@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (Camino Spanish titles)
+
+**What changed**
+- Six later unit `title`s on Camino were English (`Future & conditional`, `Pluperfect & conditional perfect`, `Se: passive, impersonal, accidental`, `Object pronouns advanced`, `Relative pronouns`, `Reported speech`). Now Mexican Spanish, matching the existing grammar-guide names. IDs / XP / routing / layout / coaches untouched.
+- Those units also lacked `desc` (tooltip / sheet showed blank or English `blurb`). Added Spanish `desc` + `blurb`. Already-Spanish titles kept.
+
+**Why**
+- Path nodes, hero subtitle, and the preview sheet are learner-facing. English product copy on Camino.
+
 ## 2026-08-30 (flashcards end)
 
 **What changed**
