@@ -69,6 +69,7 @@ const snapshotLive = (s) => {
     matchSel: s.matchSel,
     matched: s.matched,
     sessionXP: s.sessionXP,
+    itemXpLock: s.itemXpLock || [],
     combo: s.combo,
     lessonStats: s.lessonStats,
     showWhy: s.showWhy,
@@ -3156,11 +3157,19 @@ export default function App() {
   const liveReady = useRef(false);
   const liveRef = useRef(null);
   const awardLockRef = useRef(new Set());
+  const sessionXPRef = useRef(0);
+  const itemXpLockRef = useRef(new Set());
 
   const lockAward = (key) => {
     if (awardLockRef.current.has(key)) return false;
     awardLockRef.current.add(key);
     return true;
+  };
+  const itemAwardKey = (sess, idx, question) =>
+    `${sess?.unitId || ""}|${idx}|${question?._u}|${question?._i}|${question?._requeued ? "r" : "n"}`;
+  const addSessionXP = (delta) => {
+    sessionXPRef.current += delta;
+    setSessionXP(sessionXPRef.current);
   };
 
 	/* load + heart regen */
@@ -3396,7 +3405,8 @@ export default function App() {
       }).map(prepQuestion);
       beginSession({ title: u.title, color: section.color, dark: section.dark, unitId: u.id, review: false, host: hostForUnit(u.id), questions: qs });
       setQi(Math.min(snap.qi || 0, qs.length - 1));
-      setSessionXP(snap.xp || 0);
+      sessionXPRef.current = snap.xp || 0;
+      setSessionXP(sessionXPRef.current);
       setLessonStats({ right: snap.right || 0, wrong: snap.wrong || 0 });
       save({ resume: null });
       return;
@@ -3915,6 +3925,8 @@ export default function App() {
 
   const beginSession = (s) => {
     awardLockRef.current.delete("lesson");
+    itemXpLockRef.current = new Set();
+    sessionXPRef.current = 0;
     setSession(s); setQi(0); setStatus("idle"); setSelected(null); setTyped(""); setTypedTileIds([]); setPlaced([]); setPlaceAt(null);
     setMatchSel(null); setMatched([]); setMatchWrong(null);
     setSessionXP(0); setCombo(0); setLessonStats({ right: 0, wrong: 0 });
@@ -3949,6 +3961,10 @@ export default function App() {
   };
 
   const applyResult = (r) => {
+    if (!q || !session) return;
+    const awardKey = itemAwardKey(session, qi, q);
+    if (itemXpLockRef.current.has(awardKey)) return;
+    itemXpLockRef.current.add(awardKey);
     setStatus(r);
     const thisKey = `${q._u}|${q._i}`;
     setQuip(pickQuip(session.host, r === "wrong" ? "wrong" : "correct"));
@@ -3975,18 +3991,22 @@ export default function App() {
     } else {
       beep("ok");
       const hard = q.type === "order" || q.type === "listen" || q.type === "transform";
-      let base = q._requeued ? 5 : r === "almost" ? 7 : hard ? 12 : 10;
-      if (prog.rayo && rayoLeft != null && rayoLeft > 0) base += 3; // rayo bonus
+      // Review cards are 4 XP (Bien). Do not use the lesson 10/12 rate — that
+      // made a single Repasar item jump +12 and then stack gems on finish.
+      let base = session.review
+        ? (r === "almost" ? 3 : 4)
+        : q._requeued ? 5 : r === "almost" ? 7 : hard ? 12 : 10;
+      if (!session.review && prog.rayo && rayoLeft != null && rayoLeft > 0) base += 3;
       const newCombo = combo + 1;
-      const bonus = newCombo % 4 === 0 ? 5 : 0;
-      if (newCombo >= 4 && newCombo % 4 === 0) {
+      const bonus = !session.review && newCombo % 4 === 0 ? 5 : 0;
+      if (bonus) {
         setInter({ text: INTERSTITIALS[(newCombo / 4 - 1) % INTERSTITIALS.length], key: Date.now() });
         setBurst(Date.now());
         setTimeout(() => setInter(null), 1100);
         beep("combo");
       }
       setCombo(newCombo);
-      setSessionXP((x) => x + base + bonus);
+      addSessionXP(base + bonus);
       if (!q._requeued) setLessonStats((s) => ({ ...s, right: s.right + 1 }));
       const sk = skillFor(q);
       if (!session.review) {
@@ -4058,11 +4078,12 @@ export default function App() {
 
   const finishLesson = () => {
     if (session?.awarded || !lockAward("lesson")) return;
-    setSession((s) => (s ? { ...s, awarded: true } : s));
     beep("win");
     const t = todayStr();
-    const perfectBonus = lessonStats.wrong === 0 && !session.review ? 5 : 0;
-    const earned = sessionXP + perfectBonus;
+    const xpNow = sessionXPRef.current;
+    // Perfect is a flat +5 once — never a second copy of item XP.
+    const perfectBonus = lessonStats.wrong === 0 ? 5 : 0;
+    const earned = xpNow + perfectBonus;
 
     // ---- El Reto de Diego: resolve the duel (your hits vs Diego's, ties to the champ) ----
     let rivalOut = null;
@@ -4082,7 +4103,13 @@ export default function App() {
       };
       if (won) setBurst(Date.now());
     }
-    const gemsEarned = session.rival ? (rivalOut?.won ? 20 : 5) : session.review ? 10 : 15;
+    // Flat 10/15 gems only for a real session. A 1-card Repasar must not jump +10.
+    const hits = lessonStats.right;
+    const gemCap = session.review ? 10 : 15;
+    const gemsEarned = session.rival
+      ? (rivalOut?.won ? 20 : 5)
+      : (session.questions.length <= 2 ? hits : gemCap);
+    setSession((s) => (s ? { ...s, awarded: true, earnedXP: earned, earnedGems: gemsEarned, perfectBonus } : s));
     const before = levelOf(prog.xp || 0).idx, after = levelOf((prog.xp || 0) + earned).idx;
     setLevelUp(after > before ? LEVELS[after][1] : null);
     setScreenQuip(pickQuip(session.host, "win"));
@@ -4435,7 +4462,7 @@ export default function App() {
   // screen/combo/session slice. A resize must flush, never reset.
   liveRef.current = {
     screen, tab, session, qi, status, selected, typed, typedTileIds, placed,
-    matchSel, matched, sessionXP, combo, lessonStats, showWhy, failKind, quip,
+    matchSel, matched, sessionXP, itemXpLock: [...itemXpLockRef.current], combo, lessonStats, showWhy, failKind, quip,
     screenQuip, storyView, paraIdx, storyMode, ansSel, wordReveal, dialogue,
     rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame,
   };
@@ -4459,7 +4486,11 @@ export default function App() {
     if (live.placed) setPlaced(live.placed);
     if (live.matchSel != null) setMatchSel(live.matchSel);
     if (live.matched) setMatched(live.matched);
-    if (live.sessionXP != null) setSessionXP(live.sessionXP);
+    if (live.sessionXP != null) {
+      sessionXPRef.current = live.sessionXP;
+      setSessionXP(live.sessionXP);
+    }
+    if (Array.isArray(live.itemXpLock)) itemXpLockRef.current = new Set(live.itemXpLock);
     if (live.combo != null) setCombo(live.combo);
     if (live.lessonStats) setLessonStats(live.lessonStats);
     if (live.showWhy != null) setShowWhy(live.showWhy);
@@ -6265,7 +6296,7 @@ export default function App() {
 	                  <Btn data-testid="lesson-check" onClick={check} style={{ flexShrink: 0 }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
-	                    <div style={{ fontSize: 11, fontWeight: 900, color: D.okText, marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade}</div>
+	                    <div style={{ fontSize: 11, fontWeight: 900, color: D.okText, marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
                     <div style={{ display: "flex", gap: 7 }}>
 	                      <Btn color={"#FF9600"} dark={"#D97F00"} onClick={() => gradeAndNext(3)} style={{ padding: "10px 13px", fontSize: 12 }}>{L.hard}</Btn>
 	                      <Btn color={D.blue} dark={D.blueDark} onClick={() => gradeAndNext(4)} style={{ padding: "10px 13px", fontSize: 12 }}>{L.good}</Btn>
@@ -6938,8 +6969,8 @@ export default function App() {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", margin: "24px 0", flexWrap: "wrap" }}>
             {[
-              { v: <Ticker to={sessionXP} />, l: "XP", c: D.gold },
-	              { v: <Ticker to={session.review ? 10 : 15} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue },
+              { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold },
+	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue },
 	              { v: <span><IcFlame size={20} className="flame" /> {prog.streak}</span>, l: L.streakDays, c: "#FF9600" },
             ].map((s, i) => (
               <div key={i} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
@@ -6965,7 +6996,7 @@ export default function App() {
           )}
 
           {/* perfect-lesson banner */}
-          {perfect && (
+          {perfect && (session.perfectBonus || 0) > 0 && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
               ★ {uiLang === "en" ? "Perfect lesson — bonus +5 XP" : "Lección perfecta — +5 XP extra"}
             </div>
