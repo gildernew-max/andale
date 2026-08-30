@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (first-tap miss)
+
+**What changed**
+- First tap after a view swap could miss: `.pop` scaled the hit box on the same frame as the click. Animation is opacity-only now. Leftover word/sheet/exit overlays clear on `screen` change.
+- Word-bank / order chips keep their grid slots (`visibility: hidden` + `data-tile-id`) so picks do not detach sibling handles.
+- `SALIR SIN GUARDAR` is `type="button"` (all `Btn`s), `preventDefault`, `data-testid="quit-without-save"` — must close the lesson in-place, not open a tab.
+- Listen/type: grade the live input; a stray first chip cannot overwrite a typed sentence (the “Es” submit).
+
+**Why**
+- Finish item from the 2026-08-30 live pass. Engine kept. No new curriculum.
+
 ## 2026-08-30 (ET)
 
 **Console** (https://gildernew-max.github.io/andale/)
@@ -13,10 +24,10 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **Hand**
 - Story and quiz finished clean.
 - Flashcards work but never end, and only two cards. No match-pairs.
-- First tap after a screen change can miss. That is the finish item.
+- First tap after a screen change can miss. That is the finish item (fixed in the entry above).
 
 **Why**
-- Store still shut. Track issue 5. Do not touch `src/App.jsx` yet.
+- Store still shut. Track issue 5.
 
 ## 2026-08-30
 
