@@ -685,6 +685,7 @@ function speak(text, rate = 0.92, opts = {}) {
             try {
               const bare = new SpeechSynthesisUtterance(step.text);
               bare.lang = "es-MX";
+              bare.voice = voice; // same Paulina / es-MX pick — never a Spain default
               bare.onstart = () => { window.__andaleSpoke = true; };
               ss.speak(bare);
             } catch (e) {}

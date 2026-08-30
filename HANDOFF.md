@@ -2,6 +2,14 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (TTS retry stays Mexican)
+
+**What changed**
+- Chrome’s dead-engine retry now uses the same Paulina / es-MX voice. It no longer speaks a bare utterance that could fall back to es-ES.
+
+**Why**
+- Brand lock: mute or Mexican system TTS only. No recording. Finish list untouched.
+
 ## 2026-08-30 (Paulina default voice)
 
 **What changed**
