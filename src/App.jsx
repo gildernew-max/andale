@@ -666,29 +666,17 @@ const bestSpanishVoice = (preferredName) => {
   return [...pool].sort((a, b) => voiceScore(b, DEFAULT_VOICE_NAME) - voiceScore(a, DEFAULT_VOICE_NAME))[0];
 };
 
-const whenVoicesReady = (ss, then) => {
-  const ready = () => (ss.getVoices?.() || []).length > 0;
-  if (ready()) { then(); return; }
-  let settled = false;
-  const done = () => {
-    if (settled) return;
-    settled = true;
-    try { ss.removeEventListener("voiceschanged", done); } catch (e) {}
-    try { if (ss.onvoiceschanged === done) ss.onvoiceschanged = null; } catch (e) {}
-    then();
-  };
-  try { ss.addEventListener("voiceschanged", done); } catch (e) {}
-  try { ss.onvoiceschanged = done; } catch (e) {}
-  setTimeout(done, 1600);
-};
-
 /* ---- speechSynthesis hardening (Chrome is hostile) ----
-   1. cancel()->speak() in the same tick gets the new utterance swallowed: defer start ~80ms.
-   2. Chrome GC-collects unreferenced utterances mid-speech and onend never fires:
+   1. speak() MUST run in the same tick as the tap. Chrome drops speak() after
+      any await / voiceschanged / setTimeout as "not a user gesture" and
+      speaking stays false. Do not wait for getVoices(). Empty list → lang es-MX.
+   2. cancel() only if something is already queued. Idle cancel + delayed speak
+      is what killed PROBAR VOZ on boxes without Paulina.
+   3. Chrome GC-collects unreferenced utterances mid-speech and onend never fires:
       keep live refs in __utterAlive.
-   3. The chunk chain must NOT depend on onend alone: a per-chunk watchdog advances it.
-   4. Chrome silently pauses long synthesis (~15s): resume() loop while speaking.
-   5. __speakToken invalidates zombie watchdogs from superseded speak() calls. */
+   4. The chunk chain must NOT depend on onend alone: a per-chunk watchdog advances it.
+   5. Chrome silently pauses long synthesis (~15s): resume() loop while speaking.
+   6. __speakToken invalidates zombie watchdogs from superseded speak() calls. */
 const __utterAlive = [];
 let __speakToken = 0;
 let __resumeTimer = null;
@@ -722,7 +710,11 @@ function speak(text, rate = 0.92, opts = {}) {
       steps.push({ text: c, rate, gap: opts.shadow ? 1200 : (opts.pauseMs ?? 180) });
       if (opts.shadow) steps.push({ text: c, rate: Math.max(0.62, rate - 0.08), gap: 900 });
     });
-    stopSpeak();
+    // Same-tick speak: invalidate prior watchdogs, cancel only a live utterance.
+    __speakToken++;
+    __utterAlive.length = 0;
+    try { if (ss.speaking || ss.pending) ss.cancel(); } catch (e) {}
+    try { ss.getVoices(); } catch (e) {} // warm list; do not wait
     const token = __speakToken;
     let i = 0;
     const playNext = () => {
@@ -730,13 +722,17 @@ function speak(text, rate = 0.92, opts = {}) {
       const step = steps[i++];
       const u = new SpeechSynthesisUtterance(step.text.replace(/_+/g, "..."));
       const voice = bestSpanishVoice(window.__andaleVoiceName); // re-resolve: voices can load late
-      // Never mute when Paulina exists. If no voice object yet, still speak es-MX.
+      // Never mute for a missing Paulina / es-MX exact match. Any es-* is fine.
+      // Empty voices at tap: still speak with lang es-MX and let the engine pick.
       u.rate = step.rate; u.pitch = 1;
+      u.lang = "es-MX";
       if (voice) {
-        u.voice = voice;
-        u.lang = isPaulinaVoice(voice) || isMexicanVoice(voice) ? "es-MX" : (voice.lang || "es-MX");
-      } else {
-        u.lang = "es-MX";
+        try {
+          u.voice = voice;
+          u.lang = isPaulinaVoice(voice) || isMexicanVoice(voice) ? "es-MX" : (voice.lang || "es-MX");
+        } catch (e) {
+          u.lang = voice.lang || "es-MX";
+        }
       }
       __utterAlive.push(u); // GC guard
       let advanced = false;
@@ -780,7 +776,7 @@ function speak(text, rate = 0.92, opts = {}) {
       ss.speak(u);
       ensureResumeLoop();
     };
-    whenVoicesReady(ss, () => setTimeout(playNext, 80)); // wait so Paulina is not muted on first tick
+    playNext(); // same tick as the tap — do not defer
   } catch (e) {}
 }
 
@@ -5599,7 +5595,7 @@ export default function App() {
               <div style={{ fontSize: 12, fontWeight: 800, color: D.sub, marginBottom: 8 }}>{uiLang === "en" ? "Effect sounds are muted (bell icon) — voices still play." : "Los efectos están silenciados (campana) — las voces sí suenan."}</div>
             )}
             {voices.length > 0 && <div style={{ marginBottom: 10 }}>{renderVoiceSelect()}</div>}
-            <Btn color={D.blue} dark={D.blueDark} onClick={() => speak(uiLang === "en" ? "¿Me escuchas bien? ¡Qué padre!" : "¿Me escuchas bien? ¡Qué padre!", 0.9)} style={{ padding: "9px 14px", fontSize: 13 }}>
+            <Btn color={D.blue} dark={D.blueDark} data-testid="probar-voz" onClick={() => speak(uiLang === "en" ? "¿Me escuchas bien? ¡Qué padre!" : "¿Me escuchas bien? ¡Qué padre!", 0.9)} style={{ padding: "9px 14px", fontSize: 13 }}>
               {uiLang === "en" ? "Test voice" : "Probar voz"} 🔊
             </Btn>
           </div>
