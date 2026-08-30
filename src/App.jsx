@@ -4718,7 +4718,10 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+        @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 600; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-600.woff2') format('woff2'); }
+        @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 700; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-700.woff2') format('woff2'); }
+        @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 800; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-800.woff2') format('woff2'); }
+        @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 900; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-900.woff2') format('woff2'); }
         * { -webkit-tap-highlight-color: transparent; }
         button, input, select, textarea { touch-action: manipulation; }
         .duo-btn:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px !important; }
