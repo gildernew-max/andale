@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (self-host Nunito)
+
+**What changed**
+- Dropped the Google Fonts `@import`. `public/fonts/nunito-{600,700,800,900}.woff2` (SIL OFL) are `@font-face`d via `import.meta.env.BASE_URL` so Pages / WKWebView load `/andale/fonts/`.
+- `fontFamily` stays `'Nunito','Avenir Next',system-ui,sans-serif`. Schema/save, XP, speech, coaches, Camino, favicon/meta, privacy.html / support.html / Perfil links, curriculum untouched.
+
+**Why**
+- WKWebView / TestFlight cannot reach fonts.googleapis.com. Same-origin Nunito.
+
 ## 2026-08-30 (privacy + support pages)
 
 **What changed**
