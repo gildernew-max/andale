@@ -530,6 +530,15 @@ const FLAT = SECTIONS.flatMap((s) => s.unitIds.map((id) => ({ unit: UNITS.find((
 const strip = (s) => s.toLowerCase().trim().replace(/[¿?¡!.,;:—–-]/g, " ").replace(/\s+/g, " ").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const exactish = (s) => s.toLowerCase().trim().replace(/[¿?¡!.,;:—–-]/g, " ").replace(/\s+/g, " ").trim();
 
+/** Put `id` at `at`, or append. Used so an unplaced chip can be replaced in the same hole. */
+const insertIdAt = (ids, id, at) => {
+  if (ids.includes(id)) return ids;
+  const next = ids.slice();
+  const i = at == null || at < 0 || at > next.length ? next.length : at;
+  next.splice(i, 0, id);
+  return next;
+};
+
 const wordDiff = (correct, user) => {
   const cw = correct.split(/\s+/).filter(Boolean);
   const uw = user.split(/\s+/).filter(Boolean);
@@ -3005,6 +3014,7 @@ export default function App() {
   const [typed, setTyped] = useState("");
   const [typedTileIds, setTypedTileIds] = useState([]);
   const [placed, setPlaced] = useState([]);
+  const [placeAt, setPlaceAt] = useState(null); // vacated index so the next chip fills the hole
   const [matchSel, setMatchSel] = useState(null); // {side, idx}
   const [matched, setMatched] = useState([]);
   const [matchWrong, setMatchWrong] = useState(null);
@@ -3820,7 +3830,7 @@ export default function App() {
 
   const beginSession = (s) => {
     awardLockRef.current.delete("lesson");
-    setSession(s); setQi(0); setStatus("idle"); setSelected(null); setTyped(""); setTypedTileIds([]); setPlaced([]);
+    setSession(s); setQi(0); setStatus("idle"); setSelected(null); setTyped(""); setTypedTileIds([]); setPlaced([]); setPlaceAt(null);
     setMatchSel(null); setMatched([]); setMatchWrong(null);
     setSessionXP(0); setCombo(0); setLessonStats({ right: 0, wrong: 0 });
     setShowWhy(false); setFailKind("hearts");
@@ -3956,7 +3966,7 @@ export default function App() {
       setSession({ ...session, questions: queue });
     }
     if (qi + 1 >= queue.length) { finishLesson(); return; }
-    setQi(qi + 1); setStatus("idle"); setSelected(null); setTyped(""); setTypedTileIds([]); setPlaced([]);
+    setQi(qi + 1); setStatus("idle"); setSelected(null); setTyped(""); setTypedTileIds([]); setPlaced([]); setPlaceAt(null);
     setMatchSel(null); setMatched([]); setMatchWrong(null); setShowWhy(false);
     setWasTimeout(false); setRayoLeft(null);
   };
@@ -4271,6 +4281,7 @@ export default function App() {
 
   const insertChar = (ch) => {
     setTypedTileIds([]);
+    setPlaceAt(null);
     const el = inputRef.current;
     if (!el) { setTyped((t) => t + ch); return; }
     const s = el.selectionStart ?? typed.length, e = el.selectionEnd ?? typed.length;
@@ -4284,22 +4295,41 @@ export default function App() {
     setTyped(ids.map((id) => tiles.find((t) => t.id === id)?.w).filter(Boolean).join(" "));
   };
 
+  const removeAnswerTile = (id) => {
+    if (status !== "idle") return;
+    const idx = typedTileIds.indexOf(id);
+    if (idx < 0) return;
+    setPlaceAt(idx);
+    setTypedFromTiles(typedTileIds.filter((x) => x !== id));
+  };
+
   const chooseAnswerTile = (tile) => {
     if (!q?.answerAid || status !== "idle") return;
     if (q.answerAid.mode === "choices") {
+      setPlaceAt(null);
       setTypedTileIds([tile.id]);
       setTyped(tile.w);
       return;
     }
-    if (typedTileIds.includes(tile.id)) return;
+    if (typedTileIds.includes(tile.id)) { removeAnswerTile(tile.id); return; }
     // A stray first chip ("Es") must not wipe a sentence already typed in the field.
     if (typedTileIds.length === 0 && /\s/.test((inputRef.current?.value ?? typed).trim())) return;
-    setTypedFromTiles([...typedTileIds, tile.id]);
+    setTypedFromTiles(insertIdAt(typedTileIds, tile.id, placeAt));
+    setPlaceAt(null);
   };
 
-  const removeAnswerTile = (id) => {
+  const placeOrderTile = (id) => {
     if (status !== "idle") return;
-    setTypedFromTiles(typedTileIds.filter((x) => x !== id));
+    setPlaced((p) => insertIdAt(p, id, placeAt));
+    setPlaceAt(null);
+  };
+
+  const unplaceOrderTile = (id) => {
+    if (status !== "idle") return;
+    const idx = placed.indexOf(id);
+    if (idx < 0) return;
+    setPlaceAt(idx);
+    setPlaced((p) => p.filter((x) => x !== id));
   };
 
   useEffect(() => {
@@ -4568,6 +4598,8 @@ export default function App() {
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
         .tile-bank { display:grid; grid-template-columns:repeat(auto-fill, minmax(4.6rem, max-content)); gap:8px; justify-content:center; align-items:start; }
+        .tile-slot { display:flex; min-width:4.6rem; min-height:2.55rem; }
+        .tile-slot .tile { flex:1; }
       `}</style>
 
       {/* ---------- TOP STAT BAR ---------- */}
@@ -5926,7 +5958,7 @@ export default function App() {
             {(q.type === "type" || q.type === "listen" || q.type === "transform") && (
               <div>
                 <input ref={inputRef} value={typed} disabled={status !== "idle"}
-                  onChange={(e) => { setTypedTileIds([]); setTyped(e.target.value); }}
+                  onChange={(e) => { setTypedTileIds([]); setPlaceAt(null); setTyped(e.target.value); }}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); status === "idle" ? check() : next(); } }}
 	                  placeholder={q.type === "listen" ? (uiLang === "en" ? "Write the full sentence…" : "Escribe la oración completa…") : q.type === "transform" ? (uiLang === "en" ? "Write the transformed sentence…" : "Escribe la oración transformada…") : (uiLang === "en" ? "Write the missing word…" : "Escribe la palabra que falta…")}
                   autoCapitalize="off" autoCorrect="off" spellCheck={false}
@@ -5940,44 +5972,62 @@ export default function App() {
                           : (uiLang === "en" ? "BUILD WITH WORDS" : "ARMA CON PALABRAS")}
                       </div>
                       {typedTileIds.length > 0 && status === "idle" && (
-                        <button onClick={() => setTypedFromTiles([])} style={{ border: "none", background: "none", color: D.sub, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
+                        <button type="button" onClick={() => { setPlaceAt(null); setTypedFromTiles([]); }} style={{ border: "none", background: "none", color: D.sub, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
                           {uiLang === "en" ? "Clear" : "Borrar"}
                         </button>
                       )}
                     </div>
                     {q.answerAid.mode === "bank" && (
-                      <div style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center", marginBottom: 10 }}>
-                        {typedTileIds.length === 0 && <span style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>{uiLang === "en" ? "Tap words below instead of typing." : "Toca palabras abajo en vez de escribir."}</span>}
-                        {typedTileIds.map((id) => {
-                          const tile = q.answerAid.tiles.find((t) => t.id === id);
-                          return tile ? (
-                            <button type="button" key={id} data-tile-id={`placed-${id}`} className="tile" disabled={status !== "idle"} onClick={() => removeAnswerTile(id)}
-                              style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark, padding: "7px 10px", fontSize: 14 }}>
-                              {tile.w}
-                            </button>
-                          ) : null;
-                        })}
+                      <div>
+                        <div style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center", marginBottom: 6 }}>
+                          {typedTileIds.length === 0 && <span style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>{uiLang === "en" ? "Tap words below instead of typing." : "Toca palabras abajo en vez de escribir."}</span>}
+                          {typedTileIds.map((id) => {
+                            const tile = q.answerAid.tiles.find((t) => t.id === id);
+                            return tile ? (
+                              <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" className="tile" disabled={status !== "idle"}
+                                title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
+                                aria-label={`${tile.w}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
+                                onClick={() => removeAnswerTile(id)}
+                                style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark, padding: "7px 10px", fontSize: 14 }}>
+                                {tile.w}
+                                <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
+                              </button>
+                            ) : null;
+                          })}
+                        </div>
+                        {typedTileIds.length > 0 && status === "idle" && (
+                          <div style={{ fontSize: 11.5, fontWeight: 800, color: D.sub, marginBottom: 8 }}>
+                            {uiLang === "en" ? "Tap a placed word to move it." : "Toca una ficha colocada para moverla."}
+                          </div>
+                        )}
                       </div>
                     )}
                     <div className="tile-bank">
                       {q.answerAid.tiles.map((tile) => {
                         const used = typedTileIds.includes(tile.id);
+                        const hide = q.answerAid.mode === "bank" && used;
                         return (
-                          <button type="button" key={tile.id} data-tile-id={tile.id} className="tile" disabled={status !== "idle" || (q.answerAid.mode === "bank" && used)}
-                            aria-pressed={used}
-                            onClick={() => chooseAnswerTile(tile)}
-                            style={{
-                              visibility: q.answerAid.mode === "bank" && used ? "hidden" : "visible",
-                              pointerEvents: used ? "none" : "auto",
-                              background: used ? D.greenBg : "#fff",
-                              borderColor: used ? D.green : D.line,
-                              borderBottomColor: used ? D.green : D.line,
-                              color: used ? D.greenDark : D.ink,
-                              padding: "8px 11px",
-                              fontSize: 14,
-                            }}>
-                            {tile.w}
-                          </button>
+                          <div key={tile.id} className="tile-slot" data-tile-slot={tile.id}
+                            onClick={() => { if (hide) removeAnswerTile(tile.id); }}>
+                            <button type="button" data-tile-id={hide ? undefined : tile.id} data-testid={hide ? undefined : "bank-tile"} className="tile"
+                              disabled={status !== "idle"}
+                              aria-pressed={used}
+                              aria-hidden={hide}
+                              tabIndex={hide ? -1 : 0}
+                              onClick={(e) => { e.stopPropagation(); chooseAnswerTile(tile); }}
+                              style={{
+                                visibility: hide ? "hidden" : "visible",
+                                pointerEvents: hide ? "none" : "auto",
+                                background: used ? D.greenBg : "#fff",
+                                borderColor: used ? D.green : D.line,
+                                borderBottomColor: used ? D.green : D.line,
+                                color: used ? D.greenDark : D.ink,
+                                padding: "8px 11px",
+                                fontSize: 14,
+                              }}>
+                              {tile.w}
+                            </button>
+                          </div>
                         );
                       })}
                     </div>
@@ -5995,26 +6045,49 @@ export default function App() {
 
             {q.type === "order" && (
               <div>
-                <div style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 18 }}>
+                <div style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 6 }}>
 	                  {placed.length === 0 && <span style={{ color: D.sub, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
                   {placed.map((id) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
                     return (
-                      <button type="button" key={id} data-tile-id={`placed-${id}`} className="tile" disabled={status !== "idle"} onClick={() => setPlaced((p) => p.filter((x) => x !== id))}
+                      <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" className="tile" disabled={status !== "idle"}
+                        title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
+                        aria-label={`${t.w}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
+                        onClick={() => unplaceOrderTile(id)}
                         style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }}>
                         {t.w}
+                        <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                       </button>
                     );
                   })}
                 </div>
-                <div className="tile-bank">
-                  {q.shuffledWords.map((t) => (
-                    <button type="button" key={t.id} data-tile-id={t.id} className="tile" disabled={placed.includes(t.id) || status !== "idle"}
-                      onClick={() => setPlaced((p) => [...p, t.id])}
-                      style={{ visibility: placed.includes(t.id) ? "hidden" : "visible", pointerEvents: placed.includes(t.id) ? "none" : "auto" }}>
-                      {t.w}
+                {placed.length > 0 && status === "idle" && (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 800, color: D.sub }}>
+                      {uiLang === "en" ? "Tap a placed word to move it." : "Toca una ficha colocada para moverla."}
+                    </div>
+                    <button type="button" onClick={() => { setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: D.sub, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
+                      {uiLang === "en" ? "Clear" : "Borrar"}
                     </button>
-                  ))}
+                  </div>
+                )}
+                <div className="tile-bank">
+                  {q.shuffledWords.map((t) => {
+                    const used = placed.includes(t.id);
+                    return (
+                      <div key={t.id} className="tile-slot" data-tile-slot={t.id}
+                        onClick={() => { if (used) unplaceOrderTile(t.id); }}>
+                        <button type="button" data-tile-id={used ? undefined : t.id} data-testid={used ? undefined : "bank-tile"} className="tile"
+                          disabled={status !== "idle"}
+                          aria-hidden={used}
+                          tabIndex={used ? -1 : 0}
+                          onClick={(e) => { e.stopPropagation(); if (!used) placeOrderTile(t.id); }}
+                          style={{ visibility: used ? "hidden" : "visible", pointerEvents: used ? "none" : "auto" }}>
+                          {t.w}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

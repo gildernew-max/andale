@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (reposition placed chips)
+
+**What changed**
+- Word-bank / order: tap a placed chip to return it to the bank. The next bank tap fills that hole, so one wrong word can move without Borrar on the whole row.
+- Bank grid stays stable (`visibility: hidden` + `.tile-slot`). Hidden holes are still tappable to unplace. `data-tile-id` follows the live chip.
+- Order also has a small Borrar. Paulina default from the voice PR is untouched (`DEFAULT_VOICE_NAME`).
+
+**Why**
+- Dave: after a chip is placed he must be able to reposition it. Hypothesis was locked chips / only Borrar — tap-to-unplace existed but bank chips were `disabled` + `pointer-events: none`, so the hole could not return a word and a mid-row fix appended at the end.
+
 ## 2026-08-30 (TTS retry stays Mexican)
 
 **What changed**
