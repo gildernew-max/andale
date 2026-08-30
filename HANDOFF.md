@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (live session across resize)
+
+**What changed**
+- Opening DevTools (viewport resize) remounted the app: in-memory `screen`/`combo`/`session` reset to Camino + combo 0. There is no wipe-on-resize listener; the remount dropped React state.
+- Live view now flushes to `andale-v3-live` on resize / pagehide / visibility, and restores on boot. A resize must save, never reset.
+
+**Why**
+- Same first-tap / screen-change miss class. Engine kept. No new curriculum.
+
 ## 2026-08-30 (first-tap miss)
 
 **What changed**
