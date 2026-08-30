@@ -52,6 +52,53 @@ const MAX_HEARTS = 5;
 const HEART_REGEN_MS = 30 * 60 * 1000; // 1 heart / 30 min
 const REFILL_COST = 350;
 const STORAGE_KEY = "andale-v3";
+const LIVE_KEY = "andale-v3-live";
+
+const snapshotLive = (s) => {
+  if (!s || s.screen === "home") return null;
+  return {
+    screen: s.screen,
+    tab: s.tab,
+    session: s.session,
+    qi: s.qi,
+    status: s.status,
+    selected: s.selected,
+    typed: s.typed,
+    typedTileIds: s.typedTileIds,
+    placed: s.placed,
+    matchSel: s.matchSel,
+    matched: s.matched,
+    sessionXP: s.sessionXP,
+    combo: s.combo,
+    lessonStats: s.lessonStats,
+    showWhy: s.showWhy,
+    failKind: s.failKind,
+    quip: s.quip,
+    screenQuip: s.screenQuip,
+    storyId: s.storyView?.id || null,
+    paraIdx: s.paraIdx,
+    storyMode: s.storyMode,
+    ansSel: s.ansSel,
+    wordReveal: s.wordReveal,
+    dialogue: s.dialogue,
+    rivalOutcome: s.rivalOutcome,
+    activeDuelId: s.activeDuel?.id || null,
+    safeGame: s.safeGame,
+    jeopardy: s.jeopardy,
+    snakeGame: s.snakeGame,
+  };
+};
+
+const writeLive = (payload) => {
+  try {
+    const raw = payload ? JSON.stringify(payload) : "";
+    if (typeof window !== "undefined") {
+      if (raw) window.localStorage?.setItem(LIVE_KEY, raw);
+      else window.localStorage?.removeItem(LIVE_KEY);
+    }
+    storage.set(LIVE_KEY, raw);
+  } catch (e) {}
+};
 
 /* ============================================================
    CONTENT ARCHITECTURE (Léxico pattern: appendable chunks)
@@ -3002,6 +3049,8 @@ export default function App() {
   const inputRef = useRef(null);
   const audioCtx = useRef(null);
   const narrationRef = useRef(null);
+  const liveReady = useRef(false);
+  const liveRef = useRef(null);
 
 	/* load + heart regen */
 	useEffect(() => {
@@ -4168,6 +4217,93 @@ export default function App() {
     setWordSel(null);
     setSheet(null);
   }, [screen]);
+
+  // Keep the in-flight lesson/story across a remount (DevTools dock / viewport
+  // resize / reload). Progress already lives in andale-v3; this is the missing
+  // screen/combo/session slice. A resize must flush, never reset.
+  liveRef.current = {
+    screen, tab, session, qi, status, selected, typed, typedTileIds, placed,
+    matchSel, matched, sessionXP, combo, lessonStats, showWhy, failKind, quip,
+    screenQuip, storyView, paraIdx, storyMode, ansSel, wordReveal, dialogue,
+    rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame,
+  };
+
+  const applyLive = (live) => {
+    if (!live || live.screen === "home") {
+      if (live?.tab) setTab(live.tab);
+      return;
+    }
+    if (live.screen === "lesson" && !live.session) return;
+    if (live.tab) setTab(live.tab);
+    if (live.session) setSession(live.session);
+    if (live.qi != null) setQi(live.qi);
+    if (live.status) setStatus(live.status);
+    if (live.selected != null) setSelected(live.selected);
+    if (live.typed != null) setTyped(live.typed);
+    if (live.typedTileIds) setTypedTileIds(live.typedTileIds);
+    if (live.placed) setPlaced(live.placed);
+    if (live.matchSel != null) setMatchSel(live.matchSel);
+    if (live.matched) setMatched(live.matched);
+    if (live.sessionXP != null) setSessionXP(live.sessionXP);
+    if (live.combo != null) setCombo(live.combo);
+    if (live.lessonStats) setLessonStats(live.lessonStats);
+    if (live.showWhy != null) setShowWhy(live.showWhy);
+    if (live.failKind) setFailKind(live.failKind);
+    if (live.quip != null) setQuip(live.quip);
+    if (live.screenQuip != null) setScreenQuip(live.screenQuip);
+    if (live.storyId) {
+      const story = STORIES.find((st) => st.id === live.storyId);
+      if (story) setStoryView(story);
+      else if (live.screen === "story") return;
+    }
+    if (live.paraIdx != null) setParaIdx(live.paraIdx);
+    if (live.storyMode) setStoryMode(live.storyMode);
+    if (live.ansSel) setAnsSel(live.ansSel);
+    if (live.wordReveal != null) setWordReveal(live.wordReveal);
+    if (live.dialogue) setDialogue(live.dialogue);
+    if (live.rivalOutcome) setRivalOutcome(live.rivalOutcome);
+    if (live.activeDuelId) {
+      const duel = DUELS.find((d) => d.id === live.activeDuelId);
+      if (duel) setActiveDuel(duel);
+    }
+    if (live.safeGame) setSafeGame(live.safeGame);
+    if (live.jeopardy) setJeopardy(live.jeopardy);
+    if (live.snakeGame) setSnakeGame(live.snakeGame);
+    setScreen(live.screen);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await storage.get(LIVE_KEY);
+        if (!cancelled && r?.value) applyLive(JSON.parse(r.value));
+      } catch (e) {}
+      if (!cancelled) liveReady.current = true;
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!liveReady.current) return;
+    writeLive(snapshotLive(liveRef.current));
+  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, dialogue, safeGame, jeopardy, snakeGame]);
+
+  useEffect(() => {
+    const flush = () => {
+      if (!liveReady.current) return;
+      writeLive(snapshotLive(liveRef.current));
+    };
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("visibilitychange", flush);
+    window.addEventListener("resize", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("visibilitychange", flush);
+      window.removeEventListener("resize", flush);
+    };
+  }, []);
 
   // Modo Rayo countdown
   useEffect(() => {
