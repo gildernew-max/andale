@@ -2,6 +2,19 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (PROBAR VOZ must speak on tap)
+
+**Repro** (Hand, live, 3:06 ET): Perfil → PROBAR VOZ. Tap did not start `speechSynthesis`. `speaking` stayed false. Box has no Paulina. Fail even with Google Spanish voices.
+
+**Cause**
+- `speak()` no longer bailed on a null Paulina / es-MX pick (that part of the hypothesis is gone).
+- It still called `cancel()` then waited `voiceschanged` + 80ms. Chrome treats that as not a user gesture, so `speak()` never starts.
+
+**Fix**
+- Same-tick `speechSynthesis.speak()`. No async `getVoices()` wait. Cancel only if already speaking.
+- Paulina if present; else any `es-*` (es-MX preferred). Empty list: still speak with `lang es-MX`.
+- Naming Paulina can wait for the iPhone. No recording. Path / splash / tap-miss / chips / SALIR / listen-type / XP untouched.
+
 ## 2026-08-30 (XP lock — one item, once)
 
 **Repro** (Hand, live): one Repasar card showed +4 XP, then the same card jumped to +12 with no extra tap. Total 185→197. Gems 25→35. Expected ~9 with the perfect bonus.
