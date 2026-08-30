@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (Paulina default voice)
+
+**What changed**
+- Auto TTS now prefers system **Paulina** (especially es-MX), then any es-MX voice. No new files, no mascot voice, no recording.
+- If the device has neither Paulina nor es-MX, readings stay quiet instead of falling back to Spain (es-ES). The existing voice dropdown still lets a learner pick any listed voice.
+
+**Why**
+- Dave’s gut check: the app works; he does not like the reading voice. Brand lock from No face. Finish-list items already shipped in #9/#10/#12.
+
 ## 2026-08-30 (Hand leftovers: glossary placeholder, XP, favicon)
 
 **What changed**

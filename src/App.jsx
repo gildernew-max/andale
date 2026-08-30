@@ -570,23 +570,44 @@ const splitSentences = (text) => text
   .map((s) => s.trim())
   .filter(Boolean);
 
+/* Brand lock (No face): Paulina is the default reading voice. Prefer es-MX
+   Paulina, then any Paulina, then any es-MX. Do not invent a mascot voice or
+   record files. Auto mode must not fall back to Spain (es-ES) / textbook TTS —
+   mute that path until a Mexican system voice exists. A user pick in the
+   existing voice dropdown still wins. */
+const DEFAULT_VOICE_NAME = "Paulina";
+const voiceLang = (v) => (v.lang || "").toLowerCase().replace("_", "-");
+const isPaulinaVoice = (v) => /paulina/i.test(v.name || "");
+const isMexicanVoice = (v) => voiceLang(v) === "es-mx";
+
 const voiceScore = (v, preferredName) => {
   const name = (v.name || "").toLowerCase();
-  const lang = (v.lang || "").toLowerCase().replace("_", "-");
+  const lang = voiceLang(v);
+  const pref = (preferredName || DEFAULT_VOICE_NAME).toLowerCase();
   let score = 0;
-  if (preferredName && v.name === preferredName) score += 100;
+  if (pref && (v.name === preferredName || name.includes(pref))) score += 100;
+  if (isPaulinaVoice(v)) score += isMexicanVoice(v) ? 40 : 20;
   if (lang === "es-mx") score += 50;
   else if (lang.startsWith("es")) score += 25;
-  if (/paulina|flo|shelley|sandy|grandma|eddy/.test(name)) score += 10;
+  if (/flo|shelley|sandy|grandma|eddy/.test(name)) score += 10;
   if (/rocko|reed|grandpa/.test(name)) score += 4;
   if (/mónica|monica/.test(name)) score += 3;
   return score;
 };
 
+const listSpanishVoices = () =>
+  ((typeof window !== "undefined" && window.speechSynthesis?.getVoices?.()) || [])
+    .filter((v) => voiceLang(v).startsWith("es"));
+
 const bestSpanishVoice = (preferredName) => {
-  const voices = window.speechSynthesis?.getVoices?.() || [];
-  return voices.filter((v) => (v.lang || "").toLowerCase().startsWith("es"))
-    .sort((a, b) => voiceScore(b, preferredName) - voiceScore(a, preferredName))[0];
+  const voices = listSpanishVoices();
+  if (!voices.length) return null;
+  const explicit = preferredName && voices.find((v) => v.name === preferredName);
+  if (explicit) return explicit;
+  const pref = preferredName || DEFAULT_VOICE_NAME;
+  const pick = [...voices].sort((a, b) => voiceScore(b, pref) - voiceScore(a, pref))[0];
+  if (pick && (isPaulinaVoice(pick) || isMexicanVoice(pick))) return pick;
+  return voices.find(isPaulinaVoice) || voices.find(isMexicanVoice) || null;
 };
 
 /* ---- speechSynthesis hardening (Chrome is hostile) ----
@@ -637,8 +658,9 @@ function speak(text, rate = 0.92, opts = {}) {
       const step = steps[i++];
       const u = new SpeechSynthesisUtterance(step.text.replace(/_+/g, "..."));
       const voice = bestSpanishVoice(window.__andaleVoiceName); // re-resolve: voices can load late
+      if (!voice) return; // auto default: no Paulina / es-MX — do not play es-ES
       u.lang = "es-MX"; u.rate = step.rate; u.pitch = 1;
-      if (voice) u.voice = voice;
+      u.voice = voice;
       __utterAlive.push(u); // GC guard
       let advanced = false;
       const advance = () => {
@@ -3088,9 +3110,8 @@ export default function App() {
 	  })();
     const loadVoices = () => {
       try {
-        const es = (window.speechSynthesis.getVoices() || [])
-          .filter((v) => (v.lang || "").toLowerCase().startsWith("es"))
-          .sort((a, b) => voiceScore(b, window.__andaleVoiceName) - voiceScore(a, window.__andaleVoiceName));
+        const es = listSpanishVoices()
+          .sort((a, b) => voiceScore(b, window.__andaleVoiceName || DEFAULT_VOICE_NAME) - voiceScore(a, window.__andaleVoiceName || DEFAULT_VOICE_NAME));
         setVoices(es);
       } catch (e) {}
     };
