@@ -2902,8 +2902,8 @@ const diegoReaction = (won, delta, lang) => {
 
 
 
-const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style }) => (
-  <button onClick={onClick} disabled={disabled} className="duo-btn"
+const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, ...rest }) => (
+  <button type="button" onClick={onClick} disabled={disabled} className="duo-btn"
     style={{
       fontFamily: "inherit", fontWeight: 800, fontSize: 15, letterSpacing: ".06em", textTransform: "uppercase",
       borderRadius: 14, padding: "13px 24px", cursor: disabled ? "default" : "pointer",
@@ -2912,7 +2912,8 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
       border: outline ? `2px solid ${D.line}` : "none",
       borderBottom: outline ? `4px solid ${D.line}` : `4px solid ${disabled ? "#CFCFCF" : dark}`,
       ...style,
-    }}>
+    }}
+    {...rest}>
     {children}
   </button>
 );
@@ -3735,13 +3736,25 @@ export default function App() {
 
   /* ---------- grading ---------- */
 
+  const typedFromField = () => {
+    const live = inputRef.current?.value;
+    return live != null ? live : typed;
+  };
+
   const check = () => {
     if (!q || status !== "idle") return;
     let r;
     if (q.type === "mc") { if (selected == null) return; r = q.shuffledChoices[selected] === q.answer ? "correct" : "wrong"; }
     else if (q.type === "order") { if (!placed.length) return; const built = placed.map((id) => q.shuffledWords.find((t) => t.id === id).w).join(" "); r = strip(built) === strip(q.answer) ? "correct" : "wrong"; }
     else if (q.type === "match") { return; }
-    else { /* type | listen | transform */ if (!typed.trim()) return; const exact = q.answers.some((a) => exactish(a) === exactish(typed)); const loose = q.answers.some((a) => strip(a) === strip(typed)); r = exact ? "correct" : loose ? "almost" : "wrong"; }
+    else { /* type | listen | transform — prefer the live input so a stray chip cannot grade a leftover tile word */
+      const given = typedFromField();
+      if (given !== typed) setTyped(given);
+      if (!given.trim()) return;
+      const exact = q.answers.some((a) => exactish(a) === exactish(given));
+      const loose = q.answers.some((a) => strip(a) === strip(given));
+      r = exact ? "correct" : loose ? "almost" : "wrong";
+    }
     applyResult(r);
   };
 
@@ -4133,6 +4146,8 @@ export default function App() {
       return;
     }
     if (typedTileIds.includes(tile.id)) return;
+    // A stray first chip ("Es") must not wipe a sentence already typed in the field.
+    if (typedTileIds.length === 0 && /\s/.test((inputRef.current?.value ?? typed).trim())) return;
     setTypedFromTiles([...typedTileIds, tile.id]);
   };
 
@@ -4146,6 +4161,13 @@ export default function App() {
     if (screen === "lesson" && q?.type === "listen" && status === "idle") setTimeout(() => speak(q.text), 350);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qi, screen]);
+
+  // Drop leftover overlays when the view swaps so the first tap hits the new screen.
+  useEffect(() => {
+    setConfirmExit(false);
+    setWordSel(null);
+    setSheet(null);
+  }, [screen]);
 
   // Modo Rayo countdown
   useEffect(() => {
@@ -4254,13 +4276,14 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
         * { -webkit-tap-highlight-color: transparent; }
+        button, input, select, textarea { touch-action: manipulation; }
         .duo-btn:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px !important; }
         .duo-btn { transition: transform .05s, filter .1s; }
         .duo-btn:hover:not(:disabled) { filter: brightness(1.05); }
         button:focus-visible, input:focus-visible { outline: 3px solid ${D.blue}; outline-offset: 2px; }
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         .bounce { animation: bounce 1.1s ease-in-out infinite; }
-        @keyframes pop { 0%{transform:scale(.95);opacity:.5} 100%{transform:scale(1);opacity:1} }
+        @keyframes pop { 0%{opacity:.35} 100%{opacity:1} }
         .pop { animation: pop .15s ease; }
         @keyframes wiggle { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
         .wiggle { animation: wiggle .25s ease; }
@@ -4296,6 +4319,7 @@ export default function App() {
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
+        .tile-bank { display:grid; grid-template-columns:repeat(auto-fill, minmax(4.6rem, max-content)); gap:8px; justify-content:center; align-items:start; }
       `}</style>
 
       {/* ---------- TOP STAT BAR ---------- */}
@@ -5360,23 +5384,24 @@ export default function App() {
 
       {/* ---------- EXIT-LESSON CONFIRM ---------- */}
       {confirmExit && screen === "lesson" && session && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setConfirmExit(false)}>
-          <div className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center" }}>
+        <div role="presentation" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setConfirmExit(false)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="exit-lesson-title" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center" }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}><CoachPortrait id={session.host} mood="sad" size={84} /></div>
-            <div style={{ fontWeight: 900, fontSize: 19, marginBottom: 6 }}>{uiLang === "en" ? "Leave the lesson?" : "¿Salir de la lección?"}</div>
+            <div id="exit-lesson-title" style={{ fontWeight: 900, fontSize: 19, marginBottom: 6 }}>{uiLang === "en" ? "Leave the lesson?" : "¿Salir de la lección?"}</div>
             <div style={{ fontWeight: 800, fontSize: 13, color: D.sub, marginBottom: 16 }}>
               {uiLang === "en" ? `You're ${qi}/${session.questions.length} in.` : `Vas ${qi}/${session.questions.length}.`}
             </div>
             <div style={{ display: "grid", gap: 9 }}>
-              <Btn onClick={() => setConfirmExit(false)}>{uiLang === "en" ? "Keep going" : "Seguir"}</Btn>
+              <Btn onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmExit(false); }}>{uiLang === "en" ? "Keep going" : "Seguir"}</Btn>
               {!session.review && !session.rival && !session.testOut && !session.missionId && !session.daily && session.unitId !== "_test" && (
-                <Btn color={D.blue} dark={D.blueDark} onClick={() => {
+                <Btn color={D.blue} dark={D.blueDark} onClick={(e) => {
+                  e.preventDefault(); e.stopPropagation();
                   const order = session.questions.map((qq) => ({ u: qq._u, i: qq._i }));
                   save({ resume: { unitId: session.unitId, order, qi, xp: sessionXP, right: lessonStats.right, wrong: lessonStats.wrong } });
-                  setConfirmExit(false); stopSpeak(); setScreen("home");
+                  stopSpeak(); setConfirmExit(false); setScreen("home");
                 }}>{uiLang === "en" ? "Save & quit" : "Guardar y salir"}</Btn>
               )}
-              <Btn outline onClick={() => { setConfirmExit(false); stopSpeak(); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
+              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); stopSpeak(); setConfirmExit(false); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
             </div>
           </div>
         </div>
@@ -5526,7 +5551,7 @@ export default function App() {
           )}
           {burst > 0 && status !== "idle" && status !== "wrong" && inter && <Confetti key={burst} count={28} />}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 26 }}>
-            <button onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+            <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div style={{ flex: 1, height: 16, background: D.line, borderRadius: 99, overflow: "hidden" }}>
               <div style={{ width: `${pct}%`, height: "100%", background: D.green, borderRadius: 99, transition: "width .25s", position: "relative", overflow: "hidden" }}>
                 <div className="shimmer" />
@@ -5673,12 +5698,12 @@ export default function App() {
                       )}
                     </div>
                     {q.answerAid.mode === "bank" && (
-                      <div style={{ minHeight: 42, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center", marginBottom: 10 }}>
+                      <div style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center", marginBottom: 10 }}>
                         {typedTileIds.length === 0 && <span style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>{uiLang === "en" ? "Tap words below instead of typing." : "Toca palabras abajo en vez de escribir."}</span>}
                         {typedTileIds.map((id) => {
                           const tile = q.answerAid.tiles.find((t) => t.id === id);
                           return tile ? (
-                            <button key={id} className="tile" disabled={status !== "idle"} onClick={() => removeAnswerTile(id)}
+                            <button type="button" key={id} data-tile-id={`placed-${id}`} className="tile" disabled={status !== "idle"} onClick={() => removeAnswerTile(id)}
                               style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark, padding: "7px 10px", fontSize: 14 }}>
                               {tile.w}
                             </button>
@@ -5686,15 +5711,16 @@ export default function App() {
                         })}
                       </div>
                     )}
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    <div className="tile-bank">
                       {q.answerAid.tiles.map((tile) => {
                         const used = typedTileIds.includes(tile.id);
                         return (
-                          <button key={tile.id} className="tile" disabled={status !== "idle" || (q.answerAid.mode === "bank" && used)}
+                          <button type="button" key={tile.id} data-tile-id={tile.id} className="tile" disabled={status !== "idle" || (q.answerAid.mode === "bank" && used)}
                             aria-pressed={used}
                             onClick={() => chooseAnswerTile(tile)}
                             style={{
-                              opacity: q.answerAid.mode === "bank" && used ? 0.35 : 1,
+                              visibility: q.answerAid.mode === "bank" && used ? "hidden" : "visible",
+                              pointerEvents: used ? "none" : "auto",
                               background: used ? D.greenBg : "#fff",
                               borderColor: used ? D.green : D.line,
                               borderBottomColor: used ? D.green : D.line,
@@ -5721,21 +5747,23 @@ export default function App() {
 
             {q.type === "order" && (
               <div>
-                <div style={{ minHeight: 56, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 18 }}>
+                <div style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 18 }}>
 	                  {placed.length === 0 && <span style={{ color: D.sub, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
                   {placed.map((id) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
                     return (
-                      <button key={id} className="tile" disabled={status !== "idle"} onClick={() => setPlaced((p) => p.filter((x) => x !== id))}
+                      <button type="button" key={id} data-tile-id={`placed-${id}`} className="tile" disabled={status !== "idle"} onClick={() => setPlaced((p) => p.filter((x) => x !== id))}
                         style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }}>
                         {t.w}
                       </button>
                     );
                   })}
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+                <div className="tile-bank">
                   {q.shuffledWords.map((t) => (
-                    <button key={t.id} className="tile" disabled={placed.includes(t.id) || status !== "idle"} onClick={() => setPlaced((p) => [...p, t.id])}>
+                    <button type="button" key={t.id} data-tile-id={t.id} className="tile" disabled={placed.includes(t.id) || status !== "idle"}
+                      onClick={() => setPlaced((p) => [...p, t.id])}
+                      style={{ visibility: placed.includes(t.id) ? "hidden" : "visible", pointerEvents: placed.includes(t.id) ? "none" : "auto" }}>
                       {t.w}
                     </button>
                   ))}
@@ -5812,7 +5840,7 @@ export default function App() {
               </div>
               {q.type !== "match" || status !== "idle" ? (
                 status === "idle" ? (
-	                  <Btn onClick={check} style={{ flexShrink: 0 }}>{L.check}</Btn>
+	                  <Btn data-testid="lesson-check" onClick={check} style={{ flexShrink: 0 }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
 	                    <div style={{ fontSize: 11, fontWeight: 900, color: D.okText, marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade}</div>
@@ -6204,7 +6232,7 @@ export default function App() {
         return (
           <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 150px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-	              <button onClick={() => { setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+	              <button type="button" onClick={() => { setWordSel(null); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div>
                 <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{story.title}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: sec.color }}>{story.subtitle}</div>
