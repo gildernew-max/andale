@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (ET, after PR 13)
+
+**Hand** (https://gildernew-max.github.io/andale/)
+- Chip-move retest after PR #13: clean.
+- Tap a placed chip to unplace; the next chip fills the hole.
+- No more full live passes from Hand this seat.
+
+**Why**
+- Retest after chip-move (PR #13) merged and Pages deployed. Wrap starts Mon Sep 8 (Kalesi). TestFlight on Dave’s phone Sep 13 — not Store live. Store still shut. No new curriculum.
+
 ## 2026-08-30 (Paulina never muted)
 
 **What changed**
