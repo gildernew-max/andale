@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (ET)
+
+**What changed**
+- Live console pass on https://gildernew-max.github.io/andale/.
+- Story Cena con la suegra (Pátzcuaro) opened via Jugar la escena. Quiz Q1–Q4 passed. No React remount. Console only: favicon.ico 404.
+- Word-bank chips reflow after every pick (stale DOM). That is the tester “element not attached to the DOM” death, not a crash.
+- SALIR SIN GUARDAR opened a new browser tab at the same URL, home path, original tab stuck on the modal.
+- Subjuntivo presente listen/type Q1: full typed sentence submitted as just “Es” (word-bank state overrode typed text). Heart lost. No console error.
+
+**Why**
+- Store still shut. Track issue 5.
+
 ## 2026-08-30
 
 **What changed**
