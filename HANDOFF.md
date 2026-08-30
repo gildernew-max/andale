@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (PNG coaches + mascot)
+
+**What changed**
+- Happy / default `CoachPortrait` is an `<img>` from `public/coaches/{id}-happy.png` via `import.meta.env.BASE_URL`. Sad / party / focused stay the inline SVG. Badge overlay still draws on top.
+- `LogoMark` uses `public/mascot/axolotl.png` the same way. XP / speech / path / Thursday play / tap-miss / chips / SALIR / curriculum untouched.
+
+**Why**
+- Drive stills are already on this branch. Wire them; keep SVG for non-happy moods.
+
 ## 2026-08-30 (review perfect bonus lock)
 
 **Lock**
