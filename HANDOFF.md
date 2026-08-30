@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (post-deploy live URL smoke)
+
+**What changed**
+- `.github/workflows/pages.yml` `smoke` job runs after `deploy`. It HTTP GETs https://gildernew-max.github.io/andale/ plus `/andale/coaches/luna-happy.png` and `/andale/mascot/axolotl.png`, retries ~60s for Pages lag, and fails the workflow on non-200 or Pages 404 HTML.
+- App.jsx / XP / speech / coaches / curriculum untouched. Repo stays public.
+
+**Why**
+- `vite build` + artifact upload never fetched the public URL. A green deploy could still leave the live site as a 404.
+
 ## 2026-08-30 (Camino header axolotl)
 
 **What changed**
