@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (schema slice: CONTENT_VERSION + no white-screen)
+
+**What changed**
+- `CONTENT_VERSION` (2) now governs `andale-v3`: written on every persist. After parse, only a plain object is accepted. Missing `contentVersion` stamps 2 and keeps progress (live users). Present-but-unreadable versions wipe to defaults instead of crashing.
+- LIVE (`andale-v3-live`): require an object; `screen==="lesson"` needs `session.questions` as an array. Fail → ignore live, stay home, `liveReady=true`.
+- Render: `session?.questions?.[qi] ?? null`. Optional ErrorBoundary in `main.jsx` so a throw cannot white-screen.
+- Persist stringify is try/caught. Camino / Nunito / privacy pages / XP / speech / curriculum untouched.
+
+**Why**
+- Parseable-garbage LIVE (`screen: lesson` without `questions`) set the lesson screen and threw on `session.questions[qi]`. Dead const never migrated or rejected saves.
+
 ## 2026-08-30 (favicon + listing meta)
 
 **What changed**

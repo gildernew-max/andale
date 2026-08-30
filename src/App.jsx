@@ -117,6 +117,24 @@ const writeLive = (payload) => {
 
 const CONTENT_VERSION = 2;
 
+const isPlainObject = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+
+// After parse: keep a real progress object. Missing contentVersion is the
+// live-user migrate (stamp 2). Present-but-unreadable versions wipe to defaults.
+const acceptProgress = (parsed) => {
+  if (!isPlainObject(parsed)) return null;
+  if (parsed.contentVersion == null) return { ...parsed, contentVersion: CONTENT_VERSION };
+  if (parsed.contentVersion !== CONTENT_VERSION) return null;
+  return parsed;
+};
+
+// LIVE restore: object required; lesson needs session.questions[].
+const acceptLive = (parsed) => {
+  if (!isPlainObject(parsed)) return null;
+  if (parsed.screen === "lesson" && !Array.isArray(parsed.session?.questions)) return null;
+  return parsed;
+};
+
 /* ---------------- CONTENT (88 exercises + match pairs) ---------------- */
 
 const UNITS = [
@@ -3191,9 +3209,10 @@ export default function App() {
 	  (async () => {
 	    let p = null;
 	    try { const r = await storage.get(STORAGE_KEY); if (r && r.value) p = JSON.parse(r.value); } catch (e) {}
+	    p = acceptProgress(p);
 	    let loaded = null;
 	    setProg((base) => {
-	      let merged = { ...base, ...(p || {}) };
+	      let merged = { ...base, ...(p || {}), contentVersion: CONTENT_VERSION };
 	      if (merged.mistakes?.length && !Object.keys(merged.srs || {}).length) {
 	        const srs = {};
 	        merged.mistakes.forEach((m) => { srs[`${m.u}|${m.i}`] = { ef: 2.5, reps: 0, interval: 0, due: Date.now() }; });
@@ -3269,7 +3288,7 @@ export default function App() {
   const hydrated = useRef(false);
   useEffect(() => {
     if (!hydrated.current) { hydrated.current = true; return; } // skip pre-hydration default state
-    storage.set(STORAGE_KEY, JSON.stringify(prog));
+    try { storage.set(STORAGE_KEY, JSON.stringify({ ...prog, contentVersion: CONTENT_VERSION })); } catch (e) {}
   }, [prog]);
 
   /* ---- Sound design: proper game audio, no more beeps ----
@@ -3948,7 +3967,7 @@ export default function App() {
     setScreen("lesson");
   };
 
-  const q = session ? session.questions[qi] : null;
+  const q = session?.questions?.[qi] ?? null;
 
   /* ---------- grading ---------- */
 
@@ -4487,7 +4506,7 @@ export default function App() {
       if (live?.tab) setTab(live.tab);
       return;
     }
-    if (live.screen === "lesson" && !live.session) return;
+    if (live.screen === "lesson" && !Array.isArray(live.session?.questions)) return;
     if (live.tab) setTab(live.tab);
     if (live.session) {
       setSession(live.session);
@@ -4550,7 +4569,12 @@ export default function App() {
     (async () => {
       try {
         const r = await storage.get(LIVE_KEY);
-        if (!cancelled && r?.value) applyLive(JSON.parse(r.value));
+        if (!cancelled && r?.value) {
+          let live = null;
+          try { live = JSON.parse(r.value); } catch (e) {}
+          live = acceptLive(live);
+          if (live) applyLive(live);
+        }
       } catch (e) {}
       if (!cancelled) liveReady.current = true;
     })();
