@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (favicon + listing meta)
+
+**What changed**
+- `index.html`: locked title/description, theme-color `#58CC02`, og/twitter tags, apple-touch-icon. Icon hrefs use `%BASE_URL%` so Pages at `/andale/` does not 404 `/favicon.ico`.
+- Favicon/ico/svg and `apple-touch-icon.png` derived from `public/mascot/axolotl.png`. App.jsx / coaches / Camino / curriculum untouched.
+
+**Why**
+- Absolute `/favicon.ico` is wrong under Vite `base: '/andale/'`. Tab still showed the generic green mountain SVG.
+
 ## 2026-08-30 (post-deploy live URL smoke)
 
 **What changed**
