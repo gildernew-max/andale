@@ -5685,6 +5685,10 @@ export default function App() {
               </div>
             ))}
           </div>
+          <div style={{ marginTop: 28, display: "flex", gap: 20, justifyContent: "center" }}>
+            <a href={`${import.meta.env.BASE_URL}privacy.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Privacidad</a>
+            <a href={`${import.meta.env.BASE_URL}support.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Soporte</a>
+          </div>
         </div>
       )}
 
