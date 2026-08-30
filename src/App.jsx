@@ -1302,6 +1302,27 @@ const Diego = ({ mood }) => {
 const CoachPortrait = ({ id = "luna", mood = "happy", size = 92, badge }) => {
   const Char = { luna: Luna, rafa: Rafa, valeria: Valeria, diego: Diego }[id] || Luna;
   const c = COACHES[id] || COACHES.luna;
+  const coachId = { luna: "luna", rafa: "rafa", valeria: "valeria", diego: "diego" }[id] || "luna";
+  const usePng = mood !== "sad" && mood !== "party" && mood !== "focused";
+  if (usePng) {
+    return (
+      <span style={{ display: "block", position: "relative", width: size, height: size, overflow: "visible", lineHeight: 0 }}>
+        <img
+          src={`${import.meta.env.BASE_URL}coaches/${coachId}-happy.png`}
+          alt=""
+          width={size}
+          height={size}
+          aria-hidden="true"
+          style={{ display: "block", width: size, height: size, objectFit: "contain" }}
+        />
+        {badge && (
+          <svg width={size} height={size} viewBox="0 0 200 240" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none" }}>
+            <CxBadge accent={c.accent} />
+          </svg>
+        )}
+      </span>
+    );
+  }
   return (
     <svg width={size} height={size} viewBox="0 0 200 240" aria-hidden="true" style={{ display: "block", overflow: "visible" }}>
       <Char mood={mood} />
@@ -1499,17 +1520,14 @@ const FlagMX = ({ size = 22 }) => (
   </svg>
 );
 const LogoMark = ({ size = 30 }) => (
-  <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
-    <ellipse cx="22" cy="48" rx="13" ry="5" fill="#FF6FA5" transform="rotate(-25 22 48)" />
-    <ellipse cx="18" cy="64" rx="13" ry="5" fill="#FF6FA5" />
-    <ellipse cx="98" cy="48" rx="13" ry="5" fill="#FF6FA5" transform="rotate(205 98 48)" />
-    <ellipse cx="102" cy="64" rx="13" ry="5" fill="#FF6FA5" />
-    <ellipse cx="60" cy="62" rx="42" ry="40" fill="#FFAFCC" />
-    <circle cx="46" cy="56" r="6.5" fill="#3C3C3C" /><circle cx="48.5" cy="53.5" r="2.2" fill="#fff" />
-    <circle cx="74" cy="56" r="6.5" fill="#3C3C3C" /><circle cx="76.5" cy="53.5" r="2.2" fill="#fff" />
-    <path d="M47 76 q13 11 26 0" stroke="#3C3C3C" strokeWidth="4.5" fill="none" strokeLinecap="round" />
-    <ellipse cx="34" cy="70" rx="6.5" ry="4.5" fill="#FF8FBA" opacity=".85" /><ellipse cx="86" cy="70" rx="6.5" ry="4.5" fill="#FF8FBA" opacity=".85" />
-  </svg>
+  <img
+    src={`${import.meta.env.BASE_URL}mascot/axolotl.png`}
+    alt=""
+    width={size}
+    height={size}
+    aria-hidden="true"
+    style={{ display: "block", width: size, height: size, objectFit: "contain" }}
+  />
 );
 
 /* ---------------- SKILL GLYPHS (white, one per unit) ---------------- */
