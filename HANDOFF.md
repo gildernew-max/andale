@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (Camino header axolotl)
+
+**What changed**
+- Camino sticky TOP STAT BAR now renders `<LogoMark size={34} />` (`${import.meta.env.BASE_URL}mascot/axolotl.png`) instead of the unused green mountain SVG next to "ándale".
+- CoachPortrait, coach PNGs, XP, speech, path nodes, Thursday play, tap-miss, chips, SALIR, curriculum untouched.
+
+**Why**
+- Hand: header still showed the mountain. LogoMark was defined on main (PR #23) but never mounted.
+
 ## 2026-08-30 (PNG coaches + mascot)
 
 **What changed**
