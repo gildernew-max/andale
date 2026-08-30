@@ -2,6 +2,19 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (XP lock — one item, once)
+
+**Repro** (Hand, live): one Repasar card showed +4 XP, then the same card jumped to +12 with no extra tap. Total 185→197. Gems 25→35. Expected ~9 with the perfect bonus.
+
+**Lock**
+- Each item can add session XP once (`itemAwardKey`). Double check / remount cannot restack the card.
+- Finish commits `sessionXP + 5` once. Perfect is a flat +5, not a second copy of item XP.
+- Review cards are 4 XP (almost 3). Done screen ticks the real total (4+5=9 on a clean one-card).
+- Gems: 1 per hit when the session has ≤2 items. No flat +10 on a 4-point card. Longer reviews/lessons keep 10/15.
+
+**Why**
+- applyResult had no per-item lock; finish always paid review gems=10 and used the lesson 10/12 rate. Path / splash / audio untouched.
+
 ## 2026-08-30 (Paulina named, do not mute)
 
 **What changed**
