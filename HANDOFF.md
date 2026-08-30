@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (review perfect bonus lock)
+
+**Lock**
+- Finish lesson: `perfectBonus` is `wrong === 0 && !session.review`. One-card Repasar stays +4 XP. No extra +5.
+- Path, Thursday play, `speak()`, per-item XP lock, splash, tap-miss, chips, SALIR, listen-type untouched.
+
+**Why**
+- Hand Claude audit: clean review was 4+5=9, zero hearts, farmable. Restore the review gate dropped in the XP lock PR.
+
 ## 2026-08-30 (PROBAR VOZ must speak on tap)
 
 **Repro** (Hand, live, 3:06 ET): Perfil → PROBAR VOZ. Tap did not start `speechSynthesis`. `speaking` stayed false. Box has no Paulina. Fail even with Google Spanish voices.
