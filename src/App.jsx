@@ -725,11 +725,14 @@ function speak(text, rate = 0.92, opts = {}) {
       // Never mute for a missing Paulina / es-MX exact match. Any es-* is fine.
       // Empty voices at tap: still speak with lang es-MX and let the engine pick.
       u.rate = step.rate; u.pitch = 1;
+      u.lang = "es-MX";
       if (voice) {
-        u.voice = voice;
-        u.lang = isPaulinaVoice(voice) || isMexicanVoice(voice) ? "es-MX" : (voice.lang || "es-MX");
-      } else {
-        u.lang = "es-MX";
+        try {
+          u.voice = voice;
+          u.lang = isPaulinaVoice(voice) || isMexicanVoice(voice) ? "es-MX" : (voice.lang || "es-MX");
+        } catch (e) {
+          u.lang = voice.lang || "es-MX";
+        }
       }
       __utterAlive.push(u); // GC guard
       let advanced = false;
