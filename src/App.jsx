@@ -4077,8 +4077,9 @@ export default function App() {
     beep("win");
     const t = todayStr();
     const xpNow = sessionXPRef.current;
-    // Perfect is a flat +5 once — never a second copy of item XP.
-    const perfectBonus = lessonStats.wrong === 0 ? 5 : 0;
+    // Perfect is a flat +5 once on a real lesson — never on Repasar.
+    // Review spends no hearts, so a clean one-card must stay +4, not 4+5.
+    const perfectBonus = lessonStats.wrong === 0 && !session.review ? 5 : 0;
     const earned = xpNow + perfectBonus;
 
     // ---- El Reto de Diego: resolve the duel (your hits vs Diego's, ties to the champ) ----
