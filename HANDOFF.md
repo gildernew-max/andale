@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (privacy + support pages)
+
+**What changed**
+- Host George’s `public/privacy.html` and `public/support.html` as-is (August 30, 2026; no inbox).
+- Perfil: Privacidad → `${import.meta.env.BASE_URL}privacy.html`, Soporte → `${import.meta.env.BASE_URL}support.html`. No mailto. No `/privacy.html` root href.
+- XP / speech / coaches / Camino / schema / Nunito / favicon / smoke untouched.
+
+**Why**
+- Need live Pages URLs for wrap. Copy is George’s. No inbox yet.
+
 ## 2026-08-30 (schema slice: CONTENT_VERSION + no white-screen)
 
 **What changed**
