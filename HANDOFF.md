@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (Paulina named, do not mute)
+
+**What changed**
+- Speak no longer returns silent when the pick is not an exact es-MX match. Paulina if present; else prefer es-MX; else any Spanish; else still request `es-MX`.
+- Picker and Perfil name **Paulina** when the device has her (including Apple’s “Spanish (Mexico)” listing). Empty-voice copy waits until voices have loaded.
+- Voice list polls + `onvoiceschanged`. No recording. Splash and path untouched.
+
+**Why**
+- Live: silent audio, Perfil “No se encontraron voces en español”, picker was Google TTS, Paulina never named. Brand lock: do not mute if she exists.
+
 ## 2026-08-30 (ET, after PR 13)
 
 **Hand** (https://gildernew-max.github.io/andale/)
