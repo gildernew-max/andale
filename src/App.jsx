@@ -579,14 +579,27 @@ const splitSentences = (text) => text
   .map((s) => s.trim())
   .filter(Boolean);
 
-/* Brand lock (No face): Paulina is the default reading voice. If any Paulina
-   system voice exists — especially es-MX Paulina — use her. Never mute as a
-   fallback when she is on the device. No recording, no mascot voice. Without
-   Paulina, use any es-MX voice; without that, stay quiet (no es-ES default). */
+/* Brand lock (No face): Paulina is the default Mexican reading voice.
+   Prefer es-MX Paulina system TTS when the device has her. Never mute when
+   she exists. If Spanish voices appear, prefer es-MX. No recording. */
 const DEFAULT_VOICE_NAME = "Paulina";
 const voiceLang = (v) => (v.lang || "").toLowerCase().replace("_", "-");
-const isPaulinaVoice = (v) => /paulina/i.test(v.name || "");
 const isMexicanVoice = (v) => voiceLang(v) === "es-mx";
+const isNamedPaulina = (v) => /paulina/i.test(v.name || "");
+/* Apple often lists the Mexican system voice as the language, not "Paulina". */
+const isAppleMexicanDefault = (v) => {
+  if (!isMexicanVoice(v)) return false;
+  const name = (v.name || "").toLowerCase();
+  if (/google|microsoft|sabina|raul|jorge|juan|pablo|mónica|monica|rocko|reed/.test(name)) return false;
+  return /spanish \(mexico\)|español \(méxico\)|español \(mexico\)|español de méxico|spanish mexico/.test(name);
+};
+const isPaulinaVoice = (v) => isNamedPaulina(v) || isAppleMexicanDefault(v);
+const isSpanishVoice = (v) => {
+  const lang = voiceLang(v);
+  if (lang.startsWith("es") || lang.startsWith("spa")) return true;
+  const name = (v.name || "").toLowerCase();
+  return /paulina|español|espanol|\bspanish\b/.test(name);
+};
 
 const voiceScore = (v, preferredName) => {
   const name = (v.name || "").toLowerCase();
@@ -594,9 +607,11 @@ const voiceScore = (v, preferredName) => {
   const pref = (preferredName || DEFAULT_VOICE_NAME).toLowerCase();
   let score = 0;
   if (pref && (v.name === preferredName || name.includes(pref))) score += 100;
-  if (isPaulinaVoice(v)) score += isMexicanVoice(v) ? 40 : 20;
+  if (isPaulinaVoice(v)) score += isMexicanVoice(v) ? 80 : 40;
+  if (v.localService) score += 12;
   if (lang === "es-mx") score += 50;
   else if (lang.startsWith("es")) score += 25;
+  if (/google/i.test(v.name || "")) score -= 8;
   if (/flo|shelley|sandy|grandma|eddy/.test(name)) score += 10;
   if (/rocko|reed|grandpa/.test(name)) score += 4;
   if (/mónica|monica/.test(name)) score += 3;
@@ -605,27 +620,49 @@ const voiceScore = (v, preferredName) => {
 
 const listSpanishVoices = () =>
   ((typeof window !== "undefined" && window.speechSynthesis?.getVoices?.()) || [])
-    .filter((v) => voiceLang(v).startsWith("es"));
+    .filter(isSpanishVoice);
 
 const pickPaulina = (voices) => {
-  const found = voices.filter(isPaulinaVoice);
+  const found = (voices || []).filter(isPaulinaVoice);
   if (!found.length) return null;
   return [...found].sort((a, b) => {
+    const named = (isNamedPaulina(b) ? 1 : 0) - (isNamedPaulina(a) ? 1 : 0);
+    if (named) return named;
     const mx = (isMexicanVoice(b) ? 1 : 0) - (isMexicanVoice(a) ? 1 : 0);
     if (mx) return mx;
     return voiceScore(b, DEFAULT_VOICE_NAME) - voiceScore(a, DEFAULT_VOICE_NAME);
   })[0];
 };
 
+const voicePickerLabel = (v) => {
+  if (!v) return "";
+  if (isPaulinaVoice(v)) return `Paulina · ${v.lang || "es-MX"}`;
+  return `${v.name} · ${v.lang}`;
+};
+
+const voicesForPicker = (voices) => {
+  const list = voices || [];
+  const paulina = pickPaulina(list);
+  const rest = list.filter((v) => v !== paulina);
+  return paulina ? [paulina, ...rest].slice(0, 12) : rest.slice(0, 10);
+};
+
 const bestSpanishVoice = (preferredName) => {
   const voices = listSpanishVoices();
   if (!voices.length) return null;
-  // Paulina always wins when she exists — do not mute or substitute another TTS.
   const paulina = pickPaulina(voices);
+  // Paulina is the brand default whenever she is installed.
+  if (paulina && (!preferredName || isPaulinaVoice({ name: preferredName, lang: "es-MX" }) || preferredName === DEFAULT_VOICE_NAME)) {
+    return paulina;
+  }
+  if (preferredName) {
+    const explicit = voices.find((v) => v.name === preferredName);
+    if (explicit) return explicit;
+  }
   if (paulina) return paulina;
-  const explicit = preferredName && voices.find((v) => v.name === preferredName);
-  if (explicit && isMexicanVoice(explicit)) return explicit;
-  return voices.find(isMexicanVoice) || null;
+  const mx = voices.filter(isMexicanVoice);
+  const pool = mx.length ? mx : voices;
+  return [...pool].sort((a, b) => voiceScore(b, DEFAULT_VOICE_NAME) - voiceScore(a, DEFAULT_VOICE_NAME))[0];
 };
 
 const whenVoicesReady = (ss, then) => {
@@ -636,9 +673,11 @@ const whenVoicesReady = (ss, then) => {
     if (settled) return;
     settled = true;
     try { ss.removeEventListener("voiceschanged", done); } catch (e) {}
+    try { if (ss.onvoiceschanged === done) ss.onvoiceschanged = null; } catch (e) {}
     then();
   };
-  try { ss.addEventListener("voiceschanged", done); } catch (e) { then(); return; }
+  try { ss.addEventListener("voiceschanged", done); } catch (e) {}
+  try { ss.onvoiceschanged = done; } catch (e) {}
   setTimeout(done, 1600);
 };
 
@@ -690,9 +729,14 @@ function speak(text, rate = 0.92, opts = {}) {
       const step = steps[i++];
       const u = new SpeechSynthesisUtterance(step.text.replace(/_+/g, "..."));
       const voice = bestSpanishVoice(window.__andaleVoiceName); // re-resolve: voices can load late
-      if (!voice) return; // auto default: no Paulina / es-MX — do not play es-ES
-      u.lang = "es-MX"; u.rate = step.rate; u.pitch = 1;
-      u.voice = voice;
+      // Never mute when Paulina exists. If no voice object yet, still speak es-MX.
+      u.rate = step.rate; u.pitch = 1;
+      if (voice) {
+        u.voice = voice;
+        u.lang = isPaulinaVoice(voice) || isMexicanVoice(voice) ? "es-MX" : (voice.lang || "es-MX");
+      } else {
+        u.lang = "es-MX";
+      }
       __utterAlive.push(u); // GC guard
       let advanced = false;
       const advance = () => {
@@ -716,15 +760,18 @@ function speak(text, rate = 0.92, opts = {}) {
             window.__andaleRetried = true;
             try {
               const bare = new SpeechSynthesisUtterance(step.text);
+              const retryVoice = voice || bestSpanishVoice(window.__andaleVoiceName);
               bare.lang = "es-MX";
-              bare.voice = voice; // same Paulina / es-MX pick — never a Spain default
+              if (retryVoice) bare.voice = retryVoice;
               bare.onstart = () => { window.__andaleSpoke = true; };
               ss.speak(bare);
             } catch (e) {}
             setTimeout(() => {
-              if (!window.__andaleSpoke) { window.__andaleVoiceDead = true; try { window.dispatchEvent(new Event("andale-voice-dead")); } catch (e) {} }
+              if (!window.__andaleSpoke && !pickPaulina(listSpanishVoices())) {
+                window.__andaleVoiceDead = true; try { window.dispatchEvent(new Event("andale-voice-dead")); } catch (e) {}
+              }
             }, 2600);
-          } else if (!window.__andaleSpoke) {
+          } else if (!window.__andaleSpoke && !pickPaulina(listSpanishVoices())) {
             window.__andaleVoiceDead = true; try { window.dispatchEvent(new Event("andale-voice-dead")); } catch (e) {}
           }
         }, 2200);
@@ -3062,6 +3109,7 @@ export default function App() {
   const [storyMode, setStoryMode] = useState("story"); // story | bilingual | challenge
   const [audioMode, setAudioMode] = useState("normal"); // normal | slow | shadow
   const [voices, setVoices] = useState([]);
+  const [voicesReady, setVoicesReady] = useState(false);
   const [streakRepair, setStreakRepair] = useState(null); // null | "freeze" | "repair"
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const iv = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(iv); }, []);
@@ -3144,13 +3192,24 @@ export default function App() {
 	  })();
     const loadVoices = () => {
       try {
+        const all = window.speechSynthesis.getVoices() || [];
+        if (all.length) setVoicesReady(true);
         const es = listSpanishVoices()
           .sort((a, b) => voiceScore(b, window.__andaleVoiceName || DEFAULT_VOICE_NAME) - voiceScore(a, window.__andaleVoiceName || DEFAULT_VOICE_NAME));
         setVoices(es);
+        const paulina = pickPaulina(es);
+        if (paulina) {
+          if (!window.__andaleVoiceName) window.__andaleVoiceName = paulina.name;
+          window.__andaleVoiceDead = false;
+          setVoiceDead(false);
+        }
       } catch (e) {}
     };
     loadVoices();
     try { window.speechSynthesis.addEventListener("voiceschanged", loadVoices); } catch (e) {}
+    try { window.speechSynthesis.onvoiceschanged = loadVoices; } catch (e) {}
+    const polls = [200, 500, 1000, 2000, 3500].map((ms) => setTimeout(loadVoices, ms));
+    const readyTimer = setTimeout(() => setVoicesReady(true), 3600);
     const iv = setInterval(() => setProg((p) => {
       const next = regen(p);
       // Return the same ref when unchanged so React bails out — no re-render,
@@ -3159,7 +3218,10 @@ export default function App() {
     }), 60000);
     return () => {
       clearInterval(iv);
+      polls.forEach(clearTimeout);
+      clearTimeout(readyTimer);
       try { window.speechSynthesis.removeEventListener("voiceschanged", loadVoices); } catch (e) {}
+      try { if (window.speechSynthesis.onvoiceschanged === loadVoices) window.speechSynthesis.onvoiceschanged = null; } catch (e) {}
     };
   }, []);
 
@@ -4537,6 +4599,17 @@ export default function App() {
   const activeCard = practiceCards.length ? practiceCards[flashIdx % practiceCards.length] : null;
   const uiLang = prog.uiLang === "en" ? "en" : "es";
   const L = UI[uiLang];
+  const paulinaVoice = pickPaulina(voices);
+  const renderVoiceSelect = () => voices.length > 0 && (
+    <select value={prog.voiceName || ""} onChange={(e) => chooseVoice(e.target.value)}
+      aria-label={uiLang === "en" ? "Reading voice" : "Voz de lectura"}
+      style={{ minWidth: 150, flex: "1 1 150px", border: `2px solid ${D.line}`, borderRadius: 10, padding: "6px 8px", fontFamily: "inherit", fontWeight: 800, fontSize: 12, color: D.ink, background: D.card }}>
+      <option value="">{paulinaVoice
+        ? (uiLang === "en" ? "Paulina (default · Mexico)" : "Paulina (predeterminada · México)")
+        : (uiLang === "en" ? "Best Mexican voice (es-MX)" : "Mejor voz mexicana (es-MX)")}</option>
+      {voicesForPicker(voices).map((v) => <option key={`${v.name}-${v.lang}`} value={v.name}>{voicePickerLabel(v)}</option>)}
+    </select>
+  );
   const coachUnlocks = [
     {
       id: "luna-patterns",
@@ -4642,12 +4715,12 @@ export default function App() {
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
               <span style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>
               <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>
-              {(voiceDead || !voices.length || !prog.sound) && (
-                <button onClick={() => { if (voiceDead || !voices.length) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label="Sound"
-                  title={!voices.length ? (uiLang === "en" ? "No Spanish voices — tap to fix" : "Sin voces en español — toca para arreglar") : (uiLang === "en" ? "Sound off" : "Sonido apagado")}
+              {(voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
+                <button onClick={() => { if (voiceDead || (voicesReady && !voices.length)) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label="Sound"
+                  title={(voicesReady && !voices.length) ? (uiLang === "en" ? "No Spanish voices — tap to fix" : "Sin voces en español — toca para arreglar") : (uiLang === "en" ? "Sound off" : "Sonido apagado")}
                   style={{ background: "none", border: "none", cursor: "pointer", padding: "12px 10px", margin: "-12px -10px", lineHeight: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minWidth: 44, minHeight: 44 }}>
                   <IcBell size={19} off={!prog.sound} />
-                  <span style={{ position: "absolute", top: -2, right: -3, width: 8, height: 8, borderRadius: 99, border: `1.5px solid ${D.card}`, background: voiceDead || !voices.length ? D.red : "#BBB" }} />
+                  <span style={{ position: "absolute", top: -2, right: -3, width: 8, height: 8, borderRadius: 99, border: `1.5px solid ${D.card}`, background: voiceDead || (voicesReady && !voices.length) ? D.red : "#BBB" }} />
                 </button>
               )}
             </div>
@@ -5461,26 +5534,30 @@ export default function App() {
 
           {/* ---------- audio diagnostic ---------- */}
           <h3 style={{ fontWeight: 900, fontSize: 16, margin: "24px 0 10px" }}>{uiLang === "en" ? "Audio check" : "Diagnóstico de audio"}</h3>
-          <div style={{ border: `2px solid ${voices.length ? D.line : D.red}`, borderBottom: `4px solid ${voices.length ? D.line : D.redDark}`, borderRadius: 16, padding: "13px 16px", marginBottom: 14, background: voices.length ? "#fff" : "#FFF1F1" }}>
+          <div style={{ border: `2px solid ${!voicesReady || voices.length ? D.line : D.red}`, borderBottom: `4px solid ${!voicesReady || voices.length ? D.line : D.redDark}`, borderRadius: 16, padding: "13px 16px", marginBottom: 14, background: !voicesReady || voices.length ? D.card : "#FFF1F1" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 900, fontSize: 14 }}>
-              <span style={{ width: 10, height: 10, borderRadius: 99, background: !prog.sound ? "#BBB" : voices.length ? D.green : D.red, flexShrink: 0 }} />
-              {voices.length
-                ? (uiLang === "en" ? `${voices.length} Spanish ${voices.length === 1 ? "voice" : "voices"} available` : `${voices.length} ${voices.length === 1 ? "voz" : "voces"} en español`)
-                : (uiLang === "en" ? "No Spanish voices found" : "No se encontraron voces en español")}
+              <span style={{ width: 10, height: 10, borderRadius: 99, background: !prog.sound ? "#BBB" : !voicesReady ? D.gold : voices.length ? D.green : D.red, flexShrink: 0 }} />
+              {!voicesReady
+                ? (uiLang === "en" ? "Looking for Spanish voices…" : "Buscando voces en español…")
+                : voices.length
+                  ? (paulinaVoice
+                    ? (uiLang === "en" ? "Paulina · Mexican Spanish (es-MX)" : "Paulina · español mexicano (es-MX)")
+                    : (uiLang === "en" ? `${voices.length} Spanish ${voices.length === 1 ? "voice" : "voices"} available` : `${voices.length} ${voices.length === 1 ? "voz" : "voces"} en español`))
+                  : (uiLang === "en" ? "No Spanish voices found" : "No se encontraron voces en español")}
             </div>
             {voices.length > 0 && (
               <div style={{ fontSize: 12, fontWeight: 800, color: D.sub, margin: "5px 0 9px" }}>
-                {voices.slice(0, 3).map((v) => v.name).join(" · ")}{voices.length > 3 ? ` · +${voices.length - 3}` : ""}
+                {voicesForPicker(voices).slice(0, 3).map((v) => voicePickerLabel(v).replace(/ · .+$/, "")).join(" · ")}{voices.length > 3 ? ` · +${voices.length - 3}` : ""}
               </div>
             )}
-            {voiceDead && (
+            {voiceDead && !paulinaVoice && (
               <div style={{ fontSize: 12.5, fontWeight: 800, color: D.badText, margin: "6px 0 9px", lineHeight: 1.45, background: D.redBg, border: `1.5px solid ${D.red}`, borderRadius: 10, padding: "8px 10px" }}>
                 {uiLang === "en"
                   ? "Audio isn't playing on this device. Try a different browser (Chrome, Edge, or Safari work best), or check that your system has a Spanish voice installed."
                   : "El audio no se está reproduciendo en este dispositivo. Intenta otro navegador (Chrome, Edge o Safari) o verifica que tu sistema tenga una voz en español instalada."}
               </div>
             )}
-            {!voices.length && (
+            {voicesReady && !voices.length && (
               <div style={{ fontSize: 12.5, fontWeight: 700, color: D.ink, margin: "6px 0 9px", lineHeight: 1.4 }}>
                 {uiLang === "en"
                   ? "Your browser/OS has no Spanish voice installed. Windows: Settings → Time & Language → Speech → Add voices (Spanish-Mexico). Mac: System Settings → Accessibility → Spoken Content → System Voice → Manage. Chrome adds Google voices automatically when online."
@@ -5490,6 +5567,7 @@ export default function App() {
             {!prog.sound && (
               <div style={{ fontSize: 12, fontWeight: 800, color: D.sub, marginBottom: 8 }}>{uiLang === "en" ? "Effect sounds are muted (bell icon) — voices still play." : "Los efectos están silenciados (campana) — las voces sí suenan."}</div>
             )}
+            {voices.length > 0 && <div style={{ marginBottom: 10 }}>{renderVoiceSelect()}</div>}
             <Btn color={D.blue} dark={D.blueDark} onClick={() => speak(uiLang === "en" ? "¿Me escuchas bien? ¡Qué padre!" : "¿Me escuchas bien? ¡Qué padre!", 0.9)} style={{ padding: "9px 14px", fontSize: 13 }}>
               {uiLang === "en" ? "Test voice" : "Probar voz"} 🔊
             </Btn>
@@ -6620,13 +6698,7 @@ export default function App() {
                     {m.l}
                   </button>
                 ))}
-                {voices.length > 0 && (
-                  <select value={prog.voiceName || ""} onChange={(e) => chooseVoice(e.target.value)}
-                    style={{ minWidth: 150, flex: "1 1 150px", border: `2px solid ${D.line}`, borderRadius: 10, padding: "6px 8px", fontFamily: "inherit", fontWeight: 800, fontSize: 12, color: D.ink, background: D.card }}>
-                    <option value="">{uiLang === "en" ? "Best Spanish voice" : "Mejor voz española"}</option>
-                    {voices.slice(0, 10).map((v) => <option key={`${v.name}-${v.lang}`} value={v.name}>{v.name} · {v.lang}</option>)}
-                  </select>
-                )}
+                {renderVoiceSelect()}
               </div>
             </div>
             <div className="pop" style={{ border: `2px solid ${sec.color}`, borderBottom: `5px solid ${sec.dark}`, borderRadius: 16, padding: 13, background: D.card, marginBottom: 18 }}>
