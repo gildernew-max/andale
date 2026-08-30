@@ -38,3 +38,92 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Artifact upload is not enough: Pages can lag, and a 404 HTML can still be 200.
+  # GET the public URL after deploy and fail if the live site is down or a Pages 404.
+  smoke:
+    name: Smoke live Pages URL
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: HTTP GET live site after deploy
+        env:
+          LIVE_HOME: https://gildernew-max.github.io/andale/
+          LIVE_LUNA: https://gildernew-max.github.io/andale/coaches/luna-happy.png
+          LIVE_MASCOT: https://gildernew-max.github.io/andale/mascot/axolotl.png
+        run: |
+          set -euo pipefail
+
+          is_pages_404_html() {
+            grep -qiE \
+              'There isn.t a GitHub Pages site here|Page not found|Site not found|<title>404</title>' \
+              "$1"
+          }
+
+          check_url() {
+            local url="$1"
+            local expect="$2"
+            local body meta code ctype
+            body="$(mktemp)"
+            echo "GET $url"
+            meta="$(curl -sS -L --max-time 20 -o "$body" \
+              -w '%{http_code} %{url_effective} %{content_type}' \
+              "$url")" || {
+              echo "FAIL: curl could not fetch $url" >&2
+              rm -f "$body"
+              return 1
+            }
+            code="${meta%% *}"
+            echo "  -> $meta"
+            if [ "$code" != "200" ]; then
+              echo "FAIL: expected HTTP 200, got $code for $url" >&2
+              rm -f "$body"
+              return 1
+            fi
+            if [ "$expect" = "html" ]; then
+              if is_pages_404_html "$body"; then
+                echo "FAIL: body is a GitHub Pages 404 for $url" >&2
+                rm -f "$body"
+                return 1
+              fi
+              if ! grep -qi '<html' "$body"; then
+                echo "FAIL: expected HTML document at $url" >&2
+                rm -f "$body"
+                return 1
+              fi
+            else
+              ctype="$(file -b --mime-type "$body")"
+              if [ "$ctype" != "image/png" ]; then
+                echo "FAIL: expected image/png at $url, got $ctype" >&2
+                if is_pages_404_html "$body"; then
+                  echo "FAIL: PNG URL returned Pages 404 HTML" >&2
+                fi
+                rm -f "$body"
+                return 1
+              fi
+            fi
+            rm -f "$body"
+            return 0
+          }
+
+          # Pages can take a few seconds after deploy-pages to serve the new site.
+          attempts=12
+          sleep_s=5
+          for i in $(seq 1 "$attempts"); do
+            echo "Live smoke attempt $i/$attempts"
+            if check_url "$LIVE_HOME" html \
+              && check_url "$LIVE_LUNA" png \
+              && check_url "$LIVE_MASCOT" png; then
+              echo "Live URL smoke passed: $LIVE_HOME plus coach + mascot PNGs"
+              exit 0
+            fi
+            if [ "$i" -lt "$attempts" ]; then
+              echo "Pages not ready yet; waiting ${sleep_s}s"
+              sleep "$sleep_s"
+            fi
+          done
+          echo "FAIL: live URL smoke did not pass after $attempts attempts" >&2
+          exit 1
