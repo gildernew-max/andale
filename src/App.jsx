@@ -2807,7 +2807,7 @@ const UI = {
     focus: "Foco", time: "¡Tiempo!", spelling: "Ojo con la ortografía", matchInstruction: "Toca una pareja en cada columna.", enterCheck: "Enter para comprobar.",
     selfGrade: "¿QUÉ TAN BIEN LO SABÍAS?", storyTip: "Toca cualquier palabra para ver su significado. El audio lee cada párrafo.",
     comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", claim: "Reclamar", saveCard: "Guardar flashcard", inDeck: "En tu deck",
-    noCard: "definición pendiente", completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel! Ahora eres",
+    completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel! Ahora eres",
     hits: "aciertos", misses: "fallos", impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
     testFailed: "Examen no superado", testFailedDesc: "Tres errores — el límite era dos. Tus fallos ya están en Práctica; repásalos y vuelve a intentarlo.",
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
@@ -2840,7 +2840,7 @@ const UI = {
     focus: "Focus", time: "Time!", spelling: "Watch the spelling", matchInstruction: "Tap one pair from each column.", enterCheck: "Enter to check.",
     selfGrade: "HOW WELL DID YOU KNOW IT?", storyTip: "Tap any word to see its meaning. Audio reads each paragraph.",
     comprehension: "Comprehension", easyQuestions: "Three easy questions · up to", xpClaimed: "XP already claimed", claim: "Claim", saveCard: "Save flashcard", inDeck: "In your deck",
-    noCard: "definition coming soon", completed: "Lesson complete!", sectionPassed: "Section passed!", levelUp: "Level up! You are now",
+    completed: "Lesson complete!", sectionPassed: "Section passed!", levelUp: "Level up! You are now",
     hits: "correct", misses: "misses", impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
     testFailed: "Test not passed", testFailedDesc: "Three mistakes — the limit was two. Your misses are in Review; revisit them and try again.",
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
@@ -3051,6 +3051,13 @@ export default function App() {
   const narrationRef = useRef(null);
   const liveReady = useRef(false);
   const liveRef = useRef(null);
+  const awardLockRef = useRef(new Set());
+
+  const lockAward = (key) => {
+    if (awardLockRef.current.has(key)) return false;
+    awardLockRef.current.add(key);
+    return true;
+  };
 
 	/* load + heart regen */
 	useEffect(() => {
@@ -3497,6 +3504,7 @@ export default function App() {
   };
 
   const startDialogue = (duel = DUELS[0]) => {
+    awardLockRef.current.delete("dialogue");
     setActiveDuel(duel);
     setDialogue({ idx: 0, score: 0, done: false, log: [] });
     setScreen("dialogue");
@@ -3533,7 +3541,8 @@ export default function App() {
   };
 
   const startSafeRisky = () => {
-    setSafeGame({ items: shuffle(SAFE_RISKY_ITEMS).slice(0, 5), idx: 0, score: 0, streak: 0, bestStreak: 0, selected: null, done: false });
+    awardLockRef.current.delete("safe");
+    setSafeGame({ items: shuffle(SAFE_RISKY_ITEMS).slice(0, 5), idx: 0, score: 0, streak: 0, bestStreak: 0, selected: null, done: false, awarded: false });
     setScreen("safeRisky");
   };
 
@@ -3547,26 +3556,28 @@ export default function App() {
   };
 
   const nextSafeRisky = () => {
-    if (!safeGame) return;
+    if (!safeGame || safeGame.done || safeGame.awarded) return;
     if (safeGame.idx + 1 >= safeGame.items.length) {
+      if (!lockAward("safe")) return;
       const perfectBonus = safeGame.score === safeGame.items.length ? 6 : 0;
       const streakBonus = Math.max(0, (safeGame.bestStreak || 0) - 2);
       const gems = 4 + safeGame.score + perfectBonus;
       const xp = 8 + safeGame.score * 3 + streakBonus * 2 + perfectBonus;
-      save({
-        xp: (prog.xp || 0) + xp,
-        gems: (prog.gems || 0) + gems,
+      save((prev) => ({
+        ...prev,
+        xp: (prev.xp || 0) + xp,
+        gems: (prev.gems || 0) + gems,
         missions: {
-          ...(prog.missions || {}),
-          safeRiskyBest: Math.max(prog.missions?.safeRiskyBest || 0, safeGame.score),
-          safeRiskyStreak: Math.max(prog.missions?.safeRiskyStreak || 0, safeGame.bestStreak || 0),
+          ...(prev.missions || {}),
+          safeRiskyBest: Math.max(prev.missions?.safeRiskyBest || 0, safeGame.score),
+          safeRiskyStreak: Math.max(prev.missions?.safeRiskyStreak || 0, safeGame.bestStreak || 0),
           gameTrophies: {
-            ...(prog.missions?.gameTrophies || {}),
+            ...(prev.missions?.gameTrophies || {}),
             ...(safeGame.score === safeGame.items.length ? { safePerfect: true } : {}),
           },
         },
-      });
-      setSafeGame({ ...safeGame, done: true, gems, xp });
+      }));
+      setSafeGame({ ...safeGame, done: true, awarded: true, gems, xp });
       setBurst(Date.now());
       beep("win");
       return;
@@ -3596,6 +3607,7 @@ export default function App() {
   };
 
   const startSnakes = () => {
+    awardLockRef.current.delete("snake");
     const focus = smartPracticeFocus();
     const questions = smartPracticeItems(focus, 12).filter((qq) => {
       const answer = qq.type === "mc" ? qq.answer : qq.answers?.[0];
@@ -3647,27 +3659,36 @@ export default function App() {
   };
 
   const nextSnake = () => {
-    if (!snakeGame || snakeGame.status === "idle") return;
+    if (!snakeGame || snakeGame.status === "idle" || snakeGame.done || snakeGame.awarded) return;
     const done = snakeGame.finalTile >= 24;
     if (done) {
+      if (!lockAward("snake")) return;
       const perfect = snakeGame.wrong === 0;
       const xp = 18 + (snakeGame.correct || 0) * 4 + (snakeGame.ladders || 0) * 3 + (perfect ? 10 : 0);
       const gems = 8 + (snakeGame.correct || 0) + (perfect ? 8 : 0);
+      save((prev) => {
+        const trophies = {
+          ...(prev.missions?.gameTrophies || {}),
+          snakeFirstWin: true,
+          ...(perfect ? { snakePerfect: true } : {}),
+        };
+        return {
+          ...prev,
+          xp: (prev.xp || 0) + xp,
+          gems: (prev.gems || 0) + gems,
+          missions: {
+            ...(prev.missions || {}),
+            snakeBest: Math.max(prev.missions?.snakeBest || 0, snakeGame.correct || 0),
+            gameTrophies: trophies,
+          },
+        };
+      });
       const trophies = {
         ...(prog.missions?.gameTrophies || {}),
         snakeFirstWin: true,
         ...(perfect ? { snakePerfect: true } : {}),
       };
-      save({
-        xp: (prog.xp || 0) + xp,
-        gems: (prog.gems || 0) + gems,
-        missions: {
-          ...(prog.missions || {}),
-          snakeBest: Math.max(prog.missions?.snakeBest || 0, snakeGame.correct || 0),
-          gameTrophies: trophies,
-        },
-      });
-      setSnakeGame({ ...snakeGame, tile: 24, done: true, xp, gems, trophies, status: "done" });
+      setSnakeGame({ ...snakeGame, tile: 24, done: true, awarded: true, xp, gems, trophies, status: "done" });
       setBurst(Date.now());
       beep("win");
       return;
@@ -3719,6 +3740,7 @@ export default function App() {
   };
 
   const startJeopardy = () => {
+    awardLockRef.current.delete("jeopardy");
     const doubleCat = jeopardyCategories[(new Date().getDate() + (prog.xp || 0)) % jeopardyCategories.length];
     const doubleValue = jeopardyValues[((prog.streak || 0) + new Date().getDay()) % jeopardyValues.length];
     setJeopardy({ score: 0, correct: 0, wrong: 0, used: {}, active: null, selected: null, status: "idle", complete: false, awarded: false, doubleKey: `${doubleCat.id}-${doubleValue}` });
@@ -3754,18 +3776,19 @@ export default function App() {
     if (!jeopardy) return;
     const complete = Object.keys(jeopardy.used || {}).length >= jeopardyCategories.length * jeopardyValues.length;
     let next = { ...jeopardy, active: null, selected: null, status: "idle", complete };
-    if (complete && !jeopardy.awarded) {
+    if (complete && !jeopardy.awarded && lockAward("jeopardy")) {
       const gems = Math.max(8, Math.round(Math.max(0, jeopardy.score) / 150) + (jeopardy.wrong === 0 ? 10 : 0));
       const xp = Math.max(15, Math.round(Math.max(0, jeopardy.score) / 40) + (jeopardy.correct || 0) * 2);
-      save({
-        xp: (prog.xp || 0) + xp,
-        gems: (prog.gems || 0) + gems,
+      save((prev) => ({
+        ...prev,
+        xp: (prev.xp || 0) + xp,
+        gems: (prev.gems || 0) + gems,
         missions: {
-          ...(prog.missions || {}),
-          jeopardyBest: Math.max(prog.missions?.jeopardyBest || 0, jeopardy.score),
-          gameTrophies: { ...(prog.missions?.gameTrophies || {}), jeopardyClear: true },
+          ...(prev.missions || {}),
+          jeopardyBest: Math.max(prev.missions?.jeopardyBest || 0, jeopardy.score),
+          gameTrophies: { ...(prev.missions?.gameTrophies || {}), jeopardyClear: true },
         },
-      });
+      }));
       next = { ...next, awarded: true, gems, xp };
       beep("win");
       setBurst(Date.now());
@@ -3774,6 +3797,7 @@ export default function App() {
   };
 
   const beginSession = (s) => {
+    awardLockRef.current.delete("lesson");
     setSession(s); setQi(0); setStatus("idle"); setSelected(null); setTyped(""); setTypedTileIds([]); setPlaced([]);
     setMatchSel(null); setMatched([]); setMatchWrong(null);
     setSessionXP(0); setCombo(0); setLessonStats({ right: 0, wrong: 0 });
@@ -3916,41 +3940,15 @@ export default function App() {
   };
 
   const finishLesson = () => {
+    if (session?.awarded || !lockAward("lesson")) return;
+    setSession((s) => (s ? { ...s, awarded: true } : s));
     beep("win");
     const t = todayStr();
-    let streak = prog.streak || 0;
-    let xpToday = prog.lastDay === t ? prog.xpToday || 0 : 0;
-    let earnedFreeze = 0;
-    if (prog.lastDay !== t) { const y = yesterdayStr(); streak = prog.lastDay === y ? streak + 1 : 1; if (streak > 0 && streak % 7 === 0) earnedFreeze = 1; }
-    const freezes = Math.min(2, (prog.freezes || 0) + earnedFreeze);
     const perfectBonus = lessonStats.wrong === 0 && !session.review ? 5 : 0;
-    xpToday += sessionXP + perfectBonus;
-    const done = { ...prog.done };
-    let testOutSrs = null;
-    if (session.testOut != null) {
-      /* Test-out previously only set the unit done-flag — but the SRS system
-         (srs[unitId|questionIndex] with ef/interval/due) was never seeded, so
-         tested-out users had an EMPTY review queue. Fix: when a section is
-         tested out cleanly, schedule every question in those units to be due
-         in 3 days at default SM-2 params. The user enters the review system
-         organically instead of hitting a content dead end. */
-      if (lessonStats.wrong <= 2) {
-        const srs = { ...(prog.srs || {}) };
-        const seedDue = Date.now() + 3 * 864e5;
-        SECTIONS[session.testOut].unitIds.forEach((id) => {
-          done[id] = Math.max(2, done[id] || 0); // 2 = mastered via test-out
-          const u = UNITS.find((x) => x.id === id);
-          if (u) u.questions.forEach((_, qi) => {
-            const key = `${id}|${qi}`;
-            if (!srs[key]) srs[key] = { ef: 2.5, interval: 3, reps: 1, due: seedDue };
-          });
-        });
-        testOutSrs = srs; // carry into the save patch below (no snapshot mutation)
-      }
-    } else if (!session.review && !session.rival && !session.missionId && !session.daily) done[session.unitId] = (done[session.unitId] || 0) + 1;
+    const earned = sessionXP + perfectBonus;
 
     // ---- El Reto de Diego: resolve the duel (your hits vs Diego's, ties to the champ) ----
-    let rivalPatch = null, rivalOut = null;
+    let rivalOut = null;
     if (session.rival) {
       const youHits = lessonStats.right;
       const diegoHits = (session.diego || []).filter(Boolean).length;
@@ -3959,42 +3957,86 @@ export default function App() {
       const newRank = Math.max(0, Math.min(RIVAL_RANKS.length - 1, (prevR.rank || 0) + (won ? 1 : -1)));
       const delta = newRank - (prevR.rank || 0);
       const streakR = won ? (prevR.streak || 0) + 1 : 0;
-      rivalPatch = {
-        rank: newRank,
-        wins: (prevR.wins || 0) + (won ? 1 : 0),
-        losses: (prevR.losses || 0) + (won ? 0 : 1),
-        streak: streakR,
-        bestStreak: Math.max(prevR.bestStreak || 0, streakR),
-        lastResult: won ? "win" : "loss",
-        lastSkill: session.weakSkill || prevR.lastSkill || null,
-        seen: true,
-      };
       rivalOut = {
         won, you: youHits, diego: diegoHits, delta,
         rankName: rivalRankName(newRank, uiLang),
         reaction: diegoReaction(won, delta, uiLang),
-        record: `${rivalPatch.wins}\u2013${rivalPatch.losses}${streakR > 1 ? ` \u00b7 ${uiLang === "en" ? "streak" : "racha"} ${streakR}` : ""}`,
+        record: `${(prevR.wins || 0) + (won ? 1 : 0)}\u2013${(prevR.losses || 0) + (won ? 0 : 1)}${streakR > 1 ? ` \u00b7 ${uiLang === "en" ? "streak" : "racha"} ${streakR}` : ""}`,
       };
       if (won) setBurst(Date.now());
     }
     const gemsEarned = session.rival ? (rivalOut?.won ? 20 : 5) : session.review ? 10 : 15;
-    const perfects = (prog.perfects || 0) + (lessonStats.wrong === 0 ? 1 : 0);
-    const newXP = (prog.xp || 0) + sessionXP + perfectBonus;
-    const before = levelOf(prog.xp || 0).idx, after = levelOf(newXP).idx;
+    const before = levelOf(prog.xp || 0).idx, after = levelOf((prog.xp || 0) + earned).idx;
     setLevelUp(after > before ? LEVELS[after][1] : null);
     setScreenQuip(pickQuip(session.host, "win"));
-    const missions = { ...(prog.missions || {}) };
-    if (session.missionId) missions[session.missionId] = Math.max(missions[session.missionId] || 0, lessonStats.wrong === 0 ? 3 : lessonStats.wrong <= 2 ? 2 : 1);
-    if (session.daily) missions[`daily-${t}`] = true;
-    if (session.todaySceneId) missions[`scene-${t}`] = session.todaySceneId;
-    const coachStats = { ...(prog.coachStats || {}) };
-    const coachKey = session.daily ? "luna" : session.review ? "valeria" : session.host;
-    coachStats[coachKey] = (coachStats[coachKey] || 0) + 1;
     save((prev) => {
+      let streak = prev.streak || 0;
+      let xpToday = prev.lastDay === t ? prev.xpToday || 0 : 0;
+      let earnedFreeze = 0;
+      if (prev.lastDay !== t) {
+        const y = yesterdayStr();
+        streak = prev.lastDay === y ? streak + 1 : 1;
+        if (streak > 0 && streak % 7 === 0) earnedFreeze = 1;
+      }
+      const freezes = Math.min(2, (prev.freezes || 0) + earnedFreeze);
+      const done = { ...prev.done };
+      let testOutSrs = null;
+      if (session.testOut != null) {
+        /* Test-out previously only set the unit done-flag — but the SRS system
+           (srs[unitId|questionIndex] with ef/interval/due) was never seeded, so
+           tested-out users had an EMPTY review queue. Fix: when a section is
+           tested out cleanly, schedule every question in those units to be due
+           in 3 days at default SM-2 params. The user enters the review system
+           organically instead of hitting a content dead end. */
+        if (lessonStats.wrong <= 2) {
+          const srs = { ...(prev.srs || {}) };
+          const seedDue = Date.now() + 3 * 864e5;
+          SECTIONS[session.testOut].unitIds.forEach((id) => {
+            done[id] = Math.max(2, done[id] || 0); // 2 = mastered via test-out
+            const u = UNITS.find((x) => x.id === id);
+            if (u) u.questions.forEach((_, qi) => {
+              const key = `${id}|${qi}`;
+              if (!srs[key]) srs[key] = { ef: 2.5, interval: 3, reps: 1, due: seedDue };
+            });
+          });
+          testOutSrs = srs;
+        }
+      } else if (!session.review && !session.rival && !session.missionId && !session.daily) {
+        done[session.unitId] = (done[session.unitId] || 0) + 1;
+      }
+      let rivalPatch = null;
+      if (session.rival) {
+        const youHits = lessonStats.right;
+        const diegoHits = (session.diego || []).filter(Boolean).length;
+        const won = youHits > diegoHits;
+        const prevR = prev.rival || { rank: 0, wins: 0, losses: 0, streak: 0, bestStreak: 0, lastResult: null, lastSkill: null };
+        const newRank = Math.max(0, Math.min(RIVAL_RANKS.length - 1, (prevR.rank || 0) + (won ? 1 : -1)));
+        const streakR = won ? (prevR.streak || 0) + 1 : 0;
+        rivalPatch = {
+          rank: newRank,
+          wins: (prevR.wins || 0) + (won ? 1 : 0),
+          losses: (prevR.losses || 0) + (won ? 0 : 1),
+          streak: streakR,
+          bestStreak: Math.max(prevR.bestStreak || 0, streakR),
+          lastResult: won ? "win" : "loss",
+          lastSkill: session.weakSkill || prevR.lastSkill || null,
+          seen: true,
+        };
+      }
+      const missions = { ...(prev.missions || {}) };
+      if (session.missionId) missions[session.missionId] = Math.max(missions[session.missionId] || 0, lessonStats.wrong === 0 ? 3 : lessonStats.wrong <= 2 ? 2 : 1);
+      if (session.daily) missions[`daily-${t}`] = true;
+      if (session.todaySceneId) missions[`scene-${t}`] = session.todaySceneId;
+      const coachStats = { ...(prev.coachStats || {}) };
+      const coachKey = session.daily ? "luna" : session.review ? "valeria" : session.host;
+      coachStats[coachKey] = (coachStats[coachKey] || 0) + 1;
       const patch = {
-        xp: newXP, streak, lastDay: t, xpToday, done, missions,
-        gems: (prev.gems || 0) + gemsEarned, perfects, resume: null, coachStats,
-        freezes, earnedFreeze: earnedFreeze ? t : prev.earnedFreeze, quickTipSeen: true,
+        xp: (prev.xp || 0) + earned,
+        streak, lastDay: t, xpToday: xpToday + earned, done, missions,
+        gems: (prev.gems || 0) + gemsEarned,
+        perfects: (prev.perfects || 0) + (lessonStats.wrong === 0 ? 1 : 0),
+        resume: null, coachStats, freezes,
+        earnedFreeze: earnedFreeze ? t : prev.earnedFreeze, quickTipSeen: true,
       };
       // Review lessons refund one heart against fresh state. Normal lessons leave
       // hearts alone — they were already decremented per-miss against fresh state,
@@ -4022,12 +4064,30 @@ export default function App() {
     beep("win"); setBurst(Date.now());
     const earned = 5 + correct * 10;
     const t = todayStr();
-    let streak = prog.streak || 0;
-    let xpToday = prog.lastDay === t ? prog.xpToday || 0 : 0;
-    let earnedFreeze = 0;
-    if (prog.lastDay !== t) { const y = yesterdayStr(); streak = prog.lastDay === y ? streak + 1 : 1; if (streak > 0 && streak % 7 === 0) earnedFreeze = 1; }
-    const freezes = Math.min(2, (prog.freezes || 0) + earnedFreeze);
-    save({ xp: (prog.xp || 0) + earned, xpToday: xpToday + earned, streak, lastDay: t, gems: (prog.gems || 0) + 10, stories: { ...(prog.stories || {}), [story.id]: true }, coachStats: { ...(prog.coachStats || {}), rafa: ((prog.coachStats || {}).rafa || 0) + 1 }, storyCollectibles: { ...(prog.storyCollectibles || {}), [story.id]: true } });
+    save((prev) => {
+      if (prev.stories?.[story.id]) return prev;
+      let streak = prev.streak || 0;
+      let xpToday = prev.lastDay === t ? prev.xpToday || 0 : 0;
+      let earnedFreeze = 0;
+      if (prev.lastDay !== t) {
+        const y = yesterdayStr();
+        streak = prev.lastDay === y ? streak + 1 : 1;
+        if (streak > 0 && streak % 7 === 0) earnedFreeze = 1;
+      }
+      return {
+        ...prev,
+        xp: (prev.xp || 0) + earned,
+        xpToday: xpToday + earned,
+        streak,
+        lastDay: t,
+        freezes: Math.min(2, (prev.freezes || 0) + earnedFreeze),
+        earnedFreeze: earnedFreeze ? t : prev.earnedFreeze,
+        gems: (prev.gems || 0) + 10,
+        stories: { ...(prev.stories || {}), [story.id]: true },
+        coachStats: { ...(prev.coachStats || {}), rafa: ((prev.coachStats || {}).rafa || 0) + 1 },
+        storyCollectibles: { ...(prev.storyCollectibles || {}), [story.id]: true },
+      };
+    });
   };
 
   const discoverStoryWord = (story, key) => {
@@ -4140,33 +4200,48 @@ export default function App() {
     const earned = quality === "again" ? 0 : 2;
     const t = todayStr();
     const y = yesterdayStr();
-    const streak = earned === 0 ? prog.streak : prog.lastDay === t ? prog.streak || 0 : prog.lastDay === y ? (prog.streak || 0) + 1 : 1;
-    save({ flashcards: cards, xp: (prog.xp || 0) + earned, xpToday: (prog.lastDay === t ? prog.xpToday || 0 : 0) + earned, streak, lastDay: earned ? t : prog.lastDay });
+    save((prev) => {
+      const streak = earned === 0 ? prev.streak : prev.lastDay === t ? prev.streak || 0 : prev.lastDay === y ? (prev.streak || 0) + 1 : 1;
+      return {
+        ...prev,
+        flashcards: cards,
+        xp: (prev.xp || 0) + earned,
+        xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + earned,
+        streak,
+        lastDay: earned ? t : prev.lastDay,
+      };
+    });
     setFlashFlipped(false);
     setFlashMode((m) => (m === "es-en" ? "en-es" : "es-en"));
     setFlashIdx((i) => i + 1);
   };
 
   const chooseDialogue = (choice) => {
+    if (!dialogue || dialogue.done) return;
     beep(choice.score >= 2 ? "ok" : "bad");
     const nextScore = dialogue.score + choice.score;
     const nextLog = [...dialogue.log, { npc: activeDuel.steps[dialogue.idx].npc, choice }];
     const done = dialogue.idx + 1 >= activeDuel.steps.length;
     setDialogue({ idx: done ? dialogue.idx : dialogue.idx + 1, score: nextScore, done, log: nextLog });
     if (done) {
+      if (!lockAward("dialogue")) return;
       const stars = nextScore >= 8 ? 3 : nextScore >= 5 ? 2 : 1;
       const t = todayStr();
       const y = yesterdayStr();
-      const streak = prog.lastDay === t ? prog.streak || 0 : prog.lastDay === y ? (prog.streak || 0) + 1 : 1;
-      save({
-        xp: (prog.xp || 0) + 20 + stars * 5,
-        xpToday: (prog.lastDay === t ? prog.xpToday || 0 : 0) + 20 + stars * 5,
-        streak,
-        lastDay: t,
-        gems: (prog.gems || 0) + 8,
-        missions: { ...(prog.missions || {}), [activeDuel.id]: Math.max(prog.missions?.[activeDuel.id] || 0, stars) },
-        coachStats: { ...(prog.coachStats || {}), diego: ((prog.coachStats || {}).diego || 0) + 1 },
-        weak: stars < 3 ? { ...(prog.weak || {}), Registro: (prog.weak?.Registro || 0) + 1 } : prog.weak,
+      const xp = 20 + stars * 5;
+      save((prev) => {
+        const streak = prev.lastDay === t ? prev.streak || 0 : prev.lastDay === y ? (prev.streak || 0) + 1 : 1;
+        return {
+          ...prev,
+          xp: (prev.xp || 0) + xp,
+          xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + xp,
+          streak,
+          lastDay: t,
+          gems: (prev.gems || 0) + 8,
+          missions: { ...(prev.missions || {}), [activeDuel.id]: Math.max(prev.missions?.[activeDuel.id] || 0, stars) },
+          coachStats: { ...(prev.coachStats || {}), diego: ((prev.coachStats || {}).diego || 0) + 1 },
+          weak: stars < 3 ? { ...(prev.weak || {}), Registro: (prev.weak?.Registro || 0) + 1 } : prev.weak,
+        };
       });
       setBurst(Date.now());
     }
@@ -4235,7 +4310,10 @@ export default function App() {
     }
     if (live.screen === "lesson" && !live.session) return;
     if (live.tab) setTab(live.tab);
-    if (live.session) setSession(live.session);
+    if (live.session) {
+      setSession(live.session);
+      if (live.session.awarded) awardLockRef.current.add("lesson");
+    }
     if (live.qi != null) setQi(live.qi);
     if (live.status) setStatus(live.status);
     if (live.selected != null) setSelected(live.selected);
@@ -4260,15 +4338,27 @@ export default function App() {
     if (live.storyMode) setStoryMode(live.storyMode);
     if (live.ansSel) setAnsSel(live.ansSel);
     if (live.wordReveal != null) setWordReveal(live.wordReveal);
-    if (live.dialogue) setDialogue(live.dialogue);
+    if (live.dialogue) {
+      setDialogue(live.dialogue);
+      if (live.dialogue.done) awardLockRef.current.add("dialogue");
+    }
     if (live.rivalOutcome) setRivalOutcome(live.rivalOutcome);
     if (live.activeDuelId) {
       const duel = DUELS.find((d) => d.id === live.activeDuelId);
       if (duel) setActiveDuel(duel);
     }
-    if (live.safeGame) setSafeGame(live.safeGame);
-    if (live.jeopardy) setJeopardy(live.jeopardy);
-    if (live.snakeGame) setSnakeGame(live.snakeGame);
+    if (live.safeGame) {
+      setSafeGame(live.safeGame);
+      if (live.safeGame.awarded || live.safeGame.done) awardLockRef.current.add("safe");
+    }
+    if (live.jeopardy) {
+      setJeopardy(live.jeopardy);
+      if (live.jeopardy.awarded) awardLockRef.current.add("jeopardy");
+    }
+    if (live.snakeGame) {
+      setSnakeGame(live.snakeGame);
+      if (live.snakeGame.awarded || live.snakeGame.done) awardLockRef.current.add("snake");
+    }
     setScreen(live.screen);
   };
 
@@ -6592,9 +6682,7 @@ export default function App() {
 	                      <span style={{ fontWeight: 700, fontSize: 15, color: D.sub }}> — {wordSel.en}</span>
                     ) : wordSel.en ? (
 	                      <span style={{ fontWeight: 700, fontSize: 14, color: D.sub, fontStyle: "italic" }}> — {uiLang === "en" ? "guess from context first" : "adivina por contexto"}</span>
-                    ) : (
-	                      <span style={{ fontWeight: 700, fontSize: 14, color: D.sub, fontStyle: "italic" }}> — {L.noCard}</span>
-	                    )}
+                    ) : null}
 	                    {storyMode === "challenge" && wordSel.en && !wordReveal && (
 	                      <button onClick={() => setWordReveal(true)} className="duo-btn"
 	                        style={{ marginTop: 8, background: sec.color, border: "none", borderBottom: `4px solid ${sec.dark}`, color: "#fff", borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>

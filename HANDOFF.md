@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (Hand leftovers: glossary placeholder, XP, favicon)
+
+**What changed**
+- Story tap card no longer shows leftover “definición pendiente” / “definition coming soon”. Words without a gloss show the word only — no invented definition.
+- Lesson/game/story XP commits once: award lock + `save(prev => prev.xp + earned)` so double Continuar / Enter cannot double-count. Same guard on story claim and minigames.
+- `public/favicon.ico` + `favicon.svg` (Camino mountain mark) and `<link rel="icon">` so Pages stops 404ing `/andale/favicon.ico`.
+
+**Why**
+- Finish remaining Hand items from issue 5. Items 1/4/5/7 already shipped in #9/#10. Engine kept. No new curriculum.
+
 ## 2026-08-30 (live session across resize)
 
 **What changed**
