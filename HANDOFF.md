@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (flashcards end)
+
+**What changed**
+- A flashcard run now snapshots a finite unique deck (due saved → other saved → unit pairs from SRS / mistakes / started units, cap 12). Index increments; no `%` wrap and no mid-run resample of two pairs.
+- Last card opens a done screen (`¡Deck terminado!` / Deck complete) with count and Otra ronda. XP rates, speech, coaches, Camino, Nunito, schema/contentVersion untouched.
+
+**Why**
+- Hand: flashcards never ended and only two cards. `flashIdx % practiceCards.length` looped, and grading rebuilt the due list so the same two items came back.
+
 ## 2026-08-30 (self-host Nunito)
 
 **What changed**

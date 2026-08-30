@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -2931,6 +2932,7 @@ const UI = {
     flashTitle: "Flashcards", saved: "guardadas", ready: "listas para practicar", emptyDeck: "Tu deck está vacío",
     emptyDeckDesc: "Abre un cuento, toca una palabra y guárdala con su frase de contexto.", goReading: "Ir a lectura",
     dueReview: "REPASO VENCIDO", ahead: "ADELANTO", tapReveal: "Toca para revelar", again: "Otra vez", hard: "Difícil", good: "Bien", easy: "Fácil", reveal: "Revelar", today: "hoy",
+    flashDone: "¡Deck terminado!", flashDoneDesc: "Repasaste", flashCardsWord: "tarjetas", flashAgain: "Otra ronda", flashOf: "de",
     profileTitle: "Tu perfil", profileSub: "Español (México) · intermedio-avanzado", level: "Nivel", maxLevel: "Nivel máximo.", xpTo: "XP para",
     streakDays: "días de racha", totalXp: "XP total", crowns: "coronas", gems: "gemas", reviewsStat: "repasos hoy / en seguimiento", perfectLessons: "lecciones impecables",
     achievements: "Logros", firstStep: "Primer paso", firstStepDesc: "Completa una lección", century: "Centenario", centuryDesc: "Gana 100 XP",
@@ -2964,6 +2966,7 @@ const UI = {
     flashTitle: "Flashcards", saved: "saved", ready: "ready to practice", emptyDeck: "Your deck is empty",
     emptyDeckDesc: "Open a story, tap a word, and save it with its context sentence.", goReading: "Go to Stories",
     dueReview: "DUE REVIEW", ahead: "EARLY REVIEW", tapReveal: "Tap to reveal", again: "Again", hard: "Hard", good: "Good", easy: "Easy", reveal: "Reveal", today: "today",
+    flashDone: "Deck complete!", flashDoneDesc: "You reviewed", flashCardsWord: "cards", flashAgain: "Another round", flashOf: "of",
     profileTitle: "Your profile", profileSub: "Spanish (Mexico) · intermediate-advanced", level: "Level", maxLevel: "Max level.", xpTo: "XP to",
     streakDays: "streak days", totalXp: "total XP", crowns: "crowns", gems: "gems", reviewsStat: "reviews today / tracked", perfectLessons: "perfect lessons",
     achievements: "Achievements", firstStep: "First step", firstStepDesc: "Complete one lesson", century: "Century", centuryDesc: "Earn 100 XP",
@@ -3162,7 +3165,7 @@ export default function App() {
   const [guideUnit, setGuideUnit] = useState(null);
   const [dialogue, setDialogue] = useState({ idx: 0, score: 0, done: false, log: [] });
   const [rivalOutcome, setRivalOutcome] = useState(null); // result of the last Diego duel
-  const [flashIdx, setFlashIdx] = useState(0);
+  const [flashRun, setFlashRun] = useState(null); // { deck, idx, done, reviewed, xpEarned }
   const [flashFlipped, setFlashFlipped] = useState(false);
   const [flashMode, setFlashMode] = useState("es-en");
   const [doctorIdx, setDoctorIdx] = useState(0);
@@ -4391,8 +4394,26 @@ export default function App() {
     });
     setFlashFlipped(false);
     setFlashMode((m) => (m === "es-en" ? "en-es" : "es-en"));
-    setFlashIdx((i) => i + 1);
+    setFlashRun((run) => advanceFlashRun(run, earned));
   };
+
+  const startFlashRun = () => {
+    const deck = buildFlashDeck(prog, UNITS, FLASH_SESSION_CAP);
+    if (!deck.length) {
+      setFlashRun({ deck: [], idx: 0, done: true, reviewed: 0, xpEarned: 0 });
+      return;
+    }
+    setFlashFlipped(false);
+    setFlashMode("es-en");
+    setFlashRun({ deck, idx: 0, done: false, reviewed: 0, xpEarned: 0 });
+  };
+
+  useEffect(() => {
+    if (flashRun != null) return;
+    const deck = buildFlashDeck(prog, UNITS, FLASH_SESSION_CAP);
+    if (!deck.length) return;
+    setFlashRun({ deck, idx: 0, done: false, reviewed: 0, xpEarned: 0 });
+  }, [flashRun, prog]);
 
   const chooseDialogue = (choice) => {
     if (!dialogue || dialogue.done) return;
@@ -4665,8 +4686,8 @@ export default function App() {
   const storyCount = STORIES.filter((st) => prog.stories?.[st.id]).length;
   const flashcards = Object.values(prog.flashcards || {}).sort((a, b) => (a.due || 0) - (b.due || 0));
   const dueFlashcards = flashcards.filter((c) => (c.due || 0) <= Date.now());
-  const practiceCards = dueFlashcards.length ? dueFlashcards : flashcards;
-  const activeCard = practiceCards.length ? practiceCards[flashIdx % practiceCards.length] : null;
+  const flashDeck = flashRun?.deck || [];
+  const activeCard = flashRun && !flashRun.done && flashRun.idx < flashDeck.length ? flashDeck[flashRun.idx] : null;
   const uiLang = prog.uiLang === "en" ? "en" : "es";
   const L = UI[uiLang];
   const paulinaVoice = pickPaulina(voices);
@@ -5706,16 +5727,28 @@ export default function App() {
 	              <div style={{ fontSize: 13, fontWeight: 800, color: D.sub }}>{flashcards.length} {L.saved} · {dueFlashcards.length} {L.ready}</div>
             </div>
           </div>
-          {!flashcards.length ? (
+          {!flashDeck.length && !flashRun?.done ? (
             <div style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: 18, textAlign: "center", background: D.card }}>
               <IcCards size={42} color={D.blue} />
 	              <h3 style={{ fontWeight: 900, margin: "8px 0 4px" }}>{L.emptyDeck}</h3>
 	              <p style={{ color: D.sub, fontWeight: 800, margin: "0 0 16px" }}>{L.emptyDeckDesc}</p>
 	              <Btn color={D.blue} dark={D.blueDark} onClick={() => setTab("lectura")}>{L.goReading}</Btn>
             </div>
-          ) : (
+          ) : flashRun?.done ? (
+            <div data-testid="flash-session-done" style={{ border: `2px solid ${D.gold}`, borderBottom: `6px solid ${D.goldDark}`, borderRadius: 18, padding: 22, background: D.card, textAlign: "center" }}>
+              <CoachPortrait id="rafa" mood="party" size={88} />
+              <h3 style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 4px", color: D.goldDark }}>{L.flashDone}</h3>
+              <p style={{ color: D.sub, fontWeight: 800, margin: "0 0 16px" }}>
+                {L.flashDoneDesc} {flashRun.reviewed || 0} {L.flashCardsWord}.
+              </p>
+              <Btn color={D.green} dark={D.greenDark} data-testid="flash-again" onClick={startFlashRun}>{L.flashAgain}</Btn>
+            </div>
+          ) : activeCard ? (
             <>
-              <div onClick={() => setFlashFlipped((f) => !f)} className="pop"
+              <div data-testid="flash-progress" style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>
+                {(flashRun.idx || 0) + 1} {L.flashOf} {flashDeck.length}
+              </div>
+              <div onClick={() => setFlashFlipped((f) => !f)} className="pop" data-testid="flash-card"
                 style={{ minHeight: 230, border: `2px solid ${flashFlipped ? D.green : D.blue}`, borderBottom: `6px solid ${flashFlipped ? D.greenDark : D.blueDark}`, borderRadius: 18, padding: 22, background: D.card, display: "flex", flexDirection: "column", justifyContent: "center", textAlign: "center", cursor: "pointer" }}>
                 <div style={{ fontSize: 11, fontWeight: 900, color: flashFlipped ? D.greenDark : D.blueDark, letterSpacing: ".06em", marginBottom: 10 }}>
 	                  {dueFlashcards.length ? L.dueReview : L.ahead} · {flashMode === "es-en" ? "ES → EN" : "EN → ES"}
@@ -5736,27 +5769,31 @@ export default function App() {
               <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginTop: 14 }}>
                 {flashFlipped ? (
                   <>
-	                    <Btn color={D.red} dark={D.redDark} onClick={() => gradeFlashcard(activeCard, "again")} style={{ padding: "10px 12px", fontSize: 12 }}>{L.again}</Btn>
-	                    <Btn color={"#FF9600"} dark={"#D97F00"} onClick={() => gradeFlashcard(activeCard, "hard")} style={{ padding: "10px 12px", fontSize: 12 }}>{L.hard}</Btn>
-	                    <Btn color={D.blue} dark={D.blueDark} onClick={() => gradeFlashcard(activeCard, "good")} style={{ padding: "10px 12px", fontSize: 12 }}>{L.good}</Btn>
-	                    <Btn onClick={() => gradeFlashcard(activeCard, "easy")} style={{ padding: "10px 12px", fontSize: 12 }}>{L.easy}</Btn>
+	                    <Btn color={D.red} dark={D.redDark} data-testid="flash-again-grade" onClick={() => gradeFlashcard(activeCard, "again")} style={{ padding: "10px 12px", fontSize: 12 }}>{L.again}</Btn>
+	                    <Btn color={"#FF9600"} dark={"#D97F00"} data-testid="flash-hard" onClick={() => gradeFlashcard(activeCard, "hard")} style={{ padding: "10px 12px", fontSize: 12 }}>{L.hard}</Btn>
+	                    <Btn color={D.blue} dark={D.blueDark} data-testid="flash-good" onClick={() => gradeFlashcard(activeCard, "good")} style={{ padding: "10px 12px", fontSize: 12 }}>{L.good}</Btn>
+	                    <Btn data-testid="flash-easy" onClick={() => gradeFlashcard(activeCard, "easy")} style={{ padding: "10px 12px", fontSize: 12 }}>{L.easy}</Btn>
                   </>
                 ) : (
-	                  <Btn color={D.blue} dark={D.blueDark} onClick={() => setFlashFlipped(true)}>{L.reveal}</Btn>
+	                  <Btn color={D.blue} dark={D.blueDark} data-testid="flash-reveal" onClick={() => setFlashFlipped(true)}>{L.reveal}</Btn>
                 )}
               </div>
-              <div style={{ marginTop: 18, display: "grid", gap: 8 }}>
-                {flashcards.slice(0, 6).map((c) => (
-                  <div key={strip(c.word)} style={{ border: `2px solid ${D.line}`, borderRadius: 12, padding: "8px 11px", display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", background: D.card }}>
+              <div style={{ marginTop: 18, display: "grid", gap: 8 }} data-testid="flash-deck-list">
+                {flashDeck.map((c, i) => (
+                  <div key={`${strip(c.word)}-${i}`} style={{ border: `2px solid ${i === flashRun.idx ? D.blue : D.line}`, borderRadius: 12, padding: "8px 11px", display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", background: D.card, opacity: i < flashRun.idx ? 0.55 : 1 }}>
                     <div>
                       <div style={{ fontWeight: 900, fontSize: 14 }}>{c.word} <span style={{ color: D.sub, fontWeight: 800 }}>— {c.en}</span></div>
                       <div style={{ fontSize: 11.5, color: D.sub, fontWeight: 800 }}>{c.story}</div>
                     </div>
-	                    <div style={{ fontSize: 11, fontWeight: 900, color: (c.due || 0) <= Date.now() ? D.red : D.sub }}>{(c.due || 0) <= Date.now() ? L.today : `${Math.ceil(((c.due || 0) - Date.now()) / DAY)}d`}</div>
+	                    <div style={{ fontSize: 11, fontWeight: 900, color: i < flashRun.idx ? D.green : D.sub }}>{i < flashRun.idx ? "✓" : `${i + 1}`}</div>
                   </div>
                 ))}
               </div>
             </>
+          ) : (
+            <div style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: 18, textAlign: "center", background: D.card }}>
+              <Btn color={D.blue} dark={D.blueDark} onClick={startFlashRun}>{L.flashAgain}</Btn>
+            </div>
           )}
         </div>
       )}
