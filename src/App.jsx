@@ -278,7 +278,8 @@ const UNITS = [
   {
     id: "subj2",
     title: "Si yo fuera...",
-    blurb: "Imperfect subjunctive: counterfactuals, polite softening, and as-if comparisons.",
+    desc: "Contrafactuales, cortesía y comparaciones con «como si»",
+    blurb: "Contrafactuales, cortesía y comparaciones con «como si».",
     questions: [
       { type: "mc", prompt: "Si yo ___ rico, viajaría por todo México.", choices: ["fuera", "soy", "era", "sería"], answer: "fuera", note: "Si + imperfect subjunctive + conditional → counterfactual present. «Si soy» would make it a real condition, not a hypothetical." },
       { type: "mc", prompt: "Habla como si lo ___ todo.", choices: ["sabe", "supiera", "sabría", "sabe"], answer: "supiera", note: "«Como si» (as if) is always followed by imperfect subjunctive, no exceptions." },
@@ -303,8 +304,9 @@ const UNITS = [
   },
   {
     id: "futcond",
-    title: "Future & conditional",
-    blurb: "Will / would, plus their underrated probability uses.",
+    title: "Futuro y condicional",
+    desc: "Lo que será, lo que sería, y la probabilidad",
+    blurb: "Lo que será, lo que sería, y la probabilidad.",
     questions: [
       { type: "mc", prompt: "Mañana ___ a Querétaro.", choices: ["voy", "iré", "iría", "vaya"], answer: "iré", note: "Plain future tense. «Voy a ir» is equally common in speech; «iré» is the one-word version." },
       { type: "mc", prompt: "Si tuviera más dinero, ___ esa casa en San Miguel.", choices: ["compraré", "compraría", "compré", "comprara"], answer: "compraría", note: "Si + imperfect subjunctive + conditional. The conditional is the «would» half." },
@@ -329,8 +331,9 @@ const UNITS = [
   },
   {
     id: "pluscamp",
-    title: "Pluperfect & conditional perfect",
-    blurb: "Had done / would have done — for storytelling and regret.",
+    title: "Pluscuamperfecto y condicional perfecto",
+    desc: "Había hecho / habría hecho: narrar y arrepentirse",
+    blurb: "Había hecho / habría hecho: narrar y arrepentirse.",
     questions: [
       { type: "mc", prompt: "Cuando llegué, ya ___ la junta.", choices: ["empezó", "empezaba", "había empezado", "habría empezado"], answer: "había empezado", note: "Pluperfect: «había + participle» — an action completed before another past action. The meeting started first; arrival came after." },
       { type: "type", prompt: "Translate: «I had never seen anything like it.»", answer: "Nunca había visto algo así.", note: "Pluperfect for a past event before a past reference point." },
@@ -355,8 +358,9 @@ const UNITS = [
   },
   {
     id: "sereflex",
-    title: "Se: passive, impersonal, accidental",
-    blurb: "Three se patterns native speakers use without thinking.",
+    title: "Se: pasivo, impersonal, accidental",
+    desc: "Tres usos de «se» que el nativo no piensa",
+    blurb: "Tres usos de «se» que el nativo no piensa.",
     questions: [
       { type: "mc", prompt: "Aquí ___ español. (general statement)", choices: ["habla", "se habla", "se hablan", "hablan"], answer: "se habla", note: "Impersonal «se» + singular verb — «Spanish is spoken here». No specific subject." },
       { type: "mc", prompt: "___ varios idiomas en este pueblo.", choices: ["Se habla", "Se hablan", "Hablan", "Está hablado"], answer: "Se hablan", note: "Passive «se»: when the «object» is plural, the verb is plural. «Varios idiomas» plural → «se hablan»." },
@@ -381,8 +385,9 @@ const UNITS = [
   },
   {
     id: "pronombres2",
-    title: "Object pronouns advanced",
-    blurb: "Clitic climbing, double objects, command attachment.",
+    title: "Pronombres avanzados",
+    desc: "Subida de clíticos, doble objeto y mandatos",
+    blurb: "Subida de clíticos, doble objeto y mandatos.",
     questions: [
       { type: "mc", prompt: "¿El libro? ___ a Juan.", choices: ["Lo doy", "Le doy", "Se lo doy", "Lo le doy"], answer: "Se lo doy", note: "Two pronouns: indirect «le» becomes «se» before direct «lo/la/los/las» (the «le-lo» rule). Mandatory." },
       { type: "mc", prompt: "Voy a ___.", choices: ["decirle algo", "le decir algo", "decir le algo", "lo decir"], answer: "decirle algo", note: "With infinitive, pronoun attaches to the end or climbs to the conjugated verb: «Voy a decirle» or «Le voy a decir». Both correct." },
@@ -408,7 +413,8 @@ const UNITS = [
   {
     id: "compsup",
     title: "Comparativos y superlativos",
-    blurb: "More than, as as, the most. Plus the irregulars that matter.",
+    desc: "Más que, tan como, el más. Y los irregulares que importan",
+    blurb: "Más que, tan como, el más. Y los irregulares que importan.",
     questions: [
       { type: "mc", prompt: "Este café es ___ que el otro.", choices: ["más bueno", "mejor", "más mejor", "el mejor"], answer: "mejor", note: "«Mejor» replaces «más bueno» in comparatives. Same for «peor», «mayor», «menor»." },
       { type: "mc", prompt: "Carlos es ___ alto ___ su hermano.", choices: ["más / que", "tan / como", "más / como", "tanto / como"], answer: "tan / como", note: "«Tan + adjective + como» = «as ___ as». «Tanto» is for nouns/verbs." },
@@ -433,8 +439,9 @@ const UNITS = [
   },
   {
     id: "relativos",
-    title: "Relative pronouns",
-    blurb: "Que, quien, el cual, cuyo, lo que — and when each is correct.",
+    title: "Pronombres relativos",
+    desc: "Que, quien, el cual, cuyo, lo que — y cuándo va cada uno",
+    blurb: "Que, quien, el cual, cuyo, lo que — y cuándo va cada uno.",
     questions: [
       { type: "mc", prompt: "La mujer ___ vimos ayer es abogada.", choices: ["que", "quien", "la cual", "cual"], answer: "que", note: "«Que» is the workhorse — works for people and things, with or without a preposition, in defining clauses." },
       { type: "mc", prompt: "El abogado, ___ acaba de llegar, firmará el contrato.", choices: ["que", "quien", "cuyo", "lo que"], answer: "quien", note: "After a comma (non-defining clause) and for people, «quien» is preferred. «Que» also works but «quien» is more elegant." },
@@ -459,8 +466,9 @@ const UNITS = [
   },
   {
     id: "reported",
-    title: "Reported speech",
-    blurb: "Telling someone what someone else said — the tense rules nobody taught you.",
+    title: "Estilo indirecto",
+    desc: "Contar lo que dijo otro: los tiempos que nadie te enseñó",
+    blurb: "Contar lo que dijo otro: los tiempos que nadie te enseñó.",
     questions: [
       { type: "mc", prompt: "Direct: «Vivo en Querétaro.» Reported: «Dijo que ___ en Querétaro.»", choices: ["vive", "vivía", "viviera", "viviría"], answer: "vivía", note: "Present in direct speech → imperfect in reported (when the introducing verb is past). «Dijo que vivía» = «He said he lived»." },
       { type: "mc", prompt: "Direct: «Voy a llamarte.» Reported: «Me dijo que ___ a llamarme.»", choices: ["va", "iba", "iría", "fuera"], answer: "iba", note: "«Voy» (present) → «iba» (imperfect) when reported in the past." },
@@ -486,7 +494,8 @@ const UNITS = [
   {
     id: "slang2",
     title: "Caló mexicano II",
-    blurb: "Beyond padre and chido: the slang that marks you as 'in.'",
+    desc: "Más allá de padre y chido: el caló que te marca como de aquí",
+    blurb: "Más allá de padre y chido: el caló que te marca como de aquí.",
     questions: [
       { type: "mc", prompt: "«Te lo juro, ___.»", choices: ["padre", "neta", "chido", "bueno"], answer: "neta", note: "«Neta» = «for real / honestly». «¿Es neta?» = «Is that true?». Quintessential CDMX slang." },
       { type: "mc", prompt: "«Tengo que ir a ___ a las nueve.» (work)", choices: ["chambear", "trabajar duro", "currar", "laburar"], answer: "chambear", note: "«Chambear» = to work (informal Mex.). «La chamba» = the job. «Currar» is Spanish slang; «laburar» is Argentine." },
@@ -512,7 +521,8 @@ const UNITS = [
   {
     id: "formal",
     title: "Registro formal y legal",
-    blurb: "The vocabulary of contracts, formal correspondence, and the cantilever language of law.",
+    desc: "El vocabulario de contratos, correos formales y el lenguaje de la ley",
+    blurb: "El vocabulario de contratos, correos formales y el lenguaje de la ley.",
     questions: [
       { type: "mc", prompt: "___ presente, le confirmo nuestra junta del jueves.", choices: ["Por la", "Con la", "Mediante", "A la"], answer: "Por la", note: "«Por la presente» = «By means of this letter / Herein». Opening for formal correspondence." },
       { type: "mc", prompt: "El contrato deberá firmarse ___ del 31 de marzo.", choices: ["antes", "a más tardar", "al menos", "ya"], answer: "a más tardar", note: "«A más tardar» = «no later than». Standard contract phrasing. «Antes del» works but is less precise." },
@@ -4882,8 +4892,8 @@ export default function App() {
                       <div style={{ fontWeight: 900, fontSize: 19, lineHeight: 1.2, marginTop: 2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                         {target ? target.title : (uiLang === "en" ? "Review your skills" : "Repasa tus habilidades")}
                       </div>
-                      {target?.blurb && (
-                        <div style={{ fontSize: 12.5, fontWeight: 700, opacity: .9, marginTop: 2, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{target.blurb}</div>
+                      {(target?.desc || target?.blurb) && (
+                        <div style={{ fontSize: 12.5, fontWeight: 700, opacity: .9, marginTop: 2, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{target.desc || target.blurb}</div>
                       )}
                     </div>
                   </div>
@@ -5006,7 +5016,7 @@ export default function App() {
                           )}
                           <button className={`node-btn ${isCurrent ? "pulse" : ""}`} disabled={!unlocked} onClick={() => setSheet({ unit: u, section: sec, crowns })}
                             aria-label={`${u.title}${unlocked ? "" : " (bloqueado)"}`}
-                            title={unlocked ? `${u.title} — ${u.desc}` : "Completa la habilidad anterior para desbloquear"}
+                            title={unlocked ? `${u.title}${u.desc || u.blurb ? ` — ${u.desc || u.blurb}` : ""}` : "Completa la habilidad anterior para desbloquear"}
                             style={{ width: 78, height: 78, borderRadius: "50%", border: "none", cursor: unlocked ? "pointer" : "default", background: nodeColor, borderBottom: `7px solid ${nodeDark}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: unlocked ? "0 4px 10px rgba(0,0,0,.12)" : "none" }}>
                             {unlocked ? GLYPHS[uid] : <IcLock size={30} />}
                           </button>
@@ -5809,7 +5819,7 @@ export default function App() {
               </div>
               <div>
                 <div style={{ fontWeight: 900, fontSize: 20, lineHeight: 1.15 }}>{sheet.unit.title}</div>
-                <div style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginTop: 2 }}>{sheet.unit.desc}</div>
+                <div style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginTop: 2 }}>{sheet.unit.desc || sheet.unit.blurb}</div>
               </div>
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "center", margin: "10px 0 2px", background: D.subtle, borderRadius: 14, padding: "8px 12px" }}>
