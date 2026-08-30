@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (ET, after PR 9)
+
+**Hand** (https://gildernew-max.github.io/andale/)
+- First tap after screen change: pass.
+- Wrong word tap: pass.
+- SALIR SIN GUARDAR (same tab): pass.
+- Listen/type eaten sentence: pass.
+- Paulina is not on Hand’s computer; default there is “Mejor voz española.” Device TTS list, not a miss of the four fixes. Brand still wants Paulina when the device has her.
+
+**Why**
+- Retest after tap-miss (PR #9) merged and Pages deployed. Store still shut pending Varys format review and two-week dates. No new curriculum.
+
 ## 2026-08-30 (live session across resize)
 
 **What changed**
