@@ -579,11 +579,10 @@ const splitSentences = (text) => text
   .map((s) => s.trim())
   .filter(Boolean);
 
-/* Brand lock (No face): Paulina is the default reading voice. Prefer es-MX
-   Paulina, then any Paulina, then any es-MX. Do not invent a mascot voice or
-   record files. Auto mode must not fall back to Spain (es-ES) / textbook TTS —
-   mute that path until a Mexican system voice exists. A user pick in the
-   existing voice dropdown still wins. */
+/* Brand lock (No face): Paulina is the default reading voice. If any Paulina
+   system voice exists — especially es-MX Paulina — use her. Never mute as a
+   fallback when she is on the device. No recording, no mascot voice. Without
+   Paulina, use any es-MX voice; without that, stay quiet (no es-ES default). */
 const DEFAULT_VOICE_NAME = "Paulina";
 const voiceLang = (v) => (v.lang || "").toLowerCase().replace("_", "-");
 const isPaulinaVoice = (v) => /paulina/i.test(v.name || "");
@@ -608,15 +607,39 @@ const listSpanishVoices = () =>
   ((typeof window !== "undefined" && window.speechSynthesis?.getVoices?.()) || [])
     .filter((v) => voiceLang(v).startsWith("es"));
 
+const pickPaulina = (voices) => {
+  const found = voices.filter(isPaulinaVoice);
+  if (!found.length) return null;
+  return [...found].sort((a, b) => {
+    const mx = (isMexicanVoice(b) ? 1 : 0) - (isMexicanVoice(a) ? 1 : 0);
+    if (mx) return mx;
+    return voiceScore(b, DEFAULT_VOICE_NAME) - voiceScore(a, DEFAULT_VOICE_NAME);
+  })[0];
+};
+
 const bestSpanishVoice = (preferredName) => {
   const voices = listSpanishVoices();
   if (!voices.length) return null;
+  // Paulina always wins when she exists — do not mute or substitute another TTS.
+  const paulina = pickPaulina(voices);
+  if (paulina) return paulina;
   const explicit = preferredName && voices.find((v) => v.name === preferredName);
-  if (explicit) return explicit;
-  const pref = preferredName || DEFAULT_VOICE_NAME;
-  const pick = [...voices].sort((a, b) => voiceScore(b, pref) - voiceScore(a, pref))[0];
-  if (pick && (isPaulinaVoice(pick) || isMexicanVoice(pick))) return pick;
-  return voices.find(isPaulinaVoice) || voices.find(isMexicanVoice) || null;
+  if (explicit && isMexicanVoice(explicit)) return explicit;
+  return voices.find(isMexicanVoice) || null;
+};
+
+const whenVoicesReady = (ss, then) => {
+  const ready = () => (ss.getVoices?.() || []).length > 0;
+  if (ready()) { then(); return; }
+  let settled = false;
+  const done = () => {
+    if (settled) return;
+    settled = true;
+    try { ss.removeEventListener("voiceschanged", done); } catch (e) {}
+    then();
+  };
+  try { ss.addEventListener("voiceschanged", done); } catch (e) { then(); return; }
+  setTimeout(done, 1600);
 };
 
 /* ---- speechSynthesis hardening (Chrome is hostile) ----
@@ -709,7 +732,7 @@ function speak(text, rate = 0.92, opts = {}) {
       ss.speak(u);
       ensureResumeLoop();
     };
-    setTimeout(playNext, 80); // never speak in the same tick as cancel()
+    whenVoicesReady(ss, () => setTimeout(playNext, 80)); // wait so Paulina is not muted on first tick
   } catch (e) {}
 }
 

@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-30 (Paulina never muted)
+
+**What changed**
+- If any system Paulina voice exists, she is the reading voice — ahead of every other TTS, including a saved dropdown pick.
+- First speak waits for `voiceschanged` so Chrome’s empty first list cannot mute her.
+
+**Why**
+- Brand lock: do not mute when Paulina is available. No recording. Finish list untouched.
+
 ## 2026-08-30 (reposition placed chips)
 
 **What changed**
