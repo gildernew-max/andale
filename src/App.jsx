@@ -4749,13 +4749,7 @@ export default function App() {
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: D.card, borderBottom: `2px solid ${D.line}` }}>
           <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
-                <rect width="34" height="34" rx="10" fill={D.green} />
-                <path d="M8 24 Q10 10 17 8 Q24 10 26 24 Q22 18 17 18 Q12 18 8 24z" fill="#fff" opacity=".95"/>
-                <path d="M12 26 Q17 30 22 26 L24 34 H10z" fill="#fff" opacity=".7"/>
-                <circle cx="13.5" cy="18" r="2" fill={D.green}/>
-                <circle cx="20.5" cy="18" r="2" fill={D.green}/>
-              </svg>
+              <LogoMark size={34} />
               <span style={{ fontWeight: 900, fontSize: 23, color: D.green, letterSpacing: "-0.02em" }}>ándale</span>
             </div>
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
