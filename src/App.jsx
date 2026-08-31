@@ -5227,7 +5227,7 @@ export default function App() {
           {/* === Safe or Risky? — featured register game ===
               Promoted to Práctica because register-judgment is the app's actual
               pedagogical edge. The other two games tuck behind a disclosure below. */}
-          <button onClick={startSafeRisky}
+          <button onClick={startSafeRisky} data-testid="safe-risky-start"
             style={{ display: "block", width: "100%", margin: "16px 0 6px", border: `2px solid ${D.red}`, borderBottom: `5px solid ${D.redDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 44, height: 44, borderRadius: 14, background: D.red, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.redDark}` }}>⚠️</span>
