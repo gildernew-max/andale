@@ -54,6 +54,7 @@ jobs:
           LIVE_HOME: https://gildernew-max.github.io/andale/
           LIVE_LUNA: https://gildernew-max.github.io/andale/coaches/luna-happy.png
           LIVE_MASCOT: https://gildernew-max.github.io/andale/mascot/axolotl.png
+          LIVE_STILL: https://gildernew-max.github.io/andale/stills/sma-lanterns.png
         run: |
           set -euo pipefail
 
@@ -116,8 +117,9 @@ jobs:
             echo "Live smoke attempt $i/$attempts"
             if check_url "$LIVE_HOME" html \
               && check_url "$LIVE_LUNA" png \
-              && check_url "$LIVE_MASCOT" png; then
-              echo "Live URL smoke passed: $LIVE_HOME plus coach + mascot PNGs"
+              && check_url "$LIVE_MASCOT" png \
+              && check_url "$LIVE_STILL" png; then
+              echo "Live URL smoke passed: $LIVE_HOME plus coach + mascot + Hoy still PNGs"
               exit 0
             fi
             if [ "$i" -lt "$attempts" ]; then

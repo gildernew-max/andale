@@ -4945,6 +4945,14 @@ export default function App() {
             const sceneStory = STORIES.find((st) => st.id === todayScene.storyId);
             return (
               <div style={{ margin: "2px 0 16px", border: `2px solid ${todayScene.color}`, borderBottom: `5px solid ${todayScene.dark}`, borderRadius: 18, background: D.card, overflow: "hidden" }}>
+                <img
+                  src={`${import.meta.env.BASE_URL}stills/sma-lanterns.png`}
+                  alt=""
+                  width={1024}
+                  height={1024}
+                  aria-hidden="true"
+                  style={{ display: "block", width: "100%", height: 148, objectFit: "cover", objectPosition: "center 38%" }}
+                />
                 <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 14px 11px", background: theme === "dark" ? D.subtle : "#FFFBEF" }}>
                   <div style={{ width: 58, height: 58, borderRadius: 17, background: todayScene.color, borderBottom: `5px solid ${todayScene.dark}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <CoachPortrait id={todayScene.host} mood={todaySceneDone ? "party" : "focused"} size={54} />
