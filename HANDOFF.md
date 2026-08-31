@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (UNITS/SECTIONS content-schema lock)
+
+**What changed**
+- This is the UNITS/SECTIONS **content-schema** lock (issue 5 gaps #2/#3), not the save/LIVE schema lock (`src/schema.test.js`).
+- `prepQuestion` normalize rules (`tokens`→`words`, `source`→`base`, `answer`→`answers`, `{es,en}` pairs) live in `src/prepQuestion.js`. App still shuffles and builds answerAid on top. UNITS not rewritten.
+- `src/content.test.js`: every UNITS question after `prepQuestion` has type; prompt/base/text; answer/answers; mc `choices`; order `words`. Every `SECTIONS[].unitIds` id exists in UNITS; every unit has pairs; FLAT has no undefined units. STORIES / MISSIONS / TODAY_SCENES have ids + required fields (`story-0` cannot vanish).
+- `npm test` runs flashDeck + schema + content. Curriculum, XP, speech, coaches, Camino, match-pairs, flashcards, Nunito, privacy, SW untouched.
+
+**Why**
+- Wed 9/2 remaining-flow lock. A deleted unit id left in SECTIONS, or an mc with no choices after prep, must fail CI before a blank tile bank.
+
 ## 2026-08-31 (schema test lock)
 
 **What changed**

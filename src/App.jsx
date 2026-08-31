@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
 import { CONTENT_VERSION, acceptProgress, acceptLive } from "./schema.js";
+import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -3402,17 +3403,7 @@ export default function App() {
   /* ---------- session building ---------- */
 
   const prepQuestion = (q) => {
-    const p = { ...q };
-    if (p.answer && !p.answers && (p.type === "type" || p.type === "listen" || p.type === "transform")) p.answers = [p.answer];
-    if (p.answers && !Array.isArray(p.answers)) p.answers = [p.answers];
-    if (p.note && !p.explain) p.explain = p.note;
-    if (p.type === "listen" && !p.text) p.text = p.answer || p.answers?.[0] || p.prompt;
-    if (p.type === "transform") {
-      if (!p.base && p.source) p.base = p.source;
-      if (!p.instruction) p.instruction = p.prompt;
-    }
-    if (p.type === "order" && !p.words && p.tokens) p.words = p.tokens;
-    if (p.type === "match" && p.pairs?.[0] && !Array.isArray(p.pairs[0])) p.pairs = p.pairs.map((pr) => [pr.es, pr.en]);
+    const p = normalizeQuestion(q);
     if (p.type === "mc") p.shuffledChoices = shuffle(p.choices);
     if (p.type === "order") p.shuffledWords = shuffle((p.words || []).map((w, i) => ({ w, id: i })));
     if (p.type === "match") { p.left = shuffle((p.pairs || []).map((pr, i) => ({ t: pr[0], id: i }))); p.right = shuffle((p.pairs || []).map((pr, i) => ({ t: pr[1], id: i }))); }
