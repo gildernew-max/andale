@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (Camino shortcuts: four names)
+
+**What changed**
+- Camino footer `L.shortcuts` still listed Luna, Don Rafa, Valeria. Now all four: Luna, Don Rafa, Valeria, Diego. Same sentence; no new tagline. Locked job strings and strip layout untouched.
+- XP, speech, Nunito, schema, privacy, flashcards, portraits untouched.
+
+**Why**
+- Hand ticked the four-card strip (PR 33) and flagged the leftover three-name helper line under it.
+
 ## 2026-08-31 (Diego on Camino strip)
 
 **What changed**
