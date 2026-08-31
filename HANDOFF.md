@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (PR CI: npm test + build)
+
+**What changed**
+- This is **PR CI** (issue 5 gap #1), not another flow test. `.github/workflows/ci.yml` runs on `pull_request` and push to `main`: Node 22, `npm ci`, `npm test` (flashDeck + schema + content + vitest/`flows.test.jsx`), `npm run build`.
+- No Pages deploy and no live-URL smoke here. `pages.yml` stays main-only for smoke/deploy. No lint stack (`package.json` has no lint script). App.jsx / XP / speech / coaches / Camino / UNITS untouched.
+
+**Why**
+- Wed 9/2 remaining-flow lock. Tests already exist, but only `pages.yml` ran on main (`npm ci` + `npm run build`). A broken PR could merge without `npm test`.
+
 ## 2026-08-31 (simulated learner flows)
 
 **What changed**
