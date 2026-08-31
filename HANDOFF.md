@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (Diego on Camino strip)
+
+**What changed**
+- Camino path footer strip was `["luna", "rafa", "valeria"]` in a 3-column grid. Now includes `diego` in 4 columns so Rival sits with Coach del día, Mentor de cuentos, and Coach de precisión. Same `COACHES.role` lines. No new copy.
+- XP, speech, Nunito, schema, privacy, flashcards, portraits/PNGs untouched.
+
+**Why**
+- Hand: first three jobs visible on the path; Diego Rival was in `COACHES` and Perfil only. Learner should see all four locked job lines on Camino without hunting Perfil.
+
 ## 2026-08-31 (Spanish coach job titles)
 
 **What changed**
