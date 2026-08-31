@@ -3703,20 +3703,20 @@ export default function App() {
   };
 
   const onMatchPracticeTap = (side, id) => {
+    let finishing = false;
     setMatchGame((cur) => {
       if (!cur || cur.done) return cur;
       const next = applyMatchPick(cur, side, id);
       if (next.miss) {
         beep("bad");
         setTimeout(() => setMatchGame((g) => (g && g.miss ? { ...g, miss: false } : g)), 400);
-      } else if (next.matched?.length > (cur.matched?.length || 0)) {
-        beep("ok");
+        return next;
       }
-      if (next.done && !cur.done) {
-        setTimeout(() => finishMatchPairs(), 250);
-      }
+      if (next.matched?.length > (cur.matched?.length || 0)) beep("ok");
+      if (next.done && !cur.done) finishing = true;
       return next;
     });
+    if (finishing) finishMatchPairs();
   };
 
   const finishMatchPairs = () => {
