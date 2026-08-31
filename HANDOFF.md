@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (match-pairs in Práctica)
+
+**What changed**
+- This is **match-pairs in Práctica**, not another test-lock slice. Hand's live pass had no Emparejar: the engine already auto-builds a match item from unit `pairs` at the end of a Camino lesson, but Práctica had no start.
+- Práctica now has `data-testid="match-pairs-start"` (Emparejar / Match pairs). One finite round from existing unit `pairs` (es/en, cap 6). Tiles match by pair id; last pair opens a done screen, then back to Práctica. No wrap, no resample.
+- XP is one review item (4), award-locked. No lesson +5, no gems, no heart refund. `src/matchPairs.js` is the tiny helper tests import. UNITS / speech / coaches / Camino / schema / Nunito / privacy / SW / CI / Apple wrap untouched.
+
+**Why**
+- Dave: improve features/UX. Learner must be able to open Práctica, start match-pairs, and finish a round.
+
 ## 2026-08-31 (PR CI: npm test + build)
 
 **What changed**

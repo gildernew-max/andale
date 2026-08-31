@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
+import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
 import { CONTENT_VERSION, acceptProgress, acceptLive } from "./schema.js";
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 
@@ -90,6 +91,7 @@ const snapshotLive = (s) => {
     safeGame: s.safeGame,
     jeopardy: s.jeopardy,
     snakeGame: s.snakeGame,
+    matchGame: s.matchGame,
   };
 };
 
@@ -3165,6 +3167,7 @@ export default function App() {
   const [safeGame, setSafeGame] = useState(null);
   const [jeopardy, setJeopardy] = useState(null);
   const [snakeGame, setSnakeGame] = useState(null);
+  const [matchGame, setMatchGame] = useState(null);
   const [burst, setBurst] = useState(0); // mini confetti trigger
   const [prog, setProg] = useState({ xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: "es", sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
@@ -3689,6 +3692,51 @@ export default function App() {
     awardLockRef.current.delete("safe");
     setSafeGame({ items: shuffle(SAFE_RISKY_ITEMS).slice(0, 5), idx: 0, score: 0, streak: 0, bestStreak: 0, selected: null, done: false, awarded: false });
     setScreen("safeRisky");
+  };
+
+  const startMatchPairs = () => {
+    const pairs = buildMatchRound(prog, UNITS, MATCH_ROUND_CAP);
+    if (pairs.length < 2) return;
+    awardLockRef.current.delete("match");
+    setMatchGame(startMatchRun(pairs));
+    setScreen("matchPairs");
+  };
+
+  const onMatchPracticeTap = (side, id) => {
+    setMatchGame((cur) => {
+      if (!cur || cur.done) return cur;
+      const next = applyMatchPick(cur, side, id);
+      if (next.miss) {
+        beep("bad");
+        setTimeout(() => setMatchGame((g) => (g && g.miss ? { ...g, miss: false } : g)), 400);
+      } else if (next.matched?.length > (cur.matched?.length || 0)) {
+        beep("ok");
+      }
+      if (next.done && !cur.done) {
+        setTimeout(() => finishMatchPairs(), 250);
+      }
+      return next;
+    });
+  };
+
+  const finishMatchPairs = () => {
+    if (!lockAward("match")) return;
+    const xp = MATCH_PRACTICE_XP;
+    const t = todayStr();
+    const y = yesterdayStr();
+    save((prev) => {
+      const streak = prev.lastDay === t ? prev.streak || 0 : prev.lastDay === y ? (prev.streak || 0) + 1 : 1;
+      return {
+        ...prev,
+        xp: (prev.xp || 0) + xp,
+        xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + xp,
+        streak,
+        lastDay: t,
+      };
+    });
+    setMatchGame((g) => (g ? { ...g, done: true, awarded: true, xp } : g));
+    setBurst(Date.now());
+    beep("win");
   };
 
   const chooseSafeRisky = (choice) => {
@@ -4501,7 +4549,7 @@ export default function App() {
     screen, tab, session, qi, status, selected, typed, typedTileIds, placed,
     matchSel, matched, sessionXP, itemXpLock: [...itemXpLockRef.current], combo, lessonStats, showWhy, failKind, quip,
     screenQuip, storyView, paraIdx, storyMode, ansSel, wordReveal, dialogue,
-    rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame,
+    rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame,
   };
 
   const applyLive = (live) => {
@@ -4564,6 +4612,10 @@ export default function App() {
       setSnakeGame(live.snakeGame);
       if (live.snakeGame.awarded || live.snakeGame.done) awardLockRef.current.add("snake");
     }
+    if (live.matchGame) {
+      setMatchGame(live.matchGame);
+      if (live.matchGame.awarded || live.matchGame.done) awardLockRef.current.add("match");
+    }
     setScreen(live.screen);
   };
 
@@ -4588,7 +4640,7 @@ export default function App() {
   useEffect(() => {
     if (!liveReady.current) return;
     writeLive(snapshotLive(liveRef.current));
-  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, dialogue, safeGame, jeopardy, snakeGame]);
+  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, dialogue, safeGame, jeopardy, snakeGame, matchGame]);
 
   useEffect(() => {
     const flush = () => {
@@ -5234,6 +5286,17 @@ export default function App() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{uiLang === "en" ? "Safe or Risky?" : "¿Seguro o riesgoso?"}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Sort phrases by register — the skill that matters most past B1." : "Clasifica frases por registro — la habilidad clave después de B1."}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={startMatchPairs} data-testid="match-pairs-start"
+            style={{ display: "block", width: "100%", margin: "0 0 6px", border: `2px solid ${D.blue}`, borderBottom: `5px solid ${D.blueDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.blue, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.blueDark}` }}>🔗</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{uiLang === "en" ? "Match pairs" : "Emparejar"}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "One finite round from the unit pairs — Spanish and English." : "Una ronda finita con las parejas de la unidad — español e inglés."}</div>
               </div>
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
@@ -6624,6 +6687,62 @@ export default function App() {
                     <Btn color={D.red} dark={D.redDark} onClick={nextSafeRisky} style={{ width: "100%", marginTop: 12 }}>{safeGame.idx + 1 >= safeGame.items.length ? (uiLang === "en" ? "Finish" : "Terminar") : L.continue}</Btn>
                   </div>
                 )}
+              </>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ---------- MATCH PAIRS (Práctica) ---------- */}
+      {screen === "matchPairs" && matchGame && (() => {
+        const goPractica = () => { setScreen("home"); setTab("practica"); };
+        const n = matchGame.pairs?.length || 0;
+        const got = matchGame.matched?.length || 0;
+        return (
+          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
+            {burst > 0 && matchGame.done && <Confetti key={burst} count={36} />}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+              <button onClick={goPractica} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <div style={{ flex: 1, height: 14, background: D.line, borderRadius: 99, overflow: "hidden" }}>
+                <div style={{ width: `${n ? Math.round((got / n) * 100) : 0}%`, height: "100%", background: D.blue }} />
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 900, color: D.blue }}>{got}/{n}</span>
+            </div>
+            {matchGame.done ? (
+              <div data-testid="match-pairs-done" className="pop" style={{ textAlign: "center", border: `2px solid ${D.gold}`, borderBottom: `5px solid ${D.goldDark}`, borderRadius: 16, padding: 18, background: D.goldBg }}>
+                <h2 style={{ fontWeight: 900, margin: "8px 0 4px" }}>{uiLang === "en" ? "Round complete" : "¡Ronda terminada!"}</h2>
+                <p style={{ color: D.sub, fontWeight: 800, margin: "0 0 16px" }}>
+                  {uiLang === "en" ? `You matched ${n} pairs.` : `Emparejaste ${n} parejas.`}
+                  {matchGame.xp ? ` · +${matchGame.xp} XP` : ""}
+                </p>
+                <Btn color={D.blue} dark={D.blueDark} onClick={startMatchPairs}>{uiLang === "en" ? "Another round" : "Otra ronda"}</Btn>
+                <Btn outline data-testid="match-pairs-back" onClick={goPractica} style={{ marginLeft: 10 }}>{L.practice}</Btn>
+              </div>
+            ) : (
+              <>
+                <h2 style={{ fontWeight: 900, fontSize: 22, margin: "0 0 8px" }}>{L.matchPairs}</h2>
+                <p style={{ fontSize: 13, fontWeight: 800, color: D.sub, margin: "0 0 16px" }}>{L.matchInstruction}</p>
+                <div data-testid="match-pairs-board" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {[0, 1].map((side) => (
+                    <div key={side} style={{ display: "grid", gap: 10, alignContent: "start" }}>
+                      {(side === 0 ? matchGame.left : matchGame.right).map((item) => {
+                        const isMatched = (matchGame.matched || []).includes(item.id);
+                        const isSel = matchGame.sel && matchGame.sel.side === side && matchGame.sel.id === item.id;
+                        const wrong = matchGame.lastWrong;
+                        const isWrong = matchGame.miss && wrong && ((wrong.a.side === side && wrong.a.id === item.id) || (wrong.b.side === side && wrong.b.id === item.id));
+                        return (
+                          <button key={`${side}-${item.id}`} type="button" className="choice-card"
+                            data-testid={side === 0 ? `match-tile-left-${item.id}` : `match-tile-right-${item.id}`}
+                            disabled={isMatched || matchGame.done}
+                            onClick={() => onMatchPracticeTap(side, item.id)}
+                            style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : isSel ? "#DDF4FF" : "#fff", borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? D.okText : isWrong ? D.badText : isSel ? D.blueDark : D.ink, opacity: isMatched ? 0.55 : 1 }}>
+                            {item.t}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
               </>
             )}
           </div>
