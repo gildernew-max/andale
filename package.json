@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node src/flashDeck.test.js && node src/schema.test.js && node src/content.test.js && vitest run"
+    "test": "node src/flashDeck.test.js && node src/schema.test.js && node src/content.test.js && node src/matchPairs.test.js && vitest run"
   },
   "dependencies": {
     "react": "^19.1.1",
