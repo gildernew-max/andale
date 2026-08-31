@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (match-pairs rematch XP lock)
+
+**What changed**
+- This is the **rematch XP lock**, not a new game. `startMatchPairs` no longer clears the `match` award lock, so Otra ronda cannot pay another +4.
+- Flow test: first round +4, rematch +0, total 4. Lesson / flashcards / gems / hearts / Camino / coaches / speech untouched.
+
+**Why**
+- Hand rejected the Emparejar tick on live 645c3cb: Otra ronda farmed +4 per rematch.
+
 ## 2026-08-31 (match-pairs in Práctica)
 
 **What changed**
