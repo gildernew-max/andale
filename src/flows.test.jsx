@@ -3,7 +3,7 @@
  * (src/content.test.js) and not the save/LIVE schema lock (src/schema.test.js).
  */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 
@@ -158,15 +158,18 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
     await user.click(openers[openers.length - 1]);
-    await waitFor(() => expect(screen.getByText(/cempasúchil/)).toBeTruthy());
-    await user.click(screen.getByText(/cempasúchil/));
+    await waitFor(() => expect(screen.getAllByText(/cempasúchil/).length).toBeGreaterThan(0));
+    const storyWord = [...document.querySelectorAll("span")].find((el) =>
+      el.textContent === "cempasúchil" && el.style.cursor === "pointer");
+    expect(storyWord).toBeTruthy();
+    await user.click(storyWord);
     await waitFor(() => expect(screen.getByText(/Mexican marigold/i)).toBeTruthy());
     expect(document.body.textContent).not.toMatch(/definición pendiente|definition coming soon/i);
   });
 
   it("section test-out starts from Camino and fails closed after 3 misses (failKind === test)", async () => {
     const user = await boot();
-    await user.click(screen.getByTitle(/Examen de la sección|Section test/));
+    await user.click(screen.getAllByTitle(/Examen de la sección|Section test/)[0]);
     await waitFor(() => {
       expect(screen.getByTestId("lesson-exit")).toBeTruthy();
       expect(screen.getByText(/EXAMEN/)).toBeTruthy();
