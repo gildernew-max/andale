@@ -202,7 +202,20 @@ for (const m of MISSIONS) {
   assert(m.storyId && storyIds.has(m.storyId), `${m.id}: storyId ${m.storyId}`);
 }
 
+assert(UNITS[0]?.id === "subj1" && UNITS[0]?.title === "Subjuntivo presente", "first path unit stays Subjuntivo presente");
+assert(SECTIONS[0]?.unitIds?.[0] === "subj1", "Camino first unit stays Subjuntivo");
+
 assert(Array.isArray(TODAY_SCENES) && TODAY_SCENES.length > 0, "TODAY_SCENES missing");
+const hoy = TODAY_SCENES[0];
+assert(hoy.city === "San Miguel", "Hoy card city must be San Miguel");
+assert(hoy.title === "Noche de faroles", "Hoy card title must be Noche de faroles");
+assert(hoy.titleEn === "Night of lanterns", "Hoy card titleEn must be Night of lanterns");
+assert(hoy.setup === "La plaza se llena de faroles y nadie tiene prisa.", "Hoy card setup lock");
+assert(hoy.setupEn === "The plaza fills with lanterns and nobody is in a hurry.", "Hoy card setupEn lock");
+const hoyCopy = [hoy.title, hoy.titleEn, hoy.city, hoy.setup, hoy.setupEn, hoy.line, hoy.question, hoy.questionEn].join("\n");
+assert(!/parroquia/i.test(hoyCopy), "Hoy card must not mention parroquia");
+const appSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "App.jsx"), "utf8");
+assert(appSrc.includes("stills/sma-lanterns.png"), "Hoy card still stays sma-lanterns.png");
 const sceneIds = new Set();
 for (const sc of TODAY_SCENES) {
   assert(sc.id && typeof sc.id === "string", "scene missing id");

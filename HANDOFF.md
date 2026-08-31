@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (Hoy en México lantern line)
+
+**What changed**
+- Hoy en México line is San Miguel / Noche de faroles, still matches. Path still Subjuntivo.
+- Existing TODAY scene city/title/setup (+ titleEn/setupEn): San Miguel, Noche de faroles / Night of lanterns, La plaza se llena de faroles y nadie tiene prisa. / The plaza fills with lanterns and nobody is in a hurry.
+- `sma-lanterns.png` stays on the card. No parroquia. No SMA-life curriculum. UNITS / first-path unit / Subjuntivo presente untouched.
+
+**Why**
+- PR 40 put the lantern still on the card while the line was still CDMX / Taquería sin miedo. Still and copy must match.
+
 ## 2026-08-31 (Hoy en México lantern still)
 
 **What changed**
