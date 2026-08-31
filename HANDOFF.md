@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (Hoy en México lantern still)
+
+**What changed**
+- This is the **Hoy en México lantern still**, not match-pairs and not a test lock.
+- No face's SMA street PNG is `public/stills/sma-lanterns.png`, shown as the still on the existing Camino first-screen Hoy en México card. Served as `${import.meta.env.BASE_URL}stills/sma-lanterns.png` so Pages `/andale/` does not 404.
+- CoachPortrait / mascot / coach PNGs, Subjuntivo, enroll, Camino nodes, unit titles, SMA-life curriculum, XP, speech, match-pairs, schema, Nunito, privacy, Apple wrap untouched.
+- `pages.yml` smoke also GETs the still (one-line add next to luna + axolotl).
+
+**Why**
+- First-screen card did not feel like Mexico. Same card; Mexican still.
+
 ## 2026-08-31 (match-pairs rematch XP lock)
 
 **What changed**
