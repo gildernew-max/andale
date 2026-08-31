@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (schema test lock)
+
+**What changed**
+- `acceptProgress` / `acceptLive` / `CONTENT_VERSION` moved to `src/schema.js` (same rules as ff7ad10). `src/schema.test.js` now locks: save without `contentVersion` is kept and stamped 2; shapeless or lesson-without-`questions` LIVE/progress stays home (no throw). `npm test` runs flashDeck + schema.
+- Confirmed no service worker: no `navigator.serviceWorker.register`, no `public/sw.js`. Test fails if one is added. No SW added.
+- Curriculum, match-pairs, XP, speech, coaches, Camino copy untouched.
+
+**Why**
+- Hand checklist still had Schema test OPEN after the corrupt-save ship. Behavior was in App.jsx with no `src/*.test.js` Hand can tick.
+
 ## 2026-08-31 (Camino shortcuts: four names)
 
 **What changed**
