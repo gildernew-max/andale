@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
+import { CONTENT_VERSION, acceptProgress, acceptLive } from "./schema.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -115,26 +116,6 @@ const writeLive = (payload) => {
    Question types: mc | type | order | listen | transform | match
    (match is auto-generated from each unit's `pairs`).
    ============================================================ */
-
-const CONTENT_VERSION = 2;
-
-const isPlainObject = (v) => !!v && typeof v === "object" && !Array.isArray(v);
-
-// After parse: keep a real progress object. Missing contentVersion is the
-// live-user migrate (stamp 2). Present-but-unreadable versions wipe to defaults.
-const acceptProgress = (parsed) => {
-  if (!isPlainObject(parsed)) return null;
-  if (parsed.contentVersion == null) return { ...parsed, contentVersion: CONTENT_VERSION };
-  if (parsed.contentVersion !== CONTENT_VERSION) return null;
-  return parsed;
-};
-
-// LIVE restore: object required; lesson needs session.questions[].
-const acceptLive = (parsed) => {
-  if (!isPlainObject(parsed)) return null;
-  if (parsed.screen === "lesson" && !Array.isArray(parsed.session?.questions)) return null;
-  return parsed;
-};
 
 /* ---------------- CONTENT (88 exercises + match pairs) ---------------- */
 
