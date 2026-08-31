@@ -188,7 +188,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(progressXp() - 42).toBe(4));
     await user.click(screen.getByTestId("match-pairs-again"));
     await playMatchRound(user);
-    expect(progressXp() - 42).toBe(4);
+    await waitFor(() => expect(progressXp() - 42).toBe(4));
   });
 
   it("opens story-0 from Lectura, taps a word, and leaves no definición pendiente", async () => {

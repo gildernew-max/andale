@@ -3704,7 +3704,6 @@ export default function App() {
   };
 
   const onMatchPracticeTap = (side, id) => {
-    let finishing = false;
     setMatchGame((cur) => {
       if (!cur || cur.done) return cur;
       const next = applyMatchPick(cur, side, id);
@@ -3714,10 +3713,9 @@ export default function App() {
         return next;
       }
       if (next.matched?.length > (cur.matched?.length || 0)) beep("ok");
-      if (next.done && !cur.done) finishing = true;
+      if (next.done && !cur.done) queueMicrotask(() => finishMatchPairs());
       return next;
     });
-    if (finishing) finishMatchPairs();
   };
 
   const finishMatchPairs = () => {
