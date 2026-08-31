@@ -5074,8 +5074,8 @@ export default function App() {
             });
           })()}
 
-	          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginTop: 30 }}>
-	            {["luna", "rafa", "valeria"].map((id) => (
+	          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 30 }}>
+	            {["luna", "rafa", "valeria", "diego"].map((id) => (
 	              <div key={id} className="pop" style={{ border: `2px solid ${COACHES[id].color}`, borderBottom: `4px solid ${COACHES[id].dark}`, borderRadius: 14, padding: "9px 6px", textAlign: "center", background: D.card }}>
 	                <CoachPortrait id={id} mood="happy" size={64} />
 	                <div style={{ fontWeight: 900, fontSize: 12 }}>{COACHES[id].name}</div>
