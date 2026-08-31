@@ -7,14 +7,19 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node src/flashDeck.test.js && node src/schema.test.js && node src/content.test.js"
+    "test": "node src/flashDeck.test.js && node src/schema.test.js && node src/content.test.js && vitest run"
   },
   "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.6",
     "@vitejs/plugin-react": "^4.7.0",
-    "vite": "^6.3.5"
+    "jsdom": "^29.1.1",
+    "vite": "^6.3.5",
+    "vitest": "^4.1.11"
   }
 }

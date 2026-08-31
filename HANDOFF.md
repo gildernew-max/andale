@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (simulated learner flows)
+
+**What changed**
+- This is **simulated learner flows** (issue 5 #4), not the content-schema lock (`src/content.test.js` / 18 units / 198 questions) and not the save/LIVE schema lock (`src/schema.test.js`).
+- `src/flows.test.jsx` (jsdom + RTL, no Playwright): boot → Camino → start `subj1` → one MC → `andale-v3` JSON progress kept (no wipe); tab nav via `nav-*`; Práctica → Safe-or-Risky (`data-testid="safe-risky-start"`); Lectura → `story-0` word tap, no leftover “definición pendiente”; section test-out starts and fails closed after 3 misses (`failKind === "test"`).
+- Featured Práctica Safe-or-Risky button now carries `data-testid="safe-risky-start"` (the juegos-hub copy was unreachable). `npm test` still runs flashDeck + schema + content, then vitest. XP / speech / coaches / Camino copy / match-pairs / flashcards / Nunito / privacy / SW / UNITS untouched.
+
+**Why**
+- Wed 9/2 remaining-flow lock. Tests fail if `nav-perfil` is missing or Safe-or-Risky does not start from Práctica.
+
 ## 2026-08-31 (UNITS/SECTIONS content-schema lock)
 
 **What changed**
