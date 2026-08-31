@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-08-31 (Spanish coach job titles)
+
+**What changed**
+- Learner-facing `COACHES.role` for Luna / Rafa / Valeria: `Daily coach` → `Coach del día`, `Story mentor` → `Mentor de cuentos`, `Precision coach` → `Coach de precisión`. Same jobs, Spanish.
+- Diego stays `Dialogue rival`. No face has not locked a Spanish line. Do not ship George's "Rival".
+- Portraits, PNGs, names, XP, speech/Paulina, Camino layout, Nunito, schema, privacy/support, flashcards untouched.
+
+**Why**
+- Locked copy (No face / George / Hand, 2026-08-30, after Apple). Pulled forward while Apple case 20000152539159 waits.
+
 ## 2026-08-30 (Camino Spanish titles)
 
 **What changed**

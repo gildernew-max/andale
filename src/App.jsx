@@ -985,9 +985,9 @@ const answerAidFor = (q) => {
    ============================================================ */
 
 const COACHES = {
-  luna:    { name: "Luna",     role: "Daily coach",     color: "#58CC02", dark: "#46A302", skin: "#C98B63", skinSh: "#B07A52", hair: "#2A2730", hairSh: "#1C1A22", accent: "#FF4F8B" },
-  rafa:    { name: "Don Rafa", role: "Story mentor",    color: "#1CB0F6", dark: "#1899D6", skin: "#B87448", skinSh: "#9C5E36", hair: "#EDE7DA", hairSh: "#CFC6B4", accent: "#1CB0F6" },
-  valeria: { name: "Valeria",  role: "Precision coach", color: "#CE82FF", dark: "#A567CC", skin: "#D9A071", skinSh: "#C08555", hair: "#33222B", hairSh: "#241820", accent: "#CE82FF" },
+  luna:    { name: "Luna",     role: "Coach del día",      color: "#58CC02", dark: "#46A302", skin: "#C98B63", skinSh: "#B07A52", hair: "#2A2730", hairSh: "#1C1A22", accent: "#FF4F8B" },
+  rafa:    { name: "Don Rafa", role: "Mentor de cuentos",  color: "#1CB0F6", dark: "#1899D6", skin: "#B87448", skinSh: "#9C5E36", hair: "#EDE7DA", hairSh: "#CFC6B4", accent: "#1CB0F6" },
+  valeria: { name: "Valeria",  role: "Coach de precisión", color: "#CE82FF", dark: "#A567CC", skin: "#D9A071", skinSh: "#C08555", hair: "#33222B", hairSh: "#241820", accent: "#CE82FF" },
   diego:   { name: "Diego",    role: "Dialogue rival",  color: "#FF9600", dark: "#D97F00", skin: "#A96A43", skinSh: "#8E5634", hair: "#1B1B1B", hairSh: "#0D0D0D", accent: "#FF4B4B" },
 };
 
