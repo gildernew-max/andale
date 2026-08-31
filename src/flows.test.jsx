@@ -153,14 +153,8 @@ describe("simulated learner flows", () => {
     });
   });
 
-  it("starts match-pairs from Práctica and finishes a finite round", async () => {
-    const user = await boot();
-    await user.click(screen.getByTestId("nav-practica"));
-    const start = screen.getByTestId("match-pairs-start");
-    expect(start).toBeTruthy();
-    await user.click(start);
+  const playMatchRound = async (user) => {
     await waitFor(() => expect(screen.getByTestId("match-pairs-board")).toBeTruthy());
-
     const lefts = [...document.querySelectorAll("[data-testid^='match-tile-left-']")];
     expect(lefts.length).toBeGreaterThan(1);
     for (const el of lefts) {
@@ -168,12 +162,33 @@ describe("simulated learner flows", () => {
       await user.click(el);
       await user.click(screen.getByTestId(`match-tile-right-${id}`));
     }
-
     await waitFor(() => expect(screen.getByTestId("match-pairs-done")).toBeTruthy());
+  };
+
+  const progressXp = () => JSON.parse(localStorage.getItem(STORAGE_KEY)).xp;
+
+  it("starts match-pairs from Práctica and finishes a finite round", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    const start = screen.getByTestId("match-pairs-start");
+    expect(start).toBeTruthy();
+    await user.click(start);
+    await playMatchRound(user);
     expect(screen.queryByTestId("match-pairs-board")).toBeNull();
     expect(screen.getByText(/¡Ronda terminada!|Round complete/)).toBeTruthy();
     await user.click(screen.getByTestId("match-pairs-back"));
     await waitFor(() => expect(screen.getByTestId("match-pairs-start")).toBeTruthy());
+  });
+
+  it("match-pairs rematch keeps XP at 4 (first +4, Otra ronda +0)", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("match-pairs-start"));
+    await playMatchRound(user);
+    await waitFor(() => expect(progressXp() - 42).toBe(4));
+    await user.click(screen.getByTestId("match-pairs-again"));
+    await playMatchRound(user);
+    expect(progressXp() - 42).toBe(4);
   });
 
   it("opens story-0 from Lectura, taps a word, and leaves no definición pendiente", async () => {

@@ -3697,7 +3697,8 @@ export default function App() {
   const startMatchPairs = () => {
     const pairs = buildMatchRound(prog, UNITS, MATCH_ROUND_CAP);
     if (pairs.length < 2) return;
-    awardLockRef.current.delete("match");
+    // Keep the match award lock across Otra ronda / rematch. Clearing it
+    // paid another +4 every replay (Hand, live 645c3cb).
     setMatchGame(startMatchRun(pairs));
     setScreen("matchPairs");
   };
@@ -6715,7 +6716,7 @@ export default function App() {
                   {uiLang === "en" ? `You matched ${n} pairs.` : `Emparejaste ${n} parejas.`}
                   {matchGame.xp ? ` · +${matchGame.xp} XP` : ""}
                 </p>
-                <Btn color={D.blue} dark={D.blueDark} onClick={startMatchPairs}>{uiLang === "en" ? "Another round" : "Otra ronda"}</Btn>
+                <Btn color={D.blue} dark={D.blueDark} data-testid="match-pairs-again" onClick={startMatchPairs}>{uiLang === "en" ? "Another round" : "Otra ronda"}</Btn>
                 <Btn outline data-testid="match-pairs-back" onClick={goPractica} style={{ marginLeft: 10 }}>{L.practice}</Btn>
               </div>
             ) : (
