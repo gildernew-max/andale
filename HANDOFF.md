@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-01 (Workout hardcodes → Rutina diaria)
+
+**What changed**
+- Workout hardcodes → Rutina diaria / Daily workout via L.
+- Práctica → Mapa de debilidades CTA and Perfil Luna coach CTA use `L.dailyWorkout` (`Rutina diaria` / `Daily workout`). Same copy Camino already shows live. Not `Workout` / `Workout diario`.
+- `L.workoutToday` stays session title (`Rutina de hoy` / `Today's workout`). Camino tree / Subjuntivo / Rayo ON/OFF / enroll / JEOPARDY SOLO / flashDone untouched.
+
+**Why**
+- Live hole hunt on c5e2230: leftover English chrome on those two CTAs.
+
 ## 2026-09-01 (optional ESLint on PR CI)
 
 **What changed**
