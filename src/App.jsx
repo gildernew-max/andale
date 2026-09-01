@@ -2920,7 +2920,7 @@ const GRAMMAR_GUIDES = {
 const UI = {
   es: {
     camino: "Camino", missions: "Misiones", reading: "Lectura", practice: "Práctica", games: "Juegos", cards: "Tarjetas", profile: "Perfil",
-    goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina completada", workoutToday: "Rutina de hoy",
+    goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina completada", workoutToday: "Rutina de hoy", dailyWorkout: "Rutina diaria",
     workoutDesc: "5 retos: escucha, trampa gramatical, mexicanismo, repaso y lectura.", play: "Jugar", repeat: "Repetir",
     sectionSkills: "habilidades + cofre", skip: "SALTAR", start: "EMPIEZA", claimed: "Reclamado", chest: "Cofre", openMe: "¡Ábreme!",
     storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4.",
@@ -2954,7 +2954,7 @@ const UI = {
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
-    goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Workout complete", workoutToday: "Today's workout",
+    goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Workout complete", workoutToday: "Today's workout", dailyWorkout: "Daily workout",
     workoutDesc: "5 challenges: listening, grammar trap, Mexicanism, review, and reading.", play: "Play", repeat: "Repeat",
     sectionSkills: "skills + chest", skip: "SKIP", start: "START", claimed: "Claimed", chest: "Chest", openMe: "Open me!",
     storyPrefix: "Story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
@@ -5485,7 +5485,7 @@ export default function App() {
 	              <div style={{ fontSize: 13, fontWeight: 800, color: D.sub }}>{L.noPatterns}</div>
             )}
             <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-              <Btn color={D.gold} dark={D.goldDark} onClick={startDailyWorkout} style={{ padding: "9px 12px", fontSize: 11 }}>Workout</Btn>
+              <Btn color={D.gold} dark={D.goldDark} data-testid="weakness-workout" onClick={startDailyWorkout} style={{ padding: "9px 12px", fontSize: 11 }}>{L.dailyWorkout}</Btn>
 	              {trackedCount > 0 && <Btn outline onClick={() => startReview(true)} style={{ padding: "9px 12px", fontSize: 11 }}>{L.adaptiveReview}</Btn>}
             </div>
           </div>
@@ -5751,7 +5751,7 @@ export default function App() {
           <h3 style={{ fontWeight: 900, fontSize: 16, margin: "24px 0 10px" }}>{uiLang === "en" ? "Your coaches" : "Tus coaches"}</h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 4 }}>
             {[
-              { id: "luna", n: prog.coachStats?.luna || 0, act: () => startDailyWorkout(), cta: uiLang === "en" ? "Daily workout" : "Workout diario" },
+              { id: "luna", n: prog.coachStats?.luna || 0, act: () => startDailyWorkout(), cta: L.dailyWorkout },
               { id: "valeria", n: prog.coachStats?.valeria || 0, act: () => startReview(true), cta: uiLang === "en" ? "Review" : "Repasar" },
               { id: "rafa", n: prog.coachStats?.rafa || 0, act: () => setTab("lectura"), cta: uiLang === "en" ? "Stories" : "Cuentos" },
               { id: "diego", n: prog.coachStats?.diego || 0, act: () => setTab("misiones"), cta: uiLang === "en" ? "Duel" : "Duelo" },
@@ -5761,7 +5761,7 @@ export default function App() {
                 <CoachPortrait id={cc.id} mood="happy" size={56} />
                 <div style={{ fontWeight: 900, fontSize: 13 }}>{COACHES[cc.id].name}</div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{cc.n} {uiLang === "en" ? (cc.n === 1 ? "session" : "sessions") : (cc.n === 1 ? "sesión" : "sesiones")}</div>
-                <div style={{ fontSize: 11.5, fontWeight: 900, color: D.greenDark, background: D.greenBg, border: `1.5px solid ${D.green}`, borderRadius: 99, padding: "2px 10px", marginTop: 2 }}>{cc.cta} →</div>
+                <div data-testid={`coach-cta-${cc.id}`} style={{ fontSize: 11.5, fontWeight: 900, color: D.greenDark, background: D.greenBg, border: `1.5px solid ${D.green}`, borderRadius: 99, padding: "2px 10px", marginTop: 2 }}>{cc.cta} →</div>
               </button>
             ))}
           </div>
