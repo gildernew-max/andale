@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-01 (one language switch, splash duplicate gone)
+
+**What changed**
+- Splash no longer has the bottom Español / English dump. Header `ES | EN` is the only language control on splash (chrome sits above the overlay). Perfil persist control stays in Perfil.
+- Splash copy follows `prog.uiLang`. `langDraft` removed. Flow test: splash has `lang-toggle`; visible Español/English buttons fail.
+
+**Why**
+- No face: one switch. Header chrome ticked; splash duplicate had to go.
+
 ## 2026-09-01 (ES|EN top right, same persist as Perfil)
 
 **What changed**
