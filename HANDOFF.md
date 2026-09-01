@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-01 (optional ESLint on PR CI)
+
+**What changed**
+- Optional lint (issue 5 remainder). `eslint` + `eslint-plugin-react-hooks` + `globals`; `eslint.config.js` flat config. `package.json` script `lint`.
+- CI: after `npm ci`, `npm run lint` then `npm test` then `npm run build`. ubuntu-latest only.
+- Errors: `react-hooks/rules-of-hooks`, `no-undef`. `exhaustive-deps` is warn. No style/recommended/compiler-hook presets — App.jsx not rewritten.
+- XP, speech, coaches, Camino tree, Subjuntivo, Hoy, Emparejar, ES|EN, chrome copy untouched.
+
+**Why**
+- Hand/Little Man: Wed lock is optional lint, not more learner flows. ES/EN chrome leftover Deck already locked live.
+
 ## 2026-09-01 (EN done-deck line)
 
 **What changed**

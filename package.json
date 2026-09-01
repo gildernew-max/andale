@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "lint": "eslint .",
     "test": "node src/flashDeck.test.js && node src/schema.test.js && node src/content.test.js && node src/matchPairs.test.js && vitest run"
   },
   "dependencies": {
@@ -18,6 +19,9 @@
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.6",
     "@vitejs/plugin-react": "^4.7.0",
+    "eslint": "^10.9.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
     "jsdom": "^29.1.1",
     "vite": "^6.3.5",
     "vitest": "^4.1.11"
