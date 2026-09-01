@@ -252,10 +252,13 @@ assert(UI.es.flashTitle === "Tarjetas", "UI.es.flashTitle");
 assert(UI.es.saveCard === "Guardar tarjeta", "UI.es.saveCard");
 assert(UI.es.emptyDeck === "No hay tarjetas", "UI.es.emptyDeck");
 assert(UI.es.inDeck === "Ya guardada", "UI.es.inDeck");
+assert(UI.es.flashDone === "¡Terminaste las tarjetas!", "UI.es.flashDone");
+assert(UI.en.flashDone === "Deck complete!", "UI.en.flashDone");
+assert(!/Deck|listas/i.test(UI.es.flashDone), "ES done-deck is not Deck / listas");
 assert(UI.es.shortcuts === "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4.", "UI.es.shortcuts");
 assert(UI.es.on === "ON" && UI.es.off === "OFF", "Rayo stays ON/OFF, not SÍ/NO");
 assert(UI.es.on !== "SÍ" && UI.es.off !== "NO", "Rayo on/off is not SÍ/NO");
-assert(!/Flashcards|DIÁLOGO DUEL/.test([UI.es.cards, UI.es.flashTitle, UI.es.dialogueDuel, UI.es.duel, UI.es.saveCard, UI.es.emptyDeck].join("\n")), "ES chrome leftover English");
+assert(!/Flashcards|DIÁLOGO DUEL|Deck terminado/.test([UI.es.cards, UI.es.flashTitle, UI.es.dialogueDuel, UI.es.duel, UI.es.saveCard, UI.es.emptyDeck, UI.es.flashDone].join("\n")), "ES chrome leftover English");
 
 const qCount = UNITS.reduce((n, u) => n + u.questions.length, 0);
 console.log(`ok: content schema — ${UNITS.length} units / ${qCount} questions after prepQuestion; ${SECTIONS.length} sections; FLAT ${FLAT.length}; ${STORIES.length} stories (story-0); ${MISSIONS.length} missions; ${TODAY_SCENES.length} today scenes`);

@@ -2935,7 +2935,7 @@ const UI = {
     flashTitle: "Tarjetas", saved: "guardadas", ready: "listas para practicar", emptyDeck: "No hay tarjetas",
     emptyDeckDesc: "Abre un cuento, toca una palabra y guárdala con su frase de contexto.", goReading: "Ir a lectura",
     dueReview: "REPASO VENCIDO", ahead: "ADELANTO", tapReveal: "Toca para revelar", again: "Otra vez", hard: "Difícil", good: "Bien", easy: "Fácil", reveal: "Revelar", today: "hoy",
-    flashDone: "¡Deck terminado!", flashDoneDesc: "Repasaste", flashCardsWord: "tarjetas", flashAgain: "Otra ronda", flashOf: "de",
+    flashDone: "¡Terminaste las tarjetas!", flashDoneDesc: "Repasaste", flashCardsWord: "tarjetas", flashAgain: "Otra ronda", flashOf: "de",
     profileTitle: "Tu perfil", profileSub: "Español (México) · intermedio-avanzado", level: "Nivel", maxLevel: "Nivel máximo.", xpTo: "XP para",
     streakDays: "días de racha", totalXp: "XP total", crowns: "coronas", gems: "gemas", reviewsStat: "repasos hoy / en seguimiento", perfectLessons: "lecciones impecables",
     achievements: "Logros", firstStep: "Primer paso", firstStepDesc: "Completa una lección", century: "Centenario", centuryDesc: "Gana 100 XP",
