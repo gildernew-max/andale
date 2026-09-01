@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-01 (EN dailyWorkout = Daily routine)
+
+**What changed**
+- EN dailyWorkout = Daily routine.
+- `UI.en.dailyWorkout` is `Daily routine` (not `Daily workout`). ES stays `Rutina diaria`.
+- Práctica Mapa de debilidades CTA and Perfil Luna CTA still use `L.dailyWorkout`. `L.workoutToday` stays session title (`Rutina de hoy` / `Today's workout`).
+- Test: UI.en.dailyWorkout locked to Daily routine; live CTAs show Daily routine / Rutina diaria. Camino tree, Subjuntivo, Rayo ON/OFF, enroll, JEOPARDY SOLO untouched.
+
+**Why**
+- No face brand lock. Daily-workout CTAs are a routine, not a workout.
+
 ## 2026-09-01 (Workout hardcodes → Rutina diaria)
 
 **What changed**

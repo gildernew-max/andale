@@ -314,7 +314,7 @@ describe("simulated learner flows", () => {
     expect(rayoEn.textContent).not.toMatch(/SÍ|NO/);
   });
 
-  it("Práctica weakness CTA and Perfil Luna CTA use Rutina diaria / Daily workout", async () => {
+  it("Práctica weakness CTA and Perfil Luna CTA use Rutina diaria / Daily routine", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-practica"));
     await waitFor(() => expect(screen.getByText("Mapa de debilidades")).toBeTruthy());
@@ -331,9 +331,9 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true"));
     await user.click(screen.getByTestId("nav-practica"));
     await waitFor(() => expect(screen.getByText("Weakness map")).toBeTruthy());
-    expect(screen.getByTestId("weakness-workout").textContent).toBe("Daily workout");
+    expect(screen.getByTestId("weakness-workout").textContent).toBe("Daily routine");
     await user.click(screen.getByTestId("nav-perfil"));
-    expect(screen.getByTestId("coach-cta-luna").textContent).toMatch(/Daily workout/);
+    expect(screen.getByTestId("coach-cta-luna").textContent).toMatch(/Daily routine/);
     expect(screen.getByTestId("coach-cta-luna").textContent).not.toMatch(/Workout diario/);
   });
 
