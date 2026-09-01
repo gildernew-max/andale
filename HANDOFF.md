@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-01 (No Workout leftovers; Routine family)
+
+**What changed**
+- No Workout leftovers; EN Routine done / Today's routine; ES Rutina hecha / Rutina de hoy.
+- Camino hero done-state uses `L.workoutDone` (`Routine done` / `Rutina hecha`). Session title `L.workoutToday` is `Today's routine` / `Rutina de hoy`. Same family as `L.dailyWorkout` (`Daily routine` / `Rutina diaria`).
+- EN greeting Luna line is `daily routine` (not daily workout). JEOPARDY SOLO stays a loan. Rayo ON/OFF stays. Camino tree / Subjuntivo / enroll untouched.
+
+**Why**
+- George + No face brand lock. Daily-workout chrome is a routine, not a workout. Live hole: done-state still said Workout done / workoutDone was Workout complete; session title was Today's workout.
+
 ## 2026-09-01 (Camino hero secondary = L.dailyWorkout)
 
 **What changed**

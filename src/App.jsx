@@ -1648,7 +1648,7 @@ const GREETINGS = {
   ],
   en: [
     "Build real Mexican Spanish through stories, challenges, and sharp feedback.",
-    "Luna has your daily workout ready.",
+    "Luna has your daily routine ready.",
     "Don Rafa saved you a story with words worth keeping.",
     "Valeria says precision is a kindness.",
     "Five minutes. Real Spanish. No tourist mode.",
@@ -2920,7 +2920,7 @@ const GRAMMAR_GUIDES = {
 const UI = {
   es: {
     camino: "Camino", missions: "Misiones", reading: "Lectura", practice: "Práctica", games: "Juegos", cards: "Tarjetas", profile: "Perfil",
-    goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina completada", workoutToday: "Rutina de hoy", dailyWorkout: "Rutina diaria",
+    goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina hecha", workoutToday: "Rutina de hoy", dailyWorkout: "Rutina diaria",
     workoutDesc: "5 retos: escucha, trampa gramatical, mexicanismo, repaso y lectura.", play: "Jugar", repeat: "Repetir",
     sectionSkills: "habilidades + cofre", skip: "SALTAR", start: "EMPIEZA", claimed: "Reclamado", chest: "Cofre", openMe: "¡Ábreme!",
     storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4.",
@@ -2954,7 +2954,7 @@ const UI = {
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
-    goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Workout complete", workoutToday: "Today's workout", dailyWorkout: "Daily routine",
+    goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Routine done", workoutToday: "Today's routine", dailyWorkout: "Daily routine",
     workoutDesc: "5 challenges: listening, grammar trap, Mexicanism, review, and reading.", play: "Play", repeat: "Repeat",
     sectionSkills: "skills + chest", skip: "SKIP", start: "START", claimed: "Claimed", chest: "Chest", openMe: "Open me!",
     storyPrefix: "Story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
@@ -4935,7 +4935,7 @@ export default function App() {
             };
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone
-              ? (uiLang === "en" ? "Workout done" : "Rutina hecha")
+              ? L.workoutDone
               : L.dailyWorkout;
             return (
               <div style={{ margin: "14px 0 18px" }}>
