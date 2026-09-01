@@ -1638,13 +1638,22 @@ const VOICES = {
   },
 };
 
-const GREETINGS = [
-  "Build real Mexican Spanish through stories, challenges, and sharp feedback.",
-  "Luna has your daily workout ready.",
-  "Don Rafa saved you a story with words worth keeping.",
-  "Valeria says precision is a kindness.",
-  "Five minutes. Real Spanish. No tourist mode.",
-];
+const GREETINGS = {
+  es: [
+    "Español mexicano real: cuentos, misiones y un empujón que pega.",
+    "Luna ya tiene tu rutina de hoy.",
+    "Don Rafa te guardó un cuento con palabras que valen.",
+    "Valeria dice que la precisión es un gesto de cariño.",
+    "Cinco minutos. Español de verdad. Nada de turista.",
+  ],
+  en: [
+    "Build real Mexican Spanish through stories, challenges, and sharp feedback.",
+    "Luna has your daily workout ready.",
+    "Don Rafa saved you a story with words worth keeping.",
+    "Valeria says precision is a kindness.",
+    "Five minutes. Real Spanish. No tourist mode.",
+  ],
+};
 
 const UNIT_INTROS = {
   subj1: "El subjuntivo no muerde. Bueno… casi nunca. ¡Échale!",
@@ -2910,20 +2919,20 @@ const GRAMMAR_GUIDES = {
 
 const UI = {
   es: {
-    camino: "Camino", missions: "Misiones", reading: "Lectura", practice: "Práctica", games: "Juegos", cards: "Cards", profile: "Perfil",
+    camino: "Camino", missions: "Misiones", reading: "Lectura", practice: "Práctica", games: "Juegos", cards: "Tarjetas", profile: "Perfil",
     goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina completada", workoutToday: "Rutina de hoy",
     workoutDesc: "5 retos: escucha, trampa gramatical, mexicanismo, repaso y lectura.", play: "Jugar", repeat: "Repetir",
     sectionSkills: "habilidades + cofre", skip: "SALTAR", start: "EMPIEZA", claimed: "Reclamado", chest: "Cofre", openMe: "¡Ábreme!",
-    storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
+    storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4.",
     missionsTitle: "Misiones", missionsDesc: "Situaciones reales con mezcla de gramática, oído y tono.", enter: "Entrar",
-    dialogueDuel: "DIÁLOGO DUEL", best: "mejor marca", duel: "Duelar",
+    dialogueDuel: "DUELO", best: "mejor marca", duel: "Duelo",
     library: "Biblioteca", storiesClaimed: "cuentos reclamados · lectura sin vidas", paragraphs: "párrafos · toca palabras · audio por párrafo",
     practiceTitle: "Práctica", dueToday: "para repasar hoy", tracked: "en seguimiento", practiceFree: "El repaso no cuesta vidas — y te regresa", reviewToday: "Repasar hoy",
     memory: "Memoria programada (SM-2): lo difícil vuelve pronto, lo dominado se aleja y se gradúa a los", noDue: "Nada vence hoy — la memoria está trabajando sola.",
     nextReview: "próximo repaso", earlyReview: "Adelantar repaso", noErrors: "Sin errores en seguimiento. Ve al camino por más retos.",
     weaknessMap: "Mapa de debilidades", weaknessDesc: "Ándale ajusta esto con tus errores y recuperaciones.", noPatterns: "Todavía no hay patrones claros. Juega una misión o falla con estilo.",
     adaptiveReview: "Repaso adaptivo", lives: "vidas", nextLife: "Próxima vida gratis en", refill: "Rellenar",
-    flashTitle: "Flashcards", saved: "guardadas", ready: "listas para practicar", emptyDeck: "Tu deck está vacío",
+    flashTitle: "Tarjetas", saved: "guardadas", ready: "listas para practicar", emptyDeck: "No hay tarjetas",
     emptyDeckDesc: "Abre un cuento, toca una palabra y guárdala con su frase de contexto.", goReading: "Ir a lectura",
     dueReview: "REPASO VENCIDO", ahead: "ADELANTO", tapReveal: "Toca para revelar", again: "Otra vez", hard: "Difícil", good: "Bien", easy: "Fácil", reveal: "Revelar", today: "hoy",
     flashDone: "¡Deck terminado!", flashDoneDesc: "Repasaste", flashCardsWord: "tarjetas", flashAgain: "Otra ronda", flashOf: "de",
@@ -2937,7 +2946,7 @@ const UI = {
     check: "Comprobar", continue: "Continuar", why: "¿Por qué?", correctAnswer: "Respuesta correcta", yourAnswer: "Tu respuesta", correct: "Correcta",
     focus: "Foco", time: "¡Tiempo!", spelling: "Ojo con la ortografía", matchInstruction: "Toca una pareja en cada columna.", enterCheck: "Enter para comprobar.",
     selfGrade: "¿QUÉ TAN BIEN LO SABÍAS?", storyTip: "Toca cualquier palabra para ver su significado. El audio lee cada párrafo.",
-    comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", claim: "Reclamar", saveCard: "Guardar flashcard", inDeck: "En tu deck",
+    comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
     completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel! Ahora eres",
     hits: "aciertos", misses: "fallos", impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
     testFailed: "Examen no superado", testFailedDesc: "Tres errores — el límite era dos. Tus fallos ya están en Práctica; repásalos y vuelve a intentarlo.",
@@ -3153,7 +3162,7 @@ export default function App() {
   const [levelUp, setLevelUp] = useState(null); // level name reached this lesson
   const [quip, setQuip] = useState(""); // host reaction line for current answer
   const [screenQuip, setScreenQuip] = useState(""); // host line on done/failed screens
-  const greeting = React.useMemo(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)], []);
+  const greetingPick = React.useMemo(() => Math.floor(Math.random() * GREETINGS.es.length), []);
   const [storyView, setStoryView] = useState(null); // active story object
   const [wordSel, setWordSel] = useState(null); // {display, def, note, pi, ti}
   const [wordReveal, setWordReveal] = useState(true);
@@ -4744,6 +4753,8 @@ export default function App() {
   const activeCard = flashRun && !flashRun.done && flashRun.idx < flashDeck.length ? flashDeck[flashRun.idx] : null;
   const uiLang = prog.uiLang === "en" ? "en" : "es";
   const L = UI[uiLang];
+  const greetingPool = GREETINGS[uiLang] || GREETINGS.es;
+  const greeting = greetingPool[greetingPick % greetingPool.length];
   const paulinaVoice = pickPaulina(voices);
   const renderVoiceSelect = () => voices.length > 0 && (
     <select value={prog.voiceName || ""} onChange={(e) => chooseVoice(e.target.value)}
