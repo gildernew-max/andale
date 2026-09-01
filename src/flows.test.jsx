@@ -91,6 +91,11 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: "Subjuntivo presente" }));
     await user.click(screen.getByRole("button", { name: /Empezar/ }));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await waitFor(() => expect(
+      document.querySelector(".choice-card")
+      || document.querySelector("input[placeholder]")
+      || screen.queryAllByTestId("bank-tile").length,
+    ).toBeTruthy());
 
     // Skip non-MC items (shuffle) until a multiple-choice prompt is up.
     for (let i = 0; i < 12 && !document.querySelector(".choice-card"); i++) {
