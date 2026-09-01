@@ -3176,7 +3176,6 @@ export default function App() {
   }, []);
   const [heartsModal, setHeartsModal] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
-  const [langDraft, setLangDraft] = useState(null);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
   const [guideUnit, setGuideUnit] = useState(null);
   const [dialogue, setDialogue] = useState({ idx: 0, score: 0, done: false, log: [] });
@@ -4849,7 +4848,7 @@ export default function App() {
 
       {/* ---------- TOP STAT BAR ---------- */}
       {!inLesson && (
-        <div style={{ position: "sticky", top: 0, zIndex: 10, background: D.card, borderBottom: `2px solid ${D.line}` }}>
+        <div style={{ position: "sticky", top: 0, zIndex: (!prog.welcomed && !(prog.xp > 0) && screen === "home") ? 70 : 10, background: D.card, borderBottom: `2px solid ${D.line}` }}>
           <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
               <LogoMark size={34} />
@@ -5924,24 +5923,16 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}><CoachPortrait id="luna" mood="party" size={130} /></div>
             <div style={{ fontWeight: 900, fontSize: 30, color: D.green, letterSpacing: "-0.02em", marginBottom: 4 }}>¡ándale!</div>
             <div style={{ fontWeight: 800, fontSize: 14.5, color: D.sub, marginBottom: 22, lineHeight: 1.4 }}>
-              {(langDraft || uiLang) === "en" ? "Real Mexican Spanish, past the basics. Stories, challenges, and four coaches." : "Español mexicano real, más allá de lo básico. Cuentos, misiones y cuatro coaches."}
-            </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 18 }}>
-              {[["es", "Español"], ["en", "English"]].map(([code, label]) => (
-                <button key={code} onClick={() => setLangDraft(code)}
-                  style={{ flex: 1, border: `2px solid ${(langDraft || uiLang) === code ? D.green : D.line}`, borderBottom: `4px solid ${(langDraft || uiLang) === code ? D.greenDark : D.line}`, background: (langDraft || uiLang) === code ? "#F3FBEA" : "#fff", color: (langDraft || uiLang) === code ? D.greenDark : D.sub, borderRadius: 14, padding: "11px 0", fontFamily: "inherit", fontWeight: 900, fontSize: 14, cursor: "pointer" }}>
-                  {label}
-                </button>
-              ))}
+              {uiLang === "en" ? "Real Mexican Spanish, past the basics. Stories, challenges, and four coaches." : "Español mexicano real, más allá de lo básico. Cuentos, misiones y cuatro coaches."}
             </div>
             <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={20}
-              placeholder={(langDraft || uiLang) === "en" ? "What should we call you?" : "¿Cómo te llamamos?"}
+              placeholder={uiLang === "en" ? "What should we call you?" : "¿Cómo te llamamos?"}
               style={{ width: "100%", boxSizing: "border-box", border: `2px solid ${D.line}`, borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 15, marginBottom: 16, outline: "none", textAlign: "center" }} />
-            <Btn onClick={() => save({ name: nameDraft.trim(), uiLang: langDraft || uiLang, welcomed: true })} style={{ width: "100%", fontSize: 16 }}>
-              {(langDraft || uiLang) === "en" ? "Let's go!" : "¡Empezar!"}
+            <Btn onClick={() => save({ name: nameDraft.trim(), welcomed: true })} style={{ width: "100%", fontSize: 16 }}>
+              {uiLang === "en" ? "Let's go!" : "¡Empezar!"}
             </Btn>
             <button onClick={() => save({ welcomed: true })} style={{ border: "none", background: "none", color: D.sub, fontWeight: 800, fontSize: 12.5, marginTop: 12, cursor: "pointer", fontFamily: "inherit" }}>
-              {(langDraft || uiLang) === "en" ? "Skip" : "Saltar"}
+              {uiLang === "en" ? "Skip" : "Saltar"}
             </button>
           </div>
         </div>

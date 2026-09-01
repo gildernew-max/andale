@@ -258,6 +258,26 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
   });
 
+  it("splash has only header ES|EN — no Español/English dump", async () => {
+    localStorage.clear();
+    mockBrowser();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lang-toggle")).toBeTruthy());
+    expect(screen.getByText("¡ándale!")).toBeTruthy();
+    expect(screen.getByTestId("lang-es").textContent).toBe("ES");
+    expect(screen.getByTestId("lang-en").textContent).toBe("EN");
+    expect([...document.querySelectorAll("button")].filter((b) =>
+      b.textContent === "Español" || b.textContent === "English")).toHaveLength(0);
+    await waitFor(() => expect(localStorage.getItem(STORAGE_KEY)).toBeTruthy());
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("What should we call you?")).toBeTruthy();
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
+    });
+    expect(screen.getByRole("button", { name: /Let's go!/ })).toBeTruthy();
+  });
+
   it("section test-out starts from Camino and fails closed after 3 misses (failKind === test)", async () => {
     const user = await boot();
     await user.click(screen.getAllByTitle(/Examen de la sección|Section test/)[0]);
