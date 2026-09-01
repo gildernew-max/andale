@@ -316,6 +316,9 @@ describe("simulated learner flows", () => {
 
   it("Práctica weakness CTA and Perfil Luna CTA use Rutina diaria / Daily routine", async () => {
     const user = await boot();
+    const caminoDailyEs = screen.getByTestId("camino-daily-workout");
+    expect(caminoDailyEs.textContent).toMatch(/Rutina diaria/);
+    expect(caminoDailyEs.textContent).not.toMatch(/Daily workout/);
     await user.click(screen.getByTestId("nav-practica"));
     await waitFor(() => expect(screen.getByText("Mapa de debilidades")).toBeTruthy());
     const weaknessEs = screen.getByTestId("weakness-workout");
@@ -335,6 +338,10 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("nav-perfil"));
     expect(screen.getByTestId("coach-cta-luna").textContent).toMatch(/Daily routine/);
     expect(screen.getByTestId("coach-cta-luna").textContent).not.toMatch(/Workout diario/);
+    await user.click(screen.getByTestId("nav-camino"));
+    await waitFor(() => expect(screen.getByTestId("camino-daily-workout")).toBeTruthy());
+    expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Daily routine/);
+    expect(screen.getByTestId("camino-daily-workout").textContent).not.toMatch(/Daily workout/);
   });
 
   it("ES flashcard-done heading is ¡Terminaste las tarjetas!, not Deck", async () => {

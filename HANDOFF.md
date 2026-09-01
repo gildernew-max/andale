@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-01 (Camino hero secondary = L.dailyWorkout)
+
+**What changed**
+- Camino hero secondary uses `L.dailyWorkout`.
+- Incomplete-state label is no longer hardcoded `Daily workout` / `Rutina diaria`. EN is `Daily routine`, ES is `Rutina diaria`.
+- Done-state stays `Workout done` / `Rutina hecha`. `L.workoutToday` stays session title. Camino tree, Subjuntivo, Rayo ON/OFF, enroll, JEOPARDY SOLO untouched.
+
+**Why**
+- Live hole on 6ce80cd / index-BIXCKe3B.js: Práctica + Perfil already used L.dailyWorkout; Camino hero secondary still hardcoded EN Daily workout.
+
 ## 2026-09-01 (EN dailyWorkout = Daily routine)
 
 **What changed**
