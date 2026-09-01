@@ -2954,7 +2954,7 @@ const UI = {
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
-    goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Workout complete", workoutToday: "Today's workout", dailyWorkout: "Daily workout",
+    goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Workout complete", workoutToday: "Today's workout", dailyWorkout: "Daily routine",
     workoutDesc: "5 challenges: listening, grammar trap, Mexicanism, review, and reading.", play: "Play", repeat: "Repeat",
     sectionSkills: "skills + chest", skip: "SKIP", start: "START", claimed: "Claimed", chest: "Chest", openMe: "Open me!",
     storyPrefix: "Story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",

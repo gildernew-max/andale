@@ -257,7 +257,7 @@ assert(UI.en.flashDone === "You finished the cards!", "UI.en.flashDone");
 assert(!/Deck|listas/i.test(UI.es.flashDone), "ES done-deck is not Deck / listas");
 assert(!/Deck/i.test(UI.en.flashDone), "EN done-deck is not Deck");
 assert(UI.es.dailyWorkout === "Rutina diaria", "UI.es.dailyWorkout");
-assert(UI.en.dailyWorkout === "Daily workout", "UI.en.dailyWorkout");
+assert(UI.en.dailyWorkout === "Daily routine", "UI.en.dailyWorkout");
 assert(appSrc.includes("{L.dailyWorkout}"), "Práctica weakness / Perfil Luna CTAs use L.dailyWorkout");
 assert(!/>Workout</.test(appSrc), "Práctica weakness CTA is not hardcoded Workout");
 assert(!/Workout diario/.test(appSrc), "Perfil Luna CTA is not hardcoded Workout diario");
