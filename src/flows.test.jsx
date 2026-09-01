@@ -258,6 +258,57 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
   });
 
+  it("ES chrome locks Tarjetas and DUELO; Rayo stays ON/OFF", async () => {
+    const user = await boot();
+    await waitFor(() => expect(screen.getByText(/¡Hola, Dave!/)).toBeTruthy());
+    const esGreetings = [
+      "Español mexicano real: cuentos, misiones y un empujón que pega.",
+      "Luna ya tiene tu rutina de hoy.",
+      "Don Rafa te guardó un cuento con palabras que valen.",
+      "Valeria dice que la precisión es un gesto de cariño.",
+      "Cinco minutos. Español de verdad. Nada de turista.",
+    ];
+    const enGreetings = [
+      "Build real Mexican Spanish through stories, challenges, and sharp feedback.",
+      "Luna has your daily workout ready.",
+      "Don Rafa saved you a story with words worth keeping.",
+      "Valeria says precision is a kindness.",
+      "Five minutes. Real Spanish. No tourist mode.",
+    ];
+    expect(esGreetings.some((g) => document.body.textContent.includes(g))).toBe(true);
+    expect(enGreetings.some((g) => document.body.textContent.includes(g))).toBe(false);
+    expect(screen.getByRole("button", { name: "Subjuntivo presente" })).toBeTruthy();
+    expect(screen.getByText("Coach del día")).toBeTruthy();
+    expect(screen.getByText("Mentor de cuentos")).toBeTruthy();
+    expect(screen.getByText("Coach de precisión")).toBeTruthy();
+    expect(screen.getByText("Rival")).toBeTruthy();
+
+    const rayo = screen.getByRole("button", { name: /Rayo/ });
+    expect(rayo.textContent).toMatch(/OFF/);
+    expect(rayo.textContent).not.toMatch(/SÍ|NO|ENCENDIDO|APAGADO/);
+    expect(document.body.textContent).not.toMatch(/DIÁLOGO DUEL|Flashcards/);
+
+    await user.click(screen.getByTestId("nav-misiones"));
+    expect(screen.getByText("DUELO")).toBeTruthy();
+    expect(screen.getAllByText("Duelo").length).toBeGreaterThan(0);
+    expect(screen.queryByText("DIÁLOGO DUEL")).toBeNull();
+
+    await user.click(screen.getByTestId("nav-practica"));
+    expect(screen.getByRole("heading", { name: "Tarjetas" })).toBeTruthy();
+    expect(screen.queryByText("Flashcards")).toBeNull();
+    expect(document.body.textContent).toMatch(/Tarjetas/);
+    expect(document.body.textContent).not.toMatch(/Flashcards|DIÁLOGO DUEL/);
+
+    await user.click(screen.getByTestId("nav-camino"));
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true"));
+    expect(enGreetings.some((g) => document.body.textContent.includes(g))).toBe(true);
+    expect(esGreetings.some((g) => document.body.textContent.includes(g))).toBe(false);
+    const rayoEn = screen.getByRole("button", { name: /Lightning|Rayo/ });
+    expect(rayoEn.textContent).toMatch(/OFF/);
+    expect(rayoEn.textContent).not.toMatch(/SÍ|NO/);
+  });
+
   it("splash has only header ES|EN — no Español/English dump", async () => {
     localStorage.clear();
     mockBrowser();

@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-01 (leftover English chrome locked)
+
+**What changed**
+- leftover English chrome locked; Rayo stays ON/OFF; tree untouched.
+- GREETINGS.es: five Mexican Spanish lines. GREETINGS.en unchanged for `uiLang === "en"`.
+- UI.es leftovers: Tarjetas, DUELO, Duelo, Guardar tarjeta, No hay tarjetas, Ya guardada, shortcuts `Atajos: 1–4.` Rayo `on`/`off` stay ON/OFF — not SÍ/NO.
+- Test: ES chrome has Tarjetas and DUELO, not Flashcards / DIÁLOGO DUEL; on/off is not SÍ/NO. Coach jobs, UNITS, Hoy lanterns, Emparejar XP, ES|EN header, schema, enroll untouched.
+
+**Why**
+- George leftover-English chrome lock. A boost is not a yes.
+
 ## 2026-09-01 (one language switch, splash duplicate gone)
 
 **What changed**

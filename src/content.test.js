@@ -231,5 +231,31 @@ for (const sc of TODAY_SCENES) {
   if (Array.isArray(sc.units)) assert(sc.units.every((id) => unitIds.has(id)), `${sc.id}: units`);
 }
 
+const GREETINGS = Function(`"use strict"; return (${extractConst(appSrc, "GREETINGS")});`)();
+assert(Array.isArray(GREETINGS.es) && GREETINGS.es.length === 5, "GREETINGS.es lock");
+assert(GREETINGS.es[0] === "Español mexicano real: cuentos, misiones y un empujón que pega.", "GREETINGS.es[0]");
+assert(GREETINGS.es[1] === "Luna ya tiene tu rutina de hoy.", "GREETINGS.es[1]");
+assert(GREETINGS.es[2] === "Don Rafa te guardó un cuento con palabras que valen.", "GREETINGS.es[2]");
+assert(GREETINGS.es[3] === "Valeria dice que la precisión es un gesto de cariño.", "GREETINGS.es[3]");
+assert(GREETINGS.es[4] === "Cinco minutos. Español de verdad. Nada de turista.", "GREETINGS.es[4]");
+assert(GREETINGS.en[0] === "Build real Mexican Spanish through stories, challenges, and sharp feedback.", "EN greetings stay English");
+assert(GREETINGS.en[1] === "Luna has your daily workout ready.", "EN greetings stay English");
+assert(GREETINGS.en[2] === "Don Rafa saved you a story with words worth keeping.", "EN greetings stay English");
+assert(GREETINGS.en[3] === "Valeria says precision is a kindness.", "EN greetings stay English");
+assert(GREETINGS.en[4] === "Five minutes. Real Spanish. No tourist mode.", "EN greetings stay English");
+
+const UI = Function(`"use strict"; return (${extractConst(appSrc, "UI")});`)();
+assert(UI.es.cards === "Tarjetas", "UI.es.cards");
+assert(UI.es.dialogueDuel === "DUELO", "UI.es.dialogueDuel");
+assert(UI.es.duel === "Duelo", "UI.es.duel");
+assert(UI.es.flashTitle === "Tarjetas", "UI.es.flashTitle");
+assert(UI.es.saveCard === "Guardar tarjeta", "UI.es.saveCard");
+assert(UI.es.emptyDeck === "No hay tarjetas", "UI.es.emptyDeck");
+assert(UI.es.inDeck === "Ya guardada", "UI.es.inDeck");
+assert(UI.es.shortcuts === "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4.", "UI.es.shortcuts");
+assert(UI.es.on === "ON" && UI.es.off === "OFF", "Rayo stays ON/OFF, not SÍ/NO");
+assert(UI.es.on !== "SÍ" && UI.es.off !== "NO", "Rayo on/off is not SÍ/NO");
+assert(!/Flashcards|DIÁLOGO DUEL/.test([UI.es.cards, UI.es.flashTitle, UI.es.dialogueDuel, UI.es.duel, UI.es.saveCard, UI.es.emptyDeck].join("\n")), "ES chrome leftover English");
+
 const qCount = UNITS.reduce((n, u) => n + u.questions.length, 0);
 console.log(`ok: content schema — ${UNITS.length} units / ${qCount} questions after prepQuestion; ${SECTIONS.length} sections; FLAT ${FLAT.length}; ${STORIES.length} stories (story-0); ${MISSIONS.length} missions; ${TODAY_SCENES.length} today scenes`);
