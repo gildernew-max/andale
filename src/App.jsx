@@ -2969,7 +2969,7 @@ const UI = {
     flashTitle: "Flashcards", saved: "saved", ready: "ready to practice", emptyDeck: "Your deck is empty",
     emptyDeckDesc: "Open a story, tap a word, and save it with its context sentence.", goReading: "Go to Stories",
     dueReview: "DUE REVIEW", ahead: "EARLY REVIEW", tapReveal: "Tap to reveal", again: "Again", hard: "Hard", good: "Good", easy: "Easy", reveal: "Reveal", today: "today",
-    flashDone: "Deck complete!", flashDoneDesc: "You reviewed", flashCardsWord: "cards", flashAgain: "Another round", flashOf: "of",
+    flashDone: "You finished the cards!", flashDoneDesc: "You reviewed", flashCardsWord: "cards", flashAgain: "Another round", flashOf: "of",
     profileTitle: "Your profile", profileSub: "Spanish (Mexico) · intermediate-advanced", level: "Level", maxLevel: "Max level.", xpTo: "XP to",
     streakDays: "streak days", totalXp: "total XP", crowns: "crowns", gems: "gems", reviewsStat: "reviews today / tracked", perfectLessons: "perfect lessons",
     achievements: "Achievements", firstStep: "First step", firstStepDesc: "Complete one lesson", century: "Century", centuryDesc: "Earn 100 XP",

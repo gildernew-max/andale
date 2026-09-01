@@ -333,7 +333,9 @@ describe("simulated learner flows", () => {
 
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true"));
-    expect(screen.getByRole("heading", { name: "Deck complete!" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "You finished the cards!" })).toBeTruthy();
+    expect(screen.queryByText(/Deck complete!/)).toBeNull();
+    expect(screen.getByTestId("flash-session-done").textContent).not.toMatch(/Deck/);
   });
 
   it("splash has only header ES|EN — no Español/English dump", async () => {

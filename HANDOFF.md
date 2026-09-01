@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-01 (EN done-deck line)
+
+**What changed**
+- EN flashcard-done heading is `You finished the cards!` — not Deck.
+- Leftover `Deck complete!` removed from UI.en. ES stays `¡Terminaste las tarjetas!`.
+- Test: UI.en.flashDone locked; live done screen heading is the EN line; ES heading stays ¡Terminaste las tarjetas!. Camino tree, Subjuntivo, Rayo ON/OFF, enroll untouched.
+
+**Why**
+- George lock. Mirrors ES `¡Terminaste las tarjetas!`. Deck is leftover chrome on an EN done screen.
+
 ## 2026-09-01 (ES done-deck line)
 
 **What changed**
