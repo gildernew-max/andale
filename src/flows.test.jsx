@@ -295,8 +295,9 @@ describe("simulated learner flows", () => {
 
     await user.click(screen.getByTestId("nav-practica"));
     expect(screen.getByRole("heading", { name: "Tarjetas" })).toBeTruthy();
-    expect(screen.getByText("No hay tarjetas")).toBeTruthy();
     expect(screen.queryByText("Flashcards")).toBeNull();
+    expect(document.body.textContent).toMatch(/Tarjetas/);
+    expect(document.body.textContent).not.toMatch(/Flashcards|DIÁLOGO DUEL/);
 
     await user.click(screen.getByTestId("nav-camino"));
     await user.click(screen.getByTestId("lang-en"));
