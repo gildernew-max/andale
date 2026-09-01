@@ -309,6 +309,33 @@ describe("simulated learner flows", () => {
     expect(rayoEn.textContent).not.toMatch(/SÍ|NO/);
   });
 
+  it("ES flashcard-done heading is ¡Terminaste las tarjetas!, not Deck", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await waitFor(() => expect(screen.getByTestId("flash-card")).toBeTruthy());
+    expect(document.body.textContent).not.toMatch(/¡Deck terminado!|¡Tarjetas listas!/);
+
+    for (let i = 0; i < 16; i++) {
+      if (screen.queryByTestId("flash-session-done")) break;
+      if (screen.queryByTestId("flash-reveal")) {
+        await user.click(screen.getByTestId("flash-reveal"));
+      }
+      await waitFor(() => expect(screen.getByTestId("flash-easy")).toBeTruthy());
+      await user.click(screen.getByTestId("flash-easy"));
+    }
+
+    await waitFor(() => expect(screen.getByTestId("flash-session-done")).toBeTruthy());
+    expect(screen.getByRole("heading", { name: "¡Terminaste las tarjetas!" })).toBeTruthy();
+    expect(screen.queryByText(/¡Deck terminado!/)).toBeNull();
+    expect(screen.queryByText(/¡Tarjetas listas!/)).toBeNull();
+    expect(screen.getByTestId("flash-session-done").textContent).not.toMatch(/Deck/);
+    expect(screen.getByTestId("flash-again")).toBeTruthy();
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true"));
+    expect(screen.getByRole("heading", { name: "Deck complete!" })).toBeTruthy();
+  });
+
   it("splash has only header ES|EN — no Español/English dump", async () => {
     localStorage.clear();
     mockBrowser();
