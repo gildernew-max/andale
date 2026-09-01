@@ -259,6 +259,8 @@ assert(!/Deck/i.test(UI.en.flashDone), "EN done-deck is not Deck");
 assert(UI.es.dailyWorkout === "Rutina diaria", "UI.es.dailyWorkout");
 assert(UI.en.dailyWorkout === "Daily routine", "UI.en.dailyWorkout");
 assert(appSrc.includes("{L.dailyWorkout}"), "Práctica weakness / Perfil Luna CTAs use L.dailyWorkout");
+assert(appSrc.includes("L.dailyWorkout"), "Camino hero secondary uses L.dailyWorkout");
+assert(!/"Daily workout"/.test(appSrc), "Camino hero is not hardcoded Daily workout");
 assert(!/>Workout</.test(appSrc), "Práctica weakness CTA is not hardcoded Workout");
 assert(!/Workout diario/.test(appSrc), "Perfil Luna CTA is not hardcoded Workout diario");
 assert(UI.es.shortcuts === "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4.", "UI.es.shortcuts");

@@ -4913,7 +4913,7 @@ export default function App() {
               Returning users see ONE primary card with one button. The
               path below becomes browsing/reference; the path nodes are
               still tappable, but only the hero is shouted at you.
-              Secondary actions (Review, Daily workout) get clear but
+              Secondary actions (Review, Daily routine) get clear but
               quieter treatment underneath.
               ============================================================ */}
           {(() => {
@@ -4936,7 +4936,7 @@ export default function App() {
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone
               ? (uiLang === "en" ? "Workout done" : "Rutina hecha")
-              : (uiLang === "en" ? "Daily workout" : "Rutina diaria");
+              : L.dailyWorkout;
             return (
               <div style={{ margin: "14px 0 18px" }}>
                 {/* Primary hero card */}
@@ -4966,7 +4966,7 @@ export default function App() {
                       <IcBarbell size={16} color={D.blue} /> {reviewLabel} ({dueCount})
                     </button>
                   )}
-                  <button onClick={() => { if (!dailyDone) startDailyWorkout(); }} disabled={dailyDone}
+                  <button data-testid="camino-daily-workout" onClick={() => { if (!dailyDone) startDailyWorkout(); }} disabled={dailyDone}
                     style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: dailyDone ? D.sub : D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: dailyDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: dailyDone ? .6 : 1 }}>
                     <IcBolt size={16} color={D.gold} /> {dailyLabel}
                   </button>
