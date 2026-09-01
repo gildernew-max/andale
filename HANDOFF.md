@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-01 (ES|EN top right, same persist as Perfil)
+
+**What changed**
+- `ES | EN` letters top-right on every screen (home stat bar + lesson/story/game rows + done/failed/rival). Not flags, not a globe, not a settings dump. Active language is weight 900; the other is mute (`D.sub`). Visible labels stay `ES | EN`; `aria-label` is Español / English.
+- Same source of truth as Perfil: `save({ uiLang })` → `prog.uiLang` → `andale-v3`. Header tap updates UI immediately; reload keeps the choice. Perfil control stays; both stay in sync. Header chrome otherwise untouched.
+- Flow test: missing `lang-toggle` / `lang-es` / `lang-en` fails; toggle EN persists and remount stays EN; Perfil `perfil-lang-*` matches; control still there on other tabs and in a Subjuntivo lesson. Hoy lanterns, Emparejar, XP, coaches, schema, Apple, enroll untouched.
+
+**Why**
+- Dave + Hand lock, then No face + George brand lock: language lives top-right on every screen. One persist path.
+
 ## 2026-08-31 (Hoy en México lantern line)
 
 **What changed**

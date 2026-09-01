@@ -3081,6 +3081,28 @@ const diegoReaction = (won, delta, lang) => {
 
 
 
+const LangToggle = ({ uiLang, D, onPick, style }) => (
+  <div data-testid="lang-toggle" role="group"
+    aria-label={uiLang === "en" ? "Interface language" : "Idioma de la interfaz"}
+    style={{ display: "inline-flex", alignItems: "center", gap: 5, flexShrink: 0, ...style }}>
+    <button type="button" data-testid="lang-es" aria-pressed={uiLang === "es"} aria-label="Español"
+      onClick={() => onPick("es")}
+      style={{
+        border: "none", background: "none", fontFamily: "inherit", padding: "6px 1px", cursor: "pointer",
+        fontWeight: uiLang === "es" ? 900 : 700, fontSize: 12, letterSpacing: ".04em", lineHeight: 1,
+        color: uiLang === "es" ? D.ink : D.sub,
+      }}>ES</button>
+    <span aria-hidden="true" style={{ color: D.sub, fontWeight: 700, fontSize: 12, lineHeight: 1 }}>|</span>
+    <button type="button" data-testid="lang-en" aria-pressed={uiLang === "en"} aria-label="English"
+      onClick={() => onPick("en")}
+      style={{
+        border: "none", background: "none", fontFamily: "inherit", padding: "6px 1px", cursor: "pointer",
+        fontWeight: uiLang === "en" ? 900 : 700, fontSize: 12, letterSpacing: ".04em", lineHeight: 1,
+        color: uiLang === "en" ? D.ink : D.sub,
+      }}>EN</button>
+  </div>
+);
+
 const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, ...rest }) => (
   <button type="button" onClick={onClick} disabled={disabled} className="duo-btn"
     style={{
@@ -4844,6 +4866,7 @@ export default function App() {
                   <span style={{ position: "absolute", top: -2, right: -3, width: 8, height: 8, borderRadius: 99, border: `1.5px solid ${D.card}`, background: voiceDead || (voicesReady && !voices.length) ? D.red : "#BBB" }} />
                 </button>
               )}
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
           </div>
         </div>
@@ -5630,6 +5653,7 @@ export default function App() {
               ].map((opt) => (
                 <button
                   key={opt.id}
+                  data-testid={`perfil-lang-${opt.id}`}
                   aria-label={opt.id === "en" ? "English context language" : "Spanish context language"}
                   aria-pressed={uiLang === opt.id}
                   onClick={() => save({ uiLang: opt.id })}
@@ -6082,6 +6106,12 @@ export default function App() {
         </nav>
       )}
 
+      {(screen === "done" || screen === "failed" || screen === "rivalIntro" || screen === "rivalDone") && (
+        <div style={{ position: "fixed", top: 14, right: 18, zIndex: 20 }}>
+          <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+        </div>
+      )}
+
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
         <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
@@ -6105,6 +6135,7 @@ export default function App() {
               : session.review
 	              ? <span style={{ fontSize: 12, fontWeight: 900, color: D.blue }}>{L.listening}</span>
               : <span style={{ fontWeight: 900, color: D.red, fontSize: 16 }}><IcHeart size={18} /> {prog.hearts}</span>}
+            <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
           </div>
 
           {session.scenario && status === "idle" && (
@@ -6455,6 +6486,7 @@ export default function App() {
                 <div style={{ width: `${Math.round((dialogue.done ? 1 : dialogue.idx / activeDuel.steps.length) * 100)}%`, height: "100%", background: activeDuel.color }} />
               </div>
               <span style={{ fontSize: 12, fontWeight: 900, color: activeDuel.dark }}>{dialogue.score}/{maxScore}</span>
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 12, marginBottom: 16 }}>
               <CoachPortrait id="diego" mood={dialogue.done ? "party" : "happy"} size={86} />
@@ -6511,6 +6543,7 @@ export default function App() {
                 <div style={{ fontWeight: 900, fontSize: 21 }}>Serpientes y Escaleras</div>
               </div>
               <div style={{ border: `2px solid ${D.green}`, borderBottom: `4px solid ${D.greenDark}`, borderRadius: 12, padding: "7px 10px", background: D.greenBg, fontWeight: 900, color: D.greenDark }}>{snakeGame.tile}/24</div>
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 12 }}>
@@ -6633,6 +6666,7 @@ export default function App() {
                 <div style={{ width: `${safeGame.done ? 100 : Math.round((safeGame.idx / safeGame.items.length) * 100)}%`, height: "100%", background: D.red }} />
               </div>
               <span style={{ fontSize: 12, fontWeight: 900, color: D.red }}>{safeGame.score}/{safeGame.items.length}</span>
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
             {safeGame.done ? (
               <div className="pop" style={{ textAlign: "center", border: `2px solid ${D.gold}`, borderBottom: `5px solid ${D.goldDark}`, borderRadius: 16, padding: 18, background: D.goldBg }}>
@@ -6714,6 +6748,7 @@ export default function App() {
                 <div style={{ width: `${n ? Math.round((got / n) * 100) : 0}%`, height: "100%", background: D.blue }} />
               </div>
               <span style={{ fontSize: 12, fontWeight: 900, color: D.blue }}>{got}/{n}</span>
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
             {matchGame.done ? (
               <div data-testid="match-pairs-done" className="pop" style={{ textAlign: "center", border: `2px solid ${D.gold}`, borderBottom: `5px solid ${D.goldDark}`, borderRadius: 16, padding: 18, background: D.goldBg }}>
@@ -6767,6 +6802,7 @@ export default function App() {
               <div style={{ fontWeight: 900, fontSize: 22 }}>{uiLang === "en" ? "Reto Ándale" : "Reto Ándale"}</div>
             </div>
             <div style={{ border: `2px solid ${D.blue}`, borderBottom: `4px solid ${D.blueDark}`, borderRadius: 12, padding: "7px 11px", background: D.blueBg, fontWeight: 900, color: D.blueDark }}>{jeopardy.score}</div>
+            <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 13 }}>
             {[
@@ -6871,10 +6907,11 @@ export default function App() {
           <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 150px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
 	              <button type="button" onClick={() => { setWordSel(null); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
-              <div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{story.title}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: sec.color }}>{story.subtitle}</div>
               </div>
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 18px", background: D.subtle, borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 800, color: D.sub }}>
 	              <IcBook size={16} color={sec.color} /> {L.storyTip}

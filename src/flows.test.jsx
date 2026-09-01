@@ -205,6 +205,59 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/definición pendiente|definition coming soon/i);
   });
 
+  it("header ES|EN toggle flips uiLang, persists andale-v3, and stays in sync with Perfil", async () => {
+    const user = await boot();
+    const toggle = screen.getByTestId("lang-toggle");
+    const es = screen.getByTestId("lang-es");
+    const en = screen.getByTestId("lang-en");
+    expect(toggle).toBeTruthy();
+    expect(es).toBeTruthy();
+    expect(en).toBeTruthy();
+    expect(es.textContent).toBe("ES");
+    expect(en.textContent).toBe("EN");
+    expect(es.getAttribute("aria-label")).toBe("Español");
+    expect(en.getAttribute("aria-label")).toBe("English");
+    await waitFor(() => expect(screen.getByText(/¡Hola, Dave!/)).toBeTruthy());
+    expect(es.getAttribute("aria-pressed")).toBe("true");
+    expect(en.getAttribute("aria-pressed")).toBe("false");
+
+    await user.click(en);
+    await waitFor(() => {
+      expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
+      expect(screen.getByTestId("lang-es").getAttribute("aria-pressed")).toBe("false");
+      const prog = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      expect(prog.uiLang).toBe("en");
+      expect(prog.name).toBe("Dave");
+      expect(prog.contentVersion).toBe(2);
+    });
+    expect(screen.getByText(/TODAY IN MEXICO/)).toBeTruthy();
+
+    for (const tab of ["nav-misiones", "nav-lectura", "nav-practica", "nav-perfil"]) {
+      await user.click(screen.getByTestId(tab));
+      expect(screen.getByTestId("lang-toggle")).toBeTruthy();
+      expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
+    }
+    expect(screen.getByText("Your profile")).toBeTruthy();
+    expect(screen.getByTestId("perfil-lang-en").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByTestId("perfil-lang-es").getAttribute("aria-pressed")).toBe("false");
+
+    cleanup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).uiLang).toBe("en");
+      expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
+    });
+    const user2 = userEvent.setup();
+    await user2.click(screen.getByTestId("nav-camino"));
+    await waitFor(() => expect(screen.getByText(/TODAY IN MEXICO/)).toBeTruthy());
+    await user2.click(screen.getByRole("button", { name: "Subjuntivo presente" }));
+    await user2.click(screen.getByRole("button", { name: /Start|Empezar/ }));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    expect(screen.getByTestId("lang-toggle")).toBeTruthy();
+    expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("section test-out starts from Camino and fails closed after 3 misses (failKind === test)", async () => {
     const user = await boot();
     await user.click(screen.getAllByTitle(/Examen de la sección|Section test/)[0]);
