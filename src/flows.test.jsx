@@ -275,7 +275,7 @@ describe("simulated learner flows", () => {
     ];
     const enGreetings = [
       "Build real Mexican Spanish through stories, challenges, and sharp feedback.",
-      "Luna has your daily workout ready.",
+      "Luna has your daily routine ready.",
       "Don Rafa saved you a story with words worth keeping.",
       "Valeria says precision is a kindness.",
       "Five minutes. Real Spanish. No tourist mode.",
@@ -341,7 +341,29 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("nav-camino"));
     await waitFor(() => expect(screen.getByTestId("camino-daily-workout")).toBeTruthy());
     expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Daily routine/);
-    expect(screen.getByTestId("camino-daily-workout").textContent).not.toMatch(/Daily workout/);
+    expect(screen.getByTestId("camino-daily-workout").textContent).not.toMatch(/Daily workout|Workout done|Today's workout/);
+  });
+
+  it("Camino hero done-state is Rutina hecha / Routine done, not Workout done", async () => {
+    const today = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    cleanup();
+    seedProgress({ missions: { [`daily-${today}`]: true } });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("camino-daily-workout")).toBeTruthy());
+    const doneEs = screen.getByTestId("camino-daily-workout");
+    expect(doneEs.textContent).toMatch(/Rutina hecha/);
+    expect(doneEs.textContent).not.toMatch(/Workout|Rutina completada/);
+    expect(doneEs.disabled).toBe(true);
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true"));
+    const doneEn = screen.getByTestId("camino-daily-workout");
+    expect(doneEn.textContent).toMatch(/Routine done/);
+    expect(doneEn.textContent).not.toMatch(/Workout done|Workout complete|Today's workout|Daily workout/);
   });
 
   it("ES flashcard-done heading is ¡Terminaste las tarjetas!, not Deck", async () => {
