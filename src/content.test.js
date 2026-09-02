@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { prepQuestion } from "./prepQuestion.js";
+import { hoyStillFor, LANTERN_STILL } from "./hoyStill.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -216,6 +217,8 @@ const hoyCopy = [hoy.title, hoy.titleEn, hoy.city, hoy.setup, hoy.setupEn, hoy.l
 assert(!/parroquia/i.test(hoyCopy), "Hoy card must not mention parroquia");
 const appSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "App.jsx"), "utf8");
 assert(appSrc.includes("stills/sma-lanterns.png"), "Hoy card still stays sma-lanterns.png");
+assert(appSrc.includes("hoyStillFor"), "Hoy still is gated so a mismatched city cannot keep lanterns");
+assert(hoyStillFor(hoy) === LANTERN_STILL, "San Miguel / Noche de faroles keeps the lantern still");
 const sceneIds = new Set();
 for (const sc of TODAY_SCENES) {
   assert(sc.id && typeof sc.id === "string", "scene missing id");
@@ -229,6 +232,13 @@ for (const sc of TODAY_SCENES) {
   assert(sc.answer != null && String(sc.answer).trim(), `${sc.id}: answer`);
   if (sc.storyId) assert(storyIds.has(sc.storyId), `${sc.id}: storyId ${sc.storyId}`);
   if (Array.isArray(sc.units)) assert(sc.units.every((id) => unitIds.has(id)), `${sc.id}: units`);
+  const wired = hoyStillFor(sc);
+  if (wired) {
+    const hay = `${sc.city || ""} ${sc.title || ""} ${sc.titleEn || ""}`;
+    assert(/san miguel/i.test(hay) && /farol|lantern/i.test(hay), `${sc.id}: still must match city/title (got ${wired} for ${hay})`);
+  } else {
+    assert(hoyStillFor({ ...sc, still: LANTERN_STILL }) === null, `${sc.id}: lantern still must not attach to a non-lantern city`);
+  }
 }
 
 const GREETINGS = Function(`"use strict"; return (${extractConst(appSrc, "GREETINGS")});`)();
@@ -262,6 +272,10 @@ assert(UI.es.workoutDone === "Rutina hecha", "UI.es.workoutDone");
 assert(UI.en.workoutDone === "Routine done", "UI.en.workoutDone");
 assert(UI.es.workoutToday === "Rutina de hoy", "UI.es.workoutToday");
 assert(UI.en.workoutToday === "Today's routine", "UI.en.workoutToday");
+assert(appSrc.includes("showLevelTheater"), "Principiante level theater is gated");
+assert(appSrc.includes("showWeaknessMap"), "empty weakness map is gated");
+assert(appSrc.includes("showAtajos"), "Atajos theater is gated");
+assert(appSrc.includes("practica-fold"), "Práctica fold hosts Phrase Doctor / Safe-Risky / Emparejar");
 assert(appSrc.includes("{L.dailyWorkout}"), "Práctica weakness / Perfil Luna CTAs use L.dailyWorkout");
 assert(appSrc.includes("L.dailyWorkout"), "Camino hero secondary uses L.dailyWorkout");
 assert(appSrc.includes("L.workoutDone"), "Camino hero done-state uses L.workoutDone");

@@ -315,7 +315,11 @@ describe("simulated learner flows", () => {
   });
 
   it("Práctica weakness CTA and Perfil Luna CTA use Rutina diaria / Daily routine", async () => {
-    const user = await boot();
+    cleanup();
+    seedProgress({ weak: { Subjuntivo: 2 } });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
     const caminoDailyEs = screen.getByTestId("camino-daily-workout");
     expect(caminoDailyEs.textContent).toMatch(/Rutina diaria/);
     expect(caminoDailyEs.textContent).not.toMatch(/Daily workout/);
@@ -449,5 +453,77 @@ describe("simulated learner flows", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => expect(screen.getByRole("heading", { name: /Examen no superado|Test not passed/ })).toBeTruthy());
     expect(screen.getByText(/Tres errores|Three mistakes/)).toBeTruthy();
+  });
+
+  it("Hoy still matches city/title or the still is dropped", async () => {
+    await boot();
+    await waitFor(() => expect(screen.getByTestId("hoy-card")).toBeTruthy());
+    const city = screen.getByTestId("hoy-city").textContent;
+    const title = screen.getByTestId("hoy-title").textContent;
+    const still = screen.queryByTestId("hoy-still");
+    const lanternCopy = /san miguel/i.test(city) && /farol|lantern/i.test(title);
+    if (lanternCopy) {
+      expect(still).toBeTruthy();
+      expect(still.getAttribute("src")).toMatch(/sma-lanterns/);
+    } else {
+      expect(still).toBeNull();
+    }
+    expect(`${city} ${title}`).not.toMatch(/parroquia/i);
+  });
+
+  it("buries Principiante, empty weakness map, and Atajos until earned", async () => {
+    localStorage.clear();
+    mockBrowser();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lang-toggle")).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /Saltar|Skip/ }));
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    expect(screen.queryByTestId("atajos")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Atajos: 1–4/);
+    expect(screen.queryByText("Principiante")).toBeNull();
+
+    await user.click(screen.getByTestId("nav-perfil"));
+    expect(screen.queryByTestId("level-theater")).toBeNull();
+    expect(screen.queryByText("Principiante")).toBeNull();
+
+    await user.click(screen.getByTestId("nav-practica"));
+    expect(screen.queryByTestId("weakness-map")).toBeNull();
+    expect(screen.queryByText("Mapa de debilidades")).toBeNull();
+    expect(screen.queryByText(/Todavía no hay patrones claros/)).toBeNull();
+    expect(screen.getByTestId("practica-fold")).toBeTruthy();
+    expect(screen.getByTestId("phrase-doctor")).toBeTruthy();
+    expect(screen.getByTestId("safe-risky-start")).toBeTruthy();
+    expect(screen.getByTestId("match-pairs-start")).toBeTruthy();
+
+    cleanup();
+    seedProgress({ xp: 50, done: { subj1: 1 }, weak: { Subjuntivo: 3 } });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    expect(screen.getByTestId("atajos").textContent).toMatch(/Atajos: 1–4/);
+    await userEvent.setup().click(screen.getByTestId("nav-perfil"));
+    expect(screen.getByTestId("level-theater").textContent).toMatch(/Principiante/);
+    await userEvent.setup().click(screen.getByTestId("nav-practica"));
+    expect(screen.getByTestId("weakness-map")).toBeTruthy();
+    expect(screen.getByText("Mapa de debilidades")).toBeTruthy();
+  });
+
+  it("Práctica fold leads with Phrase Doctor, Safe-or-Risky, and Emparejar", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    const fold = screen.getByTestId("practica-fold");
+    const ids = [...fold.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
+    expect(ids.filter((id) => ["phrase-doctor", "safe-risky-start", "match-pairs-start"].includes(id)))
+      .toEqual(["phrase-doctor", "safe-risky-start", "match-pairs-start"]);
+    const html = document.body.innerHTML;
+    const foldAt = html.indexOf('data-testid="practica-fold"');
+    const smartAt = html.search(/PRÁCTICA INTELIGENTE|SMART PRACTICE/);
+    const flashAt = html.indexOf("Tarjetas");
+    expect(foldAt).toBeGreaterThan(-1);
+    expect(smartAt).toBeGreaterThan(foldAt);
+    expect(flashAt).toBeGreaterThan(foldAt);
+    expect(screen.getByTestId("phrase-doctor").textContent).toMatch(/Doctora de frases|Phrase Doctor/);
+    expect(screen.getByTestId("safe-risky-start").textContent).toMatch(/¿Seguro o riesgoso\?|Safe or Risky\?/);
+    expect(screen.getByTestId("match-pairs-start").textContent).toMatch(/Emparejar|Match pairs/);
   });
 });
