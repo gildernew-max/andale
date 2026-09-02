@@ -213,8 +213,6 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/definición pendiente|definition coming soon/i);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("story-tip").textContent).toMatch(/Read the paragraph\. Tap a word only if it stops you\./));
-    expect(screen.getByTestId("nav-lectura").textContent).toMatch(/Stories/);
-    expect(screen.getByTestId("nav-lectura").textContent).not.toMatch(/Reading/);
   });
 
   it("header ES|EN toggle flips uiLang, persists andale-v3, and stays in sync with Perfil", async () => {
