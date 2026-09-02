@@ -2933,10 +2933,10 @@ const UI = {
     practiceTitle: "Práctica", dueToday: "para repasar hoy", tracked: "en seguimiento", practiceFree: "El repaso no cuesta vidas — y te regresa", reviewToday: "Repasar hoy",
     memory: "Memoria programada (SM-2): lo difícil vuelve pronto, lo dominado se aleja y se gradúa a los", noDue: "Nada vence hoy — la memoria está trabajando sola.",
     nextReview: "próximo repaso", earlyReview: "Adelantar repaso", noErrors: "Sin errores en seguimiento. Ve al camino por más retos.",
-    weaknessMap: "Mapa de debilidades", weaknessDesc: "Ándale ajusta esto con tus errores y recuperaciones.", noPatterns: "Todavía no hay patrones claros. Juega una misión o falla con estilo.",
+    weaknessMap: "Mapa de debilidades", weaknessDesc: "Ándale ajusta esto con tus errores y recuperaciones.", noPatterns: "Todavía no hay un mapa. Juega una misión o falla con estilo — entonces aparece.",
     adaptiveReview: "Repaso adaptivo", lives: "vidas", nextLife: "Próxima vida gratis en", refill: "Rellenar",
-    flashTitle: "Tarjetas", saved: "guardadas", ready: "listas para practicar", emptyDeck: "No hay tarjetas",
-    emptyDeckDesc: "Abre un cuento, toca una palabra y guárdala con su frase de contexto.", goReading: "Ir a lectura",
+    flashTitle: "Tarjetas", saved: "guardadas", ready: "listas para practicar", emptyDeck: "Todavía no hay tarjetas",
+    emptyDeckDesc: "Abre un cuento, toca una palabra que te frena, y guárdala con su frase.", goReading: "Ir a Lectura",
     dueReview: "REPASO VENCIDO", ahead: "ADELANTO", tapReveal: "Toca para revelar", again: "Otra vez", hard: "Difícil", good: "Bien", easy: "Fácil", reveal: "Revelar", today: "hoy",
     flashDone: "¡Terminaste las tarjetas!", flashDoneDesc: "Repasaste", flashCardsWord: "tarjetas", flashAgain: "Otra ronda", flashOf: "de",
     profileTitle: "Tu perfil", profileSub: "Español (México) · intermedio-avanzado", level: "Nivel", maxLevel: "Nivel máximo.", xpTo: "XP para",
@@ -2948,7 +2948,7 @@ const UI = {
     transformIt: "Transfórmala", writeHeard: "Escribe lo que escuchas", matchPairs: "Une las parejas", typeOrder: "Toca las fichas en orden…",
     check: "Comprobar", continue: "Continuar", why: "¿Por qué?", correctAnswer: "Respuesta correcta", yourAnswer: "Tu respuesta", correct: "Correcta",
     focus: "Foco", time: "¡Tiempo!", spelling: "Ojo con la ortografía", matchInstruction: "Toca una pareja en cada columna.", enterCheck: "Enter para comprobar.",
-    selfGrade: "¿QUÉ TAN BIEN LO SABÍAS?", storyTip: "Toca cualquier palabra para ver su significado. El audio lee cada párrafo.",
+    selfGrade: "¿QUÉ TAN BIEN LO SABÍAS?", storyTip: "Lee el párrafo. Toca una palabra solo si te frena.",
     comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
     completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel! Ahora eres",
     hits: "aciertos", misses: "fallos", impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
@@ -2967,10 +2967,10 @@ const UI = {
     practiceTitle: "Review", dueToday: "due for review today", tracked: "tracked", practiceFree: "Review costs no lives — and gives back", reviewToday: "Review today",
     memory: "Scheduled memory (SM-2): hard items return soon, mastered items spread out and graduate after", noDue: "Nothing is due today — memory is working in the background.",
     nextReview: "next review", earlyReview: "Review early", noErrors: "No tracked errors. Go to Learn for more challenges.",
-    weaknessMap: "Weakness map", weaknessDesc: "Ándale adjusts this from your misses and recoveries.", noPatterns: "No clear patterns yet. Try a Challenge or keep learning.",
+    weaknessMap: "Weakness map", weaknessDesc: "Ándale adjusts this from your misses and recoveries.", noPatterns: "No map yet. Play a mission or miss with style — then it shows up.",
     adaptiveReview: "Adaptive review", lives: "lives", nextLife: "Next free life in", refill: "Refill",
-    flashTitle: "Flashcards", saved: "saved", ready: "ready to practice", emptyDeck: "Your deck is empty",
-    emptyDeckDesc: "Open a story, tap a word, and save it with its context sentence.", goReading: "Go to Stories",
+    flashTitle: "Flashcards", saved: "saved", ready: "ready to practice", emptyDeck: "No cards yet",
+    emptyDeckDesc: "Open a story, tap a word that stops you, and save it with its line.", goReading: "Go to Stories",
     dueReview: "DUE REVIEW", ahead: "EARLY REVIEW", tapReveal: "Tap to reveal", again: "Again", hard: "Hard", good: "Good", easy: "Easy", reveal: "Reveal", today: "today",
     flashDone: "You finished the cards!", flashDoneDesc: "You reviewed", flashCardsWord: "cards", flashAgain: "Another round", flashOf: "of",
     profileTitle: "Your profile", profileSub: "Spanish (Mexico) · intermediate-advanced", level: "Level", maxLevel: "Max level.", xpTo: "XP to",
@@ -2982,7 +2982,7 @@ const UI = {
     transformIt: "Transform it", writeHeard: "Write what you hear", matchPairs: "Match the pairs", typeOrder: "Tap the tiles in order…",
     check: "Check", continue: "Continue", why: "Why?", correctAnswer: "Correct answer", yourAnswer: "Your answer", correct: "Correct",
     focus: "Focus", time: "Time!", spelling: "Watch the spelling", matchInstruction: "Tap one pair from each column.", enterCheck: "Enter to check.",
-    selfGrade: "HOW WELL DID YOU KNOW IT?", storyTip: "Tap any word to see its meaning. Audio reads each paragraph.",
+    selfGrade: "HOW WELL DID YOU KNOW IT?", storyTip: "Read the paragraph. Tap a word only if it stops you.",
     comprehension: "Comprehension", easyQuestions: "Three easy questions · up to", xpClaimed: "XP already claimed", claim: "Claim", saveCard: "Save flashcard", inDeck: "In your deck",
     completed: "Lesson complete!", sectionPassed: "Section passed!", levelUp: "Level up! You are now",
     hits: "correct", misses: "misses", impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
@@ -6939,7 +6939,7 @@ export default function App() {
               </div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 18px", background: D.subtle, borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 800, color: D.sub }}>
+            <div data-testid="story-tip" style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 18px", background: D.subtle, borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 800, color: D.sub }}>
 	              <IcBook size={16} color={sec.color} /> {L.storyTip}
             </div>
             <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 12 }}>

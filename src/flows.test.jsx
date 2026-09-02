@@ -201,6 +201,9 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
     await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
+    expect(screen.getByTestId("story-tip").textContent).toMatch(/Lee el párrafo\. Toca una palabra solo si te frena\./);
+    expect(screen.getByTestId("lectura-paragraph-first")).toBeTruthy();
     await waitFor(() => expect(screen.getAllByText(/cempasúchil/).length).toBeGreaterThan(0));
     const storyWord = [...document.querySelectorAll("span")].find((el) =>
       el.textContent === "cempasúchil" && el.style.cursor === "pointer");
@@ -208,6 +211,8 @@ describe("simulated learner flows", () => {
     await user.click(storyWord);
     await waitFor(() => expect(screen.getByText(/Mexican marigold/i)).toBeTruthy());
     expect(document.body.textContent).not.toMatch(/definición pendiente|definition coming soon/i);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("story-tip").textContent).toMatch(/Read the paragraph\. Tap a word only if it stops you\./));
   });
 
   it("header ES|EN toggle flips uiLang, persists andale-v3, and stays in sync with Perfil", async () => {
