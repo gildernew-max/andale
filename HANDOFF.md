@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-02 (Dave/Hand tonight: Hoy still + bury theater + Práctica fold)
+
+**What changed**
+- Hoy still matches city/title or the still is dropped. San Miguel / Noche de faroles keeps `sma-lanterns.png`. Roma Norte / Cancún / Pátzcuaro no longer wear lanterns. `hoyStillFor` is the gate.
+- Bury until earned: Principiante level theater (`level-theater`) until progress; empty weakness map until `prog.weak` has counts; Atajos line until first unit crown. New sessions do not see empty theater.
+- Práctica above the fold: Phrase Doctor, ¿Seguro o riesgoso?, Emparejar lead (`practica-fold`). Chrome shrunk. JEOPARDY SOLO and Rayo ON/OFF stay loans.
+- George hooks left: `lectura-paragraph-first`, `empty-tarjetas`. Copy untouched if his Lectura / tarjetas lines are not in yet.
+- Camino tree / Subjuntivo first door, streak-1, enroll, Apple wrap untouched.
+
+**Why**
+- Soft ETA first slice by 10pm ET Wed Sep 2. Face-brand: a Hoy still that lies is worse than no still. Empty Principiante / weakness / Atajos theater is for later, not session one.
+
 ## 2026-09-01 (No Workout leftovers; Routine family)
 
 **What changed**

@@ -3,6 +3,8 @@ import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.
 import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
 import { CONTENT_VERSION, acceptProgress, acceptLive } from "./schema.js";
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
+import { hoyStillFor } from "./hoyStill.js";
+import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -2517,6 +2519,7 @@ const TODAY_SCENES = [
     title: "Noche de faroles",
     titleEn: "Night of lanterns",
     city: "San Miguel",
+    still: "stills/sma-lanterns.png",
     color: D.green,
     dark: D.greenDark,
     host: "luna",
@@ -3194,6 +3197,7 @@ export default function App() {
   const [flashMode, setFlashMode] = useState("es-en");
   const [doctorIdx, setDoctorIdx] = useState(0);
   const [doctorReveal, setDoctorReveal] = useState(false);
+  const [doctorOpen, setDoctorOpen] = useState(false);
   const [safeGame, setSafeGame] = useState(null);
   const [jeopardy, setJeopardy] = useState(null);
   const [snakeGame, setSnakeGame] = useState(null);
@@ -4744,6 +4748,10 @@ export default function App() {
   const todayKey = todayStr();
   const todaySceneIndex = [...todayKey].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % TODAY_SCENES.length;
   const todayScene = TODAY_SCENES[todaySceneIndex];
+  const hoyStill = hoyStillFor(todayScene);
+  const showLevelTheater = hasLearnerProgress(prog);
+  const showWeaknessMap = hasWeaknessData(prog);
+  const showAtajos = hasUnlockedShortcuts(prog);
   const todaySceneDone = !!prog.missions?.[`scene-${todayKey}`];
   const dailyDone = !!prog.missions?.[`daily-${todayKey}`];
   const storyCount = STORIES.filter((st) => prog.stories?.[st.id]).length;
@@ -4977,15 +4985,18 @@ export default function App() {
           {todayScene && (() => {
             const sceneStory = STORIES.find((st) => st.id === todayScene.storyId);
             return (
-              <div style={{ margin: "2px 0 16px", border: `2px solid ${todayScene.color}`, borderBottom: `5px solid ${todayScene.dark}`, borderRadius: 18, background: D.card, overflow: "hidden" }}>
-                <img
-                  src={`${import.meta.env.BASE_URL}stills/sma-lanterns.png`}
-                  alt=""
-                  width={1024}
-                  height={1024}
-                  aria-hidden="true"
-                  style={{ display: "block", width: "100%", height: 148, objectFit: "cover", objectPosition: "center 38%" }}
-                />
+              <div data-testid="hoy-card" style={{ margin: "2px 0 16px", border: `2px solid ${todayScene.color}`, borderBottom: `5px solid ${todayScene.dark}`, borderRadius: 18, background: D.card, overflow: "hidden" }}>
+                {hoyStill && (
+                  <img
+                    data-testid="hoy-still"
+                    src={`${import.meta.env.BASE_URL}${hoyStill}`}
+                    alt=""
+                    width={1024}
+                    height={1024}
+                    aria-hidden="true"
+                    style={{ display: "block", width: "100%", height: 148, objectFit: "cover", objectPosition: "center 38%" }}
+                  />
+                )}
                 <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 14px 11px", background: theme === "dark" ? D.subtle : "#FFFBEF" }}>
                   <div style={{ width: 58, height: 58, borderRadius: 17, background: todayScene.color, borderBottom: `5px solid ${todayScene.dark}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <CoachPortrait id={todayScene.host} mood={todaySceneDone ? "party" : "focused"} size={54} />
@@ -4993,9 +5004,9 @@ export default function App() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                       <span style={{ fontSize: 10.5, fontWeight: 900, letterSpacing: ".08em", color: todayScene.dark }}>{uiLang === "en" ? "TODAY IN MEXICO" : "HOY EN MÉXICO"}</span>
-                      <span style={{ fontSize: 10.5, fontWeight: 900, color: D.sub, background: D.card, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "1px 7px" }}>{todayScene.city}</span>
+                      <span data-testid="hoy-city" style={{ fontSize: 10.5, fontWeight: 900, color: D.sub, background: D.card, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "1px 7px" }}>{todayScene.city}</span>
                     </div>
-                    <div style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.15, marginTop: 2 }}>{uiLang === "en" ? todayScene.titleEn : todayScene.title}</div>
+                    <div data-testid="hoy-title" style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.15, marginTop: 2 }}>{uiLang === "en" ? todayScene.titleEn : todayScene.title}</div>
                     <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, marginTop: 3 }}>{uiLang === "en" ? todayScene.setupEn : todayScene.setup}</div>
                   </div>
                 </div>
@@ -5147,7 +5158,7 @@ export default function App() {
 	              </div>
 	            ))}
 	          </div>
-	          <p style={{ textAlign: "center", fontSize: 12, color: D.sub, fontWeight: 700 }}>{L.shortcuts}</p>
+	          {showAtajos && <p data-testid="atajos" style={{ textAlign: "center", fontSize: 12, color: D.sub, fontWeight: 700 }}>{L.shortcuts}</p>}
         </div>
       )}
 
@@ -5312,59 +5323,30 @@ export default function App() {
 
       {/* ---------- PRÁCTICA ---------- */}
       {!inLesson && tab === "practica" && (
-	          <div style={{ maxWidth: 480, margin: "0 auto", padding: "26px 20px 40px", textAlign: "center" }}>
-		          <CoachPortrait id="luna" mood={dueCount > 0 ? "sad" : "happy"} size={102} />
-		          <h2 style={{ fontWeight: 900, fontSize: 24, margin: "10px 0 4px" }}>{L.practiceTitle}</h2>
+	          <div style={{ maxWidth: 480, margin: "0 auto", padding: "16px 20px 40px", textAlign: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, textAlign: "left" }}>
+            <CoachPortrait id="luna" mood={dueCount > 0 ? "sad" : "happy"} size={48} />
+            <h2 style={{ fontWeight: 900, fontSize: 22, margin: 0 }}>{L.practiceTitle}</h2>
+          </div>
 
-          {/* === Safe or Risky? — featured register game ===
-              Promoted to Práctica because register-judgment is the app's actual
-              pedagogical edge. The other two games tuck behind a disclosure below. */}
-          <button onClick={startSafeRisky} data-testid="safe-risky-start"
-            style={{ display: "block", width: "100%", margin: "16px 0 6px", border: `2px solid ${D.red}`, borderBottom: `5px solid ${D.redDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          {/* Above the fold: Phrase Doctor, Safe-or-Risky, Emparejar. Other chrome stays below. */}
+          <div data-testid="practica-fold">
+          <button onClick={() => setDoctorOpen((v) => !v)} data-testid="phrase-doctor"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.purple}`, borderBottom: `5px solid ${D.purpleDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.red, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.redDark}` }}>⚠️</span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.purple, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.purpleDark}` }}>✎</span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{uiLang === "en" ? "Safe or Risky?" : "¿Seguro o riesgoso?"}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Sort phrases by register — the skill that matters most past B1." : "Clasifica frases por registro — la habilidad clave después de B1."}</div>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{uiLang === "en" ? "Phrase Doctor" : "Doctora de frases"}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Valeria fixes translation-shaped Spanish." : "Valeria corrige español con forma de traducción."}</div>
               </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>{doctorOpen ? "▾" : "→"}</span>
             </div>
           </button>
-          <button onClick={startMatchPairs} data-testid="match-pairs-start"
-            style={{ display: "block", width: "100%", margin: "0 0 6px", border: `2px solid ${D.blue}`, borderBottom: `5px solid ${D.blueDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.blue, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.blueDark}` }}>🔗</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{uiLang === "en" ? "Match pairs" : "Emparejar"}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "One finite round from the unit pairs — Spanish and English." : "Una ronda finita con las parejas de la unidad — español e inglés."}</div>
-              </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
-            </div>
-          </button>
-          <details style={{ margin: "0 0 14px", textAlign: "left" }}>
-            <summary style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, cursor: "pointer", padding: "8px 4px", listStyle: "none" }}>
-              {uiLang === "en" ? "More games" : "Más juegos"} ▾
-            </summary>
-            <div style={{ display: "grid", gap: 7, marginTop: 6 }}>
-              <button onClick={startSnakes}
-                style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", background: D.card, border: `2px solid ${D.line}`, borderBottom: `3px solid ${D.line}`, color: D.ink, borderRadius: 12, padding: "9px 12px", fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: 18 }}>🐍</span>
-                <span style={{ flex: 1 }}>{uiLang === "en" ? "Snakes & Ladders" : "Serpientes y Escaleras"}</span>
-                <span style={{ fontSize: 14, color: D.sub }}>→</span>
-              </button>
-              <button onClick={startJeopardy}
-                style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", background: D.card, border: `2px solid ${D.line}`, borderBottom: `3px solid ${D.line}`, color: D.ink, borderRadius: 12, padding: "9px 12px", fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: 18 }}>🎯</span>
-                <span style={{ flex: 1 }}>{uiLang === "en" ? "Reto Ándale" : "Reto Ándale"}</span>
-                <span style={{ fontSize: 14, color: D.sub }}>→</span>
-              </button>
-            </div>
-          </details>
-
           {(() => {
             const item = PHRASE_DOCTOR[doctorIdx % PHRASE_DOCTOR.length];
+            if (!doctorOpen) return null;
             return (
-              <div style={{ margin: "16px 0 14px", border: `2px solid ${D.purple}`, borderBottom: `5px solid ${D.purpleDark}`, borderRadius: 18, background: D.card, textAlign: "left", overflow: "hidden" }}>
+              <div data-testid="phrase-doctor-board" style={{ margin: "0 0 8px", border: `2px solid ${D.purple}`, borderBottom: `5px solid ${D.purpleDark}`, borderRadius: 18, background: D.card, textAlign: "left", overflow: "hidden" }}>
                 <div style={{ display: "flex", gap: 11, alignItems: "center", padding: "12px 14px", background: D.purpleBg }}>
                   <CoachPortrait id="valeria" mood={doctorReveal ? "party" : "focused"} size={58} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -5413,6 +5395,48 @@ export default function App() {
               </div>
             );
           })()}
+          <button onClick={startSafeRisky} data-testid="safe-risky-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.red}`, borderBottom: `5px solid ${D.redDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.red, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.redDark}` }}>⚠️</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{uiLang === "en" ? "Safe or Risky?" : "¿Seguro o riesgoso?"}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Sort phrases by register — the skill that matters most past B1." : "Clasifica frases por registro — la habilidad clave después de B1."}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={startMatchPairs} data-testid="match-pairs-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.blue}`, borderBottom: `5px solid ${D.blueDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.blue, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.blueDark}` }}>🔗</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{uiLang === "en" ? "Match pairs" : "Emparejar"}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "One finite round from the unit pairs — Spanish and English." : "Una ronda finita con las parejas de la unidad — español e inglés."}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          </div>
+          <details style={{ margin: "0 0 14px", textAlign: "left" }}>
+            <summary style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, cursor: "pointer", padding: "8px 4px", listStyle: "none" }}>
+              {uiLang === "en" ? "More games" : "Más juegos"} ▾
+            </summary>
+            <div style={{ display: "grid", gap: 7, marginTop: 6 }}>
+              <button onClick={startSnakes}
+                style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", background: D.card, border: `2px solid ${D.line}`, borderBottom: `3px solid ${D.line}`, color: D.ink, borderRadius: 12, padding: "9px 12px", fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: 18 }}>🐍</span>
+                <span style={{ flex: 1 }}>{uiLang === "en" ? "Snakes & Ladders" : "Serpientes y Escaleras"}</span>
+                <span style={{ fontSize: 14, color: D.sub }}>→</span>
+              </button>
+              <button onClick={startJeopardy}
+                style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", background: D.card, border: `2px solid ${D.line}`, borderBottom: `3px solid ${D.line}`, color: D.ink, borderRadius: 12, padding: "9px 12px", fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: 18 }}>🎯</span>
+                <span style={{ flex: 1 }}>{uiLang === "en" ? "Reto Ándale" : "Reto Ándale"}</span>
+                <span style={{ fontSize: 14, color: D.sub }}>→</span>
+              </button>
+            </div>
+          </details>
           <div style={{ margin: "16px 0 16px", border: `2px solid ${D.purple}`, borderBottom: `5px solid ${D.purpleDark}`, borderRadius: 16, padding: 14, background: D.purpleBg, textAlign: "left" }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 10 }}>
               <div style={{ width: 44, height: 44, borderRadius: 14, background: D.purple, borderBottom: `4px solid ${D.purpleDark}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -5464,7 +5488,8 @@ export default function App() {
 	            <p style={{ color: D.sub, fontWeight: 700 }}>{L.noErrors}</p>
           )}
 
-          <div style={{ marginTop: 28, border: `2px solid ${D.line}`, borderRadius: 16, padding: 16, textAlign: "left", background: D.card }}>
+          {showWeaknessMap && (
+          <div data-testid="weakness-map" style={{ marginTop: 28, border: `2px solid ${D.line}`, borderRadius: 16, padding: 16, textAlign: "left", background: D.card }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <div>
 	                <div style={{ fontWeight: 900, fontSize: 16 }}>{L.weaknessMap}</div>
@@ -5472,7 +5497,7 @@ export default function App() {
               </div>
               <IcBolt size={22} color={D.gold} />
             </div>
-            {weakSpots.length ? weakSpots.map(([name, n]) => (
+            {weakSpots.map(([name, n]) => (
               <div key={name} style={{ marginBottom: 9 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, fontWeight: 900, marginBottom: 4 }}>
                   <span>{name}</span><span style={{ color: D.red }}>{n}</span>
@@ -5481,14 +5506,13 @@ export default function App() {
                   <div style={{ width: `${Math.min(100, 18 + n * 18)}%`, height: "100%", background: n >= 3 ? D.red : D.gold }} />
                 </div>
               </div>
-            )) : (
-	              <div style={{ fontSize: 13, fontWeight: 800, color: D.sub }}>{L.noPatterns}</div>
-            )}
+            ))}
             <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
               <Btn color={D.gold} dark={D.goldDark} data-testid="weakness-workout" onClick={startDailyWorkout} style={{ padding: "9px 12px", fontSize: 11 }}>{L.dailyWorkout}</Btn>
 	              {trackedCount > 0 && <Btn outline onClick={() => startReview(true)} style={{ padding: "9px 12px", fontSize: 11 }}>{L.adaptiveReview}</Btn>}
             </div>
           </div>
+          )}
 
           {prog.hearts < MAX_HEARTS && (
             <div style={{ marginTop: 34, border: `2px solid ${D.line}`, borderRadius: 16, padding: 18 }}>
@@ -5617,7 +5641,7 @@ export default function App() {
 	              <div style={{ fontSize: 13, color: D.sub, fontWeight: 700 }}>{L.profileSub}</div>
             </div>
           </div>
-          <div style={{ border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 16, padding: "14px 18px", marginBottom: 14, background: D.goldBg }}>
+          {showLevelTheater && <div data-testid="level-theater" style={{ border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 16, padding: "14px 18px", marginBottom: 14, background: D.goldBg }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <span style={{ fontWeight: 900, fontSize: 18, color: D.goldDark }}>{lvl.name}</span>
 	              <span style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{L.level} {lvl.idx + 1}/{LEVELS.length}</span>
@@ -5632,7 +5656,7 @@ export default function App() {
             ) : (
 	              <div style={{ fontSize: 12, fontWeight: 800, color: D.sub, marginTop: 4 }}>{L.maxLevel}</div>
             )}
-          </div>
+          </div>}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
 	              { icon: <IcFlame size={26} />, v: prog.streak || 0, l: L.streakDays },
@@ -5814,7 +5838,7 @@ export default function App() {
             </div>
           </div>
           {!flashDeck.length && !flashRun?.done ? (
-            <div style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: 18, textAlign: "center", background: D.card }}>
+            <div data-testid="empty-tarjetas" style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: 18, textAlign: "center", background: D.card }}>
               <IcCards size={42} color={D.blue} />
 	              <h3 style={{ fontWeight: 900, margin: "8px 0 4px" }}>{L.emptyDeck}</h3>
 	              <p style={{ color: D.sub, fontWeight: 800, margin: "0 0 16px" }}>{L.emptyDeckDesc}</p>
@@ -6997,7 +7021,7 @@ export default function App() {
             )}
 
             {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
-              <div key={pi} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
+              <div key={pi} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
                 <div style={{ display: "flex", gap: 10 }}>
                 <button onClick={() => playStoryParagraph(story, pi, para)} aria-label="Escuchar párrafo"
                   style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "4px 7px", flexShrink: 0, alignSelf: "flex-start", lineHeight: 0, marginTop: 3 }}>
