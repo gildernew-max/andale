@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-02 (George + No face copy lock)
+
+**What changed**
+- `storyTip` is paragraph-first: ES `Lee el párrafo. Toca una palabra solo si te frena.` / EN `Read the paragraph. Tap a word only if it stops you.`
+- Empty tarjetas: ES `Todavía no hay tarjetas` + `Abre un cuento, toca una palabra que te frena, y guárdala con su frase.` + `Ir a Lectura`. EN `No cards yet` + `Open a story, tap a word that stops you, and save it with its line.` + `Go to Stories` — EN go matches the tab (`Stories`), not Reading.
+- `noPatterns` (empty weakness copy only): ES `Todavía no hay un mapa. Juega una misión o falla con estilo — entonces aparece.` / EN `No map yet. Play a mission or miss with style — then it shows up.` Empty map stays buried until earned.
+- Tonight slice stays: Hoy still match; bury Principiante / empty weakness / Atajos; Phrase Doctor + Safe-Risky + Emparejar above the fold. Tree / Subjuntivo first door / streak-1 / enroll untouched.
+
+**Why**
+- George + No face copy lock after PR 53. Lectura is paragraph-first; a tap is only if a word stops you. EN go follows tab chrome.
+
 ## 2026-09-02 (Dave/Hand tonight: Hoy still + bury theater + Práctica fold)
 
 **What changed**
