@@ -91,6 +91,35 @@ const expectedComeBack = (lang) => {
   return comeBackTomorrowLine({ lang, nextTitle: hoyTitleForLang(next, lang) });
 };
 
+/** Yearly is the sole filled primary; monthly is quiet text under it. Existing copy only. */
+const assertSoftPaywallAnnualPrimary = (lang = "es") => {
+  const annual = screen.getByTestId("soft-paywall-annual");
+  const monthly = screen.getByTestId("soft-paywall-monthly");
+  const honesty = screen.getByTestId("soft-paywall-honesty");
+  const dismiss = screen.getByTestId("soft-paywall-dismiss");
+  const copy = lang === "en"
+    ? { annual: "$39.99 / year", monthly: "$6.99 / month", honesty: "Practice · no charge yet", dismiss: "Continue free for now" }
+    : { annual: "$39.99 al año", monthly: "$6.99 al mes", honesty: "Práctica · sin cobro todavía", dismiss: "Seguir gratis por ahora" };
+  expect(annual.textContent).toBe(copy.annual);
+  expect(monthly.textContent).toBe(copy.monthly);
+  expect(honesty.textContent).toBe(copy.honesty);
+  expect(dismiss.textContent).toBe(copy.dismiss);
+  expect(annual.className).toMatch(/duo-btn/);
+  expect(annual.style.background).toMatch(/#58CC02|rgb\(88,\s*204,\s*2\)/i);
+  expect(annual.style.borderBottom).toMatch(/4px solid/);
+  expect(monthly.className).not.toMatch(/duo-btn/);
+  expect(monthly.style.background).toBe("none");
+  expect(monthly.style.padding).toBe("11px 0px");
+  expect(monthly.style.borderBottom).not.toMatch(/4px/);
+  expect(monthly.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
+  const filled = [...screen.getByTestId("soft-paywall").querySelectorAll("button.duo-btn")]
+    .filter((el) => !/^(#fff|#ffffff|rgb\(255,\s*255,\s*255\))$/i.test(el.style.background));
+  expect(filled).toHaveLength(1);
+  expect(filled[0]).toBe(annual);
+  expect(dismiss.className).toMatch(/duo-btn/);
+  expect(dismiss.style.background).toMatch(/#fff|#ffffff|rgb\(255,\s*255,\s*255\)/i);
+};
+
 const openCaminoMore = async (user) => {
   const more = screen.getByTestId("camino-more");
   if (more.getAttribute("aria-expanded") !== "true") await user.click(more);
@@ -1360,10 +1389,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
-    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("$39.99 al año");
-    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("$6.99 al mes");
-    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
-    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis por ahora");
+    assertSoftPaywallAnnualPrimary("es");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
@@ -1673,10 +1699,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.");
-    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("$39.99 al año");
-    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("$6.99 al mes");
-    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
-    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis por ahora");
+    assertSoftPaywallAnnualPrimary("es");
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Orden distinto, mismo sentido|Different order, same meaning/);
     expect(screen.getByTestId("soft-paywall").querySelector("[data-testid=\"word-order-tip\"]")).toBeNull();
 
@@ -1714,10 +1737,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Your streak just started.");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.");
-    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("$39.99 / year");
-    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("$6.99 / month");
-    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Practice · no charge yet");
-    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Continue free for now");
+    assertSoftPaywallAnnualPrimary("en");
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
@@ -1729,6 +1749,16 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
     expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
+  });
+
+  it("soft paywall yearly is sole filled primary; monthly is quiet text", async () => {
+    cleanup();
+    seedProgress({ streak: 1, lastDay: localToday() });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertSoftPaywallAnnualPrimary("es");
+    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
+    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis por ahora");
   });
 
   it("armed soft-paywall backdrop free-dismiss lands on post-dismiss-handoff", async () => {
