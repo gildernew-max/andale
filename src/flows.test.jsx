@@ -3,7 +3,7 @@
  * (src/content.test.js) and not the save/LIVE schema lock (src/schema.test.js).
  */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey } from "./firstDoor.js";
@@ -1359,6 +1359,19 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
     expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
+  });
+
+  it("armed soft-paywall backdrop free-dismiss lands on post-dismiss-handoff", async () => {
+    const today = localToday();
+    cleanup();
+    seedProgress({ streak: 1, lastDay: today });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    fireEvent.click(screen.getByTestId("soft-paywall"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
   });
 
   it("header mute and locked unit-node aria follow uiLang", async () => {
