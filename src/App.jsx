@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive } from "./schema.js";
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, firstDoorHero, shouldShowSoftPaywall, showComeBackTomorrow, streakAfterWin } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, shouldShowSoftPaywall, showComeBackTomorrow, streakAfterWin } from "./firstDoor.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -796,14 +796,11 @@ function speak(text, rate = 0.92, opts = {}) {
   } catch (e) {}
 }
 
-const todayStr = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+const todayStr = () => dayKeyFromDate(new Date());
 const yesterdayStr = () => {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return dayKeyFromDate(d);
 };
 
 const storage = {
@@ -4785,8 +4782,8 @@ export default function App() {
   const weakSpots = Object.entries(prog.weak || {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const smartFocus = smartPracticeFocus();
   const todayKey = todayStr();
-  const todaySceneIndex = [...todayKey].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % TODAY_SCENES.length;
-  const todayScene = TODAY_SCENES[todaySceneIndex];
+  const todayScene = hoySceneForDay(TODAY_SCENES, todayKey);
+  const tomorrowScene = hoySceneForDay(TODAY_SCENES, nextDayKey(todayKey));
   const hoyStill = hoyStillFor(todayScene);
   const showLevelTheater = hasLearnerProgress(prog);
   const showWeaknessMap = hasWeaknessData(prog);
@@ -5067,7 +5064,11 @@ export default function App() {
                   )}
                   {showLine && (
                     <div data-testid="come-back-tomorrow" style={{ margin: "0 0 10px", border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13.5, fontWeight: 800, color: D.ink, lineHeight: 1.35 }}>
-                      {L.comeBackTomorrow}
+                      {comeBackTomorrowLine({
+                        lang: uiLang,
+                        nextTitle: hoyTitleForLang(tomorrowScene, uiLang),
+                        fallback: L.comeBackTomorrow,
+                      })}
                     </div>
                   )}
                 </div>

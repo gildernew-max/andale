@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (tomorrow teaser + return door)
+
+**What changed**
+- After streak-1, Camino teaser names tomorrow’s Hoy when the same day-hash can resolve it: ES `Vuelve mañana por «{title}».` / EN `Come back tomorrow for “{title}”.` Example lock: 2026-09-05 → `Mostrador en caos` / `Airport Counter Chaos`.
+- Generic `siguiente escena` / `next scene` stays as fallback when the title is unknown. HOLD generic strings untouched.
+- Return door with streak ≥ 1 locked: open Hoy → `Jugar la escena` / Play the scene; Hoy done → Doctora `Arreglar una frase` / Fix a phrase. Never Subjuntivo Continuar as hero. Empieza stays demoted; empty Principiante theater stays buried.
+- Soft paywall, splash, JEOPARDY SOLO, Rayo, enroll, PrivacyInfo, IAP untouched. Paywall still after first win once.
+
+**Why**
+- George stamp: the vuelve line should tease the next real Hoy title, not a generic scene. Return door hero was already the rule — lock it on streak ≥ 1.
+
 ## 2026-09-04 (splash marketability pass)
 
 **What changed**
