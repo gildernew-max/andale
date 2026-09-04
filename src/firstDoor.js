@@ -107,6 +107,14 @@ export function progressAfterWinContinue(prev = {}, { today, todaySceneId } = {}
   };
 }
 
+export const SCREEN_HOME = "home";
+export const SCREEN_SESSION_CLOSE = "sessionClose";
+
+/** First-session Doctora CONTINUE lands on the come-back card, not idle Camino. */
+export function screenAfterWinContinue({ firstDoctora } = {}) {
+  return firstDoctora ? SCREEN_SESSION_CLOSE : SCREEN_HOME;
+}
+
 /** Meta / Rayo / four-coach strip after first win. Same streak ≥ 1 gate as teaser/paywall. */
 export function showDoorMetaChrome({ streak } = {}) {
   return (Number(streak) || 0) >= 1;
