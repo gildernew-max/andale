@@ -7,6 +7,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey, prevDayKey } from "./firstDoor.js";
+import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -96,15 +97,47 @@ const openCaminoMore = async (user) => {
   await waitFor(() => expect(screen.getByTestId("camino-more-panel")).toBeTruthy());
 };
 
+const JSDOM_UA = "Mozilla/5.0 (linux) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/26.0.0";
+
+const mockA2hsEnv = ({ userAgent = IPHONE_SAFARI_UA, standalone = false, platform = "", maxTouchPoints = 0 } = {}) => {
+  Object.defineProperty(window.navigator, "userAgent", {
+    configurable: true,
+    get: () => userAgent,
+  });
+  Object.defineProperty(window.navigator, "standalone", {
+    configurable: true,
+    get: () => standalone,
+  });
+  Object.defineProperty(window.navigator, "platform", {
+    configurable: true,
+    get: () => platform,
+  });
+  Object.defineProperty(window.navigator, "maxTouchPoints", {
+    configurable: true,
+    get: () => maxTouchPoints,
+  });
+  window.matchMedia = (query) => ({
+    matches: standalone && String(query).includes("display-mode: standalone"),
+    media: query,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    dispatchEvent() { return false; },
+  });
+};
+
 beforeEach(() => {
   localStorage.clear();
   mockBrowser();
+  mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
   seedProgress();
 });
 
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
 });
 
 describe("simulated learner flows", () => {
@@ -1277,6 +1310,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
     expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
     expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
     expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*\d+\/40/);
@@ -1638,6 +1672,7 @@ describe("simulated learner flows", () => {
     expect(stored.paywallPlan).toBe("annual");
     expect(stored.unlockedPrem).toBe(true);
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
     expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
   });
@@ -1653,6 +1688,131 @@ describe("simulated learner flows", () => {
     fireEvent.click(screen.getByTestId("soft-paywall"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
+  });
+
+  it("A2HS after iOS Safari free dismiss sits on Doctora handoff — once, locked copy", async () => {
+    const today = localToday();
+    cleanup();
+    mockA2hsEnv();
+    seedProgress({ streak: 1, lastDay: today });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("a2hs-sheet")).toBeTruthy();
+    expect(screen.getByTestId("a2hs-title").textContent).toBe("Agrega Ándale a tu pantalla de inicio");
+    expect(screen.getByTestId("a2hs-how").textContent).toBe("Toca Compartir, luego «Agregar a pantalla de inicio».");
+    expect(screen.getByTestId("a2hs-dismiss").textContent).toBe("Ahora no");
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
+    expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
+    expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).a2hsSeen).toBe(true);
+    expect(document.body.textContent).not.toMatch(/Ya empezó tu racha/);
+    expect(screen.getByTestId("a2hs-sheet").textContent).not.toMatch(/\$39\.99|\$6\.99/);
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("a2hs-title").textContent).toBe("Add Ándale to your Home Screen"));
+    expect(screen.getByTestId("a2hs-how").textContent).toBe("Tap Share, then Add to Home Screen.");
+    expect(screen.getByTestId("a2hs-dismiss").textContent).toBe("Not now");
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
+
+    await user.click(screen.getByTestId("a2hs-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("a2hs-sheet")).toBeNull());
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+
+    cleanup();
+    mockA2hsEnv();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).a2hsSeen).toBe(true);
+  });
+
+  it("A2HS skips non-iOS Safari, standalone, seen flag, and price-plan dismiss", async () => {
+    const today = localToday();
+    const user = userEvent.setup();
+
+    cleanup();
+    mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
+    seedProgress({ streak: 1, lastDay: today });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).a2hsSeen).not.toBe(true);
+
+    cleanup();
+    mockA2hsEnv({ standalone: true });
+    seedProgress({ streak: 1, lastDay: today });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await userEvent.setup().click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
+
+    cleanup();
+    mockA2hsEnv();
+    seedProgress({ streak: 1, lastDay: today, a2hsSeen: true });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await userEvent.setup().click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
+
+    cleanup();
+    mockA2hsEnv();
+    seedProgress({ uiLang: "en", streak: 1, lastDay: today });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await userEvent.setup().click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).a2hsSeen).not.toBe(true);
+
+    cleanup();
+    mockA2hsEnv({ userAgent: MAC_SAFARI_UA, platform: "MacIntel", maxTouchPoints: 0 });
+    seedProgress({ streak: 1, lastDay: today });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await userEvent.setup().click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
+  });
+
+  it("A2HS shows on iPadOS Safari desktop mode (Macintosh UA + touch)", async () => {
+    const today = localToday();
+    cleanup();
+    mockA2hsEnv({ userAgent: MAC_SAFARI_UA, platform: "MacIntel", maxTouchPoints: 5 });
+    seedProgress({ streak: 1, lastDay: today });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("a2hs-sheet")).toBeTruthy();
+    expect(screen.getByTestId("a2hs-title").textContent).toBe("Agrega Ándale a tu pantalla de inicio");
+    expect(screen.getByTestId("a2hs-how").textContent).toBe("Toca Compartir, luego «Agregar a pantalla de inicio».");
+    expect(screen.getByTestId("a2hs-dismiss").textContent).toBe("Ahora no");
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).a2hsSeen).toBe(true);
   });
 
   it("header mute and locked unit-node aria follow uiLang", async () => {
