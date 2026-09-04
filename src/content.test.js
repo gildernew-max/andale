@@ -327,6 +327,10 @@ assert(!/Empezar tanda|siguiente tanda|tanda útil/.test(appSrc), "ES chrome is 
 assert(!/Elegido como tu siguiente/.test(appSrc), "ES reason is not Elegido como…");
 assert(!/útil/.test("Tu siguiente ronda.Empezar ronda de 5 — sin vidas"), "locked ES lines have no útil");
 assert(appSrc.includes("JEOPARDY SOLO"), "JEOPARDY SOLO stays an intentional loan");
+assert(appSrc.includes('uiLang === "en" ? "Sound" : "Sonido"'), "mute aria-label follows uiLang");
+assert(!/aria-label="Sound"/.test(appSrc), "mute aria-label is not hardcoded Sound");
+assert(appSrc.includes('" (blocked)"') && appSrc.includes('" (bloqueado)"'), "locked unit-node suffix follows uiLang");
+assert(!/unlocked \? "" : " \(bloqueado\)"/.test(appSrc), "locked unit-node suffix is not hardcoded bloqueado");
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const viteSrc = readFileSync(join(repoRoot, "vite.config.js"), "utf8");
 assert(viteSrc.includes("base: '/andale/'"), "Pages vite base stays /andale/");

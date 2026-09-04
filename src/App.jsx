@@ -4894,7 +4894,7 @@ export default function App() {
               <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>
               <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>
               {(voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
-                <button onClick={() => { if (voiceDead || (voicesReady && !voices.length)) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label="Sound"
+                <button onClick={() => { if (voiceDead || (voicesReady && !voices.length)) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label={uiLang === "en" ? "Sound" : "Sonido"}
                   title={(voicesReady && !voices.length) ? (uiLang === "en" ? "No Spanish voices — tap to fix" : "Sin voces en español — toca para arreglar") : (uiLang === "en" ? "Sound off" : "Sonido apagado")}
                   style={{ background: "none", border: "none", cursor: "pointer", padding: "12px 10px", margin: "-12px -10px", lineHeight: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minWidth: 44, minHeight: 44 }}>
                   <IcBell size={19} off={!prog.sound} />
@@ -5116,7 +5116,7 @@ export default function App() {
                             </div>
                           )}
                           <button className={`node-btn ${isCurrent ? "pulse" : ""}`} disabled={!unlocked} onClick={() => setSheet({ unit: u, section: sec, crowns })}
-                            aria-label={`${u.title}${unlocked ? "" : " (bloqueado)"}`}
+                            aria-label={`${u.title}${unlocked ? "" : (uiLang === "en" ? " (blocked)" : " (bloqueado)")}`}
                             title={unlocked ? `${u.title}${u.desc || u.blurb ? ` — ${u.desc || u.blurb}` : ""}` : "Completa la habilidad anterior para desbloquear"}
                             style={{ width: 78, height: 78, borderRadius: "50%", border: "none", cursor: unlocked ? "pointer" : "default", background: nodeColor, borderBottom: `7px solid ${nodeDark}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: unlocked ? "0 4px 10px rgba(0,0,0,.12)" : "none" }}>
                             {unlocked ? GLYPHS[uid] : <IcLock size={30} />}
