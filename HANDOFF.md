@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (tomorrow teaser inert — not tappable)
+
+**What changed**
+- Camino `come-back-tomorrow` is a quiet `<p>`, not a card/button. No pressable chrome (no 2px/4px card border, no card fill, no radius, no `cursor:pointer`, no `role=button`, no onClick).
+- Copy/behavior stays: titled `Vuelve mañana por «{title}».` / `Come back tomorrow for “{title}”.` when next Hoy is known; generic fallback unchanged. Tap does not navigate or open anything.
+- Tests: flow + content lock that the teaser is not a button / not clickable. Door, paywall/honesty, splash, word-order tip, Perfil Intermedio, cold EN, Más/More, name, casero, skill chips, enroll, JEOPARDY, Rayo untouched.
+
+**Why**
+- Varys quit risk / Hand lock: retention teaser looked like a second tappable card beside the door.
+
 ## 2026-09-04 (Más / More bury + name + casero)
 
 **What changed**

@@ -935,6 +935,34 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
   });
 
+  it("tomorrow teaser is inert — not a button and not clickable", async () => {
+    const today = localToday();
+    cleanup();
+    seedProgress({ streak: 1, lastDay: today, paywallSeen: true });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
+    const teaser = screen.getByTestId("come-back-tomorrow");
+    expect(teaser.textContent).toBe(expectedComeBack("es"));
+    expect(teaser.tagName).not.toBe("BUTTON");
+    expect(teaser.tagName).not.toBe("A");
+    expect(teaser.getAttribute("role")).not.toBe("button");
+    expect(teaser.getAttribute("href")).toBeNull();
+    expect(teaser.closest("button")).toBeNull();
+    expect(teaser.closest("a")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Vuelve mañana|Come back tomorrow/ })).toBeNull();
+    expect(window.getComputedStyle(teaser).cursor).not.toBe("pointer");
+
+    await user.click(teaser);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    expect(screen.getByTestId("nav-camino")).toBeTruthy();
+    expect(screen.getByTestId("hero-cta")).toBeTruthy();
+    expect(screen.queryByTestId("lesson-exit")).toBeNull();
+    expect(screen.queryByTestId("phrase-doctor-board")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("splash")).toBeNull();
+  });
+
   it("first win shows streak 1 and the vuelve mañana home line", async () => {
     const today = (() => {
       const d = new Date();
