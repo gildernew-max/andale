@@ -2,6 +2,14 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (day-2 return Hoy ≤60s — George + No face lock)
+
+**What changed**
+- Day-2 return Hoy gates ≤4 (`isShortHoy` / `trimHoyBeats`). Native scene only (setup · line · Q). Early win, ES `¡Eso!` · EN `That's it.`
+- Live casero and tomorrow `Mostrador en caos` are already 3 beats. No cut list. No invented copy.
+- `shouldParkHoyUnderMas` only if a scene grows past 4. Live titles do not park under Más.
+- Door / paywall / teaser / handoff / first Hoy+Doctora / door diet / Más bury / enroll stay.
+
 ## 2026-09-04 (soft paywall cannot survive midnight)
 
 **What changed**

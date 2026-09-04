@@ -895,6 +895,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("path-entry")).toBeNull();
     expect(screen.queryByTestId("camino-review")).toBeNull();
     expect(screen.queryByTestId("camino-daily-workout")).toBeNull();
+    expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     expect(screen.queryByRole("button", { name: /^EMPIEZA$|^START$/ })).toBeNull();
     expect(screen.queryByTestId("camino-review")).toBeNull();
     expect(screen.queryByRole("button", { name: /Rutina diaria|Daily routine/ })).toBeNull();
@@ -906,6 +907,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("path-entry").textContent).toBe("EMPIEZA");
     expect(screen.getByTestId("camino-review").textContent).toMatch(/Repasar/);
     expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Rutina diaria/);
+    expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     expect(screen.getByTestId("nav-camino").textContent).toBe("Camino");
     expect(screen.getByTestId("camino-more").textContent).toBe("Más");
 
@@ -1032,6 +1034,87 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
     expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
+    expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
+    await openCaminoMore(userEvent.setup());
+    expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
+    expect(screen.getByTestId("first-door-hero").querySelector("[data-testid='hoy-card']")).toBeTruthy();
+  });
+
+  it("day-2 return Hoy wins early (≤4 beats) with ¡Eso! / That's it.", async () => {
+    const today = localToday();
+    const yesterday = prevDayKey(today);
+    cleanup();
+    seedProgress({
+      streak: 1,
+      lastDay: yesterday,
+      paywallSeen: true,
+      missions: { [`scene-${yesterday}`]: "taqueria" },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene/);
+    await user.click(screen.getByTestId("lang-es"));
+    await user.click(screen.getByTestId("hero-cta"));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const liveShort = JSON.parse(localStorage.getItem(LIVE_KEY));
+    expect(liveShort.session.firstHoy).toBe(true);
+    expect(liveShort.session.questions.length).toBeLessThanOrEqual(4);
+    expect(liveShort.session.questions.length).toBeGreaterThan(0);
+    const hoyAnswers = [
+      "cilantro, cebolla, salsa y guarnición",
+      "natural y firme",
+      "contraste",
+      "habla de un momento futuro",
+    ];
+    const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
+      hoyAnswers.some((ans) => el.textContent.includes(ans)));
+    expect(choice).toBeTruthy();
+    await user.click(choice);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win")).toBeTruthy());
+    expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
+    expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
+    expect(document.body.textContent).not.toMatch(/¡IMPECABLE!|FLAWLESS!/);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
+    expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /You won!|¡Ganaste!|Lesson complete/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+    await user.click(screen.getByTestId("hoy-win-continue"));
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+  });
+
+  it("day-2 live Hoy does not park under Más — scenes are already ≤4", async () => {
+    const today = localToday();
+    const yesterday = prevDayKey(today);
+    const promised = hoySceneForDay(HOY_TITLES, today);
+    cleanup();
+    seedProgress({
+      streak: 1,
+      lastDay: yesterday,
+      paywallSeen: true,
+      missions: { [`scene-${yesterday}`]: "taqueria" },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.getByTestId("hoy-title").textContent).toBe(promised.title);
+    expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
+    await openCaminoMore(user);
+    expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
+    expect(screen.getByTestId("camino-more-panel")).toBeTruthy();
+    expect(screen.getByTestId("first-door-hero").textContent).toMatch(/Jugar la escena|Play the scene/);
+    expect(promised.title).toMatch(/WhatsApp del casero|Mostrador en caos|Noche de faroles|Cena con la suegra/);
   });
 
   it("undismissed soft paywall clears when the day rolls — no stale Doctora handoff", async () => {
