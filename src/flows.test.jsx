@@ -463,6 +463,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
     expect(screen.getByTestId("splash").querySelector("img[src*='sma-']")).toBeNull();
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/Orden distinto|Different order, same meaning/);
+    expect(screen.queryByTestId("word-order-tip")).toBeNull();
     expect(screen.queryByRole("button", { name: /Let's go!/ })).toBeNull();
 
     await user.click(screen.getByTestId("lang-en"));
@@ -658,9 +660,17 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("phrase-doctor-fix"));
     await waitFor(() => expect(screen.getByTestId("word-order-tip")).toBeTruthy());
     expect(screen.getByTestId("word-order-tip").textContent).toBe("Orden distinto, mismo sentido. En formal, ambas valen.");
+    expect(screen.getByTestId("phrase-doctor-miss")).toBeTruthy();
+    expect(screen.getByTestId("phrase-doctor-guess").value).toBe("Me dará mucho gusto verlo/la.");
+    const boardHtml = screen.getByTestId("phrase-doctor-board").innerHTML;
+    expect(boardHtml.indexOf("phrase-doctor-miss")).toBeGreaterThan(-1);
+    expect(boardHtml.indexOf("word-order-tip")).toBeGreaterThan(boardHtml.indexOf("phrase-doctor-miss"));
     expect(screen.queryByTestId("phrase-doctor-fail")).toBeNull();
     expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/NATURAL/);
     expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/Tengo muchas ganas de verte/);
+    expect(screen.queryByTestId("splash")).toBeNull();
+    expect(screen.getByTestId("word-order-tip").closest("[data-testid=\"soft-paywall\"]")).toBeNull();
+    expect(screen.getByTestId("word-order-tip").style.position).not.toBe("fixed");
 
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("word-order-tip").textContent).toBe("Different order, same meaning. Formally, both work."));
@@ -847,7 +857,9 @@ describe("simulated learner flows", () => {
     render(<App />);
     await waitFor(() => expect(screen.getByRole("button", { name: /¡Empezar!|Start!/ })).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("word-order-tip")).toBeNull();
     expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
+    expect(document.body.textContent).not.toMatch(/Orden distinto, mismo sentido|Different order, same meaning/);
 
     cleanup();
     localStorage.clear();
@@ -886,6 +898,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("$6.99 al mes");
     expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis por ahora");
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Orden distinto, mismo sentido|Different order, same meaning/);
+    expect(screen.getByTestId("soft-paywall").querySelector("[data-testid=\"word-order-tip\"]")).toBeNull();
 
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());

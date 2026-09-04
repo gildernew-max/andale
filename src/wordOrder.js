@@ -1,5 +1,6 @@
 /** Word-order / dual-register phrase grading.
- *  Listed equivalents (or Phrase Doctor natural+formal) accept BEFORE a hard fail.
+ *  Placement lock (No face): tip card AFTER a miss that is a listed alternate.
+ *  Accept / soft-credit that miss. Not splash, not paywall, not a blocking modal.
  *  Tip copy is George + No face locked. Short card — not a lecture. */
 
 export const WORD_ORDER_TIP_ES = "Orden distinto, mismo sentido. En formal, ambas valen.";

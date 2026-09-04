@@ -276,7 +276,18 @@ assert(UI.en.wordOrderTip === "Different order, same meaning. Formally, both wor
 assert(appSrc.includes("{L.wordOrderTip}"), "word-order tip uses L.wordOrderTip");
 assert(appSrc.includes("data-testid=\"word-order-tip\""), "word-order tip is testable");
 assert(appSrc.includes("data-testid=\"phrase-doctor-guess\""), "Phrase Doctor guess is testable");
+assert(appSrc.includes("phrase-doctor-miss"), "accepted alternate miss stays visible");
+assert(appSrc.includes("data-testid=\"word-order-miss\""), "lesson miss stays visible before the tip");
+const doctorChunk = appSrc.slice(appSrc.indexOf("phrase-doctor-board"), appSrc.indexOf("phrase-doctor-fix"));
+assert(doctorChunk.includes("phrase-doctor-miss"), "Doctora miss is on the board");
+assert(doctorChunk.indexOf("phrase-doctor-miss") < doctorChunk.indexOf("word-order-tip"), "Doctora tip card is AFTER the accepted miss");
+assert(/word-order-miss[\s\S]{0,400}word-order-tip/.test(appSrc), "lesson tip card is AFTER the accepted miss");
 assert(appSrc.includes("gradeListedPhrase"), "listed equivalents grade before hard fail");
+const splashChunk = appSrc.slice(appSrc.indexOf('data-testid="splash"'), appSrc.indexOf('data-testid="splash"') + 1800);
+assert(!/wordOrderTip|word-order-tip/.test(splashChunk), "word-order tip is not on splash");
+const paywallChunk = appSrc.slice(appSrc.indexOf('data-testid="soft-paywall"'), appSrc.indexOf('data-testid="soft-paywall"') + 1800);
+assert(!/wordOrderTip|word-order-tip/.test(paywallChunk), "word-order tip is not on paywall");
+assert(!/data-testid="word-order-tip"[\s\S]{0,180}position:\s*["']?fixed/.test(appSrc), "word-order tip is not a blocking modal");
 assert(UI.es.noPatterns === "Todavía no hay un mapa. Juega una misión o falla con estilo — entonces aparece.", "UI.es.noPatterns");
 assert(UI.en.noPatterns === "No map yet. Play a mission or miss with style — then it shows up.", "UI.en.noPatterns");
 assert(UI.es.inDeck === "Ya guardada", "UI.es.inDeck");

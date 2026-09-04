@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (word-order tip placement lock)
+
+**What changed**
+- Placement lock: tip card AFTER a miss that is a listed alternate order. Accept / soft-credit that miss. Short card only.
+- Copy stays exact: ES `Orden distinto, mismo sentido. En formal, ambas valen.` / EN `Different order, same meaning. Formally, both work.`
+- Primary surface: Doctora de frases. Miss (typed formal / other listed order) stays visible; tip sits under it. Formal/register lessons use the same after-miss slot when variants are listed.
+- Not on splash. Not on paywall. Not a blocking modal. Door / paywall / honesty stay. Enroll off.
+
+**Why**
+- No face placement lock. The tip belongs after the accepted miss, not as a lecture or overlay.
+
 ## 2026-09-04 (word-order tip — George + No face)
 
 **What changed**

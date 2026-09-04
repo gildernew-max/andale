@@ -3244,6 +3244,7 @@ export default function App() {
   const [doctorGrade, setDoctorGrade] = useState(null);
   const [doctorFailed, setDoctorFailed] = useState(false);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
+  const [wordOrderMiss, setWordOrderMiss] = useState("");
   const [safeGame, setSafeGame] = useState(null);
   const [jeopardy, setJeopardy] = useState(null);
   const [snakeGame, setSnakeGame] = useState(null);
@@ -4077,6 +4078,7 @@ export default function App() {
     setSessionXP(0); setCombo(0); setLessonStats({ right: 0, wrong: 0 });
     setShowWhy(false); setFailKind("hearts");
     setShowWordOrderTip(false);
+    setWordOrderMiss("");
     setScreen("lesson");
   };
 
@@ -4093,24 +4095,28 @@ export default function App() {
     if (!q || status !== "idle") return;
     let r;
     let tip = false;
+    let missText = "";
     if (q.type === "mc") { if (selected == null) return; r = q.shuffledChoices[selected] === q.answer ? "correct" : "wrong"; }
     else if (q.type === "order") {
       if (!placed.length) return;
       const built = placed.map((id) => q.shuffledWords.find((t) => t.id === id).w).join(" ");
       const g = gradeListedPhrase(built, q);
       tip = !!g.tip;
+      if (tip) missText = built;
       r = g.status === "wrong" ? "wrong" : "correct";
     }
     else if (q.type === "match") { return; }
-    else { /* type | listen | transform — listed equivalents accept before a hard fail */
+    else { /* type | listen | transform — listed equivalents accept / soft-credit before a hard fail */
       const given = typedFromField();
       if (given !== typed) setTyped(given);
       if (!given.trim()) return;
       const g = gradeListedPhrase(given, q);
       tip = !!g.tip;
+      if (tip) missText = given;
       r = g.status === "wrong" ? "wrong" : g.almost ? "almost" : "correct";
     }
     setShowWordOrderTip(tip);
+    setWordOrderMiss(missText);
     applyResult(r);
   };
 
@@ -4229,6 +4235,7 @@ export default function App() {
     setMatchSel(null); setMatched([]); setMatchWrong(null); setShowWhy(false);
     setWasTimeout(false); setRayoLeft(null);
     setShowWordOrderTip(false);
+    setWordOrderMiss("");
   };
 
   const finishLesson = () => {
@@ -5447,39 +5454,42 @@ export default function App() {
                   <div style={{ border: `2px solid ${D.line}`, borderRadius: 12, padding: "10px 12px", background: D.subtle, fontWeight: 900, fontSize: 16, color: D.ink }}>
                     {item.awkward}
                   </div>
-                  {!doctorReveal && (
-                    <input
-                      data-testid="phrase-doctor-guess"
-                      value={doctorGuess}
-                      onChange={(e) => {
-                        setDoctorGuess(e.target.value);
-                        if (doctorGrade === "wrong") setDoctorGrade(null);
-                      }}
-                      placeholder={uiLang === "en" ? "Your version" : "Tu versión"}
-                      autoCapitalize="off"
-                      autoCorrect="off"
-                      spellCheck={false}
-                      aria-invalid={doctorGrade === "wrong"}
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        boxSizing: "border-box",
-                        marginTop: 10,
-                        padding: "10px 12px",
-                        fontSize: 16,
-                        fontWeight: 800,
-                        fontFamily: "inherit",
-                        borderRadius: 12,
-                        border: `2px solid ${doctorGrade === "wrong" ? D.red : D.line}`,
-                        background: doctorGrade === "wrong" ? D.badBg : D.subtle,
-                        color: D.ink,
-                      }}
-                    />
+                  {(!doctorReveal || doctorGrade === "equivalent") && (
+                    <div data-testid={doctorGrade === "equivalent" ? "phrase-doctor-miss" : undefined}>
+                      <input
+                        data-testid="phrase-doctor-guess"
+                        value={doctorGuess}
+                        disabled={doctorReveal}
+                        onChange={(e) => {
+                          setDoctorGuess(e.target.value);
+                          if (doctorGrade === "wrong") setDoctorGrade(null);
+                        }}
+                        placeholder={uiLang === "en" ? "Your version" : "Tu versión"}
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        aria-invalid={doctorGrade === "wrong"}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          boxSizing: "border-box",
+                          marginTop: 10,
+                          padding: "10px 12px",
+                          fontSize: 16,
+                          fontWeight: 800,
+                          fontFamily: "inherit",
+                          borderRadius: 12,
+                          border: `2px solid ${doctorGrade === "wrong" ? D.red : doctorGrade === "equivalent" ? D.gold : D.line}`,
+                          background: doctorGrade === "wrong" ? D.badBg : doctorGrade === "equivalent" ? D.goldBg : D.subtle,
+                          color: D.ink,
+                        }}
+                      />
+                    </div>
                   )}
                   {doctorGrade === "wrong" && !doctorReveal && (
                     <div data-testid="phrase-doctor-fail" style={{ marginTop: 6, fontSize: 12.5, fontWeight: 800, color: D.red }} />
                   )}
-                  {doctorTip && (
+                  {doctorTip && doctorGrade === "equivalent" && (
                     <div data-testid="word-order-tip" className="pop" style={{ marginTop: 10, border: `1.5px solid ${D.gold}`, borderRadius: 11, padding: "8px 10px", background: D.goldBg, fontSize: 12.5, fontWeight: 800, lineHeight: 1.35, color: D.ink }}>
                       {L.wordOrderTip}
                     </div>
@@ -6627,8 +6637,13 @@ export default function App() {
               )}
               <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? D.sub : D.okText }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
-                  <div data-testid="word-order-tip" className="pop" style={{ marginBottom: 8, border: `1.5px solid ${D.gold}`, borderRadius: 11, padding: "8px 10px", background: D.goldBg, fontSize: 12.5, fontWeight: 800, lineHeight: 1.35, color: D.ink }}>
-                    {L.wordOrderTip}
+                  <div>
+                    <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: 0.85 }}>
+                      {L.yourAnswer}: {wordOrderMiss}
+                    </div>
+                    <div data-testid="word-order-tip" className="pop" style={{ marginBottom: 8, border: `1.5px solid ${D.gold}`, borderRadius: 11, padding: "8px 10px", background: D.goldBg, fontSize: 12.5, fontWeight: 800, lineHeight: 1.35, color: D.ink }}>
+                      {L.wordOrderTip}
+                    </div>
                   </div>
                 )}
                 {status === "correct" && <span><b>{quip}</b> {q.explain}</span>}
