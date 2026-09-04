@@ -648,6 +648,11 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
     expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Vuelve mañana por la siguiente escena.");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
     expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
@@ -658,6 +663,92 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("first-door-tag").textContent).toBe("WIN IN 60 SECONDS");
     expect(screen.getByTestId("first-door-title").textContent).toBe("Phrase Doctor");
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
+  });
+
+  it("soft paywall does not render on splash or boot before a win", async () => {
+    cleanup();
+    localStorage.clear();
+    render(<App />);
+    await waitFor(() => expect(screen.getByRole("button", { name: /¡Empezar!|Let's go!/ })).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
+
+    cleanup();
+    localStorage.clear();
+    seedProgress({ streak: 0, lastDay: null });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
+  });
+
+  it("soft paywall after first Phrase Doctor win: vuelve first, then once, dismiss stays free", async () => {
+    const today = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, xp: 0 });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+
+    await user.click(screen.getByTestId("first-door-alt"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => {
+      const prog = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      expect(prog.streak).toBe(1);
+      expect(prog.lastDay).toBe(today);
+    });
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+
+    await user.click(screen.getByTestId("nav-camino"));
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Vuelve mañana por la siguiente escena."));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
+    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.");
+    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("$39.99 al año");
+    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("$6.99 al mes");
+    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis por ahora");
+
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+    expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
+    expect(screen.getByTestId("hero-cta")).toBeTruthy();
+
+    cleanup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+  });
+
+  it("soft paywall EN strings after first-win state; annual CTA is local-only", async () => {
+    const today = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    cleanup();
+    seedProgress({ uiLang: "en", streak: 1, lastDay: today });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Come back tomorrow for the next scene."));
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Your streak just started.");
+    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.");
+    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("$39.99 / year");
+    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("$6.99 / month");
+    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Continue free for now");
+
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(stored.paywallSeen).toBe(true);
+    expect(stored.paywallInterest).toBe("annual");
+    expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
+    expect(screen.getByTestId("hero-cta")).toBeTruthy();
   });
 
   it("header mute and locked unit-node aria follow uiLang", async () => {

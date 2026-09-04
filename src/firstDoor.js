@@ -20,3 +20,25 @@ export function streakAfterWin(prev = {}, today, yesterday) {
   if (prev.lastDay === yesterday) return (Number(prev.streak) || 0) + 1;
   return 1;
 }
+
+/**
+ * Soft paywall once after first win (streak-1), only after the come-back-tomorrow
+ * home line is on Camino. Never splash, never before a win, never again after seen.
+ */
+export function shouldShowSoftPaywall({
+  paywallSeen,
+  todaySceneDone,
+  streak,
+  lastDay,
+  today,
+  screen = "home",
+  tab = "camino",
+  splash = false,
+} = {}) {
+  if (paywallSeen) return false;
+  if (splash) return false;
+  if (screen !== "home") return false;
+  if (tab !== "camino") return false;
+  if ((Number(streak) || 0) !== 1) return false;
+  return showComeBackTomorrow({ todaySceneDone, streak, lastDay, today });
+}

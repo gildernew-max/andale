@@ -1,4 +1,4 @@
-import { FIRST_DOOR_HOY, FIRST_DOOR_PHRASE_DOCTOR, firstDoorHero, showComeBackTomorrow, streakAfterWin } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, FIRST_DOOR_PHRASE_DOCTOR, firstDoorHero, shouldShowSoftPaywall, showComeBackTomorrow, streakAfterWin } from "./firstDoor.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -16,5 +16,14 @@ assert(streakAfterWin({ streak: 1, lastDay: "2026-09-03" }, "2026-09-04", "2026-
 assert(showComeBackTomorrow({ todaySceneDone: true, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "cleared scene shows home line");
 assert(showComeBackTomorrow({ todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "first win today shows home line");
 assert(!showComeBackTomorrow({ todaySceneDone: false, streak: 0, lastDay: null, today: "2026-09-04" }), "new session has no home line yet");
+
+const firstWinHome = { todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04", screen: "home", tab: "camino", splash: false };
+assert(shouldShowSoftPaywall(firstWinHome), "first win on Camino shows paywall after vuelve");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, splash: true }), "paywall never on splash");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, screen: "done" }), "paywall waits until after celebration");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, tab: "practica" }), "paywall waits until Camino / vuelve");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, streak: 0, lastDay: null }), "paywall never before a win");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, streak: 2 }), "paywall is not every subsequent win");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, paywallSeen: true }), "seen flag stops the loop");
 
 console.log("ok: first door is Hoy or Phrase Doctor; streak-1 + come-back line");
