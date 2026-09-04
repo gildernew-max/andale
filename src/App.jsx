@@ -9,6 +9,7 @@ import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, ho
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
+import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -2974,6 +2975,9 @@ const UI = {
     paywallMonthly: "$6.99 al mes",
     paywallHonesty: "Práctica · sin cobro todavía",
     paywallDismiss: "Seguir gratis por ahora",
+    a2hsTitle: "Agrega Ándale a tu pantalla de inicio",
+    a2hsHow: "Toca Compartir, luego «Agregar a pantalla de inicio».",
+    a2hsDismiss: "Ahora no",
     playScene: "Jugar la escena",
     phraseDoctor: "Doctora de frases",
     phraseDoctorTag: "GANA EN 60 SEGUNDOS",
@@ -3027,6 +3031,9 @@ const UI = {
     paywallMonthly: "$6.99 / month",
     paywallHonesty: "Practice · no charge yet",
     paywallDismiss: "Continue free for now",
+    a2hsTitle: "Add Ándale to your Home Screen",
+    a2hsHow: "Tap Share, then Add to Home Screen.",
+    a2hsDismiss: "Not now",
     playScene: "Play the scene",
     phraseDoctor: "Phrase Doctor",
     phraseDoctorTag: "WIN IN 60 SECONDS",
@@ -3240,6 +3247,7 @@ export default function App() {
   const [softPaywall, setSoftPaywall] = useState(false);
   const [paywallArmed, setPaywallArmed] = useState(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
+  const [a2hsSheet, setA2hsSheet] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
@@ -4950,10 +4958,20 @@ export default function App() {
     if (!plan) {
       setPostDismissHandoff(true);
       setTab("camino");
+      const showA2hs = shouldShowA2hsSheet({
+        a2hsSeen: !!prog.a2hsSeen,
+        freeDismiss: true,
+        ...a2hsDisplayEnv(),
+      });
+      if (showA2hs) setA2hsSheet(true);
+      save({ paywallSeen: true, ...(showA2hs ? { a2hsSeen: true } : {}) });
+      return;
     }
-    save(plan
-      ? { paywallSeen: true, unlockedPrem: true, paywallPlan: plan }
-      : { paywallSeen: true });
+    save({ paywallSeen: true, unlockedPrem: true, paywallPlan: plan });
+  };
+  const dismissA2hs = () => {
+    setA2hsSheet(false);
+    save({ a2hsSeen: true });
   };
   const awardDoctoraStreak = () => {
     if (!lockAward("phrase-doctor")) return;
@@ -6367,6 +6385,17 @@ export default function App() {
               </div>
               <Btn outline data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}>{L.paywallDismiss}</Btn>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* A2HS: once after free dismiss, on top of post-dismiss Doctora handoff. Not a second paywall. */}
+      {a2hsSheet && (
+        <div data-testid="a2hs-sheet" style={{ position: "fixed", inset: 0, zIndex: 61, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={dismissA2hs}>
+          <div className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center" }}>
+            <div data-testid="a2hs-title" style={{ fontWeight: 900, fontSize: 19, marginBottom: 6 }}>{L.a2hsTitle}</div>
+            <div data-testid="a2hs-how" style={{ fontWeight: 800, fontSize: 13.5, color: D.sub, marginBottom: 16, lineHeight: 1.45 }}>{L.a2hsHow}</div>
+            <Btn outline data-testid="a2hs-dismiss" onClick={dismissA2hs}>{L.a2hsDismiss}</Btn>
           </div>
         </div>
       )}
