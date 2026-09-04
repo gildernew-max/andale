@@ -555,6 +555,32 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("match-pairs-start").textContent).toMatch(/Emparejar|Match pairs/);
   });
 
+  it("Safe/Risky hub reward is extra por racha / streak extra, not bonus", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    const reward = screen.getByTestId("safe-risky-reward");
+    expect(reward.textContent).toBe("5 rondas · extra por racha · gemas");
+    expect(reward.textContent).not.toMatch(/bonus/i);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-reward").textContent).toBe("5 rounds · streak extra · gems"));
+    expect(screen.getByTestId("safe-risky-reward").textContent).not.toMatch(/bonus/i);
+  });
+
+  it("Lectura narration chrome is NARRACIÓN / NARRATION, not LAB", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("narration-label")).toBeTruthy());
+    expect(screen.getByTestId("narration-label").textContent).toBe("NARRACIÓN");
+    expect(screen.getByTestId("narration-label").textContent).not.toMatch(/LAB/);
+    expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB/);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("narration-label").textContent).toBe("NARRATION"));
+    expect(screen.getByTestId("narration-label").textContent).not.toMatch(/LAB/);
+    expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB/);
+  });
+
   it("first-door hero is Hoy or Phrase Doctor, not Subjuntivo Continuar", async () => {
     const user = await boot();
     const hero = screen.getByTestId("hero-cta");
