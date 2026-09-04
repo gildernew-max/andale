@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (Recuerdos / Souvenir trail — Mexico map)
+
+**What changed**
+- Lectura souvenir trail is a Mexico map: SVG outline, Bajío first unlocked glow, fog on locked regions, axolotl, five pins. `Bajío` starts `Abierto` / `Open`. `CDMX` · `Oaxaca` · `Yucatán` · `Norte` / `North` start `Cerrado` / `Locked`.
+- Hand lock: no Recuerdos tab / no tab pep, no backpack `12/25`, no `¡Sigue explorando!`. No parroquia / SMA photos.
+- Door / soft paywall annual primary / Doctora / Day-2 / A2HS / Post-Doctora close card untouched. Enroll off. IAP off.
+
+**Why**
+- Hand locked the wiring. Dave cleared the Mexico-map look.
+
 ## 2026-09-04 (soft paywall — yearly sole filled primary)
 
 **What changed**

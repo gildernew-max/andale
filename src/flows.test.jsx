@@ -8,6 +8,7 @@ import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey, prevDayKey } from "./firstDoor.js";
 import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
+import { recuerdosHasProgressFraction, recuerdosSurfaceHasCuts } from "./recuerdos.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -1986,5 +1987,74 @@ describe("simulated learner flows", () => {
     expect(screen.queryByRole("button", { name: "Párrafo 1" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Escuchar párrafo" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Escuchar palabra" })).toBeNull();
+  });
+
+  it("Recuerdos / Souvenir trail is a Mexico map with locked pin labels", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const map = screen.getByTestId("recuerdos-map");
+    expect(map.textContent).toMatch(/Recuerdos/);
+    expect(map.textContent).not.toMatch(/Ruta de recuerdos/);
+    expect(screen.getByTestId("recuerdos-outline")).toBeTruthy();
+    expect(screen.getByTestId("recuerdos-fog")).toBeTruthy();
+    expect(screen.getByTestId("recuerdos-fog-cdmx")).toBeTruthy();
+    expect(screen.getByTestId("recuerdos-fog-oaxaca")).toBeTruthy();
+    expect(screen.getByTestId("recuerdos-fog-yucatan")).toBeTruthy();
+    expect(screen.getByTestId("recuerdos-fog-norte")).toBeTruthy();
+    expect(screen.queryByTestId("recuerdos-fog-bajio")).toBeNull();
+    expect(screen.getByTestId("recuerdos-axolotl").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
+    expect(screen.getByTestId("recuerdos-bajio-glow")).toBeTruthy();
+    expect(screen.getByTestId("recuerdos-bajio-glow").className).toMatch(/bajio-glow/);
+    expect(map.querySelector("nav")).toBeNull();
+    expect(screen.queryByTestId("nav-recuerdos")).toBeNull();
+
+    expect(screen.getByTestId("recuerdos-pin-bajio").textContent).toMatch(/Bajío/);
+    expect(screen.getByTestId("recuerdos-pin-bajio").textContent).toMatch(/Abierto/);
+    expect(screen.getByTestId("recuerdos-pin-bajio").getAttribute("data-open")).toBe("true");
+    expect(screen.getByTestId("recuerdos-pin-cdmx").textContent).toMatch(/CDMX/);
+    expect(screen.getByTestId("recuerdos-pin-cdmx").textContent).toMatch(/Cerrado/);
+    expect(screen.getByTestId("recuerdos-pin-oaxaca").textContent).toMatch(/Oaxaca/);
+    expect(screen.getByTestId("recuerdos-pin-oaxaca").textContent).toMatch(/Cerrado/);
+    expect(screen.getByTestId("recuerdos-pin-yucatan").textContent).toMatch(/Yucatán/);
+    expect(screen.getByTestId("recuerdos-pin-yucatan").textContent).toMatch(/Cerrado/);
+    expect(screen.getByTestId("recuerdos-pin-norte").textContent).toMatch(/Norte/);
+    expect(screen.getByTestId("recuerdos-pin-norte").textContent).toMatch(/Cerrado/);
+
+    expect(recuerdosSurfaceHasCuts(map.textContent)).toBe(false);
+    expect(recuerdosHasProgressFraction(map.textContent)).toBe(false);
+    expect(map.innerHTML).not.toMatch(/parroquia|sma-lanterns|12\/25|¡Sigue explorando!|Sigue explorando|backpack/i);
+    expect(screen.getByTestId("nav-lectura").textContent).toMatch(/Lectura/);
+    expect(screen.getByTestId("nav-lectura").textContent).not.toMatch(/Sigue|explorando|NEW|12\/25/i);
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("recuerdos-map").textContent).toMatch(/Souvenir trail/));
+    expect(screen.getByTestId("recuerdos-pin-bajio").textContent).toMatch(/Bajío/);
+    expect(screen.getByTestId("recuerdos-pin-bajio").textContent).toMatch(/Open/);
+    expect(screen.getByTestId("recuerdos-pin-cdmx").textContent).toMatch(/Locked/);
+    expect(screen.getByTestId("recuerdos-pin-oaxaca").textContent).toMatch(/Locked/);
+    expect(screen.getByTestId("recuerdos-pin-yucatan").textContent).toMatch(/Locked/);
+    expect(screen.getByTestId("recuerdos-pin-norte").textContent).toMatch(/North/);
+    expect(screen.getByTestId("recuerdos-pin-norte").textContent).toMatch(/Locked/);
+    expect(screen.getByTestId("recuerdos-pin-norte").textContent).not.toMatch(/Norte/);
+    expect(recuerdosSurfaceHasCuts(screen.getByTestId("recuerdos-map").textContent)).toBe(false);
+    expect(recuerdosHasProgressFraction(screen.getByTestId("recuerdos-map").textContent)).toBe(false);
+  });
+
+  it("Recuerdos Yucatán opens after a claimed souvenir; cuts stay off the map", async () => {
+    cleanup();
+    seedProgress({ stories: { "story-2": true }, storyCollectibles: { "story-2": true } });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
+    await user.click(screen.getByTestId("nav-lectura"));
+    expect(screen.getByTestId("recuerdos-pin-bajio").getAttribute("data-open")).toBe("true");
+    expect(screen.getByTestId("recuerdos-pin-yucatan").getAttribute("data-open")).toBe("true");
+    expect(screen.getByTestId("recuerdos-pin-yucatan").textContent).toMatch(/Yucatán/);
+    expect(screen.getByTestId("recuerdos-pin-yucatan").textContent).toMatch(/Abierto/);
+    expect(screen.queryByTestId("recuerdos-fog-yucatan")).toBeNull();
+    expect(screen.getByTestId("recuerdos-fog-cdmx")).toBeTruthy();
+    expect(screen.getByTestId("recuerdos-pin-cdmx").textContent).toMatch(/Cerrado/);
+    expect(recuerdosHasProgressFraction(screen.getByTestId("recuerdos-map").textContent)).toBe(false);
+    expect(screen.getByTestId("recuerdos-map").innerHTML).not.toMatch(/¡Sigue explorando!|12\/25|parroquia/i);
   });
 });
