@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive } from "./schema.js";
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, firstDoorHero, showComeBackTomorrow, streakAfterWin } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, firstDoorHero, shouldShowSoftPaywall, showComeBackTomorrow, streakAfterWin } from "./firstDoor.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -2970,6 +2970,11 @@ const UI = {
     phraseDoctorCta: "Arreglar una frase",
     safeRiskyReward: "5 rondas · extra por racha · gemas",
     narrationLabel: "NARRACIÓN",
+    paywallHeadline: "Ya empezó tu racha.",
+    paywallBody: "Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.",
+    paywallAnnual: "$39.99 al año",
+    paywallMonthly: "$6.99 al mes",
+    paywallDismiss: "Seguir gratis por ahora",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3011,6 +3016,11 @@ const UI = {
     phraseDoctorCta: "Fix a phrase",
     safeRiskyReward: "5 rounds · streak extra · gems",
     narrationLabel: "NARRATION",
+    paywallHeadline: "Your streak just started.",
+    paywallBody: "Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.",
+    paywallAnnual: "$39.99 / year",
+    paywallMonthly: "$6.99 / month",
+    paywallDismiss: "Continue free for now",
   },
 };
 
@@ -4829,6 +4839,20 @@ export default function App() {
   /* ---------------- RENDER ---------------- */
 
   const inLesson = screen !== "home";
+  const splashOpen = !prog.welcomed && !(prog.xp > 0) && screen === "home";
+  const showSoftPaywall = shouldShowSoftPaywall({
+    paywallSeen: !!prog.paywallSeen,
+    todaySceneDone,
+    streak: prog.streak,
+    lastDay: prog.lastDay,
+    today: todayKey,
+    screen,
+    tab,
+    splash: splashOpen,
+  });
+  const dismissSoftPaywall = (interest) => {
+    save(interest ? { paywallSeen: true, paywallInterest: interest } : { paywallSeen: true });
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
@@ -6060,6 +6084,24 @@ export default function App() {
                 {uiLang === "en" ? "Refill" : "Recargar"} (<IcGem size={14} /> {REFILL_COST})
               </Btn>
               <Btn outline onClick={() => setHeartsModal(false)}>{uiLang === "en" ? "Close" : "Cerrar"}</Btn>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------- SOFT PAYWALL (after first win + vuelve; $0, no IAP) ---------- */}
+      {showSoftPaywall && (
+        <div data-testid="soft-paywall" role="presentation" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => dismissSoftPaywall()}>
+          <div role="dialog" aria-modal="true" aria-labelledby="soft-paywall-title" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 480, padding: "10px 22px 28px", boxShadow: "0 -8px 30px rgba(0,0,0,.18)", textAlign: "center" }}>
+            <div style={{ width: 44, height: 5, background: D.line, borderRadius: 99, margin: "6px auto 18px" }} />
+            <div id="soft-paywall-title" data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.2, marginBottom: 8 }}>{L.paywallHeadline}</div>
+            <div data-testid="soft-paywall-body" style={{ fontWeight: 800, fontSize: 14, color: D.sub, lineHeight: 1.45, marginBottom: 18 }}>{L.paywallBody}</div>
+            <div style={{ display: "grid", gap: 9 }}>
+              <Btn data-testid="soft-paywall-annual" onClick={() => dismissSoftPaywall("annual")}>{L.paywallAnnual}</Btn>
+              <Btn outline data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")}>{L.paywallMonthly}</Btn>
+              <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()} style={{ border: "none", background: "none", color: D.sub, fontWeight: 800, fontSize: 13, marginTop: 4, cursor: "pointer", fontFamily: "inherit" }}>
+                {L.paywallDismiss}
+              </button>
             </div>
           </div>
         </div>

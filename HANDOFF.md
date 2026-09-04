@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (soft paywall after first win)
+
+**What changed**
+- Soft paywall sheet after first win (Hoy or Phrase Doctor / Doctora Curarla), only once `showComeBackTomorrow` is on Camino. Celebration + streak-1 + `Vuelve mañana…` / `Come back tomorrow…` stay first.
+- Locked copy via `L.paywall*`. ES: `Ya empezó tu racha.` / `Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.` / `$39.99 al año` / `$6.99 al mes` / `Seguir gratis por ahora`. EN: `Your streak just started.` / `Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.` / `$39.99 / year` / `$6.99 / month` / `Continue free for now`.
+- Persist `paywallSeen` (optional `paywallInterest` on annual/monthly). Dismiss or CTA is local-only — no Stripe, no ASC/IAP, no enroll, no content lock.
+- Never on splash. Never before a win. Never every later win. First door, Empieza/Subjuntivo, JEOPARDY SOLO, Rayo ON/OFF, PrivacyInfo, vite base untouched.
+
+**Why**
+- Coin + No face: $0-safe funnel practice after streak-1. Soft UI only.
+
 ## 2026-09-04 (a11y/lang: perfil context + listen/story-nav)
 
 **What changed**
