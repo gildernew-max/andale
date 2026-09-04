@@ -443,9 +443,10 @@ describe("simulated learner flows", () => {
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
     });
     expect(screen.getByRole("button", { name: "Start!" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
   });
 
-  it("splash locks exact line + one primary CTA, no mash, axolotl hero", async () => {
+  it("splash locks exact line + one primary CTA, no equal Saltar, axolotl hero", async () => {
     localStorage.clear();
     mockBrowser();
     const user = userEvent.setup();
@@ -453,9 +454,12 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
     expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico.");
     expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
-    expect(screen.getByTestId("splash-skip").textContent).toBe("Saltar");
-    expect(screen.getByTestId("splash-actions").textContent).not.toMatch(/¡Empezar!Saltar/);
-    expect(screen.getByTestId("splash").textContent).not.toMatch(/¡Empezar!Saltar/);
+    expect(screen.queryByTestId("splash-skip")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
+    expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
+    expect(screen.getByTestId("splash-actions").textContent.trim()).toBe("¡Empezar!");
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/¡Empezar! ?Saltar/);
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/Saltar/);
     expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
     expect(screen.getByTestId("splash").querySelector("img[src*='sma-']")).toBeNull();
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
@@ -464,11 +468,77 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics."));
     expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
-    expect(screen.getByTestId("splash-skip").textContent).toBe("Skip");
-    expect(screen.getByTestId("splash-actions").textContent).not.toMatch(/Start!Skip/);
-    expect(screen.getByTestId("splash").textContent).not.toMatch(/Start!Skip/);
+    expect(screen.queryByTestId("splash-skip")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
+    expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
+    expect(screen.getByTestId("splash-actions").textContent.trim()).toBe("Start!");
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/Start! ?Skip/);
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/\bSkip\b/);
     expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
+  });
+
+  it("first boot with empty storage always shows splash Empezar after hydrate", async () => {
+    localStorage.clear();
+    mockBrowser();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!"));
+    expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico.");
+    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
+    expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
+    // Async load + persist must not dismiss splash on a true first visit.
+    await waitFor(() => {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        expect(saved.welcomed).toBeFalsy();
+        expect(saved.xp > 0).toBeFalsy();
+      }
+      expect(screen.getByTestId("splash")).toBeTruthy();
+      expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
+    });
+    expect(screen.queryByTestId("nav-camino")).toBeTruthy();
+    expect(screen.queryByTestId("home-pitch")).toBeTruthy();
+    expect(screen.getByTestId("splash")).toBeTruthy();
+  });
+
+  it("leftover LIVE lesson does not skip first-visit splash", async () => {
+    localStorage.clear();
+    mockBrowser();
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      session: {
+        title: "Subjuntivo presente",
+        unitId: "subj1",
+        host: "luna",
+        questions: [{ type: "mc", prompt: "x", choices: ["a"], answer: "a", shuffledChoices: ["a"] }],
+      },
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
+    expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico.");
+    expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
+    expect(screen.queryByTestId("lesson-exit")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
+  });
+
+  it("Camino home pitch is the splash short lock — long blob gone", async () => {
+    const user = await boot();
+    await waitFor(() => expect(screen.getByTestId("home-pitch")).toBeTruthy());
+    expect(screen.getByTestId("home-pitch").textContent).toBe("Español mexicano real. Más allá de lo básico.");
+    expect(document.body.textContent).not.toMatch(/para quien ya pasó lo básico/);
+    expect(document.body.textContent).not.toMatch(/cuentos, misiones, tarjetas y cuatro coaches/);
+    expect(document.body.textContent).not.toMatch(/for people past the basics/);
+    expect(document.body.textContent).not.toMatch(/stories, challenges, flashcards, and four coaches/);
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("home-pitch").textContent).toBe("Real Mexican Spanish. Past the basics."));
+    expect(document.body.textContent).not.toMatch(/para quien ya pasó lo básico/);
+    expect(document.body.textContent).not.toMatch(/for people past the basics/);
   });
 
   it("section test-out starts from Camino and fails closed after 3 misses (failKind === test)", async () => {
@@ -529,7 +599,7 @@ describe("simulated learner flows", () => {
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("lang-toggle")).toBeTruthy());
-    await user.click(screen.getByRole("button", { name: /Saltar|Skip/ }));
+    await user.click(screen.getByTestId("splash-start"));
     await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
     expect(screen.queryByTestId("atajos")).toBeNull();
     expect(document.body.textContent).not.toMatch(/Atajos: 1–4/);

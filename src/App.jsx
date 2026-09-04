@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
 import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
-import { CONTENT_VERSION, acceptProgress, acceptLive } from "./schema.js";
+import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./schema.js";
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
@@ -2975,7 +2975,6 @@ const UI = {
     narrationLabel: "NARRACIÓN",
     splashLine: "Español mexicano real. Más allá de lo básico.",
     splashCta: "¡Empezar!",
-    splashSkip: "Saltar",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3024,7 +3023,6 @@ const UI = {
     narrationLabel: "NARRATION",
     splashLine: "Real Mexican Spanish. Past the basics.",
     splashCta: "Start!",
-    splashSkip: "Skip",
   },
 };
 
@@ -3241,7 +3239,7 @@ export default function App() {
   const [snakeGame, setSnakeGame] = useState(null);
   const [matchGame, setMatchGame] = useState(null);
   const [burst, setBurst] = useState(0); // mini confetti trigger
-  const [prog, setProg] = useState({ xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: "es", sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
+  const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: "es", sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
      file-level D constant, so all `D.green` reads inside App pick this up. */
   const theme = prog.theme || "light";
@@ -4692,10 +4690,13 @@ export default function App() {
     let cancelled = false;
     (async () => {
       try {
-        const r = await storage.get(LIVE_KEY);
-        if (!cancelled && r?.value) {
+        const [liveRes, progRes] = await Promise.all([storage.get(LIVE_KEY), storage.get(STORAGE_KEY)]);
+        let progress = null;
+        try { progress = acceptProgress(JSON.parse(progRes?.value || "null")); } catch (e) {}
+        // Leftover andale-v3-live (lesson/done) must not hide first-visit splash.
+        if (!cancelled && !isFirstVisit(progress) && liveRes?.value) {
           let live = null;
-          try { live = JSON.parse(r.value); } catch (e) {}
+          try { live = JSON.parse(liveRes.value); } catch (e) {}
           live = acceptLive(live);
           if (live) applyLive(live);
         }
@@ -4844,7 +4845,7 @@ export default function App() {
   /* ---------------- RENDER ---------------- */
 
   const inLesson = screen !== "home";
-  const splashOpen = !prog.welcomed && !(prog.xp > 0);
+  const splashOpen = isFirstVisit(prog);
   useEffect(() => {
     if (shouldShowSoftPaywall({
       paywallSeen: !!prog.paywallSeen,
@@ -4922,7 +4923,7 @@ export default function App() {
 
       {/* ---------- TOP STAT BAR ---------- */}
       {!inLesson && (
-        <div style={{ position: "sticky", top: 0, zIndex: (!prog.welcomed && !(prog.xp > 0) && screen === "home") ? 70 : 10, background: D.card, borderBottom: `2px solid ${D.line}` }}>
+        <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 10, background: D.card, borderBottom: `2px solid ${D.line}` }}>
           <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
               <LogoMark size={34} />
@@ -4966,10 +4967,8 @@ export default function App() {
               {prog.name ? `¡Hola, ${prog.name}! ` : ""}{greeting}
             </div>
           </div>
-          <div style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>
-            {uiLang === "en"
-              ? "Real Mexican Spanish for people past the basics: stories, challenges, flashcards, and four coaches who push different skills."
-              : "Español mexicano real para quien ya pasó lo básico: cuentos, misiones, tarjetas y cuatro coaches para habilidades distintas."}
+          <div data-testid="home-pitch" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>
+            {L.splashLine}
           </div>
           {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
           {(() => {
@@ -6033,7 +6032,7 @@ export default function App() {
       )}
 
       {/* ---------- FIRST-RUN WELCOME ---------- */}
-      {!prog.welcomed && !(prog.xp > 0) && screen === "home" && (
+      {splashOpen && (
         <div data-testid="splash" style={{ position: "fixed", inset: 0, zIndex: 60, background: D.card, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ maxWidth: 380, width: "100%", textAlign: "center" }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
@@ -6046,14 +6045,10 @@ export default function App() {
             <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={20}
               placeholder={uiLang === "en" ? "What should we call you?" : "¿Cómo te llamamos?"}
               style={{ width: "100%", boxSizing: "border-box", border: `2px solid ${D.line}`, borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 15, marginBottom: 16, outline: "none", textAlign: "center" }} />
-            <div data-testid="splash-actions" style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: 12 }}>
+            <div data-testid="splash-actions" style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
               <Btn data-testid="splash-start" onClick={() => save({ name: nameDraft.trim(), welcomed: true })} style={{ display: "block", width: "100%", fontSize: 16, textTransform: "none", letterSpacing: "normal" }}>
                 {L.splashCta}
               </Btn>
-              {"\n"}
-              <button type="button" data-testid="splash-skip" onClick={() => save({ welcomed: true })} style={{ display: "block", width: "100%", border: "none", background: "none", color: D.sub, fontWeight: 800, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit" }}>
-                {L.splashSkip}
-              </button>
             </div>
           </div>
         </div>

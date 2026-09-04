@@ -2,6 +2,19 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (splash residual Saltar + Camino home pitch)
+
+**What changed**
+- Splash keeps the locked line: ES `Español mexicano real. Más allá de lo básico.` / EN `Real Mexican Spanish. Past the basics.` Primary CTA stays `¡Empezar!` / `Start!`.
+- Saltar / Skip is gone from splash. One primary CTA only — no equal-weight sibling, no `¡Empezar! Saltar` mash. Empty name + Empezar is the skip path.
+- Camino home pitch under the greeting uses the same short lock (`L.splashLine`). Long blob `para quien ya pasó lo básico: cuentos, misiones…` / `for people past the basics: stories, challenges…` is gone.
+- **Gate fix (live index-ClqecVqS.js quit risk):** splash used `!welcomed && !(xp>0) && screen==="home"`. Leftover `andale-v3-live` (lesson/done) set `screen` off home and hid splash on a first visit. Splash now follows `isFirstVisit(prog)` only (`!welcomed && !(xp>0)`). Default `welcomed: false`. LIVE restore is skipped on first visit. Returning users still restore LIVE.
+- Tests: empty-storage first boot still has Empezar after hydrate; leftover LIVE cannot steal splash; single CTA; home pitch short lock; long blob gone.
+- First door, soft paywall, tomorrow teaser titled line, JEOPARDY SOLO, Rayo, enroll, PrivacyInfo untouched.
+
+**Why**
+- Residual after the marketability pass: Saltar still sat equal beside Empezar. Home Camino still had the long pitch blob. Live first visit skipped splash when LIVE leftover moved `screen` off home.
+
 ## 2026-09-04 (tomorrow teaser + return door)
 
 **What changed**
