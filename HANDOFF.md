@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (first Hoy ≤60s to win — No face)
+
+**What changed**
+- First-session / streak-0 Hoy is a short path: scene MC first, then listen, extras, cap 4 (`trimHoyBeats` / `hoyBeatCap` in `hoyWin.js`).
+- Early win checkpoint: first correct beat finishes (`shouldHoyEarlyWin`). Win heading LOCKED: ES `¡Eso!` · EN `That's it.` — not ¡Ganaste!/You won!. No pep (no coach win quip, impeccable, perfect banner, milestone).
+- Then existing streak-1 + `Vuelve mañana…` + soft paywall/wall. Later Hoys keep the shuffled 5-beat scene.
+- Tests: helper cap + checkpoint + strings; first-win flow wins after beat 1 of 5; later Hoy stays in-scene after beat 1.
+
+**Why**
+- If they cannot win Hoy before the wall, they bounce. First attention window is ≤60s.
+
 ## 2026-09-04 (door diet until streak ≥ 1)
 
 **What changed**

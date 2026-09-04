@@ -1000,6 +1000,15 @@ describe("simulated learner flows", () => {
     })();
     cleanup();
     seedProgress({ streak: 0, lastDay: null });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["cilantro, cebolla, salsa y guarnición"],
+      answer: "cilantro, cebolla, salsa y guarnición",
+      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+      _u: "_today",
+      _i: -1,
+    });
     localStorage.setItem(LIVE_KEY, JSON.stringify({
       screen: "lesson",
       tab: "camino",
@@ -1010,28 +1019,41 @@ describe("simulated learner flows", () => {
         title: "Noche de faroles",
         unitId: "_today:taqueria",
         todaySceneId: "taqueria",
+        firstHoy: true,
         host: "luna",
-        questions: [{
-          type: "mc",
-          prompt: "Si el taquero pregunta «¿con todo?», normalmente habla de:",
-          choices: ["cilantro, cebolla, salsa y guarnición"],
-          answer: "cilantro, cebolla, salsa y guarnición",
-          shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
-          _u: "_today",
-          _i: -1,
-        }],
+        questions: [
+          hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:"),
+          hoyMc("beat 2 must not run — early checkpoint"),
+          hoyMc("beat 3 must not run — early checkpoint"),
+          hoyMc("beat 4 must not run — early checkpoint"),
+          hoyMc("beat 5 must not run — later Hoy only"),
+        ],
       },
     }));
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    expect(document.body.textContent).toMatch(/Si el taquero pregunta/);
+    expect(document.body.textContent).not.toMatch(/beat 2 must not run/);
     const choices = document.querySelectorAll(".choice-card");
     expect(choices.length).toBeGreaterThan(0);
     await user.click(choices[0]);
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
-    await waitFor(() => expect(screen.getByRole("heading", { name: /Lección completada|Lesson complete/ })).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("hoy-win")).toBeTruthy());
+    expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
+    expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
+    expect(document.body.textContent).not.toMatch(/¡IMPECABLE!|FLAWLESS!/);
+    expect(document.body.textContent).not.toMatch(/beat 2 must not run|beat 5 must not run/);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
+    expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /You won!|¡Ganaste!|Lesson complete/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
     await waitFor(() => {
       const prog = JSON.parse(localStorage.getItem(STORAGE_KEY));
       expect(prog.streak).toBe(1);
@@ -1064,6 +1086,57 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("first-door-tag").textContent).toBe("WIN IN 60 SECONDS");
     expect(screen.getByTestId("first-door-title").textContent).toBe("Phrase Doctor");
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
+  });
+
+  it("later Hoy keeps full depth — no early checkpoint after one hit", async () => {
+    const today = localToday();
+    cleanup();
+    seedProgress({ streak: 1, lastDay: today, paywallSeen: true });
+    const laterMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["contraste"],
+      answer: "contraste",
+      shuffledChoices: ["contraste"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Mostrador en caos",
+        unitId: "_today:airport",
+        todaySceneId: "airport",
+        firstHoy: false,
+        host: "diego",
+        questions: [
+          laterMc("«Sin embargo» introduce:"),
+          laterMc("later Hoy beat 2"),
+          laterMc("later Hoy beat 3"),
+          laterMc("later Hoy beat 4"),
+          laterMc("later Hoy beat 5"),
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    expect(document.body.textContent).toMatch(/«Sin embargo» introduce/);
+    const choices = document.querySelectorAll(".choice-card");
+    expect(choices.length).toBeGreaterThan(0);
+    await user.click(choices[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    expect(screen.queryByTestId("hoy-win")).toBeNull();
+    expect(screen.queryByRole("heading", { name: /^¡Eso!$|^That's it\.$/ })).toBeNull();
+    expect(document.body.textContent).toMatch(/later Hoy beat 2/);
+    expect(document.body.textContent).not.toMatch(/¡Eso!|That's it\./);
   });
 
   it("soft paywall does not render on splash or boot before a win", async () => {

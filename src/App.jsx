@@ -6,6 +6,7 @@ import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, shouldShowSoftPaywall, showComeBackTomorrow, showDoorMetaChrome, streakAfterWin } from "./firstDoor.js";
+import { isFirstHoySession, shouldHoyEarlyWin, trimHoyBeats } from "./hoyWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 
 /* ============================================================
@@ -2982,6 +2983,7 @@ const UI = {
     splashCta: "¡Empezar!",
     more: "Más",
     namePrompt: "¿Cómo te dicen?",
+    hoyWin: "¡Eso!",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3034,6 +3036,7 @@ const UI = {
     splashCta: "Start!",
     more: "More",
     namePrompt: "What do they call you?",
+    hoyWin: "That's it.",
   },
 };
 
@@ -3689,6 +3692,7 @@ export default function App() {
 
   const startTodayScene = (scene) => {
     if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
+    const firstHoy = isFirstHoySession(prog);
     const picks = scene.units.flatMap((uid) => {
       const q1 = sampleQuestion(uid, (q) => q.type === "listen" || q.type === "transform" || q.type === "order");
       const q2 = sampleQuestion(uid, (q) => q.type === "mc" || q.type === "type");
@@ -3696,48 +3700,51 @@ export default function App() {
     }).slice(0, 3);
     const story = STORIES.find((st) => st.id === scene.storyId) || STORIES[0];
     const storyQ = story.questions[Math.floor(Math.random() * story.questions.length)];
-    const items = [
-      {
-        type: "listen",
-        text: scene.line,
-        answers: scene.answers,
-        explain: scene.explain,
-        _u: "_today",
-        _i: -1,
-        skill: "Escucha real",
-      },
-      {
-        type: "mc",
-        prompt: uiLang === "en" ? scene.questionEn : scene.question,
-        choices: scene.choices,
-        answer: scene.answer,
-        explain: scene.explain,
-        _u: "_today",
-        _i: -1,
-        skill: "Vida real",
-      },
-      ...picks,
-      {
-        type: "mc",
-        prompt: `Postal de ${story.title}: ${storyQ.prompt}`,
-        choices: storyQ.choices,
-        answer: storyQ.answer,
-        explain: `Pista cultural desbloqueada desde «${story.title}».`,
-        _u: "_story",
-        _i: -1,
-        skill: "Lectura",
-      },
-    ];
+    const listenBeat = {
+      type: "listen",
+      text: scene.line,
+      answers: scene.answers,
+      explain: scene.explain,
+      _u: "_today",
+      _i: -1,
+      skill: "Escucha real",
+    };
+    const sceneBeat = {
+      type: "mc",
+      prompt: uiLang === "en" ? scene.questionEn : scene.question,
+      choices: scene.choices,
+      answer: scene.answer,
+      explain: scene.explain,
+      _u: "_today",
+      _i: -1,
+      skill: "Vida real",
+    };
+    const storyBeat = {
+      type: "mc",
+      prompt: `Postal de ${story.title}: ${storyQ.prompt}`,
+      choices: storyQ.choices,
+      answer: storyQ.answer,
+      explain: `Pista cultural desbloqueada desde «${story.title}».`,
+      _u: "_story",
+      _i: -1,
+      skill: "Lectura",
+    };
+    // First session: scene MC first (one tap ≤60s), then listen, then extras, cap 4.
+    // Later Hoys keep the shuffled 5-beat scene.
+    const items = firstHoy
+      ? trimHoyBeats([sceneBeat, listenBeat, ...picks], { firstHoy: true })
+      : trimHoyBeats(shuffle([listenBeat, sceneBeat, ...picks, storyBeat]), { firstHoy: false });
     beginSession({
       title: uiLang === "en" ? scene.titleEn : scene.title,
       color: scene.color,
       dark: scene.dark,
       unitId: `_today:${scene.id}`,
       todaySceneId: scene.id,
+      firstHoy,
       scenario: uiLang === "en" ? scene.setupEn : scene.setup,
       review: false,
       host: scene.host,
-      questions: shuffle(items).slice(0, 5).map(prepQuestion),
+      questions: items.map(prepQuestion),
     });
   };
 
@@ -4233,6 +4240,10 @@ export default function App() {
   const next = () => {
     if (status === "wrong" && session.testOut != null && lessonStats.wrong >= 3) { setFailKind("test"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return; }
     if (status === "wrong" && (prog.hearts ?? 0) <= 0 && !session.review && !session.rival) { setFailKind("hearts"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return; }
+    if (status !== "wrong" && shouldHoyEarlyWin({ firstHoy: session.firstHoy, hits: lessonStats.right })) {
+      finishLesson();
+      return;
+    }
     let queue = session.questions;
     if (status === "wrong" && session.testOut == null && !session.rival) {
       // mastery loop: the miss comes back near the end of the lesson
@@ -4284,7 +4295,7 @@ export default function App() {
     setSession((s) => (s ? { ...s, awarded: true, earnedXP: earned, earnedGems: gemsEarned, perfectBonus } : s));
     const before = levelOf(prog.xp || 0).idx, after = levelOf((prog.xp || 0) + earned).idx;
     setLevelUp(after > before ? LEVELS[after][1] : null);
-    setScreenQuip(pickQuip(session.host, "win"));
+    setScreenQuip(session.firstHoy ? "" : pickQuip(session.host, "win"));
     save((prev) => {
       const streak = streakAfterWin(prev, t, yesterdayStr());
       let xpToday = prev.lastDay === t ? prev.xpToday || 0 : 0;
@@ -4734,6 +4745,9 @@ export default function App() {
           let live = null;
           try { live = JSON.parse(liveRes.value); } catch (e) {}
           live = acceptLive(live);
+          if (live?.session?.todaySceneId && live.session.firstHoy == null && isFirstHoySession(progress)) {
+            live = { ...live, session: { ...live.session, firstHoy: true } };
+          }
           if (live) applyLive(live);
         }
       } catch (e) {}
@@ -7428,11 +7442,11 @@ export default function App() {
               </div>
             ))}
           </div>
-          {screenQuip && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
+          {screenQuip && !session.firstHoy && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
             <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{screenQuip}»
           </div>}
-          <h2 style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
-	            {session.testOut != null ? L.sectionPassed : L.completed}
+          <h2 data-testid={session.firstHoy ? "hoy-win" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
+	            {session.firstHoy ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
           {levelUp && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", margin: "4px 0 8px", fontWeight: 900, color: D.goldDark }}>
@@ -7440,7 +7454,7 @@ export default function App() {
             </div>
           )}
           <p style={{ color: D.sub, fontWeight: 700 }}>
-	            «{session.title}» · {lessonStats.right} {L.hits}, {lessonStats.wrong} {L.misses}{lessonStats.wrong === 0 ? ` · ${L.impeccable}` : ""}
+	            «{session.title}» · {lessonStats.right} {L.hits}, {lessonStats.wrong} {L.misses}{!session.firstHoy && lessonStats.wrong === 0 ? ` · ${L.impeccable}` : ""}
 	            {session.testOut != null && <span><br />{L.unlockedSection}</span>}
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", margin: "24px 0", flexWrap: "wrap" }}>
@@ -7461,7 +7475,7 @@ export default function App() {
           </div>
 
           {/* one-time Quick Practice discoverability tip */}
-          {!prog.quickTipSeen && (
+          {!prog.quickTipSeen && !session.firstHoy && (
             <div className="pop" style={{ display: "flex", alignItems: "center", gap: 10, background: D.purpleBg, border: `2px solid ${D.purple}`, borderBottom: `4px solid ${D.purpleDark}`, borderRadius: 14, padding: "10px 14px", marginTop: 14, fontSize: 12.5, fontWeight: 800, color: D.ink, textAlign: "left", lineHeight: 1.4 }}>
               <IcBolt size={22} color={D.purple} />
               <span>{uiLang === "en"
@@ -7472,14 +7486,14 @@ export default function App() {
           )}
 
           {/* perfect-lesson banner */}
-          {perfect && (session.perfectBonus || 0) > 0 && (
+          {perfect && !session.firstHoy && (session.perfectBonus || 0) > 0 && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
               ★ {uiLang === "en" ? "Perfect lesson — bonus +5 XP" : "Lección perfecta — +5 XP extra"}
             </div>
           )}
 
           {/* streak milestone badge */}
-          {hitMilestone && (
+          {hitMilestone && !session.firstHoy && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: D.orangeBg, border: `2px solid #FF9600`, borderBottom: `4px solid #D97F00`, borderRadius: 14, padding: "10px 20px", marginTop: 12, fontWeight: 900, color: "#A35E00", fontSize: 14 }}>
               <IcFlame size={22} className="flame" />
               {uiLang === "en" ? `${prog.streak}-day streak!` : `¡Racha de ${prog.streak} días!`}
