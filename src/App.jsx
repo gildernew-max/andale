@@ -1543,7 +1543,7 @@ const FlagMX = ({ size = 22 }) => (
     <circle cx="13.5" cy="9" r="2.4" fill="#B08A4F" /><circle cx="13.5" cy="9" r="1.2" fill="#6B5530" />
   </svg>
 );
-const LogoMark = ({ size = 30 }) => (
+const LogoMark = ({ size = 30, ...rest }) => (
   <img
     src={`${import.meta.env.BASE_URL}mascot/axolotl.png`}
     alt=""
@@ -1551,6 +1551,7 @@ const LogoMark = ({ size = 30 }) => (
     height={size}
     aria-hidden="true"
     style={{ display: "block", width: size, height: size, objectFit: "contain" }}
+    {...rest}
   />
 );
 
@@ -2975,6 +2976,9 @@ const UI = {
     phraseDoctorCta: "Arreglar una frase",
     safeRiskyReward: "5 rondas · extra por racha · gemas",
     narrationLabel: "NARRACIÓN",
+    splashLine: "Español mexicano real. Más allá de lo básico.",
+    splashCta: "¡Empezar!",
+    splashSkip: "Saltar",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3021,6 +3025,9 @@ const UI = {
     phraseDoctorCta: "Fix a phrase",
     safeRiskyReward: "5 rounds · streak extra · gems",
     narrationLabel: "NARRATION",
+    splashLine: "Real Mexican Spanish. Past the basics.",
+    splashCta: "Start!",
+    splashSkip: "Skip",
   },
 };
 
@@ -6026,22 +6033,27 @@ export default function App() {
 
       {/* ---------- FIRST-RUN WELCOME ---------- */}
       {!prog.welcomed && !(prog.xp > 0) && screen === "home" && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 60, background: D.card, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div data-testid="splash" style={{ position: "fixed", inset: 0, zIndex: 60, background: D.card, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ maxWidth: 380, width: "100%", textAlign: "center" }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}><CoachPortrait id="luna" mood="party" size={130} /></div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
+              <LogoMark size={130} data-testid="splash-hero" />
+            </div>
             <div style={{ fontWeight: 900, fontSize: 30, color: D.green, letterSpacing: "-0.02em", marginBottom: 4 }}>¡ándale!</div>
-            <div style={{ fontWeight: 800, fontSize: 14.5, color: D.sub, marginBottom: 22, lineHeight: 1.4 }}>
-              {uiLang === "en" ? "Real Mexican Spanish, past the basics. Stories, challenges, and four coaches." : "Español mexicano real, más allá de lo básico. Cuentos, misiones y cuatro coaches."}
+            <div data-testid="splash-line" style={{ fontWeight: 800, fontSize: 14.5, color: D.sub, marginBottom: 22, lineHeight: 1.4 }}>
+              {L.splashLine}
             </div>
             <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={20}
               placeholder={uiLang === "en" ? "What should we call you?" : "¿Cómo te llamamos?"}
               style={{ width: "100%", boxSizing: "border-box", border: `2px solid ${D.line}`, borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 15, marginBottom: 16, outline: "none", textAlign: "center" }} />
-            <Btn onClick={() => save({ name: nameDraft.trim(), welcomed: true })} style={{ width: "100%", fontSize: 16 }}>
-              {uiLang === "en" ? "Let's go!" : "¡Empezar!"}
-            </Btn>
-            <button onClick={() => save({ welcomed: true })} style={{ border: "none", background: "none", color: D.sub, fontWeight: 800, fontSize: 12.5, marginTop: 12, cursor: "pointer", fontFamily: "inherit" }}>
-              {uiLang === "en" ? "Skip" : "Saltar"}
-            </button>
+            <div data-testid="splash-actions" style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: 12 }}>
+              <Btn data-testid="splash-start" onClick={() => save({ name: nameDraft.trim(), welcomed: true })} style={{ display: "block", width: "100%", fontSize: 16, textTransform: "none", letterSpacing: "normal" }}>
+                {L.splashCta}
+              </Btn>
+              {"\n"}
+              <button type="button" data-testid="splash-skip" onClick={() => save({ welcomed: true })} style={{ display: "block", width: "100%", border: "none", background: "none", color: D.sub, fontWeight: 800, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit" }}>
+                {L.splashSkip}
+              </button>
+            </div>
           </div>
         </div>
       )}

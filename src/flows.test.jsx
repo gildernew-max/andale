@@ -426,7 +426,33 @@ describe("simulated learner flows", () => {
       expect(screen.getByPlaceholderText("What should we call you?")).toBeTruthy();
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
     });
-    expect(screen.getByRole("button", { name: /Let's go!/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Start!" })).toBeTruthy();
+  });
+
+  it("splash locks exact line + one primary CTA, no mash, axolotl hero", async () => {
+    localStorage.clear();
+    mockBrowser();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
+    expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico.");
+    expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
+    expect(screen.getByTestId("splash-skip").textContent).toBe("Saltar");
+    expect(screen.getByTestId("splash-actions").textContent).not.toMatch(/¡Empezar!Saltar/);
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/¡Empezar!Saltar/);
+    expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
+    expect(screen.getByTestId("splash").querySelector("img[src*='sma-']")).toBeNull();
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
+    expect(screen.queryByRole("button", { name: /Let's go!/ })).toBeNull();
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics."));
+    expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
+    expect(screen.getByTestId("splash-skip").textContent).toBe("Skip");
+    expect(screen.getByTestId("splash-actions").textContent).not.toMatch(/Start!Skip/);
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/Start!Skip/);
+    expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
   });
 
   it("section test-out starts from Camino and fails closed after 3 misses (failKind === test)", async () => {
@@ -669,7 +695,7 @@ describe("simulated learner flows", () => {
     cleanup();
     localStorage.clear();
     render(<App />);
-    await waitFor(() => expect(screen.getByRole("button", { name: /¡Empezar!|Let's go!/ })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole("button", { name: /¡Empezar!|Start!/ })).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
 
