@@ -6,7 +6,7 @@ import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
-import { isShortHoy, shouldHoyEarlyWin, trimHoyBeats } from "./hoyWin.js";
+import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 
@@ -3697,6 +3697,11 @@ export default function App() {
 
   const startTodayScene = (scene, { full } = {}) => {
     if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
+    const day2Hoy = isDay2Return({
+      streak: prog.streak,
+      lastDay: prog.lastDay,
+      today: todayStr(),
+    });
     const firstHoy = !full && isShortHoy({
       streak: prog.streak,
       lastDay: prog.lastDay,
@@ -3738,18 +3743,18 @@ export default function App() {
       _i: -1,
       skill: "Lectura",
     };
-    // Short path (first session or day-2 return): scene MC first, then listen, extras, cap 4.
-    // Full landlord / long mission (Más) keeps the shuffled 5-beat scene.
+    // Day-2 return: native setup · line · Q only (already ≤4). First session keeps extras, cap 4.
+    // Full / Más path only when a scene grows past 4.
+    const shortQueue = day2Hoy ? [sceneBeat, listenBeat] : [sceneBeat, listenBeat, ...picks];
     const items = firstHoy
-      ? trimHoyBeats([sceneBeat, listenBeat, ...picks], { firstHoy: true })
+      ? trimHoyBeats(shortQueue, { firstHoy: true })
       : trimHoyBeats(shuffle([listenBeat, sceneBeat, ...picks, storyBeat]), { firstHoy: false });
-    const promisedId = hoySceneForDay(TODAY_SCENES, todayStr())?.id;
     beginSession({
       title: uiLang === "en" ? scene.titleEn : scene.title,
       color: scene.color,
       dark: scene.dark,
       unitId: `_today:${scene.id}`,
-      todaySceneId: !full || scene.id === promisedId ? scene.id : undefined,
+      todaySceneId: scene.id,
       firstHoy,
       scenario: uiLang === "en" ? scene.setupEn : scene.setup,
       review: false,
@@ -5127,7 +5132,7 @@ export default function App() {
               lastDay: prog.lastDay,
               today: todayKey,
             });
-            const landlordScene = TODAY_SCENES.find((sc) => sc.id === "landlord");
+            const parkLongHoy = shouldParkHoyUnderMas(todayScene) && (day2Return || todaySceneDone);
             const showLine = showComeBackTomorrow({
               todaySceneDone,
               streak: prog.streak,
@@ -5239,10 +5244,10 @@ export default function App() {
                 </button>
                 {caminoMore && (
                   <div data-testid="camino-more-panel" style={{ marginTop: 8 }}>
-                    {(day2Return || todaySceneDone) && landlordScene && (
-                      <button data-testid="camino-more-full-hoy" type="button" onClick={() => startTodayScene(landlordScene, { full: true })}
+                    {parkLongHoy && todayScene && (
+                      <button data-testid="camino-more-full-hoy" type="button" onClick={() => startTodayScene(todayScene, { full: true })}
                         style={{ display: "block", width: "100%", margin: "0 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.sub, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
-                        {uiLang === "en" ? landlordScene.titleEn : landlordScene.title}
+                        {uiLang === "en" ? todayScene.titleEn : todayScene.title}
                       </button>
                     )}
                     {pathUnit && (

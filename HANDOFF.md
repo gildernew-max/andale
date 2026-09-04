@@ -2,14 +2,13 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
-## 2026-09-04 (day-2 return Hoy ≤60s — Hand stamp)
+## 2026-09-04 (day-2 return Hoy ≤60s — George + No face lock)
 
 **What changed**
-- Promised return Hoy (streak ≥ 1, lastDay ≠ today) reuses first Hoy / first Doctora: cap 4, early win, ES `¡Eso!` · EN `That's it.`
-- Full landlord / long mission parks under Más (`camino-more-full-hoy` = existing `WhatsApp del casero` / `Landlord WhatsApp`). Not the hero. Playing it on a non-casero day does not stamp today’s promised scene done.
-- Door / paywall once-only / teaser / post-dismiss handoff / first Hoy+Doctora ≤60s / door diet / Más bury / enroll stay.
-
-**George:** no cut list. Live promised title is not still long after the first-Hoy keep-4 + early win. Reuse only. No invented copy.
+- Day-2 return Hoy gates ≤4 (`isShortHoy` / `trimHoyBeats`). Native scene only (setup · line · Q). Early win, ES `¡Eso!` · EN `That's it.`
+- Live casero and tomorrow `Mostrador en caos` are already 3 beats. No cut list. No invented copy.
+- `shouldParkHoyUnderMas` only if a scene grows past 4. Live titles do not park under Más.
+- Door / paywall / teaser / handoff / first Hoy+Doctora / door diet / Más bury / enroll stay.
 
 ## 2026-09-04 (soft paywall cannot survive midnight)
 

@@ -1,4 +1,4 @@
-/** First-session + day-2 return Hoy: win before the wall. Full scene parks under Más. */
+/** First-session + day-2 return Hoy: win before the wall. Park under Más only if a scene grows past 4. */
 
 import { isDay2Return } from "./firstDoor.js";
 
@@ -14,7 +14,7 @@ export function isFirstHoySession({ streak } = {}) {
 
 /**
  * Short Hoy: first session, or day-2+ return (streak ≥ 1, lastDay ≠ today).
- * Explicit firstHoy false keeps the full 5-beat / Más path.
+ * Explicit firstHoy false keeps the full path (only if a scene grows past 4).
  */
 export function isShortHoy({ firstHoy, streak, lastDay, today } = {}) {
   if (firstHoy === true) return true;
@@ -22,7 +22,27 @@ export function isShortHoy({ firstHoy, streak, lastDay, today } = {}) {
   return isFirstHoySession({ streak }) || isDay2Return({ streak, lastDay, today });
 }
 
-/** First / day-2 return Hoy ≤4 beats. Full / Más path keeps the existing 5-beat scene. */
+/**
+ * Native scene beats: setup · line · Q, plus any later scene.beats / scene.extras.
+ * Live casero / airport are 3. No invented cut list.
+ */
+export function hoySceneBeatCount(scene) {
+  if (!scene || typeof scene !== "object") return 0;
+  let n = 0;
+  if (scene.setup || scene.setupEn) n += 1;
+  if (scene.line) n += 1;
+  if (scene.question || scene.questionEn) n += 1;
+  if (Array.isArray(scene.beats)) n += scene.beats.length;
+  if (Array.isArray(scene.extras)) n += scene.extras.length;
+  return n;
+}
+
+/** Long park under Más only when the scene itself grows past 4. */
+export function shouldParkHoyUnderMas(scene) {
+  return hoySceneBeatCount(scene) > FIRST_HOY_BEAT_CAP;
+}
+
+/** First / day-2 return Hoy ≤4 beats. Later / grown scenes keep full depth. */
 export function hoyBeatCap(opts = {}) {
   return isShortHoy(opts) ? FIRST_HOY_BEAT_CAP : HOY_FULL_BEAT_CAP;
 }

@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { prepQuestion } from "./prepQuestion.js";
 import { hoyStillFor, LANTERN_STILL } from "./hoyStill.js";
 import { comeBackTomorrowLine, hoySceneForDay, nextDayKey } from "./firstDoor.js";
+import { hoySceneBeatCount, shouldParkHoyUnderMas } from "./hoyWin.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -371,13 +372,13 @@ assert(appSrc.includes("hoy-win"), "first-Hoy win heading is testable");
 assert(appSrc.includes("shouldHoyEarlyWin"), "first-Hoy early checkpoint is wired");
 assert(appSrc.includes("trimHoyBeats"), "first-Hoy beat cap is wired");
 assert(appSrc.includes("isShortHoy"), "short Hoy path covers first session and day-2 return");
-assert(appSrc.includes("camino-more-full-hoy"), "full / casero Hoy parks under Más");
-assert(appSrc.includes("landlordScene"), "Más long mission is the landlord scene");
-assert(appSrc.includes("{ full: true }") || appSrc.includes("full: true"), "Más full Hoy starts the long path");
+assert(appSrc.includes("shouldParkHoyUnderMas"), "Más park is gated on scene length");
+assert(appSrc.includes("camino-more-full-hoy"), "grown Hoy can park under Más");
 const hoyWinSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "hoyWin.js"), "utf8");
 assert(hoyWinSrc.includes("isFirstHoySession"), "streak 0 first-Hoy gate stays");
 assert(hoyWinSrc.includes("isDay2Return"), "day-2 return reuses the door gate");
 assert(hoyWinSrc.includes("isShortHoy"), "short Hoy helper covers day-2 return");
+assert(hoyWinSrc.includes("shouldParkHoyUnderMas"), "Más park helper lives with the ≤4 gate");
 assert(appSrc.includes("shouldDoctoraEarlyWin"), "first-Doctora early checkpoint is wired");
 assert(appSrc.includes("trimDoctoraBeats"), "first-Doctora beat cap is wired");
 assert(appSrc.includes("isFirstDoctoraSession"), "short Doctora path is gated to streak 0");
@@ -435,6 +436,15 @@ assert(landlord.question === "En WhatsApp con el casero, «Oye, ¿el depósito c
 assert(landlord.questionEn === "On WhatsApp with the landlord, «Oye, ¿el depósito cuenta…?» sounds:", "landlord EN question");
 assert(landlord.choices[0] === "natural y firme" && landlord.choices[1] === "de correo formal" && landlord.choices[2] === "agresivo", "landlord choices");
 assert(landlord.answer === "natural y firme", "landlord answer");
+assert(hoySceneBeatCount(landlord) === 3, "live casero is already setup · line · Q");
+assert(!shouldParkHoyUnderMas(landlord), "live casero does not park under Más");
+const airport = TODAY_SCENES.find((sc) => sc.id === "airport");
+assert(airport && hoySceneBeatCount(airport) === 3, "Mostrador en caos is already 3 beats");
+assert(!shouldParkHoyUnderMas(airport), "Mostrador does not park under Más");
+for (const sc of TODAY_SCENES) {
+  assert(hoySceneBeatCount(sc) <= 4, `${sc.id} live Hoy is ≤4 — no cut list`);
+  assert(!shouldParkHoyUnderMas(sc), `${sc.id} does not park under Más`);
+}
 assert(appSrc.includes("showDoorMetaChrome"), "door Meta/Rayo/coaches gated on streak ≥ 1");
 assert(appSrc.includes("data-testid=\"luna-greeting\""), "Luna greeting is testable");
 assert(/showDoorMeta && \([\s\S]{0,220}luna-greeting/.test(appSrc), "Luna greeting uses the same streak ≥ 1 gate as coach-strip");

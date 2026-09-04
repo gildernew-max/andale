@@ -1036,8 +1036,7 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     await openCaminoMore(userEvent.setup());
-    expect(screen.getByTestId("camino-more-full-hoy").textContent).toBe("WhatsApp del casero");
-    expect(screen.getByTestId("camino-more-full-hoy").textContent).not.toMatch(/Jugar la escena|Play the scene/);
+    expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     expect(screen.getByTestId("first-door-hero").querySelector("[data-testid='hoy-card']")).toBeTruthy();
   });
 
@@ -1095,7 +1094,7 @@ describe("simulated learner flows", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
   });
 
-  it("day-2 long / casero Hoy stays under Más — no early win", async () => {
+  it("day-2 live Hoy does not park under Más — scenes are already ≤4", async () => {
     const today = localToday();
     const yesterday = prevDayKey(today);
     const promised = hoySceneForDay(HOY_TITLES, today);
@@ -1109,70 +1108,13 @@ describe("simulated learner flows", () => {
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.getByTestId("hoy-title").textContent).toBe(promised.title);
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     await openCaminoMore(user);
-    const fullHoy = screen.getByTestId("camino-more-full-hoy");
-    expect(fullHoy.textContent).toBe("WhatsApp del casero");
-    expect(fullHoy.textContent).not.toMatch(/Jugar la escena|Play the scene/);
-    expect(screen.getByTestId("hoy-title").textContent).toBe(promised.title);
+    expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
+    expect(screen.getByTestId("camino-more-panel")).toBeTruthy();
     expect(screen.getByTestId("first-door-hero").textContent).toMatch(/Jugar la escena|Play the scene/);
-    await user.click(fullHoy);
-    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
-    const liveFull = JSON.parse(localStorage.getItem(LIVE_KEY));
-    expect(liveFull.session.firstHoy).toBe(false);
-    expect(liveFull.session.unitId).toBe("_today:landlord");
-    expect(liveFull.session.questions.length).toBe(5);
-    const laterMc = (prompt) => ({
-      type: "mc",
-      prompt,
-      choices: ["natural y firme"],
-      answer: "natural y firme",
-      shuffledChoices: ["natural y firme"],
-      _u: "_today",
-      _i: -1,
-    });
-    cleanup();
-    seedProgress({
-      streak: 1,
-      lastDay: yesterday,
-      paywallSeen: true,
-      missions: { [`scene-${yesterday}`]: "taqueria" },
-    });
-    localStorage.setItem(LIVE_KEY, JSON.stringify({
-      screen: "lesson",
-      tab: "camino",
-      status: "idle",
-      qi: 0,
-      lessonStats: { right: 0, wrong: 0 },
-      session: {
-        title: "WhatsApp del casero",
-        unitId: "_today:landlord",
-        todaySceneId: "landlord",
-        firstHoy: false,
-        host: "valeria",
-        questions: [
-          laterMc("full casero beat 1 — stay in the scene"),
-          laterMc("full casero beat 2"),
-          laterMc("full casero beat 3"),
-          laterMc("full casero beat 4"),
-          laterMc("full casero beat 5"),
-        ],
-      },
-    }));
-    render(<App />);
-    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
-    expect(document.body.textContent).toMatch(/full casero beat 1/);
-    const choices = document.querySelectorAll(".choice-card");
-    expect(choices.length).toBeGreaterThan(0);
-    await user.click(choices[0]);
-    await user.click(screen.getByTestId("lesson-check"));
-    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
-    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
-    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
-    expect(screen.queryByTestId("hoy-win")).toBeNull();
-    expect(screen.queryByRole("heading", { name: /^¡Eso!$|^That's it\.$/ })).toBeNull();
-    expect(document.body.textContent).toMatch(/full casero beat 2/);
-    expect(document.body.textContent).not.toMatch(/¡Eso!|That's it\./);
+    expect(promised.title).toMatch(/WhatsApp del casero|Mostrador en caos|Noche de faroles|Cena con la suegra/);
   });
 
   it("undismissed soft paywall clears when the day rolls — no stale Doctora handoff", async () => {

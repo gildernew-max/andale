@@ -7,6 +7,8 @@ import {
   hoyWinCopy,
   isFirstHoySession,
   isShortHoy,
+  hoySceneBeatCount,
+  shouldParkHoyUnderMas,
   shouldHoyEarlyWin,
   trimHoyBeats,
 } from "./hoyWin.js";
@@ -42,7 +44,25 @@ assert(hoyBeatCap({ firstHoy: false, streak: 0 }) === 5, "explicit later path ke
 assert(hoyBeatCap({ streak: 1 }) === 5, "streak 1 keeps full depth");
 assert(hoyBeatCap({ firstHoy: false }) === 5, "returning Hoy keeps full depth");
 assert(hoyBeatCap({ streak: 1, lastDay: "2026-09-04", today: "2026-09-05" }) === 4, "day-2 return caps at 4");
-assert(hoyBeatCap({ firstHoy: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-05" }) === 5, "Más full path keeps 5 on day-2");
+assert(hoyBeatCap({ firstHoy: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-05" }) === 5, "grown scene / explicit full keeps 5");
+
+const casero3 = {
+  setup: "El casero pide depósito y aval hoy. Contéstale sin sonar de manual.",
+  line: "Oye, ¿el depósito cuenta para el último mes?",
+  question: "En WhatsApp con el casero, «Oye, ¿el depósito cuenta…?» suena:",
+};
+const airport3 = {
+  setup: "Tu vuelo cambió de puerta dos veces.",
+  line: "Mi vuelo fue cancelado; sin embargo, necesito llegar hoy mismo.",
+  question: "«Sin embargo» introduce:",
+};
+assert(hoySceneBeatCount(casero3) === 3, "live casero is setup · line · Q");
+assert(hoySceneBeatCount(airport3) === 3, "tomorrow Mostrador is 3 beats");
+assert(!shouldParkHoyUnderMas(casero3), "casero ≤4 does not park under Más");
+assert(!shouldParkHoyUnderMas(airport3), "Mostrador ≤4 does not park under Más");
+assert(!shouldParkHoyUnderMas({ setup: "a", line: "b", question: "c" }), "3-beat scene stays on the hero");
+assert(shouldParkHoyUnderMas({ setup: "a", line: "b", question: "c", extras: ["d", "e"] }), "Más park only after a scene grows past 4");
+assert(!shouldParkHoyUnderMas(null), "missing scene does not park");
 
 const six = [1, 2, 3, 4, 5, 6];
 assert(trimHoyBeats(six, { firstHoy: true }).length === 4, "first session trims to 4");
@@ -50,7 +70,7 @@ assert(trimHoyBeats(six, { firstHoy: true }).join(",") === "1,2,3,4", "first ses
 assert(trimHoyBeats(six, { firstHoy: false }).length === 5, "later Hoy trims to 5");
 assert(trimHoyBeats(six, { streak: 1 }).length === 5, "streak 1 trim is full depth");
 assert(trimHoyBeats(six, { streak: 1, lastDay: "2026-09-04", today: "2026-09-05" }).length === 4, "day-2 return trims to 4");
-assert(trimHoyBeats(six, { firstHoy: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-05" }).length === 5, "Más full trim is 5");
+assert(trimHoyBeats(six, { firstHoy: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-05" }).length === 5, "grown / explicit full trim is 5");
 assert(trimHoyBeats([], { firstHoy: true }).length === 0, "empty queue stays empty");
 
 assert(shouldHoyEarlyWin({ firstHoy: true, hits: 1 }), "first correct is the early checkpoint");
