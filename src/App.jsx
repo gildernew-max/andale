@@ -824,6 +824,14 @@ const storage = {
   },
 };
 
+/* WRAP PREP — speech/storage flags only. Enroll off. No PrivacyInfo until Mon wrap.
+   Pages stays vite base '/andale/'. Wrap/WKWebView rebuild uses base '/'.
+   Wrap may set window.__andaleSpeech / window.__andaleStorage before boot. */
+if (typeof window !== "undefined") {
+  if (window.__andaleSpeech == null) window.__andaleSpeech = !!window.speechSynthesis;
+  if (window.__andaleStorage == null) window.__andaleStorage = !!(window.storage?.get || window.localStorage);
+}
+
 const skillFor = (q) => {
   if (!q) return "Precisión";
   if (q.skill) return q.skill;
@@ -5484,13 +5492,13 @@ export default function App() {
                   ? (uiLang === "en" ? "Chosen from your misses." : "Elegido por tus errores.")
                   : smartFocus.reason === "due"
                     ? (uiLang === "en" ? "Chosen from due review." : "Elegido por tu repaso vencido.")
-                    : (uiLang === "en" ? "Chosen as your next useful sprint." : "Elegido como tu siguiente tanda útil.")}
+                    : (uiLang === "en" ? "Chosen as your next useful sprint." : "Tu siguiente ronda.")}
               </span>
             </div>
             <button data-testid="smart-practice-cta" onClick={startQuickPractice}
               style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, width: "100%", background: D.purple, border: "none", borderBottom: `4px solid ${D.purpleDark}`, color: "#fff", borderRadius: 13, padding: "11px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 14, cursor: "pointer" }}>
               <IcBarbell size={18} color="#fff" />
-              {uiLang === "en" ? "Start 5-item sprint — no hearts" : "Empezar tanda de 5 — sin vidas"}
+              {uiLang === "en" ? "Start 5-item sprint — no hearts" : "Empezar ronda de 5 — sin vidas"}
             </button>
           </div>
           {dueCount > 0 ? (

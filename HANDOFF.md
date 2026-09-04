@@ -2,15 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
-## 2026-09-04 (ES sprint → tanda)
+## 2026-09-04 (George ES sprint → ronda; wrap-prep notes)
 
 **What changed**
-- ES Práctica Smart Practice chrome: `Empezar tanda de 5 — sin vidas` and `Elegido como tu siguiente tanda útil.` EN stays `sprint` (`Start 5-item sprint — no hearts` / `Chosen as your next useful sprint.`).
-- Soft leftover-English scan: no other clear ungated ES chrome holes. JEOPARDY SOLO and Rayo ON/OFF stay. Coach stays the existing loan.
-- Tests lock the new ES strings in content + live Práctica. First door, streak-1, vuelve mañana, Hoy still, theater gates, Práctica fold, Subjuntivo/Empieza, enroll untouched.
+- ES Práctica Smart Practice locked: `Tu siguiente ronda.` and `Empezar ronda de 5 — sin vidas`. Not tanda, not útil, not sprint. EN stays `sprint` (`Chosen as your next useful sprint.` / `Start 5-item sprint — no hearts`).
+- JEOPARDY SOLO stays an intentional loan. Rayo ON/OFF stay.
+- Wrap-prep only: vite comments that Pages keeps `base: '/andale/'` and wrap rebuilds with `base: '/'`. Speech/storage flags `window.__andaleSpeech` / `window.__andaleStorage`. No PrivacyInfo. Enroll off.
+- Tests lock the exact ES strings. First door, streak-1, vuelve mañana, Hoy still, theater gates, Práctica fold, Subjuntivo/Empieza, tree untouched.
 
 **Why**
-- Mon 9/8 polish slice starting Thu night. Sprint is an English loan on ES Práctica; tanda matches brand. Soft chrome only.
+- George + No face locked the ES lines. Soft leftover chrome + wrap-prep holes only. Soft ETA 9:30 ET.
 
 ## 2026-09-03 (George + No face first-door copy lock)
 
