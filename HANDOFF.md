@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (splash residual Saltar + Camino home pitch)
+
+**What changed**
+- Splash keeps the locked line: ES `Español mexicano real. Más allá de lo básico.` / EN `Real Mexican Spanish. Past the basics.` Primary CTA stays `¡Empezar!` / `Start!`.
+- Saltar / Skip is gone from splash. One primary CTA only — no equal-weight sibling, no `¡Empezar! Saltar` mash. Empty name + Empezar is the skip path.
+- Camino home pitch under the greeting uses the same short lock (`L.splashLine`). Long blob `para quien ya pasó lo básico: cuentos, misiones…` / `for people past the basics: stories, challenges…` is gone.
+- Tests lock single splash CTA, no Saltar/Skip on splash, home pitch short lock, long blob gone.
+- First door, soft paywall, tomorrow teaser titled line, JEOPARDY SOLO, Rayo, enroll, PrivacyInfo untouched.
+
+**Why**
+- Residual after the marketability pass: Saltar still sat equal beside Empezar. Home Camino still had the long pitch blob.
+
 ## 2026-09-04 (tomorrow teaser + return door)
 
 **What changed**

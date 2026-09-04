@@ -2975,7 +2975,6 @@ const UI = {
     narrationLabel: "NARRACIÓN",
     splashLine: "Español mexicano real. Más allá de lo básico.",
     splashCta: "¡Empezar!",
-    splashSkip: "Saltar",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3024,7 +3023,6 @@ const UI = {
     narrationLabel: "NARRATION",
     splashLine: "Real Mexican Spanish. Past the basics.",
     splashCta: "Start!",
-    splashSkip: "Skip",
   },
 };
 
@@ -4966,10 +4964,8 @@ export default function App() {
               {prog.name ? `¡Hola, ${prog.name}! ` : ""}{greeting}
             </div>
           </div>
-          <div style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>
-            {uiLang === "en"
-              ? "Real Mexican Spanish for people past the basics: stories, challenges, flashcards, and four coaches who push different skills."
-              : "Español mexicano real para quien ya pasó lo básico: cuentos, misiones, tarjetas y cuatro coaches para habilidades distintas."}
+          <div data-testid="home-pitch" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>
+            {L.splashLine}
           </div>
           {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
           {(() => {
@@ -6046,14 +6042,10 @@ export default function App() {
             <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={20}
               placeholder={uiLang === "en" ? "What should we call you?" : "¿Cómo te llamamos?"}
               style={{ width: "100%", boxSizing: "border-box", border: `2px solid ${D.line}`, borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 15, marginBottom: 16, outline: "none", textAlign: "center" }} />
-            <div data-testid="splash-actions" style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: 12 }}>
+            <div data-testid="splash-actions" style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
               <Btn data-testid="splash-start" onClick={() => save({ name: nameDraft.trim(), welcomed: true })} style={{ display: "block", width: "100%", fontSize: 16, textTransform: "none", letterSpacing: "normal" }}>
                 {L.splashCta}
               </Btn>
-              {"\n"}
-              <button type="button" data-testid="splash-skip" onClick={() => save({ welcomed: true })} style={{ display: "block", width: "100%", border: "none", background: "none", color: D.sub, fontWeight: 800, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit" }}>
-                {L.splashSkip}
-              </button>
             </div>
           </div>
         </div>
