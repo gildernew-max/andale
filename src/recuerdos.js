@@ -94,7 +94,7 @@ export function markBajioUnlockFlashLive(on) {
   bajioUnlockFlashLive = !!on;
 }
 
-/** First streak-1 ¡Eso! / That's it. Once only. Not every later Eso. */
+/** After first streak-1 ¡Eso! / That's it. CONTINUE — short glow beat, then paywall. Once only. */
 export function shouldShowBajioUnlockFlash({
   bajioUnlockSeen,
   firstStreakEso,

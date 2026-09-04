@@ -2,15 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
-## 2026-09-04 (Bajío unlock flash — first streak-1 Eso)
+## 2026-09-04 (Bajío unlock flash — Hand brief)
 
 **What changed**
-- First streak-1 `¡Eso!` / `That's it.` shows a brief Bajío unlock flash once (`bajioUnlockSeen`) before the soft paywall sequence. Stamps only: `Bajío` + `Abierto` / `Open`.
-- Flash does not re-fire on remount or later Eso. CONTINUE still lands on today’s paywall / post-dismiss / A2HS / Doctora close paths.
-- Map surface and yearly-primary paywall stay. No pep, no `¡Sigue explorando!`, no backpack fraction. Enroll off. IAP off.
+- Exact beat: first streak-1 `¡Eso!` / `That's it.` → short Bajío `Abierto` / `Open` glow (existing stamps only) → then soft paywall. Handoff unchanged.
+- Hoy CONTINUE plays the glow then the wall. First-Doctora close card stays; `Listo` / `Done` then glow then wall. Once-only (`bajioUnlockSeen`).
+- Door / Day-2 / A2HS / close / map stay. No new copy. Enroll off. IAP off.
 
 **Why**
-- No Face locked ROI: first short win unlocks Bajío, then the existing wall.
+- Hand locked the sequence. Glow is a beat after Eso, not on top of it.
 
 ## 2026-09-04 (Recuerdos / Souvenir trail — Mexico map)
 

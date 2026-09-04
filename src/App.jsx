@@ -3258,6 +3258,7 @@ export default function App() {
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
   const [a2hsSheet, setA2hsSheet] = useState(false);
   const [bajioUnlockFlash, setBajioUnlockFlash] = useState(false);
+  const [bajioFlashPending, setBajioFlashPending] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
@@ -4945,14 +4946,15 @@ export default function App() {
     splash: splashOpen,
   });
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
-  const showSoftPaywall = paywallGate;
+  // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
+  const showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending;
   useEffect(() => {
-    if (paywallGate) setSoftPaywall(true);
+    if (showSoftPaywall) setSoftPaywall(true);
     else {
       setSoftPaywall(false);
       setPaywallArmed(false);
     }
-  }, [paywallGate]);
+  }, [showSoftPaywall]);
   useEffect(() => {
     if (!showSoftPaywall) {
       setPaywallArmed(false);
@@ -4961,36 +4963,20 @@ export default function App() {
     const arm = setTimeout(() => setPaywallArmed(true), 400);
     return () => clearTimeout(arm);
   }, [showSoftPaywall]);
-  const firstStreakEso = screen === "done" && !!(session?.firstHoy || session?.firstDoctora);
-  const bajioFlashGate = shouldShowBajioUnlockFlash({
-    bajioUnlockSeen: !!prog.bajioUnlockSeen,
-    firstStreakEso,
-    streak: prog.streak,
-    paywallSeen: !!prog.paywallSeen,
-  });
   useEffect(() => {
     if (isBajioUnlockFlashLive()) {
       setBajioUnlockFlash(true);
       return;
     }
-    if (!bajioFlashGate) return;
-    markBajioUnlockFlashLive(true);
-    setBajioUnlockFlash(true);
-    save({ bajioUnlockSeen: true });
-  }, [bajioFlashGate]);
+  }, []);
   useEffect(() => {
-    if (screen !== "done") {
-      markBajioUnlockFlashLive(false);
-      setBajioUnlockFlash(false);
-      return undefined;
-    }
     if (!bajioUnlockFlash) return undefined;
     const hide = setTimeout(() => {
       markBajioUnlockFlashLive(false);
       setBajioUnlockFlash(false);
     }, BAJIO_UNLOCK_FLASH_MS);
     return () => clearTimeout(hide);
-  }, [bajioUnlockFlash, screen]);
+  }, [bajioUnlockFlash]);
   const dismissSoftPaywall = (plan, { fromBackdrop } = {}) => {
     if (fromBackdrop && !paywallArmed) return;
     setSoftPaywall(false);
@@ -5064,11 +5050,27 @@ export default function App() {
 
   const continueFromWin = () => {
     const t = todayStr();
-    save((prev) => progressAfterWinContinue(prev, {
-      today: t,
-      todaySceneId: todaySceneIdFromSession(session),
-    }));
+    const firstStreakEso = !!(session?.firstHoy || session?.firstDoctora);
     const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
+    const willFlash = shouldShowBajioUnlockFlash({
+      bajioUnlockSeen: !!prog.bajioUnlockSeen,
+      firstStreakEso,
+      streak: 1,
+      paywallSeen: !!prog.paywallSeen,
+    });
+    save((prev) => ({
+      ...progressAfterWinContinue(prev, {
+        today: t,
+        todaySceneId: todaySceneIdFromSession(session),
+      }),
+      ...(willFlash ? { bajioUnlockSeen: true } : {}),
+    }));
+    if (willFlash && next === "home") {
+      markBajioUnlockFlashLive(true);
+      setBajioUnlockFlash(true);
+    } else if (willFlash) {
+      setBajioFlashPending(true);
+    }
     setScreen(next);
     if (next === "home") setTab("camino");
   };
@@ -5076,6 +5078,11 @@ export default function App() {
   const dismissSessionClose = () => {
     setScreen("home");
     setTab("camino");
+    if (bajioFlashPending) {
+      setBajioFlashPending(false);
+      markBajioUnlockFlashLive(true);
+      setBajioUnlockFlash(true);
+    }
   };
 
   return (
@@ -6461,7 +6468,7 @@ export default function App() {
         const bajio = RECUERDOS_PINS.find((p) => p.id === "bajio") || RECUERDOS_PINS[0];
         const flashCopy = bajioUnlockFlashCopy(uiLang);
         return (
-        <div data-testid="bajio-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 55, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, pointerEvents: "none" }}>
+        <div data-testid="bajio-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 62, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
             <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
               <svg data-testid="bajio-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>

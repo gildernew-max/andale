@@ -121,6 +121,19 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(dismiss.style.background).toMatch(/#fff|#ffffff|rgb\(255,\s*255,\s*255\)/i);
 };
 
+/** Eso → Bajío glow beat → paywall. Skips wait when the glow already fired. */
+const awaitSoftPaywallAfterFirstWin = async () => {
+  await waitFor(() => {
+    expect(screen.queryByTestId("bajio-unlock-flash") || screen.queryByTestId("soft-paywall")).toBeTruthy();
+  }, { timeout: 3000 });
+  if (screen.queryByTestId("bajio-unlock-flash")) {
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy(), { timeout: 3000 });
+  }
+  expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+  expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+};
+
 const openCaminoMore = async (user) => {
   const more = screen.getByTestId("camino-more");
   if (more.getAttribute("aria-expanded") !== "true") await user.click(more);
@@ -1189,7 +1202,7 @@ describe("simulated learner flows", () => {
       cleanup();
       seedProgress({ streak: 1, lastDay: "2026-09-04", paywallSeen: false });
       render(<App />);
-      await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+      await awaitSoftPaywallAfterFirstWin();
       expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
 
@@ -1336,7 +1349,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
     expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Vuelve mañana por «.+»\.$/);
     expect(screen.getByTestId("come-back-tomorrow").textContent).not.toBe("Vuelve mañana por la siguiente escena.");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
@@ -1389,7 +1402,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("hoy-win-continue"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
     assertSoftPaywallAnnualPrimary("es");
@@ -1450,6 +1463,9 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("hoy-win-continue"));
     await waitFor(() => expect(screen.getByTestId("bajio-unlock-flash")).toBeTruthy());
     const flash = screen.getByTestId("bajio-unlock-flash");
     expect(flash.textContent).toMatch(/Bajío/);
@@ -1460,8 +1476,7 @@ describe("simulated learner flows", () => {
     expect(flash.textContent).not.toMatch(/¡Sigue explorando!|12\/25|backpack/i);
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).bajioUnlockSeen).toBe(true);
-    await user.click(screen.getByTestId("hoy-win-continue"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy(), { timeout: 3000 });
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     assertSoftPaywallAnnualPrimary("es");
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
@@ -1479,7 +1494,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("hoy-win")).toBeTruthy());
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     await replay.click(screen.getByTestId("hoy-win-continue"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     assertSoftPaywallAnnualPrimary("es");
   });
@@ -1525,7 +1540,7 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => expect(screen.getByTestId("hoy-win-continue")).toBeTruthy());
     await user.click(screen.getByTestId("hoy-win-continue"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis por ahora");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
@@ -1642,7 +1657,7 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("session-close-dismiss"));
     await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
@@ -1774,7 +1789,7 @@ describe("simulated learner flows", () => {
       expect(prog.streak).toBe(1);
       expect(prog.lastDay).toBe(today);
     });
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.");
     assertSoftPaywallAnnualPrimary("es");
@@ -1812,7 +1827,7 @@ describe("simulated learner flows", () => {
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en")));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Your streak just started.");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.");
     assertSoftPaywallAnnualPrimary("en");
@@ -1833,7 +1848,7 @@ describe("simulated learner flows", () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday() });
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     assertSoftPaywallAnnualPrimary("es");
     expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis por ahora");
@@ -1844,7 +1859,7 @@ describe("simulated learner flows", () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: today });
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
     await new Promise((resolve) => setTimeout(resolve, 450));
     fireEvent.click(screen.getByTestId("soft-paywall"));
@@ -1860,7 +1875,7 @@ describe("simulated learner flows", () => {
     seedProgress({ streak: 1, lastDay: today });
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
@@ -1909,7 +1924,7 @@ describe("simulated learner flows", () => {
     mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
     seedProgress({ streak: 1, lastDay: today });
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
@@ -1920,7 +1935,7 @@ describe("simulated learner flows", () => {
     mockA2hsEnv({ standalone: true });
     seedProgress({ streak: 1, lastDay: today });
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     await userEvent.setup().click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
@@ -1930,7 +1945,7 @@ describe("simulated learner flows", () => {
     mockA2hsEnv();
     seedProgress({ streak: 1, lastDay: today, a2hsSeen: true });
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     await userEvent.setup().click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
@@ -1940,7 +1955,7 @@ describe("simulated learner flows", () => {
     mockA2hsEnv();
     seedProgress({ uiLang: "en", streak: 1, lastDay: today });
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     await userEvent.setup().click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
@@ -1952,7 +1967,7 @@ describe("simulated learner flows", () => {
     mockA2hsEnv({ userAgent: MAC_SAFARI_UA, platform: "MacIntel", maxTouchPoints: 0 });
     seedProgress({ streak: 1, lastDay: today });
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     await userEvent.setup().click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
@@ -1966,7 +1981,7 @@ describe("simulated learner flows", () => {
     seedProgress({ streak: 1, lastDay: today });
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await awaitSoftPaywallAfterFirstWin();
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(screen.getByTestId("a2hs-sheet")).toBeTruthy();

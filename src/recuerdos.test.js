@@ -83,7 +83,7 @@ assert(recuerdosHasProgressFraction("0/10"), "0/10 is a backpack fraction");
 assert(!recuerdosHasProgressFraction("Bajío Abierto"), "pin chrome is not a fraction");
 
 const firstEso = { firstStreakEso: true, streak: 1 };
-assert(shouldShowBajioUnlockFlash(firstEso), "first streak-1 Eso shows Bajío unlock flash");
+assert(shouldShowBajioUnlockFlash(firstEso), "first streak-1 Eso CONTINUE arms the Bajío glow beat");
 assert(!shouldShowBajioUnlockFlash({ ...firstEso, bajioUnlockSeen: true }), "seen flag never re-flashes");
 assert(!shouldShowBajioUnlockFlash({ ...firstEso, paywallSeen: true }), "paywallSeen skips the flash");
 assert(!shouldShowBajioUnlockFlash({ firstStreakEso: false, streak: 1 }), "later win without Eso flag does not flash");

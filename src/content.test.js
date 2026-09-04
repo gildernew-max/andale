@@ -426,6 +426,7 @@ assert(appSrc.includes("hoy-win"), "first-Hoy win heading is testable");
 assert(appSrc.includes("shouldShowBajioUnlockFlash"), "Bajío unlock flash uses the once-only gate");
 assert(appSrc.includes("isBajioUnlockFlashLive") && appSrc.includes("markBajioUnlockFlashLive"), "flash live flag survives remount");
 assert(appSrc.includes("bajioUnlockSeen"), "Bajío unlock flash seen flag is persisted");
+assert(/showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending/.test(appSrc), "paywall waits for the Bajío glow beat");
 assert(appSrc.includes("data-testid=\"bajio-unlock-flash\""), "Bajío unlock flash is testable");
 assert(appSrc.includes("bajioUnlockFlashCopy"), "flash copy reuses Recuerdos stamps");
 const flashChunk = appSrc.slice(appSrc.indexOf('data-testid="bajio-unlock-flash"'), appSrc.indexOf("SOFT PAYWALL"));
