@@ -90,6 +90,12 @@ const expectedComeBack = (lang) => {
   return comeBackTomorrowLine({ lang, nextTitle: hoyTitleForLang(next, lang) });
 };
 
+const openCaminoMore = async (user) => {
+  const more = screen.getByTestId("camino-more");
+  if (more.getAttribute("aria-expanded") !== "true") await user.click(more);
+  await waitFor(() => expect(screen.getByTestId("camino-more-panel")).toBeTruthy());
+};
+
 beforeEach(() => {
   localStorage.clear();
   mockBrowser();
@@ -346,6 +352,7 @@ describe("simulated learner flows", () => {
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    await openCaminoMore(user);
     const caminoDailyEs = screen.getByTestId("camino-daily-workout");
     expect(caminoDailyEs.textContent).toMatch(/Rutina diaria/);
     expect(caminoDailyEs.textContent).not.toMatch(/Daily workout/);
@@ -369,7 +376,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("coach-cta-luna").textContent).toMatch(/Daily routine/);
     expect(screen.getByTestId("coach-cta-luna").textContent).not.toMatch(/Workout diario/);
     await user.click(screen.getByTestId("nav-camino"));
-    await waitFor(() => expect(screen.getByTestId("camino-daily-workout")).toBeTruthy());
+    await openCaminoMore(user);
     expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Daily routine/);
     expect(screen.getByTestId("camino-daily-workout").textContent).not.toMatch(/Daily workout|Workout done|Today's workout/);
   });
@@ -383,7 +390,8 @@ describe("simulated learner flows", () => {
     seedProgress({ missions: { [`daily-${today}`]: true } });
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("camino-daily-workout")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("camino-more")).toBeTruthy());
+    await openCaminoMore(user);
     const doneEs = screen.getByTestId("camino-daily-workout");
     expect(doneEs.textContent).toMatch(/Rutina hecha/);
     expect(doneEs.textContent).not.toMatch(/Workout|Rutina completada/);
@@ -439,12 +447,12 @@ describe("simulated learner flows", () => {
       b.textContent === "Español" || b.textContent === "English")).toHaveLength(0);
     await waitFor(() => expect(localStorage.getItem(STORAGE_KEY)).toBeTruthy());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
-    expect(screen.getByPlaceholderText("What should we call you?")).toBeTruthy();
+    expect(screen.getByPlaceholderText("What do they call you?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Start!" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => {
-      expect(screen.getByPlaceholderText("¿Cómo te llamamos?")).toBeTruthy();
+      expect(screen.getByPlaceholderText("¿Cómo te dicen?")).toBeTruthy();
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("es");
     });
     expect(screen.getByRole("button", { name: "¡Empezar!" })).toBeTruthy();
@@ -788,6 +796,8 @@ describe("simulated learner flows", () => {
     expect(hero.textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Phrase Doctor/);
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
     expect(screen.getByRole("button", { name: "Subjuntivo presente" })).toBeTruthy();
+    expect(screen.queryByTestId("path-entry")).toBeNull();
+    await openCaminoMore(user);
     expect(screen.getByTestId("path-entry").textContent).toMatch(/EMPIEZA|START/);
     expect(screen.getByTestId("hoy-card")).toBeTruthy();
     expect(screen.getByTestId("first-door-alt").textContent).toBe("Arreglar una frase");
@@ -799,6 +809,97 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("first-door-alt").textContent).toBe("Fix a phrase");
   });
 
+  it("Hoy + Doctora door buries EMPIEZA / Repasar / Rutina diaria under quiet Más / More", async () => {
+    cleanup();
+    seedProgress({
+      srs: { "subj1|0": { ef: 2.5, reps: 1, interval: 1, due: Date.now() - 1000 } },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena/);
+    expect(screen.getByTestId("first-door-alt").textContent).toBe("Arreglar una frase");
+    expect(screen.getByTestId("nav-camino").textContent).toBe("Camino");
+    expect(screen.getByTestId("camino-more").textContent).toBe("Más");
+    expect(screen.getByTestId("camino-more").getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("camino-more-panel")).toBeNull();
+    expect(screen.queryByTestId("path-entry")).toBeNull();
+    expect(screen.queryByTestId("camino-review")).toBeNull();
+    expect(screen.queryByTestId("camino-daily-workout")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^EMPIEZA$|^START$/ })).toBeNull();
+    expect(screen.queryByTestId("camino-review")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Rutina diaria|Daily routine/ })).toBeNull();
+    expect(screen.getByTestId("camino-more").textContent).not.toMatch(/Más opciones|See more|More options|Camino extra/);
+
+    await user.click(screen.getByTestId("camino-more"));
+    await waitFor(() => expect(screen.getByTestId("camino-more-panel")).toBeTruthy());
+    expect(screen.getByTestId("camino-more").getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByTestId("path-entry").textContent).toBe("EMPIEZA");
+    expect(screen.getByTestId("camino-review").textContent).toMatch(/Repasar/);
+    expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Rutina diaria/);
+    expect(screen.getByTestId("nav-camino").textContent).toBe("Camino");
+    expect(screen.getByTestId("camino-more").textContent).toBe("Más");
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("camino-more").textContent).toBe("More"));
+    expect(screen.getByTestId("path-entry").textContent).toBe("START");
+    expect(screen.getByTestId("camino-review").textContent).toMatch(/Review/);
+    expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Daily routine/);
+    expect(screen.getByTestId("nav-camino").textContent).toBe("Learn");
+    expect(screen.getByTestId("camino-more").textContent).not.toMatch(/Más opciones|See more|More options/);
+  });
+
+  it("Doctora hero still buries path CTAs under Más; life door stays first", async () => {
+    const today = localToday();
+    cleanup();
+    seedProgress({
+      streak: 1,
+      lastDay: today,
+      paywallSeen: true,
+      missions: { [`scene-${today}`]: "taqueria" },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
+    expect(screen.getByTestId("hoy-card")).toBeTruthy();
+    expect(screen.getByTestId("camino-more").textContent).toBe("Más");
+    expect(screen.queryByTestId("path-entry")).toBeNull();
+    expect(screen.queryByTestId("camino-daily-workout")).toBeNull();
+    await user.click(screen.getByTestId("camino-more"));
+    await waitFor(() => expect(screen.getByTestId("path-entry").textContent).toBe("EMPIEZA"));
+    expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Rutina diaria/);
+  });
+
+  it("name field warm line is ¿Cómo te dicen? / What do they call you?", async () => {
+    localStorage.clear();
+    mockBrowser();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
+    expect(screen.getByPlaceholderText("What do they call you?")).toBeTruthy();
+    expect(screen.queryByPlaceholderText("What should we call you?")).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByPlaceholderText("¿Cómo te dicen?")).toBeTruthy());
+    expect(screen.queryByPlaceholderText("¿Cómo te llamamos?")).toBeNull();
+  });
+
+  it("landlord Hoy scene keeps title and uses locked casero copy", async () => {
+    const user = await boot();
+    const title = screen.getByTestId("hoy-title").textContent;
+    if (title === "WhatsApp del casero") {
+      expect(screen.getByTestId("hoy-card").textContent).toMatch(/El casero pide depósito y aval hoy\. Contéstale sin sonar de manual\./);
+      expect(screen.getByTestId("hoy-card").textContent).not.toMatch(/Te piden depósito, aval y contrato hoy/);
+      await user.click(screen.getByTestId("lang-en"));
+      await waitFor(() => expect(screen.getByTestId("hoy-title").textContent).toBe("Landlord WhatsApp"));
+      expect(screen.getByTestId("hoy-card").textContent).toMatch(/Landlord wants deposit and guarantor today\. Answer without sounding like a textbook\./);
+    } else {
+      const landlord = HOY_TITLES.find((s) => s.title === "WhatsApp del casero");
+      expect(landlord.titleEn).toBe("Landlord WhatsApp");
+    }
+  });
+
   it("return door with streak ≥ 1: Hoy CTA if scene open, Doctora if Hoy done — never Subjuntivo Continuar", async () => {
     const today = localToday();
     cleanup();
@@ -808,6 +909,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena/);
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Phrase Doctor|Arreglar una frase/);
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
+    expect(screen.queryByTestId("path-entry")).toBeNull();
+    await openCaminoMore(userEvent.setup());
     expect(screen.getByTestId("path-entry").textContent).toMatch(/EMPIEZA|START/);
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
     expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/«.+»/);
@@ -826,6 +929,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Phrase Doctor|Jugar la escena/);
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
+    expect(screen.queryByTestId("path-entry")).toBeNull();
+    await openCaminoMore(userEvent.setup());
     expect(screen.getByTestId("path-entry").textContent).toMatch(/EMPIEZA|START/);
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
   });
