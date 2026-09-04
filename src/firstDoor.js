@@ -62,7 +62,12 @@ export function hoyTitleForLang(scene, lang) {
   return typeof title === "string" ? title.trim() : "";
 }
 
-/** Named teaser when tomorrow's Hoy title is known; else generic siguiente escena / next scene. */
+/**
+ * George + No face LOCKED titled teaser — plain text only, not a CTA.
+ * ES: Vuelve mañana por «{title}».
+ * EN: Come back tomorrow for “{title}”.
+ * Generic siguiente escena / next scene stays fallback when title unknown.
+ */
 export function comeBackTomorrowLine({ lang = "es", nextTitle, fallback } = {}) {
   const title = typeof nextTitle === "string" ? nextTitle.trim() : "";
   if (!title) {

@@ -5215,16 +5215,16 @@ export default function App() {
                       </button>
                     </div>
                   )}
-                  {showLine && (
-                    <p data-testid="come-back-tomorrow" style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default" }}>
-                      {comeBackTomorrowLine({
-                        lang: uiLang,
-                        nextTitle: hoyTitleForLang(tomorrowScene, uiLang),
-                        fallback: L.comeBackTomorrow,
-                      })}
-                    </p>
-                  )}
                 </div>
+                {showLine && (
+                  <p data-testid="come-back-tomorrow" style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
+                    {comeBackTomorrowLine({
+                      lang: uiLang,
+                      nextTitle: hoyTitleForLang(tomorrowScene, uiLang),
+                      fallback: L.comeBackTomorrow,
+                    })}
+                  </p>
+                )}
                 {doorKind === FIRST_DOOR_HOY && (
                   <button data-testid="first-door-alt" onClick={openDoctor}
                     style={{ display: "block", width: "100%", marginTop: 8, background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>

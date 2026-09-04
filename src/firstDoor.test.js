@@ -159,8 +159,8 @@ assert(hoyTitleForLang(tomorrowHoy, "es") === "Mostrador en caos", "ES tomorrow 
 assert(hoyTitleForLang(tomorrowHoy, "en") === "Airport Counter Chaos", "EN tomorrow title");
 assert(hoySceneForDay([], "2026-09-05") === null, "empty list → no invented title");
 assert(hoySceneForDay(HOY_TITLES, "") === null, "missing day → no invented title");
-assert(comeBackTomorrowLine({ lang: "es", nextTitle: "Mostrador en caos" }) === "Vuelve mañana por «Mostrador en caos».", "ES teaser uses guillemets");
-assert(comeBackTomorrowLine({ lang: "en", nextTitle: "Airport Counter Chaos" }) === "Come back tomorrow for “Airport Counter Chaos”.", "EN teaser uses curly quotes");
+assert(comeBackTomorrowLine({ lang: "es", nextTitle: "Mostrador en caos" }) === "Vuelve mañana por «Mostrador en caos».", "George ES lock: Vuelve mañana por «{title}».");
+assert(comeBackTomorrowLine({ lang: "en", nextTitle: "Airport Counter Chaos" }) === "Come back tomorrow for “Airport Counter Chaos”.", "George EN lock: Come back tomorrow for “{title}”.");
 assert(comeBackTomorrowLine({ lang: "es" }) === COME_BACK_GENERIC_ES, "ES fallback when title unknown");
 assert(comeBackTomorrowLine({ lang: "en", nextTitle: "" }) === COME_BACK_GENERIC_EN, "EN fallback when title empty");
 assert(comeBackTomorrowLine({ lang: "es", nextTitle: "   " }) === COME_BACK_GENERIC_ES, "whitespace title is unknown");

@@ -1057,6 +1057,8 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
     const teaser = screen.getByTestId("come-back-tomorrow");
     expect(teaser.textContent).toBe(expectedComeBack("es"));
+    expect(teaser.textContent).toMatch(/^Vuelve mañana por «.+»\.$/);
+    expect(teaser.textContent).not.toBe("Vuelve mañana por la siguiente escena.");
     expect(screen.queryByTestId("home-pitch")).toBeNull();
     expect(teaser.tagName).toBe("P");
     expect(teaser.tagName).not.toBe("BUTTON");
@@ -1065,10 +1067,13 @@ describe("simulated learner flows", () => {
     expect(teaser.getAttribute("href")).toBeNull();
     expect(teaser.closest("button")).toBeNull();
     expect(teaser.closest("a")).toBeNull();
+    expect(teaser.closest("[data-testid='first-door-hero']")).toBeNull();
     expect(screen.queryByRole("button", { name: /Vuelve mañana|Come back tomorrow/ })).toBeNull();
     expect(window.getComputedStyle(teaser).cursor).not.toBe("pointer");
+    expect(window.getComputedStyle(teaser).pointerEvents).toBe("none");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene/);
 
-    await user.click(teaser);
+    fireEvent.click(teaser);
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
     expect(screen.getByTestId("nav-camino")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
@@ -1076,6 +1081,13 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("phrase-doctor-board")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByTestId("splash")).toBeNull();
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en")));
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Come back tomorrow for “.+”\.$/);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).not.toBe("Come back tomorrow for the next scene.");
+    expect(screen.queryByRole("button", { name: /Vuelve mañana|Come back tomorrow/ })).toBeNull();
+    expect(screen.getByTestId("come-back-tomorrow").closest("[data-testid='first-door-hero']")).toBeNull();
   });
 
   it("first win shows streak 1 and the vuelve mañana home line", async () => {

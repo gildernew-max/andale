@@ -8,7 +8,7 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 - Day-2+ return (`isDay2Return`: streak ≥ 1, lastDay ≠ today) opens the promised Hoy (yesterday’s `Vuelve mañana…` / `Come back tomorrow for '…'`) as the one hero CTA. Playable Hoy card in `first-door-hero`, not buried. Doctora stays `first-door-alt`.
 - Hand lock: no cold pitch dump on that door. `showColdPitch` keeps `L.splashLine` on streak 0 only; streak ≥ 1 / day-2 return does not dump the first-visit short pitch as a second hero.
 - Soft paywall stays once-only: `paywallSeen` never re-fires; day-2 before today’s win does not open the wall.
-- Teaser demoted to a quiet `<p>` (`come-back-tomorrow`): no card chrome, no button, no fake tap. Same titled / generic copy. Hidden on day-2 while the promise is the hero.
+- George + No face LOCKED teaser as plain text only (not a CTA): ES `Vuelve mañana por «{title}».` / EN `Come back tomorrow for “{title}”.` Quiet `<p>` outside `first-door-hero` — no button, no fake tap, `pointerEvents: none`. Generic fallback unchanged. Hidden on day-2 while the promise is the hero.
 - Tests: helper + flow lock streak≥1 return → Hoy hero, no home-pitch; paywallSeen → no paywall; teaser is non-interactive plain text. Door diet, first Hoy/Doctora ≤60s, honesty, post-dismiss handoff, Más, name, casero, splash, enroll untouched.
 
 **Why**
