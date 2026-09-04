@@ -303,12 +303,17 @@ assert(UI.es.paywallHeadline === "Ya empezó tu racha.", "UI.es.paywallHeadline"
 assert(UI.es.paywallBody === "Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.", "UI.es.paywallBody");
 assert(UI.es.paywallAnnual === "$39.99 al año", "UI.es.paywallAnnual");
 assert(UI.es.paywallMonthly === "$6.99 al mes", "UI.es.paywallMonthly");
+assert(UI.es.paywallHonesty === "Práctica · sin cobro todavía", "UI.es.paywallHonesty");
 assert(UI.es.paywallDismiss === "Seguir gratis por ahora", "UI.es.paywallDismiss");
 assert(UI.en.paywallHeadline === "Your streak just started.", "UI.en.paywallHeadline");
 assert(UI.en.paywallBody === "Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.", "UI.en.paywallBody");
 assert(UI.en.paywallAnnual === "$39.99 / year", "UI.en.paywallAnnual");
 assert(UI.en.paywallMonthly === "$6.99 / month", "UI.en.paywallMonthly");
+assert(UI.en.paywallHonesty === "Practice · no charge yet", "UI.en.paywallHonesty");
 assert(UI.en.paywallDismiss === "Continue free for now", "UI.en.paywallDismiss");
+assert(appSrc.includes("{L.paywallHonesty}"), "paywall honesty uses L.paywallHonesty");
+assert(appSrc.includes("data-testid=\"soft-paywall-honesty\""), "paywall honesty is testable");
+assert(appSrc.includes("data-testid=\"first-door-alt\""), "Doctora first-door-alt stays on home");
 assert(appSrc.includes("shouldShowSoftPaywall"), "soft paywall uses first-win gate");
 assert(appSrc.includes("soft-paywall"), "soft paywall is wired");
 assert(appSrc.includes("paywallSeen"), "paywall seen flag is persisted");

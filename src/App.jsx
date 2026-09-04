@@ -2966,6 +2966,7 @@ const UI = {
     paywallBody: "Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.",
     paywallAnnual: "$39.99 al año",
     paywallMonthly: "$6.99 al mes",
+    paywallHonesty: "Práctica · sin cobro todavía",
     paywallDismiss: "Seguir gratis por ahora",
     playScene: "Jugar la escena",
     phraseDoctor: "Doctora de frases",
@@ -3014,6 +3015,7 @@ const UI = {
     paywallBody: "Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.",
     paywallAnnual: "$39.99 / year",
     paywallMonthly: "$6.99 / month",
+    paywallHonesty: "Practice · no charge yet",
     paywallDismiss: "Continue free for now",
     playScene: "Play the scene",
     phraseDoctor: "Phrase Doctor",
@@ -6112,6 +6114,9 @@ export default function App() {
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => dismissSoftPaywall("annual")}>{L.paywallAnnual}</Btn>
               <Btn outline data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")}>{L.paywallMonthly}</Btn>
+              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 800, fontSize: 12.5, color: D.sub, lineHeight: 1.35 }}>
+                {L.paywallHonesty}
+              </div>
               <Btn outline data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}>{L.paywallDismiss}</Btn>
             </div>
           </div>

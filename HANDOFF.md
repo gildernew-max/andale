@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (paywall honesty under price CTAs)
+
+**What changed**
+- Soft paywall honesty line under the price CTAs: ES `Práctica · sin cobro todavía` / EN `Practice · no charge yet`. Wired via `L.paywallHonesty` (`data-testid="soft-paywall-honesty"`).
+- `$39.99` / `$6.99` and `Seguir gratis por ahora` / `Continue free for now` stay visible. No Stripe, no IAP, enroll off.
+- `first-door-alt` (Doctora `Arreglar una frase`) stays on the home door after win/paywall. Splash gate + Saltar-gone + Camino short pitch from PR 64 untouched.
+
+**Why**
+- No face: price buttons were a false IAP hit without an honesty line. Practice, no charge yet.
+
 ## 2026-09-04 (splash residual Saltar + Camino home pitch)
 
 **What changed**
