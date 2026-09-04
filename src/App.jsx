@@ -2968,6 +2968,8 @@ const UI = {
     phraseDoctor: "Doctora de frases",
     phraseDoctorTag: "GANA EN 60 SEGUNDOS",
     phraseDoctorCta: "Arreglar una frase",
+    safeRiskyReward: "5 rondas · extra por racha · gemas",
+    narrationLabel: "NARRACIÓN",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3007,6 +3009,8 @@ const UI = {
     phraseDoctor: "Phrase Doctor",
     phraseDoctorTag: "WIN IN 60 SECONDS",
     phraseDoctorCta: "Fix a phrase",
+    safeRiskyReward: "5 rounds · streak extra · gems",
+    narrationLabel: "NARRATION",
   },
 };
 
@@ -5440,6 +5444,7 @@ export default function App() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{uiLang === "en" ? "Safe or Risky?" : "¿Seguro o riesgoso?"}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Sort phrases by register — the skill that matters most past B1." : "Clasifica frases por registro — la habilidad clave después de B1."}</div>
+                <div data-testid="safe-risky-reward" style={{ fontSize: 11, fontWeight: 900, color: D.redDark, marginTop: 4 }}>{L.safeRiskyReward}</div>
               </div>
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
@@ -5630,7 +5635,7 @@ export default function App() {
                 act: startSafeRisky,
                 testid: "safe-risky-start",
                 stat: `${prog.missions?.safeRiskyBest || 0}/5 ${uiLang === "en" ? "best" : "mejor"}`,
-                reward: uiLang === "en" ? "5 rounds · streak bonus · gems" : "5 rondas · bonus de racha · gemas",
+                reward: L.safeRiskyReward,
               },
               {
                 title: "Reto Ándale",
@@ -5653,7 +5658,7 @@ export default function App() {
                     <span style={{ display: "block", fontSize: 10, fontWeight: 900, letterSpacing: ".07em", color: game.dark }}>{game.tag}</span>
                     <span style={{ display: "block", fontSize: 18, fontWeight: 900, lineHeight: 1.1 }}>{game.title}</span>
                     <span style={{ display: "block", fontSize: 12.5, fontWeight: 800, color: D.sub, lineHeight: 1.25, marginTop: 3 }}>{game.desc}</span>
-                    <span style={{ display: "inline-flex", marginTop: 8, fontSize: 11, fontWeight: 900, color: game.dark, background: game.color === D.red ? D.redBg : game.color === D.green ? D.greenBg : D.blueBg, border: `1.5px solid ${game.color}`, borderRadius: 99, padding: "3px 8px" }}>{game.reward}</span>
+                    <span data-testid={game.testid === "safe-risky-start" ? "safe-risky-hub-reward" : undefined} style={{ display: "inline-flex", marginTop: 8, fontSize: 11, fontWeight: 900, color: game.dark, background: game.color === D.red ? D.redBg : game.color === D.green ? D.greenBg : D.blueBg, border: `1.5px solid ${game.color}`, borderRadius: 99, padding: "3px 8px" }}>{game.reward}</span>
                   </span>
                   <span style={{ fontSize: 11, fontWeight: 900, color: game.dark, background: game.color === D.red ? D.redBg : game.color === D.green ? D.greenBg : D.blueBg, border: `1.5px solid ${game.color}`, borderRadius: 99, padding: "4px 8px", whiteSpace: "nowrap" }}>{game.stat}</span>
                 </div>
@@ -6995,7 +7000,7 @@ export default function App() {
             <div style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 10, background: D.card, marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 8 }}>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 900, color: sec.dark, letterSpacing: ".06em" }}>{uiLang === "en" ? "NARRATION LAB" : "LAB DE NARRACIÓN"}</div>
+                  <div data-testid="narration-label" style={{ fontSize: 11, fontWeight: 900, color: sec.dark, letterSpacing: ".06em" }}>{L.narrationLabel}</div>
                   <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>
                     {STORY_AUDIO[story.id] ? (uiLang === "en" ? "Story 1 uses cached paragraph audio in Normal mode." : "El cuento 1 usa audio cacheado en modo Normal.") : (uiLang === "en" ? "Sentence-chunked browser audio." : "Audio del navegador por frases.")}
                   </div>

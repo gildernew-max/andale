@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (George + No face: extra por racha + NARRACIÓN)
+
+**What changed**
+- Safe/Risky hub reward: ES `5 rondas · extra por racha · gemas` / EN `5 rounds · streak extra · gems`. No bonus.
+- Lectura narration chrome: ES `NARRACIÓN` / EN `NARRATION`. LAB DE NARRACIÓN / NARRATION LAB dropped.
+- Wired via `L.safeRiskyReward` and `L.narrationLabel`. Live Práctica Safe/Risky card shows the same reward line.
+- Tests lock the exact ES/EN strings. First door, Hoy, Phrase Doctor, streak-1/vuelve, Empieza/Subjuntivo, JEOPARDY SOLO, Rayo ON/OFF, enroll, PrivacyInfo, paywall, mute/node aria (PR 57) untouched.
+
+**Why**
+- George + No face locked these two leftover chrome lines after the ES ronda polish.
+
 ## 2026-09-04 (a11y/lang: mute + locked unit-node)
 
 **What changed**
