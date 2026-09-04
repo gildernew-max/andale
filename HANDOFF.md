@@ -5,11 +5,12 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 ## 2026-09-04 (post-dismiss handoff — Doctora second beat)
 
 **What changed**
-- Free dismiss (`Seguir gratis por ahora` / `Continue free for now`) no longer dumps to idle home. Same-session flag `postDismissHandoff` lands Camino on one Doctora CTA: tag `GANA EN 60 SEGUNDOS` / `WIN IN 60 SECONDS`, CTA `Arreglar una frase` / `Fix a phrase`, opens Phrase Doctor (`openDoctor`).
+- Free dismiss (`Seguir gratis por ahora` / `Continue free for now`) no longer dumps to idle home. Same-session flag `postDismissHandoff` lands Camino on one Doctora CTA: existing `L.phraseDoctorTag` / `L.phraseDoctorCta` / `L.phraseDoctor` only. Opens Phrase Doctor (`openDoctor`).
+- No new CTA lines. Stamps hold: `Arreglar una frase` / `Fix a phrase` + `GANA EN 60 SEGUNDOS` / `WIN IN 60 SECONDS`.
 - Price-plan dismiss stays on normal home (no handoff). Flag is React-only — remount is idle return home. Door locks, paywall copy, splash, Más, name, casero, door diet, ¡Eso!, enroll untouched.
 
 **Why**
-- No face conversion-critical: after the wall they need a same-session second beat, not Vuelve-mañana idle.
+- No face conversion-critical + CTA stamp hold: same-session second beat, reuse existing Doctora copy, no invented lines.
 
 ## 2026-09-04 (soft paywall after first streak-1 Hoy CONTINUE)
 
