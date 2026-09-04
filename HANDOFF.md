@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-03 (No face Fri first-door: Hoy or Phrase Doctor)
+
+**What changed**
+- First-door hero is Hoy `Jugar la escena` / `Play the scene` when a today scene exists; Phrase Doctor (`Doctora de frases`) is the alternate fast win after the scene is cleared (or if no scene).
+- Subjuntivo Continuar is off the hero. Path / skill tree stays under Empieza (`path-entry` + existing EMPIEZA node). Tree not deleted.
+- After a first win, streak shows 1. Home line uses UI key `comeBackTomorrow`: ES `vuelve mañana por la siguiente escena` / EN `Come back tomorrow for the next scene`.
+- Hoy still still matches city/title or drops. Enroll off. JEOPARDY SOLO / Rayo ON/OFF stay loans. No ads/paywall. No Apple wrap. Not a new path. Not more grammar units.
+
+**Why**
+- Soft ETA first slice by 10:30pm ET Thu Sep 3. First door = Hoy or Phrase Doctor so a learner can win in under 60s. Subjuntivo is later, under Empieza.
+
 ## 2026-09-02 (George + No face copy lock)
 
 **What changed**

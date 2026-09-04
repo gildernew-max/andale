@@ -133,7 +133,9 @@ describe("simulated learner flows", () => {
   it("tabs Camino → Misiones → Lectura → Práctica → Perfil via nav-*", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-camino"));
-    expect(screen.getByRole("button", { name: /Continuar/ })).toBeTruthy();
+    expect(screen.getByTestId("hero-cta")).toBeTruthy();
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene|Doctora de frases|Phrase Doctor/);
+    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue/);
 
     await user.click(screen.getByTestId("nav-misiones"));
     expect(screen.getByRole("heading", { name: /Misiones/ })).toBeTruthy();
@@ -530,5 +532,74 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("phrase-doctor").textContent).toMatch(/Doctora de frases|Phrase Doctor/);
     expect(screen.getByTestId("safe-risky-start").textContent).toMatch(/¿Seguro o riesgoso\?|Safe or Risky\?/);
     expect(screen.getByTestId("match-pairs-start").textContent).toMatch(/Emparejar|Match pairs/);
+  });
+
+  it("first-door hero is Hoy or Phrase Doctor, not Subjuntivo Continuar", async () => {
+    await boot();
+    const hero = screen.getByTestId("hero-cta");
+    expect(hero.textContent).toMatch(/Jugar la escena|Play the scene|Doctora de frases|Phrase Doctor/);
+    expect(hero.textContent).not.toMatch(/Continuar|Continue|Subjuntivo/);
+    expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
+    expect(screen.getByRole("button", { name: "Subjuntivo presente" })).toBeTruthy();
+    expect(screen.getByTestId("path-entry").textContent).toMatch(/EMPIEZA|START/);
+    expect(screen.getByTestId("hoy-card")).toBeTruthy();
+    expect(screen.getByTestId("first-door-alt").textContent).toMatch(/Doctora de frases|Phrase Doctor/);
+    expect(screen.getByTestId("streak").textContent).toMatch(/0/);
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
+  });
+
+  it("first win shows streak 1 and the vuelve mañana home line", async () => {
+    const today = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        host: "luna",
+        questions: [{
+          type: "mc",
+          prompt: "Si el taquero pregunta «¿con todo?», normalmente habla de:",
+          choices: ["cilantro, cebolla, salsa y guarnición"],
+          answer: "cilantro, cebolla, salsa y guarnición",
+          shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+          _u: "_today",
+          _i: -1,
+        }],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const choices = document.querySelectorAll(".choice-card");
+    expect(choices.length).toBeGreaterThan(0);
+    await user.click(choices[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByRole("heading", { name: /Lección completada|Lesson complete/ })).toBeTruthy());
+    await waitFor(() => {
+      const prog = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      expect(prog.streak).toBe(1);
+      expect(prog.lastDay).toBe(today);
+      expect(prog.missions[`scene-${today}`]).toBe("taqueria");
+    });
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("vuelve mañana por la siguiente escena");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Doctora de frases|Phrase Doctor/);
+    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Subjuntivo/);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Come back tomorrow for the next scene"));
   });
 });

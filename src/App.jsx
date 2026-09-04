@@ -5,6 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive } from "./schema.js";
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
+import { FIRST_DOOR_HOY, firstDoorHero, showComeBackTomorrow, streakAfterWin } from "./firstDoor.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -2954,6 +2955,7 @@ const UI = {
     hits: "aciertos", misses: "fallos", impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
     testFailed: "Examen no superado", testFailedDesc: "Tres errores — el límite era dos. Tus fallos ya están en Práctica; repásalos y vuelve a intentarlo.",
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
+    comeBackTomorrow: "vuelve mañana por la siguiente escena",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -2988,6 +2990,7 @@ const UI = {
     hits: "correct", misses: "misses", impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
     testFailed: "Test not passed", testFailedDesc: "Three mistakes — the limit was two. Your misses are in Review; revisit them and try again.",
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
+    comeBackTomorrow: "Come back tomorrow for the next scene",
   },
 };
 
@@ -4214,12 +4217,10 @@ export default function App() {
     setLevelUp(after > before ? LEVELS[after][1] : null);
     setScreenQuip(pickQuip(session.host, "win"));
     save((prev) => {
-      let streak = prev.streak || 0;
+      const streak = streakAfterWin(prev, t, yesterdayStr());
       let xpToday = prev.lastDay === t ? prev.xpToday || 0 : 0;
       let earnedFreeze = 0;
       if (prev.lastDay !== t) {
-        const y = yesterdayStr();
-        streak = prev.lastDay === y ? streak + 1 : 1;
         if (streak > 0 && streak % 7 === 0) earnedFreeze = 1;
       }
       const freezes = Math.min(2, (prev.freezes || 0) + earnedFreeze);
@@ -4874,7 +4875,7 @@ export default function App() {
               <span style={{ fontWeight: 900, fontSize: 23, color: D.green, letterSpacing: "-0.02em" }}>ándale</span>
             </div>
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
-              <span style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>
+              <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>
               <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>
               {(voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
                 <button onClick={() => { if (voiceDead || (voicesReady && !voices.length)) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label="Sound"
@@ -4916,58 +4917,111 @@ export default function App() {
               ? "Real Mexican Spanish for people past the basics: stories, challenges, flashcards, and four coaches who push different skills."
               : "Español mexicano real para quien ya pasó lo básico: cuentos, misiones, tarjetas y cuatro coaches para habilidades distintas."}
           </div>
-          {/* ============================================================
-              REC #1: Continue hero — the single dominant action on home.
-              Returning users see ONE primary card with one button. The
-              path below becomes browsing/reference; the path nodes are
-              still tappable, but only the hero is shouted at you.
-              Secondary actions (Review, Daily routine) get clear but
-              quieter treatment underneath.
-              ============================================================ */}
+          {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
           {(() => {
+            const doorKind = firstDoorHero({ todayScene, todaySceneDone });
+            const showLine = showComeBackTomorrow({
+              todaySceneDone,
+              streak: prog.streak,
+              lastDay: prog.lastDay,
+              today: todayKey,
+            });
             const resumeU = prog.resume && UNITS.find((u) => u.id === prog.resume.unitId);
             const nextF = FLAT.find((f) => !((prog.done || {})[f.unit.id] > 0));
-            const target = resumeU || nextF?.unit;
-            const section = resumeU ? (FLAT.find((x) => x.unit.id === resumeU.id)?.section || SECTIONS[0]) : nextF?.section;
-            const tag = resumeU
-              ? (uiLang === "en" ? "RESUME LESSON" : "REANUDAR LECCIÓN")
-              : target ? (uiLang === "en" ? "NEXT LESSON" : "SIGUIENTE LECCIÓN")
-              : (uiLang === "en" ? "REVIEW" : "REPASO");
-            const ctaLabel = target
-              ? (uiLang === "en" ? "Continue" : "Continuar")
-              : (uiLang === "en" ? "Review now" : "Repasar ahora");
-            const goPrimary = () => {
-              if (resumeU) startUnit(resumeU, section);
-              else if (nextF) startUnit(nextF.unit, nextF.section);
-              else startReview(true);
+            const pathUnit = resumeU || nextF?.unit;
+            const pathSection = resumeU
+              ? (FLAT.find((x) => x.unit.id === resumeU.id)?.section || SECTIONS[0])
+              : nextF?.section;
+            const openPath = () => {
+              if (!pathUnit) return;
+              setSheet({ unit: pathUnit, section: pathSection || SECTIONS[0], crowns: prog.done?.[pathUnit.id] || 0 });
             };
+            const openDoctor = () => { setTab("practica"); setDoctorOpen(true); };
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
-            const dailyLabel = dailyDone
-              ? L.workoutDone
-              : L.dailyWorkout;
-            return (
-              <div style={{ margin: "14px 0 18px" }}>
-                {/* Primary hero card */}
-                <div style={{ background: section ? section.color : D.purple, borderRadius: 20, padding: "16px 18px 18px", color: "#fff", boxShadow: "0 6px 18px rgba(0,0,0,.10)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                    <div style={{ flexShrink: 0 }}><CoachPortrait id="luna" mood="happy" size={68} /></div>
+            const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
+            const sceneStory = todayScene ? STORIES.find((st) => st.id === todayScene.storyId) : null;
+            const renderHoyCard = (asHero) => {
+              if (!todayScene) return null;
+              return (
+                <div data-testid="hoy-card" style={{ margin: asHero ? "0 0 10px" : "2px 0 16px", border: `2px solid ${todayScene.color}`, borderBottom: `5px solid ${todayScene.dark}`, borderRadius: 18, background: D.card, overflow: "hidden" }}>
+                  {hoyStill && (
+                    <img
+                      data-testid="hoy-still"
+                      src={`${import.meta.env.BASE_URL}${hoyStill}`}
+                      alt=""
+                      width={1024}
+                      height={1024}
+                      aria-hidden="true"
+                      style={{ display: "block", width: "100%", height: 148, objectFit: "cover", objectPosition: "center 38%" }}
+                    />
+                  )}
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 14px 11px", background: theme === "dark" ? D.subtle : "#FFFBEF" }}>
+                    <div style={{ width: 58, height: 58, borderRadius: 17, background: todayScene.color, borderBottom: `5px solid ${todayScene.dark}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <CoachPortrait id={todayScene.host} mood={todaySceneDone ? "party" : "focused"} size={54} />
+                    </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", opacity: .85 }}>{tag}</div>
-                      <div style={{ fontWeight: 900, fontSize: 19, lineHeight: 1.2, marginTop: 2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                        {target ? target.title : (uiLang === "en" ? "Review your skills" : "Repasa tus habilidades")}
+                      <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 900, letterSpacing: ".08em", color: todayScene.dark }}>{uiLang === "en" ? "TODAY IN MEXICO" : "HOY EN MÉXICO"}</span>
+                        <span data-testid="hoy-city" style={{ fontSize: 10.5, fontWeight: 900, color: D.sub, background: D.card, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "1px 7px" }}>{todayScene.city}</span>
                       </div>
-                      {(target?.desc || target?.blurb) && (
-                        <div style={{ fontSize: 12.5, fontWeight: 700, opacity: .9, marginTop: 2, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{target.desc || target.blurb}</div>
-                      )}
+                      <div data-testid="hoy-title" style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.15, marginTop: 2 }}>{uiLang === "en" ? todayScene.titleEn : todayScene.title}</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, marginTop: 3 }}>{uiLang === "en" ? todayScene.setupEn : todayScene.setup}</div>
                     </div>
                   </div>
-                  <button onClick={goPrimary}
-                    style={{ display: "block", width: "100%", marginTop: 14, background: "#fff", color: section ? section.dark : D.purpleDark, border: "none", borderBottom: "4px solid rgba(0,0,0,.15)", borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 900, fontSize: 16, cursor: "pointer", letterSpacing: ".01em" }}>
-                    {ctaLabel} →
-                  </button>
+                  <div style={{ padding: "11px 14px 13px" }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                      {todayScene.units.map((uid) => (
+                        <span key={uid} style={{ fontSize: 10.5, fontWeight: 900, color: D.ink, background: D.subtle, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "2px 8px" }}>
+                          {getUnit(uid)?.title}
+                        </span>
+                      ))}
+                      {sceneStory && (
+                        <span style={{ fontSize: 10.5, fontWeight: 900, color: todayScene.dark, background: theme === "dark" ? D.subtle : D.greenBg, border: `1.5px solid ${todayScene.color}`, borderRadius: 99, padding: "2px 8px" }}>
+                          {sceneStory.title}
+                        </span>
+                      )}
+                    </div>
+                    <button data-testid={asHero ? "hero-cta" : undefined} onClick={() => !todaySceneDone && startTodayScene(todayScene)} disabled={todaySceneDone}
+                      style={{ width: "100%", border: "none", borderBottom: `4px solid ${todaySceneDone ? D.line : todayScene.dark}`, background: todaySceneDone ? D.subtle : todayScene.color, color: todaySceneDone ? D.sub : "#fff", borderRadius: 13, padding: "11px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 14.5, cursor: todaySceneDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                      <IcBolt size={18} color={todaySceneDone ? D.sub : "#fff"} />
+                      {todaySceneDone ? (uiLang === "en" ? "Scene cleared" : "Escena superada") : (uiLang === "en" ? "Play the scene" : "Jugar la escena")}
+                    </button>
+                  </div>
                 </div>
-                {/* Secondary actions — quieter, beneath the hero */}
-                <div style={{ display: "grid", gridTemplateColumns: dueCount > 0 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 10 }}>
+              );
+            };
+            return (
+              <div style={{ margin: "14px 0 18px" }}>
+                <div data-testid="first-door-hero">
+                  {doorKind === FIRST_DOOR_HOY ? renderHoyCard(true) : (
+                    <div style={{ background: D.purple, borderRadius: 20, padding: "16px 18px 18px", color: "#fff", boxShadow: "0 6px 18px rgba(0,0,0,.10)", marginBottom: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                        <div style={{ flexShrink: 0 }}><CoachPortrait id="valeria" mood="happy" size={68} /></div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", opacity: .85 }}>{uiLang === "en" ? "PHRASE DOCTOR" : "DOCTORA DE FRASES"}</div>
+                          <div style={{ fontWeight: 900, fontSize: 19, lineHeight: 1.2, marginTop: 2 }}>{uiLang === "en" ? "Phrase Doctor" : "Doctora de frases"}</div>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, opacity: .9, marginTop: 2, lineHeight: 1.3 }}>{uiLang === "en" ? "Valeria fixes translation-shaped Spanish." : "Valeria corrige español con forma de traducción."}</div>
+                        </div>
+                      </div>
+                      <button data-testid="hero-cta" onClick={openDoctor}
+                        style={{ display: "block", width: "100%", marginTop: 14, background: "#fff", color: D.purpleDark, border: "none", borderBottom: "4px solid rgba(0,0,0,.15)", borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 900, fontSize: 16, cursor: "pointer", letterSpacing: ".01em" }}>
+                        {uiLang === "en" ? "Phrase Doctor" : "Doctora de frases"} →
+                      </button>
+                    </div>
+                  )}
+                  {showLine && (
+                    <div data-testid="come-back-tomorrow" style={{ margin: "0 0 10px", border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13.5, fontWeight: 800, color: D.ink, lineHeight: 1.35 }}>
+                      {L.comeBackTomorrow}
+                    </div>
+                  )}
+                </div>
+                {pathUnit && (
+                  <button data-testid="path-entry" onClick={openPath}
+                    style={{ display: "block", width: "100%", margin: "0 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.sub, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
+                    {L.start}
+                  </button>
+                )}
+                <div style={{ display: "grid", gridTemplateColumns: dueCount > 0 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 0 }}>
                   {dueCount > 0 && (
                     <button onClick={() => startReview(false)}
                       style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
@@ -4979,56 +5033,13 @@ export default function App() {
                     <IcBolt size={16} color={D.gold} /> {dailyLabel}
                   </button>
                 </div>
-              </div>
-            );
-	          })()}
-          {todayScene && (() => {
-            const sceneStory = STORIES.find((st) => st.id === todayScene.storyId);
-            return (
-              <div data-testid="hoy-card" style={{ margin: "2px 0 16px", border: `2px solid ${todayScene.color}`, borderBottom: `5px solid ${todayScene.dark}`, borderRadius: 18, background: D.card, overflow: "hidden" }}>
-                {hoyStill && (
-                  <img
-                    data-testid="hoy-still"
-                    src={`${import.meta.env.BASE_URL}${hoyStill}`}
-                    alt=""
-                    width={1024}
-                    height={1024}
-                    aria-hidden="true"
-                    style={{ display: "block", width: "100%", height: 148, objectFit: "cover", objectPosition: "center 38%" }}
-                  />
-                )}
-                <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 14px 11px", background: theme === "dark" ? D.subtle : "#FFFBEF" }}>
-                  <div style={{ width: 58, height: 58, borderRadius: 17, background: todayScene.color, borderBottom: `5px solid ${todayScene.dark}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <CoachPortrait id={todayScene.host} mood={todaySceneDone ? "party" : "focused"} size={54} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 10.5, fontWeight: 900, letterSpacing: ".08em", color: todayScene.dark }}>{uiLang === "en" ? "TODAY IN MEXICO" : "HOY EN MÉXICO"}</span>
-                      <span data-testid="hoy-city" style={{ fontSize: 10.5, fontWeight: 900, color: D.sub, background: D.card, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "1px 7px" }}>{todayScene.city}</span>
-                    </div>
-                    <div data-testid="hoy-title" style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.15, marginTop: 2 }}>{uiLang === "en" ? todayScene.titleEn : todayScene.title}</div>
-                    <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, marginTop: 3 }}>{uiLang === "en" ? todayScene.setupEn : todayScene.setup}</div>
-                  </div>
-                </div>
-                <div style={{ padding: "11px 14px 13px" }}>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                    {todayScene.units.map((uid) => (
-                      <span key={uid} style={{ fontSize: 10.5, fontWeight: 900, color: D.ink, background: D.subtle, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "2px 8px" }}>
-                        {getUnit(uid)?.title}
-                      </span>
-                    ))}
-                    {sceneStory && (
-                      <span style={{ fontSize: 10.5, fontWeight: 900, color: todayScene.dark, background: theme === "dark" ? D.subtle : D.greenBg, border: `1.5px solid ${todayScene.color}`, borderRadius: 99, padding: "2px 8px" }}>
-                        {sceneStory.title}
-                      </span>
-                    )}
-                  </div>
-                  <button onClick={() => !todaySceneDone && startTodayScene(todayScene)} disabled={todaySceneDone}
-                    style={{ width: "100%", border: "none", borderBottom: `4px solid ${todaySceneDone ? D.line : todayScene.dark}`, background: todaySceneDone ? D.subtle : todayScene.color, color: todaySceneDone ? D.sub : "#fff", borderRadius: 13, padding: "11px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 14.5, cursor: todaySceneDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    <IcBolt size={18} color={todaySceneDone ? D.sub : "#fff"} />
-                    {todaySceneDone ? (uiLang === "en" ? "Scene cleared" : "Escena superada") : (uiLang === "en" ? "Play the scene" : "Jugar la escena")}
+                {doorKind === FIRST_DOOR_HOY && (
+                  <button data-testid="first-door-alt" onClick={openDoctor}
+                    style={{ display: "block", width: "100%", marginTop: 8, background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
+                    {uiLang === "en" ? "Phrase Doctor" : "Doctora de frases"}
                   </button>
-                </div>
+                )}
+                {doorKind !== FIRST_DOOR_HOY && renderHoyCard(false)}
               </div>
             );
           })()}
@@ -5382,7 +5393,19 @@ export default function App() {
                     </div>
                   )}
                   <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                    <button onClick={() => setDoctorReveal((v) => !v)}
+                    <button data-testid="phrase-doctor-fix" onClick={() => {
+                      if (!doctorReveal && lockAward("phrase-doctor")) {
+                        const t = todayStr();
+                        const y = yesterdayStr();
+                        save((prev) => ({
+                          ...prev,
+                          streak: streakAfterWin(prev, t, y),
+                          lastDay: t,
+                          xpToday: prev.lastDay === t ? prev.xpToday || 0 : 0,
+                        }));
+                      }
+                      setDoctorReveal((v) => !v);
+                    }}
                       style={{ flex: 1, border: "none", borderBottom: `4px solid ${doctorReveal ? D.line : D.purpleDark}`, background: doctorReveal ? D.subtle : D.purple, color: doctorReveal ? D.sub : "#fff", borderRadius: 12, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, cursor: "pointer" }}>
                       {doctorReveal ? (uiLang === "en" ? "Hide" : "Ocultar") : (uiLang === "en" ? "Fix it" : "Curarla")}
                     </button>
