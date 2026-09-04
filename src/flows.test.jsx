@@ -712,6 +712,7 @@ describe("simulated learner flows", () => {
   });
 
   it("Phrase Doctor accepts listed formal equivalent before hard fail and shows the word-order tip", async () => {
+    seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
     const user = await boot();
     await user.click(screen.getByTestId("nav-practica"));
     await user.click(screen.getByTestId("phrase-doctor"));
@@ -1261,6 +1262,84 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/¡Eso!|That's it\./);
   });
 
+  it("first-session Doctora wins early (≤4 beats) with ¡Eso! / That's it.", async () => {
+    const today = localToday();
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("first-door-alt")).toBeTruthy());
+    await user.click(screen.getByTestId("lang-es"));
+    await user.click(screen.getByTestId("first-door-alt"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
+    expect(document.body.textContent).toMatch(/¿Puedo obtener un café\?/);
+    expect(document.body.textContent).not.toMatch(/Necesito hacer una decisión|Voy a aplicar para el trabajo/);
+    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/NATURAL/));
+    expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/¿Me da un café/);
+    expect(screen.queryByTestId("doctora-win")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("doctora-win")).toBeTruthy());
+    expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
+    expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
+    expect(document.body.textContent).not.toMatch(/¡IMPECABLE!|FLAWLESS!/);
+    expect(document.body.textContent).not.toMatch(/Necesito hacer una decisión|Voy a aplicar para el trabajo|beat 5/);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("That's it."));
+    expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /You won!|¡Ganaste!|Lesson complete/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!"));
+    await user.click(screen.getByTestId("doctora-win-continue"));
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(1);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lastDay).toBe(today);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    const handoff = screen.getByTestId("post-dismiss-handoff");
+    expect(handoff).toBeTruthy();
+    expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
+    expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
+    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Jugar la escena|Continuar|Subjuntivo/);
+    expect(handoff.textContent).not.toMatch(/Phrase Doctor/);
+    expect(screen.queryByTestId("first-door-alt")).toBeNull();
+    expect(screen.getByTestId("hoy-card")).toBeTruthy();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("first-door-tag").textContent).toBe("WIN IN 60 SECONDS"));
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
+  });
+
+  it("later Doctora does not early-exit after beat 1", async () => {
+    cleanup();
+    seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-practica")).toBeTruthy());
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("phrase-doctor"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
+    expect(document.body.textContent).toMatch(/Estoy emocionado para verte/);
+    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/NATURAL/));
+    expect(screen.queryByTestId("doctora-win")).toBeNull();
+    expect(screen.queryByRole("heading", { name: /^¡Eso!$|^That's it\.$/ })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/¡Eso!|That's it\./);
+    const otra = [...screen.getByTestId("phrase-doctor-board").querySelectorAll("button")].find((b) => /Otra|New/.test(b.textContent));
+    expect(otra).toBeTruthy();
+    await user.click(otra);
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-guess")).toBeTruthy());
+    expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/¿Puedo obtener un café\?/);
+    expect(screen.queryByTestId("doctora-win")).toBeNull();
+    expect(screen.queryByRole("heading", { name: /^¡Eso!$|^That's it\.$/ })).toBeNull();
+  });
+
   it("soft paywall does not render on splash or boot before a win", async () => {
     cleanup();
     localStorage.clear();
@@ -1296,6 +1375,13 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-fix").textContent).toMatch(/Continuar|Continue/));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("doctora-win")).toBeTruthy());
+    expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("doctora-win-continue"));
     await waitFor(() => {
       const prog = JSON.parse(localStorage.getItem(STORAGE_KEY));
       expect(prog.streak).toBe(1);

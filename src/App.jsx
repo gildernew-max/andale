@@ -7,6 +7,7 @@ import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isFirstHoySession, shouldHoyEarlyWin, trimHoyBeats } from "./hoyWin.js";
+import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 
 /* ============================================================
@@ -3255,6 +3256,8 @@ export default function App() {
   const [doctorTip, setDoctorTip] = useState(false);
   const [doctorGrade, setDoctorGrade] = useState(null);
   const [doctorFailed, setDoctorFailed] = useState(false);
+  const [firstDoctora, setFirstDoctora] = useState(false);
+  const [doctorHits, setDoctorHits] = useState(0);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [wordOrderMiss, setWordOrderMiss] = useState("");
   const [safeGame, setSafeGame] = useState(null);
@@ -4940,6 +4943,55 @@ export default function App() {
       ? { paywallSeen: true, unlockedPrem: true, paywallPlan: plan }
       : { paywallSeen: true });
   };
+  const awardDoctoraStreak = () => {
+    if (!lockAward("phrase-doctor")) return;
+    const t = todayStr();
+    const y = yesterdayStr();
+    save((prev) => ({
+      ...prev,
+      streak: streakAfterWin(prev, t, y),
+      lastDay: t,
+      xpToday: prev.lastDay === t ? prev.xpToday || 0 : 0,
+    }));
+  };
+
+  const finishDoctoraWin = () => {
+    awardDoctoraStreak();
+    setSession({
+      firstDoctora: true,
+      title: L.phraseDoctor,
+      host: "valeria",
+      questions: [{}],
+      awarded: true,
+      earnedXP: 0,
+      earnedGems: 0,
+    });
+    setLessonStats({ right: Math.max(doctorHits, 1), wrong: 0 });
+    setScreenQuip("");
+    setDoctorOpen(false);
+    setScreen("done");
+  };
+
+  const resetDoctorBoard = () => {
+    setDoctorIdx(0);
+    setDoctorHits(0);
+    setDoctorReveal(false);
+    setDoctorGuess("");
+    setDoctorTip(false);
+    setDoctorGrade(null);
+    setDoctorFailed(false);
+  };
+
+  const openDoctor = () => {
+    setPostDismissHandoff(false);
+    if (!doctorOpen) {
+      setFirstDoctora(isFirstDoctoraSession(prog));
+      resetDoctorBoard();
+    }
+    setDoctorOpen(true);
+    setTab("practica");
+  };
+
   const continueFromWin = () => {
     const t = todayStr();
     save((prev) => progressAfterWinContinue(prev, {
@@ -5077,7 +5129,6 @@ export default function App() {
               if (!pathUnit) return;
               setSheet({ unit: pathUnit, section: pathSection || SECTIONS[0], crowns: prog.done?.[pathUnit.id] || 0 });
             };
-            const openDoctor = () => { setPostDismissHandoff(false); setTab("practica"); setDoctorOpen(true); };
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
             const sceneStory = todayScene ? STORIES.find((st) => st.id === todayScene.storyId) : null;
@@ -5499,7 +5550,7 @@ export default function App() {
 
           {/* Above the fold: Phrase Doctor, Safe-or-Risky, Emparejar. Other chrome stays below. */}
           <div data-testid="practica-fold">
-          <button onClick={() => setDoctorOpen((v) => !v)} data-testid="phrase-doctor"
+          <button onClick={() => (doctorOpen ? setDoctorOpen(false) : openDoctor())} data-testid="phrase-doctor"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.purple}`, borderBottom: `5px solid ${D.purpleDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 44, height: 44, borderRadius: 14, background: D.purple, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.purpleDark}` }}>✎</span>
@@ -5511,7 +5562,9 @@ export default function App() {
             </div>
           </button>
           {(() => {
-            const item = PHRASE_DOCTOR[doctorIdx % PHRASE_DOCTOR.length];
+            const doctorBeats = trimDoctoraBeats(PHRASE_DOCTOR, { firstDoctora });
+            const item = doctorBeats[doctorIdx % Math.max(doctorBeats.length, 1)] || PHRASE_DOCTOR[0];
+            const readyDoctoraWin = shouldDoctoraEarlyWin({ firstDoctora, hits: doctorHits });
             if (!doctorOpen) return null;
             return (
               <div data-testid="phrase-doctor-board" style={{ margin: "0 0 8px", border: `2px solid ${D.purple}`, borderBottom: `5px solid ${D.purpleDark}`, borderRadius: 18, background: D.card, textAlign: "left", overflow: "hidden" }}>
@@ -5592,6 +5645,7 @@ export default function App() {
                   <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                     <button data-testid="phrase-doctor-fix" onClick={() => {
                       if (doctorReveal) {
+                        if (readyDoctoraWin) { finishDoctoraWin(); return; }
                         setDoctorReveal(false);
                         return;
                       }
@@ -5613,23 +5667,23 @@ export default function App() {
                         setDoctorGrade(g.status === "empty" ? null : "correct");
                         setDoctorTip(false);
                       }
-                      if (!doctorFailed && lockAward("phrase-doctor")) {
-                        const t = todayStr();
-                        const y = yesterdayStr();
-                        save((prev) => ({
-                          ...prev,
-                          streak: streakAfterWin(prev, t, y),
-                          lastDay: t,
-                          xpToday: prev.lastDay === t ? prev.xpToday || 0 : 0,
-                        }));
+                      if (!doctorFailed) {
+                        const nextHits = doctorHits + 1;
+                        setDoctorHits(nextHits);
+                        if (!shouldDoctoraEarlyWin({ firstDoctora, hits: nextHits })) {
+                          awardDoctoraStreak();
+                        }
                       }
                       setDoctorReveal(true);
                     }}
                       style={{ flex: 1, border: "none", borderBottom: `4px solid ${doctorReveal ? D.line : D.purpleDark}`, background: doctorReveal ? D.subtle : D.purple, color: doctorReveal ? D.sub : "#fff", borderRadius: 12, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, cursor: "pointer" }}>
-                      {doctorReveal ? (uiLang === "en" ? "Hide" : "Ocultar") : (uiLang === "en" ? "Fix it" : "Curarla")}
+                      {doctorReveal
+                        ? (readyDoctoraWin ? L.continue : (uiLang === "en" ? "Hide" : "Ocultar"))
+                        : (uiLang === "en" ? "Fix it" : "Curarla")}
                     </button>
                     <button onClick={() => {
-                      setDoctorIdx((i) => (i + 1) % PHRASE_DOCTOR.length);
+                      if (readyDoctoraWin) { finishDoctoraWin(); return; }
+                      setDoctorIdx((i) => (i + 1) % Math.max(doctorBeats.length, 1));
                       setDoctorReveal(false);
                       setDoctorGuess("");
                       setDoctorTip(false);
@@ -7469,6 +7523,9 @@ export default function App() {
         const perfect = lessonStats.wrong === 0;
         const milestones = [3, 7, 14, 30, 50, 100, 365];
         const hitMilestone = milestones.includes(prog.streak);
+        const quietWin = session.firstHoy || session.firstDoctora;
+        const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : undefined;
+        const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : undefined;
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
           <Confetti count={perfect ? 160 : 70} />
@@ -7479,11 +7536,11 @@ export default function App() {
               </div>
             ))}
           </div>
-          {screenQuip && !session.firstHoy && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
+          {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
             <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{screenQuip}»
           </div>}
-          <h2 data-testid={session.firstHoy ? "hoy-win" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
-	            {session.firstHoy ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
+          <h2 data-testid={winTestId} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
+	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
           {levelUp && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", margin: "4px 0 8px", fontWeight: 900, color: D.goldDark }}>
@@ -7491,7 +7548,7 @@ export default function App() {
             </div>
           )}
           <p style={{ color: D.sub, fontWeight: 700 }}>
-	            «{session.title}» · {lessonStats.right} {L.hits}, {lessonStats.wrong} {L.misses}{!session.firstHoy && lessonStats.wrong === 0 ? ` · ${L.impeccable}` : ""}
+	            «{session.title}» · {lessonStats.right} {L.hits}, {lessonStats.wrong} {L.misses}{!quietWin && lessonStats.wrong === 0 ? ` · ${L.impeccable}` : ""}
 	            {session.testOut != null && <span><br />{L.unlockedSection}</span>}
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", margin: "24px 0", flexWrap: "wrap" }}>
@@ -7508,11 +7565,11 @@ export default function App() {
           </div>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
-	            <Btn data-testid={session.firstHoy ? "hoy-win-continue" : undefined} onClick={continueFromWin}>{L.continue}</Btn>
+	            <Btn data-testid={continueTestId} onClick={continueFromWin}>{L.continue}</Btn>
           </div>
 
           {/* one-time Quick Practice discoverability tip */}
-          {!prog.quickTipSeen && !session.firstHoy && (
+          {!prog.quickTipSeen && !quietWin && (
             <div className="pop" style={{ display: "flex", alignItems: "center", gap: 10, background: D.purpleBg, border: `2px solid ${D.purple}`, borderBottom: `4px solid ${D.purpleDark}`, borderRadius: 14, padding: "10px 14px", marginTop: 14, fontSize: 12.5, fontWeight: 800, color: D.ink, textAlign: "left", lineHeight: 1.4 }}>
               <IcBolt size={22} color={D.purple} />
               <span>{uiLang === "en"
@@ -7523,14 +7580,14 @@ export default function App() {
           )}
 
           {/* perfect-lesson banner */}
-          {perfect && !session.firstHoy && (session.perfectBonus || 0) > 0 && (
+          {perfect && !quietWin && (session.perfectBonus || 0) > 0 && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
               ★ {uiLang === "en" ? "Perfect lesson — bonus +5 XP" : "Lección perfecta — +5 XP extra"}
             </div>
           )}
 
           {/* streak milestone badge */}
-          {hitMilestone && !session.firstHoy && (
+          {hitMilestone && !quietWin && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: D.orangeBg, border: `2px solid #FF9600`, borderBottom: `4px solid #D97F00`, borderRadius: 14, padding: "10px 20px", marginTop: 12, fontWeight: 900, color: "#A35E00", fontSize: 14 }}>
               <IcFlame size={22} className="flame" />
               {uiLang === "en" ? `${prog.streak}-day streak!` : `¡Racha de ${prog.streak} días!`}
