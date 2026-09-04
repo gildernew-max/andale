@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (a11y/lang: perfil context + listen/story-nav)
+
+**What changed**
+- Perfil `perfil-lang-*` aria follows `uiLang`: ES `Idioma de contexto: inglés` / `Idioma de contexto: español`, EN keeps `English context language` / `Spanish context language`.
+- Lesson listen + slower and story listen/nav aria follow `uiLang`: Escuchar/Listen, Más lento/Slower, Escuchar párrafo/Listen to paragraph, Escuchar palabra/Listen to word, Preguntas/Questions, `Párrafo n`/`Paragraph n`.
+- Tests lock both live strings. First door, Hoy, Phrase Doctor, streak, Empieza, Subjuntivo, theater gates, JEOPARDY SOLO, Rayo ON/OFF / `${n} segundos`, enroll, PrivacyInfo, paywall, mute/node (PR 57) untouched.
+
+**Why**
+- Soft polish leftover: Perfil aria was always English; lesson/story listen + story-nav aria were always ES.
+
 ## 2026-09-04 (George + No face: extra por racha + NARRACIÓN)
 
 **What changed**
