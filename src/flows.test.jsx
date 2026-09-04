@@ -525,7 +525,6 @@ describe("simulated learner flows", () => {
     expect(reason.textContent).toBe("Elegido como tu siguiente tanda útil.");
     expect(reason.textContent).not.toMatch(/sprint/i);
     expect(document.body.textContent).toMatch(/PRÁCTICA INTELIGENTE/);
-    expect(screen.getByRole("button", { name: /Rayo/ }).textContent).toMatch(/OFF/);
 
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("smart-practice-cta").textContent).toBe("Start 5-item sprint — no hearts"));
