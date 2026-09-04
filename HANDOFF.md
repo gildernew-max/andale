@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (Perfil Intermedio + cold-open EN)
+
+**What changed**
+- Perfil floor level is `Intermedio` / `Intermediate`. Visible `Principiante` / beginner is gone. Theater still buried until earned (`hasLearnerProgress`). Prefer show Intermedio when a level is shown.
+- Cold-open: empty first visit defaults `uiLang` EN (`DEFAULT_UI_LANG`). Header ES|EN still flips; persist unchanged. Returning saves without `uiLang` stay ES.
+- Product content stays mexicano: skill chips (`Subjuntivo presente`, etc.) stay Spanish in both langs.
+- Tests lock Intermedio/Intermediate strings and cold-open default EN. Splash copy/CTA/structure, first door, paywall/honesty, word-order tip, teaser, JEOPARDY, Rayo, enroll, Más bury, name, Landlord untouched.
+
+**Why**
+- No face: intermediate product cannot call them beginner. US store first visit opens EN; learner Spanish stays Spanish.
+
 ## 2026-09-04 (word-order tip placement lock)
 
 **What changed**
