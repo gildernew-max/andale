@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (splash marketability pass)
+
+**What changed**
+- Splash line locked: ES `Español mexicano real. Más allá de lo básico.` / EN `Real Mexican Spanish. Past the basics.`
+- One primary CTA: `¡Empezar!` / `Start!` (`textTransform` none so the live label stays exact). Saltar / Skip stays a secondary text control in a column stack — no `¡Empezar!Saltar` mash.
+- Splash hero is the axolotl `LogoMark`. No SMA photos. No Subjuntivo on the splash overlay.
+- Wired via `L.splashLine` / `L.splashCta` / `L.splashSkip`. Tests lock exact strings + no mashed CTA.
+- First door, soft paywall, tomorrow teaser, JEOPARDY SOLO, Rayo, enroll, PrivacyInfo untouched.
+
+**Why**
+- No face marketability pass. Splash was a coaches dump + Let's go! / Saltar mash.
+
 ## 2026-09-04 (soft paywall after first win)
 
 **What changed**
