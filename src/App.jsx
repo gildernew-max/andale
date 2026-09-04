@@ -6387,7 +6387,10 @@ export default function App() {
             <div data-testid="soft-paywall-body" style={{ fontWeight: 800, fontSize: 13.5, color: D.sub, marginBottom: 16, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => dismissSoftPaywall("annual")}>{L.paywallAnnual}</Btn>
-              <Btn outline data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")}>{L.paywallMonthly}</Btn>
+              <button type="button" data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")}
+                style={{ display: "block", width: "100%", margin: 0, padding: "2px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 800, fontSize: 13, lineHeight: 1.35, cursor: "pointer" }}>
+                {L.paywallMonthly}
+              </button>
               <div data-testid="soft-paywall-honesty" style={{ fontWeight: 800, fontSize: 12.5, color: D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
               </div>

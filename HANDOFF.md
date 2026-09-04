@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (soft paywall — yearly sole filled primary)
+
+**What changed**
+- Soft paywall layout only: `$39.99 al año` / `$39.99 / year` is the sole filled primary. `$6.99 al mes` / `$6.99 / month` is quiet text under it — not an equal second button.
+- Honesty stays under both: `Práctica · sin cobro todavía` / `Practice · no charge yet`. Free dismiss stays `Seguir gratis por ahora` / `Continue free for now`.
+- No new copy. Door / Doctora / Day-2 / A2HS / session-close / enroll / IAP untouched.
+
+**Why**
+- No Face / Hand locked ROI: annual primary. Hierarchy restyle of existing plan CTAs.
+
 ## 2026-09-04 (post-Doctora session close — come-back card only)
 
 **What changed**
