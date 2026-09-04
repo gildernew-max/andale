@@ -2,6 +2,22 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (day-2 return Hoy ≤60s — No face / Hand lock)
+
+**What changed**
+- Day-2+ return Hoy (`isDay2Return`: streak ≥ 1, lastDay ≠ today) uses the same short path as first-session Hoy: cap 4 (`trimHoyBeats` / `isShortHoy` in `hoyWin.js`), early win on first correct (`shouldHoyEarlyWin`), heading ES `¡Eso!` · EN `That's it.` — not ¡Ganaste!/You won!. No pep.
+- Long / full scene (shuffled 5-beat, including live casero) parks under Más: `camino-more-full-hoy` reuses the existing scene title (no new CTA). Not the hero.
+- First-session Hoy (streak 0) still short. Same-day later Hoy (`firstHoy: false`) still full depth. Door / paywall once-only / teaser / post-dismiss Doctora / first Doctora ≤60s / door diet / Más bury / enroll untouched.
+
+**Beat lock (George)** — day-2 promised Hoy reuses the first-Hoy keep-4. No new lines. Live 2026-09-04 title is `WhatsApp del casero` / `Landlord WhatsApp`:
+- Keep: scene MC `En WhatsApp con el casero, «Oye, ¿el depósito cuenta…?» suena:` · listen `Oye, ¿el depósito cuenta para el último mes?` · two existing unit extras from `registro` / `porpara` / `pronombres2`
+- Park under Más (full 5): story beat `Postal de …` + fifth shuffled extra
+
+**George cut ask:** none unless he wants a different keep-4 than scene-MC + listen + 2 extras (same recipe as first Hoy). Do not invent lines.
+
+**Why**
+- Promised return Hoy must win in ≤60s. Long casero must not sit on the hero.
+
 ## 2026-09-04 (soft paywall cannot survive midnight)
 
 **What changed**

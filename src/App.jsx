@@ -6,7 +6,7 @@ import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
-import { isFirstHoySession, shouldHoyEarlyWin, trimHoyBeats } from "./hoyWin.js";
+import { isShortHoy, shouldHoyEarlyWin, trimHoyBeats } from "./hoyWin.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 
@@ -3695,9 +3695,13 @@ export default function App() {
     beginSession({ title: L.workoutToday, color: D.gold, dark: D.goldDark, unitId: "_daily", daily: true, review: false, host: "luna", questions: items.map(prepQuestion) });
   };
 
-  const startTodayScene = (scene) => {
+  const startTodayScene = (scene, { full } = {}) => {
     if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
-    const firstHoy = isFirstHoySession(prog);
+    const firstHoy = !full && isShortHoy({
+      streak: prog.streak,
+      lastDay: prog.lastDay,
+      today: todayStr(),
+    });
     const picks = scene.units.flatMap((uid) => {
       const q1 = sampleQuestion(uid, (q) => q.type === "listen" || q.type === "transform" || q.type === "order");
       const q2 = sampleQuestion(uid, (q) => q.type === "mc" || q.type === "type");
@@ -3734,8 +3738,8 @@ export default function App() {
       _i: -1,
       skill: "Lectura",
     };
-    // First session: scene MC first (one tap ≤60s), then listen, then extras, cap 4.
-    // Later Hoys keep the shuffled 5-beat scene.
+    // Short path (first session or day-2 return): scene MC first, then listen, extras, cap 4.
+    // Full / Más path keeps the shuffled 5-beat scene (casero long scene included).
     const items = firstHoy
       ? trimHoyBeats([sceneBeat, listenBeat, ...picks], { firstHoy: true })
       : trimHoyBeats(shuffle([listenBeat, sceneBeat, ...picks, storyBeat]), { firstHoy: false });
@@ -4750,7 +4754,11 @@ export default function App() {
           let live = null;
           try { live = JSON.parse(liveRes.value); } catch (e) {}
           live = acceptLive(live);
-          if (live?.session?.todaySceneId && live.session.firstHoy == null && isFirstHoySession(progress)) {
+          if (live?.session?.todaySceneId && live.session.firstHoy == null && isShortHoy({
+            streak: progress?.streak,
+            lastDay: progress?.lastDay,
+            today: todayStr(),
+          })) {
             live = { ...live, session: { ...live.session, firstHoy: true } };
           }
           if (live) applyLive(live);
@@ -5229,6 +5237,12 @@ export default function App() {
                 </button>
                 {caminoMore && (
                   <div data-testid="camino-more-panel" style={{ marginTop: 8 }}>
+                    {(day2Return || todaySceneDone) && todayScene && (
+                      <button data-testid="camino-more-full-hoy" type="button" onClick={() => startTodayScene(todayScene, { full: true })}
+                        style={{ display: "block", width: "100%", margin: "0 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.sub, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
+                        {uiLang === "en" ? todayScene.titleEn : todayScene.title}
+                      </button>
+                    )}
                     {pathUnit && (
                       <button data-testid="path-entry" onClick={openPath}
                         style={{ display: "block", width: "100%", margin: "0 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.sub, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
