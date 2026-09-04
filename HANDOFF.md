@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (Bajío unlock flash — first streak-1 Eso)
+
+**What changed**
+- First streak-1 `¡Eso!` / `That's it.` shows a brief Bajío unlock flash once (`bajioUnlockSeen`) before the soft paywall sequence. Stamps only: `Bajío` + `Abierto` / `Open`.
+- Flash does not re-fire on remount or later Eso. CONTINUE still lands on today’s paywall / post-dismiss / A2HS / Doctora close paths.
+- Map surface and yearly-primary paywall stay. No pep, no `¡Sigue explorando!`, no backpack fraction. Enroll off. IAP off.
+
+**Why**
+- No Face locked ROI: first short win unlocks Bajío, then the existing wall.
+
 ## 2026-09-04 (Recuerdos / Souvenir trail — Mexico map)
 
 **What changed**

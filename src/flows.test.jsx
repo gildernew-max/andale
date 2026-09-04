@@ -1139,6 +1139,7 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => expect(screen.getByTestId("hoy-win")).toBeTruthy());
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
+    expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
     expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
@@ -1405,6 +1406,81 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+  });
+
+  it("first streak-1 Eso shows Bajío unlock flash once, then existing paywall", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["cilantro, cebolla, salsa y guarnición"],
+      answer: "cilantro, cebolla, salsa y guarnición",
+      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+      _u: "_today",
+      _i: -1,
+    });
+    const seedFirstHoyLive = () => {
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "lesson",
+        tab: "camino",
+        status: "idle",
+        qi: 0,
+        lessonStats: { right: 0, wrong: 0 },
+        session: {
+          title: "Noche de faroles",
+          unitId: "_today:taqueria",
+          todaySceneId: "taqueria",
+          firstHoy: true,
+          host: "luna",
+          questions: [
+            hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:"),
+            hoyMc("beat 2 must not run — early checkpoint"),
+          ],
+        },
+      }));
+    };
+    seedFirstHoyLive();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelectorAll(".choice-card")[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    await waitFor(() => expect(screen.getByTestId("bajio-unlock-flash")).toBeTruthy());
+    const flash = screen.getByTestId("bajio-unlock-flash");
+    expect(flash.textContent).toMatch(/Bajío/);
+    expect(flash.textContent).toMatch(/Abierto/);
+    expect(screen.getByTestId("bajio-unlock-flash-glow").className).toMatch(/bajio-glow/);
+    expect(recuerdosSurfaceHasCuts(flash.textContent)).toBe(false);
+    expect(recuerdosHasProgressFraction(flash.textContent)).toBe(false);
+    expect(flash.textContent).not.toMatch(/¡Sigue explorando!|12\/25|backpack/i);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).bajioUnlockSeen).toBe(true);
+    await user.click(screen.getByTestId("hoy-win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+    assertSoftPaywallAnnualPrimary("es");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
+
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, bajioUnlockSeen: true, paywallSeen: false });
+    seedFirstHoyLive();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const replay = userEvent.setup();
+    await replay.click(document.querySelectorAll(".choice-card")[0]);
+    await replay.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await replay.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win")).toBeTruthy());
+    expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+    await replay.click(screen.getByTestId("hoy-win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+    assertSoftPaywallAnnualPrimary("es");
   });
 
   it("first streak-1 win CONTINUE dismiss free lands on Doctora CTA, not idle home", async () => {

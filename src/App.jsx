@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { MEXICO_OUTLINE_PATH, RECUERDOS_PINS, isRecuerdosPinOpen, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, storyIdForRecuerdosPin } from "./recuerdos.js";
+import { BAJIO_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, isRecuerdosPinOpen, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -3257,6 +3257,7 @@ export default function App() {
   const [paywallArmed, setPaywallArmed] = useState(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
   const [a2hsSheet, setA2hsSheet] = useState(false);
+  const [bajioUnlockFlash, setBajioUnlockFlash] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
@@ -4960,6 +4961,27 @@ export default function App() {
     const arm = setTimeout(() => setPaywallArmed(true), 400);
     return () => clearTimeout(arm);
   }, [showSoftPaywall]);
+  const firstStreakEso = screen === "done" && !!(session?.firstHoy || session?.firstDoctora);
+  const bajioFlashGate = shouldShowBajioUnlockFlash({
+    bajioUnlockSeen: !!prog.bajioUnlockSeen,
+    firstStreakEso,
+    streak: prog.streak,
+    paywallSeen: !!prog.paywallSeen,
+  });
+  useEffect(() => {
+    if (!bajioFlashGate) return;
+    setBajioUnlockFlash(true);
+    save({ bajioUnlockSeen: true });
+  }, [bajioFlashGate]);
+  useEffect(() => {
+    if (!bajioUnlockFlash) return undefined;
+    if (screen !== "done") {
+      setBajioUnlockFlash(false);
+      return undefined;
+    }
+    const hide = setTimeout(() => setBajioUnlockFlash(false), BAJIO_UNLOCK_FLASH_MS);
+    return () => clearTimeout(hide);
+  }, [bajioUnlockFlash, screen]);
   const dismissSoftPaywall = (plan, { fromBackdrop } = {}) => {
     if (fromBackdrop && !paywallArmed) return;
     setSoftPaywall(false);
@@ -6424,6 +6446,46 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Bajío unlock flash: once on first streak-1 ¡Eso! / That's it. Then paywall as today. */}
+      {bajioUnlockFlash && (() => {
+        const bajio = RECUERDOS_PINS.find((p) => p.id === "bajio") || RECUERDOS_PINS[0];
+        const flashCopy = bajioUnlockFlashCopy(uiLang);
+        return (
+        <div data-testid="bajio-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 55, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, pointerEvents: "none" }}>
+          <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
+            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
+              <svg data-testid="bajio-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
+              </svg>
+              <div aria-hidden="true" style={{
+                position: "absolute", inset: 0, pointerEvents: "none",
+                background: recuerdosFogBackground(RECUERDOS_PINS, {}, theme),
+              }} />
+              <div
+                data-testid="bajio-unlock-flash-pin"
+                style={{
+                  position: "absolute", left: `${bajio.x}%`, top: `${bajio.y}%`,
+                  transform: "translate(-50%, -50%)",
+                  display: "flex", flexDirection: "column", alignItems: "center", minWidth: 52, zIndex: 2,
+                }}
+              >
+                <span data-testid="bajio-unlock-flash-glow" className="bajio-glow" style={{
+                  width: 18, height: 18,
+                  borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
+                  background: D.gold, border: "2px solid #fff",
+                  boxShadow: "0 3px 8px rgba(0,0,0,.22)",
+                }} />
+                <span style={{ marginTop: 6, textAlign: "center", lineHeight: 1.15 }}>
+                  <span style={{ display: "block", fontSize: 11, fontWeight: 900, color: D.ink }}>{flashCopy.label}</span>
+                  <span style={{ display: "block", fontSize: 10, fontWeight: 800, color: D.greenDark }}>{flashCopy.state}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
 
       {/* ---------- SOFT PAYWALL (after first win + vuelve; $0, no IAP) ---------- */}
       {showSoftPaywall && (

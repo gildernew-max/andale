@@ -8,6 +8,7 @@ import {
   RECUERDOS_PINS,
   RECUERDOS_TITLE_EN,
   RECUERDOS_TITLE_ES,
+  bajioUnlockFlashCopy,
   isRecuerdosPinOpen,
   recuerdosFogBackground,
   recuerdosHasProgressFraction,
@@ -16,6 +17,7 @@ import {
   recuerdosPinState,
   recuerdosSurfaceHasCuts,
   recuerdosTitle,
+  shouldShowBajioUnlockFlash,
   storyIdForRecuerdosPin,
 } from "./recuerdos.js";
 
@@ -77,5 +79,21 @@ assert(recuerdosSurfaceHasCuts("parroquia"), "parroquia is a cut");
 assert(recuerdosHasProgressFraction("12/25"), "12/25 is a backpack fraction");
 assert(recuerdosHasProgressFraction("0/10"), "0/10 is a backpack fraction");
 assert(!recuerdosHasProgressFraction("Bajío Abierto"), "pin chrome is not a fraction");
+
+const firstEso = { firstStreakEso: true, streak: 1 };
+assert(shouldShowBajioUnlockFlash(firstEso), "first streak-1 Eso shows Bajío unlock flash");
+assert(!shouldShowBajioUnlockFlash({ ...firstEso, bajioUnlockSeen: true }), "seen flag never re-flashes");
+assert(!shouldShowBajioUnlockFlash({ ...firstEso, paywallSeen: true }), "paywallSeen skips the flash");
+assert(!shouldShowBajioUnlockFlash({ firstStreakEso: false, streak: 1 }), "later win without Eso flag does not flash");
+assert(!shouldShowBajioUnlockFlash({ firstStreakEso: true, streak: 2 }), "day-2 / later streak Eso does not flash");
+assert(!shouldShowBajioUnlockFlash({ firstStreakEso: true, streak: 0 }), "streak 0 is not the streak-1 Eso");
+assert(!shouldShowBajioUnlockFlash({}), "empty args do not flash");
+assert(bajioUnlockFlashCopy("es").label === "Bajío", "flash ES pin is Bajío");
+assert(bajioUnlockFlashCopy("es").state === "Abierto", "flash ES state is Abierto");
+assert(bajioUnlockFlashCopy("en").label === "Bajío", "flash EN pin stays Bajío");
+assert(bajioUnlockFlashCopy("en").state === "Open", "flash EN state is Open");
+assert(!/¡Sigue explorando!|Sigue explorando|12\/25|backpack/i.test(
+  `${bajioUnlockFlashCopy("es").label}${bajioUnlockFlashCopy("es").state}${bajioUnlockFlashCopy("en").label}${bajioUnlockFlashCopy("en").state}`
+), "flash copy is not pep or backpack");
 
 console.log("recuerdos.test.js: ok");

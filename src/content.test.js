@@ -423,6 +423,16 @@ assert(!/Vuelve mañana por «\{title\}»|Come back tomorrow for “\{title\}”
 assert(!/¡Ganaste!|You won!/.test(`${UI.es.hoyWin}${UI.en.hoyWin}`), "first-Hoy win is not ¡Ganaste!/You won!");
 assert(appSrc.includes("L.hoyWin"), "first-Hoy done heading uses L.hoyWin");
 assert(appSrc.includes("hoy-win"), "first-Hoy win heading is testable");
+assert(appSrc.includes("shouldShowBajioUnlockFlash"), "Bajío unlock flash uses the once-only gate");
+assert(appSrc.includes("bajioUnlockSeen"), "Bajío unlock flash seen flag is persisted");
+assert(appSrc.includes("data-testid=\"bajio-unlock-flash\""), "Bajío unlock flash is testable");
+assert(appSrc.includes("bajioUnlockFlashCopy"), "flash copy reuses Recuerdos stamps");
+const flashChunk = appSrc.slice(appSrc.indexOf('data-testid="bajio-unlock-flash"'), appSrc.indexOf("SOFT PAYWALL"));
+assert(flashChunk.includes("bajio-unlock-flash-pin"), "flash shows the Bajío pin");
+assert(flashChunk.includes("flashCopy.label") && flashChunk.includes("flashCopy.state"), "flash labels come from bajioUnlockFlashCopy");
+assert(!/¡Sigue explorando!|Sigue explorando|12\/25|backpack/i.test(flashChunk), "flash has no pep or backpack fraction");
+assert(!/setSoftPaywall\(true\)/.test(flashChunk), "flash does not open the paywall");
+assert(!Object.keys(UI.es).concat(Object.keys(UI.en)).some((k) => /bajioUnlock|unlockFlash|sigueExplor/i.test(k)), "no new Bajío-flash marketing UI keys");
 assert(appSrc.includes("shouldHoyEarlyWin"), "first-Hoy early checkpoint is wired");
 assert(appSrc.includes("trimHoyBeats"), "first-Hoy beat cap is wired");
 assert(appSrc.includes("isShortHoy"), "short Hoy path covers first session and day-2 return");
