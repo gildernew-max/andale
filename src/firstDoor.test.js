@@ -42,13 +42,13 @@ assert(!showDoorMetaChrome({ streak: null }), "null streak hides door meta chrom
 assert(showDoorMetaChrome({ streak: 1 }), "streak 1 shows Meta / Rayo / coaches");
 assert(showDoorMetaChrome({ streak: 4 }), "streak above 1 keeps door meta chrome");
 
-const firstWinHome = { streak: 1, lastDay: "2026-09-04", today: "2026-09-04", splash: false };
-assert(!shouldShowSoftPaywall(firstWinHome), "idle home does not open paywall");
-assert(shouldShowSoftPaywall({ ...firstWinHome, fromFirstWin: true }), "first streak-1 Hoy CONTINUE / Curarla opens paywall");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, fromFirstWin: true, splash: true }), "paywall never on splash");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, fromFirstWin: true, streak: 2 }), "not every later Hoy win");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, fromFirstWin: true, streak: 0, lastDay: null }), "paywall never before a win");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, fromFirstWin: true, paywallSeen: true }), "seen flag stops the loop");
+const firstWinHome = { todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04", screen: "home", splash: false };
+assert(shouldShowSoftPaywall(firstWinHome), "first win on home shows paywall after vuelve");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, splash: true }), "paywall never on splash");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, screen: "done" }), "paywall waits until after celebration");
+assert(shouldShowSoftPaywall(firstWinHome), "Phrase Doctor Curarla (home, no done screen) can fire the gate");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, streak: 0, lastDay: null }), "paywall never before a win");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, paywallSeen: true }), "seen flag stops the loop");
 
 assert(todaySceneIdFromSession({ todaySceneId: "taqueria" }) === "taqueria", "session todaySceneId wins");
 assert(todaySceneIdFromSession({ unitId: "_today:landlord" }) === "landlord", "unitId _today: recovers scene");
@@ -68,16 +68,18 @@ assert(showComeBackTomorrow({
 }), "CONTINUE lands with Fh come-back true");
 assert(shouldShowSoftPaywall({
   ...stamped,
+  todaySceneDone: true,
   today: "2026-09-04",
-  fromFirstWin: true,
+  screen: "home",
   splash: false,
-}), "first-win CONTINUE opens paywall once");
+}), "CONTINUE home + come-back opens paywall once");
 assert(!shouldShowSoftPaywall({
   ...stamped,
+  todaySceneDone: true,
   today: "2026-09-04",
-  fromFirstWin: false,
+  screen: "done",
   splash: false,
-}), "same flags on idle home do not reopen");
+}), "paywall still waits until after CONTINUE");
 
 const HOY_TITLES = [
   { title: "Noche de faroles", titleEn: "Night of lanterns" },

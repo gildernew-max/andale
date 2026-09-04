@@ -339,8 +339,7 @@ assert(appSrc.includes("{L.paywallHonesty}"), "paywall honesty uses L.paywallHon
 assert(appSrc.includes("data-testid=\"soft-paywall-honesty\""), "paywall honesty is testable");
 assert(appSrc.includes("data-testid=\"first-door-alt\""), "Doctora first-door-alt stays on home");
 assert(appSrc.includes("shouldShowSoftPaywall"), "soft paywall uses first-win gate");
-assert(appSrc.includes("fromFirstWin"), "paywall opens from first-win CONTINUE / Curarla only");
-assert(appSrc.includes("continueFromWin"), "Hoy CONTINUE uses continueFromWin");
+assert(appSrc.includes("continueFromWin"), "Hoy CONTINUE lands on home with come-back");
 assert(appSrc.includes("soft-paywall"), "soft paywall is wired");
 assert(appSrc.includes("paywallSeen"), "paywall seen flag is persisted");
 assert(appSrc.includes("unlockedPrem") && appSrc.includes("paywallPlan"), "CTA marks local plan only");

@@ -4898,10 +4898,27 @@ export default function App() {
 
   const inLesson = screen !== "home";
   const splashOpen = isFirstVisit(prog);
-  const showSoftPaywall = softPaywall && !prog.paywallSeen && !splashOpen;
+  const showSoftPaywall = shouldShowSoftPaywall({
+    paywallSeen: !!prog.paywallSeen,
+    todaySceneDone,
+    streak: prog.streak,
+    lastDay: prog.lastDay,
+    today: todayKey,
+    screen,
+    splash: splashOpen,
+  }) || (softPaywall && !prog.paywallSeen && !splashOpen && screen === "home");
   useEffect(() => {
-    if (prog.paywallSeen) setSoftPaywall(false);
-  }, [prog.paywallSeen]);
+    if (shouldShowSoftPaywall({
+      paywallSeen: !!prog.paywallSeen,
+      todaySceneDone,
+      streak: prog.streak,
+      lastDay: prog.lastDay,
+      today: todayKey,
+      screen,
+      splash: splashOpen,
+    })) setSoftPaywall(true);
+    else if (prog.paywallSeen) setSoftPaywall(false);
+  }, [prog.paywallSeen, prog.streak, prog.lastDay, todaySceneDone, todayKey, screen, splashOpen]);
   useEffect(() => {
     if (!showSoftPaywall) {
       setPaywallArmed(false);
@@ -4920,23 +4937,12 @@ export default function App() {
   };
   const continueFromWin = () => {
     const t = todayStr();
-    const firstHoyWin = !!session?.firstHoy;
-    if (firstHoyWin) {
-      save((prev) => progressAfterWinContinue(prev, {
-        today: t,
-        todaySceneId: todaySceneIdFromSession(session),
-      }));
-    }
+    save((prev) => progressAfterWinContinue(prev, {
+      today: t,
+      todaySceneId: todaySceneIdFromSession(session),
+    }));
     setScreen("home");
     setTab("camino");
-    if (shouldShowSoftPaywall({
-      paywallSeen: !!prog.paywallSeen,
-      streak: firstHoyWin ? Math.max(Number(prog.streak) || 0, 1) : prog.streak,
-      lastDay: firstHoyWin ? t : prog.lastDay,
-      today: t,
-      splash: splashOpen,
-      fromFirstWin: firstHoyWin,
-    })) setSoftPaywall(true);
   };
 
   return (
@@ -5604,22 +5610,12 @@ export default function App() {
                       if (!doctorFailed && lockAward("phrase-doctor")) {
                         const t = todayStr();
                         const y = yesterdayStr();
-                        const nextStreak = streakAfterWin(prog, t, y);
-                        const firstDoctorWin = shouldShowSoftPaywall({
-                          paywallSeen: !!prog.paywallSeen,
-                          streak: nextStreak,
-                          lastDay: t,
-                          today: t,
-                          splash: splashOpen,
-                          fromFirstWin: prog.lastDay !== t,
-                        });
                         save((prev) => ({
                           ...prev,
                           streak: streakAfterWin(prev, t, y),
                           lastDay: t,
                           xpToday: prev.lastDay === t ? prev.xpToday || 0 : 0,
                         }));
-                        if (firstDoctorWin) setSoftPaywall(true);
                       }
                       setDoctorReveal(true);
                     }}

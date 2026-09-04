@@ -2,15 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
-## 2026-09-04 (soft paywall first streak-1 win only)
+## 2026-09-04 (soft paywall after first streak-1 Hoy CONTINUE)
 
 **What changed**
-- Soft paywall opens once from first streak-1 win only: Hoy CONTINUE after `¡Eso!`, or Phrase Doctor Curarla. Overlay sits on home with `Vuelve mañana…` behind it — before idle home.
-- Idle home / remount / later Hoy do not open the sheet. `paywallSeen` stamps only on dismiss/CTA, not on CONTINUE (backdrop armed so the same tap cannot mark it seen).
-- Tests: helper `fromFirstWin` gate; cold Hoy CONTINUE shows honesty + prices once; idle streak-1 home stays clear.
+- Existing trigger kept: `shouldShowSoftPaywall` = come-back / streak-today && !paywallSeen && !splash && home.
+- Hoy CONTINUE stamps come-back flags then goes home so the gate fires once after `¡Eso!` + `Vuelve mañana…`. Backdrop armed so that tap cannot stamp `paywallSeen` without a visible modal.
+- Honesty + price copy unchanged. Cold Hoy flow: CONTINUE → `soft-paywall` once; dismiss stays gone.
 
 **Why**
-- Live `index-C448UG4u.js`: home+come-back hook never fired from CONTINUE, or stamped `paywallSeen` without a visible modal. Conversion miss after first Hoy win.
+- Live `index-C448UG4u.js`: CONTINUE after first Hoy win landed on home without the existing paywall gate seeing come-back, or marked seen on the same tap.
 
 ## 2026-09-04 (first Hoy ≤60s to win — No face)
 

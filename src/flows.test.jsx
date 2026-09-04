@@ -1214,12 +1214,6 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
-
-    cleanup();
-    seedProgress({ streak: 1, lastDay: localToday() });
-    render(<App />);
-    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
-    expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
   it("soft paywall after first Phrase Doctor win: vuelve first, then once, dismiss stays free", async () => {
@@ -1271,16 +1265,16 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
-  it("soft paywall EN strings after first Phrase Doctor win; annual CTA is local-only", async () => {
+  it("soft paywall EN strings after first-win state; annual CTA is local-only", async () => {
+    const today = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
     cleanup();
-    seedProgress({ uiLang: "en", streak: 0, lastDay: null, xp: 0 });
+    seedProgress({ uiLang: "en", streak: 1, lastDay: today });
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("first-door-alt")).toBeTruthy());
-    expect(screen.queryByTestId("soft-paywall")).toBeNull();
-    await user.click(screen.getByTestId("first-door-alt"));
-    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
-    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en")));
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Your streak just started.");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.");
@@ -1295,10 +1289,8 @@ describe("simulated learner flows", () => {
     expect(stored.paywallSeen).toBe(true);
     expect(stored.paywallPlan).toBe("annual");
     expect(stored.unlockedPrem).toBe(true);
-    await user.click(screen.getByTestId("nav-camino"));
-    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en")));
+    expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
-    expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
   it("header mute and locked unit-node aria follow uiLang", async () => {

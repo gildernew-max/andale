@@ -93,19 +93,20 @@ export function streakAfterWin(prev = {}, today, yesterday) {
 }
 
 /**
- * First streak-1 win only (Hoy CONTINUE after ¡Eso! or Phrase Doctor Curarla).
- * Once. Not idle home. Not every later Hoy.
+ * Soft paywall once after first win: showComeBackTomorrow && !paywallSeen && !splash.
+ * Hook waits for home so Hoy celebration is first; Phrase Doctor Curarla has no done screen.
  */
 export function shouldShowSoftPaywall({
   paywallSeen,
+  todaySceneDone,
   streak,
   lastDay,
   today,
+  screen = "home",
   splash = false,
-  fromFirstWin = false,
 } = {}) {
   if (paywallSeen) return false;
   if (splash) return false;
-  if (!fromFirstWin) return false;
-  return (Number(streak) || 0) === 1 && lastDay === today;
+  if (screen !== "home") return false;
+  return showComeBackTomorrow({ todaySceneDone, streak, lastDay, today });
 }
