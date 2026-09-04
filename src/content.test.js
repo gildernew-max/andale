@@ -384,6 +384,8 @@ assert((paywallLayout.match(/<Btn(?! outline)/g) || []).length === 1, "annual is
 assert(!/<Btn[^>]*soft-paywall-monthly/.test(paywallLayout), "monthly is not a Btn");
 assert(!/<Btn outline data-testid="soft-paywall-monthly"/.test(appSrc), "monthly is not an equal outline Btn");
 assert(/<button type="button" data-testid="soft-paywall-monthly"/.test(paywallLayout), "monthly stays a quiet tap target");
+assert(/soft-paywall-monthly[\s\S]{0,280}padding:\s*["']11px 0/.test(paywallLayout), "monthly quiet text has ~44px tap padding");
+assert(!/soft-paywall-monthly[\s\S]{0,280}padding:\s*["']2px 0/.test(paywallLayout), "monthly is not the 2px tap target");
 assert(/soft-paywall-monthly[\s\S]{0,280}background:\s*["']none/.test(paywallLayout), "monthly is quiet text");
 assert(/soft-paywall-monthly[\s\S]{0,280}border:\s*["']none/.test(paywallLayout), "monthly has no button chrome");
 assert(!/soft-paywall-monthly[\s\S]{0,280}borderBottom:\s*`4px/.test(paywallLayout), "monthly has no 4px press chrome");

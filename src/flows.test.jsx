@@ -109,6 +109,7 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(annual.style.borderBottom).toMatch(/4px solid/);
   expect(monthly.className).not.toMatch(/duo-btn/);
   expect(monthly.style.background).toBe("none");
+  expect(monthly.style.padding).toBe("11px 0px");
   expect(monthly.style.borderBottom).not.toMatch(/4px/);
   expect(monthly.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
   const filled = [...screen.getByTestId("soft-paywall").querySelectorAll("button.duo-btn")]

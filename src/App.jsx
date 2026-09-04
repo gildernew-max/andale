@@ -6388,7 +6388,7 @@ export default function App() {
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => dismissSoftPaywall("annual")}>{L.paywallAnnual}</Btn>
               <button type="button" data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")}
-                style={{ display: "block", width: "100%", margin: 0, padding: "2px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 800, fontSize: 13, lineHeight: 1.35, cursor: "pointer" }}>
+                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 800, fontSize: 13, lineHeight: 1.35, cursor: "pointer" }}>
                 {L.paywallMonthly}
               </button>
               <div data-testid="soft-paywall-honesty" style={{ fontWeight: 800, fontSize: 12.5, color: D.sub, lineHeight: 1.35 }}>
