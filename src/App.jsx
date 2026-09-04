@@ -10,6 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
+import { MEXICO_OUTLINE_PATH, RECUERDOS_PINS, isRecuerdosPinOpen, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, storyIdForRecuerdosPin } from "./recuerdos.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -2990,6 +2991,9 @@ const UI = {
     namePrompt: "¿Cómo te dicen?",
     hoyWin: "¡Eso!",
     sessionClose: "Listo",
+    recuerdosTitle: "Recuerdos",
+    recuerdosOpen: "Abierto",
+    recuerdosLocked: "Cerrado",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3047,6 +3051,9 @@ const UI = {
     namePrompt: "What do they call you?",
     hoyWin: "That's it.",
     sessionClose: "Done",
+    recuerdosTitle: "Souvenir trail",
+    recuerdosOpen: "Open",
+    recuerdosLocked: "Locked",
   },
 };
 
@@ -5067,6 +5074,8 @@ export default function App() {
         .shimmer { position:absolute; top:0; bottom:0; width:30%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent); animation:shimmer 1.6s ease-in-out infinite; }
         @keyframes pulseRing { 0%{box-shadow:0 0 0 0 rgba(88,204,2,.45)} 70%{box-shadow:0 0 0 16px rgba(88,204,2,0)} 100%{box-shadow:0 0 0 0 rgba(88,204,2,0)} }
         .pulse { animation: pulseRing 1.6s ease-out infinite; }
+        @keyframes bajioGlow { 0%,100%{box-shadow:0 0 0 0 rgba(255,200,0,.55),0 0 14px rgba(88,204,2,.55)} 50%{box-shadow:0 0 0 10px rgba(255,200,0,0),0 0 22px rgba(88,204,2,.85)} }
+        .bajio-glow { animation: bajioGlow 1.8s ease-in-out infinite; }
         @keyframes interPop { 0%{transform:scale(.4) rotate(-6deg);opacity:0} 30%{transform:scale(1.15) rotate(2deg);opacity:1} 70%{transform:scale(1) rotate(0);opacity:1} 100%{transform:scale(1.05);opacity:0} }
         .inter { animation: interPop 1.1s ease forwards; }
         @keyframes flame { 0%,100%{transform:scale(1) rotate(-3deg)} 50%{transform:scale(1.18) rotate(3deg)} }
@@ -5082,7 +5091,7 @@ export default function App() {
         @keyframes jumpK { 0%{transform:translateY(0)} 30%{transform:translateY(-11px)} 55%{transform:translateY(0)} 72%{transform:translateY(-4px)} 100%{transform:translateY(0)} }
         .jump { animation: jumpK .55s ease; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
-        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump { animation:none !important; } }
+        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
         .node-btn:active:not(:disabled) { transform: translateY(3px); }
@@ -5517,48 +5526,85 @@ export default function App() {
 		            <CoachPortrait id="rafa" mood="happy" size={74} />
 	            <div>
 		              <h2 style={{ fontWeight: 900, fontSize: 24, margin: 0 }}>{L.library}</h2>
-		              <div style={{ fontSize: 13, fontWeight: 800, color: D.sub }}>{storyCount}/{STORIES.length} {L.storiesClaimed}</div>
+		              <div style={{ fontSize: 13, fontWeight: 800, color: D.sub }}>{L.storiesClaimed}</div>
 	            </div>
 	          </div>
-          <div style={{ border: `2px solid ${D.line}`, borderBottom: `5px solid ${D.line}`, borderRadius: 18, background: D.card, padding: 14, marginBottom: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
+          <div data-testid="recuerdos-map" style={{ border: `2px solid ${D.line}`, borderBottom: `5px solid ${D.line}`, borderRadius: 18, background: D.card, padding: 14, marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <LogoMark size={36} data-testid="recuerdos-axolotl" />
               <div>
-                <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", color: D.blueDark }}>{uiLang === "en" ? "MEXICO STORY MAP" : "MAPA DE CUENTOS"}</div>
-                <div style={{ fontWeight: 900, fontSize: 17 }}>{uiLang === "en" ? "Souvenir trail" : "Ruta de recuerdos"}</div>
+                <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", color: D.blueDark }}>{uiLang === "en" ? "MEXICO" : "MÉXICO"}</div>
+                <div style={{ fontWeight: 900, fontSize: 17 }}>{L.recuerdosTitle}</div>
               </div>
-              <div style={{ fontSize: 12, fontWeight: 900, color: D.greenDark }}>{storyCount}/{STORIES.length}</div>
             </div>
-            <div style={{ position: "relative", height: 190, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(135deg,#DDF4FF,#F3FBEA)", border: `2px solid ${D.line}` }}>
-              <div aria-hidden="true" style={{ position: "absolute", left: "10%", top: "10%", width: "78%", height: "80%", borderRadius: "47% 42% 50% 45%", background: theme === "dark" ? "#2A3A2C" : "#BFE8A8", transform: "rotate(-12deg)", boxShadow: "inset 0 -8px 0 rgba(0,0,0,.08)" }} />
-              <div aria-hidden="true" style={{ position: "absolute", left: "20%", top: "17%", width: "54%", height: "70%", borderRadius: "44% 52% 46% 50%", background: theme === "dark" ? "#334A36" : "#D7F4BF", transform: "rotate(10deg)" }} />
-              {STORIES.map((story, i) => {
-                const meta = STORY_META[story.id] || { x: 50, y: 50, place: story.subtitle };
-                const sec = SECTIONS[story.section];
-                const claimed = !!prog.stories?.[story.id];
+            <div style={{ position: "relative", height: 228, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
+              <svg data-testid="recuerdos-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
+              </svg>
+              <div data-testid="recuerdos-fog" aria-hidden="true" style={{
+                position: "absolute", inset: 0, pointerEvents: "none",
+                background: recuerdosFogBackground(RECUERDOS_PINS, prog.stories, theme),
+              }} />
+              {recuerdosLockedPins(RECUERDOS_PINS, prog.stories).map((pin) => (
+                <div
+                  key={`fog-${pin.id}`}
+                  data-testid={`recuerdos-fog-${pin.id}`}
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    left: `${pin.x}%`,
+                    top: `${pin.y}%`,
+                    width: 78,
+                    height: 58,
+                    transform: "translate(-50%, -50%)",
+                    borderRadius: "50%",
+                    background: theme === "dark" ? "rgba(18,22,28,.5)" : "rgba(236,242,246,.78)",
+                    filter: "blur(10px)",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                  }}
+                />
+              ))}
+              {RECUERDOS_PINS.map((pin) => {
+                const open = isRecuerdosPinOpen(pin, prog.stories);
+                const label = recuerdosPinLabel(pin, uiLang);
+                const state = recuerdosPinState(open, uiLang);
+                const storyId = storyIdForRecuerdosPin(pin, prog.stories);
+                const story = STORIES.find((s) => s.id === storyId);
                 return (
-                  <button key={story.id} onClick={() => openStory(story)} title={`${meta.place}: ${story.title}`}
-                    style={{ position: "absolute", left: `${meta.x}%`, top: `${meta.y}%`, transform: "translate(-50%, -50%) rotate(-45deg)", width: claimed ? 28 : 22, height: claimed ? 28 : 22, borderRadius: "50% 50% 50% 8px", border: `2px solid ${claimed ? "#fff" : sec.dark}`, background: claimed ? D.gold : sec.color, boxShadow: "0 3px 8px rgba(0,0,0,.22)", cursor: "pointer", padding: 0 }}>
-                    <span style={{ display: "block", transform: "rotate(45deg)", fontSize: claimed ? 12 : 10, fontWeight: 900, color: "#fff", lineHeight: `${claimed ? 24 : 18}px` }}>{claimed ? "★" : i + 1}</span>
+                  <button
+                    key={pin.id}
+                    type="button"
+                    data-testid={`recuerdos-pin-${pin.id}`}
+                    data-open={open ? "true" : "false"}
+                    disabled={!open || !story}
+                    onClick={() => { if (open && story) openStory(story); }}
+                    aria-label={`${label} · ${state}`}
+                    style={{
+                      position: "absolute", left: `${pin.x}%`, top: `${pin.y}%`,
+                      transform: "translate(-50%, -50%)",
+                      background: "none", border: "none", padding: 0, cursor: open ? "pointer" : "default",
+                      display: "flex", flexDirection: "column", alignItems: "center", minWidth: 52, zIndex: pin.firstGlow ? 2 : 1,
+                    }}
+                  >
+                    <span
+                      data-testid={pin.firstGlow ? "recuerdos-bajio-glow" : undefined}
+                      className={pin.firstGlow ? "bajio-glow" : undefined}
+                      style={{
+                        width: pin.firstGlow ? 18 : 14, height: pin.firstGlow ? 18 : 14,
+                        borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
+                        background: open ? (pin.firstGlow ? D.gold : D.green) : D.lockGray,
+                        border: `2px solid ${open ? "#fff" : D.lockIcon}`,
+                        boxShadow: open ? "0 3px 8px rgba(0,0,0,.22)" : "none",
+                      }}
+                    />
+                    <span style={{ marginTop: 6, textAlign: "center", lineHeight: 1.15 }}>
+                      <span style={{ display: "block", fontSize: 11, fontWeight: 900, color: D.ink }}>{label}</span>
+                      <span style={{ display: "block", fontSize: 10, fontWeight: 800, color: open ? D.greenDark : D.sub }}>{state}</span>
+                    </span>
                   </button>
                 );
               })}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginTop: 10 }}>
-              {STORIES.filter((story) => prog.stories?.[story.id]).slice(-4).map((story) => {
-                const meta = STORY_META[story.id] || {};
-                const souvenir = STORY_EXTRAS[story.id]?.collectible || meta.souvenir;
-                return (
-                  <div key={story.id} style={{ border: `1.5px solid ${D.line}`, borderRadius: 11, padding: "7px 8px", background: D.subtle }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 900, color: D.sub }}>{meta.place}</div>
-                    <div style={{ fontSize: 12.5, fontWeight: 900, color: D.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{souvenir?.[uiLang] || story.title}</div>
-                  </div>
-                );
-              })}
-              {storyCount === 0 && (
-                <div style={{ gridColumn: "1 / -1", fontSize: 12.5, fontWeight: 800, color: D.sub, background: D.subtle, borderRadius: 11, padding: "9px 10px" }}>
-                  {uiLang === "en" ? "Read a story to pin your first souvenir." : "Lee un cuento para fijar tu primer recuerdo."}
-                </div>
-              )}
             </div>
           </div>
 	          <div style={{ display: "grid", gap: 12 }}>
