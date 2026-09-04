@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (George ES sprint → ronda; wrap-prep notes)
+
+**What changed**
+- ES Práctica Smart Practice locked: `Tu siguiente ronda.` and `Empezar ronda de 5 — sin vidas`. Not tanda, not útil, not sprint. EN stays `sprint` (`Chosen as your next useful sprint.` / `Start 5-item sprint — no hearts`).
+- JEOPARDY SOLO stays an intentional loan. Rayo ON/OFF stay.
+- Wrap-prep only: vite comments that Pages keeps `base: '/andale/'` and wrap rebuilds with `base: '/'`. Speech/storage flags `window.__andaleSpeech` / `window.__andaleStorage`. No PrivacyInfo. Enroll off.
+- Tests lock the exact ES strings. First door, streak-1, vuelve mañana, Hoy still, theater gates, Práctica fold, Subjuntivo/Empieza, tree untouched.
+
+**Why**
+- George + No face locked the ES lines. Soft leftover chrome + wrap-prep holes only. Soft ETA 9:30 ET.
+
 ## 2026-09-03 (George + No face first-door copy lock)
 
 **What changed**

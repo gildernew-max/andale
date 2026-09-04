@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { prepQuestion } from "./prepQuestion.js";
@@ -317,6 +317,24 @@ assert(UI.es.shortcuts === "Luna, Don Rafa, Valeria y Diego te acompañan. Atajo
 assert(UI.es.on === "ON" && UI.es.off === "OFF", "Rayo stays ON/OFF, not SÍ/NO");
 assert(UI.es.on !== "SÍ" && UI.es.off !== "NO", "Rayo on/off is not SÍ/NO");
 assert(!/Flashcards|DIÁLOGO DUEL|Deck terminado/.test([UI.es.cards, UI.es.flashTitle, UI.es.dialogueDuel, UI.es.duel, UI.es.saveCard, UI.es.emptyDeck, UI.es.flashDone].join("\n")), "ES chrome leftover English");
+assert(appSrc.includes("Tu siguiente ronda."), "ES Smart Practice reason is George lock");
+assert(appSrc.includes("Empezar ronda de 5 — sin vidas"), "ES Smart Practice CTA is George lock");
+assert(appSrc.includes("Start 5-item sprint — no hearts"), "EN Smart Practice CTA stays sprint");
+assert(appSrc.includes("Chosen as your next useful sprint."), "EN Smart Practice reason stays sprint");
+assert(!/Empezar sprint de 5/.test(appSrc), "ES CTA is not Empezar sprint");
+assert(!/siguiente sprint útil/.test(appSrc), "ES reason is not siguiente sprint útil");
+assert(!/Empezar tanda|siguiente tanda|tanda útil/.test(appSrc), "ES chrome is not tanda");
+assert(!/Elegido como tu siguiente/.test(appSrc), "ES reason is not Elegido como…");
+assert(!/útil/.test("Tu siguiente ronda.Empezar ronda de 5 — sin vidas"), "locked ES lines have no útil");
+assert(appSrc.includes("JEOPARDY SOLO"), "JEOPARDY SOLO stays an intentional loan");
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+const viteSrc = readFileSync(join(repoRoot, "vite.config.js"), "utf8");
+assert(viteSrc.includes("base: '/andale/'"), "Pages vite base stays /andale/");
+assert(/Wrap\/WKWebView rebuilds with base '\/'/.test(viteSrc), "wrap-prep notes base /");
+assert(appSrc.includes("window.__andaleSpeech"), "wrap-prep speech flag");
+assert(appSrc.includes("window.__andaleStorage"), "wrap-prep storage flag");
+assert(!existsSync(join(repoRoot, "PrivacyInfo.xcprivacy")), "no PrivacyInfo until Mon wrap");
+assert(!existsSync(join(repoRoot, "ios", "App", "PrivacyInfo.xcprivacy")), "no ios PrivacyInfo until Mon wrap");
 
 const qCount = UNITS.reduce((n, u) => n + u.questions.length, 0);
 console.log(`ok: content schema — ${UNITS.length} units / ${qCount} questions after prepQuestion; ${SECTIONS.length} sections; FLAT ${FLAT.length}; ${STORIES.length} stories (story-0); ${MISSIONS.length} missions; ${TODAY_SCENES.length} today scenes`);
