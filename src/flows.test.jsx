@@ -97,6 +97,8 @@ const openCaminoMore = async (user) => {
   await waitFor(() => expect(screen.getByTestId("camino-more-panel")).toBeTruthy());
 };
 
+const JSDOM_UA = "Mozilla/5.0 (linux) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/26.0.0";
+
 const mockA2hsEnv = ({ userAgent = IPHONE_SAFARI_UA, standalone = false } = {}) => {
   Object.defineProperty(window.navigator, "userAgent", {
     configurable: true,
@@ -120,12 +122,14 @@ const mockA2hsEnv = ({ userAgent = IPHONE_SAFARI_UA, standalone = false } = {}) 
 beforeEach(() => {
   localStorage.clear();
   mockBrowser();
+  mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
   seedProgress();
 });
 
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
 });
 
 describe("simulated learner flows", () => {
@@ -1732,6 +1736,7 @@ describe("simulated learner flows", () => {
     const user = userEvent.setup();
 
     cleanup();
+    mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
     seedProgress({ streak: 1, lastDay: today });
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
