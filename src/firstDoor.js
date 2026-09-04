@@ -6,9 +6,15 @@ export const FIRST_DOOR_PHRASE_DOCTOR = "phrase-doctor";
 export const COME_BACK_GENERIC_ES = "Vuelve mañana por la siguiente escena.";
 export const COME_BACK_GENERIC_EN = "Come back tomorrow for the next scene.";
 
-export function firstDoorHero({ todayScene, todaySceneDone } = {}) {
+export function firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff } = {}) {
+  if (showPostDismissHandoff({ armed: postDismissHandoff })) return FIRST_DOOR_PHRASE_DOCTOR;
   if (todayScene && !todaySceneDone) return FIRST_DOOR_HOY;
   return FIRST_DOOR_PHRASE_DOCTOR;
+}
+
+/** Same-session second beat after free paywall dismiss. Not persisted. */
+export function showPostDismissHandoff({ armed } = {}) {
+  return !!armed;
 }
 
 /** Local calendar key YYYY-MM-DD — same clock App uses for todayKey. */

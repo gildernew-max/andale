@@ -13,6 +13,7 @@ import {
   shouldShowSoftPaywall,
   showComeBackTomorrow,
   showDoorMetaChrome,
+  showPostDismissHandoff,
   streakAfterWin,
   todaySceneIdFromSession,
 } from "./firstDoor.js";
@@ -26,6 +27,12 @@ assert(firstDoorHero({}) === FIRST_DOOR_PHRASE_DOCTOR, "empty args → Phrase Do
 assert(firstDoorHero({ todayScene: { id: "taqueria" }, todaySceneDone: false }) !== "subj1", "hero is never Subjuntivo");
 assert(firstDoorHero({ todayScene: { id: "taqueria" }, todaySceneDone: false }) === FIRST_DOOR_HOY, "return door streak≥1: open Hoy stays hero");
 assert(firstDoorHero({ todayScene: { id: "taqueria" }, todaySceneDone: true }) === FIRST_DOOR_PHRASE_DOCTOR, "return door streak≥1: done Hoy → Doctora");
+assert(firstDoorHero({ todayScene: { id: "taqueria" }, todaySceneDone: false, postDismissHandoff: true }) === FIRST_DOOR_PHRASE_DOCTOR, "post-dismiss handoff is Doctora even if Hoy is open");
+assert(firstDoorHero({ todayScene: { id: "taqueria" }, todaySceneDone: false }) === FIRST_DOOR_HOY, "without handoff, open Hoy stays hero");
+assert(showPostDismissHandoff({ armed: true }), "armed session shows the Doctora handoff");
+assert(!showPostDismissHandoff({ armed: false }), "unarmed session has no handoff");
+assert(!showPostDismissHandoff({}), "empty args is not a handoff");
+assert(!showPostDismissHandoff({ armed: null }), "null arm is not a handoff");
 
 assert(streakAfterWin({ streak: 0, lastDay: null }, "2026-09-04", "2026-09-03") === 1, "first win is streak 1");
 assert(streakAfterWin({}, "2026-09-04", "2026-09-03") === 1, "empty progress first win is streak 1");
