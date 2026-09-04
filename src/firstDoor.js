@@ -56,6 +56,30 @@ export function showComeBackTomorrow({ todaySceneDone, streak, lastDay, today } 
   return (Number(streak) || 0) >= 1 && lastDay === today;
 }
 
+/** Hoy session id from live session — unitId `_today:{id}` if todaySceneId was dropped. */
+export function todaySceneIdFromSession(session) {
+  if (session?.todaySceneId) return session.todaySceneId;
+  const id = String(session?.unitId || "");
+  return id.startsWith("_today:") ? id.slice("_today:".length) : "";
+}
+
+/**
+ * CONTINUE after a win must land on home with come-back/streak-today true.
+ * Does not stamp paywallSeen — that only happens after the modal is shown.
+ */
+export function progressAfterWinContinue(prev = {}, { today, todaySceneId } = {}) {
+  const missions = { ...(prev.missions || {}) };
+  if (today && todaySceneId && !missions[`scene-${today}`]) {
+    missions[`scene-${today}`] = todaySceneId;
+  }
+  return {
+    ...prev,
+    missions,
+    streak: Math.max(Number(prev.streak) || 0, 1),
+    lastDay: today || prev.lastDay || null,
+  };
+}
+
 /** Meta / Rayo / four-coach strip after first win. Same streak ≥ 1 gate as teaser/paywall. */
 export function showDoorMetaChrome({ streak } = {}) {
   return (Number(streak) || 0) >= 1;

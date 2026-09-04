@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (soft paywall after first streak-1 Hoy CONTINUE)
+
+**What changed**
+- Existing trigger kept: `shouldShowSoftPaywall` = come-back / streak-today && !paywallSeen && !splash && home.
+- Hoy CONTINUE stamps come-back flags then goes home so the gate fires once after `¡Eso!` + `Vuelve mañana…`. Backdrop armed so that tap cannot stamp `paywallSeen` without a visible modal.
+- Honesty + price copy unchanged. Cold Hoy flow: CONTINUE → `soft-paywall` once; dismiss stays gone.
+
+**Why**
+- Live `index-C448UG4u.js`: CONTINUE after first Hoy win landed on home without the existing paywall gate seeing come-back, or marked seen on the same tap.
+
 ## 2026-09-04 (first Hoy ≤60s to win — No face)
 
 **Also**

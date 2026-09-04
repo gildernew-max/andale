@@ -9,10 +9,12 @@ import {
   hoySceneForDay,
   hoyTitleForLang,
   nextDayKey,
+  progressAfterWinContinue,
   shouldShowSoftPaywall,
   showComeBackTomorrow,
   showDoorMetaChrome,
   streakAfterWin,
+  todaySceneIdFromSession,
 } from "./firstDoor.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
@@ -47,6 +49,37 @@ assert(!shouldShowSoftPaywall({ ...firstWinHome, screen: "done" }), "paywall wai
 assert(shouldShowSoftPaywall(firstWinHome), "Phrase Doctor Curarla (home, no done screen) can fire the gate");
 assert(!shouldShowSoftPaywall({ ...firstWinHome, streak: 0, lastDay: null }), "paywall never before a win");
 assert(!shouldShowSoftPaywall({ ...firstWinHome, paywallSeen: true }), "seen flag stops the loop");
+
+assert(todaySceneIdFromSession({ todaySceneId: "taqueria" }) === "taqueria", "session todaySceneId wins");
+assert(todaySceneIdFromSession({ unitId: "_today:landlord" }) === "landlord", "unitId _today: recovers scene");
+assert(todaySceneIdFromSession({ unitId: "subj1" }) === "", "grammar unit is not a Hoy scene");
+assert(todaySceneIdFromSession({}) === "", "empty session has no Hoy scene");
+
+const stamped = progressAfterWinContinue({ streak: 0, lastDay: null, missions: {} }, { today: "2026-09-04", todaySceneId: "taqueria" });
+assert(stamped.streak === 1, "CONTINUE stamps streak 1");
+assert(stamped.lastDay === "2026-09-04", "CONTINUE stamps lastDay today");
+assert(stamped.missions["scene-2026-09-04"] === "taqueria", "CONTINUE stamps today's Hoy scene");
+assert(stamped.paywallSeen == null, "CONTINUE never stamps paywallSeen");
+assert(showComeBackTomorrow({
+  todaySceneDone: !!stamped.missions["scene-2026-09-04"],
+  streak: stamped.streak,
+  lastDay: stamped.lastDay,
+  today: "2026-09-04",
+}), "CONTINUE lands with Fh come-back true");
+assert(shouldShowSoftPaywall({
+  ...stamped,
+  todaySceneDone: true,
+  today: "2026-09-04",
+  screen: "home",
+  splash: false,
+}), "CONTINUE home + come-back opens paywall once");
+assert(!shouldShowSoftPaywall({
+  ...stamped,
+  todaySceneDone: true,
+  today: "2026-09-04",
+  screen: "done",
+  splash: false,
+}), "paywall still waits until after CONTINUE");
 
 const HOY_TITLES = [
   { title: "Noche de faroles", titleEn: "Night of lanterns" },
