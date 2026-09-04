@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (door diet until streak ≥ 1)
+
+**What changed**
+- Camino door hides Meta `0/40`, Rayo OFF, and the four-coach strip until streak ≥ 1 (`showDoorMetaChrome` in `firstDoor.js` — same first-win gate as teaser/paywall).
+- First screen stays short pitch + Hoy + Doctora + quiet Más. Rayo is hidden chrome only, not deleted.
+- After streak-1, Meta / Rayo / coaches return with existing `Vuelve mañana…` teaser.
+- Tests: cold open / streak 0 hides Meta/Rayo/coaches; streak ≥ 1 shows them. Paywall, honesty, door hero, splash, word-order tip, Perfil Intermedio, cold EN, Más bury, name, casero, skill chips, enroll, JEOPARDY untouched.
+
+**Why**
+- Empty theater (0/40, Rayo OFF, unused coaches) kills enjoyment before the first win.
+
 ## 2026-09-04 (Más / More bury + name + casero)
 
 **What changed**

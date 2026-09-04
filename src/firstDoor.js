@@ -56,6 +56,11 @@ export function showComeBackTomorrow({ todaySceneDone, streak, lastDay, today } 
   return (Number(streak) || 0) >= 1 && lastDay === today;
 }
 
+/** Meta / Rayo / four-coach strip after first win. Same streak ≥ 1 gate as teaser/paywall. */
+export function showDoorMetaChrome({ streak } = {}) {
+  return (Number(streak) || 0) >= 1;
+}
+
 /** Session-one hook: first win of a new day is streak 1. Same day keeps the count. */
 export function streakAfterWin(prev = {}, today, yesterday) {
   if (prev.lastDay === today) return Number(prev.streak) || 0;

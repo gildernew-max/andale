@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, shouldShowSoftPaywall, showComeBackTomorrow, streakAfterWin } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, shouldShowSoftPaywall, showComeBackTomorrow, showDoorMetaChrome, streakAfterWin } from "./firstDoor.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 
 /* ============================================================
@@ -4825,6 +4825,7 @@ export default function App() {
   const showLevelTheater = hasLearnerProgress(prog);
   const showWeaknessMap = hasWeaknessData(prog);
   const showAtajos = hasUnlockedShortcuts(prog);
+  const showDoorMeta = showDoorMetaChrome({ streak: prog.streak });
   const todaySceneDone = !!prog.missions?.[`scene-${todayKey}`];
   const dailyDone = !!prog.missions?.[`daily-${todayKey}`];
   const storyCount = STORIES.filter((st) => prog.stories?.[st.id]).length;
@@ -5144,19 +5145,21 @@ export default function App() {
               </div>
             );
           })()}
-          {/* daily goal */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0 6px", fontSize: 13, fontWeight: 800, color: D.sub }}>
+          {/* daily goal + Rayo: after first win only — empty 0/40 theater stays off the door */}
+          {showDoorMeta && (
+          <div data-testid="door-meta" style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0 6px", fontSize: 13, fontWeight: 800, color: D.sub }}>
             <div style={{ flex: 1, height: 12, background: D.line, borderRadius: 99, overflow: "hidden", position: "relative" }}>
               <div style={{ width: `${Math.min(100, Math.round(((prog.xpToday || 0) / DAILY_GOAL) * 100))}%`, height: "100%", background: D.gold, transition: "width .3s", position: "relative", overflow: "hidden", borderRadius: 99 }}>
                 <div className="shimmer" />
               </div>
             </div>
 	            <span>{L.goal}: {prog.xpToday || 0}/{DAILY_GOAL} XP</span>
-	            <button aria-pressed={!!prog.rayo} onClick={() => save({ rayo: !prog.rayo })} title={uiLang === "en" ? "Lightning mode: answer against the clock. Correct in time: +3 XP. Time out counts as a mistake." : "Modo Rayo: responde contra reloj. Acierta a tiempo: +3 XP. Se acaba el tiempo: cuenta como error."}
+	            <button data-testid="rayo-toggle" aria-pressed={!!prog.rayo} onClick={() => save({ rayo: !prog.rayo })} title={uiLang === "en" ? "Lightning mode: answer against the clock. Correct in time: +3 XP. Time out counts as a mistake." : "Modo Rayo: responde contra reloj. Acierta a tiempo: +3 XP. Se acaba el tiempo: cuenta como error."}
 	              style={{ display: "flex", alignItems: "center", gap: 5, border: `2px solid ${prog.rayo ? D.gold : D.line}`, borderBottom: `3px solid ${prog.rayo ? D.goldDark : D.line}`, background: prog.rayo ? "#FFF6DC" : "#fff", color: prog.rayo ? D.goldDark : D.sub, borderRadius: 99, padding: "4px 12px", fontWeight: 900, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
 	              <IcBolt size={14} /> {L.rayo} {prog.rayo ? L.on : L.off}
             </button>
           </div>
+          )}
 
           {(() => {
             let g = -1; // global node index
@@ -5261,7 +5264,8 @@ export default function App() {
             });
           })()}
 
-	          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 30 }}>
+	          {showDoorMeta && (
+	          <div data-testid="coach-strip" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 30 }}>
 	            {["luna", "rafa", "valeria", "diego"].map((id) => (
 	              <div key={id} className="pop" style={{ border: `2px solid ${COACHES[id].color}`, borderBottom: `4px solid ${COACHES[id].dark}`, borderRadius: 14, padding: "9px 6px", textAlign: "center", background: D.card }}>
 	                <CoachPortrait id={id} mood="happy" size={64} />
@@ -5270,6 +5274,7 @@ export default function App() {
 	              </div>
 	            ))}
 	          </div>
+	          )}
 	          {showAtajos && <p data-testid="atajos" style={{ textAlign: "center", fontSize: 12, color: D.sub, fontWeight: 700 }}>{L.shortcuts}</p>}
         </div>
       )}

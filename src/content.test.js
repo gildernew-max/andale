@@ -384,6 +384,10 @@ assert(landlord.question === "En WhatsApp con el casero, «Oye, ¿el depósito c
 assert(landlord.questionEn === "On WhatsApp with the landlord, «Oye, ¿el depósito cuenta…?» sounds:", "landlord EN question");
 assert(landlord.choices[0] === "natural y firme" && landlord.choices[1] === "de correo formal" && landlord.choices[2] === "agresivo", "landlord choices");
 assert(landlord.answer === "natural y firme", "landlord answer");
+assert(appSrc.includes("showDoorMetaChrome"), "door Meta/Rayo/coaches gated on streak ≥ 1");
+assert(appSrc.includes("data-testid=\"door-meta\""), "Meta chrome is testable");
+assert(appSrc.includes("data-testid=\"rayo-toggle\""), "Rayo toggle is testable");
+assert(appSrc.includes("data-testid=\"coach-strip\""), "four-coach strip is testable");
 assert(appSrc.includes("data-testid=\"camino-more\""), "Más/More bury control is testable");
 assert(appSrc.includes("{L.more}"), "Más/More uses L.more");
 assert(appSrc.includes("{L.namePrompt}"), "name field uses L.namePrompt");
