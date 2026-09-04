@@ -5,7 +5,7 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 ## 2026-09-04 (post-Doctora session close — come-back card only)
 
 **What changed**
-- First-session Doctora CONTINUE after `¡Eso!` / `That's it.` lands on a come-back card only (`sessionClose`): existing streak chip + locked teaser `Vuelve mañana por «{title}».` / `Come back tomorrow for “{title}”.` + dismiss `Listo` / `Done`.
+- First-session Doctora CONTINUE after `¡Eso!` / `That's it.` lands on a come-back card only (`sessionClose`): existing streak chip + locked teaser `Vuelve mañana por «{title}».` / `Come back tomorrow for “{title}”.` + George dismiss `Listo` / `Done` (not Cerrar/Close/Continuar/Ready).
 - Not idle Camino home — no Más park, no coaches strip, no Meta theater as the landing. Hoy CONTINUE still goes home.
 - `Listo` / `Done` dismisses to existing home so soft paywall / post-dismiss Doctora handoff / A2HS stay on that path. Door / paywall honesty / Day-2 / teaser-elsewhere / enroll / IAP untouched.
 

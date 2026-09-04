@@ -1577,6 +1577,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
     expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Vuelve mañana por «.+»\.$/);
     expect(screen.getByTestId("session-close-dismiss").textContent).toBe("Listo");
+    expect(screen.getByTestId("session-close-dismiss").textContent).not.toMatch(/Cerrar|Continuar|Ya está|Vale|Close|Continue|All set|Ready/);
+    expect(screen.queryByRole("button", { name: /Cerrar|Continuar|Ya está|Close|Continue|All set/ })).toBeNull();
     expect(screen.queryByTestId("nav-camino")).toBeNull();
     expect(screen.queryByTestId("camino-more")).toBeNull();
     expect(screen.queryByTestId("coach-strip")).toBeNull();
@@ -1587,6 +1589,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByRole("button", { name: /Vuelve mañana|Come back tomorrow/ })).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("session-close-dismiss").textContent).toBe("Done"));
+    expect(screen.getByTestId("session-close-dismiss").textContent).not.toMatch(/Close|Continue|All set|Ready|Cerrar|Listo/);
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en"));
     expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Come back tomorrow for “.+”\.$/);
     expect(screen.queryByTestId("camino-more")).toBeNull();

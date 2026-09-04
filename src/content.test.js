@@ -392,8 +392,10 @@ assert(!/\|\| \(softPaywall && !prog\.paywallSeen/.test(appSrc), "stale softPayw
 assert(!/stripe\.com|@stripe|RevenueCat|StoreKit|SKPayment/.test(appSrc), "soft paywall is $0 — no IAP");
 assert(UI.es.hoyWin === "¡Eso!", "UI.es.hoyWin first-Hoy lock");
 assert(UI.en.hoyWin === "That's it.", "UI.en.hoyWin first-Hoy lock");
-assert(UI.es.sessionClose === "Listo", "UI.es.sessionClose first-Doctora close");
-assert(UI.en.sessionClose === "Done", "UI.en.sessionClose first-Doctora close");
+assert(UI.es.sessionClose === "Listo", "George lock: session-close dismiss is Listo");
+assert(UI.en.sessionClose === "Done", "George lock: session-close dismiss is Done");
+assert(!/Cerrar|Continuar|Ya está|Vale|Listos|Cerrar sesión/.test(UI.es.sessionClose), "ES dismiss is not a soft synonym");
+assert(!/Close|Continue|All set|That's all|Ready|Finish/.test(UI.en.sessionClose), "EN dismiss is not a soft synonym");
 assert(appSrc.includes("screenAfterWinContinue"), "first-Doctora CONTINUE uses screenAfterWinContinue");
 assert(appSrc.includes("data-testid=\"session-close\""), "come-back card is testable");
 assert(appSrc.includes("data-testid=\"session-close-dismiss\""), "Listo/Done dismiss is testable");
