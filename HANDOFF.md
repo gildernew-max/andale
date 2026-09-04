@@ -5,16 +5,22 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 ## 2026-09-04 (first Doctora ≤60s to win — No face / Hand lock)
 
 **What changed**
-- First-session / streak-0 Doctora is a short path: cap 4 (`trimDoctoraBeats` / `doctoraBeatCap` in `doctoraWin.js`). Front four phrases stay; later sessions keep all 6.
+- First-session / streak-0 Doctora is a short path: cap 4 (`trimDoctoraBeats` / `pickFirstDoctoraBeats` in `doctoraWin.js`). George lock keep 4; later sessions keep all 6 (parked included).
 - Early win checkpoint: first correct (empty Curarla or accepted guess) finishes (`shouldDoctoraEarlyWin`). Win heading reuses Hoy lock: ES `¡Eso!` · EN `That's it.` — not ¡Ganaste!/You won!. No pep.
 - Then existing streak-1 + `Vuelve mañana…` + soft paywall / post-dismiss Doctora handoff. Later Doctora stays on the board after beat 1.
 
 **Why**
 - Same ≤60s first-attention rule as first Hoy. If they pick Doctora first, they must win before the wall.
 
-**Beat-cut list (George)** — first-session queue only; later Doctora still has these:
-- Eso hace sentido. / Eso tiene sentido.
-- Voy a aplicar para el trabajo. / Voy a postularme al trabajo.
+**Beat lock (George + No face)** — first-session keep only these 4 (existing copy):
+- café — `¿Me da un café, por favor?`
+- ganas — `Tengo muchas ganas de verte.`
+- sentido — `Eso tiene sentido.`
+- esperando — `Te estoy esperando.`
+
+**Park (later Doctora only):**
+- decisión — `Necesito tomar una decisión.`
+- postularse — `Voy a postularme al trabajo.`
 
 ## 2026-09-04 (post-dismiss handoff — Doctora second beat)
 

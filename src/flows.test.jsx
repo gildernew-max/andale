@@ -1272,10 +1272,11 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("lang-es"));
     await user.click(screen.getByTestId("first-door-alt"));
     await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
-    expect(document.body.textContent).toMatch(/Estoy emocionado para verte/);
-    expect(document.body.textContent).not.toMatch(/Eso hace sentido|Voy a aplicar para el trabajo/);
+    expect(document.body.textContent).toMatch(/¿Puedo obtener un café\?/);
+    expect(document.body.textContent).not.toMatch(/Necesito hacer una decisión|Voy a aplicar para el trabajo/);
     await user.click(screen.getByTestId("phrase-doctor-fix"));
     await waitFor(() => expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/NATURAL/));
+    expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/¿Me da un café/);
     expect(screen.queryByTestId("doctora-win")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("phrase-doctor-fix"));
@@ -1285,7 +1286,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
     expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
     expect(document.body.textContent).not.toMatch(/¡IMPECABLE!|FLAWLESS!/);
-    expect(document.body.textContent).not.toMatch(/Eso hace sentido|Voy a aplicar para el trabajo|beat 5/);
+    expect(document.body.textContent).not.toMatch(/Necesito hacer una decisión|Voy a aplicar para el trabajo|beat 5/);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();

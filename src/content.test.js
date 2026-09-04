@@ -360,6 +360,13 @@ assert(appSrc.includes("shouldDoctoraEarlyWin"), "first-Doctora early checkpoint
 assert(appSrc.includes("trimDoctoraBeats"), "first-Doctora beat cap is wired");
 assert(appSrc.includes("isFirstDoctoraSession"), "short Doctora path is gated to streak 0");
 assert(appSrc.includes("doctora-win"), "first-Doctora win heading is testable");
+const doctoraWinSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "doctoraWin.js"), "utf8");
+assert(doctoraWinSrc.includes("¿Me da un café, por favor?"), "first-Doctora keep stamps café");
+assert(doctoraWinSrc.includes("Tengo muchas ganas de verte."), "first-Doctora keep stamps ganas");
+assert(doctoraWinSrc.includes("Eso tiene sentido."), "first-Doctora keep stamps sentido");
+assert(doctoraWinSrc.includes("Te estoy esperando."), "first-Doctora keep stamps esperando");
+assert(doctoraWinSrc.includes("Necesito tomar una decisión."), "decisión is parked, not deleted");
+assert(doctoraWinSrc.includes("Voy a postularme al trabajo."), "postularse is parked, not deleted");
 assert(UI.es.playScene === "Jugar la escena", "UI.es.playScene");
 assert(UI.en.playScene === "Play the scene", "UI.en.playScene");
 assert(UI.es.phraseDoctor === "Doctora de frases", "UI.es.phraseDoctor is not Phrase Doctor");
