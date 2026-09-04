@@ -11,6 +11,7 @@ import {
   nextDayKey,
   shouldShowSoftPaywall,
   showComeBackTomorrow,
+  showDoorMetaChrome,
   streakAfterWin,
 } from "./firstDoor.js";
 
@@ -32,6 +33,12 @@ assert(streakAfterWin({ streak: 1, lastDay: "2026-09-03" }, "2026-09-04", "2026-
 assert(showComeBackTomorrow({ todaySceneDone: true, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "cleared scene shows home line");
 assert(showComeBackTomorrow({ todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "first win today shows home line");
 assert(!showComeBackTomorrow({ todaySceneDone: false, streak: 0, lastDay: null, today: "2026-09-04" }), "new session has no home line yet");
+
+assert(!showDoorMetaChrome({ streak: 0 }), "streak 0 hides Meta / Rayo / coaches");
+assert(!showDoorMetaChrome({}), "empty progress hides door meta chrome");
+assert(!showDoorMetaChrome({ streak: null }), "null streak hides door meta chrome");
+assert(showDoorMetaChrome({ streak: 1 }), "streak 1 shows Meta / Rayo / coaches");
+assert(showDoorMetaChrome({ streak: 4 }), "streak above 1 keeps door meta chrome");
 
 const firstWinHome = { todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04", screen: "home", splash: false };
 assert(shouldShowSoftPaywall(firstWinHome), "first win on home shows paywall after vuelve");

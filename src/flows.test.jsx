@@ -296,7 +296,10 @@ describe("simulated learner flows", () => {
   });
 
   it("ES chrome locks Tarjetas and DUELO; Rayo stays ON/OFF", async () => {
-    const user = await boot();
+    cleanup();
+    seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
+    const user = userEvent.setup();
+    render(<App />);
     await waitFor(() => expect(screen.getByText(/¡Hola, Dave!/)).toBeTruthy());
     const esGreetings = [
       "Español mexicano real: cuentos, misiones y un empujón que pega.",
@@ -809,6 +812,61 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("first-door-alt").textContent).toBe("Fix a phrase");
   });
 
+  it("cold open / streak 0 hides Meta, Rayo OFF, and the four-coach strip", async () => {
+    cleanup();
+    localStorage.clear();
+    mockBrowser();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
+    await user.click(screen.getByTestId("splash-start"));
+    await waitFor(() => expect(screen.getByTestId("home-pitch")).toBeTruthy());
+    expect(screen.getByTestId("hoy-card")).toBeTruthy();
+    expect(screen.getByTestId("first-door-alt")).toBeTruthy();
+    expect(screen.getByTestId("camino-more")).toBeTruthy();
+    expect(screen.queryByTestId("door-meta")).toBeNull();
+    expect(screen.queryByTestId("rayo-toggle")).toBeNull();
+    expect(screen.queryByTestId("coach-strip")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Rayo|Lightning/ })).toBeNull();
+    expect(screen.queryByText(/Meta:|Goal:/)).toBeNull();
+    expect(screen.queryByText("Coach del día")).toBeNull();
+    expect(screen.queryByText("Daily coach")).toBeNull();
+    expect(screen.getByTestId("streak").textContent).toMatch(/0/);
+
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("home-pitch")).toBeTruthy());
+    expect(screen.getByTestId("hoy-card")).toBeTruthy();
+    expect(screen.getByTestId("first-door-alt")).toBeTruthy();
+    expect(screen.getByTestId("camino-more")).toBeTruthy();
+    expect(screen.queryByTestId("door-meta")).toBeNull();
+    expect(screen.queryByTestId("rayo-toggle")).toBeNull();
+    expect(screen.queryByTestId("coach-strip")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Rayo|Lightning/ })).toBeNull();
+    expect(screen.queryByText("Coach del día")).toBeNull();
+  });
+
+  it("after streak ≥ 1 Meta, Rayo, and coaches return with Vuelve mañana", async () => {
+    const today = localToday();
+    cleanup();
+    seedProgress({ streak: 1, lastDay: today, paywallSeen: true });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("door-meta")).toBeTruthy());
+    expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*0\/40/);
+    expect(screen.getByTestId("rayo-toggle").textContent).toMatch(/Rayo\s*OFF/);
+    expect(screen.getByTestId("coach-strip")).toBeTruthy();
+    expect(screen.getByText("Coach del día")).toBeTruthy();
+    expect(screen.getByText("Mentor de cuentos")).toBeTruthy();
+    expect(screen.getByText("Coach de precisión")).toBeTruthy();
+    expect(screen.getByText("Rival")).toBeTruthy();
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    expect(screen.getByTestId("home-pitch")).toBeTruthy();
+    expect(screen.getByTestId("hoy-card")).toBeTruthy();
+    expect(screen.getByTestId("first-door-alt")).toBeTruthy();
+    expect(screen.getByTestId("camino-more")).toBeTruthy();
+  });
+
   it("Hoy + Doctora door buries EMPIEZA / Repasar / Rutina diaria under quiet Más / More", async () => {
     cleanup();
     seedProgress({
@@ -993,6 +1051,9 @@ describe("simulated learner flows", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
     expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
+    expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*\d+\/40/);
+    expect(screen.getByTestId("rayo-toggle")).toBeTruthy();
+    expect(screen.getByTestId("coach-strip")).toBeTruthy();
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
     expect(screen.getByTestId("first-door-hero").textContent).not.toMatch(/Phrase Doctor/);
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Subjuntivo|Phrase Doctor/);
