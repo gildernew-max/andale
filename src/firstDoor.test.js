@@ -34,7 +34,7 @@ assert(showComeBackTomorrow({ todaySceneDone: true, streak: 1, lastDay: "2026-09
 assert(showComeBackTomorrow({ todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "first win today shows home line");
 assert(!showComeBackTomorrow({ todaySceneDone: false, streak: 0, lastDay: null, today: "2026-09-04" }), "new session has no home line yet");
 
-assert(!showDoorMetaChrome({ streak: 0 }), "streak 0 hides Meta / Rayo / coaches");
+assert(!showDoorMetaChrome({ streak: 0 }), "streak 0 hides Meta / Rayo / coaches / Luna greeting");
 assert(!showDoorMetaChrome({}), "empty progress hides door meta chrome");
 assert(!showDoorMetaChrome({ streak: null }), "null streak hides door meta chrome");
 assert(showDoorMetaChrome({ streak: 1 }), "streak 1 shows Meta / Rayo / coaches");

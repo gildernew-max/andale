@@ -252,7 +252,8 @@ describe("simulated learner flows", () => {
     expect(es.getAttribute("aria-label")).toBe("Español");
     expect(en.getAttribute("aria-label")).toBe("English");
     expect(screen.getByRole("button", { name: "Pretérito vs. imperfecto (bloqueado)" })).toBeTruthy();
-    await waitFor(() => expect(screen.getByText(/¡Hola, Dave!/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("home-pitch")).toBeTruthy());
+    expect(screen.queryByTestId("luna-greeting")).toBeNull();
     expect(es.getAttribute("aria-pressed")).toBe("true");
     expect(en.getAttribute("aria-pressed")).toBe("false");
 
@@ -827,6 +828,10 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("door-meta")).toBeNull();
     expect(screen.queryByTestId("rayo-toggle")).toBeNull();
     expect(screen.queryByTestId("coach-strip")).toBeNull();
+    expect(screen.queryByTestId("luna-greeting")).toBeNull();
+    expect(screen.queryByText(/¡Hola,/)).toBeNull();
+    expect(screen.queryByText("Luna ya tiene tu rutina de hoy.")).toBeNull();
+    expect(screen.queryByText("Luna has your daily routine ready.")).toBeNull();
     expect(screen.queryByRole("button", { name: /Rayo|Lightning/ })).toBeNull();
     expect(screen.queryByText(/Meta:|Goal:/)).toBeNull();
     expect(screen.queryByText("Coach del día")).toBeNull();
@@ -843,6 +848,8 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("door-meta")).toBeNull();
     expect(screen.queryByTestId("rayo-toggle")).toBeNull();
     expect(screen.queryByTestId("coach-strip")).toBeNull();
+    expect(screen.queryByTestId("luna-greeting")).toBeNull();
+    expect(screen.queryByText(/¡Hola,/)).toBeNull();
     expect(screen.queryByRole("button", { name: /Rayo|Lightning/ })).toBeNull();
     expect(screen.queryByText("Coach del día")).toBeNull();
   });
@@ -856,6 +863,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*0\/40/);
     expect(screen.getByTestId("rayo-toggle").textContent).toMatch(/Rayo\s*OFF/);
     expect(screen.getByTestId("coach-strip")).toBeTruthy();
+    expect(screen.getByTestId("luna-greeting")).toBeTruthy();
+    expect(screen.getByTestId("luna-greeting").textContent).toMatch(/¡Hola, Dave!/);
     expect(screen.getByText("Coach del día")).toBeTruthy();
     expect(screen.getByText("Mentor de cuentos")).toBeTruthy();
     expect(screen.getByText("Coach de precisión")).toBeTruthy();

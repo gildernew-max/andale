@@ -393,6 +393,8 @@ assert(landlord.questionEn === "On WhatsApp with the landlord, «Oye, ¿el depó
 assert(landlord.choices[0] === "natural y firme" && landlord.choices[1] === "de correo formal" && landlord.choices[2] === "agresivo", "landlord choices");
 assert(landlord.answer === "natural y firme", "landlord answer");
 assert(appSrc.includes("showDoorMetaChrome"), "door Meta/Rayo/coaches gated on streak ≥ 1");
+assert(appSrc.includes("data-testid=\"luna-greeting\""), "Luna greeting is testable");
+assert(/showDoorMeta && \([\s\S]{0,220}luna-greeting/.test(appSrc), "Luna greeting uses the same streak ≥ 1 gate as coach-strip");
 assert(appSrc.includes("data-testid=\"door-meta\""), "Meta chrome is testable");
 assert(appSrc.includes("data-testid=\"rayo-toggle\""), "Rayo toggle is testable");
 assert(appSrc.includes("data-testid=\"coach-strip\""), "four-coach strip is testable");

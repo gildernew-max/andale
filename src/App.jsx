@@ -5010,14 +5010,16 @@ export default function App() {
       {/* ---------- CAMINO (path) ---------- */}
       {!inLesson && tab === "camino" && (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "10px 20px 40px" }}>
-          {/* host greeting */}
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-end", margin: "10px 0 2px" }}>
+          {/* host greeting — same streak ≥ 1 gate as Meta / Rayo / coach-strip */}
+          {showDoorMeta && (
+          <div data-testid="luna-greeting" style={{ display: "flex", gap: 10, alignItems: "flex-end", margin: "10px 0 2px" }}>
 	            <div className="idle" style={{ flexShrink: 0, lineHeight: 0 }}><CoachPortrait id="luna" mood="happy" size={58} badge={dailyDone} /></div>
             <div style={{ position: "relative", border: `2px solid ${D.line}`, borderRadius: 14, padding: "9px 14px", background: D.card, marginBottom: 10, fontWeight: 800, fontSize: 14, transform: "rotate(-.4deg)" }}>
               <div style={{ position: "absolute", left: -8, bottom: 12, width: 12, height: 12, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
               {prog.name ? `¡Hola, ${prog.name}! ` : ""}{greeting}
             </div>
           </div>
+          )}
           <div data-testid="home-pitch" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>
             {L.splashLine}
           </div>
