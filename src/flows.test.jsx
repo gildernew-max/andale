@@ -1036,8 +1036,9 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     await openCaminoMore(userEvent.setup());
-    expect(screen.getByTestId("camino-more-full-hoy").textContent).toBe(promised.title);
-    expect(screen.getByTestId("camino-more-panel").textContent).toMatch(/WhatsApp del casero|Landlord WhatsApp|Mostrador en caos|Noche de faroles|Cena con la suegra/);
+    expect(screen.getByTestId("camino-more-full-hoy").textContent).toBe("WhatsApp del casero");
+    expect(screen.getByTestId("camino-more-full-hoy").textContent).not.toMatch(/Jugar la escena|Play the scene/);
+    expect(screen.getByTestId("first-door-hero").querySelector("[data-testid='hoy-card']")).toBeTruthy();
   });
 
   it("day-2 return Hoy wins early (≤4 beats) with ¡Eso! / That's it.", async () => {
@@ -1111,12 +1112,15 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     await openCaminoMore(user);
     const fullHoy = screen.getByTestId("camino-more-full-hoy");
-    expect(fullHoy.textContent).toBe(promised.title);
+    expect(fullHoy.textContent).toBe("WhatsApp del casero");
+    expect(fullHoy.textContent).not.toMatch(/Jugar la escena|Play the scene/);
+    expect(screen.getByTestId("hoy-title").textContent).toBe(promised.title);
     expect(screen.getByTestId("first-door-hero").textContent).toMatch(/Jugar la escena|Play the scene/);
     await user.click(fullHoy);
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
     const liveFull = JSON.parse(localStorage.getItem(LIVE_KEY));
     expect(liveFull.session.firstHoy).toBe(false);
+    expect(liveFull.session.unitId).toBe("_today:landlord");
     expect(liveFull.session.questions.length).toBe(5);
     const laterMc = (prompt) => ({
       type: "mc",

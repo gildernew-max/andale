@@ -3739,16 +3739,17 @@ export default function App() {
       skill: "Lectura",
     };
     // Short path (first session or day-2 return): scene MC first, then listen, extras, cap 4.
-    // Full / Más path keeps the shuffled 5-beat scene (casero long scene included).
+    // Full landlord / long mission (Más) keeps the shuffled 5-beat scene.
     const items = firstHoy
       ? trimHoyBeats([sceneBeat, listenBeat, ...picks], { firstHoy: true })
       : trimHoyBeats(shuffle([listenBeat, sceneBeat, ...picks, storyBeat]), { firstHoy: false });
+    const promisedId = hoySceneForDay(TODAY_SCENES, todayStr())?.id;
     beginSession({
       title: uiLang === "en" ? scene.titleEn : scene.title,
       color: scene.color,
       dark: scene.dark,
       unitId: `_today:${scene.id}`,
-      todaySceneId: scene.id,
+      todaySceneId: !full || scene.id === promisedId ? scene.id : undefined,
       firstHoy,
       scenario: uiLang === "en" ? scene.setupEn : scene.setup,
       review: false,
@@ -5126,6 +5127,7 @@ export default function App() {
               lastDay: prog.lastDay,
               today: todayKey,
             });
+            const landlordScene = TODAY_SCENES.find((sc) => sc.id === "landlord");
             const showLine = showComeBackTomorrow({
               todaySceneDone,
               streak: prog.streak,
@@ -5237,10 +5239,10 @@ export default function App() {
                 </button>
                 {caminoMore && (
                   <div data-testid="camino-more-panel" style={{ marginTop: 8 }}>
-                    {(day2Return || todaySceneDone) && todayScene && (
-                      <button data-testid="camino-more-full-hoy" type="button" onClick={() => startTodayScene(todayScene, { full: true })}
+                    {(day2Return || todaySceneDone) && landlordScene && (
+                      <button data-testid="camino-more-full-hoy" type="button" onClick={() => startTodayScene(landlordScene, { full: true })}
                         style={{ display: "block", width: "100%", margin: "0 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.sub, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
-                        {uiLang === "en" ? todayScene.titleEn : todayScene.title}
+                        {uiLang === "en" ? landlordScene.titleEn : landlordScene.title}
                       </button>
                     )}
                     {pathUnit && (

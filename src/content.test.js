@@ -372,6 +372,7 @@ assert(appSrc.includes("shouldHoyEarlyWin"), "first-Hoy early checkpoint is wire
 assert(appSrc.includes("trimHoyBeats"), "first-Hoy beat cap is wired");
 assert(appSrc.includes("isShortHoy"), "short Hoy path covers first session and day-2 return");
 assert(appSrc.includes("camino-more-full-hoy"), "full / casero Hoy parks under Más");
+assert(appSrc.includes("landlordScene"), "Más long mission is the landlord scene");
 assert(appSrc.includes("{ full: true }") || appSrc.includes("full: true"), "Más full Hoy starts the long path");
 const hoyWinSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "hoyWin.js"), "utf8");
 assert(hoyWinSrc.includes("isFirstHoySession"), "streak 0 first-Hoy gate stays");
