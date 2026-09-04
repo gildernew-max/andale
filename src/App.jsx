@@ -6492,10 +6492,7 @@ export default function App() {
                   background: D.gold, border: "2px solid #fff",
                   boxShadow: "0 3px 8px rgba(0,0,0,.22)",
                 }} />
-                <span style={{ marginTop: 6, textAlign: "center", lineHeight: 1.15 }}>
-                  <span style={{ display: "block", fontSize: 11, fontWeight: 900, color: D.ink }}>{flashCopy.label}</span>
-                  <span style={{ display: "block", fontSize: 10, fontWeight: 800, color: D.greenDark }}>{flashCopy.state}</span>
-                </span>
+                <span data-testid="bajio-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
               </div>
             </div>
           </div>

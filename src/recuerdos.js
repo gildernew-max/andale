@@ -107,13 +107,9 @@ export function shouldShowBajioUnlockFlash({
   return (Number(streak) || 0) === 1;
 }
 
-/** Existing Recuerdos stamps only — Bajío + Abierto / Open. */
+/** George + No face stamp: flash copy is Abierto / Open only. No pep, no new lines. */
 export function bajioUnlockFlashCopy(lang) {
-  const pin = RECUERDOS_PINS.find((p) => p.id === FIRST_GLOW_PIN) || RECUERDOS_PINS[0];
-  return {
-    label: recuerdosPinLabel(pin, lang),
-    state: recuerdosPinState(true, lang),
-  };
+  return recuerdosPinState(true, lang);
 }
 
 /** Fog-of-war: mist over the map, clear around open pins (Bajío first). */

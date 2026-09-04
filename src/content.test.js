@@ -428,10 +428,14 @@ assert(appSrc.includes("isBajioUnlockFlashLive") && appSrc.includes("markBajioUn
 assert(appSrc.includes("bajioUnlockSeen"), "Bajío unlock flash seen flag is persisted");
 assert(/showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending/.test(appSrc), "paywall waits for the Bajío glow beat");
 assert(appSrc.includes("data-testid=\"bajio-unlock-flash\""), "Bajío unlock flash is testable");
-assert(appSrc.includes("bajioUnlockFlashCopy"), "flash copy reuses Recuerdos stamps");
+assert(appSrc.includes("bajioUnlockFlashCopy"), "flash copy reuses Recuerdos Abierto/Open stamp");
 const flashChunk = appSrc.slice(appSrc.indexOf('data-testid="bajio-unlock-flash"'), appSrc.indexOf("SOFT PAYWALL"));
 assert(flashChunk.includes("bajio-unlock-flash-pin"), "flash shows the Bajío pin");
-assert(flashChunk.includes("flashCopy.label") && flashChunk.includes("flashCopy.state"), "flash labels come from bajioUnlockFlashCopy");
+assert(flashChunk.includes("{flashCopy}"), "flash copy is bajioUnlockFlashCopy only");
+assert(!/flashCopy\.label/.test(flashChunk), "flash has no Bajío label line");
+const flashCopyLine = flashChunk.match(/data-testid="bajio-unlock-flash-copy"[\s\S]{0,120}/)?.[0] ?? "";
+assert(flashCopyLine.includes("{flashCopy}"), "copy node is Open/Abierto only");
+assert(!/Bajío/.test(flashCopyLine), "visible flash copy has no Bajío text");
 assert(!/¡Sigue explorando!|Sigue explorando|12\/25|backpack/i.test(flashChunk), "flash has no pep or backpack fraction");
 assert(!/setSoftPaywall\(true\)/.test(flashChunk), "flash does not open the paywall");
 assert(!Object.keys(UI.es).concat(Object.keys(UI.en)).some((k) => /bajioUnlock|unlockFlash|sigueExplor/i.test(k)), "no new Bajío-flash marketing UI keys");

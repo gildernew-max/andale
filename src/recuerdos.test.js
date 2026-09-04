@@ -90,13 +90,13 @@ assert(!shouldShowBajioUnlockFlash({ firstStreakEso: false, streak: 1 }), "later
 assert(!shouldShowBajioUnlockFlash({ firstStreakEso: true, streak: 2 }), "day-2 / later streak Eso does not flash");
 assert(!shouldShowBajioUnlockFlash({ firstStreakEso: true, streak: 0 }), "streak 0 is not the streak-1 Eso");
 assert(!shouldShowBajioUnlockFlash({}), "empty args do not flash");
-assert(bajioUnlockFlashCopy("es").label === "Bajío", "flash ES pin is Bajío");
-assert(bajioUnlockFlashCopy("es").state === "Abierto", "flash ES state is Abierto");
-assert(bajioUnlockFlashCopy("en").label === "Bajío", "flash EN pin stays Bajío");
-assert(bajioUnlockFlashCopy("en").state === "Open", "flash EN state is Open");
-assert(!/¡Sigue explorando!|Sigue explorando|12\/25|backpack/i.test(
-  `${bajioUnlockFlashCopy("es").label}${bajioUnlockFlashCopy("es").state}${bajioUnlockFlashCopy("en").label}${bajioUnlockFlashCopy("en").state}`
-), "flash copy is not pep or backpack");
+assert(bajioUnlockFlashCopy("es") === "Abierto", "flash ES copy is Abierto only");
+assert(bajioUnlockFlashCopy("en") === "Open", "flash EN copy is Open only");
+assert(bajioUnlockFlashCopy("es") === RECUERDOS_OPEN_ES, "flash ES reuses Recuerdos open stamp");
+assert(bajioUnlockFlashCopy("en") === RECUERDOS_OPEN_EN, "flash EN reuses Recuerdos open stamp");
+assert(!/Bajío|¡Sigue explorando!|Sigue explorando|12\/25|backpack|Unlocked|Cerrado|Locked/i.test(
+  `${bajioUnlockFlashCopy("es")}${bajioUnlockFlashCopy("en")}`
+), "flash copy is Abierto/Open only — no pep, no new lines");
 
 markBajioUnlockFlashLive(true);
 assert(isBajioUnlockFlashLive(), "live flag stays up across a remount");

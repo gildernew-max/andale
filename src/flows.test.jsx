@@ -1468,8 +1468,9 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("hoy-win-continue"));
     await waitFor(() => expect(screen.getByTestId("bajio-unlock-flash")).toBeTruthy());
     const flash = screen.getByTestId("bajio-unlock-flash");
-    expect(flash.textContent).toMatch(/Bajío/);
-    expect(flash.textContent).toMatch(/Abierto/);
+    expect(screen.getByTestId("bajio-unlock-flash-copy").textContent).toBe("Abierto");
+    expect(flash.textContent.trim()).toBe("Abierto");
+    expect(flash.textContent).not.toMatch(/Bajío|¡Sigue explorando!|Sigue explorando/);
     expect(screen.getByTestId("bajio-unlock-flash-glow").className).toMatch(/bajio-glow/);
     expect(recuerdosSurfaceHasCuts(flash.textContent)).toBe(false);
     expect(recuerdosHasProgressFraction(flash.textContent)).toBe(false);
