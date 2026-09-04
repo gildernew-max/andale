@@ -338,6 +338,9 @@ assert(UI.en.paywallDismiss === "Continue free for now", "UI.en.paywallDismiss")
 assert(appSrc.includes("{L.paywallHonesty}"), "paywall honesty uses L.paywallHonesty");
 assert(appSrc.includes("data-testid=\"soft-paywall-honesty\""), "paywall honesty is testable");
 assert(appSrc.includes("data-testid=\"first-door-alt\""), "Doctora first-door-alt stays on home");
+assert(appSrc.includes("data-testid=\"post-dismiss-handoff\""), "post-dismiss Doctora handoff is testable");
+assert(appSrc.includes("showPostDismissHandoff"), "post-dismiss handoff uses the same-session gate");
+assert(appSrc.includes("setPostDismissHandoff"), "post-dismiss handoff is session state");
 assert(appSrc.includes("shouldShowSoftPaywall"), "soft paywall uses first-win gate");
 assert(appSrc.includes("continueFromWin"), "Hoy CONTINUE lands on home with come-back");
 assert(appSrc.includes("soft-paywall"), "soft paywall is wired");

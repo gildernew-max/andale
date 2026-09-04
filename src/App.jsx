@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showComeBackTomorrow, showDoorMetaChrome, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isFirstHoySession, shouldHoyEarlyWin, trimHoyBeats } from "./hoyWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 
@@ -3238,6 +3238,7 @@ export default function App() {
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
   const [paywallArmed, setPaywallArmed] = useState(false);
+  const [postDismissHandoff, setPostDismissHandoff] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
@@ -4931,6 +4932,10 @@ export default function App() {
     if (fromBackdrop && !paywallArmed) return;
     setSoftPaywall(false);
     setPaywallArmed(false);
+    if (!plan) {
+      setPostDismissHandoff(true);
+      setTab("camino");
+    }
     save(plan
       ? { paywallSeen: true, unlockedPrem: true, paywallPlan: plan }
       : { paywallSeen: true });
@@ -5054,7 +5059,8 @@ export default function App() {
           </div>
           {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
           {(() => {
-            const doorKind = firstDoorHero({ todayScene, todaySceneDone });
+            const doorKind = firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff });
+            const showHandoff = showPostDismissHandoff({ armed: postDismissHandoff });
             const showLine = showComeBackTomorrow({
               todaySceneDone,
               streak: prog.streak,
@@ -5071,7 +5077,7 @@ export default function App() {
               if (!pathUnit) return;
               setSheet({ unit: pathUnit, section: pathSection || SECTIONS[0], crowns: prog.done?.[pathUnit.id] || 0 });
             };
-            const openDoctor = () => { setTab("practica"); setDoctorOpen(true); };
+            const openDoctor = () => { setPostDismissHandoff(false); setTab("practica"); setDoctorOpen(true); };
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
             const sceneStory = todayScene ? STORIES.find((st) => st.id === todayScene.storyId) : null;
@@ -5129,7 +5135,7 @@ export default function App() {
               <div style={{ margin: "14px 0 18px" }}>
                 <div data-testid="first-door-hero">
                   {doorKind === FIRST_DOOR_HOY ? renderHoyCard(true) : (
-                    <div style={{ background: D.purple, borderRadius: 20, padding: "16px 18px 18px", color: "#fff", boxShadow: "0 6px 18px rgba(0,0,0,.10)", marginBottom: 10 }}>
+                    <div data-testid={showHandoff ? "post-dismiss-handoff" : undefined} style={{ background: D.purple, borderRadius: 20, padding: "16px 18px 18px", color: "#fff", boxShadow: "0 6px 18px rgba(0,0,0,.10)", marginBottom: 10 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                         <div style={{ flexShrink: 0 }}><CoachPortrait id="valeria" mood="happy" size={68} /></div>
                         <div style={{ flex: 1, minWidth: 0 }}>

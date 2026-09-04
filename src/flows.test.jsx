@@ -1080,6 +1080,7 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
     expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
     expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
     expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*\d+\/40/);
@@ -1138,12 +1139,75 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
     expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
     expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
     cleanup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+  });
+
+  it("first streak-1 win CONTINUE dismiss free lands on Doctora CTA, not idle home", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["cilantro, cebolla, salsa y guarnición"],
+      answer: "cilantro, cebolla, salsa y guarnición",
+      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        firstHoy: true,
+        host: "luna",
+        questions: [
+          hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:"),
+          hoyMc("beat 2 must not run — early checkpoint"),
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const choices = document.querySelectorAll(".choice-card");
+    expect(choices.length).toBeGreaterThan(0);
+    await user.click(choices[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win-continue")).toBeTruthy());
+    await user.click(screen.getByTestId("hoy-win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis por ahora");
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    const handoff = screen.getByTestId("post-dismiss-handoff");
+    expect(handoff).toBeTruthy();
+    expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
+    expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
+    expect(handoff.textContent).not.toMatch(/Phrase Doctor/);
+    expect(screen.queryByTestId("phrase-doctor-board")).toBeNull();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("first-door-tag").textContent).toBe("WIN IN 60 SECONDS"));
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
+    await user.click(screen.getByTestId("hero-cta"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
   });
 
   it("later Hoy keeps full depth — no early checkpoint after one hit", async () => {
@@ -1254,10 +1318,13 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("nav-camino"));
     await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es")));
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
-    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena/);
+    expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Subjuntivo/);
-    expect(screen.getByTestId("first-door-alt").textContent).toBe("Arreglar una frase");
+    expect(screen.getByTestId("hoy-card")).toBeTruthy();
+    expect(screen.queryByTestId("first-door-alt")).toBeNull();
 
     cleanup();
     render(<App />);
@@ -1289,6 +1356,7 @@ describe("simulated learner flows", () => {
     expect(stored.paywallSeen).toBe(true);
     expect(stored.paywallPlan).toBe("annual");
     expect(stored.unlockedPrem).toBe(true);
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
     expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
   });
