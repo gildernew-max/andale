@@ -9,7 +9,9 @@ import {
   RECUERDOS_TITLE_EN,
   RECUERDOS_TITLE_ES,
   bajioUnlockFlashCopy,
+  isBajioUnlockFlashLive,
   isRecuerdosPinOpen,
+  markBajioUnlockFlashLive,
   recuerdosFogBackground,
   recuerdosHasProgressFraction,
   recuerdosLockedPins,
@@ -95,5 +97,10 @@ assert(bajioUnlockFlashCopy("en").state === "Open", "flash EN state is Open");
 assert(!/¡Sigue explorando!|Sigue explorando|12\/25|backpack/i.test(
   `${bajioUnlockFlashCopy("es").label}${bajioUnlockFlashCopy("es").state}${bajioUnlockFlashCopy("en").label}${bajioUnlockFlashCopy("en").state}`
 ), "flash copy is not pep or backpack");
+
+markBajioUnlockFlashLive(true);
+assert(isBajioUnlockFlashLive(), "live flag stays up across a remount");
+markBajioUnlockFlashLive(false);
+assert(!isBajioUnlockFlashLive(), "live flag clears after the flash");
 
 console.log("recuerdos.test.js: ok");

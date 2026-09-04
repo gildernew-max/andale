@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { BAJIO_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, isRecuerdosPinOpen, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
+import { BAJIO_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, isBajioUnlockFlashLive, isRecuerdosPinOpen, markBajioUnlockFlashLive, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -4969,17 +4969,26 @@ export default function App() {
     paywallSeen: !!prog.paywallSeen,
   });
   useEffect(() => {
+    if (isBajioUnlockFlashLive()) {
+      setBajioUnlockFlash(true);
+      return;
+    }
     if (!bajioFlashGate) return;
+    markBajioUnlockFlashLive(true);
     setBajioUnlockFlash(true);
     save({ bajioUnlockSeen: true });
   }, [bajioFlashGate]);
   useEffect(() => {
-    if (!bajioUnlockFlash) return undefined;
     if (screen !== "done") {
+      markBajioUnlockFlashLive(false);
       setBajioUnlockFlash(false);
       return undefined;
     }
-    const hide = setTimeout(() => setBajioUnlockFlash(false), BAJIO_UNLOCK_FLASH_MS);
+    if (!bajioUnlockFlash) return undefined;
+    const hide = setTimeout(() => {
+      markBajioUnlockFlashLive(false);
+      setBajioUnlockFlash(false);
+    }, BAJIO_UNLOCK_FLASH_MS);
     return () => clearTimeout(hide);
   }, [bajioUnlockFlash, screen]);
   const dismissSoftPaywall = (plan, { fromBackdrop } = {}) => {

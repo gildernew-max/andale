@@ -83,6 +83,17 @@ export function recuerdosLockedPins(pins = RECUERDOS_PINS, claimedStories = {}) 
 
 export const BAJIO_UNLOCK_FLASH_MS = 1400;
 
+/** Survives React StrictMode remount so persist-on-show cannot swallow the flash. */
+let bajioUnlockFlashLive = false;
+
+export function isBajioUnlockFlashLive() {
+  return bajioUnlockFlashLive;
+}
+
+export function markBajioUnlockFlashLive(on) {
+  bajioUnlockFlashLive = !!on;
+}
+
 /** First streak-1 ¡Eso! / That's it. Once only. Not every later Eso. */
 export function shouldShowBajioUnlockFlash({
   bajioUnlockSeen,

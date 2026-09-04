@@ -424,6 +424,7 @@ assert(!/¡Ganaste!|You won!/.test(`${UI.es.hoyWin}${UI.en.hoyWin}`), "first-Hoy
 assert(appSrc.includes("L.hoyWin"), "first-Hoy done heading uses L.hoyWin");
 assert(appSrc.includes("hoy-win"), "first-Hoy win heading is testable");
 assert(appSrc.includes("shouldShowBajioUnlockFlash"), "Bajío unlock flash uses the once-only gate");
+assert(appSrc.includes("isBajioUnlockFlashLive") && appSrc.includes("markBajioUnlockFlashLive"), "flash live flag survives remount");
 assert(appSrc.includes("bajioUnlockSeen"), "Bajío unlock flash seen flag is persisted");
 assert(appSrc.includes("data-testid=\"bajio-unlock-flash\""), "Bajío unlock flash is testable");
 assert(appSrc.includes("bajioUnlockFlashCopy"), "flash copy reuses Recuerdos stamps");
