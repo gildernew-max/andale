@@ -6,10 +6,19 @@ export const FIRST_DOOR_PHRASE_DOCTOR = "phrase-doctor";
 export const COME_BACK_GENERIC_ES = "Vuelve mañana por la siguiente escena.";
 export const COME_BACK_GENERIC_EN = "Come back tomorrow for the next scene.";
 
-export function firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff } = {}) {
+export function firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff, streak, lastDay, today } = {}) {
   if (showPostDismissHandoff({ armed: postDismissHandoff })) return FIRST_DOOR_PHRASE_DOCTOR;
+  // Day-2+ return: yesterday's Vuelve mañana / Come back tomorrow promise is the one Hoy hero.
+  if (isDay2Return({ streak, lastDay, today }) && todayScene && !todaySceneDone) return FIRST_DOOR_HOY;
   if (todayScene && !todaySceneDone) return FIRST_DOOR_HOY;
   return FIRST_DOOR_PHRASE_DOCTOR;
+}
+
+/** Streak ≥ 1 and last activity was a previous calendar day — come-back, not same-day after win. */
+export function isDay2Return({ streak, lastDay, today } = {}) {
+  if ((Number(streak) || 0) < 1) return false;
+  if (!lastDay || !today) return false;
+  return lastDay !== today;
 }
 
 /** Same-session second beat after free paywall dismiss. Not persisted. */
@@ -30,6 +39,14 @@ export function nextDayKey(dayKey) {
   const [y, m, day] = parts;
   if (!y || !m || !day) return "";
   return dayKeyFromDate(new Date(y, m - 1, day + 1));
+}
+
+export function prevDayKey(dayKey) {
+  const parts = String(dayKey || "").split("-").map(Number);
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return "";
+  const [y, m, day] = parts;
+  if (!y || !m || !day) return "";
+  return dayKeyFromDate(new Date(y, m - 1, day - 1));
 }
 
 /** Same hash as Camino: sum of todayKey char codes % scene list length. */
@@ -56,8 +73,9 @@ export function comeBackTomorrowLine({ lang = "es", nextTitle, fallback } = {}) 
     : `Vuelve mañana por «${title}».`;
 }
 
-/** Home line after a first win today, or after today's scene is cleared. */
+/** Home line after a first win today, or after today's scene is cleared. Hidden on day-2 return while the promised Hoy is the hero. */
 export function showComeBackTomorrow({ todaySceneDone, streak, lastDay, today } = {}) {
+  if (isDay2Return({ streak, lastDay, today }) && !todaySceneDone) return false;
   if (todaySceneDone) return true;
   return (Number(streak) || 0) >= 1 && lastDay === today;
 }
@@ -114,5 +132,7 @@ export function shouldShowSoftPaywall({
   if (paywallSeen) return false;
   if (splash) return false;
   if (screen !== "home") return false;
+  // Day-2+ return: the promised Hoy is the door. Do not re-open the wall.
+  if (isDay2Return({ streak, lastDay, today }) && !todaySceneDone) return false;
   return showComeBackTomorrow({ todaySceneDone, streak, lastDay, today });
 }

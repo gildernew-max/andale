@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
-import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey } from "./firstDoor.js";
+import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey, prevDayKey } from "./firstDoor.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -1001,6 +1001,76 @@ describe("simulated learner flows", () => {
     await openCaminoMore(userEvent.setup());
     expect(screen.getByTestId("path-entry").textContent).toMatch(/EMPIEZA|START/);
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+  });
+
+  it("day-2 return with streak ≥ 1 opens the promised Hoy as the hero CTA", async () => {
+    const today = localToday();
+    const yesterday = prevDayKey(today);
+    const promised = hoySceneForDay(HOY_TITLES, today);
+    cleanup();
+    seedProgress({
+      streak: 1,
+      lastDay: yesterday,
+      paywallSeen: true,
+      missions: { [`scene-${yesterday}`]: "taqueria" },
+    });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    const hero = screen.getByTestId("first-door-hero");
+    expect(hero.querySelector("[data-testid='hoy-card']")).toBeTruthy();
+    expect(hero.querySelector("[data-testid='hero-cta']")).toBeTruthy();
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene/);
+    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Arreglar una frase|Fix a phrase/);
+    expect(screen.getByTestId("hoy-title").textContent).toBe(promised.title);
+    expect(screen.queryByTestId("first-door-title")).toBeNull();
+    expect(screen.getByTestId("first-door-alt").textContent).toMatch(/Arreglar una frase/);
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
+  });
+
+  it("day-2 return does not re-show soft paywall when paywallSeen", async () => {
+    const yesterday = prevDayKey(localToday());
+    cleanup();
+    seedProgress({ streak: 1, lastDay: yesterday, paywallSeen: true });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+  });
+
+  it("tomorrow teaser is inert — plain text, not a button and not clickable", async () => {
+    const today = localToday();
+    cleanup();
+    seedProgress({ streak: 1, lastDay: today, paywallSeen: true });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
+    const teaser = screen.getByTestId("come-back-tomorrow");
+    expect(teaser.textContent).toBe(expectedComeBack("es"));
+    expect(teaser.tagName).toBe("P");
+    expect(teaser.tagName).not.toBe("BUTTON");
+    expect(teaser.tagName).not.toBe("A");
+    expect(teaser.getAttribute("role")).not.toBe("button");
+    expect(teaser.getAttribute("href")).toBeNull();
+    expect(teaser.closest("button")).toBeNull();
+    expect(teaser.closest("a")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Vuelve mañana|Come back tomorrow/ })).toBeNull();
+    expect(window.getComputedStyle(teaser).cursor).not.toBe("pointer");
+
+    await user.click(teaser);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    expect(screen.getByTestId("nav-camino")).toBeTruthy();
+    expect(screen.getByTestId("hero-cta")).toBeTruthy();
+    expect(screen.queryByTestId("lesson-exit")).toBeNull();
+    expect(screen.queryByTestId("phrase-doctor-board")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("splash")).toBeNull();
   });
 
   it("first win shows streak 1 and the vuelve mañana home line", async () => {

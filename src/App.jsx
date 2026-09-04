@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isFirstHoySession, shouldHoyEarlyWin, trimHoyBeats } from "./hoyWin.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
@@ -5111,14 +5111,26 @@ export default function App() {
           </div>
           {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
           {(() => {
-            const doorKind = firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff });
+            const doorKind = firstDoorHero({
+              todayScene,
+              todaySceneDone,
+              postDismissHandoff,
+              streak: prog.streak,
+              lastDay: prog.lastDay,
+              today: todayKey,
+            });
             const showHandoff = showPostDismissHandoff({ armed: postDismissHandoff });
+            const day2Return = isDay2Return({
+              streak: prog.streak,
+              lastDay: prog.lastDay,
+              today: todayKey,
+            });
             const showLine = showComeBackTomorrow({
               todaySceneDone,
               streak: prog.streak,
               lastDay: prog.lastDay,
               today: todayKey,
-            });
+            }) && !day2Return;
             const resumeU = prog.resume && UNITS.find((u) => u.id === prog.resume.unitId);
             const nextF = FLAT.find((f) => !((prog.done || {})[f.unit.id] > 0));
             const pathUnit = resumeU || nextF?.unit;
@@ -5201,13 +5213,13 @@ export default function App() {
                     </div>
                   )}
                   {showLine && (
-                    <div data-testid="come-back-tomorrow" style={{ margin: "0 0 10px", border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13.5, fontWeight: 800, color: D.ink, lineHeight: 1.35 }}>
+                    <p data-testid="come-back-tomorrow" style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default" }}>
                       {comeBackTomorrowLine({
                         lang: uiLang,
                         nextTitle: hoyTitleForLang(tomorrowScene, uiLang),
                         fallback: L.comeBackTomorrow,
                       })}
-                    </div>
+                    </p>
                   )}
                 </div>
                 {doorKind === FIRST_DOOR_HOY && (

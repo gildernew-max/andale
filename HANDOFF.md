@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (day-2 return door — promised Hoy hero + teaser plain text)
+
+**What changed**
+- Day-2+ return (`isDay2Return`: streak ≥ 1, lastDay ≠ today) opens the promised Hoy (yesterday’s `Vuelve mañana…` / `Come back tomorrow for '…'`) as the one hero CTA. Playable Hoy card in `first-door-hero`, not buried. Doctora stays `first-door-alt`.
+- Soft paywall stays once-only: `paywallSeen` never re-fires; day-2 before today’s win does not open the wall.
+- Teaser demoted to a quiet `<p>` (`come-back-tomorrow`): no card chrome, no button, no fake tap. Same titled / generic copy. Hidden on day-2 while the promise is the hero.
+- Tests: helper + flow lock streak≥1 return → Hoy hero; paywallSeen → no paywall; teaser is non-interactive plain text. Door diet, first Hoy/Doctora ≤60s, honesty, post-dismiss handoff, Más, name, casero, splash, enroll untouched.
+
+**Why**
+- No face / Hand conversion-critical: the promised next Hoy must be the door they can play. Fake-tap teaser and a re-fired wall kill the return.
+
 ## 2026-09-04 (first Doctora ≤60s to win — No face / Hand lock)
 
 **What changed**
