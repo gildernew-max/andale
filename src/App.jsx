@@ -2555,15 +2555,15 @@ const TODAY_SCENES = [
     host: "valeria",
     storyId: "story-1",
     units: ["registro", "porpara", "pronombres2"],
-    setup: "Te piden depósito, aval y contrato hoy. Toca negociar sin sonar desesperado.",
-    setupEn: "They want deposit, guarantor, and contract today. Time to negotiate without sounding desperate.",
-    line: "¿Me podría confirmar si el depósito cuenta para el último mes de renta?",
-    answers: ["¿Me podría confirmar si el depósito cuenta para el último mes de renta?", "Me podría confirmar si el depósito cuenta para el último mes de renta"],
-    explain: "A polite conditional question keeps the tone firm but professional.",
-    question: "En una negociación formal, «¿Me podría confirmar…?» suena:",
-    questionEn: "In a formal negotiation, «¿Me podría confirmar…?» sounds:",
-    choices: ["cortés y claro", "demasiado íntimo", "agresivo"],
-    answer: "cortés y claro",
+    setup: "El casero pide depósito y aval hoy. Contéstale sin sonar de manual.",
+    setupEn: "Landlord wants deposit and guarantor today. Answer without sounding like a textbook.",
+    line: "Oye, ¿el depósito cuenta para el último mes?",
+    answers: ["Oye, ¿el depósito cuenta para el último mes?", "Oye, ¿el depósito cuenta para el último mes de renta?"],
+    explain: "WhatsApp casero: corto, claro, sin correo formal.",
+    question: "En WhatsApp con el casero, «Oye, ¿el depósito cuenta…?» suena:",
+    questionEn: "On WhatsApp with the landlord, «Oye, ¿el depósito cuenta…?» sounds:",
+    choices: ["natural y firme", "de correo formal", "agresivo"],
+    answer: "natural y firme",
   },
   {
     id: "airport",
@@ -2980,6 +2980,8 @@ const UI = {
     narrationLabel: "NARRACIÓN",
     splashLine: "Español mexicano real. Más allá de lo básico.",
     splashCta: "¡Empezar!",
+    more: "Más",
+    namePrompt: "¿Cómo te dicen?",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3030,6 +3032,8 @@ const UI = {
     narrationLabel: "NARRATION",
     splashLine: "Real Mexican Spanish. Past the basics.",
     splashCta: "Start!",
+    more: "More",
+    namePrompt: "What do they call you?",
   },
 };
 
@@ -3231,6 +3235,7 @@ export default function App() {
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
+  const [caminoMore, setCaminoMore] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
   const [guideUnit, setGuideUnit] = useState(null);
   const [dialogue, setDialogue] = useState({ idx: 0, score: 0, done: false, log: [] });
@@ -5102,24 +5107,6 @@ export default function App() {
                     </div>
                   )}
                 </div>
-                {pathUnit && (
-                  <button data-testid="path-entry" onClick={openPath}
-                    style={{ display: "block", width: "100%", margin: "0 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.sub, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
-                    {L.start}
-                  </button>
-                )}
-                <div style={{ display: "grid", gridTemplateColumns: dueCount > 0 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 0 }}>
-                  {dueCount > 0 && (
-                    <button onClick={() => startReview(false)}
-                      style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                      <IcBarbell size={16} color={D.blue} /> {reviewLabel} ({dueCount})
-                    </button>
-                  )}
-                  <button data-testid="camino-daily-workout" onClick={() => { if (!dailyDone) startDailyWorkout(); }} disabled={dailyDone}
-                    style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: dailyDone ? D.sub : D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: dailyDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: dailyDone ? .6 : 1 }}>
-                    <IcBolt size={16} color={D.gold} /> {dailyLabel}
-                  </button>
-                </div>
                 {doorKind === FIRST_DOOR_HOY && (
                   <button data-testid="first-door-alt" onClick={openDoctor}
                     style={{ display: "block", width: "100%", marginTop: 8, background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
@@ -5127,6 +5114,33 @@ export default function App() {
                   </button>
                 )}
                 {doorKind !== FIRST_DOOR_HOY && renderHoyCard(false)}
+                <button data-testid="camino-more" type="button" aria-expanded={caminoMore}
+                  onClick={() => setCaminoMore((open) => !open)}
+                  style={{ display: "block", margin: "10px auto 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", padding: "4px 8px", letterSpacing: ".01em" }}>
+                  {L.more}
+                </button>
+                {caminoMore && (
+                  <div data-testid="camino-more-panel" style={{ marginTop: 8 }}>
+                    {pathUnit && (
+                      <button data-testid="path-entry" onClick={openPath}
+                        style={{ display: "block", width: "100%", margin: "0 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.sub, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
+                        {L.start}
+                      </button>
+                    )}
+                    <div style={{ display: "grid", gridTemplateColumns: dueCount > 0 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 0 }}>
+                      {dueCount > 0 && (
+                        <button data-testid="camino-review" onClick={() => startReview(false)}
+                          style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                          <IcBarbell size={16} color={D.blue} /> {reviewLabel} ({dueCount})
+                        </button>
+                      )}
+                      <button data-testid="camino-daily-workout" onClick={() => { if (!dailyDone) startDailyWorkout(); }} disabled={dailyDone}
+                        style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: dailyDone ? D.sub : D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: dailyDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: dailyDone ? .6 : 1 }}>
+                        <IcBolt size={16} color={D.gold} /> {dailyLabel}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -6143,7 +6157,7 @@ export default function App() {
               {L.splashLine}
             </div>
             <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={20}
-              placeholder={uiLang === "en" ? "What should we call you?" : "¿Cómo te llamamos?"}
+              placeholder={L.namePrompt}
               style={{ width: "100%", boxSizing: "border-box", border: `2px solid ${D.line}`, borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 15, marginBottom: 16, outline: "none", textAlign: "center" }} />
             <div data-testid="splash-actions" style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
               <Btn data-testid="splash-start" onClick={() => save({ name: nameDraft.trim(), welcomed: true })} style={{ display: "block", width: "100%", fontSize: 16, textTransform: "none", letterSpacing: "normal" }}>

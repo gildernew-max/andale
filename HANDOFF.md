@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (Más / More bury + name + casero)
+
+**What changed**
+- When Hoy / Doctora is the door, EMPIEZA / Repasar / Rutina diaria sit under one quiet control: ES `Más` / EN `More`. Not a second hero. Camino stays the tab name. No other bury labels.
+- First screen is the life door only (Hoy card + Doctora alt, or Doctora hero + Hoy card). Path CTAs appear after Más.
+- Name field: ES `¿Cómo te dicen?` / EN `What do they call you?` (`L.namePrompt`). Form-feel `¿Cómo te llamamos?` / `What should we call you?` gone.
+- Landlord WhatsApp Hoy: title kept. Setup / line / answers / explain / question / choices / answer rewritten to the George lock (WhatsApp, not formal email).
+- Tests: Más/More bury + expand; name strings; landlord copy. Door/paywall/honesty, splash line/CTA, word-order tip, Perfil Intermedio, cold EN default, skill chips, enroll, JEOPARDY, Rayo untouched.
+
+**Why**
+- George + No face: competing path CTAs were a second hero beside the life door. Name prompt was form-feel. Casero line still sounded like correo formal.
+
 ## 2026-09-04 (Perfil Intermedio + cold-open EN)
 
 **What changed**
