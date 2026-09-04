@@ -6,10 +6,8 @@ export const FIRST_DOOR_PHRASE_DOCTOR = "phrase-doctor";
 export const COME_BACK_GENERIC_ES = "Vuelve mañana por la siguiente escena.";
 export const COME_BACK_GENERIC_EN = "Come back tomorrow for the next scene.";
 
-export function firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff, streak, lastDay, today } = {}) {
+export function firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff } = {}) {
   if (showPostDismissHandoff({ armed: postDismissHandoff })) return FIRST_DOOR_PHRASE_DOCTOR;
-  // Day-2+ return: yesterday's Vuelve mañana / Come back tomorrow promise is the one Hoy hero.
-  if (isDay2Return({ streak, lastDay, today }) && todayScene && !todaySceneDone) return FIRST_DOOR_HOY;
   if (todayScene && !todaySceneDone) return FIRST_DOOR_HOY;
   return FIRST_DOOR_PHRASE_DOCTOR;
 }
@@ -142,7 +140,5 @@ export function shouldShowSoftPaywall({
   if (paywallSeen) return false;
   if (splash) return false;
   if (screen !== "home") return false;
-  // Day-2+ return: the promised Hoy is the door. Do not re-open the wall.
-  if (isDay2Return({ streak, lastDay, today }) && !todaySceneDone) return false;
   return showComeBackTomorrow({ todaySceneDone, streak, lastDay, today });
 }

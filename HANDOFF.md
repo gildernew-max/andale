@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (soft paywall cannot survive midnight)
+
+**What changed**
+- Soft paywall display follows `shouldShowSoftPaywall` only. Stale `softPaywall` session flag no longer ORs the modal open. Effect clears + disarms whenever the gate is false — not only when `paywallSeen`.
+- Midnight / day-2: undismissed wall goes away; free/backdrop dismiss cannot arm Doctora handoff. Promised Hoy is the hero. `todayKey` follows the ticking `now` clock.
+- Test: paywall open → day rolls → modal gone, no `post-dismiss-handoff`. Door / Doctora / handoff-on-same-day dismiss / teaser / enroll untouched.
+
+**Why**
+- Hand Claude HOLD: undismissed wall survived midnight and a dismiss stole the day-2 Hoy.
+
 ## 2026-09-04 (day-2 return door — promised Hoy hero + teaser plain text)
 
 **What changed**

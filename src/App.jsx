@@ -4837,7 +4837,7 @@ export default function App() {
   const nextHeartMin = Math.max(0, Math.ceil((HEART_REGEN_MS - ((now - (prog.heartT || now)) % HEART_REGEN_MS)) / 60000));
   const weakSpots = Object.entries(prog.weak || {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const smartFocus = smartPracticeFocus();
-  const todayKey = todayStr();
+  const todayKey = dayKeyFromDate(new Date(now));
   const todayScene = hoySceneForDay(TODAY_SCENES, todayKey);
   const tomorrowScene = hoySceneForDay(TODAY_SCENES, nextDayKey(todayKey));
   const hoyStill = hoyStillFor(todayScene);
@@ -4903,7 +4903,7 @@ export default function App() {
 
   const inLesson = screen !== "home";
   const splashOpen = isFirstVisit(prog);
-  const showSoftPaywall = shouldShowSoftPaywall({
+  const paywallGate = shouldShowSoftPaywall({
     paywallSeen: !!prog.paywallSeen,
     todaySceneDone,
     streak: prog.streak,
@@ -4911,19 +4911,16 @@ export default function App() {
     today: todayKey,
     screen,
     splash: splashOpen,
-  }) || (softPaywall && !prog.paywallSeen && !splashOpen && screen === "home");
+  });
+  // Gate only — a stale session flag must not keep the modal after midnight / day-2.
+  const showSoftPaywall = paywallGate;
   useEffect(() => {
-    if (shouldShowSoftPaywall({
-      paywallSeen: !!prog.paywallSeen,
-      todaySceneDone,
-      streak: prog.streak,
-      lastDay: prog.lastDay,
-      today: todayKey,
-      screen,
-      splash: splashOpen,
-    })) setSoftPaywall(true);
-    else if (prog.paywallSeen) setSoftPaywall(false);
-  }, [prog.paywallSeen, prog.streak, prog.lastDay, todaySceneDone, todayKey, screen, splashOpen]);
+    if (paywallGate) setSoftPaywall(true);
+    else {
+      setSoftPaywall(false);
+      setPaywallArmed(false);
+    }
+  }, [paywallGate]);
   useEffect(() => {
     if (!showSoftPaywall) {
       setPaywallArmed(false);
@@ -5114,14 +5111,7 @@ export default function App() {
           )}
           {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
           {(() => {
-            const doorKind = firstDoorHero({
-              todayScene,
-              todaySceneDone,
-              postDismissHandoff,
-              streak: prog.streak,
-              lastDay: prog.lastDay,
-              today: todayKey,
-            });
+            const doorKind = firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff });
             const showHandoff = showPostDismissHandoff({ armed: postDismissHandoff });
             const day2Return = isDay2Return({
               streak: prog.streak,

@@ -360,6 +360,8 @@ assert(appSrc.includes("soft-paywall"), "soft paywall is wired");
 assert(appSrc.includes("paywallSeen"), "paywall seen flag is persisted");
 assert(appSrc.includes("unlockedPrem") && appSrc.includes("paywallPlan"), "CTA marks local plan only");
 assert(appSrc.includes("setSoftPaywall"), "soft paywall opens from a hook");
+assert(!/else if \(prog\.paywallSeen\) setSoftPaywall\(false\)/.test(appSrc), "paywall clears when the gate is false, not only when seen");
+assert(!/\|\| \(softPaywall && !prog\.paywallSeen/.test(appSrc), "stale softPaywall cannot keep the modal after the gate closes");
 assert(!/stripe\.com|@stripe|RevenueCat|StoreKit|SKPayment/.test(appSrc), "soft paywall is $0 — no IAP");
 assert(UI.es.hoyWin === "¡Eso!", "UI.es.hoyWin first-Hoy lock");
 assert(UI.en.hoyWin === "That's it.", "UI.en.hoyWin first-Hoy lock");

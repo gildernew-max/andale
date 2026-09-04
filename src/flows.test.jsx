@@ -2,7 +2,7 @@
  * Simulated learner flows (issue 5 #4). Not the content-schema lock
  * (src/content.test.js) and not the save/LIVE schema lock (src/schema.test.js).
  */
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
@@ -1032,6 +1032,31 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
     expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
+  });
+
+  it("undismissed soft paywall clears when the day rolls — no stale Doctora handoff", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(2026, 8, 4, 23, 50, 0));
+    try {
+      cleanup();
+      seedProgress({ streak: 1, lastDay: "2026-09-04", paywallSeen: false });
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+      expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
+
+      vi.setSystemTime(new Date(2026, 8, 5, 0, 1, 0));
+      await vi.advanceTimersByTimeAsync(30000);
+      await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+      expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
+      expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene/);
+      expect(screen.getByTestId("hoy-title").textContent).toBe("Mostrador en caos");
+      expect(screen.queryByTestId("first-door-title")).toBeNull();
+      expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("day-2 return does not re-show soft paywall when paywallSeen", async () => {
