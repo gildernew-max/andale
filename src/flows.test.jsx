@@ -855,6 +855,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.");
     expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("$39.99 al año");
     expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("$6.99 al mes");
+    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis por ahora");
 
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
@@ -867,6 +868,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena/);
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Subjuntivo/);
+    expect(screen.getByTestId("first-door-alt").textContent).toBe("Arreglar una frase");
 
     cleanup();
     render(<App />);
@@ -889,6 +891,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.");
     expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("$39.99 / year");
     expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("$6.99 / month");
+    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Practice · no charge yet");
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Continue free for now");
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
