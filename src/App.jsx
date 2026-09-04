@@ -2964,17 +2964,17 @@ const UI = {
     testFailed: "Examen no superado", testFailedDesc: "Tres errores — el límite era dos. Tus fallos ya están en Práctica; repásalos y vuelve a intentarlo.",
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
     comeBackTomorrow: "Vuelve mañana por la siguiente escena.",
+    paywallHeadline: "Ya empezó tu racha.",
+    paywallBody: "Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.",
+    paywallAnnual: "$39.99 al año",
+    paywallMonthly: "$6.99 al mes",
+    paywallDismiss: "Seguir gratis por ahora",
     playScene: "Jugar la escena",
     phraseDoctor: "Doctora de frases",
     phraseDoctorTag: "GANA EN 60 SEGUNDOS",
     phraseDoctorCta: "Arreglar una frase",
     safeRiskyReward: "5 rondas · extra por racha · gemas",
     narrationLabel: "NARRACIÓN",
-    paywallHeadline: "Ya empezó tu racha.",
-    paywallBody: "Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.",
-    paywallAnnual: "$39.99 al año",
-    paywallMonthly: "$6.99 al mes",
-    paywallDismiss: "Seguir gratis por ahora",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3010,17 +3010,17 @@ const UI = {
     testFailed: "Test not passed", testFailedDesc: "Three mistakes — the limit was two. Your misses are in Review; revisit them and try again.",
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
     comeBackTomorrow: "Come back tomorrow for the next scene.",
+    paywallHeadline: "Your streak just started.",
+    paywallBody: "Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.",
+    paywallAnnual: "$39.99 / year",
+    paywallMonthly: "$6.99 / month",
+    paywallDismiss: "Continue free for now",
     playScene: "Play the scene",
     phraseDoctor: "Phrase Doctor",
     phraseDoctorTag: "WIN IN 60 SECONDS",
     phraseDoctorCta: "Fix a phrase",
     safeRiskyReward: "5 rounds · streak extra · gems",
     narrationLabel: "NARRATION",
-    paywallHeadline: "Your streak just started.",
-    paywallBody: "Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.",
-    paywallAnnual: "$39.99 / year",
-    paywallMonthly: "$6.99 / month",
-    paywallDismiss: "Continue free for now",
   },
 };
 
@@ -3220,6 +3220,7 @@ export default function App() {
     return () => window.removeEventListener("andale-voice-dead", onDead);
   }, []);
   const [heartsModal, setHeartsModal] = useState(false);
+  const [softPaywall, setSoftPaywall] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
   const [guideUnit, setGuideUnit] = useState(null);
@@ -4839,19 +4840,24 @@ export default function App() {
   /* ---------------- RENDER ---------------- */
 
   const inLesson = screen !== "home";
-  const splashOpen = !prog.welcomed && !(prog.xp > 0) && screen === "home";
-  const showSoftPaywall = shouldShowSoftPaywall({
-    paywallSeen: !!prog.paywallSeen,
-    todaySceneDone,
-    streak: prog.streak,
-    lastDay: prog.lastDay,
-    today: todayKey,
-    screen,
-    tab,
-    splash: splashOpen,
-  });
-  const dismissSoftPaywall = (interest) => {
-    save(interest ? { paywallSeen: true, paywallInterest: interest } : { paywallSeen: true });
+  const splashOpen = !prog.welcomed && !(prog.xp > 0);
+  useEffect(() => {
+    if (shouldShowSoftPaywall({
+      paywallSeen: !!prog.paywallSeen,
+      todaySceneDone,
+      streak: prog.streak,
+      lastDay: prog.lastDay,
+      today: todayKey,
+      screen,
+      splash: splashOpen,
+    })) setSoftPaywall(true);
+    else if (prog.paywallSeen) setSoftPaywall(false);
+  }, [prog.paywallSeen, prog.streak, prog.lastDay, todaySceneDone, todayKey, screen, splashOpen]);
+  const dismissSoftPaywall = (plan) => {
+    setSoftPaywall(false);
+    save(plan
+      ? { paywallSeen: true, unlockedPrem: true, paywallPlan: plan }
+      : { paywallSeen: true });
   };
 
   return (
@@ -6090,18 +6096,15 @@ export default function App() {
       )}
 
       {/* ---------- SOFT PAYWALL (after first win + vuelve; $0, no IAP) ---------- */}
-      {showSoftPaywall && (
-        <div data-testid="soft-paywall" role="presentation" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => dismissSoftPaywall()}>
-          <div role="dialog" aria-modal="true" aria-labelledby="soft-paywall-title" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 480, padding: "10px 22px 28px", boxShadow: "0 -8px 30px rgba(0,0,0,.18)", textAlign: "center" }}>
-            <div style={{ width: 44, height: 5, background: D.line, borderRadius: 99, margin: "6px auto 18px" }} />
-            <div id="soft-paywall-title" data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.2, marginBottom: 8 }}>{L.paywallHeadline}</div>
-            <div data-testid="soft-paywall-body" style={{ fontWeight: 800, fontSize: 14, color: D.sub, lineHeight: 1.45, marginBottom: 18 }}>{L.paywallBody}</div>
+      {softPaywall && (
+        <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall()}>
+          <div className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center" }}>
+            <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 19, marginBottom: 6 }}>{L.paywallHeadline}</div>
+            <div data-testid="soft-paywall-body" style={{ fontWeight: 800, fontSize: 13.5, color: D.sub, marginBottom: 16, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => dismissSoftPaywall("annual")}>{L.paywallAnnual}</Btn>
               <Btn outline data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")}>{L.paywallMonthly}</Btn>
-              <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()} style={{ border: "none", background: "none", color: D.sub, fontWeight: 800, fontSize: 13, marginTop: 4, cursor: "pointer", fontFamily: "inherit" }}>
-                {L.paywallDismiss}
-              </button>
+              <Btn outline data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}>{L.paywallDismiss}</Btn>
             </div>
           </div>
         </div>

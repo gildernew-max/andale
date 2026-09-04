@@ -301,6 +301,8 @@ assert(UI.en.paywallDismiss === "Continue free for now", "UI.en.paywallDismiss")
 assert(appSrc.includes("shouldShowSoftPaywall"), "soft paywall uses first-win gate");
 assert(appSrc.includes("soft-paywall"), "soft paywall is wired");
 assert(appSrc.includes("paywallSeen"), "paywall seen flag is persisted");
+assert(appSrc.includes("unlockedPrem") && appSrc.includes("paywallPlan"), "CTA marks local plan only");
+assert(appSrc.includes("setSoftPaywall"), "soft paywall opens from a hook");
 assert(!/stripe\.com|@stripe|RevenueCat|StoreKit|SKPayment/.test(appSrc), "soft paywall is $0 — no IAP");
 assert(UI.es.playScene === "Jugar la escena", "UI.es.playScene");
 assert(UI.en.playScene === "Play the scene", "UI.en.playScene");

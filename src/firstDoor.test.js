@@ -17,13 +17,12 @@ assert(showComeBackTomorrow({ todaySceneDone: true, streak: 1, lastDay: "2026-09
 assert(showComeBackTomorrow({ todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "first win today shows home line");
 assert(!showComeBackTomorrow({ todaySceneDone: false, streak: 0, lastDay: null, today: "2026-09-04" }), "new session has no home line yet");
 
-const firstWinHome = { todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04", screen: "home", tab: "camino", splash: false };
-assert(shouldShowSoftPaywall(firstWinHome), "first win on Camino shows paywall after vuelve");
+const firstWinHome = { todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04", screen: "home", splash: false };
+assert(shouldShowSoftPaywall(firstWinHome), "first win on home shows paywall after vuelve");
 assert(!shouldShowSoftPaywall({ ...firstWinHome, splash: true }), "paywall never on splash");
 assert(!shouldShowSoftPaywall({ ...firstWinHome, screen: "done" }), "paywall waits until after celebration");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, tab: "practica" }), "paywall waits until Camino / vuelve");
+assert(shouldShowSoftPaywall(firstWinHome), "Phrase Doctor Curarla (home, no done screen) can fire the gate");
 assert(!shouldShowSoftPaywall({ ...firstWinHome, streak: 0, lastDay: null }), "paywall never before a win");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, streak: 2 }), "paywall is not every subsequent win");
 assert(!shouldShowSoftPaywall({ ...firstWinHome, paywallSeen: true }), "seen flag stops the loop");
 
 console.log("ok: first door is Hoy or Phrase Doctor; streak-1 + come-back line");

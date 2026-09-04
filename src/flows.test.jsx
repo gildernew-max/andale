@@ -703,10 +703,6 @@ describe("simulated learner flows", () => {
       expect(prog.streak).toBe(1);
       expect(prog.lastDay).toBe(today);
     });
-    expect(screen.queryByTestId("soft-paywall")).toBeNull();
-
-    await user.click(screen.getByTestId("nav-camino"));
-    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Vuelve mañana por la siguiente escena."));
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.");
@@ -717,7 +713,10 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
-    expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
+
+    await user.click(screen.getByTestId("nav-camino"));
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Vuelve mañana por la siguiente escena."));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
 
     cleanup();
@@ -736,6 +735,7 @@ describe("simulated learner flows", () => {
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Come back tomorrow for the next scene."));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Your streak just started.");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.");
     expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("$39.99 / year");
@@ -746,7 +746,8 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(stored.paywallSeen).toBe(true);
-    expect(stored.paywallInterest).toBe("annual");
+    expect(stored.paywallPlan).toBe("annual");
+    expect(stored.unlockedPrem).toBe(true);
     expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
   });
