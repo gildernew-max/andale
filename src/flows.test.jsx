@@ -648,6 +648,35 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).toMatch(/SMART PRACTICE/);
   });
 
+  it("Phrase Doctor accepts listed formal equivalent before hard fail and shows the word-order tip", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("phrase-doctor"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
+    const guess = screen.getByTestId("phrase-doctor-guess");
+    await user.type(guess, "Me dará mucho gusto verlo/la.");
+    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("word-order-tip")).toBeTruthy());
+    expect(screen.getByTestId("word-order-tip").textContent).toBe("Orden distinto, mismo sentido. En formal, ambas valen.");
+    expect(screen.queryByTestId("phrase-doctor-fail")).toBeNull();
+    expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/NATURAL/);
+    expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/Tengo muchas ganas de verte/);
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("word-order-tip").textContent).toBe("Different order, same meaning. Formally, both work."));
+
+    const otra = [...screen.getByTestId("phrase-doctor-board").querySelectorAll("button")].find((b) => /Otra|New/.test(b.textContent));
+    expect(otra).toBeTruthy();
+    await user.click(otra);
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-guess")).toBeTruthy());
+    expect(screen.queryByTestId("word-order-tip")).toBeNull();
+    await user.type(screen.getByTestId("phrase-doctor-guess"), "Puedo obtener un cafe por favor");
+    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-fail")).toBeTruthy());
+    expect(screen.queryByTestId("word-order-tip")).toBeNull();
+    expect(screen.getByTestId("phrase-doctor-board").textContent).not.toMatch(/NATURAL/);
+  });
+
   it("Práctica fold leads with Phrase Doctor, Safe-or-Risky, and Emparejar", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-practica"));

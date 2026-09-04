@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (word-order tip — George + No face)
+
+**What changed**
+- Phrase Doctor / natural–formal phrases accept listed equivalents (word-order variants, or the other register) BEFORE a hard fail.
+- Short tip card, locked: ES `Orden distinto, mismo sentido. En formal, ambas valen.` / EN `Different order, same meaning. Formally, both work.`
+- Learner can type a guess on Doctora. Formal (or a listed alternate order) is accepted and shows the tip. Unlisted still hard-fails. Empty Curarla stays the 60-second win.
+- Lesson type/transform/order uses the same `gradeListedPhrase` so a listed alternate order is not a miss.
+- Tests lock tip strings + equivalent-before-fail. First door, soft paywall (honesty line stays), splash, Camino short pitch, tomorrow teaser, JEOPARDY SOLO, Rayo, enroll, PrivacyInfo untouched.
+
+**Why**
+- George + No face lock. Same meaning, different order (or dual-acceptable formal/natural) should not be a hard fail.
+
 ## 2026-09-04 (paywall honesty under price CTAs)
 
 **What changed**

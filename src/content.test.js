@@ -271,6 +271,12 @@ assert(UI.en.goReading === `Go to ${UI.en.reading}`, "EN empty-deck go matches t
 assert(UI.en.goReading !== "Go to Reading" || UI.en.reading === "Reading", "EN go is not Reading unless the tab says Reading");
 assert(UI.es.storyTip === "Lee el párrafo. Toca una palabra solo si te frena.", "UI.es.storyTip");
 assert(UI.en.storyTip === "Read the paragraph. Tap a word only if it stops you.", "UI.en.storyTip");
+assert(UI.es.wordOrderTip === "Orden distinto, mismo sentido. En formal, ambas valen.", "UI.es.wordOrderTip");
+assert(UI.en.wordOrderTip === "Different order, same meaning. Formally, both work.", "UI.en.wordOrderTip");
+assert(appSrc.includes("{L.wordOrderTip}"), "word-order tip uses L.wordOrderTip");
+assert(appSrc.includes("data-testid=\"word-order-tip\""), "word-order tip is testable");
+assert(appSrc.includes("data-testid=\"phrase-doctor-guess\""), "Phrase Doctor guess is testable");
+assert(appSrc.includes("gradeListedPhrase"), "listed equivalents grade before hard fail");
 assert(UI.es.noPatterns === "Todavía no hay un mapa. Juega una misión o falla con estilo — entonces aparece.", "UI.es.noPatterns");
 assert(UI.en.noPatterns === "No map yet. Play a mission or miss with style — then it shows up.", "UI.en.noPatterns");
 assert(UI.es.inDeck === "Ya guardada", "UI.es.inDeck");

@@ -6,6 +6,7 @@ import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, shouldShowSoftPaywall, showComeBackTomorrow, streakAfterWin } from "./firstDoor.js";
+import { gradeListedPhrase } from "./wordOrder.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -2956,6 +2957,7 @@ const UI = {
     check: "Comprobar", continue: "Continuar", why: "¿Por qué?", correctAnswer: "Respuesta correcta", yourAnswer: "Tu respuesta", correct: "Correcta",
     focus: "Foco", time: "¡Tiempo!", spelling: "Ojo con la ortografía", matchInstruction: "Toca una pareja en cada columna.", enterCheck: "Enter para comprobar.",
     selfGrade: "¿QUÉ TAN BIEN LO SABÍAS?", storyTip: "Lee el párrafo. Toca una palabra solo si te frena.",
+    wordOrderTip: "Orden distinto, mismo sentido. En formal, ambas valen.",
     comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
     completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel! Ahora eres",
     hits: "aciertos", misses: "fallos", impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
@@ -3005,6 +3007,7 @@ const UI = {
     check: "Check", continue: "Continue", why: "Why?", correctAnswer: "Correct answer", yourAnswer: "Your answer", correct: "Correct",
     focus: "Focus", time: "Time!", spelling: "Watch the spelling", matchInstruction: "Tap one pair from each column.", enterCheck: "Enter to check.",
     selfGrade: "HOW WELL DID YOU KNOW IT?", storyTip: "Read the paragraph. Tap a word only if it stops you.",
+    wordOrderTip: "Different order, same meaning. Formally, both work.",
     comprehension: "Comprehension", easyQuestions: "Three easy questions · up to", xpClaimed: "XP already claimed", claim: "Claim", saveCard: "Save flashcard", inDeck: "In your deck",
     completed: "Lesson complete!", sectionPassed: "Section passed!", levelUp: "Level up! You are now",
     hits: "correct", misses: "misses", impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
@@ -3236,6 +3239,11 @@ export default function App() {
   const [doctorIdx, setDoctorIdx] = useState(0);
   const [doctorReveal, setDoctorReveal] = useState(false);
   const [doctorOpen, setDoctorOpen] = useState(false);
+  const [doctorGuess, setDoctorGuess] = useState("");
+  const [doctorTip, setDoctorTip] = useState(false);
+  const [doctorGrade, setDoctorGrade] = useState(null);
+  const [doctorFailed, setDoctorFailed] = useState(false);
+  const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [safeGame, setSafeGame] = useState(null);
   const [jeopardy, setJeopardy] = useState(null);
   const [snakeGame, setSnakeGame] = useState(null);
@@ -4068,6 +4076,7 @@ export default function App() {
     setMatchSel(null); setMatched([]); setMatchWrong(null);
     setSessionXP(0); setCombo(0); setLessonStats({ right: 0, wrong: 0 });
     setShowWhy(false); setFailKind("hearts");
+    setShowWordOrderTip(false);
     setScreen("lesson");
   };
 
@@ -4083,17 +4092,25 @@ export default function App() {
   const check = () => {
     if (!q || status !== "idle") return;
     let r;
+    let tip = false;
     if (q.type === "mc") { if (selected == null) return; r = q.shuffledChoices[selected] === q.answer ? "correct" : "wrong"; }
-    else if (q.type === "order") { if (!placed.length) return; const built = placed.map((id) => q.shuffledWords.find((t) => t.id === id).w).join(" "); r = strip(built) === strip(q.answer) ? "correct" : "wrong"; }
+    else if (q.type === "order") {
+      if (!placed.length) return;
+      const built = placed.map((id) => q.shuffledWords.find((t) => t.id === id).w).join(" ");
+      const g = gradeListedPhrase(built, q);
+      tip = !!g.tip;
+      r = g.status === "wrong" ? "wrong" : "correct";
+    }
     else if (q.type === "match") { return; }
-    else { /* type | listen | transform — prefer the live input so a stray chip cannot grade a leftover tile word */
+    else { /* type | listen | transform — listed equivalents accept before a hard fail */
       const given = typedFromField();
       if (given !== typed) setTyped(given);
       if (!given.trim()) return;
-      const exact = q.answers.some((a) => exactish(a) === exactish(given));
-      const loose = q.answers.some((a) => strip(a) === strip(given));
-      r = exact ? "correct" : loose ? "almost" : "wrong";
+      const g = gradeListedPhrase(given, q);
+      tip = !!g.tip;
+      r = g.status === "wrong" ? "wrong" : g.almost ? "almost" : "correct";
     }
+    setShowWordOrderTip(tip);
     applyResult(r);
   };
 
@@ -4211,6 +4228,7 @@ export default function App() {
     setQi(qi + 1); setStatus("idle"); setSelected(null); setTyped(""); setTypedTileIds([]); setPlaced([]); setPlaceAt(null);
     setMatchSel(null); setMatched([]); setMatchWrong(null); setShowWhy(false);
     setWasTimeout(false); setRayoLeft(null);
+    setShowWordOrderTip(false);
   };
 
   const finishLesson = () => {
@@ -5429,6 +5447,43 @@ export default function App() {
                   <div style={{ border: `2px solid ${D.line}`, borderRadius: 12, padding: "10px 12px", background: D.subtle, fontWeight: 900, fontSize: 16, color: D.ink }}>
                     {item.awkward}
                   </div>
+                  {!doctorReveal && (
+                    <input
+                      data-testid="phrase-doctor-guess"
+                      value={doctorGuess}
+                      onChange={(e) => {
+                        setDoctorGuess(e.target.value);
+                        if (doctorGrade === "wrong") setDoctorGrade(null);
+                      }}
+                      placeholder={uiLang === "en" ? "Your version" : "Tu versión"}
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      aria-invalid={doctorGrade === "wrong"}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        boxSizing: "border-box",
+                        marginTop: 10,
+                        padding: "10px 12px",
+                        fontSize: 16,
+                        fontWeight: 800,
+                        fontFamily: "inherit",
+                        borderRadius: 12,
+                        border: `2px solid ${doctorGrade === "wrong" ? D.red : D.line}`,
+                        background: doctorGrade === "wrong" ? D.badBg : D.subtle,
+                        color: D.ink,
+                      }}
+                    />
+                  )}
+                  {doctorGrade === "wrong" && !doctorReveal && (
+                    <div data-testid="phrase-doctor-fail" style={{ marginTop: 6, fontSize: 12.5, fontWeight: 800, color: D.red }} />
+                  )}
+                  {doctorTip && (
+                    <div data-testid="word-order-tip" className="pop" style={{ marginTop: 10, border: `1.5px solid ${D.gold}`, borderRadius: 11, padding: "8px 10px", background: D.goldBg, fontSize: 12.5, fontWeight: 800, lineHeight: 1.35, color: D.ink }}>
+                      {L.wordOrderTip}
+                    </div>
+                  )}
                   {doctorReveal ? (
                     <div className="pop" style={{ marginTop: 12, display: "grid", gap: 8 }}>
                       {[
@@ -5452,7 +5507,29 @@ export default function App() {
                   )}
                   <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                     <button data-testid="phrase-doctor-fix" onClick={() => {
-                      if (!doctorReveal && lockAward("phrase-doctor")) {
+                      if (doctorReveal) {
+                        setDoctorReveal(false);
+                        return;
+                      }
+                      const g = gradeListedPhrase(doctorGuess, item);
+                      if (doctorGuess.trim() && g.status === "wrong") {
+                        setDoctorGrade("wrong");
+                        setDoctorTip(false);
+                        if (!doctorFailed) {
+                          setDoctorFailed(true);
+                          return;
+                        }
+                        setDoctorReveal(true);
+                        return;
+                      }
+                      if (g.status === "equivalent") {
+                        setDoctorGrade("equivalent");
+                        setDoctorTip(true);
+                      } else {
+                        setDoctorGrade(g.status === "empty" ? null : "correct");
+                        setDoctorTip(false);
+                      }
+                      if (!doctorFailed && lockAward("phrase-doctor")) {
                         const t = todayStr();
                         const y = yesterdayStr();
                         save((prev) => ({
@@ -5462,12 +5539,19 @@ export default function App() {
                           xpToday: prev.lastDay === t ? prev.xpToday || 0 : 0,
                         }));
                       }
-                      setDoctorReveal((v) => !v);
+                      setDoctorReveal(true);
                     }}
                       style={{ flex: 1, border: "none", borderBottom: `4px solid ${doctorReveal ? D.line : D.purpleDark}`, background: doctorReveal ? D.subtle : D.purple, color: doctorReveal ? D.sub : "#fff", borderRadius: 12, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, cursor: "pointer" }}>
                       {doctorReveal ? (uiLang === "en" ? "Hide" : "Ocultar") : (uiLang === "en" ? "Fix it" : "Curarla")}
                     </button>
-                    <button onClick={() => { setDoctorIdx((i) => (i + 1) % PHRASE_DOCTOR.length); setDoctorReveal(false); }}
+                    <button onClick={() => {
+                      setDoctorIdx((i) => (i + 1) % PHRASE_DOCTOR.length);
+                      setDoctorReveal(false);
+                      setDoctorGuess("");
+                      setDoctorTip(false);
+                      setDoctorGrade(null);
+                      setDoctorFailed(false);
+                    }}
                       style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, background: D.card, color: D.ink, borderRadius: 12, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, cursor: "pointer" }}>
                       {uiLang === "en" ? "New" : "Otra"}
                     </button>
@@ -6542,6 +6626,11 @@ export default function App() {
                 </div>
               )}
               <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? D.sub : D.okText }}>
+                {showWordOrderTip && status !== "idle" && status !== "wrong" && (
+                  <div data-testid="word-order-tip" className="pop" style={{ marginBottom: 8, border: `1.5px solid ${D.gold}`, borderRadius: 11, padding: "8px 10px", background: D.goldBg, fontSize: 12.5, fontWeight: 800, lineHeight: 1.35, color: D.ink }}>
+                    {L.wordOrderTip}
+                  </div>
+                )}
                 {status === "correct" && <span><b>{quip}</b> {q.explain}</span>}
 	                {status === "almost" && <span><b>{quip}</b> {L.spelling}: <b>{q.answers?.[0]}</b>. {q.explain}</span>}
                 {status === "wrong" && (() => {
