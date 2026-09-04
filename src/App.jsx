@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
 import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
-import { CONTENT_VERSION, acceptProgress, acceptLive } from "./schema.js";
+import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./schema.js";
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
@@ -3239,7 +3239,7 @@ export default function App() {
   const [snakeGame, setSnakeGame] = useState(null);
   const [matchGame, setMatchGame] = useState(null);
   const [burst, setBurst] = useState(0); // mini confetti trigger
-  const [prog, setProg] = useState({ xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: "es", sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
+  const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: "es", sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
      file-level D constant, so all `D.green` reads inside App pick this up. */
   const theme = prog.theme || "light";
@@ -4690,10 +4690,13 @@ export default function App() {
     let cancelled = false;
     (async () => {
       try {
-        const r = await storage.get(LIVE_KEY);
-        if (!cancelled && r?.value) {
+        const [liveRes, progRes] = await Promise.all([storage.get(LIVE_KEY), storage.get(STORAGE_KEY)]);
+        let progress = null;
+        try { progress = acceptProgress(JSON.parse(progRes?.value || "null")); } catch (e) {}
+        // Leftover andale-v3-live (lesson/done) must not hide first-visit splash.
+        if (!cancelled && !isFirstVisit(progress) && liveRes?.value) {
           let live = null;
-          try { live = JSON.parse(r.value); } catch (e) {}
+          try { live = JSON.parse(liveRes.value); } catch (e) {}
           live = acceptLive(live);
           if (live) applyLive(live);
         }
@@ -4842,7 +4845,7 @@ export default function App() {
   /* ---------------- RENDER ---------------- */
 
   const inLesson = screen !== "home";
-  const splashOpen = !prog.welcomed && !(prog.xp > 0);
+  const splashOpen = isFirstVisit(prog);
   useEffect(() => {
     if (shouldShowSoftPaywall({
       paywallSeen: !!prog.paywallSeen,
@@ -4920,7 +4923,7 @@ export default function App() {
 
       {/* ---------- TOP STAT BAR ---------- */}
       {!inLesson && (
-        <div style={{ position: "sticky", top: 0, zIndex: (!prog.welcomed && !(prog.xp > 0) && screen === "home") ? 70 : 10, background: D.card, borderBottom: `2px solid ${D.line}` }}>
+        <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 10, background: D.card, borderBottom: `2px solid ${D.line}` }}>
           <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
               <LogoMark size={34} />
@@ -6029,7 +6032,7 @@ export default function App() {
       )}
 
       {/* ---------- FIRST-RUN WELCOME ---------- */}
-      {!prog.welcomed && !(prog.xp > 0) && screen === "home" && (
+      {splashOpen && (
         <div data-testid="splash" style={{ position: "fixed", inset: 0, zIndex: 60, background: D.card, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ maxWidth: 380, width: "100%", textAlign: "center" }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>

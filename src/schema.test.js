@@ -5,6 +5,7 @@ import {
   CONTENT_VERSION,
   acceptProgress,
   acceptLive,
+  isFirstVisit,
   screenFromLive,
   currentQuestion,
 } from "./schema.js";
@@ -57,6 +58,13 @@ assert(screenFromLive(homeLive) === "home", "home LIVE stays home");
 const okLesson = { screen: "lesson", session: { questions: [{ type: "mc", prompt: "x" }] }, qi: 0 };
 assert(acceptLive(okLesson) === okLesson, "lesson LIVE with questions[] is kept");
 assert(screenFromLive(okLesson) === "lesson", "valid lesson LIVE may restore");
+assert(isFirstVisit(undefined) === true, "missing progress is first visit");
+assert(isFirstVisit({ welcomed: false, xp: 0 }) === true, "explicit unwelcomed zero-xp is first visit");
+assert(isFirstVisit({ xp: 0 }) === true, "xp 0 without welcomed is first visit");
+assert(isFirstVisit({ welcomed: true, xp: 0 }) === false, "welcomed skip is not first visit");
+assert(isFirstVisit({ xp: 12 }) === false, "xp skips splash even without welcomed");
+assert(screenFromLive(okLesson, { welcomed: false, xp: 0 }) === "home", "first visit LIVE must not steal splash");
+assert(screenFromLive(okLesson, { welcomed: true, xp: 4 }) === "lesson", "returning LIVE still restores");
 
 // Render guard: missing questions cannot white-screen (no throw, q is null).
 let q;

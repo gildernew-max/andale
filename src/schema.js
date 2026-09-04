@@ -18,8 +18,12 @@ export const acceptLive = (parsed) => {
   return parsed;
 };
 
-/** Boot screen after LIVE restore. Rejected / missing / home → stay home. */
-export const screenFromLive = (parsed) => {
+/** First visit: never welcomed and no XP. Splash must show; leftover LIVE must not steal boot. */
+export const isFirstVisit = (prog) => !prog?.welcomed && !(Number(prog?.xp) > 0);
+
+/** Boot screen after LIVE restore. Rejected / missing / home → stay home. First visit stays home. */
+export const screenFromLive = (parsed, prog) => {
+  if (prog != null && isFirstVisit(prog)) return "home";
   const live = acceptLive(parsed);
   if (!live || live.screen === "home") return "home";
   return live.screen;

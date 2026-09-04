@@ -478,6 +478,54 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
   });
 
+  it("first boot with empty storage always shows splash Empezar after hydrate", async () => {
+    localStorage.clear();
+    mockBrowser();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!"));
+    expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico.");
+    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
+    expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
+    // Async load + persist must not dismiss splash on a true first visit.
+    await waitFor(() => {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        expect(saved.welcomed).toBeFalsy();
+        expect(saved.xp > 0).toBeFalsy();
+      }
+      expect(screen.getByTestId("splash")).toBeTruthy();
+      expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
+    });
+    expect(screen.queryByTestId("nav-camino")).toBeTruthy();
+    expect(screen.queryByTestId("home-pitch")).toBeTruthy();
+    expect(screen.getByTestId("splash")).toBeTruthy();
+  });
+
+  it("leftover LIVE lesson does not skip first-visit splash", async () => {
+    localStorage.clear();
+    mockBrowser();
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      session: {
+        title: "Subjuntivo presente",
+        unitId: "subj1",
+        host: "luna",
+        questions: [{ type: "mc", prompt: "x", choices: ["a"], answer: "a", shuffledChoices: ["a"] }],
+      },
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
+    expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico.");
+    expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
+    expect(screen.queryByTestId("lesson-exit")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
+  });
+
   it("Camino home pitch is the splash short lock — long blob gone", async () => {
     const user = await boot();
     await waitFor(() => expect(screen.getByTestId("home-pitch")).toBeTruthy());
