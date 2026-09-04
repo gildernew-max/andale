@@ -7,7 +7,7 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **What changed**
 - First-session / streak-0 Doctora is a short path: cap 4 (`trimDoctoraBeats` / `pickFirstDoctoraBeats` in `doctoraWin.js`). George lock keep 4; later sessions keep all 6 (parked included).
 - Early win checkpoint: first correct (empty Curarla or accepted guess) finishes (`shouldDoctoraEarlyWin`). Win heading reuses Hoy lock: ES `¡Eso!` · EN `That's it.` — not ¡Ganaste!/You won!. No pep.
-- Then existing streak-1 + `Vuelve mañana…` + soft paywall / post-dismiss Doctora handoff. Later Doctora stays on the board after beat 1.
+- Then existing streak-1 + `Vuelve mañana…` + soft paywall / post-dismiss Doctora handoff (`post-dismiss-handoff`, not Hoy-as-hero). Later Doctora stays on the board after beat 1.
 
 **Why**
 - Same ≤60s first-attention rule as first Hoy. If they pick Doctora first, they must win before the wall.

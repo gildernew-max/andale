@@ -1302,9 +1302,18 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
-    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena/);
-    expect(screen.getByTestId("first-door-alt").textContent).toBe("Arreglar una frase");
-    expect(screen.getByTestId("first-door-hero").textContent).not.toMatch(/Phrase Doctor/);
+    const handoff = screen.getByTestId("post-dismiss-handoff");
+    expect(handoff).toBeTruthy();
+    expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
+    expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
+    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Jugar la escena|Continuar|Subjuntivo/);
+    expect(handoff.textContent).not.toMatch(/Phrase Doctor/);
+    expect(screen.queryByTestId("first-door-alt")).toBeNull();
+    expect(screen.getByTestId("hoy-card")).toBeTruthy();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("first-door-tag").textContent).toBe("WIN IN 60 SECONDS"));
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
   });
 
   it("later Doctora does not early-exit after beat 1", async () => {
