@@ -105,19 +105,19 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(honesty.textContent).toBe(copy.honesty);
   expect(dismiss.textContent).toBe(copy.dismiss);
   expect(annual.className).toMatch(/duo-btn/);
-  expect(annual.style.background).toBe("#58CC02");
+  expect(annual.style.background).toMatch(/#58CC02|rgb\(88,\s*204,\s*2\)/i);
   expect(annual.style.border).toBe("none");
   expect(annual.style.borderBottom).toMatch(/4px solid/);
   expect(monthly.className).not.toMatch(/duo-btn/);
   expect(monthly.style.background).toBe("none");
   expect(monthly.style.border).toBe("none");
-  expect(monthly.style.color).toBe("#777777");
+  expect(monthly.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
   const filled = [...screen.getByTestId("soft-paywall").querySelectorAll("button.duo-btn")]
-    .filter((el) => el.style.background !== "#fff");
+    .filter((el) => !/^(#fff|#ffffff|rgb\(255,\s*255,\s*255\))$/i.test(el.style.background));
   expect(filled).toHaveLength(1);
   expect(filled[0]).toBe(annual);
   expect(dismiss.className).toMatch(/duo-btn/);
-  expect(dismiss.style.background).toBe("#fff");
+  expect(dismiss.style.background).toMatch(/#fff|#ffffff|rgb\(255,\s*255,\s*255\)/i);
 };
 
 const openCaminoMore = async (user) => {
