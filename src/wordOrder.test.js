@@ -27,7 +27,15 @@ assert(primary.status === "correct" && primary.tip === false, "primary listed or
 const alt = gradeListedPhrase("Salimos aunque llueve", wordOrderItem);
 assert(alt.status === "equivalent", "listed alternate order is equivalent, not wrong");
 assert(alt.tip === true, "listed alternate order shows the tip");
-assert(alt.status !== "wrong", "equivalent accepts BEFORE a hard fail");
+assert(alt.status !== "wrong", "equivalent accepts / soft-credits AFTER the miss, not a hard fail");
+const formalRegister = {
+  natural: "Le agradezco de antemano su atención.",
+  formal: "De antemano le agradezco su atención.",
+  answers: ["Le agradezco de antemano su atención.", "De antemano le agradezco su atención."],
+};
+const formalAlt = gradeListedPhrase("De antemano le agradezco su atención.", formalRegister);
+assert(formalAlt.status === "equivalent" && formalAlt.tip === true, "formal/register listed order variant is soft-credit + tip");
+assert(formalAlt.status !== "wrong", "formal/register listed variant is not a hard fail");
 
 const punct = gradeListedPhrase("salimos aunque llueve.", wordOrderItem);
 assert(punct.status === "equivalent" && punct.tip === true, "punctuation still matches listed alternate");
