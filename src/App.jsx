@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, shouldShowSoftPaywall, showComeBackTomorrow, showDoorMetaChrome, streakAfterWin } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showComeBackTomorrow, showDoorMetaChrome, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isFirstHoySession, shouldHoyEarlyWin, trimHoyBeats } from "./hoyWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 
@@ -3237,6 +3237,7 @@ export default function App() {
   }, []);
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
+  const [paywallArmed, setPaywallArmed] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
@@ -4897,23 +4898,45 @@ export default function App() {
 
   const inLesson = screen !== "home";
   const splashOpen = isFirstVisit(prog);
+  const showSoftPaywall = softPaywall && !prog.paywallSeen && !splashOpen;
   useEffect(() => {
-    if (shouldShowSoftPaywall({
-      paywallSeen: !!prog.paywallSeen,
-      todaySceneDone,
-      streak: prog.streak,
-      lastDay: prog.lastDay,
-      today: todayKey,
-      screen,
-      splash: splashOpen,
-    })) setSoftPaywall(true);
-    else if (prog.paywallSeen) setSoftPaywall(false);
-  }, [prog.paywallSeen, prog.streak, prog.lastDay, todaySceneDone, todayKey, screen, splashOpen]);
-  const dismissSoftPaywall = (plan) => {
+    if (prog.paywallSeen) setSoftPaywall(false);
+  }, [prog.paywallSeen]);
+  useEffect(() => {
+    if (!showSoftPaywall) {
+      setPaywallArmed(false);
+      return undefined;
+    }
+    const arm = setTimeout(() => setPaywallArmed(true), 400);
+    return () => clearTimeout(arm);
+  }, [showSoftPaywall]);
+  const dismissSoftPaywall = (plan, { fromBackdrop } = {}) => {
+    if (fromBackdrop && !paywallArmed) return;
     setSoftPaywall(false);
+    setPaywallArmed(false);
     save(plan
       ? { paywallSeen: true, unlockedPrem: true, paywallPlan: plan }
       : { paywallSeen: true });
+  };
+  const continueFromWin = () => {
+    const t = todayStr();
+    const firstHoyWin = !!session?.firstHoy;
+    if (firstHoyWin) {
+      save((prev) => progressAfterWinContinue(prev, {
+        today: t,
+        todaySceneId: todaySceneIdFromSession(session),
+      }));
+    }
+    setScreen("home");
+    setTab("camino");
+    if (shouldShowSoftPaywall({
+      paywallSeen: !!prog.paywallSeen,
+      streak: firstHoyWin ? Math.max(Number(prog.streak) || 0, 1) : prog.streak,
+      lastDay: firstHoyWin ? t : prog.lastDay,
+      today: t,
+      splash: splashOpen,
+      fromFirstWin: firstHoyWin,
+    })) setSoftPaywall(true);
   };
 
   return (
@@ -5581,12 +5604,22 @@ export default function App() {
                       if (!doctorFailed && lockAward("phrase-doctor")) {
                         const t = todayStr();
                         const y = yesterdayStr();
+                        const nextStreak = streakAfterWin(prog, t, y);
+                        const firstDoctorWin = shouldShowSoftPaywall({
+                          paywallSeen: !!prog.paywallSeen,
+                          streak: nextStreak,
+                          lastDay: t,
+                          today: t,
+                          splash: splashOpen,
+                          fromFirstWin: prog.lastDay !== t,
+                        });
                         save((prev) => ({
                           ...prev,
                           streak: streakAfterWin(prev, t, y),
                           lastDay: t,
                           xpToday: prev.lastDay === t ? prev.xpToday || 0 : 0,
                         }));
+                        if (firstDoctorWin) setSoftPaywall(true);
                       }
                       setDoctorReveal(true);
                     }}
@@ -6239,8 +6272,8 @@ export default function App() {
       )}
 
       {/* ---------- SOFT PAYWALL (after first win + vuelve; $0, no IAP) ---------- */}
-      {softPaywall && (
-        <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall()}>
+      {showSoftPaywall && (
+        <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
           <div className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center" }}>
             <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 19, marginBottom: 6 }}>{L.paywallHeadline}</div>
             <div data-testid="soft-paywall-body" style={{ fontWeight: 800, fontSize: 13.5, color: D.sub, marginBottom: 16, lineHeight: 1.45 }}>{L.paywallBody}</div>
@@ -7473,7 +7506,7 @@ export default function App() {
           </div>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
-	            <Btn onClick={() => { setScreen("home"); setTab("camino"); }}>{L.continue}</Btn>
+	            <Btn data-testid={session.firstHoy ? "hoy-win-continue" : undefined} onClick={continueFromWin}>{L.continue}</Btn>
           </div>
 
           {/* one-time Quick Practice discoverability tip */}

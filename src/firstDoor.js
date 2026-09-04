@@ -56,6 +56,30 @@ export function showComeBackTomorrow({ todaySceneDone, streak, lastDay, today } 
   return (Number(streak) || 0) >= 1 && lastDay === today;
 }
 
+/** Hoy session id from live session — unitId `_today:{id}` if todaySceneId was dropped. */
+export function todaySceneIdFromSession(session) {
+  if (session?.todaySceneId) return session.todaySceneId;
+  const id = String(session?.unitId || "");
+  return id.startsWith("_today:") ? id.slice("_today:".length) : "";
+}
+
+/**
+ * CONTINUE after a win must land on home with come-back/streak-today true.
+ * Does not stamp paywallSeen — that only happens after the modal is shown.
+ */
+export function progressAfterWinContinue(prev = {}, { today, todaySceneId } = {}) {
+  const missions = { ...(prev.missions || {}) };
+  if (today && todaySceneId && !missions[`scene-${today}`]) {
+    missions[`scene-${today}`] = todaySceneId;
+  }
+  return {
+    ...prev,
+    missions,
+    streak: Math.max(Number(prev.streak) || 0, 1),
+    lastDay: today || prev.lastDay || null,
+  };
+}
+
 /** Meta / Rayo / four-coach strip after first win. Same streak ≥ 1 gate as teaser/paywall. */
 export function showDoorMetaChrome({ streak } = {}) {
   return (Number(streak) || 0) >= 1;
@@ -69,20 +93,19 @@ export function streakAfterWin(prev = {}, today, yesterday) {
 }
 
 /**
- * Soft paywall once after first win: showComeBackTomorrow && !paywallSeen && !splash.
- * Hook waits for home so Hoy celebration is first; Phrase Doctor Curarla has no done screen.
+ * First streak-1 win only (Hoy CONTINUE after ¡Eso! or Phrase Doctor Curarla).
+ * Once. Not idle home. Not every later Hoy.
  */
 export function shouldShowSoftPaywall({
   paywallSeen,
-  todaySceneDone,
   streak,
   lastDay,
   today,
-  screen = "home",
   splash = false,
+  fromFirstWin = false,
 } = {}) {
   if (paywallSeen) return false;
   if (splash) return false;
-  if (screen !== "home") return false;
-  return showComeBackTomorrow({ todaySceneDone, streak, lastDay, today });
+  if (!fromFirstWin) return false;
+  return (Number(streak) || 0) === 1 && lastDay === today;
 }

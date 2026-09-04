@@ -9,10 +9,12 @@ import {
   hoySceneForDay,
   hoyTitleForLang,
   nextDayKey,
+  progressAfterWinContinue,
   shouldShowSoftPaywall,
   showComeBackTomorrow,
   showDoorMetaChrome,
   streakAfterWin,
+  todaySceneIdFromSession,
 } from "./firstDoor.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
@@ -40,13 +42,42 @@ assert(!showDoorMetaChrome({ streak: null }), "null streak hides door meta chrom
 assert(showDoorMetaChrome({ streak: 1 }), "streak 1 shows Meta / Rayo / coaches");
 assert(showDoorMetaChrome({ streak: 4 }), "streak above 1 keeps door meta chrome");
 
-const firstWinHome = { todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04", screen: "home", splash: false };
-assert(shouldShowSoftPaywall(firstWinHome), "first win on home shows paywall after vuelve");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, splash: true }), "paywall never on splash");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, screen: "done" }), "paywall waits until after celebration");
-assert(shouldShowSoftPaywall(firstWinHome), "Phrase Doctor Curarla (home, no done screen) can fire the gate");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, streak: 0, lastDay: null }), "paywall never before a win");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, paywallSeen: true }), "seen flag stops the loop");
+const firstWinHome = { streak: 1, lastDay: "2026-09-04", today: "2026-09-04", splash: false };
+assert(!shouldShowSoftPaywall(firstWinHome), "idle home does not open paywall");
+assert(shouldShowSoftPaywall({ ...firstWinHome, fromFirstWin: true }), "first streak-1 Hoy CONTINUE / Curarla opens paywall");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, fromFirstWin: true, splash: true }), "paywall never on splash");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, fromFirstWin: true, streak: 2 }), "not every later Hoy win");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, fromFirstWin: true, streak: 0, lastDay: null }), "paywall never before a win");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, fromFirstWin: true, paywallSeen: true }), "seen flag stops the loop");
+
+assert(todaySceneIdFromSession({ todaySceneId: "taqueria" }) === "taqueria", "session todaySceneId wins");
+assert(todaySceneIdFromSession({ unitId: "_today:landlord" }) === "landlord", "unitId _today: recovers scene");
+assert(todaySceneIdFromSession({ unitId: "subj1" }) === "", "grammar unit is not a Hoy scene");
+assert(todaySceneIdFromSession({}) === "", "empty session has no Hoy scene");
+
+const stamped = progressAfterWinContinue({ streak: 0, lastDay: null, missions: {} }, { today: "2026-09-04", todaySceneId: "taqueria" });
+assert(stamped.streak === 1, "CONTINUE stamps streak 1");
+assert(stamped.lastDay === "2026-09-04", "CONTINUE stamps lastDay today");
+assert(stamped.missions["scene-2026-09-04"] === "taqueria", "CONTINUE stamps today's Hoy scene");
+assert(stamped.paywallSeen == null, "CONTINUE never stamps paywallSeen");
+assert(showComeBackTomorrow({
+  todaySceneDone: !!stamped.missions["scene-2026-09-04"],
+  streak: stamped.streak,
+  lastDay: stamped.lastDay,
+  today: "2026-09-04",
+}), "CONTINUE lands with Fh come-back true");
+assert(shouldShowSoftPaywall({
+  ...stamped,
+  today: "2026-09-04",
+  fromFirstWin: true,
+  splash: false,
+}), "first-win CONTINUE opens paywall once");
+assert(!shouldShowSoftPaywall({
+  ...stamped,
+  today: "2026-09-04",
+  fromFirstWin: false,
+  splash: false,
+}), "same flags on idle home do not reopen");
 
 const HOY_TITLES = [
   { title: "Noche de faroles", titleEn: "Night of lanterns" },
