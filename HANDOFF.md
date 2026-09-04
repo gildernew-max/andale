@@ -8,6 +8,7 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 - Once after first soft-paywall free dismiss (`Seguir gratis` / `Continue free for now`): iOS Safari A2HS sheet. Persist `a2hsSeen`. Never a second paywall.
 - Copy lock: ES `Agrega Ándale a tu pantalla de inicio` / `Toca Compartir, luego «Agregar a pantalla de inicio».` / `Ahora no`. EN `Add Ándale to your Home Screen` / `Tap Share, then Add to Home Screen.` / `Not now`.
 - Skip standalone / already installed / non-iOS Safari. Shown or dismissed → never again.
+- iPadOS Safari desktop mode counts: Macintosh UA / `MacIntel` plus `maxTouchPoints > 1`. Tokenized iPhone/iPad UA stays. Real Mac Safari (no touch) stays skipped.
 - Sequence: free dismiss → paywall closes → post-dismiss Doctora handoff as today → A2HS overlay on that same home if eligible. Overlay does not wipe `postDismissHandoff`. Price-plan dismiss has no A2HS.
 - Tests: once-only, copy locks, skip non-eligible. Door / paywall honesty / handoff / Day-2 / Hoy+Doctora ≤60s / teaser / Más / enroll / IAP untouched.
 
