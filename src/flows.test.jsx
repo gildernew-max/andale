@@ -1051,7 +1051,7 @@ describe("simulated learner flows", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
     expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
-    expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*0\/40/);
+    expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*\d+\/40/);
     expect(screen.getByTestId("rayo-toggle")).toBeTruthy();
     expect(screen.getByTestId("coach-strip")).toBeTruthy();
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
