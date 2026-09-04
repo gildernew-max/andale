@@ -134,8 +134,8 @@ describe("simulated learner flows", () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-camino"));
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
-    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene|Doctora de frases|Phrase Doctor/);
-    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue/);
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene|Arreglar una frase|Fix a phrase/);
+    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue|Subjuntivo/);
 
     await user.click(screen.getByTestId("nav-misiones"));
     expect(screen.getByRole("heading", { name: /Misiones/ })).toBeTruthy();
@@ -535,17 +535,21 @@ describe("simulated learner flows", () => {
   });
 
   it("first-door hero is Hoy or Phrase Doctor, not Subjuntivo Continuar", async () => {
-    await boot();
+    const user = await boot();
     const hero = screen.getByTestId("hero-cta");
-    expect(hero.textContent).toMatch(/Jugar la escena|Play the scene|Doctora de frases|Phrase Doctor/);
-    expect(hero.textContent).not.toMatch(/Continuar|Continue|Subjuntivo/);
+    expect(hero.textContent).toMatch(/Jugar la escena/);
+    expect(hero.textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Phrase Doctor/);
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
     expect(screen.getByRole("button", { name: "Subjuntivo presente" })).toBeTruthy();
     expect(screen.getByTestId("path-entry").textContent).toMatch(/EMPIEZA|START/);
     expect(screen.getByTestId("hoy-card")).toBeTruthy();
-    expect(screen.getByTestId("first-door-alt").textContent).toMatch(/Doctora de frases|Phrase Doctor/);
+    expect(screen.getByTestId("first-door-alt").textContent).toBe("Arreglar una frase");
+    expect(screen.getByTestId("first-door-alt").textContent).not.toMatch(/Phrase Doctor/);
     expect(screen.getByTestId("streak").textContent).toMatch(/0/);
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("hero-cta").textContent).toMatch(/Play the scene/));
+    expect(screen.getByTestId("first-door-alt").textContent).toBe("Fix a phrase");
   });
 
   it("first win shows streak 1 and the vuelve mañana home line", async () => {
@@ -596,10 +600,16 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
     expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("vuelve mañana por la siguiente escena");
-    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Doctora de frases|Phrase Doctor/);
-    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Subjuntivo/);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Vuelve mañana por la siguiente escena.");
+    expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
+    expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
+    expect(screen.getByTestId("first-door-hero").textContent).not.toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Subjuntivo|Phrase Doctor/);
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Come back tomorrow for the next scene"));
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Come back tomorrow for the next scene."));
+    expect(screen.getByTestId("first-door-tag").textContent).toBe("WIN IN 60 SECONDS");
+    expect(screen.getByTestId("first-door-title").textContent).toBe("Phrase Doctor");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
   });
 });

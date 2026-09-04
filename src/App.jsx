@@ -2955,7 +2955,11 @@ const UI = {
     hits: "aciertos", misses: "fallos", impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
     testFailed: "Examen no superado", testFailedDesc: "Tres errores — el límite era dos. Tus fallos ya están en Práctica; repásalos y vuelve a intentarlo.",
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
-    comeBackTomorrow: "vuelve mañana por la siguiente escena",
+    comeBackTomorrow: "Vuelve mañana por la siguiente escena.",
+    playScene: "Jugar la escena",
+    phraseDoctor: "Doctora de frases",
+    phraseDoctorTag: "GANA EN 60 SEGUNDOS",
+    phraseDoctorCta: "Arreglar una frase",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -2990,7 +2994,11 @@ const UI = {
     hits: "correct", misses: "misses", impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
     testFailed: "Test not passed", testFailedDesc: "Three mistakes — the limit was two. Your misses are in Review; revisit them and try again.",
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
-    comeBackTomorrow: "Come back tomorrow for the next scene",
+    comeBackTomorrow: "Come back tomorrow for the next scene.",
+    playScene: "Play the scene",
+    phraseDoctor: "Phrase Doctor",
+    phraseDoctorTag: "WIN IN 60 SECONDS",
+    phraseDoctorCta: "Fix a phrase",
   },
 };
 
@@ -4984,7 +4992,7 @@ export default function App() {
                     <button data-testid={asHero ? "hero-cta" : undefined} onClick={() => !todaySceneDone && startTodayScene(todayScene)} disabled={todaySceneDone}
                       style={{ width: "100%", border: "none", borderBottom: `4px solid ${todaySceneDone ? D.line : todayScene.dark}`, background: todaySceneDone ? D.subtle : todayScene.color, color: todaySceneDone ? D.sub : "#fff", borderRadius: 13, padding: "11px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 14.5, cursor: todaySceneDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                       <IcBolt size={18} color={todaySceneDone ? D.sub : "#fff"} />
-                      {todaySceneDone ? (uiLang === "en" ? "Scene cleared" : "Escena superada") : (uiLang === "en" ? "Play the scene" : "Jugar la escena")}
+                      {todaySceneDone ? (uiLang === "en" ? "Scene cleared" : "Escena superada") : L.playScene}
                     </button>
                   </div>
                 </div>
@@ -4998,14 +5006,13 @@ export default function App() {
                       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                         <div style={{ flexShrink: 0 }}><CoachPortrait id="valeria" mood="happy" size={68} /></div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", opacity: .85 }}>{uiLang === "en" ? "PHRASE DOCTOR" : "DOCTORA DE FRASES"}</div>
-                          <div style={{ fontWeight: 900, fontSize: 19, lineHeight: 1.2, marginTop: 2 }}>{uiLang === "en" ? "Phrase Doctor" : "Doctora de frases"}</div>
-                          <div style={{ fontSize: 12.5, fontWeight: 700, opacity: .9, marginTop: 2, lineHeight: 1.3 }}>{uiLang === "en" ? "Valeria fixes translation-shaped Spanish." : "Valeria corrige español con forma de traducción."}</div>
+                          <div data-testid="first-door-tag" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", opacity: .85 }}>{L.phraseDoctorTag}</div>
+                          <div data-testid="first-door-title" style={{ fontWeight: 900, fontSize: 19, lineHeight: 1.2, marginTop: 2 }}>{L.phraseDoctor}</div>
                         </div>
                       </div>
                       <button data-testid="hero-cta" onClick={openDoctor}
                         style={{ display: "block", width: "100%", marginTop: 14, background: "#fff", color: D.purpleDark, border: "none", borderBottom: "4px solid rgba(0,0,0,.15)", borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 900, fontSize: 16, cursor: "pointer", letterSpacing: ".01em" }}>
-                        {uiLang === "en" ? "Phrase Doctor" : "Doctora de frases"} →
+                        {L.phraseDoctorCta} →
                       </button>
                     </div>
                   )}
@@ -5036,7 +5043,7 @@ export default function App() {
                 {doorKind === FIRST_DOOR_HOY && (
                   <button data-testid="first-door-alt" onClick={openDoctor}
                     style={{ display: "block", width: "100%", marginTop: 8, background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
-                    {uiLang === "en" ? "Phrase Doctor" : "Doctora de frases"}
+                    {L.phraseDoctorCta}
                   </button>
                 )}
                 {doorKind !== FIRST_DOOR_HOY && renderHoyCard(false)}
