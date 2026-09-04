@@ -871,8 +871,10 @@ const sm2 = (it, q) => {
   return { ef, reps, interval, due: Date.now() + interval * DAY };
 };
 const GRADUATE_DAYS = 60; // interval beyond this = mastered, drop from rotation
-const LEVELS = [[0, "Principiante"], [100, "Turista"], [250, "Estudiante"], [500, "Vecino"], [900, "Cuate"], [1400, "Chilango honorario"], [2000, "Charlador"], [2800, "Abogado bilingüe"], [3800, "Casi nativo"], [5000, "Políglota"]];
+const DEFAULT_UI_LANG = "en";
+const LEVELS = [[0, "Intermedio"], [100, "Turista"], [250, "Estudiante"], [500, "Vecino"], [900, "Cuate"], [1400, "Chilango honorario"], [2000, "Charlador"], [2800, "Abogado bilingüe"], [3800, "Casi nativo"], [5000, "Políglota"]];
 const levelOf = (xp) => { let i = 0; while (i < LEVELS.length - 1 && xp >= LEVELS[i + 1][0]) i++; return { idx: i, name: LEVELS[i][1], cur: LEVELS[i][0], next: LEVELS[i + 1] ? LEVELS[i + 1][0] : null }; };
+const levelLabel = (name, lang) => (lang === "en" && name === "Intermedio" ? "Intermediate" : name);
 const RAYO_SECS = { mc: 8, type: 15, transform: 25, order: 20, listen: 30, match: 60 };
 const ACCENTS = ["á", "é", "í", "ó", "ú", "ñ", "ü", "¿", "¡"];
 const answerTokens = (text) => String(text || "").trim().split(/\s+/).filter(Boolean);
@@ -3250,7 +3252,7 @@ export default function App() {
   const [snakeGame, setSnakeGame] = useState(null);
   const [matchGame, setMatchGame] = useState(null);
   const [burst, setBurst] = useState(0); // mini confetti trigger
-  const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: "es", sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
+  const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
      file-level D constant, so all `D.green` reads inside App pick this up. */
   const theme = prog.theme || "light";
@@ -3292,6 +3294,8 @@ export default function App() {
 	    let loaded = null;
 	    setProg((base) => {
 	      let merged = { ...base, ...(p || {}), contentVersion: CONTENT_VERSION };
+	      // First visit keeps DEFAULT_UI_LANG (EN). Returning saves without uiLang stay ES.
+	      if (p && p.uiLang !== "en" && p.uiLang !== "es") merged = { ...merged, uiLang: "es" };
 	      if (merged.mistakes?.length && !Object.keys(merged.srs || {}).length) {
 	        const srs = {};
 	        merged.mistakes.forEach((m) => { srs[`${m.u}|${m.i}`] = { ef: 2.5, reps: 0, interval: 0, due: Date.now() }; });
@@ -5819,7 +5823,7 @@ export default function App() {
           </div>
           {showLevelTheater && <div data-testid="level-theater" style={{ border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 16, padding: "14px 18px", marginBottom: 14, background: D.goldBg }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={{ fontWeight: 900, fontSize: 18, color: D.goldDark }}>{lvl.name}</span>
+              <span style={{ fontWeight: 900, fontSize: 18, color: D.goldDark }}>{levelLabel(lvl.name, uiLang)}</span>
 	              <span style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{L.level} {lvl.idx + 1}/{LEVELS.length}</span>
             </div>
             {lvl.next != null ? (
@@ -5827,7 +5831,7 @@ export default function App() {
                 <div style={{ height: 10, background: D.trackWarm, borderRadius: 99, overflow: "hidden", margin: "8px 0 4px" }}>
                   <div style={{ width: `${Math.round(((prog.xp || 0) - lvl.cur) / (lvl.next - lvl.cur) * 100)}%`, height: "100%", background: D.gold }} />
                 </div>
-	                <div style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{lvl.next - (prog.xp || 0)} {L.xpTo} «{LEVELS[lvl.idx + 1][1]}»</div>
+	                <div style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{lvl.next - (prog.xp || 0)} {L.xpTo} «{levelLabel(LEVELS[lvl.idx + 1][1], uiLang)}»</div>
               </>
             ) : (
 	              <div style={{ fontSize: 12, fontWeight: 800, color: D.sub, marginTop: 4 }}>{L.maxLevel}</div>
@@ -7413,7 +7417,7 @@ export default function App() {
           </h2>
           {levelUp && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", margin: "4px 0 8px", fontWeight: 900, color: D.goldDark }}>
-	              <IcBolt size={18} /> {L.levelUp} <span style={{ textTransform: "uppercase", letterSpacing: ".03em" }}>{levelUp}</span>
+	              <IcBolt size={18} /> {L.levelUp} <span style={{ textTransform: "uppercase", letterSpacing: ".03em" }}>{levelLabel(levelUp, uiLang)}</span>
             </div>
           )}
           <p style={{ color: D.sub, fontWeight: 700 }}>

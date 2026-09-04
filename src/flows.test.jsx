@@ -434,16 +434,20 @@ describe("simulated learner flows", () => {
     expect(screen.getByText("¡ándale!")).toBeTruthy();
     expect(screen.getByTestId("lang-es").textContent).toBe("ES");
     expect(screen.getByTestId("lang-en").textContent).toBe("EN");
+    expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
     expect([...document.querySelectorAll("button")].filter((b) =>
       b.textContent === "Español" || b.textContent === "English")).toHaveLength(0);
     await waitFor(() => expect(localStorage.getItem(STORAGE_KEY)).toBeTruthy());
-    await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText("What should we call you?")).toBeTruthy();
-      expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
-    });
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
+    expect(screen.getByPlaceholderText("What should we call you?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Start!" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("¿Cómo te llamamos?")).toBeTruthy();
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("es");
+    });
+    expect(screen.getByRole("button", { name: "¡Empezar!" })).toBeTruthy();
   });
 
   it("splash locks exact line + one primary CTA, no equal Saltar, axolotl hero", async () => {
@@ -452,23 +456,7 @@ describe("simulated learner flows", () => {
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
-    expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico.");
-    expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
-    expect(screen.queryByTestId("splash-skip")).toBeNull();
-    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
-    expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
-    expect(screen.getByTestId("splash-actions").textContent.trim()).toBe("¡Empezar!");
-    expect(screen.getByTestId("splash").textContent).not.toMatch(/¡Empezar! ?Saltar/);
-    expect(screen.getByTestId("splash").textContent).not.toMatch(/Saltar/);
-    expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
-    expect(screen.getByTestId("splash").querySelector("img[src*='sma-']")).toBeNull();
-    expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
-    expect(screen.getByTestId("splash").textContent).not.toMatch(/Orden distinto|Different order, same meaning/);
-    expect(screen.queryByTestId("word-order-tip")).toBeNull();
-    expect(screen.queryByRole("button", { name: /Let's go!/ })).toBeNull();
-
-    await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics."));
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
     expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
     expect(screen.queryByTestId("splash-skip")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
@@ -477,16 +465,34 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Start! ?Skip/);
     expect(screen.getByTestId("splash").textContent).not.toMatch(/\bSkip\b/);
     expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
+    expect(screen.getByTestId("splash").querySelector("img[src*='sma-']")).toBeNull();
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/Orden distinto|Different order, same meaning/);
+    expect(screen.queryByTestId("word-order-tip")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Let's go!/ })).toBeNull();
+
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico."));
+    expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
+    expect(screen.queryByTestId("splash-skip")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
+    expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
+    expect(screen.getByTestId("splash-actions").textContent.trim()).toBe("¡Empezar!");
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/¡Empezar! ?Saltar/);
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/Saltar/);
+    expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
+    expect(screen.getByTestId("splash").textContent).not.toMatch(/Orden distinto|Different order, same meaning/);
+    expect(screen.queryByTestId("word-order-tip")).toBeNull();
   });
 
-  it("first boot with empty storage always shows splash Empezar after hydrate", async () => {
+  it("first boot with empty storage always shows splash Start after hydrate", async () => {
     localStorage.clear();
     mockBrowser();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
-    await waitFor(() => expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!"));
-    expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico.");
+    await waitFor(() => expect(screen.getByTestId("splash-start").textContent).toBe("Start!"));
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
     expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
     // Async load + persist must not dismiss splash on a true first visit.
@@ -496,9 +502,10 @@ describe("simulated learner flows", () => {
         const saved = JSON.parse(raw);
         expect(saved.welcomed).toBeFalsy();
         expect(saved.xp > 0).toBeFalsy();
+        expect(saved.uiLang).toBe("en");
       }
       expect(screen.getByTestId("splash")).toBeTruthy();
-      expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
+      expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
     });
     expect(screen.queryByTestId("nav-camino")).toBeTruthy();
     expect(screen.queryByTestId("home-pitch")).toBeTruthy();
@@ -522,8 +529,8 @@ describe("simulated learner flows", () => {
     }));
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
-    expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico.");
-    expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
+    expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
     expect(screen.queryByTestId("lesson-exit")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
   });
@@ -595,7 +602,7 @@ describe("simulated learner flows", () => {
     expect(`${city} ${title}`).not.toMatch(/parroquia/i);
   });
 
-  it("buries Principiante, empty weakness map, and Atajos until earned", async () => {
+  it("buries empty level theater, weakness map, and Atajos until earned", async () => {
     localStorage.clear();
     mockBrowser();
     const user = userEvent.setup();
@@ -606,10 +613,14 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("atajos")).toBeNull();
     expect(document.body.textContent).not.toMatch(/Atajos: 1–4/);
     expect(screen.queryByText("Principiante")).toBeNull();
+    expect(screen.queryByText("Intermedio")).toBeNull();
+    expect(screen.queryByText("Intermediate")).toBeNull();
 
     await user.click(screen.getByTestId("nav-perfil"));
     expect(screen.queryByTestId("level-theater")).toBeNull();
     expect(screen.queryByText("Principiante")).toBeNull();
+    expect(screen.queryByText("Intermedio")).toBeNull();
+    expect(screen.queryByText("Intermediate")).toBeNull();
 
     await user.click(screen.getByTestId("nav-practica"));
     expect(screen.queryByTestId("weakness-map")).toBeNull();
@@ -626,10 +637,48 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
     expect(screen.getByTestId("atajos").textContent).toMatch(/Atajos: 1–4/);
     await userEvent.setup().click(screen.getByTestId("nav-perfil"));
-    expect(screen.getByTestId("level-theater").textContent).toMatch(/Principiante/);
+    expect(screen.getByTestId("level-theater").textContent).toMatch(/Intermedio/);
+    expect(screen.getByTestId("level-theater").textContent).not.toMatch(/Principiante|beginner/i);
     await userEvent.setup().click(screen.getByTestId("nav-practica"));
     expect(screen.getByTestId("weakness-map")).toBeTruthy();
     expect(screen.getByText("Mapa de debilidades")).toBeTruthy();
+  });
+
+  it("Perfil level is Intermedio / Intermediate, never Principiante or beginner", async () => {
+    seedProgress({ xp: 50, streak: 1, done: { subj1: 1 } });
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-perfil"));
+    const theater = screen.getByTestId("level-theater");
+    expect(theater.textContent).toMatch(/Intermedio/);
+    expect(theater.textContent).not.toMatch(/Principiante|beginner/i);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("level-theater").textContent).toMatch(/Intermediate/));
+    expect(screen.getByTestId("level-theater").textContent).not.toMatch(/Principiante|beginner/i);
+    expect(screen.getByTestId("level-theater").textContent).not.toMatch(/Intermedio/);
+  });
+
+  it("cold-open defaults uiLang EN; user can flip ES; skill chips stay Spanish", async () => {
+    localStorage.clear();
+    mockBrowser();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
+    expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByTestId("lang-es").getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
+    expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
+    });
+    await user.click(screen.getByTestId("splash-start"));
+    await waitFor(() => expect(screen.queryByTestId("splash")).toBeNull());
+    expect(screen.getByRole("button", { name: /Subjuntivo presente/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Pretérito vs\. imperfecto/ })).toBeTruthy();
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("lang-es").getAttribute("aria-pressed")).toBe("true"));
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).uiLang).toBe("es");
+    expect(screen.getByRole("button", { name: /Subjuntivo presente/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Pretérito vs\. imperfecto/ })).toBeTruthy();
   });
 
   it("Práctica Smart Practice ES uses locked ronda, not sprint or tanda", async () => {
