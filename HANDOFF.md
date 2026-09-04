@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (ES sprint → tanda)
+
+**What changed**
+- ES Práctica Smart Practice chrome: `Empezar tanda de 5 — sin vidas` and `Elegido como tu siguiente tanda útil.` EN stays `sprint` (`Start 5-item sprint — no hearts` / `Chosen as your next useful sprint.`).
+- Soft leftover-English scan: no other clear ungated ES chrome holes. JEOPARDY SOLO and Rayo ON/OFF stay. Coach stays the existing loan.
+- Tests lock the new ES strings in content + live Práctica. First door, streak-1, vuelve mañana, Hoy still, theater gates, Práctica fold, Subjuntivo/Empieza, enroll untouched.
+
+**Why**
+- Mon 9/8 polish slice starting Thu night. Sprint is an English loan on ES Práctica; tanda matches brand. Soft chrome only.
+
 ## 2026-09-03 (George + No face first-door copy lock)
 
 **What changed**

@@ -515,6 +515,24 @@ describe("simulated learner flows", () => {
     expect(screen.getByText("Mapa de debilidades")).toBeTruthy();
   });
 
+  it("Práctica Smart Practice ES uses tanda, not sprint", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    const cta = screen.getByTestId("smart-practice-cta");
+    const reason = screen.getByTestId("smart-practice-reason");
+    expect(cta.textContent).toBe("Empezar tanda de 5 — sin vidas");
+    expect(cta.textContent).not.toMatch(/sprint/i);
+    expect(reason.textContent).toBe("Elegido como tu siguiente tanda útil.");
+    expect(reason.textContent).not.toMatch(/sprint/i);
+    expect(document.body.textContent).toMatch(/PRÁCTICA INTELIGENTE/);
+    expect(screen.getByRole("button", { name: /Rayo/ }).textContent).toMatch(/OFF/);
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("smart-practice-cta").textContent).toBe("Start 5-item sprint — no hearts"));
+    expect(screen.getByTestId("smart-practice-reason").textContent).toBe("Chosen as your next useful sprint.");
+    expect(document.body.textContent).toMatch(/SMART PRACTICE/);
+  });
+
   it("Práctica fold leads with Phrase Doctor, Safe-or-Risky, and Emparejar", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-practica"));

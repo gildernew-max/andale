@@ -317,6 +317,12 @@ assert(UI.es.shortcuts === "Luna, Don Rafa, Valeria y Diego te acompañan. Atajo
 assert(UI.es.on === "ON" && UI.es.off === "OFF", "Rayo stays ON/OFF, not SÍ/NO");
 assert(UI.es.on !== "SÍ" && UI.es.off !== "NO", "Rayo on/off is not SÍ/NO");
 assert(!/Flashcards|DIÁLOGO DUEL|Deck terminado/.test([UI.es.cards, UI.es.flashTitle, UI.es.dialogueDuel, UI.es.duel, UI.es.saveCard, UI.es.emptyDeck, UI.es.flashDone].join("\n")), "ES chrome leftover English");
+assert(appSrc.includes("Empezar tanda de 5 — sin vidas"), "ES Smart Practice CTA is tanda");
+assert(appSrc.includes("Elegido como tu siguiente tanda útil."), "ES Smart Practice reason is tanda");
+assert(appSrc.includes("Start 5-item sprint — no hearts"), "EN Smart Practice CTA stays sprint");
+assert(appSrc.includes("Chosen as your next useful sprint."), "EN Smart Practice reason stays sprint");
+assert(!/Empezar sprint de 5/.test(appSrc), "ES CTA is not Empezar sprint");
+assert(!/siguiente sprint útil/.test(appSrc), "ES reason is not siguiente sprint útil");
 
 const qCount = UNITS.reduce((n, u) => n + u.questions.length, 0);
 console.log(`ok: content schema — ${UNITS.length} units / ${qCount} questions after prepQuestion; ${SECTIONS.length} sections; FLAT ${FLAT.length}; ${STORIES.length} stories (story-0); ${MISSIONS.length} missions; ${TODAY_SCENES.length} today scenes`);
