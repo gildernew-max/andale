@@ -13,6 +13,7 @@ import {
   prevDayKey,
   progressAfterWinContinue,
   shouldShowSoftPaywall,
+  showColdPitch,
   showComeBackTomorrow,
   showDoorMetaChrome,
   showPostDismissHandoff,
@@ -84,6 +85,11 @@ assert(!showDoorMetaChrome({}), "empty progress hides door meta chrome");
 assert(!showDoorMetaChrome({ streak: null }), "null streak hides door meta chrome");
 assert(showDoorMetaChrome({ streak: 1 }), "streak 1 shows Meta / Rayo / coaches");
 assert(showDoorMetaChrome({ streak: 4 }), "streak above 1 keeps door meta chrome");
+assert(showColdPitch({ streak: 0 }), "streak 0 keeps the first-visit short pitch");
+assert(showColdPitch({}), "empty progress keeps the cold pitch");
+assert(showColdPitch({ streak: null }), "null streak keeps the cold pitch");
+assert(!showColdPitch({ streak: 1 }), "streak ≥ 1 hides the cold pitch on the return door");
+assert(!showColdPitch({ streak: 4 }), "later streak keeps the cold pitch off");
 
 const firstWinHome = { todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04", screen: "home", splash: false };
 assert(shouldShowSoftPaywall(firstWinHome), "first win on home shows paywall after vuelve");

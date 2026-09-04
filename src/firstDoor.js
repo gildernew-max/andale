@@ -109,6 +109,11 @@ export function showDoorMetaChrome({ streak } = {}) {
   return (Number(streak) || 0) >= 1;
 }
 
+/** First-visit short pitch only. Hidden once streak ≥ 1 — return door is the promised Hoy, not the cold dump. */
+export function showColdPitch({ streak } = {}) {
+  return (Number(streak) || 0) < 1;
+}
+
 /** Session-one hook: first win of a new day is streak 1. Same day keeps the count. */
 export function streakAfterWin(prev = {}, today, yesterday) {
   if (prev.lastDay === today) return Number(prev.streak) || 0;

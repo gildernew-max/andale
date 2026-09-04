@@ -322,6 +322,7 @@ assert(comeBackTomorrowLine({ lang: "es" }) === UI.es.comeBackTomorrow, "ES teas
 assert(comeBackTomorrowLine({ lang: "en", nextTitle: "" }) === UI.en.comeBackTomorrow, "EN teaser falls back when title unknown");
 assert(appSrc.includes("comeBackTomorrowLine"), "Camino teaser uses comeBackTomorrowLine");
 assert(appSrc.includes("isDay2Return"), "day-2 return gate is wired");
+assert(appSrc.includes("showColdPitch"), "cold pitch is gated off the return door");
 const teaserOpen = appSrc.match(/<(p|div) data-testid="come-back-tomorrow"[^>]*>/);
 assert(teaserOpen, "teaser is a non-button element");
 assert(!/<button[^>]*come-back-tomorrow/.test(appSrc), "teaser is not a <button>");

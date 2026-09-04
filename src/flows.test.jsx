@@ -871,7 +871,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByText("Coach de precisión")).toBeTruthy();
     expect(screen.getByText("Rival")).toBeTruthy();
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
-    expect(screen.getByTestId("home-pitch")).toBeTruthy();
+    expect(screen.queryByTestId("home-pitch")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Español mexicano real\. Más allá de lo básico/);
     expect(screen.getByTestId("hoy-card")).toBeTruthy();
     expect(screen.getByTestId("first-door-alt")).toBeTruthy();
     expect(screen.getByTestId("camino-more")).toBeTruthy();
@@ -1022,6 +1023,9 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene/);
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Arreglar una frase|Fix a phrase/);
     expect(screen.getByTestId("hoy-title").textContent).toBe(promised.title);
+    expect(screen.queryByTestId("home-pitch")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Español mexicano real\. Más allá de lo básico/);
+    expect(document.body.textContent).not.toMatch(/Real Mexican Spanish\. Past the basics/);
     expect(screen.queryByTestId("first-door-title")).toBeNull();
     expect(screen.getByTestId("first-door-alt").textContent).toMatch(/Arreglar una frase/);
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
@@ -1053,6 +1057,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
     const teaser = screen.getByTestId("come-back-tomorrow");
     expect(teaser.textContent).toBe(expectedComeBack("es"));
+    expect(screen.queryByTestId("home-pitch")).toBeNull();
     expect(teaser.tagName).toBe("P");
     expect(teaser.tagName).not.toBe("BUTTON");
     expect(teaser.tagName).not.toBe("A");
