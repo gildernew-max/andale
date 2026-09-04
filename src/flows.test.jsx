@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
+import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey } from "./firstDoor.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -73,6 +74,21 @@ const boot = async () => {
 };
 
 const continueBtn = () => screen.getByRole("button", { name: /^Continuar$/i });
+
+const localToday = () => dayKeyFromDate(new Date());
+
+/** Same four Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
+const HOY_TITLES = [
+  { title: "Noche de faroles", titleEn: "Night of lanterns" },
+  { title: "WhatsApp del casero", titleEn: "Landlord WhatsApp" },
+  { title: "Mostrador en caos", titleEn: "Airport Counter Chaos" },
+  { title: "Cena con la suegra", titleEn: "Dinner With the In-Laws" },
+];
+
+const expectedComeBack = (lang) => {
+  const next = hoySceneForDay(HOY_TITLES, nextDayKey(localToday()));
+  return comeBackTomorrowLine({ lang, nextTitle: hoyTitleForLang(next, lang) });
+};
 
 beforeEach(() => {
   localStorage.clear();
@@ -625,6 +641,37 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("first-door-alt").textContent).toBe("Fix a phrase");
   });
 
+  it("return door with streak ≥ 1: Hoy CTA if scene open, Doctora if Hoy done — never Subjuntivo Continuar", async () => {
+    const today = localToday();
+    cleanup();
+    seedProgress({ streak: 1, lastDay: today, paywallSeen: true });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena/);
+    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Phrase Doctor|Arreglar una frase/);
+    expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
+    expect(screen.getByTestId("path-entry").textContent).toMatch(/EMPIEZA|START/);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/«.+»/);
+
+    cleanup();
+    seedProgress({
+      streak: 1,
+      lastDay: today,
+      paywallSeen: true,
+      missions: { [`scene-${today}`]: "taqueria" },
+    });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.getByTestId("first-door-tag").textContent).toBe("GANA EN 60 SEGUNDOS");
+    expect(screen.getByTestId("first-door-title").textContent).toBe("Doctora de frases");
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase/);
+    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Phrase Doctor|Jugar la escena/);
+    expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
+    expect(screen.getByTestId("path-entry").textContent).toMatch(/EMPIEZA|START/);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+  });
+
   it("first win shows streak 1 and the vuelve mañana home line", async () => {
     const today = (() => {
       const d = new Date();
@@ -673,7 +720,9 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
     expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Vuelve mañana por la siguiente escena.");
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Vuelve mañana por «.+»\.$/);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).not.toBe("Vuelve mañana por la siguiente escena.");
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
@@ -685,7 +734,9 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("first-door-hero").textContent).not.toMatch(/Phrase Doctor/);
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Subjuntivo|Phrase Doctor/);
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Come back tomorrow for the next scene."));
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en")));
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Come back tomorrow for “.+”\.$/);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).not.toBe("Come back tomorrow for the next scene.");
     expect(screen.getByTestId("first-door-tag").textContent).toBe("WIN IN 60 SECONDS");
     expect(screen.getByTestId("first-door-title").textContent).toBe("Phrase Doctor");
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
@@ -741,9 +792,11 @@ describe("simulated learner flows", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
 
     await user.click(screen.getByTestId("nav-camino"));
-    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Vuelve mañana por la siguiente escena."));
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es")));
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
+    expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena/);
+    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Subjuntivo/);
 
     cleanup();
     render(<App />);
@@ -760,7 +813,7 @@ describe("simulated learner flows", () => {
     seedProgress({ uiLang: "en", streak: 1, lastDay: today });
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe("Come back tomorrow for the next scene."));
+    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en")));
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Your streak just started.");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.");

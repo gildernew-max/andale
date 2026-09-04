@@ -3,6 +3,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { prepQuestion } from "./prepQuestion.js";
 import { hoyStillFor, LANTERN_STILL } from "./hoyStill.js";
+import { comeBackTomorrowLine, hoySceneForDay, nextDayKey } from "./firstDoor.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -286,8 +287,18 @@ assert(UI.en.workoutToday === "Today's routine", "UI.en.workoutToday");
 assert(appSrc.includes("showLevelTheater"), "Principiante level theater is gated");
 assert(appSrc.includes("showWeaknessMap"), "empty weakness map is gated");
 assert(appSrc.includes("showAtajos"), "Atajos theater is gated");
-assert(UI.es.comeBackTomorrow === "Vuelve mañana por la siguiente escena.", "UI.es.comeBackTomorrow");
-assert(UI.en.comeBackTomorrow === "Come back tomorrow for the next scene.", "UI.en.comeBackTomorrow");
+assert(UI.es.comeBackTomorrow === "Vuelve mañana por la siguiente escena.", "UI.es.comeBackTomorrow generic fallback");
+assert(UI.en.comeBackTomorrow === "Come back tomorrow for the next scene.", "UI.en.comeBackTomorrow generic fallback");
+const nextHoy = hoySceneForDay(TODAY_SCENES, nextDayKey("2026-09-04"));
+assert(nextHoy?.title === "Mostrador en caos", "tomorrow Hoy on 2026-09-05 is Mostrador en caos");
+assert(nextHoy?.titleEn === "Airport Counter Chaos", "EN tomorrow Hoy on 2026-09-05 is Airport Counter Chaos");
+assert(comeBackTomorrowLine({ lang: "es", nextTitle: nextHoy.title }) === "Vuelve mañana por «Mostrador en caos».", "ES teaser names tomorrow Hoy");
+assert(comeBackTomorrowLine({ lang: "en", nextTitle: nextHoy.titleEn }) === "Come back tomorrow for “Airport Counter Chaos”.", "EN teaser names tomorrow Hoy");
+assert(comeBackTomorrowLine({ lang: "es" }) === UI.es.comeBackTomorrow, "ES teaser falls back when title unknown");
+assert(comeBackTomorrowLine({ lang: "en", nextTitle: "" }) === UI.en.comeBackTomorrow, "EN teaser falls back when title unknown");
+assert(appSrc.includes("comeBackTomorrowLine"), "Camino teaser uses comeBackTomorrowLine");
+assert(appSrc.includes("hoySceneForDay"), "Hoy day pick is shared");
+assert(appSrc.includes("nextDayKey(todayKey)"), "tomorrow Hoy uses the same day hash");
 assert(UI.es.paywallHeadline === "Ya empezó tu racha.", "UI.es.paywallHeadline");
 assert(UI.es.paywallBody === "Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.", "UI.es.paywallBody");
 assert(UI.es.paywallAnnual === "$39.99 al año", "UI.es.paywallAnnual");
