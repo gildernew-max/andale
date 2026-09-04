@@ -5731,7 +5731,7 @@ export default function App() {
                 <button
                   key={opt.id}
                   data-testid={`perfil-lang-${opt.id}`}
-                  aria-label={opt.id === "en" ? "English context language" : "Spanish context language"}
+                  aria-label={uiLang === "en" ? (opt.id === "en" ? "English context language" : "Spanish context language") : (opt.id === "en" ? "Idioma de contexto: inglés" : "Idioma de contexto: español")}
                   aria-pressed={uiLang === opt.id}
                   onClick={() => save({ uiLang: opt.id })}
                   style={{
@@ -6251,8 +6251,8 @@ export default function App() {
               <div style={{ textAlign: "center", marginBottom: 18 }}>
 	                <h2 style={{ fontWeight: 900, fontSize: 22, margin: "0 0 16px" }}>{L.writeHeard}</h2>
                 <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                  <button onClick={() => speak(q.text)} className="duo-btn" style={{ background: D.blue, borderBottom: `4px solid ${D.blueDark}`, border: "none", color: "#fff", borderRadius: 18, width: 70, height: 70, fontSize: 28, cursor: "pointer" }} aria-label="Escuchar"><IcSpeaker size={32} /></button>
-                  <button onClick={() => speak(q.text, 0.6)} className="duo-btn" style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 18, width: 70, height: 70, fontSize: 24, cursor: "pointer" }} aria-label="Más lento"><IcTurtle size={34} /></button>
+                  <button onClick={() => speak(q.text)} className="duo-btn" style={{ background: D.blue, borderBottom: `4px solid ${D.blueDark}`, border: "none", color: "#fff", borderRadius: 18, width: 70, height: 70, fontSize: 28, cursor: "pointer" }} aria-label={uiLang === "en" ? "Listen" : "Escuchar"}><IcSpeaker size={32} /></button>
+                  <button onClick={() => speak(q.text, 0.6)} className="duo-btn" style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 18, width: 70, height: 70, fontSize: 24, cursor: "pointer" }} aria-label={uiLang === "en" ? "Slower" : "Más lento"}><IcTurtle size={34} /></button>
                 </div>
               </div>
             ) : q.type === "transform" ? (
@@ -6262,7 +6262,7 @@ export default function App() {
 	                  <h2 style={{ fontWeight: 900, fontSize: 22, margin: 0 }}>{L.transformIt}</h2>
                 </div>
                 <div style={{ border: `2px solid ${D.line}`, borderRadius: 14, padding: "13px 16px", background: D.subtle, display: "flex", gap: 10, alignItems: "center" }}>
-                  <button onClick={() => speak(q.base)} aria-label="Escuchar" style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "5px 9px", flexShrink: 0, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
+                  <button onClick={() => speak(q.base)} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "5px 9px", flexShrink: 0, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                   <span style={{ fontSize: 18, fontWeight: 800 }}>{q.base}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0 0" }}>
@@ -6283,7 +6283,7 @@ export default function App() {
                   <div style={{ position: "relative", border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", background: D.card, flex: 1, marginBottom: 14 }}>
                     <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                      <button onClick={() => speak(q.type === "order" ? q.answer : q.prompt)} aria-label="Escuchar" style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
+                      <button onClick={() => speak(q.type === "order" ? q.answer : q.prompt)} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                       <div>
                         <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{q.prompt}</div>
                         {q.note ? <div style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
@@ -7051,10 +7051,10 @@ export default function App() {
             {/* chunk progress — segments per paragraph + final questions step */}
             <div style={{ display: "flex", gap: 5, alignItems: "center", margin: "2px 0 14px" }}>
               {story.paragraphs.map((_, i) => (
-                <button key={i} onClick={() => { stopNarration(); setWordSel(null); setParaIdx(i); }} aria-label={`Párrafo ${i + 1}`}
+                <button key={i} onClick={() => { stopNarration(); setWordSel(null); setParaIdx(i); }} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
                   style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : "#E8E8E8", outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
               ))}
-              <button onClick={() => { stopNarration(); setWordSel(null); setParaIdx(story.paragraphs.length); }} aria-label="Preguntas"
+              <button onClick={() => { stopNarration(); setWordSel(null); setParaIdx(story.paragraphs.length); }} aria-label={uiLang === "en" ? "Questions" : "Preguntas"}
                 style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : "#E8E8E8", color: paraIdx >= story.paragraphs.length ? "#fff" : D.sub }}>?</button>
             </div>
             {paraIdx < story.paragraphs.length && (
@@ -7066,7 +7066,7 @@ export default function App() {
             {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
               <div key={pi} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
                 <div style={{ display: "flex", gap: 10 }}>
-                <button onClick={() => playStoryParagraph(story, pi, para)} aria-label="Escuchar párrafo"
+                <button onClick={() => playStoryParagraph(story, pi, para)} aria-label={uiLang === "en" ? "Listen to paragraph" : "Escuchar párrafo"}
                   style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "4px 7px", flexShrink: 0, alignSelf: "flex-start", lineHeight: 0, marginTop: 3 }}>
                   <IcSpeaker size={15} color={"#1CB0F6"} />
                 </button>
@@ -7184,7 +7184,7 @@ export default function App() {
               <div onClick={() => setWordSel(null)} style={{ position: "fixed", inset: 0, zIndex: 29 }} />
               <div className="pop" style={{ position: "fixed", left, width: cw, ...pos, zIndex: 30, background: D.card, border: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: "46vh", overflowY: "auto" }}>
                 <div style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <button onClick={() => speak(wordSel.display)} aria-label="Escuchar palabra"
+                  <button onClick={() => speak(wordSel.display)} aria-label={uiLang === "en" ? "Listen to word" : "Escuchar palabra"}
                     style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "7px 9px", flexShrink: 0, lineHeight: 0 }}>
                     <IcSpeaker size={18} color={"#1CB0F6"} />
                   </button>

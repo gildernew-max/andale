@@ -678,4 +678,74 @@ describe("simulated learner flows", () => {
     expect(screen.queryByRole("button", { name: / \(bloqueado\)/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "Sonido" })).toBeNull();
   });
+
+  it("perfil context-lang aria follows uiLang", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-perfil"));
+    expect(screen.getByTestId("perfil-lang-en").getAttribute("aria-label")).toBe("Idioma de contexto: inglés");
+    expect(screen.getByTestId("perfil-lang-es").getAttribute("aria-label")).toBe("Idioma de contexto: español");
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("perfil-lang-en").getAttribute("aria-label")).toBe("English context language"));
+    expect(screen.getByTestId("perfil-lang-es").getAttribute("aria-label")).toBe("Spanish context language");
+    expect(screen.getByText("Context language")).toBeTruthy();
+  });
+
+  it("lesson listen aria follows uiLang", async () => {
+    cleanup();
+    seedProgress();
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Listen lock",
+        unitId: "subj1",
+        host: "luna",
+        questions: [{
+          type: "listen",
+          text: "Es importante que llegues temprano a la reunión.",
+          answers: ["Es importante que llegues temprano a la reunión"],
+        }],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    expect(screen.getByRole("button", { name: "Escuchar" }).getAttribute("aria-label")).toBe("Escuchar");
+    expect(screen.getByRole("button", { name: "Más lento" }).getAttribute("aria-label")).toBe("Más lento");
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Listen" })).toBeTruthy());
+    expect(screen.getByRole("button", { name: "Listen" }).getAttribute("aria-label")).toBe("Listen");
+    expect(screen.getByRole("button", { name: "Slower" }).getAttribute("aria-label")).toBe("Slower");
+    expect(screen.queryByRole("button", { name: "Escuchar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Más lento" })).toBeNull();
+  });
+
+  it("story listen and nav aria follow uiLang", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
+    expect(screen.getByRole("button", { name: "Párrafo 1" }).getAttribute("aria-label")).toBe("Párrafo 1");
+    expect(screen.getByRole("button", { name: "Preguntas" }).getAttribute("aria-label")).toBe("Preguntas");
+    expect(screen.getByRole("button", { name: "Escuchar párrafo" }).getAttribute("aria-label")).toBe("Escuchar párrafo");
+    const storyWord = [...document.querySelectorAll("span")].find((el) =>
+      el.textContent === "cempasúchil" && el.style.cursor === "pointer");
+    expect(storyWord).toBeTruthy();
+    await user.click(storyWord);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Escuchar palabra" })).toBeTruthy());
+    expect(screen.getByRole("button", { name: "Escuchar palabra" }).getAttribute("aria-label")).toBe("Escuchar palabra");
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Paragraph 1" })).toBeTruthy());
+    expect(screen.getByRole("button", { name: "Paragraph 1" }).getAttribute("aria-label")).toBe("Paragraph 1");
+    expect(screen.getByRole("button", { name: "Questions" }).getAttribute("aria-label")).toBe("Questions");
+    expect(screen.getByRole("button", { name: "Listen to paragraph" }).getAttribute("aria-label")).toBe("Listen to paragraph");
+    expect(screen.getByRole("button", { name: "Listen to word" }).getAttribute("aria-label")).toBe("Listen to word");
+    expect(screen.queryByRole("button", { name: "Párrafo 1" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Escuchar párrafo" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Escuchar palabra" })).toBeNull();
+  });
 });
