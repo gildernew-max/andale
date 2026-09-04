@@ -229,6 +229,7 @@ describe("simulated learner flows", () => {
     expect(en.textContent).toBe("EN");
     expect(es.getAttribute("aria-label")).toBe("Español");
     expect(en.getAttribute("aria-label")).toBe("English");
+    expect(screen.getByRole("button", { name: "Pretérito vs. imperfecto (bloqueado)" })).toBeTruthy();
     await waitFor(() => expect(screen.getByText(/¡Hola, Dave!/)).toBeTruthy());
     expect(es.getAttribute("aria-pressed")).toBe("true");
     expect(en.getAttribute("aria-pressed")).toBe("false");
@@ -243,6 +244,8 @@ describe("simulated learner flows", () => {
       expect(prog.contentVersion).toBe(2);
     });
     expect(screen.getByText(/TODAY IN MEXICO/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pretérito vs. imperfecto (blocked)" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: / \(bloqueado\)/ })).toBeNull();
 
     for (const tab of ["nav-misiones", "nav-lectura", "nav-practica", "nav-perfil"]) {
       await user.click(screen.getByTestId(tab));
@@ -629,5 +632,24 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("first-door-tag").textContent).toBe("WIN IN 60 SECONDS");
     expect(screen.getByTestId("first-door-title").textContent).toBe("Phrase Doctor");
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
+  });
+
+  it("header mute and locked unit-node aria follow uiLang", async () => {
+    cleanup();
+    seedProgress({ sound: false });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    expect(screen.getByRole("button", { name: "Sonido" }).getAttribute("aria-label")).toBe("Sonido");
+    expect(screen.getByRole("button", { name: "Pretérito vs. imperfecto (bloqueado)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Subjuntivo presente" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Subjuntivo presente \((bloqueado|blocked)\)/ })).toBeNull();
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Sound" })).toBeTruthy());
+    expect(screen.getByRole("button", { name: "Sound" }).getAttribute("aria-label")).toBe("Sound");
+    expect(screen.getByRole("button", { name: "Pretérito vs. imperfecto (blocked)" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: / \(bloqueado\)/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sonido" })).toBeNull();
   });
 });

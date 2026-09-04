@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (a11y/lang: mute + locked unit-node)
+
+**What changed**
+- Header mute `aria-label` follows `uiLang`: ES `Sonido`, EN `Sound`. No longer hardcoded `Sound`.
+- Locked Camino unit-node `aria-label` suffix follows `uiLang`: ES `(bloqueado)`, EN `(blocked)`. Parentheses pattern kept.
+- Tests lock both live strings. First door, Hoy, Phrase Doctor, streak, Empieza, Subjuntivo, theater gates, JEOPARDY SOLO, Rayo ON/OFF, enroll, PrivacyInfo, paywall/ads untouched. Dead UI keys not pruned. `bonus de racha` and `LAB DE NARRACIÓN` left for George/No face.
+
+**Why**
+- Soft polish leftover: two chrome aria holes after ES sprint→ronda.
+
 ## 2026-09-04 (George ES sprint → ronda; wrap-prep notes)
 
 **What changed**
