@@ -12,6 +12,9 @@ import {
   nextDayKey,
   prevDayKey,
   progressAfterWinContinue,
+  SCREEN_HOME,
+  SCREEN_SESSION_CLOSE,
+  screenAfterWinContinue,
   shouldShowSoftPaywall,
   showColdPitch,
   showComeBackTomorrow,
@@ -139,6 +142,18 @@ assert(!shouldShowSoftPaywall({
   screen: "done",
   splash: false,
 }), "paywall still waits until after CONTINUE");
+assert(screenAfterWinContinue({ firstDoctora: true }) === SCREEN_SESSION_CLOSE, "first-session Doctora CONTINUE lands on come-back card");
+assert(screenAfterWinContinue({ firstDoctora: false }) === SCREEN_HOME, "Hoy CONTINUE still lands on home");
+assert(screenAfterWinContinue({}) === SCREEN_HOME, "missing firstDoctora stays home");
+assert(!shouldShowSoftPaywall({
+  ...stamped,
+  todaySceneDone: false,
+  streak: 1,
+  lastDay: "2026-09-04",
+  today: "2026-09-04",
+  screen: SCREEN_SESSION_CLOSE,
+  splash: false,
+}), "paywall waits until after the come-back card");
 
 const HOY_TITLES = [
   { title: "Noche de faroles", titleEn: "Night of lanterns" },

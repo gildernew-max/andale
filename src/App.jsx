@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
@@ -2989,6 +2989,7 @@ const UI = {
     more: "Más",
     namePrompt: "¿Cómo te dicen?",
     hoyWin: "¡Eso!",
+    sessionClose: "Listo",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3045,6 +3046,7 @@ const UI = {
     more: "More",
     namePrompt: "What do they call you?",
     hoyWin: "That's it.",
+    sessionClose: "Done",
   },
 };
 
@@ -3197,7 +3199,7 @@ export default function App() {
   const [tab, setTabRaw] = useState("camino");
   // Normalize legacy "juegos" tab (removed from primary nav, games live in "practica" now)
   const setTab = (t) => setTabRaw(t === "juegos" ? "practica" : t); // camino | misiones | lectura | practica | flashcards | perfil
-  const [screen, setScreen] = useState("home"); // home | lesson | story | dialogue | done | failed
+  const [screen, setScreen] = useState("home"); // home | lesson | story | dialogue | done | failed | sessionClose
   const [session, setSession] = useState(null);
   const [qi, setQi] = useState(0);
   const [status, setStatus] = useState("idle");
@@ -5028,6 +5030,12 @@ export default function App() {
       today: t,
       todaySceneId: todaySceneIdFromSession(session),
     }));
+    const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
+    setScreen(next);
+    if (next === "home") setTab("camino");
+  };
+
+  const dismissSessionClose = () => {
     setScreen("home");
     setTab("camino");
   };
@@ -6510,7 +6518,7 @@ export default function App() {
         </nav>
       )}
 
-      {(screen === "done" || screen === "failed" || screen === "rivalIntro" || screen === "rivalDone") && (
+      {(screen === "done" || screen === "failed" || screen === "rivalIntro" || screen === "rivalDone" || screen === "sessionClose") && (
         <div style={{ position: "fixed", top: 14, right: 18, zIndex: 20 }}>
           <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
         </div>
@@ -7659,6 +7667,23 @@ export default function App() {
           )}
         </div>
       ); })()}
+
+      {/* ---------- FIRST-SESSION DOCTORA CLOSE (come-back card only) ---------- */}
+      {screen === "sessionClose" && (
+        <div data-testid="session-close" style={{ maxWidth: 480, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
+          <div style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 20, padding: "28px 22px 22px" }}>
+            <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 900, fontSize: 18 }} title={L.streakDays}><IcFlame size={22} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}</span>
+            <p data-testid="come-back-tomorrow" style={{ margin: "16px 0 22px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
+              {comeBackTomorrowLine({
+                lang: uiLang,
+                nextTitle: hoyTitleForLang(tomorrowScene, uiLang),
+                fallback: L.comeBackTomorrow,
+              })}
+            </p>
+            <Btn data-testid="session-close-dismiss" onClick={dismissSessionClose} style={{ textTransform: "none", letterSpacing: "normal" }}>{L.sessionClose}</Btn>
+          </div>
+        </div>
+      )}
 
       {/* ---------- FAILED (out of hearts) ---------- */}
       {screen === "failed" && session && (

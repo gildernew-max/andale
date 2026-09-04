@@ -1523,9 +1523,20 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!"));
     await user.click(screen.getByTestId("doctora-win-continue"));
-    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("session-close")).toBeTruthy());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(1);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lastDay).toBe(today);
+    expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    expect(screen.getByTestId("session-close-dismiss").textContent).toBe("Listo");
+    expect(screen.queryByTestId("camino-more")).toBeNull();
+    expect(screen.queryByTestId("coach-strip")).toBeNull();
+    expect(screen.queryByTestId("door-meta")).toBeNull();
+    expect(screen.queryByTestId("hero-cta")).toBeNull();
+    expect(screen.queryByTestId("first-door-hero")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("session-close-dismiss"));
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
@@ -1543,6 +1554,46 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("first-door-tag").textContent).toBe("WIN IN 60 SECONDS"));
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
+  });
+
+  it("first-session Doctora win lands on come-back card only — streak + teaser + Listo/Done", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("first-door-alt")).toBeTruthy());
+    await user.click(screen.getByTestId("lang-es"));
+    await user.click(screen.getByTestId("first-door-alt"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
+    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-fix").textContent).toMatch(/Continuar|Continue/));
+    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("doctora-win")).toBeTruthy());
+    expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
+    await user.click(screen.getByTestId("doctora-win-continue"));
+    await waitFor(() => expect(screen.getByTestId("session-close")).toBeTruthy());
+    expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
+    expect(screen.getByTestId("come-back-tomorrow").tagName).toBe("P");
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Vuelve mañana por «.+»\.$/);
+    expect(screen.getByTestId("session-close-dismiss").textContent).toBe("Listo");
+    expect(screen.getByTestId("session-close-dismiss").textContent).not.toMatch(/Cerrar|Continuar|Ya está|Vale|Close|Continue|All set|Ready/);
+    expect(screen.queryByRole("button", { name: /Cerrar|Continuar|Ya está|Close|Continue|All set/ })).toBeNull();
+    expect(screen.queryByTestId("nav-camino")).toBeNull();
+    expect(screen.queryByTestId("camino-more")).toBeNull();
+    expect(screen.queryByTestId("coach-strip")).toBeNull();
+    expect(screen.queryByTestId("door-meta")).toBeNull();
+    expect(screen.queryByTestId("luna-greeting")).toBeNull();
+    expect(screen.queryByTestId("first-door-hero")).toBeNull();
+    expect(screen.queryByTestId("hero-cta")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Vuelve mañana|Come back tomorrow/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("session-close-dismiss").textContent).toBe("Done"));
+    expect(screen.getByTestId("session-close-dismiss").textContent).not.toMatch(/Close|Continue|All set|Ready|Cerrar|Listo/);
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en"));
+    expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Come back tomorrow for “.+”\.$/);
+    expect(screen.queryByTestId("camino-more")).toBeNull();
+    expect(screen.queryByTestId("coach-strip")).toBeNull();
   });
 
   it("later Doctora does not early-exit after beat 1", async () => {
@@ -1611,6 +1662,9 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("doctora-win-continue"));
+    await waitFor(() => expect(screen.getByTestId("session-close")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("session-close-dismiss"));
     await waitFor(() => {
       const prog = JSON.parse(localStorage.getItem(STORAGE_KEY));
       expect(prog.streak).toBe(1);

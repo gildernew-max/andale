@@ -392,6 +392,17 @@ assert(!/\|\| \(softPaywall && !prog\.paywallSeen/.test(appSrc), "stale softPayw
 assert(!/stripe\.com|@stripe|RevenueCat|StoreKit|SKPayment/.test(appSrc), "soft paywall is $0 — no IAP");
 assert(UI.es.hoyWin === "¡Eso!", "UI.es.hoyWin first-Hoy lock");
 assert(UI.en.hoyWin === "That's it.", "UI.en.hoyWin first-Hoy lock");
+assert(UI.es.sessionClose === "Listo", "George lock: session-close dismiss is Listo");
+assert(UI.en.sessionClose === "Done", "George lock: session-close dismiss is Done");
+assert(!/Cerrar|Continuar|Ya está|Vale|Listos|Cerrar sesión/.test(UI.es.sessionClose), "ES dismiss is not a soft synonym");
+assert(!/Close|Continue|All set|That's all|Ready|Finish/.test(UI.en.sessionClose), "EN dismiss is not a soft synonym");
+assert(appSrc.includes("screenAfterWinContinue"), "first-Doctora CONTINUE uses screenAfterWinContinue");
+assert(appSrc.includes("data-testid=\"session-close\""), "come-back card is testable");
+assert(appSrc.includes("data-testid=\"session-close-dismiss\""), "Listo/Done dismiss is testable");
+assert(appSrc.includes("{L.sessionClose}"), "close dismiss uses L.sessionClose");
+assert(/data-testid="session-close"[\s\S]{0,900}<p data-testid="come-back-tomorrow"/.test(appSrc), "close-card teaser is a <p>");
+assert(/data-testid="session-close"[\s\S]{0,1100}pointerEvents:\s*["']none/.test(appSrc), "close-card teaser is not a tap target");
+assert(!/Vuelve mañana por «\{title\}»|Come back tomorrow for “\{title\}”/.test(appSrc), "close card reuses comeBackTomorrowLine — no new teaser copy");
 assert(!/¡Ganaste!|You won!/.test(`${UI.es.hoyWin}${UI.en.hoyWin}`), "first-Hoy win is not ¡Ganaste!/You won!");
 assert(appSrc.includes("L.hoyWin"), "first-Hoy done heading uses L.hoyWin");
 assert(appSrc.includes("hoy-win"), "first-Hoy win heading is testable");
