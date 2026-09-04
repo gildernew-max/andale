@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isFirstHoySession, shouldHoyEarlyWin, trimHoyBeats } from "./hoyWin.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
@@ -4837,7 +4837,7 @@ export default function App() {
   const nextHeartMin = Math.max(0, Math.ceil((HEART_REGEN_MS - ((now - (prog.heartT || now)) % HEART_REGEN_MS)) / 60000));
   const weakSpots = Object.entries(prog.weak || {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const smartFocus = smartPracticeFocus();
-  const todayKey = todayStr();
+  const todayKey = dayKeyFromDate(new Date(now));
   const todayScene = hoySceneForDay(TODAY_SCENES, todayKey);
   const tomorrowScene = hoySceneForDay(TODAY_SCENES, nextDayKey(todayKey));
   const hoyStill = hoyStillFor(todayScene);
@@ -4845,6 +4845,7 @@ export default function App() {
   const showWeaknessMap = hasWeaknessData(prog);
   const showAtajos = hasUnlockedShortcuts(prog);
   const showDoorMeta = showDoorMetaChrome({ streak: prog.streak });
+  const showPitch = showColdPitch({ streak: prog.streak });
   const todaySceneDone = !!prog.missions?.[`scene-${todayKey}`];
   const dailyDone = !!prog.missions?.[`daily-${todayKey}`];
   const storyCount = STORIES.filter((st) => prog.stories?.[st.id]).length;
@@ -4902,7 +4903,7 @@ export default function App() {
 
   const inLesson = screen !== "home";
   const splashOpen = isFirstVisit(prog);
-  const showSoftPaywall = shouldShowSoftPaywall({
+  const paywallGate = shouldShowSoftPaywall({
     paywallSeen: !!prog.paywallSeen,
     todaySceneDone,
     streak: prog.streak,
@@ -4910,19 +4911,16 @@ export default function App() {
     today: todayKey,
     screen,
     splash: splashOpen,
-  }) || (softPaywall && !prog.paywallSeen && !splashOpen && screen === "home");
+  });
+  // Gate only — a stale session flag must not keep the modal after midnight / day-2.
+  const showSoftPaywall = paywallGate;
   useEffect(() => {
-    if (shouldShowSoftPaywall({
-      paywallSeen: !!prog.paywallSeen,
-      todaySceneDone,
-      streak: prog.streak,
-      lastDay: prog.lastDay,
-      today: todayKey,
-      screen,
-      splash: splashOpen,
-    })) setSoftPaywall(true);
-    else if (prog.paywallSeen) setSoftPaywall(false);
-  }, [prog.paywallSeen, prog.streak, prog.lastDay, todaySceneDone, todayKey, screen, splashOpen]);
+    if (paywallGate) setSoftPaywall(true);
+    else {
+      setSoftPaywall(false);
+      setPaywallArmed(false);
+    }
+  }, [paywallGate]);
   useEffect(() => {
     if (!showSoftPaywall) {
       setPaywallArmed(false);
@@ -5106,19 +5104,26 @@ export default function App() {
             </div>
           </div>
           )}
+          {showPitch && (
           <div data-testid="home-pitch" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>
             {L.splashLine}
           </div>
+          )}
           {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
           {(() => {
             const doorKind = firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff });
             const showHandoff = showPostDismissHandoff({ armed: postDismissHandoff });
+            const day2Return = isDay2Return({
+              streak: prog.streak,
+              lastDay: prog.lastDay,
+              today: todayKey,
+            });
             const showLine = showComeBackTomorrow({
               todaySceneDone,
               streak: prog.streak,
               lastDay: prog.lastDay,
               today: todayKey,
-            });
+            }) && !day2Return;
             const resumeU = prog.resume && UNITS.find((u) => u.id === prog.resume.unitId);
             const nextF = FLAT.find((f) => !((prog.done || {})[f.unit.id] > 0));
             const pathUnit = resumeU || nextF?.unit;
@@ -5200,16 +5205,16 @@ export default function App() {
                       </button>
                     </div>
                   )}
-                  {showLine && (
-                    <div data-testid="come-back-tomorrow" style={{ margin: "0 0 10px", border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13.5, fontWeight: 800, color: D.ink, lineHeight: 1.35 }}>
-                      {comeBackTomorrowLine({
-                        lang: uiLang,
-                        nextTitle: hoyTitleForLang(tomorrowScene, uiLang),
-                        fallback: L.comeBackTomorrow,
-                      })}
-                    </div>
-                  )}
                 </div>
+                {showLine && (
+                  <p data-testid="come-back-tomorrow" style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
+                    {comeBackTomorrowLine({
+                      lang: uiLang,
+                      nextTitle: hoyTitleForLang(tomorrowScene, uiLang),
+                      fallback: L.comeBackTomorrow,
+                    })}
+                  </p>
+                )}
                 {doorKind === FIRST_DOOR_HOY && (
                   <button data-testid="first-door-alt" onClick={openDoctor}
                     style={{ display: "block", width: "100%", marginTop: 8, background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>

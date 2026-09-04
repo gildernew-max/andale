@@ -12,6 +12,13 @@ export function firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff }
   return FIRST_DOOR_PHRASE_DOCTOR;
 }
 
+/** Streak ≥ 1 and last activity was a previous calendar day — come-back, not same-day after win. */
+export function isDay2Return({ streak, lastDay, today } = {}) {
+  if ((Number(streak) || 0) < 1) return false;
+  if (!lastDay || !today) return false;
+  return lastDay !== today;
+}
+
 /** Same-session second beat after free paywall dismiss. Not persisted. */
 export function showPostDismissHandoff({ armed } = {}) {
   return !!armed;
@@ -32,6 +39,14 @@ export function nextDayKey(dayKey) {
   return dayKeyFromDate(new Date(y, m - 1, day + 1));
 }
 
+export function prevDayKey(dayKey) {
+  const parts = String(dayKey || "").split("-").map(Number);
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return "";
+  const [y, m, day] = parts;
+  if (!y || !m || !day) return "";
+  return dayKeyFromDate(new Date(y, m - 1, day - 1));
+}
+
 /** Same hash as Camino: sum of todayKey char codes % scene list length. */
 export function hoySceneForDay(scenes, dayKey) {
   if (!Array.isArray(scenes) || !scenes.length || !dayKey) return null;
@@ -45,7 +60,12 @@ export function hoyTitleForLang(scene, lang) {
   return typeof title === "string" ? title.trim() : "";
 }
 
-/** Named teaser when tomorrow's Hoy title is known; else generic siguiente escena / next scene. */
+/**
+ * George + No face LOCKED titled teaser — plain text only, not a CTA.
+ * ES: Vuelve mañana por «{title}».
+ * EN: Come back tomorrow for “{title}”.
+ * Generic siguiente escena / next scene stays fallback when title unknown.
+ */
 export function comeBackTomorrowLine({ lang = "es", nextTitle, fallback } = {}) {
   const title = typeof nextTitle === "string" ? nextTitle.trim() : "";
   if (!title) {
@@ -56,8 +76,9 @@ export function comeBackTomorrowLine({ lang = "es", nextTitle, fallback } = {}) 
     : `Vuelve mañana por «${title}».`;
 }
 
-/** Home line after a first win today, or after today's scene is cleared. */
+/** Home line after a first win today, or after today's scene is cleared. Hidden on day-2 return while the promised Hoy is the hero. */
 export function showComeBackTomorrow({ todaySceneDone, streak, lastDay, today } = {}) {
+  if (isDay2Return({ streak, lastDay, today }) && !todaySceneDone) return false;
   if (todaySceneDone) return true;
   return (Number(streak) || 0) >= 1 && lastDay === today;
 }
@@ -89,6 +110,11 @@ export function progressAfterWinContinue(prev = {}, { today, todaySceneId } = {}
 /** Meta / Rayo / four-coach strip after first win. Same streak ≥ 1 gate as teaser/paywall. */
 export function showDoorMetaChrome({ streak } = {}) {
   return (Number(streak) || 0) >= 1;
+}
+
+/** First-visit short pitch only. Hidden once streak ≥ 1 — return door is the promised Hoy, not the cold dump. */
+export function showColdPitch({ streak } = {}) {
+  return (Number(streak) || 0) < 1;
 }
 
 /** Session-one hook: first win of a new day is streak 1. Same day keeps the count. */

@@ -2,6 +2,28 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (soft paywall cannot survive midnight)
+
+**What changed**
+- Soft paywall display follows `shouldShowSoftPaywall` only. Stale `softPaywall` session flag no longer ORs the modal open. Effect clears + disarms whenever the gate is false — not only when `paywallSeen`.
+- Midnight / day-2: undismissed wall goes away; free/backdrop dismiss cannot arm Doctora handoff. Promised Hoy is the hero. `todayKey` follows the ticking `now` clock.
+- Test: paywall open → day rolls → modal gone, no `post-dismiss-handoff`. Door / Doctora / handoff-on-same-day dismiss / teaser / enroll untouched.
+
+**Why**
+- Hand Claude HOLD: undismissed wall survived midnight and a dismiss stole the day-2 Hoy.
+
+## 2026-09-04 (day-2 return door — promised Hoy hero + teaser plain text)
+
+**What changed**
+- Day-2+ return (`isDay2Return`: streak ≥ 1, lastDay ≠ today) opens the promised Hoy (yesterday’s `Vuelve mañana…` / `Come back tomorrow for '…'`) as the one hero CTA. Playable Hoy card in `first-door-hero`, not buried. Doctora stays `first-door-alt`.
+- Hand lock: no cold pitch dump on that door. `showColdPitch` keeps `L.splashLine` on streak 0 only; streak ≥ 1 / day-2 return does not dump the first-visit short pitch as a second hero.
+- Soft paywall stays once-only: `paywallSeen` never re-fires; day-2 before today’s win does not open the wall.
+- George + No face LOCKED teaser as plain text only (not a CTA): ES `Vuelve mañana por «{title}».` / EN `Come back tomorrow for “{title}”.` Quiet `<p>` outside `first-door-hero` — no button, no fake tap, `pointerEvents: none`. Generic fallback unchanged. Hidden on day-2 while the promise is the hero.
+- Tests: helper + flow lock streak≥1 return → Hoy hero, no home-pitch; paywallSeen → no paywall; teaser is non-interactive plain text. Door diet, first Hoy/Doctora ≤60s, honesty, post-dismiss handoff, Más, name, casero, splash, enroll untouched.
+
+**Why**
+- Hand stamp: return door is the promised Hoy title as the one CTA. Cold pitch as a second card kills the come-back.
+
 ## 2026-09-04 (first Doctora ≤60s to win — No face / Hand lock)
 
 **What changed**
