@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-04 (Bajío unlock flash — Hand brief)
+
+**What changed**
+- Exact beat: first streak-1 `¡Eso!` / `That's it.` → short glow with **`Abierto` / `Open` only** (no Bajío label, no pep, no new lines) → then soft paywall. Handoff unchanged.
+- Hoy CONTINUE plays the glow then the wall. First-Doctora close card stays; `Listo` / `Done` then glow then wall. Once-only (`bajioUnlockSeen`).
+- Door / Day-2 / A2HS / close / map stay. No new copy. Enroll off. IAP off.
+
+**Why**
+- Hand locked the sequence. Glow is a beat after Eso, not on top of it.
+
 ## 2026-09-04 (Recuerdos / Souvenir trail — Mexico map)
 
 **What changed**

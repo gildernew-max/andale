@@ -81,6 +81,37 @@ export function recuerdosLockedPins(pins = RECUERDOS_PINS, claimedStories = {}) 
   return (pins || []).filter((pin) => !isRecuerdosPinOpen(pin, claimedStories));
 }
 
+export const BAJIO_UNLOCK_FLASH_MS = 1400;
+
+/** Survives React StrictMode remount so persist-on-show cannot swallow the flash. */
+let bajioUnlockFlashLive = false;
+
+export function isBajioUnlockFlashLive() {
+  return bajioUnlockFlashLive;
+}
+
+export function markBajioUnlockFlashLive(on) {
+  bajioUnlockFlashLive = !!on;
+}
+
+/** After first streak-1 ¡Eso! / That's it. CONTINUE — short glow beat, then paywall. Once only. */
+export function shouldShowBajioUnlockFlash({
+  bajioUnlockSeen,
+  firstStreakEso,
+  streak,
+  paywallSeen,
+} = {}) {
+  if (bajioUnlockSeen) return false;
+  if (paywallSeen) return false;
+  if (!firstStreakEso) return false;
+  return (Number(streak) || 0) === 1;
+}
+
+/** George + No face stamp: flash copy is Abierto / Open only. No pep, no new lines. */
+export function bajioUnlockFlashCopy(lang) {
+  return recuerdosPinState(true, lang);
+}
+
 /** Fog-of-war: mist over the map, clear around open pins (Bajío first). */
 export function recuerdosFogBackground(pins = RECUERDOS_PINS, claimedStories = {}, theme = "light") {
   const fog = theme === "dark" ? "rgba(18,22,28,.58)" : "rgba(232,238,242,.7)";

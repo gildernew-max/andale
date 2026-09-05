@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { MEXICO_OUTLINE_PATH, RECUERDOS_PINS, isRecuerdosPinOpen, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, storyIdForRecuerdosPin } from "./recuerdos.js";
+import { BAJIO_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, isBajioUnlockFlashLive, isRecuerdosPinOpen, markBajioUnlockFlashLive, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -3257,6 +3257,8 @@ export default function App() {
   const [paywallArmed, setPaywallArmed] = useState(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
   const [a2hsSheet, setA2hsSheet] = useState(false);
+  const [bajioUnlockFlash, setBajioUnlockFlash] = useState(false);
+  const [bajioFlashPending, setBajioFlashPending] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
@@ -4944,14 +4946,15 @@ export default function App() {
     splash: splashOpen,
   });
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
-  const showSoftPaywall = paywallGate;
+  // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
+  const showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending;
   useEffect(() => {
-    if (paywallGate) setSoftPaywall(true);
+    if (showSoftPaywall) setSoftPaywall(true);
     else {
       setSoftPaywall(false);
       setPaywallArmed(false);
     }
-  }, [paywallGate]);
+  }, [showSoftPaywall]);
   useEffect(() => {
     if (!showSoftPaywall) {
       setPaywallArmed(false);
@@ -4960,6 +4963,20 @@ export default function App() {
     const arm = setTimeout(() => setPaywallArmed(true), 400);
     return () => clearTimeout(arm);
   }, [showSoftPaywall]);
+  useEffect(() => {
+    if (isBajioUnlockFlashLive()) {
+      setBajioUnlockFlash(true);
+      return;
+    }
+  }, []);
+  useEffect(() => {
+    if (!bajioUnlockFlash) return undefined;
+    const hide = setTimeout(() => {
+      markBajioUnlockFlashLive(false);
+      setBajioUnlockFlash(false);
+    }, BAJIO_UNLOCK_FLASH_MS);
+    return () => clearTimeout(hide);
+  }, [bajioUnlockFlash]);
   const dismissSoftPaywall = (plan, { fromBackdrop } = {}) => {
     if (fromBackdrop && !paywallArmed) return;
     setSoftPaywall(false);
@@ -5033,11 +5050,27 @@ export default function App() {
 
   const continueFromWin = () => {
     const t = todayStr();
-    save((prev) => progressAfterWinContinue(prev, {
-      today: t,
-      todaySceneId: todaySceneIdFromSession(session),
-    }));
+    const firstStreakEso = !!(session?.firstHoy || session?.firstDoctora);
     const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
+    const willFlash = shouldShowBajioUnlockFlash({
+      bajioUnlockSeen: !!prog.bajioUnlockSeen,
+      firstStreakEso,
+      streak: 1,
+      paywallSeen: !!prog.paywallSeen,
+    });
+    save((prev) => ({
+      ...progressAfterWinContinue(prev, {
+        today: t,
+        todaySceneId: todaySceneIdFromSession(session),
+      }),
+      ...(willFlash ? { bajioUnlockSeen: true } : {}),
+    }));
+    if (willFlash && next === "home") {
+      markBajioUnlockFlashLive(true);
+      setBajioUnlockFlash(true);
+    } else if (willFlash) {
+      setBajioFlashPending(true);
+    }
     setScreen(next);
     if (next === "home") setTab("camino");
   };
@@ -5045,6 +5078,11 @@ export default function App() {
   const dismissSessionClose = () => {
     setScreen("home");
     setTab("camino");
+    if (bajioFlashPending) {
+      setBajioFlashPending(false);
+      markBajioUnlockFlashLive(true);
+      setBajioUnlockFlash(true);
+    }
   };
 
   return (
@@ -6424,6 +6462,43 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Bajío unlock flash: once on first streak-1 ¡Eso! / That's it. Then paywall as today. */}
+      {bajioUnlockFlash && (() => {
+        const bajio = RECUERDOS_PINS.find((p) => p.id === "bajio") || RECUERDOS_PINS[0];
+        const flashCopy = bajioUnlockFlashCopy(uiLang);
+        return (
+        <div data-testid="bajio-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 62, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
+            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
+              <svg data-testid="bajio-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
+              </svg>
+              <div aria-hidden="true" style={{
+                position: "absolute", inset: 0, pointerEvents: "none",
+                background: recuerdosFogBackground(RECUERDOS_PINS, {}, theme),
+              }} />
+              <div
+                data-testid="bajio-unlock-flash-pin"
+                style={{
+                  position: "absolute", left: `${bajio.x}%`, top: `${bajio.y}%`,
+                  transform: "translate(-50%, -50%)",
+                  display: "flex", flexDirection: "column", alignItems: "center", minWidth: 52, zIndex: 2,
+                }}
+              >
+                <span data-testid="bajio-unlock-flash-glow" className="bajio-glow" style={{
+                  width: 18, height: 18,
+                  borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
+                  background: D.gold, border: "2px solid #fff",
+                  boxShadow: "0 3px 8px rgba(0,0,0,.22)",
+                }} />
+                <span data-testid="bajio-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
 
       {/* ---------- SOFT PAYWALL (after first win + vuelve; $0, no IAP) ---------- */}
       {showSoftPaywall && (

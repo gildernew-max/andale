@@ -8,7 +8,10 @@ import {
   RECUERDOS_PINS,
   RECUERDOS_TITLE_EN,
   RECUERDOS_TITLE_ES,
+  bajioUnlockFlashCopy,
+  isBajioUnlockFlashLive,
   isRecuerdosPinOpen,
+  markBajioUnlockFlashLive,
   recuerdosFogBackground,
   recuerdosHasProgressFraction,
   recuerdosLockedPins,
@@ -16,6 +19,7 @@ import {
   recuerdosPinState,
   recuerdosSurfaceHasCuts,
   recuerdosTitle,
+  shouldShowBajioUnlockFlash,
   storyIdForRecuerdosPin,
 } from "./recuerdos.js";
 
@@ -77,5 +81,26 @@ assert(recuerdosSurfaceHasCuts("parroquia"), "parroquia is a cut");
 assert(recuerdosHasProgressFraction("12/25"), "12/25 is a backpack fraction");
 assert(recuerdosHasProgressFraction("0/10"), "0/10 is a backpack fraction");
 assert(!recuerdosHasProgressFraction("Bajío Abierto"), "pin chrome is not a fraction");
+
+const firstEso = { firstStreakEso: true, streak: 1 };
+assert(shouldShowBajioUnlockFlash(firstEso), "first streak-1 Eso CONTINUE arms the Bajío glow beat");
+assert(!shouldShowBajioUnlockFlash({ ...firstEso, bajioUnlockSeen: true }), "seen flag never re-flashes");
+assert(!shouldShowBajioUnlockFlash({ ...firstEso, paywallSeen: true }), "paywallSeen skips the flash");
+assert(!shouldShowBajioUnlockFlash({ firstStreakEso: false, streak: 1 }), "later win without Eso flag does not flash");
+assert(!shouldShowBajioUnlockFlash({ firstStreakEso: true, streak: 2 }), "day-2 / later streak Eso does not flash");
+assert(!shouldShowBajioUnlockFlash({ firstStreakEso: true, streak: 0 }), "streak 0 is not the streak-1 Eso");
+assert(!shouldShowBajioUnlockFlash({}), "empty args do not flash");
+assert(bajioUnlockFlashCopy("es") === "Abierto", "flash ES copy is Abierto only");
+assert(bajioUnlockFlashCopy("en") === "Open", "flash EN copy is Open only");
+assert(bajioUnlockFlashCopy("es") === RECUERDOS_OPEN_ES, "flash ES reuses Recuerdos open stamp");
+assert(bajioUnlockFlashCopy("en") === RECUERDOS_OPEN_EN, "flash EN reuses Recuerdos open stamp");
+assert(!/Bajío|¡Sigue explorando!|Sigue explorando|12\/25|backpack|Unlocked|Cerrado|Locked/i.test(
+  `${bajioUnlockFlashCopy("es")}${bajioUnlockFlashCopy("en")}`
+), "flash copy is Abierto/Open only — no pep, no new lines");
+
+markBajioUnlockFlashLive(true);
+assert(isBajioUnlockFlashLive(), "live flag stays up across a remount");
+markBajioUnlockFlashLive(false);
+assert(!isBajioUnlockFlashLive(), "live flag clears after the flash");
 
 console.log("recuerdos.test.js: ok");
