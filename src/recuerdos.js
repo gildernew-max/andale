@@ -43,10 +43,13 @@ export function recuerdosPinState(open, lang) {
   return lang === "en" ? RECUERDOS_LOCKED_EN : RECUERDOS_LOCKED_ES;
 }
 
-/** Bajío first-glow always open. Other pins open once a mapped souvenir is claimed. */
-export function isRecuerdosPinOpen(pin, claimedStories = {}) {
+export const CDMX_PIN = "cdmx";
+
+/** Bajío first-glow always open. CDMX opens on souvenir claim or day-2 Hoy unlock. */
+export function isRecuerdosPinOpen(pin, claimedStories = {}, unlocks = {}) {
   if (!pin) return false;
   if (pin.firstGlow || pin.id === FIRST_GLOW_PIN) return true;
+  if (pin.id === CDMX_PIN && unlocks.cdmxUnlockSeen) return true;
   return (pin.storyIds || []).some((id) => !!claimedStories[id]);
 }
 
@@ -77,8 +80,8 @@ export function recuerdosHasProgressFraction(text) {
 }
 
 /** Fog sits on locked regions only. Bajío first-glow stays clear. */
-export function recuerdosLockedPins(pins = RECUERDOS_PINS, claimedStories = {}) {
-  return (pins || []).filter((pin) => !isRecuerdosPinOpen(pin, claimedStories));
+export function recuerdosLockedPins(pins = RECUERDOS_PINS, claimedStories = {}, unlocks = {}) {
+  return (pins || []).filter((pin) => !isRecuerdosPinOpen(pin, claimedStories, unlocks));
 }
 
 export const BAJIO_UNLOCK_FLASH_MS = 1400;
@@ -138,10 +141,67 @@ export function bajioUnlockFlashCopy(lang) {
   return recuerdosPinState(true, lang);
 }
 
+/** Same Abierto / Open stamps as Bajío. No new copy. */
+export function cdmxUnlockFlashCopy(lang) {
+  return bajioUnlockFlashCopy(lang);
+}
+
+export const CDMX_UNLOCK_FLASH_MS = BAJIO_UNLOCK_FLASH_MS;
+
+let cdmxUnlockFlashLive = false;
+
+export const CDMX_UNLOCK_FLASH_DUE_KEY = "andale-cdmx-flash-due";
+
+export function isCdmxUnlockFlashLive() {
+  return cdmxUnlockFlashLive;
+}
+
+export function markCdmxUnlockFlashLive(on) {
+  cdmxUnlockFlashLive = !!on;
+}
+
+export function isCdmxUnlockFlashDue() {
+  if (cdmxUnlockFlashLive) return true;
+  try {
+    return sessionStorage.getItem(CDMX_UNLOCK_FLASH_DUE_KEY) === "1";
+  } catch (e) {
+    return false;
+  }
+}
+
+export function markCdmxUnlockFlashDue(on) {
+  markCdmxUnlockFlashLive(on);
+  try {
+    if (on) sessionStorage.setItem(CDMX_UNLOCK_FLASH_DUE_KEY, "1");
+    else sessionStorage.removeItem(CDMX_UNLOCK_FLASH_DUE_KEY);
+  } catch (e) {}
+}
+
+/**
+ * Day-2 Hoy ¡Eso! / That's it. (scene id / `_today:` count if firstHoy dropped).
+ * Not first-Doctora — that stays on the Bajío path.
+ */
+export function isDay2HoyEsoWin(session) {
+  if (!session || session.firstDoctora) return false;
+  const todayScene = !!(session.todaySceneId || String(session.unitId || "").startsWith("_today:"));
+  return !!(session.day2Hoy || session.firstHoy || session.esoWin || todayScene);
+}
+
+/** After day-2 Hoy ¡Eso! / That's it. CONTINUE — glow beat, then close or idle. Once only. */
+export function shouldShowCdmxUnlockFlash({
+  cdmxUnlockSeen,
+  day2HoyEso,
+  streak,
+} = {}) {
+  if (cdmxUnlockSeen) return false;
+  if (!day2HoyEso) return false;
+  return (Number(streak) || 0) === 2;
+}
+
 /** Fog-of-war: mist over the map, clear around open pins (Bajío first). */
-export function recuerdosFogBackground(pins = RECUERDOS_PINS, claimedStories = {}, theme = "light") {
+export function recuerdosFogBackground(pins = RECUERDOS_PINS, claimedStories = {}, theme = "light", unlocks = {}) {
   const fog = theme === "dark" ? "rgba(18,22,28,.58)" : "rgba(232,238,242,.7)";
-  const open = (pins || []).filter((pin) => isRecuerdosPinOpen(pin, claimedStories));
+  const open = (pins || []).filter((pin) => isRecuerdosPinOpen(pin, claimedStories, unlocks));
   if (!open.length) return fog;
   return open
     .map((pin) => `radial-gradient(circle at ${pin.x}% ${pin.y}%, transparent 0 11%, ${fog} 30%)`)

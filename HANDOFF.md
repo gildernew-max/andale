@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-05 (CDMX unlock flash — day-2 Hoy ¡Eso!)
+
+**What changed**
+- Day-2 Hoy `¡Eso!` / `That's it.` CONTINUE plays a CDMX glow beat with **`Abierto` / `Open` only** (same stamps as Bajío). Placement is **before close or idle**, not before the soft paywall. Map progression earns the return (`cdmxUnlockSeen` opens the CDMX pin).
+- Eso arms due/pending; `todaySceneId` / `_today:` / `day2Hoy` count so CONTINUE cannot skip. Once-only. No pep, no new copy.
+- Door / paywall / A2HS / Bajío first-win flash stay. Enroll off. IAP off.
+
+**Why**
+- Hand / No face lock: return map beat, not a paywall beat. Landlord / streak-1 Bajío path must not regress.
+
 ## 2026-09-05 (Bajío flash gate — Varys live miss)
 
 **What changed**

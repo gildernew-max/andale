@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { BAJIO_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isFirstStreakEsoWin, isRecuerdosPinOpen, markBajioUnlockFlashDue, markBajioUnlockFlashLive, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
+import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isRecuerdosPinOpen, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -3259,6 +3259,9 @@ export default function App() {
   const [a2hsSheet, setA2hsSheet] = useState(false);
   const [bajioUnlockFlash, setBajioUnlockFlash] = useState(false);
   const [bajioFlashPending, setBajioFlashPending] = useState(false);
+  const [cdmxUnlockFlash, setCdmxUnlockFlash] = useState(false);
+  const [cdmxFlashPending, setCdmxFlashPending] = useState(false);
+  const cdmxFlashNextRef = useRef(null);
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
@@ -3775,6 +3778,7 @@ export default function App() {
       unitId: `_today:${scene.id}`,
       todaySceneId: scene.id,
       firstHoy,
+      ...(day2Hoy ? { day2Hoy: true } : {}),
       scenario: uiLang === "en" ? scene.setupEn : scene.setup,
       review: false,
       host: scene.host,
@@ -4786,12 +4790,18 @@ export default function App() {
           let live = null;
           try { live = JSON.parse(liveRes.value); } catch (e) {}
           live = acceptLive(live);
-          if (live?.session?.todaySceneId && live.session.firstHoy == null && isShortHoy({
-            streak: progress?.streak,
-            lastDay: progress?.lastDay,
-            today: todayStr(),
-          })) {
-            live = { ...live, session: { ...live.session, firstHoy: true } };
+          if (live?.session?.todaySceneId) {
+            const shortOpts = {
+              streak: progress?.streak,
+              lastDay: progress?.lastDay,
+              today: todayStr(),
+            };
+            if (live.session.firstHoy == null && isShortHoy(shortOpts)) {
+              live = { ...live, session: { ...live.session, firstHoy: true } };
+            }
+            if (live.session.day2Hoy == null && isDay2Return(shortOpts)) {
+              live = { ...live, session: { ...live.session, day2Hoy: true } };
+            }
           }
           if (live) applyLive(live);
         }
@@ -4994,6 +5004,34 @@ export default function App() {
     }, BAJIO_UNLOCK_FLASH_MS);
     return () => clearTimeout(hide);
   }, [bajioUnlockFlash]);
+  useEffect(() => {
+    if (isCdmxUnlockFlashLive() || isCdmxUnlockFlashDue()) {
+      setCdmxUnlockFlash(true);
+    }
+  }, []);
+  useEffect(() => {
+    if (screen !== "done") return;
+    if (!shouldShowCdmxUnlockFlash({
+      cdmxUnlockSeen: !!prog.cdmxUnlockSeen,
+      day2HoyEso: isDay2HoyEsoWin(session),
+      streak: Number(prog.streak) || 0,
+    })) return;
+    markCdmxUnlockFlashDue(true);
+    setCdmxFlashPending(true);
+  }, [screen, session, prog.cdmxUnlockSeen, prog.streak]);
+  useEffect(() => {
+    if (!cdmxUnlockFlash) return undefined;
+    const hide = setTimeout(() => {
+      markCdmxUnlockFlashDue(false);
+      setCdmxUnlockFlash(false);
+      const dest = cdmxFlashNextRef.current || "home";
+      cdmxFlashNextRef.current = null;
+      setCdmxFlashPending(false);
+      setScreen(dest);
+      if (dest === "home") setTab("camino");
+    }, CDMX_UNLOCK_FLASH_MS);
+    return () => clearTimeout(hide);
+  }, [cdmxUnlockFlash]);
   const dismissSoftPaywall = (plan, { fromBackdrop } = {}) => {
     if (fromBackdrop && !paywallArmed) return;
     setSoftPaywall(false);
@@ -5076,12 +5114,18 @@ export default function App() {
       streak: Math.max(Number(prog.streak) || 0, 1),
       paywallSeen: !!prog.paywallSeen,
     });
+    const willCdmxFlash = !willFlash && (cdmxFlashPending || isCdmxUnlockFlashDue() || shouldShowCdmxUnlockFlash({
+      cdmxUnlockSeen: !!prog.cdmxUnlockSeen,
+      day2HoyEso: isDay2HoyEsoWin(session),
+      streak: Number(prog.streak) || 0,
+    }));
     save((prev) => ({
       ...progressAfterWinContinue(prev, {
         today: t,
         todaySceneId: todaySceneIdFromSession(session),
       }),
       ...(willFlash ? { bajioUnlockSeen: true } : {}),
+      ...(willCdmxFlash ? { cdmxUnlockSeen: true } : {}),
     }));
     if (willFlash && next === "home") {
       markBajioUnlockFlashDue(true);
@@ -5090,6 +5134,13 @@ export default function App() {
     } else if (willFlash) {
       markBajioUnlockFlashDue(true);
       setBajioFlashPending(true);
+    }
+    if (willCdmxFlash) {
+      markCdmxUnlockFlashDue(true);
+      setCdmxFlashPending(true);
+      cdmxFlashNextRef.current = next;
+      setCdmxUnlockFlash(true);
+      return;
     }
     setScreen(next);
     if (next === "home") setTab("camino");
@@ -5102,6 +5153,11 @@ export default function App() {
       setBajioFlashPending(false);
       markBajioUnlockFlashDue(true);
       setBajioUnlockFlash(true);
+    } else if (cdmxFlashPending || isCdmxUnlockFlashDue()) {
+      setCdmxFlashPending(false);
+      cdmxFlashNextRef.current = "home";
+      markCdmxUnlockFlashDue(true);
+      setCdmxUnlockFlash(true);
     }
   };
 
@@ -5601,9 +5657,9 @@ export default function App() {
               </svg>
               <div data-testid="recuerdos-fog" aria-hidden="true" style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
-                background: recuerdosFogBackground(RECUERDOS_PINS, prog.stories, theme),
+                background: recuerdosFogBackground(RECUERDOS_PINS, prog.stories, theme, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen }),
               }} />
-              {recuerdosLockedPins(RECUERDOS_PINS, prog.stories).map((pin) => (
+              {recuerdosLockedPins(RECUERDOS_PINS, prog.stories, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen }).map((pin) => (
                 <div
                   key={`fog-${pin.id}`}
                   data-testid={`recuerdos-fog-${pin.id}`}
@@ -5624,7 +5680,7 @@ export default function App() {
                 />
               ))}
               {RECUERDOS_PINS.map((pin) => {
-                const open = isRecuerdosPinOpen(pin, prog.stories);
+                const open = isRecuerdosPinOpen(pin, prog.stories, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen });
                 const label = recuerdosPinLabel(pin, uiLang);
                 const state = recuerdosPinState(open, uiLang);
                 const storyId = storyIdForRecuerdosPin(pin, prog.stories);
@@ -6513,6 +6569,43 @@ export default function App() {
                   boxShadow: "0 3px 8px rgba(0,0,0,.22)",
                 }} />
                 <span data-testid="bajio-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
+
+      {/* CDMX unlock flash: once on day-2 Hoy ¡Eso! / That's it. Then close or idle. */}
+      {cdmxUnlockFlash && (() => {
+        const cdmx = RECUERDOS_PINS.find((p) => p.id === "cdmx");
+        const flashCopy = cdmxUnlockFlashCopy(uiLang);
+        return (
+        <div data-testid="cdmx-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 62, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
+            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
+              <svg data-testid="cdmx-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
+              </svg>
+              <div aria-hidden="true" style={{
+                position: "absolute", inset: 0, pointerEvents: "none",
+                background: recuerdosFogBackground(RECUERDOS_PINS, {}, theme, { cdmxUnlockSeen: true }),
+              }} />
+              <div
+                data-testid="cdmx-unlock-flash-pin"
+                style={{
+                  position: "absolute", left: `${cdmx.x}%`, top: `${cdmx.y}%`,
+                  transform: "translate(-50%, -50%)",
+                  display: "flex", flexDirection: "column", alignItems: "center", minWidth: 52, zIndex: 2,
+                }}
+              >
+                <span data-testid="cdmx-unlock-flash-glow" className="bajio-glow" style={{
+                  width: 18, height: 18,
+                  borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
+                  background: D.gold, border: "2px solid #fff",
+                  boxShadow: "0 3px 8px rgba(0,0,0,.22)",
+                }} />
+                <span data-testid="cdmx-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
               </div>
             </div>
           </div>
