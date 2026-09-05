@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-05 (Bajío flash gate — Varys live miss)
+
+**What changed**
+- Live miss: streak-1 `That's it.` CONTINUE opened the soft paywall with no `Abierto` / `Open` glow. CONTINUE now plays a due/pending glow even if `firstHoy` dropped, and paywall waits on `isBajioUnlockFlashDue`.
+- Eso done screen arms the beat. Remount/reload in the same tab still shows the glow before the wall. Copy stays `Abierto` / `Open` only. Once-only. No new pep.
+
+**Why**
+- Conversion waits allowed paywall without flash. Persist-on-CONTINUE + remount swallowed the overlay.
+
 ## 2026-09-04 (Bajío unlock flash — Hand brief)
 
 **What changed**

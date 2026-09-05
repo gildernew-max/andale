@@ -86,12 +86,37 @@ export const BAJIO_UNLOCK_FLASH_MS = 1400;
 /** Survives React StrictMode remount so persist-on-show cannot swallow the flash. */
 let bajioUnlockFlashLive = false;
 
+/** Survives a full remount/reload in the same tab after Eso CONTINUE. */
+export const BAJIO_UNLOCK_FLASH_DUE_KEY = "andale-bajio-flash-due";
+
 export function isBajioUnlockFlashLive() {
   return bajioUnlockFlashLive;
 }
 
 export function markBajioUnlockFlashLive(on) {
   bajioUnlockFlashLive = !!on;
+}
+
+export function isBajioUnlockFlashDue() {
+  if (bajioUnlockFlashLive) return true;
+  try {
+    return sessionStorage.getItem(BAJIO_UNLOCK_FLASH_DUE_KEY) === "1";
+  } catch (e) {
+    return false;
+  }
+}
+
+export function markBajioUnlockFlashDue(on) {
+  markBajioUnlockFlashLive(on);
+  try {
+    if (on) sessionStorage.setItem(BAJIO_UNLOCK_FLASH_DUE_KEY, "1");
+    else sessionStorage.removeItem(BAJIO_UNLOCK_FLASH_DUE_KEY);
+  } catch (e) {}
+}
+
+/** ¡Eso! / That's it. first-win (Hoy or first Doctora). */
+export function isFirstStreakEsoWin(session) {
+  return !!(session?.firstHoy || session?.firstDoctora || session?.esoWin);
 }
 
 /** After first streak-1 ¡Eso! / That's it. CONTINUE — short glow beat, then paywall. Once only. */

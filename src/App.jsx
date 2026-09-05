@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { BAJIO_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, isBajioUnlockFlashLive, isRecuerdosPinOpen, markBajioUnlockFlashLive, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
+import { BAJIO_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isFirstStreakEsoWin, isRecuerdosPinOpen, markBajioUnlockFlashDue, markBajioUnlockFlashLive, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -4326,7 +4326,14 @@ export default function App() {
     const gemsEarned = session.rival
       ? (rivalOut?.won ? 20 : 5)
       : (session.questions.length <= 2 ? hits : gemCap);
-    setSession((s) => (s ? { ...s, awarded: true, earnedXP: earned, earnedGems: gemsEarned, perfectBonus } : s));
+    setSession((s) => (s ? {
+      ...s,
+      awarded: true,
+      earnedXP: earned,
+      earnedGems: gemsEarned,
+      perfectBonus,
+      ...(s.firstHoy || s.firstDoctora ? { esoWin: true } : {}),
+    } : s));
     const before = levelOf(prog.xp || 0).idx, after = levelOf((prog.xp || 0) + earned).idx;
     setLevelUp(after > before ? LEVELS[after][1] : null);
     setScreenQuip(session.firstHoy ? "" : pickQuip(session.host, "win"));
@@ -4947,7 +4954,7 @@ export default function App() {
   });
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
-  const showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending;
+  const showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
   useEffect(() => {
     if (showSoftPaywall) setSoftPaywall(true);
     else {
@@ -4964,15 +4971,25 @@ export default function App() {
     return () => clearTimeout(arm);
   }, [showSoftPaywall]);
   useEffect(() => {
-    if (isBajioUnlockFlashLive()) {
+    if (isBajioUnlockFlashLive() || isBajioUnlockFlashDue()) {
       setBajioUnlockFlash(true);
-      return;
     }
   }, []);
   useEffect(() => {
+    if (screen !== "done") return;
+    if (!shouldShowBajioUnlockFlash({
+      bajioUnlockSeen: !!prog.bajioUnlockSeen,
+      firstStreakEso: isFirstStreakEsoWin(session),
+      streak: Number(prog.streak) || 0,
+      paywallSeen: !!prog.paywallSeen,
+    })) return;
+    markBajioUnlockFlashDue(true);
+    setBajioFlashPending(true);
+  }, [screen, session, prog.bajioUnlockSeen, prog.streak, prog.paywallSeen]);
+  useEffect(() => {
     if (!bajioUnlockFlash) return undefined;
     const hide = setTimeout(() => {
-      markBajioUnlockFlashLive(false);
+      markBajioUnlockFlashDue(false);
       setBajioUnlockFlash(false);
     }, BAJIO_UNLOCK_FLASH_MS);
     return () => clearTimeout(hide);
@@ -5015,6 +5032,7 @@ export default function App() {
     awardDoctoraStreak();
     setSession({
       firstDoctora: true,
+      esoWin: true,
       title: L.phraseDoctor,
       host: "valeria",
       questions: [{}],
@@ -5050,12 +5068,12 @@ export default function App() {
 
   const continueFromWin = () => {
     const t = todayStr();
-    const firstStreakEso = !!(session?.firstHoy || session?.firstDoctora);
+    const firstStreakEso = isFirstStreakEsoWin(session);
     const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
-    const willFlash = shouldShowBajioUnlockFlash({
+    const willFlash = bajioFlashPending || isBajioUnlockFlashDue() || shouldShowBajioUnlockFlash({
       bajioUnlockSeen: !!prog.bajioUnlockSeen,
       firstStreakEso,
-      streak: 1,
+      streak: Math.max(Number(prog.streak) || 0, 1),
       paywallSeen: !!prog.paywallSeen,
     });
     save((prev) => ({
@@ -5066,9 +5084,11 @@ export default function App() {
       ...(willFlash ? { bajioUnlockSeen: true } : {}),
     }));
     if (willFlash && next === "home") {
-      markBajioUnlockFlashLive(true);
+      markBajioUnlockFlashDue(true);
+      setBajioFlashPending(false);
       setBajioUnlockFlash(true);
     } else if (willFlash) {
+      markBajioUnlockFlashDue(true);
       setBajioFlashPending(true);
     }
     setScreen(next);
@@ -5078,9 +5098,9 @@ export default function App() {
   const dismissSessionClose = () => {
     setScreen("home");
     setTab("camino");
-    if (bajioFlashPending) {
+    if (bajioFlashPending || isBajioUnlockFlashDue()) {
       setBajioFlashPending(false);
-      markBajioUnlockFlashLive(true);
+      markBajioUnlockFlashDue(true);
       setBajioUnlockFlash(true);
     }
   };
