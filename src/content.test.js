@@ -427,6 +427,7 @@ assert(appSrc.includes("shouldShowBajioUnlockFlash"), "Bajío unlock flash uses 
 assert(appSrc.includes("isBajioUnlockFlashLive") && appSrc.includes("markBajioUnlockFlashLive"), "flash live flag survives remount");
 assert(appSrc.includes("isBajioUnlockFlashDue") && appSrc.includes("markBajioUnlockFlashDue"), "flash due flag survives CONTINUE remount");
 assert(appSrc.includes("isFirstStreakEsoWin"), "CONTINUE uses the Eso win stamp, not only firstHoy");
+assert(/function isFirstStreakEsoWin[\s\S]{0,280}todaySceneId/.test(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "recuerdos.js"), "utf8")), "Hoy scene id (Landlord WhatsApp included) is an Eso win");
 assert(appSrc.includes("bajioUnlockSeen"), "Bajío unlock flash seen flag is persisted");
 assert(/showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue\(\)/.test(appSrc), "paywall waits for the Bajío glow beat");
 assert(appSrc.includes("data-testid=\"bajio-unlock-flash\""), "Bajío unlock flash is testable");

@@ -114,9 +114,10 @@ export function markBajioUnlockFlashDue(on) {
   } catch (e) {}
 }
 
-/** ¡Eso! / That's it. first-win (Hoy or first Doctora). */
+/** ¡Eso! / That's it. first-win (Hoy scene — including Landlord WhatsApp — or first Doctora). */
 export function isFirstStreakEsoWin(session) {
-  return !!(session?.firstHoy || session?.firstDoctora || session?.esoWin);
+  const todayScene = !!(session?.todaySceneId || String(session?.unitId || "").startsWith("_today:"));
+  return !!(session?.firstHoy || session?.firstDoctora || session?.esoWin || todayScene);
 }
 
 /** After first streak-1 ¡Eso! / That's it. CONTINUE — short glow beat, then paywall. Once only. */

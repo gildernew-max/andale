@@ -4332,7 +4332,7 @@ export default function App() {
       earnedXP: earned,
       earnedGems: gemsEarned,
       perfectBonus,
-      ...(s.firstHoy || s.firstDoctora ? { esoWin: true } : {}),
+      ...(s.firstHoy || s.firstDoctora || s.todaySceneId ? { esoWin: true } : {}),
     } : s));
     const before = levelOf(prog.xp || 0).idx, after = levelOf((prog.xp || 0) + earned).idx;
     setLevelUp(after > before ? LEVELS[after][1] : null);

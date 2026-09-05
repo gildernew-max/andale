@@ -1515,32 +1515,80 @@ describe("simulated learner flows", () => {
   });
 
   it("CONTINUE after first streak-1 Eso cannot skip the Bajío flash onto the paywall", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(2026, 8, 4, 12, 0, 0));
+    try {
+      cleanup();
+      localStorage.clear();
+      markBajioUnlockFlashDue(false);
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(
+        <StrictMode>
+          <App />
+        </StrictMode>
+      );
+      await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
+      await user.click(screen.getByTestId("splash-start"));
+      await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+      await user.click(screen.getByTestId("lang-es"));
+      await waitFor(() => expect(screen.getByTestId("hoy-title").textContent).toBe("WhatsApp del casero"));
+      await waitFor(() => expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena/));
+      await user.click(screen.getByTestId("hero-cta"));
+      await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+      const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
+        el.textContent.includes("natural y firme"));
+      expect(choice).toBeTruthy();
+      await user.click(choice);
+      await user.click(screen.getByTestId("lesson-check"));
+      await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+      await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+      await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+      expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+      expect(screen.queryByTestId("soft-paywall")).toBeNull();
+      await user.click(screen.getByTestId("hoy-win-continue"));
+      await awaitBajioFlashThenPaywall();
+      expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
+      assertSoftPaywallAnnualPrimary("es");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("Landlord WhatsApp first streak-1 CONTINUE shows Abierto before paywall", async () => {
     cleanup();
-    localStorage.clear();
-    markBajioUnlockFlashDue(false);
+    seedProgress({ streak: 0, lastDay: null });
+    const landlordMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["natural y firme"],
+      answer: "natural y firme",
+      shuffledChoices: ["natural y firme"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "WhatsApp del casero",
+        unitId: "_today:landlord",
+        todaySceneId: "landlord",
+        firstHoy: true,
+        host: "valeria",
+        questions: [
+          landlordMc("En WhatsApp con el casero, «Oye, ¿el depósito cuenta…?» suena:"),
+          landlordMc("beat 2 must not run — early checkpoint"),
+        ],
+      },
+    }));
     const user = userEvent.setup();
-    render(
-      <StrictMode>
-        <App />
-      </StrictMode>
-    );
-    await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
-    await user.click(screen.getByTestId("splash-start"));
-    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
-    await user.click(screen.getByTestId("lang-es"));
-    await waitFor(() => expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena/));
-    await user.click(screen.getByTestId("hero-cta"));
+    render(<App />);
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
-    const hoyAnswers = [
-      "cilantro, cebolla, salsa y guarnición",
-      "natural y firme",
-      "contraste",
-      "habla de un momento futuro",
-    ];
-    const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
-      hoyAnswers.some((ans) => el.textContent.includes(ans)));
-    expect(choice).toBeTruthy();
-    await user.click(choice);
+    expect(document.body.textContent).toMatch(/WhatsApp del casero|depósito cuenta/);
+    await user.click(document.querySelectorAll(".choice-card")[0]);
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
