@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-05 (Yucatán unlock flash — streak-4 Hoy ¡Eso!)
+
+**What changed**
+- Streak-4 Hoy `¡Eso!` / `That's it.` CONTINUE plays a Yucatán glow beat with **`Abierto` / `Open` only** (same stamps as Bajío / CDMX / Oaxaca). Placement is **before close or idle**, not before the soft paywall.
+- CONTINUE uses earned streak (`yucatanUnlockFlashStreak`: yesterday → 4) so raw streak 3 cannot skip. Stale Oaxaca due cannot steal the beat once Oaxaca was seen. `yucatanUnlockSeen` waits until the overlay is on screen (map pin opens after glow). Pin id stays `yucatan`; stamps stay `Yucatán`.
+- Once-only. No pep, no new copy, no backpack, no enroll/IAP. Door / paywall / A2HS / Bajío streak-1 → glow → wall / CDMX day-2 → glow before idle / Oaxaca streak-3 → glow before idle stay.
+
+**Why**
+- Same class as Oaxaca streak-3 (PR 86): return map beat after earned streak, glow before idle, do not flip Open before the overlay.
+
 ## 2026-09-05 (Oaxaca unlock flash — streak-3 Hoy ¡Eso!)
 
 **What changed**
