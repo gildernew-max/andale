@@ -2,6 +2,7 @@ import {
   CDMX_PIN,
   FIRST_GLOW_PIN,
   OAXACA_PIN,
+  YUCATAN_PIN,
   MEXICO_OUTLINE_PATH,
   RECUERDOS_LOCKED_EN,
   RECUERDOS_LOCKED_ES,
@@ -21,6 +22,9 @@ import {
   isOaxacaUnlockFlashDue,
   isOaxacaUnlockFlashLive,
   isStreak3HoyEsoWin,
+  isStreak4HoyEsoWin,
+  isYucatanUnlockFlashDue,
+  isYucatanUnlockFlashLive,
   isFirstStreakEsoWin,
   isRecuerdosPinOpen,
   markBajioUnlockFlashDue,
@@ -29,6 +33,8 @@ import {
   markCdmxUnlockFlashLive,
   markOaxacaUnlockFlashDue,
   markOaxacaUnlockFlashLive,
+  markYucatanUnlockFlashDue,
+  markYucatanUnlockFlashLive,
   recuerdosFogBackground,
   recuerdosHasProgressFraction,
   recuerdosLockedPins,
@@ -39,8 +45,11 @@ import {
   shouldShowBajioUnlockFlash,
   shouldShowCdmxUnlockFlash,
   shouldShowOaxacaUnlockFlash,
+  shouldShowYucatanUnlockFlash,
   oaxacaUnlockFlashCopy,
   oaxacaUnlockFlashStreak,
+  yucatanUnlockFlashCopy,
+  yucatanUnlockFlashStreak,
   storyIdForRecuerdosPin,
 } from "./recuerdos.js";
 
@@ -81,9 +90,15 @@ assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "cdmx"), { "story-
 assert(RECUERDOS_PINS.find((p) => p.id === "oaxaca")?.id === OAXACA_PIN, "Oaxaca pin id is oaxaca");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "cdmx"), {}, { cdmxUnlockSeen: true }), "day-2 Hoy unlock opens CDMX");
 assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "oaxaca"), {}, { cdmxUnlockSeen: true }), "CDMX unlock does not open Oaxaca");
+assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "yucatan"), {}, { cdmxUnlockSeen: true }), "CDMX unlock does not open Yucatán");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "oaxaca"), {}, { oaxacaUnlockSeen: true }), "streak-3 Hoy unlock opens Oaxaca");
 assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "cdmx"), {}, { oaxacaUnlockSeen: true }), "Oaxaca unlock does not open CDMX");
+assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "yucatan"), {}, { oaxacaUnlockSeen: true }), "Oaxaca unlock does not open Yucatán");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "oaxaca"), { "story-4": true }), "Oaxaca opens on story-4");
+assert(RECUERDOS_PINS.find((p) => p.id === "yucatan")?.id === YUCATAN_PIN, "Yucatán pin id is yucatan");
+assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "yucatan"), {}, { yucatanUnlockSeen: true }), "streak-4 Hoy unlock opens Yucatán");
+assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "oaxaca"), {}, { yucatanUnlockSeen: true }), "Yucatán unlock does not open Oaxaca");
+assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "norte"), {}, { yucatanUnlockSeen: true }), "Yucatán unlock does not open Norte");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "yucatan"), { "story-2": true }), "Yucatán opens on Cancún");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "norte"), { "story-5": true }), "Norte opens on Tijuana");
 assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "cdmx"), { "story-0": true }), "Bajío claim does not open CDMX");
@@ -270,5 +285,70 @@ markOaxacaUnlockFlashDue(true);
 assert(isOaxacaUnlockFlashDue(), "Oaxaca due flag survives a tab remount after Eso CONTINUE");
 markOaxacaUnlockFlashDue(false);
 assert(!isOaxacaUnlockFlashDue(), "Oaxaca due flag clears after the glow");
+
+assert(isStreak4HoyEsoWin({ day2Hoy: true }), "day2Hoy stamp still counts as streak-4 Hoy Eso");
+assert(isStreak4HoyEsoWin({ firstHoy: true }), "short Hoy Eso still counts on streak-4");
+assert(isStreak4HoyEsoWin({ esoWin: true }), "esoWin stamp still counts if firstHoy dropped");
+assert(isStreak4HoyEsoWin({ todaySceneId: "taqueria" }), "streak-4 Hoy scene id counts");
+assert(isStreak4HoyEsoWin({ unitId: "_today:taqueria" }), "Hoy unitId still counts if todaySceneId dropped");
+assert(!isStreak4HoyEsoWin({ firstDoctora: true, todaySceneId: "taqueria" }), "first Doctora stays on the Bajío path");
+assert(!isStreak4HoyEsoWin({}), "empty session is not a streak-4 Hoy Eso");
+
+const streak4Hoy = { streak4HoyEso: true, streak: 4 };
+assert(shouldShowYucatanUnlockFlash(streak4Hoy), "streak-4 Hoy Eso CONTINUE arms the Yucatán glow beat");
+assert(yucatanUnlockFlashStreak({
+  streak: 3,
+  lastDay: "2026-09-06",
+  today: "2026-09-07",
+  yesterday: "2026-09-06",
+}) === 4, "streak-4 CONTINUE earns streak 4 before persist");
+assert(yucatanUnlockFlashStreak({
+  streak: 4,
+  lastDay: "2026-09-07",
+  today: "2026-09-07",
+  yesterday: "2026-09-06",
+}) === 4, "already-committed streak-4 win stays streak 4");
+assert(yucatanUnlockFlashStreak({
+  streak: 3,
+  lastDay: "2026-09-06",
+  today: "2026-09-06",
+  yesterday: "2026-09-05",
+}) === 3, "same-day streak-3 stays Oaxaca, not Yucatán");
+assert(shouldShowYucatanUnlockFlash({
+  streak4HoyEso: isStreak4HoyEsoWin({ todaySceneId: "taqueria" }),
+  streak: 4,
+}), "streak-4 Hoy scene CONTINUE arms Yucatán");
+assert(shouldShowYucatanUnlockFlash({
+  streak4HoyEso: isStreak4HoyEsoWin({ todaySceneId: "taqueria" }),
+  streak: yucatanUnlockFlashStreak({
+    streak: 3,
+    lastDay: "2026-09-06",
+    today: "2026-09-07",
+    yesterday: "2026-09-06",
+  }),
+}), "raw streak 3 on streak-4 Hoy CONTINUE still arms Yucatán");
+assert(!shouldShowYucatanUnlockFlash({ ...streak4Hoy, yucatanUnlockSeen: true }), "Yucatán seen flag never re-flashes");
+assert(!shouldShowYucatanUnlockFlash({ streak4HoyEso: false, streak: 4 }), "later win without streak-4 Hoy Eso does not flash Yucatán");
+assert(!shouldShowYucatanUnlockFlash({ streak4HoyEso: true, streak: 1 }), "first streak-1 Eso stays Bajío, not Yucatán");
+assert(!shouldShowYucatanUnlockFlash({ streak4HoyEso: true, streak: 2 }), "day-2 streak Eso stays CDMX, not Yucatán");
+assert(!shouldShowYucatanUnlockFlash({ streak4HoyEso: true, streak: 3 }), "streak-3 Eso stays Oaxaca, not Yucatán");
+assert(!shouldShowYucatanUnlockFlash({ streak4HoyEso: true, streak: 5 }), "day-5 / later streak does not re-flash Yucatán");
+assert(!shouldShowYucatanUnlockFlash({}), "empty args do not flash Yucatán");
+assert(yucatanUnlockFlashCopy("es") === "Abierto", "Yucatán flash ES copy is Abierto only");
+assert(yucatanUnlockFlashCopy("en") === "Open", "Yucatán flash EN copy is Open only");
+assert(yucatanUnlockFlashCopy("es") === bajioUnlockFlashCopy("es"), "Yucatán reuses Bajío Abierto stamp");
+assert(yucatanUnlockFlashCopy("en") === bajioUnlockFlashCopy("en"), "Yucatán reuses Bajío Open stamp");
+assert(!/Yucatán|Yucatan|Oaxaca|CDMX|Bajío|¡Sigue explorando!|Sigue explorando|12\/25|backpack|Unlocked|Cerrado|Locked/i.test(
+  `${yucatanUnlockFlashCopy("es")}${yucatanUnlockFlashCopy("en")}`
+), "Yucatán flash copy is Abierto/Open only — no pep, no new lines");
+
+markYucatanUnlockFlashLive(true);
+assert(isYucatanUnlockFlashLive(), "Yucatán live flag stays up across a remount");
+markYucatanUnlockFlashLive(false);
+assert(!isYucatanUnlockFlashLive(), "Yucatán live flag clears after the flash");
+markYucatanUnlockFlashDue(true);
+assert(isYucatanUnlockFlashDue(), "Yucatán due flag survives a tab remount after Eso CONTINUE");
+markYucatanUnlockFlashDue(false);
+assert(!isYucatanUnlockFlashDue(), "Yucatán due flag clears after the glow");
 
 console.log("recuerdos.test.js: ok");

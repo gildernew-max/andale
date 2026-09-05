@@ -45,13 +45,15 @@ export function recuerdosPinState(open, lang) {
 
 export const CDMX_PIN = "cdmx";
 export const OAXACA_PIN = "oaxaca";
+export const YUCATAN_PIN = "yucatan";
 
-/** Bajío first-glow always open. CDMX / Oaxaca open on souvenir claim or streak unlock. */
+/** Bajío first-glow always open. CDMX / Oaxaca / Yucatán open on souvenir claim or streak unlock. */
 export function isRecuerdosPinOpen(pin, claimedStories = {}, unlocks = {}) {
   if (!pin) return false;
   if (pin.firstGlow || pin.id === FIRST_GLOW_PIN) return true;
   if (pin.id === CDMX_PIN && unlocks.cdmxUnlockSeen) return true;
   if (pin.id === OAXACA_PIN && unlocks.oaxacaUnlockSeen) return true;
+  if (pin.id === YUCATAN_PIN && unlocks.yucatanUnlockSeen) return true;
   return (pin.storyIds || []).some((id) => !!claimedStories[id]);
 }
 
@@ -273,6 +275,69 @@ export function shouldShowOaxacaUnlockFlash({
   if (oaxacaUnlockSeen) return false;
   if (!streak3HoyEso) return false;
   return (Number(streak) || 0) === 3;
+}
+
+/** Same Abierto / Open stamps as Bajío / CDMX / Oaxaca. No new copy. */
+export function yucatanUnlockFlashCopy(lang) {
+  return bajioUnlockFlashCopy(lang);
+}
+
+export const YUCATAN_UNLOCK_FLASH_MS = BAJIO_UNLOCK_FLASH_MS;
+
+let yucatanUnlockFlashLive = false;
+
+export const YUCATAN_UNLOCK_FLASH_DUE_KEY = "andale-yucatan-flash-due";
+
+export function isYucatanUnlockFlashLive() {
+  return yucatanUnlockFlashLive;
+}
+
+export function markYucatanUnlockFlashLive(on) {
+  yucatanUnlockFlashLive = !!on;
+}
+
+export function isYucatanUnlockFlashDue() {
+  if (yucatanUnlockFlashLive) return true;
+  try {
+    return sessionStorage.getItem(YUCATAN_UNLOCK_FLASH_DUE_KEY) === "1";
+  } catch (e) {
+    return false;
+  }
+}
+
+export function markYucatanUnlockFlashDue(on) {
+  markYucatanUnlockFlashLive(on);
+  try {
+    if (on) sessionStorage.setItem(YUCATAN_UNLOCK_FLASH_DUE_KEY, "1");
+    else sessionStorage.removeItem(YUCATAN_UNLOCK_FLASH_DUE_KEY);
+  } catch (e) {}
+}
+
+/**
+ * Streak-4 Hoy ¡Eso! / That's it. Same scene stamps as day-2
+ * (`todaySceneId` / `_today:` / firstHoy / esoWin). Not first-Doctora.
+ */
+export function isStreak4HoyEsoWin(session) {
+  return isDay2HoyEsoWin(session);
+}
+
+/**
+ * Streak CONTINUE must pass. Raw `prog.streak` can still be 3 on day-4
+ * (lastDay = yesterday) if persist has not committed yet.
+ */
+export function yucatanUnlockFlashStreak(opts) {
+  return cdmxUnlockFlashStreak(opts);
+}
+
+/** After streak-4 Hoy ¡Eso! / That's it. CONTINUE — glow beat, then close or idle. Once only. */
+export function shouldShowYucatanUnlockFlash({
+  yucatanUnlockSeen,
+  streak4HoyEso,
+  streak,
+} = {}) {
+  if (yucatanUnlockSeen) return false;
+  if (!streak4HoyEso) return false;
+  return (Number(streak) || 0) === 4;
 }
 
 /** Fog-of-war: mist over the map, clear around open pins (Bajío first). */
