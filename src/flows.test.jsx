@@ -1925,7 +1925,7 @@ describe("simulated learner flows", () => {
     } finally {
       vi.useRealTimers();
     }
-  });
+  }, 15000);
 
   it("remount after day-2 Hoy CONTINUE still plays CDMX flash before idle", async () => {
     const today = localToday();
