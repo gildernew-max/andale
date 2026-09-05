@@ -11,6 +11,7 @@ import {
   RECUERDOS_TITLE_ES,
   bajioUnlockFlashCopy,
   cdmxUnlockFlashCopy,
+  cdmxUnlockFlashStreak,
   isBajioUnlockFlashDue,
   isBajioUnlockFlashLive,
   isCdmxUnlockFlashDue,
@@ -141,10 +142,37 @@ assert(!isDay2HoyEsoWin({}), "empty session is not a day-2 Hoy Eso");
 
 const day2Hoy = { day2HoyEso: true, streak: 2 };
 assert(shouldShowCdmxUnlockFlash(day2Hoy), "day-2 Hoy Eso CONTINUE arms the CDMX glow beat");
+assert(cdmxUnlockFlashStreak({
+  streak: 1,
+  lastDay: "2026-09-04",
+  today: "2026-09-05",
+  yesterday: "2026-09-04",
+}) === 2, "day-2 CONTINUE earns streak 2 before persist");
+assert(cdmxUnlockFlashStreak({
+  streak: 2,
+  lastDay: "2026-09-05",
+  today: "2026-09-05",
+  yesterday: "2026-09-04",
+}) === 2, "already-committed day-2 win stays streak 2");
+assert(cdmxUnlockFlashStreak({
+  streak: 1,
+  lastDay: "2026-09-04",
+  today: "2026-09-04",
+  yesterday: "2026-09-03",
+}) === 1, "same-day streak-1 stays Bajío, not CDMX");
 assert(shouldShowCdmxUnlockFlash({
   day2HoyEso: isDay2HoyEsoWin({ todaySceneId: "airport" }),
   streak: 2,
 }), "day-2 Hoy scene streak-2 CONTINUE arms CDMX");
+assert(shouldShowCdmxUnlockFlash({
+  day2HoyEso: isDay2HoyEsoWin({ todaySceneId: "airport" }),
+  streak: cdmxUnlockFlashStreak({
+    streak: 1,
+    lastDay: "2026-09-04",
+    today: "2026-09-05",
+    yesterday: "2026-09-04",
+  }),
+}), "raw streak 1 on day-2 Hoy CONTINUE still arms CDMX");
 assert(!shouldShowCdmxUnlockFlash({ ...day2Hoy, cdmxUnlockSeen: true }), "CDMX seen flag never re-flashes");
 assert(!shouldShowCdmxUnlockFlash({ day2HoyEso: false, streak: 2 }), "later win without day-2 Hoy Eso does not flash CDMX");
 assert(!shouldShowCdmxUnlockFlash({ day2HoyEso: true, streak: 1 }), "first streak-1 Eso stays Bajío, not CDMX");

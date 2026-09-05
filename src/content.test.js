@@ -435,6 +435,14 @@ assert(appSrc.includes("shouldShowCdmxUnlockFlash"), "CDMX unlock flash uses the
 assert(appSrc.includes("isCdmxUnlockFlashDue") && appSrc.includes("markCdmxUnlockFlashDue"), "CDMX due flag survives CONTINUE remount");
 assert(appSrc.includes("isDay2HoyEsoWin"), "CONTINUE uses the day-2 Hoy Eso stamp, not only firstHoy");
 assert(/function isDay2HoyEsoWin[\s\S]{0,280}todaySceneId/.test(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "recuerdos.js"), "utf8")), "Hoy scene id counts as a day-2 Hoy Eso win");
+assert(appSrc.includes("cdmxUnlockFlashStreak"), "CONTINUE uses earned streak so raw streak 1 cannot skip CDMX");
+assert(/function cdmxUnlockFlashStreak[\s\S]{0,280}yesterday/.test(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "recuerdos.js"), "utf8")), "earned CDMX streak counts yesterday → 2");
+const continueWinChunk = appSrc.slice(appSrc.indexOf("const continueFromWin"), appSrc.indexOf("const dismissSessionClose"));
+assert(!/willCdmxFlash \? \{ cdmxUnlockSeen: true \}/.test(continueWinChunk), "CONTINUE does not flip map Open before the glow");
+assert(continueWinChunk.includes("cdmxUnlockFlashStreak"), "day-2 CONTINUE passes earned streak into the CDMX gate");
+assert(continueWinChunk.includes("setCdmxUnlockFlash(true)"), "CONTINUE forces the CDMX glow overlay");
+assert(continueWinChunk.includes("setScreen(next)"), "CONTINUE still lands after arming the glow");
+assert(!/if \(willCdmxFlash\) \{\s*markCdmxUnlockFlashDue\(true\);[\s\S]*?return;/.test(continueWinChunk), "CONTINUE cannot return past the glow onto idle");
 assert(appSrc.includes("cdmxUnlockSeen"), "CDMX unlock flash seen flag is persisted");
 assert(appSrc.includes("data-testid=\"cdmx-unlock-flash\""), "CDMX unlock flash is testable");
 assert(appSrc.includes("cdmxUnlockFlashCopy"), "CDMX flash copy reuses Recuerdos Abierto/Open stamp");

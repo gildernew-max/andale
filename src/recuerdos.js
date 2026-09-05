@@ -187,6 +187,18 @@ export function isDay2HoyEsoWin(session) {
   return !!(session.day2Hoy || session.firstHoy || session.esoWin || todayScene);
 }
 
+/**
+ * Streak CONTINUE must pass. Raw `prog.streak` can still be 1 on day-2
+ * (lastDay = yesterday) if persist has not committed yet — that skip
+ * flipped the map Open without a glow.
+ */
+export function cdmxUnlockFlashStreak({ streak, lastDay, today, yesterday } = {}) {
+  const n = Number(streak) || 0;
+  if (lastDay && today && lastDay === today) return n;
+  if (lastDay && yesterday && lastDay === yesterday) return n + 1;
+  return n;
+}
+
 /** After day-2 Hoy ¡Eso! / That's it. CONTINUE — glow beat, then close or idle. Once only. */
 export function shouldShowCdmxUnlockFlash({
   cdmxUnlockSeen,

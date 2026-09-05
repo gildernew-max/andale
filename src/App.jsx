@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isRecuerdosPinOpen, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
+import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isRecuerdosPinOpen, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -5014,13 +5014,21 @@ export default function App() {
     if (!shouldShowCdmxUnlockFlash({
       cdmxUnlockSeen: !!prog.cdmxUnlockSeen,
       day2HoyEso: isDay2HoyEsoWin(session),
-      streak: Number(prog.streak) || 0,
+      streak: cdmxUnlockFlashStreak({
+        streak: Number(prog.streak) || 0,
+        lastDay: prog.lastDay,
+        today: todayStr(),
+        yesterday: yesterdayStr(),
+      }),
     })) return;
     markCdmxUnlockFlashDue(true);
     setCdmxFlashPending(true);
-  }, [screen, session, prog.cdmxUnlockSeen, prog.streak]);
+  }, [screen, session, prog.cdmxUnlockSeen, prog.streak, prog.lastDay]);
   useEffect(() => {
     if (!cdmxUnlockFlash) return undefined;
+    // Persist Open only once the glow is on screen — CONTINUE must not flip the
+    // map pin and then race past the overlay (same class as Bajío persist-on-CONTINUE).
+    save((prev) => (prev.cdmxUnlockSeen ? prev : { ...prev, cdmxUnlockSeen: true }));
     const hide = setTimeout(() => {
       markCdmxUnlockFlashDue(false);
       setCdmxUnlockFlash(false);
@@ -5108,16 +5116,22 @@ export default function App() {
     const t = todayStr();
     const firstStreakEso = isFirstStreakEsoWin(session);
     const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
-    const willFlash = bajioFlashPending || isBajioUnlockFlashDue() || shouldShowBajioUnlockFlash({
+    // Stale Bajío due from day-1 must not steal day-2 CDMX once Bajío was seen.
+    const willFlash = shouldShowBajioUnlockFlash({
       bajioUnlockSeen: !!prog.bajioUnlockSeen,
       firstStreakEso,
       streak: Math.max(Number(prog.streak) || 0, 1),
       paywallSeen: !!prog.paywallSeen,
-    });
+    }) || (!prog.bajioUnlockSeen && (bajioFlashPending || isBajioUnlockFlashDue()));
     const willCdmxFlash = !willFlash && (cdmxFlashPending || isCdmxUnlockFlashDue() || shouldShowCdmxUnlockFlash({
       cdmxUnlockSeen: !!prog.cdmxUnlockSeen,
       day2HoyEso: isDay2HoyEsoWin(session),
-      streak: Number(prog.streak) || 0,
+      streak: cdmxUnlockFlashStreak({
+        streak: Number(prog.streak) || 0,
+        lastDay: prog.lastDay,
+        today: t,
+        yesterday: yesterdayStr(),
+      }),
     }));
     save((prev) => ({
       ...progressAfterWinContinue(prev, {
@@ -5125,7 +5139,6 @@ export default function App() {
         todaySceneId: todaySceneIdFromSession(session),
       }),
       ...(willFlash ? { bajioUnlockSeen: true } : {}),
-      ...(willCdmxFlash ? { cdmxUnlockSeen: true } : {}),
     }));
     if (willFlash && next === "home") {
       markBajioUnlockFlashDue(true);
@@ -5135,12 +5148,15 @@ export default function App() {
       markBajioUnlockFlashDue(true);
       setBajioFlashPending(true);
     }
-    if (willCdmxFlash) {
+    if (willCdmxFlash && next === "home") {
+      markCdmxUnlockFlashDue(true);
+      setCdmxFlashPending(false);
+      cdmxFlashNextRef.current = next;
+      setCdmxUnlockFlash(true);
+    } else if (willCdmxFlash) {
       markCdmxUnlockFlashDue(true);
       setCdmxFlashPending(true);
       cdmxFlashNextRef.current = next;
-      setCdmxUnlockFlash(true);
-      return;
     }
     setScreen(next);
     if (next === "home") setTab("camino");
