@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-05 (CDMX flash skip — official day-2 Hoy CONTINUE)
+
+**What changed**
+- Official walk miss: day-2 Hoy `¡Eso!` / `That's it.` CONTINUE landed idle (streak 2, Scene cleared, Phrase Doctor) with no `Abierto` / `Open` glow. Map later showed CDMX Open — persist flipped the pin without the flash UI.
+- CONTINUE now uses earned streak (`cdmxUnlockFlashStreak`: yesterday → 2) so raw streak 1 cannot skip. Stale Bajío due cannot steal the beat once Bajío was seen. Glow overlays home before idle; `cdmxUnlockSeen` waits until the overlay is on screen.
+- Stamps stay `Abierto` / `Open` only. Landlord / first streak-1 Bajío → glow → soft paywall stays. Door / paywall / A2HS stay. Enroll off.
+
+**Why**
+- Same class as Landlord skipping Bajío (PR 83): CONTINUE / persist raced past the glow while still setting Open.
+
 ## 2026-09-05 (CDMX unlock flash — day-2 Hoy ¡Eso!)
 
 **What changed**
