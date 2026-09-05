@@ -1,6 +1,7 @@
 import {
   CDMX_PIN,
   FIRST_GLOW_PIN,
+  OAXACA_PIN,
   MEXICO_OUTLINE_PATH,
   RECUERDOS_LOCKED_EN,
   RECUERDOS_LOCKED_ES,
@@ -17,12 +18,17 @@ import {
   isCdmxUnlockFlashDue,
   isCdmxUnlockFlashLive,
   isDay2HoyEsoWin,
+  isOaxacaUnlockFlashDue,
+  isOaxacaUnlockFlashLive,
+  isStreak3HoyEsoWin,
   isFirstStreakEsoWin,
   isRecuerdosPinOpen,
   markBajioUnlockFlashDue,
   markBajioUnlockFlashLive,
   markCdmxUnlockFlashDue,
   markCdmxUnlockFlashLive,
+  markOaxacaUnlockFlashDue,
+  markOaxacaUnlockFlashLive,
   recuerdosFogBackground,
   recuerdosHasProgressFraction,
   recuerdosLockedPins,
@@ -32,6 +38,9 @@ import {
   recuerdosTitle,
   shouldShowBajioUnlockFlash,
   shouldShowCdmxUnlockFlash,
+  shouldShowOaxacaUnlockFlash,
+  oaxacaUnlockFlashCopy,
+  oaxacaUnlockFlashStreak,
   storyIdForRecuerdosPin,
 } from "./recuerdos.js";
 
@@ -69,8 +78,11 @@ for (const pin of RECUERDOS_PINS.slice(1)) {
 }
 assert(RECUERDOS_PINS.find((p) => p.id === "cdmx")?.id === CDMX_PIN, "CDMX pin id is cdmx");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "cdmx"), { "story-1": true }), "CDMX opens on Coyoacán");
+assert(RECUERDOS_PINS.find((p) => p.id === "oaxaca")?.id === OAXACA_PIN, "Oaxaca pin id is oaxaca");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "cdmx"), {}, { cdmxUnlockSeen: true }), "day-2 Hoy unlock opens CDMX");
 assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "oaxaca"), {}, { cdmxUnlockSeen: true }), "CDMX unlock does not open Oaxaca");
+assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "oaxaca"), {}, { oaxacaUnlockSeen: true }), "streak-3 Hoy unlock opens Oaxaca");
+assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "cdmx"), {}, { oaxacaUnlockSeen: true }), "Oaxaca unlock does not open CDMX");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "oaxaca"), { "story-4": true }), "Oaxaca opens on story-4");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "yucatan"), { "story-2": true }), "Yucatán opens on Cancún");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "norte"), { "story-5": true }), "Norte opens on Tijuana");
@@ -194,5 +206,69 @@ markCdmxUnlockFlashDue(true);
 assert(isCdmxUnlockFlashDue(), "CDMX due flag survives a tab remount after Eso CONTINUE");
 markCdmxUnlockFlashDue(false);
 assert(!isCdmxUnlockFlashDue(), "CDMX due flag clears after the glow");
+
+assert(isStreak3HoyEsoWin({ day2Hoy: true }), "day2Hoy stamp still counts as streak-3 Hoy Eso");
+assert(isStreak3HoyEsoWin({ firstHoy: true }), "short Hoy Eso still counts on streak-3");
+assert(isStreak3HoyEsoWin({ esoWin: true }), "esoWin stamp still counts if firstHoy dropped");
+assert(isStreak3HoyEsoWin({ todaySceneId: "family" }), "streak-3 Hoy scene id counts");
+assert(isStreak3HoyEsoWin({ unitId: "_today:family" }), "Hoy unitId still counts if todaySceneId dropped");
+assert(!isStreak3HoyEsoWin({ firstDoctora: true, todaySceneId: "family" }), "first Doctora stays on the Bajío path");
+assert(!isStreak3HoyEsoWin({}), "empty session is not a streak-3 Hoy Eso");
+
+const streak3Hoy = { streak3HoyEso: true, streak: 3 };
+assert(shouldShowOaxacaUnlockFlash(streak3Hoy), "streak-3 Hoy Eso CONTINUE arms the Oaxaca glow beat");
+assert(oaxacaUnlockFlashStreak({
+  streak: 2,
+  lastDay: "2026-09-05",
+  today: "2026-09-06",
+  yesterday: "2026-09-05",
+}) === 3, "streak-3 CONTINUE earns streak 3 before persist");
+assert(oaxacaUnlockFlashStreak({
+  streak: 3,
+  lastDay: "2026-09-06",
+  today: "2026-09-06",
+  yesterday: "2026-09-05",
+}) === 3, "already-committed streak-3 win stays streak 3");
+assert(oaxacaUnlockFlashStreak({
+  streak: 2,
+  lastDay: "2026-09-05",
+  today: "2026-09-05",
+  yesterday: "2026-09-04",
+}) === 2, "same-day streak-2 stays CDMX, not Oaxaca");
+assert(shouldShowOaxacaUnlockFlash({
+  streak3HoyEso: isStreak3HoyEsoWin({ todaySceneId: "family" }),
+  streak: 3,
+}), "streak-3 Hoy scene CONTINUE arms Oaxaca");
+assert(shouldShowOaxacaUnlockFlash({
+  streak3HoyEso: isStreak3HoyEsoWin({ todaySceneId: "family" }),
+  streak: oaxacaUnlockFlashStreak({
+    streak: 2,
+    lastDay: "2026-09-05",
+    today: "2026-09-06",
+    yesterday: "2026-09-05",
+  }),
+}), "raw streak 2 on streak-3 Hoy CONTINUE still arms Oaxaca");
+assert(!shouldShowOaxacaUnlockFlash({ ...streak3Hoy, oaxacaUnlockSeen: true }), "Oaxaca seen flag never re-flashes");
+assert(!shouldShowOaxacaUnlockFlash({ streak3HoyEso: false, streak: 3 }), "later win without streak-3 Hoy Eso does not flash Oaxaca");
+assert(!shouldShowOaxacaUnlockFlash({ streak3HoyEso: true, streak: 1 }), "first streak-1 Eso stays Bajío, not Oaxaca");
+assert(!shouldShowOaxacaUnlockFlash({ streak3HoyEso: true, streak: 2 }), "day-2 streak Eso stays CDMX, not Oaxaca");
+assert(!shouldShowOaxacaUnlockFlash({ streak3HoyEso: true, streak: 4 }), "day-4 / later streak does not re-flash Oaxaca");
+assert(!shouldShowOaxacaUnlockFlash({}), "empty args do not flash Oaxaca");
+assert(oaxacaUnlockFlashCopy("es") === "Abierto", "Oaxaca flash ES copy is Abierto only");
+assert(oaxacaUnlockFlashCopy("en") === "Open", "Oaxaca flash EN copy is Open only");
+assert(oaxacaUnlockFlashCopy("es") === bajioUnlockFlashCopy("es"), "Oaxaca reuses Bajío Abierto stamp");
+assert(oaxacaUnlockFlashCopy("en") === bajioUnlockFlashCopy("en"), "Oaxaca reuses Bajío Open stamp");
+assert(!/Oaxaca|CDMX|Bajío|¡Sigue explorando!|Sigue explorando|12\/25|backpack|Unlocked|Cerrado|Locked/i.test(
+  `${oaxacaUnlockFlashCopy("es")}${oaxacaUnlockFlashCopy("en")}`
+), "Oaxaca flash copy is Abierto/Open only — no pep, no new lines");
+
+markOaxacaUnlockFlashLive(true);
+assert(isOaxacaUnlockFlashLive(), "Oaxaca live flag stays up across a remount");
+markOaxacaUnlockFlashLive(false);
+assert(!isOaxacaUnlockFlashLive(), "Oaxaca live flag clears after the flash");
+markOaxacaUnlockFlashDue(true);
+assert(isOaxacaUnlockFlashDue(), "Oaxaca due flag survives a tab remount after Eso CONTINUE");
+markOaxacaUnlockFlashDue(false);
+assert(!isOaxacaUnlockFlashDue(), "Oaxaca due flag clears after the glow");
 
 console.log("recuerdos.test.js: ok");

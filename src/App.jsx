@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, RECUERDOS_PINS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isRecuerdosPinOpen, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
+import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_PINS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markOaxacaUnlockFlashDue, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowOaxacaUnlockFlash, storyIdForRecuerdosPin } from "./recuerdos.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -3262,6 +3262,9 @@ export default function App() {
   const [cdmxUnlockFlash, setCdmxUnlockFlash] = useState(false);
   const [cdmxFlashPending, setCdmxFlashPending] = useState(false);
   const cdmxFlashNextRef = useRef(null);
+  const [oaxacaUnlockFlash, setOaxacaUnlockFlash] = useState(false);
+  const [oaxacaFlashPending, setOaxacaFlashPending] = useState(false);
+  const oaxacaFlashNextRef = useRef(null);
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
@@ -5040,6 +5043,42 @@ export default function App() {
     }, CDMX_UNLOCK_FLASH_MS);
     return () => clearTimeout(hide);
   }, [cdmxUnlockFlash]);
+  useEffect(() => {
+    if (isOaxacaUnlockFlashLive() || isOaxacaUnlockFlashDue()) {
+      setOaxacaUnlockFlash(true);
+    }
+  }, []);
+  useEffect(() => {
+    if (screen !== "done") return;
+    if (!shouldShowOaxacaUnlockFlash({
+      oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen,
+      streak3HoyEso: isStreak3HoyEsoWin(session),
+      streak: oaxacaUnlockFlashStreak({
+        streak: Number(prog.streak) || 0,
+        lastDay: prog.lastDay,
+        today: todayStr(),
+        yesterday: yesterdayStr(),
+      }),
+    })) return;
+    markOaxacaUnlockFlashDue(true);
+    setOaxacaFlashPending(true);
+  }, [screen, session, prog.oaxacaUnlockSeen, prog.streak, prog.lastDay]);
+  useEffect(() => {
+    if (!oaxacaUnlockFlash) return undefined;
+    // Persist Open only once the glow is on screen — CONTINUE must not flip the
+    // map pin and then race past the overlay (same class as CDMX persist-on-CONTINUE).
+    save((prev) => (prev.oaxacaUnlockSeen ? prev : { ...prev, oaxacaUnlockSeen: true }));
+    const hide = setTimeout(() => {
+      markOaxacaUnlockFlashDue(false);
+      setOaxacaUnlockFlash(false);
+      const dest = oaxacaFlashNextRef.current || "home";
+      oaxacaFlashNextRef.current = null;
+      setOaxacaFlashPending(false);
+      setScreen(dest);
+      if (dest === "home") setTab("camino");
+    }, OAXACA_UNLOCK_FLASH_MS);
+    return () => clearTimeout(hide);
+  }, [oaxacaUnlockFlash]);
   const dismissSoftPaywall = (plan, { fromBackdrop } = {}) => {
     if (fromBackdrop && !paywallArmed) return;
     setSoftPaywall(false);
@@ -5123,10 +5162,23 @@ export default function App() {
       streak: Math.max(Number(prog.streak) || 0, 1),
       paywallSeen: !!prog.paywallSeen,
     }) || (!prog.bajioUnlockSeen && (bajioFlashPending || isBajioUnlockFlashDue()));
-    const willCdmxFlash = !willFlash && (cdmxFlashPending || isCdmxUnlockFlashDue() || shouldShowCdmxUnlockFlash({
-      cdmxUnlockSeen: !!prog.cdmxUnlockSeen,
-      day2HoyEso: isDay2HoyEsoWin(session),
-      streak: cdmxUnlockFlashStreak({
+    // Stale CDMX due from day-2 must not steal streak-3 Oaxaca once CDMX was seen.
+    const willCdmxFlash = !willFlash && (
+      shouldShowCdmxUnlockFlash({
+        cdmxUnlockSeen: !!prog.cdmxUnlockSeen,
+        day2HoyEso: isDay2HoyEsoWin(session),
+        streak: cdmxUnlockFlashStreak({
+          streak: Number(prog.streak) || 0,
+          lastDay: prog.lastDay,
+          today: t,
+          yesterday: yesterdayStr(),
+        }),
+      }) || (!prog.cdmxUnlockSeen && (cdmxFlashPending || isCdmxUnlockFlashDue()))
+    );
+    const willOaxacaFlash = !willFlash && !willCdmxFlash && (oaxacaFlashPending || isOaxacaUnlockFlashDue() || shouldShowOaxacaUnlockFlash({
+      oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen,
+      streak3HoyEso: isStreak3HoyEsoWin(session),
+      streak: oaxacaUnlockFlashStreak({
         streak: Number(prog.streak) || 0,
         lastDay: prog.lastDay,
         today: t,
@@ -5158,6 +5210,16 @@ export default function App() {
       setCdmxFlashPending(true);
       cdmxFlashNextRef.current = next;
     }
+    if (willOaxacaFlash && next === "home") {
+      markOaxacaUnlockFlashDue(true);
+      setOaxacaFlashPending(false);
+      oaxacaFlashNextRef.current = next;
+      setOaxacaUnlockFlash(true);
+    } else if (willOaxacaFlash) {
+      markOaxacaUnlockFlashDue(true);
+      setOaxacaFlashPending(true);
+      oaxacaFlashNextRef.current = next;
+    }
     setScreen(next);
     if (next === "home") setTab("camino");
   };
@@ -5174,6 +5236,11 @@ export default function App() {
       cdmxFlashNextRef.current = "home";
       markCdmxUnlockFlashDue(true);
       setCdmxUnlockFlash(true);
+    } else if (oaxacaFlashPending || isOaxacaUnlockFlashDue()) {
+      setOaxacaFlashPending(false);
+      oaxacaFlashNextRef.current = "home";
+      markOaxacaUnlockFlashDue(true);
+      setOaxacaUnlockFlash(true);
     }
   };
 
@@ -5673,9 +5740,9 @@ export default function App() {
               </svg>
               <div data-testid="recuerdos-fog" aria-hidden="true" style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
-                background: recuerdosFogBackground(RECUERDOS_PINS, prog.stories, theme, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen }),
+                background: recuerdosFogBackground(RECUERDOS_PINS, prog.stories, theme, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen, oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen }),
               }} />
-              {recuerdosLockedPins(RECUERDOS_PINS, prog.stories, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen }).map((pin) => (
+              {recuerdosLockedPins(RECUERDOS_PINS, prog.stories, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen, oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen }).map((pin) => (
                 <div
                   key={`fog-${pin.id}`}
                   data-testid={`recuerdos-fog-${pin.id}`}
@@ -5696,7 +5763,7 @@ export default function App() {
                 />
               ))}
               {RECUERDOS_PINS.map((pin) => {
-                const open = isRecuerdosPinOpen(pin, prog.stories, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen });
+                const open = isRecuerdosPinOpen(pin, prog.stories, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen, oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen });
                 const label = recuerdosPinLabel(pin, uiLang);
                 const state = recuerdosPinState(open, uiLang);
                 const storyId = storyIdForRecuerdosPin(pin, prog.stories);
@@ -6622,6 +6689,43 @@ export default function App() {
                   boxShadow: "0 3px 8px rgba(0,0,0,.22)",
                 }} />
                 <span data-testid="cdmx-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
+
+      {/* Oaxaca unlock flash: once on streak-3 Hoy ¡Eso! / That's it. Then close or idle. */}
+      {oaxacaUnlockFlash && (() => {
+        const oaxaca = RECUERDOS_PINS.find((p) => p.id === "oaxaca");
+        const flashCopy = oaxacaUnlockFlashCopy(uiLang);
+        return (
+        <div data-testid="oaxaca-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 62, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
+            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
+              <svg data-testid="oaxaca-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
+              </svg>
+              <div aria-hidden="true" style={{
+                position: "absolute", inset: 0, pointerEvents: "none",
+                background: recuerdosFogBackground(RECUERDOS_PINS, {}, theme, { cdmxUnlockSeen: true, oaxacaUnlockSeen: true }),
+              }} />
+              <div
+                data-testid="oaxaca-unlock-flash-pin"
+                style={{
+                  position: "absolute", left: `${oaxaca.x}%`, top: `${oaxaca.y}%`,
+                  transform: "translate(-50%, -50%)",
+                  display: "flex", flexDirection: "column", alignItems: "center", minWidth: 52, zIndex: 2,
+                }}
+              >
+                <span data-testid="oaxaca-unlock-flash-glow" className="bajio-glow" style={{
+                  width: 18, height: 18,
+                  borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
+                  background: D.gold, border: "2px solid #fff",
+                  boxShadow: "0 3px 8px rgba(0,0,0,.22)",
+                }} />
+                <span data-testid="oaxaca-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
               </div>
             </div>
           </div>
