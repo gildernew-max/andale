@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey, prevDayKey } from "./firstDoor.js";
 import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
-import { isBajioUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts } from "./recuerdos.js";
+import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts } from "./recuerdos.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -139,10 +139,31 @@ const awaitSoftPaywallAfterFirstWin = async () => {
 const awaitBajioFlashThenPaywall = async () => {
   await waitFor(() => expect(screen.getByTestId("bajio-unlock-flash")).toBeTruthy());
   expect(screen.queryByTestId("soft-paywall")).toBeNull();
+  expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
   expect(screen.getByTestId("bajio-unlock-flash-copy").textContent).toMatch(/^(Abierto|Open)$/);
   expect(screen.getByTestId("bajio-unlock-flash").textContent.trim()).toMatch(/^(Abierto|Open)$/);
   expect(screen.getByTestId("bajio-unlock-flash").textContent).not.toMatch(/Bajío|¡Sigue explorando!|Sigue explorando/);
   await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy(), { timeout: 3000 });
+  expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+  expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+};
+
+/** Day-2 Hoy Eso CONTINUE must show CDMX glow before close or idle. Fail if paywall/idle land first. */
+const awaitCdmxFlashThenIdle = async () => {
+  await waitFor(() => expect(screen.getByTestId("cdmx-unlock-flash")).toBeTruthy());
+  expect(screen.queryByTestId("soft-paywall")).toBeNull();
+  expect(screen.queryByTestId("session-close")).toBeNull();
+  expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+  expect(screen.getByTestId("cdmx-unlock-flash-copy").textContent).toMatch(/^(Abierto|Open)$/);
+  expect(screen.getByTestId("cdmx-unlock-flash").textContent.trim()).toMatch(/^(Abierto|Open)$/);
+  expect(screen.getByTestId("cdmx-unlock-flash").textContent).not.toMatch(/CDMX|Bajío|¡Sigue explorando!|Sigue explorando/);
+  expect(screen.getByTestId("cdmx-unlock-flash-glow").className).toMatch(/bajio-glow/);
+  expect(recuerdosSurfaceHasCuts(screen.getByTestId("cdmx-unlock-flash").textContent)).toBe(false);
+  expect(recuerdosHasProgressFraction(screen.getByTestId("cdmx-unlock-flash").textContent)).toBe(false);
+  await waitFor(() => expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull(), { timeout: 3000 });
+  await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+  expect(screen.queryByTestId("soft-paywall")).toBeNull();
+  expect(screen.queryByTestId("session-close")).toBeNull();
   expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
 };
 
@@ -194,6 +215,8 @@ afterEach(() => {
   localStorage.clear();
   markBajioUnlockFlashDue(false);
   markBajioUnlockFlashLive(false);
+  markCdmxUnlockFlashDue(false);
+  markCdmxUnlockFlashLive(false);
   mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
 });
 
@@ -1179,10 +1202,11 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     await user.click(screen.getByTestId("hoy-win-continue"));
-    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
-    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await awaitCdmxFlashThenIdle();
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).cdmxUnlockSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).bajioUnlockSeen).not.toBe(true);
   });
 
   it("day-2 live Hoy does not park under Más — scenes are already ≤4", async () => {
@@ -1650,6 +1674,171 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("bajio-unlock-flash-copy").textContent).toBe("Abierto");
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy(), { timeout: 3000 });
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+    expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+  });
+
+  it("day-2 Hoy Eso CONTINUE shows CDMX Abierto before idle — not paywall", async () => {
+    const today = localToday();
+    const yesterday = prevDayKey(today);
+    cleanup();
+    seedProgress({
+      streak: 1,
+      lastDay: yesterday,
+      bajioUnlockSeen: true,
+      paywallSeen: true,
+      missions: { [`scene-${yesterday}`]: "landlord" },
+    });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["contraste"],
+      answer: "contraste",
+      shuffledChoices: ["contraste"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Mostrador en caos",
+        unitId: "_today:airport",
+        todaySceneId: "airport",
+        firstHoy: true,
+        day2Hoy: true,
+        host: "luna",
+        questions: [
+          hoyMc("«Mostrador» frente a «ventanilla» en el aeropuerto marca:"),
+          hoyMc("beat 2 must not run — early checkpoint"),
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelectorAll(".choice-card")[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+    expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("session-close")).toBeNull();
+    await user.click(screen.getByTestId("hoy-win-continue"));
+    await awaitCdmxFlashThenIdle();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).cdmxUnlockSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+    await user.click(screen.getByTestId("nav-lectura"));
+    await waitFor(() => expect(screen.getByTestId("recuerdos-pin-cdmx")).toBeTruthy());
+    expect(screen.getByTestId("recuerdos-pin-cdmx").getAttribute("data-open")).toBe("true");
+    expect(screen.getByTestId("recuerdos-pin-cdmx").textContent).toMatch(/Abierto/);
+    expect(screen.queryByTestId("recuerdos-fog-cdmx")).toBeNull();
+    expect(screen.getByTestId("recuerdos-pin-bajio").textContent).toMatch(/Abierto/);
+  });
+
+  it("CONTINUE after day-2 Hoy Eso cannot skip the CDMX flash onto idle", async () => {
+    const today = localToday();
+    const yesterday = prevDayKey(today);
+    cleanup();
+    seedProgress({
+      streak: 1,
+      lastDay: yesterday,
+      bajioUnlockSeen: true,
+      paywallSeen: true,
+      missions: { [`scene-${yesterday}`]: "taqueria" },
+    });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["contraste"],
+      answer: "contraste",
+      shuffledChoices: ["contraste"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Mostrador en caos",
+        unitId: "_today:airport",
+        todaySceneId: "airport",
+        host: "luna",
+        questions: [
+          hoyMc("«Mostrador» frente a «ventanilla» en el aeropuerto marca:"),
+          hoyMc("beat 2 must not run — early checkpoint"),
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelectorAll(".choice-card")[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+    await user.click(screen.getByTestId("hoy-win-continue"));
+    expect(isCdmxUnlockFlashDue() || screen.queryByTestId("cdmx-unlock-flash")).toBeTruthy();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await awaitCdmxFlashThenIdle();
+  });
+
+  it("Landlord WhatsApp first streak-1 CONTINUE still shows Bajío before paywall, not CDMX", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null });
+    const landlordMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["natural y firme"],
+      answer: "natural y firme",
+      shuffledChoices: ["natural y firme"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "WhatsApp del casero",
+        unitId: "_today:landlord",
+        todaySceneId: "landlord",
+        firstHoy: true,
+        host: "valeria",
+        questions: [
+          landlordMc("En WhatsApp con el casero, «Oye, ¿el depósito cuenta…?» suena:"),
+          landlordMc("beat 2 must not run — early checkpoint"),
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelectorAll(".choice-card")[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+    await user.click(screen.getByTestId("hoy-win-continue"));
+    await awaitBajioFlashThenPaywall();
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Ya empezó tu racha.");
+    assertSoftPaywallAnnualPrimary("es");
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).bajioUnlockSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).cdmxUnlockSeen).not.toBe(true);
+    expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
   });
 
   it("first streak-1 win CONTINUE dismiss free lands on Doctora CTA, not idle home", async () => {

@@ -1,4 +1,5 @@
 import {
+  CDMX_PIN,
   FIRST_GLOW_PIN,
   MEXICO_OUTLINE_PATH,
   RECUERDOS_LOCKED_EN,
@@ -9,12 +10,18 @@ import {
   RECUERDOS_TITLE_EN,
   RECUERDOS_TITLE_ES,
   bajioUnlockFlashCopy,
+  cdmxUnlockFlashCopy,
   isBajioUnlockFlashDue,
   isBajioUnlockFlashLive,
+  isCdmxUnlockFlashDue,
+  isCdmxUnlockFlashLive,
+  isDay2HoyEsoWin,
   isFirstStreakEsoWin,
   isRecuerdosPinOpen,
   markBajioUnlockFlashDue,
   markBajioUnlockFlashLive,
+  markCdmxUnlockFlashDue,
+  markCdmxUnlockFlashLive,
   recuerdosFogBackground,
   recuerdosHasProgressFraction,
   recuerdosLockedPins,
@@ -23,6 +30,7 @@ import {
   recuerdosSurfaceHasCuts,
   recuerdosTitle,
   shouldShowBajioUnlockFlash,
+  shouldShowCdmxUnlockFlash,
   storyIdForRecuerdosPin,
 } from "./recuerdos.js";
 
@@ -58,7 +66,10 @@ assert(isRecuerdosPinOpen(RECUERDOS_PINS[0], { "story-0": true }), "Bajío stays
 for (const pin of RECUERDOS_PINS.slice(1)) {
   assert(!isRecuerdosPinOpen(pin, {}), `${pin.id} starts locked`);
 }
+assert(RECUERDOS_PINS.find((p) => p.id === "cdmx")?.id === CDMX_PIN, "CDMX pin id is cdmx");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "cdmx"), { "story-1": true }), "CDMX opens on Coyoacán");
+assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "cdmx"), {}, { cdmxUnlockSeen: true }), "day-2 Hoy unlock opens CDMX");
+assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "oaxaca"), {}, { cdmxUnlockSeen: true }), "CDMX unlock does not open Oaxaca");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "oaxaca"), { "story-4": true }), "Oaxaca opens on story-4");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "yucatan"), { "story-2": true }), "Yucatán opens on Cancún");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "norte"), { "story-5": true }), "Norte opens on Tijuana");
@@ -119,5 +130,41 @@ markBajioUnlockFlashDue(true);
 assert(isBajioUnlockFlashDue(), "due flag survives a tab remount after Eso CONTINUE");
 markBajioUnlockFlashDue(false);
 assert(!isBajioUnlockFlashDue(), "due flag clears after the glow");
+
+assert(isDay2HoyEsoWin({ day2Hoy: true }), "day2Hoy stamp is a day-2 Hoy Eso win");
+assert(isDay2HoyEsoWin({ firstHoy: true }), "short Hoy Eso still counts on day-2");
+assert(isDay2HoyEsoWin({ esoWin: true }), "esoWin stamp still counts if firstHoy dropped");
+assert(isDay2HoyEsoWin({ todaySceneId: "airport" }), "day-2 Hoy scene id counts");
+assert(isDay2HoyEsoWin({ unitId: "_today:airport" }), "Hoy unitId still counts if todaySceneId dropped");
+assert(!isDay2HoyEsoWin({ firstDoctora: true, todaySceneId: "airport" }), "first Doctora stays on the Bajío path");
+assert(!isDay2HoyEsoWin({}), "empty session is not a day-2 Hoy Eso");
+
+const day2Hoy = { day2HoyEso: true, streak: 2 };
+assert(shouldShowCdmxUnlockFlash(day2Hoy), "day-2 Hoy Eso CONTINUE arms the CDMX glow beat");
+assert(shouldShowCdmxUnlockFlash({
+  day2HoyEso: isDay2HoyEsoWin({ todaySceneId: "airport" }),
+  streak: 2,
+}), "day-2 Hoy scene streak-2 CONTINUE arms CDMX");
+assert(!shouldShowCdmxUnlockFlash({ ...day2Hoy, cdmxUnlockSeen: true }), "CDMX seen flag never re-flashes");
+assert(!shouldShowCdmxUnlockFlash({ day2HoyEso: false, streak: 2 }), "later win without day-2 Hoy Eso does not flash CDMX");
+assert(!shouldShowCdmxUnlockFlash({ day2HoyEso: true, streak: 1 }), "first streak-1 Eso stays Bajío, not CDMX");
+assert(!shouldShowCdmxUnlockFlash({ day2HoyEso: true, streak: 3 }), "day-3 / later streak does not re-flash CDMX");
+assert(!shouldShowCdmxUnlockFlash({}), "empty args do not flash CDMX");
+assert(cdmxUnlockFlashCopy("es") === "Abierto", "CDMX flash ES copy is Abierto only");
+assert(cdmxUnlockFlashCopy("en") === "Open", "CDMX flash EN copy is Open only");
+assert(cdmxUnlockFlashCopy("es") === bajioUnlockFlashCopy("es"), "CDMX reuses Bajío Abierto stamp");
+assert(cdmxUnlockFlashCopy("en") === bajioUnlockFlashCopy("en"), "CDMX reuses Bajío Open stamp");
+assert(!/CDMX|Bajío|¡Sigue explorando!|Sigue explorando|12\/25|backpack|Unlocked|Cerrado|Locked/i.test(
+  `${cdmxUnlockFlashCopy("es")}${cdmxUnlockFlashCopy("en")}`
+), "CDMX flash copy is Abierto/Open only — no pep, no new lines");
+
+markCdmxUnlockFlashLive(true);
+assert(isCdmxUnlockFlashLive(), "CDMX live flag stays up across a remount");
+markCdmxUnlockFlashLive(false);
+assert(!isCdmxUnlockFlashLive(), "CDMX live flag clears after the flash");
+markCdmxUnlockFlashDue(true);
+assert(isCdmxUnlockFlashDue(), "CDMX due flag survives a tab remount after Eso CONTINUE");
+markCdmxUnlockFlashDue(false);
+assert(!isCdmxUnlockFlashDue(), "CDMX due flag clears after the glow");
 
 console.log("recuerdos.test.js: ok");
