@@ -5035,7 +5035,7 @@ export default function App() {
       const dest = cdmxFlashNextRef.current || "home";
       cdmxFlashNextRef.current = null;
       setCdmxFlashPending(false);
-      if (dest !== "home" || screen !== "home") setScreen(dest);
+      setScreen(dest);
       if (dest === "home") setTab("camino");
     }, CDMX_UNLOCK_FLASH_MS);
     return () => clearTimeout(hide);
