@@ -9,8 +9,11 @@ import {
   RECUERDOS_TITLE_EN,
   RECUERDOS_TITLE_ES,
   bajioUnlockFlashCopy,
+  isBajioUnlockFlashDue,
   isBajioUnlockFlashLive,
+  isFirstStreakEsoWin,
   isRecuerdosPinOpen,
+  markBajioUnlockFlashDue,
   markBajioUnlockFlashLive,
   recuerdosFogBackground,
   recuerdosHasProgressFraction,
@@ -84,6 +87,16 @@ assert(!recuerdosHasProgressFraction("Bajío Abierto"), "pin chrome is not a fra
 
 const firstEso = { firstStreakEso: true, streak: 1 };
 assert(shouldShowBajioUnlockFlash(firstEso), "first streak-1 Eso CONTINUE arms the Bajío glow beat");
+assert(isFirstStreakEsoWin({ firstHoy: true }), "Hoy Eso is a first-streak Eso win");
+assert(isFirstStreakEsoWin({ firstDoctora: true }), "first Doctora Eso is a first-streak Eso win");
+assert(isFirstStreakEsoWin({ esoWin: true }), "esoWin stamp still counts if firstHoy dropped");
+assert(isFirstStreakEsoWin({ todaySceneId: "landlord" }), "Landlord WhatsApp / Hoy scene is an Eso win");
+assert(isFirstStreakEsoWin({ unitId: "_today:landlord" }), "Hoy unitId still counts if todaySceneId dropped");
+assert(!isFirstStreakEsoWin({}), "empty session is not an Eso win");
+assert(shouldShowBajioUnlockFlash({
+  firstStreakEso: isFirstStreakEsoWin({ todaySceneId: "landlord" }),
+  streak: 1,
+}), "Landlord WhatsApp streak-1 CONTINUE arms the glow");
 assert(!shouldShowBajioUnlockFlash({ ...firstEso, bajioUnlockSeen: true }), "seen flag never re-flashes");
 assert(!shouldShowBajioUnlockFlash({ ...firstEso, paywallSeen: true }), "paywallSeen skips the flash");
 assert(!shouldShowBajioUnlockFlash({ firstStreakEso: false, streak: 1 }), "later win without Eso flag does not flash");
@@ -102,5 +115,9 @@ markBajioUnlockFlashLive(true);
 assert(isBajioUnlockFlashLive(), "live flag stays up across a remount");
 markBajioUnlockFlashLive(false);
 assert(!isBajioUnlockFlashLive(), "live flag clears after the flash");
+markBajioUnlockFlashDue(true);
+assert(isBajioUnlockFlashDue(), "due flag survives a tab remount after Eso CONTINUE");
+markBajioUnlockFlashDue(false);
+assert(!isBajioUnlockFlashDue(), "due flag clears after the glow");
 
 console.log("recuerdos.test.js: ok");
