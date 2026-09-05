@@ -44,12 +44,14 @@ export function recuerdosPinState(open, lang) {
 }
 
 export const CDMX_PIN = "cdmx";
+export const OAXACA_PIN = "oaxaca";
 
-/** Bajío first-glow always open. CDMX opens on souvenir claim or day-2 Hoy unlock. */
+/** Bajío first-glow always open. CDMX / Oaxaca open on souvenir claim or streak unlock. */
 export function isRecuerdosPinOpen(pin, claimedStories = {}, unlocks = {}) {
   if (!pin) return false;
   if (pin.firstGlow || pin.id === FIRST_GLOW_PIN) return true;
   if (pin.id === CDMX_PIN && unlocks.cdmxUnlockSeen) return true;
+  if (pin.id === OAXACA_PIN && unlocks.oaxacaUnlockSeen) return true;
   return (pin.storyIds || []).some((id) => !!claimedStories[id]);
 }
 
@@ -208,6 +210,69 @@ export function shouldShowCdmxUnlockFlash({
   if (cdmxUnlockSeen) return false;
   if (!day2HoyEso) return false;
   return (Number(streak) || 0) === 2;
+}
+
+/** Same Abierto / Open stamps as Bajío / CDMX. No new copy. */
+export function oaxacaUnlockFlashCopy(lang) {
+  return bajioUnlockFlashCopy(lang);
+}
+
+export const OAXACA_UNLOCK_FLASH_MS = BAJIO_UNLOCK_FLASH_MS;
+
+let oaxacaUnlockFlashLive = false;
+
+export const OAXACA_UNLOCK_FLASH_DUE_KEY = "andale-oaxaca-flash-due";
+
+export function isOaxacaUnlockFlashLive() {
+  return oaxacaUnlockFlashLive;
+}
+
+export function markOaxacaUnlockFlashLive(on) {
+  oaxacaUnlockFlashLive = !!on;
+}
+
+export function isOaxacaUnlockFlashDue() {
+  if (oaxacaUnlockFlashLive) return true;
+  try {
+    return sessionStorage.getItem(OAXACA_UNLOCK_FLASH_DUE_KEY) === "1";
+  } catch (e) {
+    return false;
+  }
+}
+
+export function markOaxacaUnlockFlashDue(on) {
+  markOaxacaUnlockFlashLive(on);
+  try {
+    if (on) sessionStorage.setItem(OAXACA_UNLOCK_FLASH_DUE_KEY, "1");
+    else sessionStorage.removeItem(OAXACA_UNLOCK_FLASH_DUE_KEY);
+  } catch (e) {}
+}
+
+/**
+ * Streak-3 Hoy ¡Eso! / That's it. Same scene stamps as day-2
+ * (`todaySceneId` / `_today:` / firstHoy / esoWin). Not first-Doctora.
+ */
+export function isStreak3HoyEsoWin(session) {
+  return isDay2HoyEsoWin(session);
+}
+
+/**
+ * Streak CONTINUE must pass. Raw `prog.streak` can still be 2 on day-3
+ * (lastDay = yesterday) if persist has not committed yet.
+ */
+export function oaxacaUnlockFlashStreak(opts) {
+  return cdmxUnlockFlashStreak(opts);
+}
+
+/** After streak-3 Hoy ¡Eso! / That's it. CONTINUE — glow beat, then close or idle. Once only. */
+export function shouldShowOaxacaUnlockFlash({
+  oaxacaUnlockSeen,
+  streak3HoyEso,
+  streak,
+} = {}) {
+  if (oaxacaUnlockSeen) return false;
+  if (!streak3HoyEso) return false;
+  return (Number(streak) || 0) === 3;
 }
 
 /** Fog-of-war: mist over the map, clear around open pins (Bajío first). */

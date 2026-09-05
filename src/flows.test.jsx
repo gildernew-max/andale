@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey, prevDayKey } from "./firstDoor.js";
 import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
-import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts } from "./recuerdos.js";
+import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isOaxacaUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts } from "./recuerdos.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -140,12 +140,14 @@ const awaitBajioFlashThenPaywall = async () => {
   await waitFor(() => expect(screen.getByTestId("bajio-unlock-flash")).toBeTruthy());
   expect(screen.queryByTestId("soft-paywall")).toBeNull();
   expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+  expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull();
   expect(screen.getByTestId("bajio-unlock-flash-copy").textContent).toMatch(/^(Abierto|Open)$/);
   expect(screen.getByTestId("bajio-unlock-flash").textContent.trim()).toMatch(/^(Abierto|Open)$/);
   expect(screen.getByTestId("bajio-unlock-flash").textContent).not.toMatch(/Bajío|¡Sigue explorando!|Sigue explorando/);
   await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy(), { timeout: 3000 });
   expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
   expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+  expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull();
 };
 
 /** Day-2 Hoy Eso CONTINUE must show CDMX glow before close or idle. Fail if paywall/idle land first. */
@@ -154,6 +156,7 @@ const awaitCdmxFlashThenIdle = async () => {
   expect(screen.queryByTestId("soft-paywall")).toBeNull();
   expect(screen.queryByTestId("session-close")).toBeNull();
   expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+  expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull();
   expect(screen.getByTestId("cdmx-unlock-flash-copy").textContent).toMatch(/^(Abierto|Open)$/);
   expect(screen.getByTestId("cdmx-unlock-flash").textContent.trim()).toMatch(/^(Abierto|Open)$/);
   expect(screen.getByTestId("cdmx-unlock-flash").textContent).not.toMatch(/CDMX|Bajío|¡Sigue explorando!|Sigue explorando/);
@@ -166,6 +169,7 @@ const awaitCdmxFlashThenIdle = async () => {
   expect(screen.queryByTestId("soft-paywall")).toBeNull();
   expect(screen.queryByTestId("session-close")).toBeNull();
   expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+  expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull();
 };
 
 /** CONTINUE must paint the glow. Due-only / idle-home is the official skip. */
@@ -174,7 +178,40 @@ const awaitCdmxFlashVisible = async () => {
   expect(screen.queryByTestId("soft-paywall")).toBeNull();
   expect(screen.queryByTestId("session-close")).toBeNull();
   expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+  expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull();
   expect(screen.getByTestId("cdmx-unlock-flash-copy").textContent).toMatch(/^(Abierto|Open)$/);
+};
+
+/** Streak-3 Hoy Eso CONTINUE must show Oaxaca glow before close or idle. Fail if paywall/idle land first. */
+const awaitOaxacaFlashThenIdle = async () => {
+  await waitFor(() => expect(screen.getByTestId("oaxaca-unlock-flash")).toBeTruthy());
+  expect(screen.queryByTestId("soft-paywall")).toBeNull();
+  expect(screen.queryByTestId("session-close")).toBeNull();
+  expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+  expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+  expect(screen.getByTestId("oaxaca-unlock-flash-copy").textContent).toMatch(/^(Abierto|Open)$/);
+  expect(screen.getByTestId("oaxaca-unlock-flash").textContent.trim()).toMatch(/^(Abierto|Open)$/);
+  expect(screen.getByTestId("oaxaca-unlock-flash").textContent).not.toMatch(/Oaxaca|CDMX|Bajío|¡Sigue explorando!|Sigue explorando/);
+  expect(screen.getByTestId("oaxaca-unlock-flash-glow").className).toMatch(/bajio-glow/);
+  expect(recuerdosSurfaceHasCuts(screen.getByTestId("oaxaca-unlock-flash").textContent)).toBe(false);
+  expect(recuerdosHasProgressFraction(screen.getByTestId("oaxaca-unlock-flash").textContent)).toBe(false);
+  await waitFor(() => expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull(), { timeout: 3000 });
+  await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+  expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull();
+  expect(screen.queryByTestId("soft-paywall")).toBeNull();
+  expect(screen.queryByTestId("session-close")).toBeNull();
+  expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+  expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+};
+
+/** CONTINUE must paint the Oaxaca glow. Due-only / idle-home is the official skip. */
+const awaitOaxacaFlashVisible = async () => {
+  await waitFor(() => expect(screen.getByTestId("oaxaca-unlock-flash")).toBeTruthy());
+  expect(screen.queryByTestId("soft-paywall")).toBeNull();
+  expect(screen.queryByTestId("session-close")).toBeNull();
+  expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+  expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+  expect(screen.getByTestId("oaxaca-unlock-flash-copy").textContent).toMatch(/^(Abierto|Open)$/);
 };
 
 const playShortHoyBeat = async (user, answer) => {
@@ -238,6 +275,8 @@ afterEach(() => {
   markBajioUnlockFlashLive(false);
   markCdmxUnlockFlashDue(false);
   markCdmxUnlockFlashLive(false);
+  markOaxacaUnlockFlashDue(false);
+  markOaxacaUnlockFlashLive(false);
   mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
 });
 
@@ -1228,6 +1267,7 @@ describe("simulated learner flows", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).cdmxUnlockSeen).toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).bajioUnlockSeen).not.toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).oaxacaUnlockSeen).not.toBe(true);
   });
 
   it("day-2 live Hoy does not park under Más — scenes are already ≤4", async () => {
@@ -1760,6 +1800,9 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("recuerdos-pin-cdmx").textContent).toMatch(/Abierto/);
     expect(screen.queryByTestId("recuerdos-fog-cdmx")).toBeNull();
     expect(screen.getByTestId("recuerdos-pin-bajio").textContent).toMatch(/Abierto/);
+    expect(screen.getByTestId("recuerdos-pin-oaxaca").textContent).toMatch(/Cerrado/);
+    expect(screen.getByTestId("recuerdos-pin-oaxaca").getAttribute("data-open")).toBe("false");
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).oaxacaUnlockSeen).not.toBe(true);
   });
 
   it("CONTINUE after day-2 Hoy Eso cannot skip the CDMX flash onto idle", async () => {
@@ -1846,6 +1889,7 @@ describe("simulated learner flows", () => {
       expect(JSON.parse(saved).bajioUnlockSeen).toBe(true);
       expect(JSON.parse(saved).paywallSeen).toBe(true);
       expect(JSON.parse(saved).cdmxUnlockSeen).not.toBe(true);
+      expect(JSON.parse(saved).oaxacaUnlockSeen).not.toBe(true);
       unmount();
       markBajioUnlockFlashDue(false);
       markCdmxUnlockFlashDue(false);
@@ -1873,6 +1917,7 @@ describe("simulated learner flows", () => {
       expect(screen.queryByTestId("session-close")).toBeNull();
       await awaitCdmxFlashThenIdle();
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).cdmxUnlockSeen).toBe(true);
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).oaxacaUnlockSeen).not.toBe(true);
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(2);
       expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^2/);
       expect(screen.getByTestId("hero-cta").textContent).toMatch(/Arreglar una frase|Fix a phrase/);
@@ -1880,7 +1925,7 @@ describe("simulated learner flows", () => {
     } finally {
       vi.useRealTimers();
     }
-  });
+  }, 15000);
 
   it("remount after day-2 Hoy CONTINUE still plays CDMX flash before idle", async () => {
     const today = localToday();
@@ -1942,6 +1987,196 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
     expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).cdmxUnlockSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).oaxacaUnlockSeen).not.toBe(true);
+  });
+
+  it("streak-3 Hoy Eso CONTINUE shows Oaxaca Abierto before idle — not paywall", async () => {
+    const today = localToday();
+    const yesterday = prevDayKey(today);
+    cleanup();
+    seedProgress({
+      streak: 2,
+      lastDay: yesterday,
+      bajioUnlockSeen: true,
+      cdmxUnlockSeen: true,
+      paywallSeen: true,
+      missions: { [`scene-${yesterday}`]: "airport" },
+    });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["habla de un momento futuro"],
+      answer: "habla de un momento futuro",
+      shuffledChoices: ["habla de un momento futuro"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Cena con la suegra",
+        unitId: "_today:family",
+        todaySceneId: "family",
+        firstHoy: true,
+        day2Hoy: true,
+        host: "rafa",
+        questions: [
+          hoyMc("En «Cuando llegue el momento…», usamos subjuntivo porque:"),
+          hoyMc("beat 2 must not run — early checkpoint"),
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelectorAll(".choice-card")[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull();
+    expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+    expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("session-close")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).oaxacaUnlockSeen).not.toBe(true);
+    await user.click(screen.getByTestId("hoy-win-continue"));
+    await awaitOaxacaFlashThenIdle();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).oaxacaUnlockSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).cdmxUnlockSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).bajioUnlockSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+    await user.click(screen.getByTestId("nav-lectura"));
+    await waitFor(() => expect(screen.getByTestId("recuerdos-pin-oaxaca")).toBeTruthy());
+    expect(screen.getByTestId("recuerdos-pin-oaxaca").getAttribute("data-open")).toBe("true");
+    expect(screen.getByTestId("recuerdos-pin-oaxaca").textContent).toMatch(/Abierto/);
+    expect(screen.queryByTestId("recuerdos-fog-oaxaca")).toBeNull();
+    expect(screen.getByTestId("recuerdos-pin-cdmx").getAttribute("data-open")).toBe("true");
+    expect(screen.getByTestId("recuerdos-pin-cdmx").textContent).toMatch(/Abierto/);
+    expect(screen.getByTestId("recuerdos-pin-bajio").textContent).toMatch(/Abierto/);
+  });
+
+  it("CONTINUE after streak-3 Hoy Eso cannot skip the Oaxaca flash onto idle", async () => {
+    const today = localToday();
+    const yesterday = prevDayKey(today);
+    cleanup();
+    seedProgress({
+      streak: 2,
+      lastDay: yesterday,
+      bajioUnlockSeen: true,
+      cdmxUnlockSeen: true,
+      paywallSeen: true,
+      missions: { [`scene-${yesterday}`]: "airport" },
+    });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["habla de un momento futuro"],
+      answer: "habla de un momento futuro",
+      shuffledChoices: ["habla de un momento futuro"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Cena con la suegra",
+        unitId: "_today:family",
+        todaySceneId: "family",
+        host: "rafa",
+        questions: [
+          hoyMc("En «Cuando llegue el momento…», usamos subjuntivo porque:"),
+          hoyMc("beat 2 must not run — early checkpoint"),
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelectorAll(".choice-card")[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull();
+    await user.click(screen.getByTestId("hoy-win-continue"));
+    await awaitOaxacaFlashVisible();
+    expect(isOaxacaUnlockFlashDue()).toBe(true);
+    expect(screen.queryByTestId("hero-cta") && !screen.queryByTestId("oaxaca-unlock-flash")).toBeFalsy();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await awaitOaxacaFlashThenIdle();
+  });
+
+  it("remount after streak-3 Hoy CONTINUE still plays Oaxaca flash before idle", async () => {
+    const today = localToday();
+    const yesterday = prevDayKey(today);
+    cleanup();
+    seedProgress({
+      streak: 2,
+      lastDay: yesterday,
+      bajioUnlockSeen: true,
+      cdmxUnlockSeen: true,
+      paywallSeen: true,
+      missions: { [`scene-${yesterday}`]: "airport" },
+    });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["habla de un momento futuro"],
+      answer: "habla de un momento futuro",
+      shuffledChoices: ["habla de un momento futuro"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Cena con la suegra",
+        unitId: "_today:family",
+        todaySceneId: "family",
+        firstHoy: true,
+        day2Hoy: true,
+        host: "rafa",
+        questions: [
+          hoyMc("En «Cuando llegue el momento…», usamos subjuntivo porque:"),
+          hoyMc("beat 2 must not run — early checkpoint"),
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelectorAll(".choice-card")[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win-continue")).toBeTruthy());
+    await user.click(screen.getByTestId("hoy-win-continue"));
+    await waitFor(() => expect(isOaxacaUnlockFlashDue() || screen.queryByTestId("oaxaca-unlock-flash")).toBeTruthy());
+    const saved = localStorage.getItem(STORAGE_KEY);
+    cleanup();
+    localStorage.setItem(STORAGE_KEY, saved);
+    render(<App />);
+    await awaitOaxacaFlashVisible();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.getByTestId("oaxaca-unlock-flash-copy").textContent).toBe("Abierto");
+    await waitFor(() => expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull(), { timeout: 3000 });
+    await waitFor(() => expect(screen.getByTestId("hero-cta")).toBeTruthy());
+    expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).oaxacaUnlockSeen).toBe(true);
   });
 
   it("Landlord WhatsApp first streak-1 CONTINUE still shows Bajío before paywall, not CDMX", async () => {
@@ -1989,7 +2224,9 @@ describe("simulated learner flows", () => {
     assertSoftPaywallAnnualPrimary("es");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).bajioUnlockSeen).toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).cdmxUnlockSeen).not.toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).oaxacaUnlockSeen).not.toBe(true);
     expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
+    expect(screen.queryByTestId("oaxaca-unlock-flash")).toBeNull();
   });
 
   it("first streak-1 win CONTINUE dismiss free lands on Doctora CTA, not idle home", async () => {
