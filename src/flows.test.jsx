@@ -80,9 +80,10 @@ const continueBtn = () => screen.getByRole("button", { name: /^Continuar$/i });
 
 const localToday = () => dayKeyFromDate(new Date());
 
-/** Same four Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
+/** Same five Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
 const HOY_TITLES = [
   { title: "Noche de faroles", titleEn: "Night of lanterns" },
+  { title: "En la farmacia", titleEn: "At the pharmacy" },
   { title: "WhatsApp del casero", titleEn: "Landlord WhatsApp" },
   { title: "Mostrador en caos", titleEn: "Airport Counter Chaos" },
   { title: "Cena con la suegra", titleEn: "Dinner With the In-Laws" },
@@ -1393,7 +1394,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     expect(screen.getByTestId("camino-more-panel")).toBeTruthy();
     expect(screen.getByTestId("first-door-hero").textContent).toMatch(/Jugar la escena|Play the scene/);
-    expect(promised.title).toMatch(/WhatsApp del casero|Mostrador en caos|Noche de faroles|Cena con la suegra/);
+    expect(promised.title).toMatch(/WhatsApp del casero|Mostrador en caos|Noche de faroles|Cena con la suegra|En la farmacia/);
   });
 
   it("undismissed soft paywall clears when the day rolls — no stale Doctora handoff", async () => {
