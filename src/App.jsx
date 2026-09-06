@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
+import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
@@ -1580,7 +1580,7 @@ const RecuerdosMexicoMap = ({ testId, theme }) => (
       objectFit: "contain",
       pointerEvents: "none",
       userSelect: "none",
-      filter: theme === "dark" ? "brightness(.78) saturate(.88)" : "none",
+      filter: theme === "dark" ? "brightness(.88) saturate(.9)" : "none",
     }}
   />
 );
@@ -6296,7 +6296,7 @@ export default function App() {
                     height: 58,
                     transform: "translate(-50%, -50%)",
                     borderRadius: "50%",
-                    background: theme === "dark" ? "rgba(18,22,28,.5)" : "rgba(236,242,246,.78)",
+                    background: theme === "dark" ? RECUERDOS_FOG_BLOB_DARK : RECUERDOS_FOG_BLOB_LIGHT,
                     filter: "blur(10px)",
                     pointerEvents: "none",
                     zIndex: 0,
@@ -6331,14 +6331,14 @@ export default function App() {
                       style={{
                         width: pin.firstGlow ? 18 : 14, height: pin.firstGlow ? 18 : 14,
                         borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
-                        background: open ? (pin.firstGlow ? D.gold : D.green) : D.lockGray,
+                        background: open ? D.green : D.lockGray,
                         border: `2px solid ${open ? "#fff" : D.lockIcon}`,
-                        boxShadow: open ? "0 3px 8px rgba(0,0,0,.22)" : "none",
+                        boxShadow: open ? RECUERDOS_PIN_SHADOW : RECUERDOS_PIN_SHADOW_LOCKED,
                       }}
                     />
                     <span style={{ marginTop: 6, textAlign: "center", lineHeight: 1.15 }}>
-                      <span style={{ display: "block", fontSize: 11, fontWeight: 900, color: D.ink }}>{label}</span>
-                      <span style={{ display: "block", fontSize: 10, fontWeight: 800, color: open ? D.greenDark : D.sub }}>{state}</span>
+                      <span style={{ display: "block", fontSize: 11, fontWeight: 900, color: RECUERDOS_PIN_LABEL }}>{label}</span>
+                      <span style={{ display: "block", fontSize: 10, fontWeight: 800, color: RECUERDOS_PIN_LABEL }}>{state}</span>
                     </span>
                   </button>
                 );
@@ -7187,10 +7187,10 @@ export default function App() {
                 <span data-testid="bajio-unlock-flash-glow" className="bajio-glow" style={{
                   width: 18, height: 18,
                   borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
-                  background: D.gold, border: "2px solid #fff",
-                  boxShadow: "0 3px 8px rgba(0,0,0,.22)",
+                  background: D.green, border: "2px solid #fff",
+                  boxShadow: RECUERDOS_PIN_SHADOW,
                 }} />
-                <span data-testid="bajio-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
+                <span data-testid="bajio-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: RECUERDOS_PIN_LABEL }}>{flashCopy}</span>
               </div>
             </div>
           </div>
@@ -7222,10 +7222,10 @@ export default function App() {
                 <span data-testid="cdmx-unlock-flash-glow" className="bajio-glow" style={{
                   width: 18, height: 18,
                   borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
-                  background: D.gold, border: "2px solid #fff",
-                  boxShadow: "0 3px 8px rgba(0,0,0,.22)",
+                  background: D.green, border: "2px solid #fff",
+                  boxShadow: RECUERDOS_PIN_SHADOW,
                 }} />
-                <span data-testid="cdmx-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
+                <span data-testid="cdmx-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: RECUERDOS_PIN_LABEL }}>{flashCopy}</span>
               </div>
             </div>
           </div>
@@ -7257,10 +7257,10 @@ export default function App() {
                 <span data-testid="oaxaca-unlock-flash-glow" className="bajio-glow" style={{
                   width: 18, height: 18,
                   borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
-                  background: D.gold, border: "2px solid #fff",
-                  boxShadow: "0 3px 8px rgba(0,0,0,.22)",
+                  background: D.green, border: "2px solid #fff",
+                  boxShadow: RECUERDOS_PIN_SHADOW,
                 }} />
-                <span data-testid="oaxaca-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
+                <span data-testid="oaxaca-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: RECUERDOS_PIN_LABEL }}>{flashCopy}</span>
               </div>
             </div>
           </div>
@@ -7292,10 +7292,10 @@ export default function App() {
                 <span data-testid="yucatan-unlock-flash-glow" className="bajio-glow" style={{
                   width: 18, height: 18,
                   borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
-                  background: D.gold, border: "2px solid #fff",
-                  boxShadow: "0 3px 8px rgba(0,0,0,.22)",
+                  background: D.green, border: "2px solid #fff",
+                  boxShadow: RECUERDOS_PIN_SHADOW,
                 }} />
-                <span data-testid="yucatan-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
+                <span data-testid="yucatan-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: RECUERDOS_PIN_LABEL }}>{flashCopy}</span>
               </div>
             </div>
           </div>
@@ -7327,10 +7327,10 @@ export default function App() {
                 <span data-testid="norte-unlock-flash-glow" className="bajio-glow" style={{
                   width: 18, height: 18,
                   borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
-                  background: D.gold, border: "2px solid #fff",
-                  boxShadow: "0 3px 8px rgba(0,0,0,.22)",
+                  background: D.green, border: "2px solid #fff",
+                  boxShadow: RECUERDOS_PIN_SHADOW,
                 }} />
-                <span data-testid="norte-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
+                <span data-testid="norte-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: RECUERDOS_PIN_LABEL }}>{flashCopy}</span>
               </div>
             </div>
           </div>

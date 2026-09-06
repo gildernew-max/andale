@@ -14,6 +14,31 @@ export const FIRST_GLOW_PIN = "bajio";
 export const MEXICO_MAP_SRC = "assets/dave-cleared-mexico-map.png";
 
 /**
+ * No Face stamp: darkened land + coast on the Recuerdos PNG.
+ * Cream paper stays. Pastel source → earth fills; coast line is darker still.
+ */
+export const MEXICO_MAP_COLORS = {
+  paper: "#f8f0e8",
+  terracotta: "#986446",
+  sage: "#6f7757",
+  yellow: "#867647",
+  stroke: "#382d1f",
+};
+
+/** Cream pin labels so they read on darkened land + deeper fog. */
+export const RECUERDOS_PIN_LABEL = "#F4EDE0";
+
+/** Pin marker ring — open CHECK lime stays bright on darker land. */
+export const RECUERDOS_PIN_SHADOW = "0 0 0 1px rgba(58,42,24,.42), 0 3px 8px rgba(0,0,0,.34)";
+export const RECUERDOS_PIN_SHADOW_LOCKED = "0 0 0 1px rgba(58,42,24,.28)";
+
+/** Deeper fog-of-war. Light mist stays a dusk brown; dark theme goes further. */
+export const RECUERDOS_FOG_LIGHT = "rgba(42,36,30,.62)";
+export const RECUERDOS_FOG_DARK = "rgba(8,10,14,.74)";
+export const RECUERDOS_FOG_BLOB_LIGHT = "rgba(42,36,30,.7)";
+export const RECUERDOS_FOG_BLOB_DARK = "rgba(8,10,14,.68)";
+
+/**
  * Five regional pins. Percent positions sit on the illustrated Mexico map.
  * Bajío is the first-glow pin and starts open.
  * Yucatán 75,66 sits the pin *dot* on peninsula land (button % is center of dot+label).
@@ -403,9 +428,9 @@ export function shouldShowNorteUnlockFlash({
   return (Number(streak) || 0) === 5;
 }
 
-/** Fog-of-war: mist over the map, clear around open pins (Bajío first). */
+/** Fog-of-war: deeper mist over the map, clear around open pins (Bajío first). */
 export function recuerdosFogBackground(pins = RECUERDOS_PINS, claimedStories = {}, theme = "light", unlocks = {}) {
-  const fog = theme === "dark" ? "rgba(18,22,28,.58)" : "rgba(232,238,242,.7)";
+  const fog = theme === "dark" ? RECUERDOS_FOG_DARK : RECUERDOS_FOG_LIGHT;
   const open = (pins || []).filter((pin) => isRecuerdosPinOpen(pin, claimedStories, unlocks));
   if (!open.length) return fog;
   return open
