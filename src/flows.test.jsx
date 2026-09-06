@@ -3527,4 +3527,38 @@ describe("simulated learner flows", () => {
     expect(recuerdosHasProgressFraction(screen.getByTestId("recuerdos-map").textContent)).toBe(false);
     expect(screen.getByTestId("recuerdos-map").innerHTML).not.toMatch(/¡Sigue explorando!|12\/25|parroquia/i);
   });
+
+  it("practice miss feedback, Focus, and Why follow uiLang", async () => {
+    cleanup();
+    seedProgress({
+      uiLang: "en",
+      hearts: 5,
+      resume: { unitId: "subj1", order: [{ u: "subj1", i: 4 }], qi: 0, xp: 0, right: 0, wrong: 0 },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    const unitBtn = screen.queryByRole("button", { name: "Subjuntivo presente" })
+      || (await openCaminoMore(user), screen.getByRole("button", { name: "Subjuntivo presente" }));
+    await user.click(unitBtn);
+    await user.click(screen.getByRole("button", { name: /Start|Empezar/ }));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await waitFor(() => expect(document.body.textContent).toMatch(/Te llamo cuando/));
+    const saldre = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() === "saldré");
+    expect(saldré).toBeTruthy();
+    await user.click(saldré);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByTestId("practice-quip")).toBeTruthy());
+    expect(screen.getByTestId("practice-quip").textContent).not.toMatch(/La idea está|Cerca\.|Respira\.|mal estacionado/);
+    expect(screen.getByTestId("practice-focus").textContent).toBe("Focus: Verb mood");
+    expect(screen.getByTestId("practice-focus").textContent).not.toMatch(/Modo verbal/);
+    await user.click(screen.getByRole("button", { name: /Why\?/ }));
+    expect(screen.getByTestId("practice-why").textContent).toBe("«Cuando» + a future action → subjunctive. A habit would be indicative: «cuando salgo».");
+    expect(screen.getByTestId("practice-why").textContent).not.toMatch(/acción futura|Hábito sería/);
+
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("practice-focus").textContent).toBe("Foco: Modo verbal"));
+    expect(screen.getByTestId("practice-quip").textContent).toMatch(/Cerca\.|La idea está|Respira\.|mal estacionado/);
+    expect(screen.getByTestId("practice-why").textContent).toBe("«Cuando» + acción futura → subjuntivo. Hábito sería indicativo: «cuando salgo».");
+  });
 });

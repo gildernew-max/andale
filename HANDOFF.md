@@ -2,6 +2,22 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (Practice feedback / Why / Focus follow uiLang)
+
+**What changed**
+- Practice / reveal chrome already followed ES|EN. The miss line, Focus chip, and Why bubble did not. They now pick `{es,en}` (or existing `explainEn`) via `uiText` / `explainText` / `focusLabel`.
+- Coach quips (`VOICES`) are `{es,en}` pairs. Focus keys stay Spanish for `prog.weak` / SMART_FOCUS; display localizes.
+- Authored `explain` strings stay ES. Temporary EN lives in `PRACTICE_EXPLAIN` until George stamps. Hoy `explainEn` wins when present.
+
+**HANDOFF — George must stamp EN (temporary meaning-match until then)**
+- All `VOICES.*.correct|wrong|win|sad[].en` (Luna / Rafa / Valeria / Diego).
+- All `FOCUS_LABELS.*.en` (`Modo verbal` → Verb mood, `Subjuntivo` → Subjunctive, etc.).
+- All `PRACTICE_EXPLAIN[].en` (unit Why lines + landlord / farmacia / lectura-rápida).
+- Templates: `culturalHintExplain` EN (`Cultural clue unlocked from “{title}”.`) and `storyClueExplain` EN (`This clue comes from the story “{title}”.`).
+
+**Why**
+- Live miss: Complete the sentence with EN still showed `La idea está; falta precisión.` / `Modo verbal` / Spanish Why. Soft chrome parked. Lectura stills untouched. Do not merge — Hand CLEAR after George EN stamp.
+
 ## 2026-09-06 (Safe/Risky Literal then Why)
 
 **What changed**
