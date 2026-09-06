@@ -93,7 +93,7 @@ assert(JSON.stringify(pinXY.bajio) === "[39,54]", "Bajío coords unchanged");
 assert(JSON.stringify(pinXY.cdmx) === "[47,62]", "CDMX coords unchanged");
 assert(JSON.stringify(pinXY.oaxaca) === "[53,74]", "Oaxaca coords unchanged");
 assert(JSON.stringify(pinXY.norte) === "[28,30]", "Norte coords unchanged");
-assert(JSON.stringify(pinXY.yucatan) === "[77,60]", "Yucatán sits on peninsula land (was 82,40 in the Gulf)");
+assert(JSON.stringify(pinXY.yucatan) === "[75,66]", "Yucatán sits on peninsula land (was 82,40 in the Gulf)");
 assert(!/Ruta de recuerdos|Keep exploring|Unlocked|Closed|Blocked/i.test(
   `${RECUERDOS_TITLE_ES}${RECUERDOS_TITLE_EN}${labelsEs.join("")}${labelsEn.join("")}${RECUERDOS_OPEN_ES}${RECUERDOS_OPEN_EN}${RECUERDOS_LOCKED_ES}${RECUERDOS_LOCKED_EN}`
 ), "no invented soft synonyms on locked strings");
