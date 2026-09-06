@@ -3635,6 +3635,7 @@ describe("simulated learner flows", () => {
       expect(tile.style.color).toMatch(lime);
       expect(tile.style.color).toBe(check.style.background);
       expect(tile.style.background).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+      expect(Number.parseInt(tile.style.fontWeight, 10)).toBeGreaterThanOrEqual(800);
     });
     expect(tiles.some((tile) => /llegues|temprano|reunión/i.test(tile.textContent))).toBe(true);
   });

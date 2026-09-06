@@ -808,6 +808,7 @@ assert(appSrc.includes("data-testid=\"choice-chip-key\""), "quiet chip digits ar
 assert(appSrc.includes("color: used ? D.greenDark : D.green"), "BUILD WITH WORDS unused chip label is CHECK lime (D.green)");
 assert(!appSrc.includes("color: used ? D.greenDark : D.ink"), "BUILD WITH WORDS unused chip label is not theme ink");
 assert(appSrc.includes('green: "#58CC02"'), "CHECK / chip lime stays the stamped D.green token");
+assert(/color: used \? D\.greenDark : D\.green,\s*fontWeight: 800,/.test(appSrc), "BUILD WITH WORDS unused chip label is No Face stamp weight 800+");
 assert(!/press 1|Press 1|pulsa 1|Pulsa 1/.test(appSrc), "no press-1 banner chrome");
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const viteSrc = readFileSync(join(repoRoot, "vite.config.js"), "utf8");

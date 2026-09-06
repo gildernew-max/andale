@@ -7634,6 +7634,7 @@ export default function App() {
                                 borderColor: used ? D.green : D.line,
                                 borderBottomColor: used ? D.green : D.line,
                                 color: used ? D.greenDark : D.green,
+                                fontWeight: 800,
                                 padding: "8px 11px",
                                 fontSize: 14,
                                 width: "100%",
