@@ -7633,7 +7633,7 @@ export default function App() {
                                 background: used ? D.greenBg : "#fff",
                                 borderColor: used ? D.green : D.line,
                                 borderBottomColor: used ? D.green : D.line,
-                                color: used ? D.greenDark : D.ink,
+                                color: used ? D.greenDark : D.green,
                                 padding: "8px 11px",
                                 fontSize: 14,
                                 width: "100%",

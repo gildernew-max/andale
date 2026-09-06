@@ -3607,4 +3607,35 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /Why\?/ }));
     expect(screen.getByTestId("practice-why").textContent).toBe("«Cuando» + future action → subjunctive. Habit would be indicative: «cuando salgo».");
   });
+
+  it("BUILD WITH WORDS unused chip labels use CHECK lime on a white chip, including dark theme", async () => {
+    cleanup();
+    seedProgress({
+      uiLang: "en",
+      theme: "dark",
+      hearts: 5,
+      resume: { unitId: "subj1", order: [{ u: "subj1", i: 10 }], qi: 0, xp: 0, right: 0, wrong: 0 },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    const unitBtn = screen.queryByRole("button", { name: "Subjuntivo presente" })
+      || (await openCaminoMore(user), screen.getByRole("button", { name: "Subjuntivo presente" }));
+    await user.click(unitBtn);
+    await user.click(screen.getByRole("button", { name: /Start|Empezar/ }));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await waitFor(() => expect(document.body.textContent).toMatch(/BUILD WITH WORDS/));
+    expect(document.body.textContent).toMatch(/Write the full sentence/);
+    const tiles = screen.getAllByTestId("bank-tile");
+    expect(tiles.length).toBeGreaterThan(3);
+    const check = screen.getByTestId("lesson-check");
+    const lime = /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i;
+    expect(check.style.background).toMatch(lime);
+    tiles.forEach((tile) => {
+      expect(tile.style.color).toMatch(lime);
+      expect(tile.style.color).toBe(check.style.background);
+      expect(tile.style.background).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    });
+    expect(tiles.some((tile) => /llegues|temprano|reunión/i.test(tile.textContent))).toBe(true);
+  });
 });
