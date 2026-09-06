@@ -2918,8 +2918,8 @@ const SAFE_RISKY_ITEMS = [
     phrase: "Quedo a sus órdenes.",
     context: { es: "Cierras un correo con una clienta.", en: "You are closing an email to a client." },
     answer: "formal",
-    literal: { es: "Quedo a su disposición.", en: "I’m at your service." },
-    note: { es: "Cierre profesional mexicano: amable, claro, seguro. Encaja en correo con clientas.", en: "A Mexican professional close: warm, clear, safe. Fits an email to a client." },
+    literal: { es: "Quedo bajo sus órdenes.", en: "I remain under your orders." },
+    note: { es: "En tono suave: estoy a su disposición. Cierre profesional mexicano — amable, claro, seguro en correo con clientas.", en: "Soft English: I’m at your service. Mexican professional close — warm, clear, safe for a client email." },
   },
   {
     phrase: "¿Mande?",
