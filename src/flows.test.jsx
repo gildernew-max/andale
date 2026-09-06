@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey, prevDayKey } from "./firstDoor.js";
 import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
-import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED } from "./recuerdos.js";
+import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED } from "./recuerdos.js";
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
 
@@ -3499,8 +3499,14 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("recuerdos-bajio-glow")).toBeTruthy();
     expect(screen.getByTestId("recuerdos-bajio-glow").className).toMatch(/bajio-glow/);
     expect(screen.getByTestId("recuerdos-bajio-glow").style.boxShadow).toBe(RECUERDOS_PIN_SHADOW);
+    expect(screen.getByTestId("recuerdos-bajio-glow").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    const bajioLabels = screen.getByTestId("recuerdos-pin-bajio").querySelectorAll("span span");
+    expect(bajioLabels[0].style.color).toBe(RECUERDOS_PIN_LABEL);
+    expect(bajioLabels[1].style.color).toBe(RECUERDOS_PIN_LABEL);
     const cdmxDot = screen.getByTestId("recuerdos-pin-cdmx").querySelector("span");
     expect(cdmxDot.style.boxShadow).toBe(RECUERDOS_PIN_SHADOW_LOCKED);
+    const cdmxLabels = screen.getByTestId("recuerdos-pin-cdmx").querySelectorAll("span span");
+    expect(cdmxLabels[0].style.color).toBe(RECUERDOS_PIN_LABEL);
     expect(map.querySelector("nav")).toBeNull();
     expect(screen.queryByTestId("nav-recuerdos")).toBeNull();
 

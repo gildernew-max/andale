@@ -9,10 +9,13 @@ import {
   YUCATAN_PIN,
   MEXICO_MAP_COLORS,
   MEXICO_MAP_SRC,
+  RECUERDOS_FOG_DARK,
+  RECUERDOS_FOG_LIGHT,
   RECUERDOS_LOCKED_EN,
   RECUERDOS_LOCKED_ES,
   RECUERDOS_OPEN_EN,
   RECUERDOS_OPEN_ES,
+  RECUERDOS_PIN_LABEL,
   RECUERDOS_PIN_SHADOW,
   RECUERDOS_PIN_SHADOW_LOCKED,
   RECUERDOS_PINS,
@@ -136,10 +139,10 @@ const mexicoMapFile = join(dirname(fileURLToPath(import.meta.url)), "..", "publi
 assert(existsSync(mexicoMapFile), "illustrated Mexico PNG is in public/assets");
 assert(readFileSync(mexicoMapFile).subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])), "Mexico map asset is a PNG");
 assert(MEXICO_MAP_COLORS.paper === "#f8f0e8", "cream paper stays #f8f0e8");
-assert(MEXICO_MAP_COLORS.terracotta === "#b37856", "terracotta land is darkened #b37856");
-assert(MEXICO_MAP_COLORS.sage === "#858e69", "sage land is darkened #858e69");
-assert(MEXICO_MAP_COLORS.yellow === "#9f8d59", "yellow land is darkened #9f8d59");
-assert(MEXICO_MAP_COLORS.stroke === "#564834", "silhouette stroke is darkened #564834");
+assert(MEXICO_MAP_COLORS.terracotta === "#986446", "terracotta land is darkened #986446");
+assert(MEXICO_MAP_COLORS.sage === "#6f7757", "sage land is darkened #6f7757");
+assert(MEXICO_MAP_COLORS.yellow === "#867647", "yellow land is darkened #867647");
+assert(MEXICO_MAP_COLORS.stroke === "#382d1f", "coast line is darkened #382d1f");
 const hexLum = (hex) => {
   const n = hex.replace("#", "");
   const r = parseInt(n.slice(0, 2), 16);
@@ -151,11 +154,17 @@ assert(hexLum(MEXICO_MAP_COLORS.paper) > 230, "paper stays bright cream");
 assert(hexLum(MEXICO_MAP_COLORS.terracotta) < hexLum("#e0a888"), "terracotta is darker than the pastel source");
 assert(hexLum(MEXICO_MAP_COLORS.sage) < hexLum("#b8c0a0"), "sage is darker than the pastel source");
 assert(hexLum(MEXICO_MAP_COLORS.yellow) < hexLum("#f8e8b8"), "yellow is darker than the pastel source");
-assert(hexLum(MEXICO_MAP_COLORS.stroke) < hexLum(MEXICO_MAP_COLORS.yellow), "stroke is darker than land fills");
+assert(hexLum(MEXICO_MAP_COLORS.stroke) < hexLum(MEXICO_MAP_COLORS.yellow), "coast is darker than land fills");
+assert(RECUERDOS_PIN_LABEL === "#F4EDE0", "pin labels are cream #F4EDE0");
 assert(RECUERDOS_PIN_SHADOW.includes("rgba(58,42,24,.42)"), "open pins keep a dark ring on the darker land");
 assert(RECUERDOS_PIN_SHADOW_LOCKED.includes("rgba(58,42,24,.28)"), "locked pins keep a faint dark ring");
+assert(RECUERDOS_FOG_LIGHT === "rgba(42,36,30,.62)", "light fog is deeper dusk brown");
+assert(RECUERDOS_FOG_DARK === "rgba(8,10,14,.74)", "dark fog is deeper than the old .58 mist");
 assert(/radial-gradient/.test(recuerdosFogBackground()), "fog treatment is a radial mist");
 assert(recuerdosFogBackground().includes("39%"), "fog clears at Bajío first");
+assert(recuerdosFogBackground().includes(RECUERDOS_FOG_LIGHT), "default fog uses the deeper light mist");
+assert(recuerdosFogBackground(RECUERDOS_PINS, {}, "dark").includes(RECUERDOS_FOG_DARK), "dark theme uses the deeper dark mist");
+assert(!recuerdosFogBackground().includes("rgba(232,238,242"), "pale wash fog is gone");
 const lockedCold = recuerdosLockedPins().map((p) => p.id);
 assert(!lockedCold.includes("bajio"), "Bajío is not a fogged locked region");
 assert(lockedCold.join(" · ") === "cdmx · oaxaca · yucatan · norte", "fog sits on CDMX Oaxaca Yucatán Norte");

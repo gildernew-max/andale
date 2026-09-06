@@ -2,16 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
-## 2026-09-06 (Recuerdos map contrast — Dave / Hand)
+## 2026-09-06 (Recuerdos map contrast — No Face stamp)
 
 **What changed**
-- Recuerdos / Souvenir trail Mexico PNG land darkened for cream-card contrast. Paper cream `#f8f0e8` unchanged.
-- Fills: terracotta `#e0a888` → `#b37856` · sage `#b8c0a0` → `#858e69` · yellow `#f8e8b8` → `#9f8d59`.
-- Silhouette / region stroke → `#564834`. Pin coords unchanged. Pin ring slightly stronger so gold / lime / lock stay readable.
+- Land fills + coast line darkened on the Dave-cleared Mexico PNG. Paper cream `#f8f0e8` unchanged.
+- Fills: terracotta `#e0a888` → `#986446` · sage `#b8c0a0` → `#6f7757` · yellow `#f8e8b8` → `#867647`. Coast `#382d1f`.
+- Fog goes deeper: light `rgba(42,36,30,.62)` · dark `rgba(8,10,14,.74)`.
+- Open pins stay bright CHECK lime (`D.green` `#58CC02`). Labels cream `#F4EDE0`. Pin coords unchanged.
 - Soft chrome parked. Cenzontle / PR 106 untouched. Do not merge.
 
 **Why**
-- Dave: the map is hard to see. Hand: darken silhouette + region fills only.
+- No Face stamp: darker land + coast, deeper fog, lime pins, cream labels. Map contrast only.
 
 ## 2026-09-06 (No Face — QWERTY letter board)
 
