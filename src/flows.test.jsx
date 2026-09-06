@@ -75,6 +75,9 @@ const boot = async () => {
   const user = userEvent.setup();
   render(<App />);
   await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+  // Seeded saves are returning visits. Wait out the default first-visit splash
+  // so a slow storage.get cannot start a lesson on empty progress.
+  await waitFor(() => expect(screen.queryByTestId("splash-start")).toBeNull());
   return user;
 };
 
