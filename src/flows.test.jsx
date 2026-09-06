@@ -402,6 +402,11 @@ describe("simulated learner flows", () => {
         break;
       }
       await user.click(continueBtn());
+      await waitFor(() => expect(
+        document.querySelector(".choice-card")
+        || document.querySelector("input[placeholder]")
+        || screen.queryAllByTestId("bank-tile").length,
+      ).toBeTruthy());
     }
     const choices = document.querySelectorAll(".choice-card");
     expect(choices.length).toBeGreaterThan(0);
