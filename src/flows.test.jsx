@@ -80,10 +80,11 @@ const continueBtn = () => screen.getByRole("button", { name: /^Continuar$/i });
 
 const localToday = () => dayKeyFromDate(new Date());
 
-/** Same five Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
+/** Same six Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
 const HOY_TITLES = [
   { title: "Noche de faroles", titleEn: "Night of lanterns" },
   { title: "En la farmacia", titleEn: "At the pharmacy" },
+  { title: "WhatsApp del plomero", titleEn: "Plumber WhatsApp" },
   { title: "WhatsApp del casero", titleEn: "Landlord WhatsApp" },
   { title: "Mostrador en caos", titleEn: "Airport Counter Chaos" },
   { title: "Cena con la suegra", titleEn: "Dinner With the In-Laws" },
@@ -1338,6 +1339,8 @@ describe("simulated learner flows", () => {
     expect(liveShort.session.questions.length).toBeGreaterThan(0);
     const hoyAnswers = [
       "cilantro, cebolla, salsa y guarnición",
+      "natural y práctico",
+      "natural y claro",
       "natural y firme",
       "contraste",
       "habla de un momento futuro",
@@ -1394,7 +1397,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     expect(screen.getByTestId("camino-more-panel")).toBeTruthy();
     expect(screen.getByTestId("first-door-hero").textContent).toMatch(/Jugar la escena|Play the scene/);
-    expect(promised.title).toMatch(/WhatsApp del casero|Mostrador en caos|Noche de faroles|Cena con la suegra|En la farmacia/);
+    expect(promised.title).toMatch(/WhatsApp del casero|Mostrador en caos|Noche de faroles|Cena con la suegra|En la farmacia|WhatsApp del plomero/);
   });
 
   it("undismissed soft paywall clears when the day rolls — no stale Doctora handoff", async () => {
@@ -1414,7 +1417,7 @@ describe("simulated learner flows", () => {
       expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
       expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene/);
-      expect(screen.getByTestId("hoy-title").textContent).toBe("Mostrador en caos");
+      expect(screen.getByTestId("hoy-title").textContent).toBe("Noche de faroles");
       expect(screen.queryByTestId("first-door-title")).toBeNull();
       expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
     } finally {
@@ -1590,6 +1593,8 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
     const hoyAnswers = [
       "cilantro, cebolla, salsa y guarnición",
+      "natural y práctico",
+      "natural y claro",
       "natural y firme",
       "contraste",
       "habla de un momento futuro",
@@ -1705,7 +1710,7 @@ describe("simulated learner flows", () => {
 
   it("CONTINUE after first streak-1 Eso cannot skip the Bajío flash onto the paywall", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    vi.setSystemTime(new Date(2026, 8, 4, 12, 0, 0));
+    vi.setSystemTime(new Date(2026, 8, 8, 12, 0, 0));
     try {
       cleanup();
       localStorage.clear();
@@ -1969,7 +1974,7 @@ describe("simulated learner flows", () => {
 
   it("official walk day-2 Hoy CONTINUE shows CDMX glow before idle — StrictMode", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    vi.setSystemTime(new Date(2026, 8, 4, 12, 0, 0));
+    vi.setSystemTime(new Date(2026, 8, 8, 12, 0, 0));
     try {
       cleanup();
       localStorage.clear();
@@ -2009,7 +2014,7 @@ describe("simulated learner flows", () => {
       markOaxacaUnlockFlashDue(false);
       markYucatanUnlockFlashDue(false);
       markNorteUnlockFlashDue(false);
-      vi.setSystemTime(new Date(2026, 8, 5, 12, 0, 0));
+      vi.setSystemTime(new Date(2026, 8, 9, 12, 0, 0));
       localStorage.setItem(STORAGE_KEY, saved);
       localStorage.removeItem(LIVE_KEY);
       const day2 = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
