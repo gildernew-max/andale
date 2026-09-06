@@ -9,6 +9,7 @@ export function GlossWord({ token, uiLang, D, accent, onActivate }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const focused = useRef(false);
+  const sticky = useRef(false);
 
   const place = () => {
     const el = ref.current;
@@ -23,27 +24,26 @@ export function GlossWord({ token, uiLang, D, accent, onActivate }) {
   };
 
   const hide = () => {
-    if (focused.current) return;
+    if (focused.current || sticky.current) return;
+    setOpen(false);
+  };
+
+  const dismiss = () => {
+    focused.current = false;
+    sticky.current = false;
     setOpen(false);
   };
 
   useEffect(() => {
     if (!open) return undefined;
     const onDoc = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        focused.current = false;
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target)) dismiss();
     };
     const onKey = (e) => {
-      if (e.key === "Escape") {
-        focused.current = false;
-        setOpen(false);
-      }
+      if (e.key === "Escape") dismiss();
     };
     const onScroll = () => {
-      focused.current = false;
-      setOpen(false);
+      dismiss();
     };
     document.addEventListener("pointerdown", onDoc);
     document.addEventListener("keydown", onKey);
@@ -61,10 +61,10 @@ export function GlossWord({ token, uiLang, D, accent, onActivate }) {
     e.preventDefault();
     e.stopPropagation();
     onActivate?.(hit);
-    if (open) {
-      focused.current = false;
-      setOpen(false);
+    if (sticky.current && open) {
+      dismiss();
     } else {
+      sticky.current = true;
       show();
     }
   };
