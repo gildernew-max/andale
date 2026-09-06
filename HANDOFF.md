@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (Cenzontle faces RIGHT)
+
+**What changed**
+- PR 106 / live mark faced LEFT. Horizontally flipped the PNGs used as the mark so the bird faces RIGHT.
+- Flipped: `public/mascot/cenzontle.png` (LogoMark / splash / Recuerdos / og), `apple-touch-icon.png`, `favicon.ico` (16/32/48 PNG-in-ICO), `favicon.svg` embed.
+- `LogoMark` has no `scaleX(-1)` / `rotateY(180)` — CSS must not reverse the asset. Future win-motion fly-in stays right-facing (not implemented here).
+- Soft chrome parked. Do not merge — Hand CLEAR.
+
+**Why**
+- Brand lock: Cenzontle faces RIGHT.
+
 ## 2026-09-06 (Cenzontle lockup — abandons axolotl)
 
 **What changed**

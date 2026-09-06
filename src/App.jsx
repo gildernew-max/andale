@@ -20,7 +20,7 @@ import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
    Spanish only · intermediate & advanced · Mexican Spanish
    Duolingo formula: serpentine node path, sequential unlock,
    mascot reactions, global hearts w/ regen, gems, match pairs,
-   chunky 3D buttons, bottom tabs. Lockup mascot: Cenzontle (Mexican mockingbird).
+   chunky 3D buttons, bottom tabs. Lockup mascot: Cenzontle (Mexican mockingbird), faces RIGHT.
    ============================================================ */
 
 /* ============================================================
@@ -1551,6 +1551,7 @@ const FlagMX = ({ size = 22 }) => (
     <circle cx="13.5" cy="9" r="2.4" fill="#B08A4F" /><circle cx="13.5" cy="9" r="1.2" fill="#6B5530" />
   </svg>
 );
+/** Cenzontle lockup. PNG faces RIGHT. Future win-motion fly-in stays right-facing — do not scaleX(-1). Soft chrome parked. */
 const LogoMark = ({ size = 30, ...rest }) => (
   <img
     src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}

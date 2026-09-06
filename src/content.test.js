@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { inflateSync } from "zlib";
 import { prepQuestion } from "./prepQuestion.js";
 import { hoyStillFor, LANTERN_STILL } from "./hoyStill.js";
 import { comeBackTomorrowLine, hoySceneForDay, nextDayKey } from "./firstDoor.js";
@@ -721,6 +722,12 @@ assert(appSrc.includes("{L.splashCta}"), "splash CTA uses L.splashCta");
 assert(appSrc.includes("data-testid=\"splash-start\""), "splash primary CTA is testable");
 assert(appSrc.includes("data-testid=\"splash-hero\""), "splash hero mark is testable");
 assert(appSrc.includes('src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}'), "LogoMark points at mascot/cenzontle.png");
+const logoMarkSrc = appSrc.slice(appSrc.indexOf("const LogoMark ="), appSrc.indexOf("const MARK_INK"));
+assert(logoMarkSrc.includes("mascot/cenzontle.png"), "LogoMark slice includes the Cenzontle src");
+assert(!/scaleX\s*\(\s*-1\s*\)/.test(logoMarkSrc), "LogoMark must not CSS-mirror the right-facing Cenzontle");
+assert(!/rotateY\s*\(\s*180/.test(logoMarkSrc), "LogoMark must not rotateY the right-facing mark");
+assert(appSrc.includes("PNG faces RIGHT"), "LogoMark documents right-facing lock");
+assert(appSrc.includes("do not scaleX(-1)"), "LogoMark documents no CSS flip for win-motion");
 assert(appSrc.includes('const MARK_INK = "#5C7356"'), "lockup wordmark uses adult sage, not Duo lime");
 assert(appSrc.includes("color: MARK_INK"), "header/splash wordmark reads MARK_INK");
 assert(appSrc.includes("data-testid=\"home-pitch\""), "Camino home pitch is testable");
@@ -860,6 +867,107 @@ assert(readFileSync(mascotPng).subarray(0, 8).equals(pngMagic), "mascot/cenzontl
 assert(readFileSync(appleTouch).subarray(0, 8).equals(pngMagic), "apple-touch-icon.png is a real PNG");
 assert(faviconSvg.includes("data:image/png;base64,"), "favicon.svg embeds a PNG, not a JPEG");
 assert(!faviconSvg.includes("data:image/jpeg"), "favicon.svg does not embed JPEG bytes");
+const pngHeadFacesRight = (buf, label) => {
+  const paeth = (a, b, c) => {
+    const p = a + b - c;
+    const pa = Math.abs(p - a);
+    const pb = Math.abs(p - b);
+    const pc = Math.abs(p - c);
+    if (pa <= pb && pa <= pc) return a;
+    if (pb <= pc) return b;
+    return c;
+  };
+  let pos = 8;
+  let width = 0;
+  let height = 0;
+  const idat = [];
+  while (pos < buf.length) {
+    const length = buf.readUInt32BE(pos);
+    const ctype = buf.toString("latin1", pos + 4, pos + 8);
+    const cdata = buf.subarray(pos + 8, pos + 8 + length);
+    pos += 12 + length;
+    if (ctype === "IHDR") {
+      width = cdata.readUInt32BE(0);
+      height = cdata.readUInt32BE(4);
+      assert(cdata[8] === 8 && cdata[9] === 6 && cdata[12] === 0, `${label}: 8-bit RGBA non-interlaced PNG`);
+    } else if (ctype === "IDAT") idat.push(cdata);
+    else if (ctype === "IEND") break;
+  }
+  const raw = inflateSync(Buffer.concat(idat));
+  const bpp = 4;
+  const stride = width * bpp;
+  const rows = [];
+  let i = 0;
+  let prev = Buffer.alloc(stride);
+  for (let y = 0; y < height; y++) {
+    const filt = raw[i];
+    const scan = Buffer.from(raw.subarray(i + 1, i + 1 + stride));
+    i += 1 + stride;
+    if (filt === 1) {
+      for (let x = 0; x < stride; x++) scan[x] = (scan[x] + (x >= bpp ? scan[x - bpp] : 0)) & 255;
+    } else if (filt === 2) {
+      for (let x = 0; x < stride; x++) scan[x] = (scan[x] + prev[x]) & 255;
+    } else if (filt === 3) {
+      for (let x = 0; x < stride; x++) scan[x] = (scan[x] + ((((x >= bpp ? scan[x - bpp] : 0) + prev[x]) >> 1))) & 255;
+    } else if (filt === 4) {
+      for (let x = 0; x < stride; x++) {
+        const a = x >= bpp ? scan[x - bpp] : 0;
+        const b = prev[x];
+        const c = x >= bpp ? prev[x - bpp] : 0;
+        scan[x] = (scan[x] + paeth(a, b, c)) & 255;
+      }
+    } else {
+      assert(filt === 0, `${label}: unknown PNG filter ${filt}`);
+    }
+    rows.push(scan);
+    prev = scan;
+  }
+  let minx = width;
+  let maxx = -1;
+  let miny = height;
+  let maxy = -1;
+  for (let y = 0; y < height; y++) {
+    const row = rows[y];
+    for (let x = 0; x < width; x++) {
+      if (row[x * 4 + 3] > 16) {
+        if (x < minx) minx = x;
+        if (x > maxx) maxx = x;
+        if (y < miny) miny = y;
+        if (y > maxy) maxy = y;
+      }
+    }
+  }
+  const cut = miny + Math.floor((maxy - miny + 1) * 0.28);
+  let sx = 0;
+  let n = 0;
+  for (let y = miny; y <= cut; y++) {
+    const row = rows[y];
+    for (let x = minx; x <= maxx; x++) {
+      if (row[x * 4 + 3] > 16) {
+        sx += x;
+        n++;
+      }
+    }
+  }
+  assert(n > 0, `${label}: found opaque head pixels`);
+  const cx = sx / n;
+  const mid = (minx + maxx) / 2;
+  assert(cx > mid, `${label}: Cenzontle head must face RIGHT (head_cx=${cx.toFixed(1)} mid=${mid.toFixed(1)})`);
+};
+pngHeadFacesRight(readFileSync(mascotPng), "mascot/cenzontle.png");
+pngHeadFacesRight(readFileSync(appleTouch), "apple-touch-icon.png");
+const faviconPng = Buffer.from(faviconSvg.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/)[1], "base64");
+pngHeadFacesRight(faviconPng, "favicon.svg embed");
+const faviconIco = readFileSync(join(repoRoot, "public", "favicon.ico"));
+assert(faviconIco.readUInt16LE(2) === 1 && faviconIco.readUInt16LE(4) === 3, "favicon.ico is a 3-image ICO");
+for (let i = 0, off = 6; i < 3; i++, off += 16) {
+  const size = faviconIco.readUInt32LE(off + 8);
+  const offset = faviconIco.readUInt32LE(off + 12);
+  const blob = faviconIco.subarray(offset, offset + size);
+  assert(blob.subarray(0, 8).equals(pngMagic), `favicon.ico#${i} is PNG-in-ICO`);
+  pngHeadFacesRight(blob, `favicon.ico#${i}`);
+}
+
 assert(indexHtml.includes('content="#5C7356"'), "theme-color drops Duo lime for lockup sage");
 assert(indexHtml.includes("mascot/cenzontle.png"), "og/twitter image uses the Cenzontle path");
 assert(!indexHtml.includes("mascot/axolotl.png"), "og/twitter no longer point at axolotl.png");
