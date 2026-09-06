@@ -16,12 +16,14 @@ export const MEXICO_MAP_SRC = "assets/dave-cleared-mexico-map.png";
 /**
  * Five regional pins. Percent positions sit on the illustrated Mexico map.
  * Bajío is the first-glow pin and starts open.
+ * Yucatán 75,66 sits the pin *dot* on peninsula land (button % is center of dot+label).
+ * Was 82,40 — Gulf water north of the hook on the Dave-cleared art.
  */
 export const RECUERDOS_PINS = [
   { id: "bajio", es: "Bajío", en: "Bajío", x: 39, y: 54, firstGlow: true, storyIds: ["story-0"] },
   { id: "cdmx", es: "CDMX", en: "CDMX", x: 47, y: 62, storyIds: ["story-1", "story-3", "story-7", "story-8"] },
   { id: "oaxaca", es: "Oaxaca", en: "Oaxaca", x: 53, y: 74, storyIds: ["story-4"] },
-  { id: "yucatan", es: "Yucatán", en: "Yucatán", x: 82, y: 40, storyIds: ["story-2"] },
+  { id: "yucatan", es: "Yucatán", en: "Yucatán", x: 75, y: 66, storyIds: ["story-2"] },
   { id: "norte", es: "Norte", en: "North", x: 28, y: 30, storyIds: ["story-5"] },
 ];
 

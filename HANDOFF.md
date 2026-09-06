@@ -2,6 +2,14 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (Recuerdos Yucatán pin — peninsula land)
+
+**What changed**
+- Yucatán Recuerdos pin only: `82,40` → `75,66` so the pin *dot* sits on the Dave-cleared peninsula land instead of Gulf water north of the hook. Norte / Bajío / CDMX / Oaxaca coords unchanged. Percent is the button center (dot + label); 75,66 places the dot on the hook at Library card sizes.
+
+**Why**
+- Live Pages miss: pin floated in water left of the Yucatán landmass. SVG-era percent did not land on the illustrated hook. No face stamps coords before merge.
+
 ## 2026-09-06 (Recuerdos map — Dave-cleared illustration)
 
 **What changed**
