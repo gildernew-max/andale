@@ -1,10 +1,13 @@
+import { existsSync, readFileSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import {
   CDMX_PIN,
   FIRST_GLOW_PIN,
   NORTE_PIN,
   OAXACA_PIN,
   YUCATAN_PIN,
-  MEXICO_OUTLINE_PATH,
+  MEXICO_MAP_SRC,
   RECUERDOS_LOCKED_EN,
   RECUERDOS_LOCKED_ES,
   RECUERDOS_OPEN_EN,
@@ -119,7 +122,10 @@ assert(storyIdForRecuerdosPin(RECUERDOS_PINS[0], {}) === "story-0", "Bajío open
 assert(storyIdForRecuerdosPin(RECUERDOS_PINS.find((p) => p.id === "cdmx"), {}) === "story-1", "CDMX prefers first unclaimed");
 assert(storyIdForRecuerdosPin(RECUERDOS_PINS.find((p) => p.id === "cdmx"), { "story-1": true }) === "story-3", "CDMX skips claimed");
 
-assert(typeof MEXICO_OUTLINE_PATH === "string" && MEXICO_OUTLINE_PATH.includes("M34"), "Mexico outline path is present");
+assert(MEXICO_MAP_SRC === "assets/dave-cleared-mexico-map.png", "Dave-cleared illustrated Mexico map is the Recuerdos base");
+const mexicoMapFile = join(dirname(fileURLToPath(import.meta.url)), "..", "public", MEXICO_MAP_SRC);
+assert(existsSync(mexicoMapFile), "illustrated Mexico PNG is in public/assets");
+assert(readFileSync(mexicoMapFile).subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])), "Mexico map asset is a PNG");
 assert(/radial-gradient/.test(recuerdosFogBackground()), "fog treatment is a radial mist");
 assert(recuerdosFogBackground().includes("39%"), "fog clears at Bajío first");
 const lockedCold = recuerdosLockedPins().map((p) => p.id);

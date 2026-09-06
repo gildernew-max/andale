@@ -423,6 +423,8 @@ assert(!/Vuelve mañana por «\{title\}»|Come back tomorrow for “\{title\}”
 assert(!/¡Ganaste!|You won!/.test(`${UI.es.hoyWin}${UI.en.hoyWin}`), "first-Hoy win is not ¡Ganaste!/You won!");
 assert(appSrc.includes("L.hoyWin"), "first-Hoy done heading uses L.hoyWin");
 assert(appSrc.includes("hoy-win"), "first-Hoy win heading is testable");
+assert(appSrc.includes("MEXICO_MAP_SRC") && appSrc.includes("RecuerdosMexicoMap"), "Recuerdos uses the Dave-cleared illustrated Mexico map");
+assert(!appSrc.includes("MEXICO_OUTLINE_PATH"), "PR 81 SVG silhouette is not the Recuerdos map");
 assert(appSrc.includes("shouldShowBajioUnlockFlash"), "Bajío unlock flash uses the once-only gate");
 assert(appSrc.includes("isBajioUnlockFlashLive") && appSrc.includes("markBajioUnlockFlashLive"), "flash live flag survives remount");
 assert(appSrc.includes("isBajioUnlockFlashDue") && appSrc.includes("markBajioUnlockFlashDue"), "flash due flag survives CONTINUE remount");

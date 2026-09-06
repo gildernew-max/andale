@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (Recuerdos map — Dave-cleared illustration)
+
+**What changed**
+- Lectura Recuerdos map uses `public/assets/dave-cleared-mexico-map.png` (Dave-cleared illustrated Mexico) instead of the PR 81 green SVG silhouette. Unlock flashes reuse the same art.
+- Bajío first-glow, fog on locked regions, axolotl, and pin stamps stay: `Bajío` · `CDMX` · `Oaxaca` · `Yucatán` · `Norte` / `North` with `Abierto` / `Open` · `Cerrado` / `Locked`. Unlock flash path from PRs 83–88 stays.
+- No Recuerdos tab / tab pep, no backpack `12/25`, no `¡Sigue explorando!`. Soft chrome parked. Enroll / IAP off.
+
+**Why**
+- Hand lock: restore the Dave-cleared illustrated look. SVG was a stand-in.
+
 ## 2026-09-06 (Norte unlock flash — streak-5 Hoy ¡Eso!)
 
 **What changed**
