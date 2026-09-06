@@ -1,21 +1,15 @@
 /** George-stamped one-line glosses for Lectura + story Qs.
  *  Add `{ en, es }` under the Spanish lemma. Only mapped words glow.
  *  Aliases map inflected forms to a lemma. Do not invent a dictionary.
+ *
+ *  First lock: cosecha. Next stamps (wire when George sends exact lines):
+ *  cerezas, cereza, ladera, mimbre, cooperativa, comercio justo, roya,
+ *  heladas, independencia, …
  */
 import { uiText } from "./practiceI18n.js";
 
-/** Key cerezas words + room for later stamps. */
 export const STORY_GLOSSES = {
-  cosecha: { en: "harvest", es: "recolección" },
-  cosechando: { en: "harvesting", es: "recogiendo la cosecha" },
-  cereza: { en: "coffee cherry", es: "fruto del café" },
-  cerezas: { en: "coffee cherries", es: "frutos del café" },
-  recolecta: { en: "harvests", es: "recoge" },
-  recolectado: { en: "harvested", es: "recogido" },
-  mimbre: { en: "wicker", es: "tejido de varas" },
-  ladera: { en: "hillside", es: "pendiente del cerro" },
-  tzotzil: { en: "Tzotzil Maya", es: "pueblo maya de Chiapas" },
-  roya: { en: "coffee rust", es: "hongo del café" },
+  cosecha: { en: "harvest", es: "la recolección de ese año" },
 };
 
 /** Inflected form → lemma already in STORY_GLOSSES. */

@@ -38,13 +38,13 @@ describe("GlossedText", () => {
 
   it("follows uiLang for the ES paraphrase and ignores unmapped words", async () => {
     const user = userEvent.setup();
-    render(<GlossedText text="Las cerezas maduras y la mesa." uiLang="es" D={D} />);
-    expect(glossByKey("cerezas")).toBeTruthy();
+    render(<GlossedText text="Vendió su cosecha completa y la mesa." uiLang="es" D={D} />);
+    expect(glossByKey("cosecha")).toBeTruthy();
     expect(screen.getAllByTestId("gloss-word")).toHaveLength(1);
     expect(document.body.textContent).toMatch(/mesa/);
 
-    glossByKey("cerezas").focus();
-    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("frutos del café"));
+    glossByKey("cosecha").focus();
+    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("la recolección de ese año"));
 
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByTestId("gloss-tip")).toBeNull());

@@ -2,12 +2,22 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (George gloss stamp — cosecha first lock)
+
+**What changed**
+- `STORY_GLOSSES.cosecha` is the George lock: EN `harvest` · ES `la recolección de ese año`.
+- Map holds only that row. Full cerezas table (cerezas, ladera, mimbre, cooperativa, comercio justo, roya, heladas, independencia, …) waits on his exact lines.
+- Mechanic unchanged. Soft chrome parked. Do not merge.
+
+**Why**
+- George first lock. Do not invent the rest.
+
 ## 2026-09-06 (Lectura word tap / hover gloss — Dave + Hand)
 
 **What changed**
 - Lectura paragraph text and story comprehension Qs: stamped words are tappable (mobile), hoverable, and keyboard-focusable. One-line gloss popover near the word.
 - Only words in `src/storyGloss.js` `STORY_GLOSSES` glow. `{ en, es }` per lemma; `GLOSS_ALIASES` for inflected forms. George extends the map — no invented dictionary.
-- Starter cerezas stamps include `cosecha` → EN `harvest` / ES `recolección`. Unmapped words keep the existing tap card.
+- Starter cerezas stamps include `cosecha` → EN `harvest` / ES `la recolección de ese año`. Unmapped words keep the existing tap card.
 - Soft chrome parked. Do not merge.
 
 **Why**
