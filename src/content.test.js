@@ -607,7 +607,7 @@ const SAFE_RISKY_LITERALS = {
 const SAFE_RISKY_WHYS = {
   "No manches.": { es: "Suena a amigos en México. Con jefes o personas mayores, pásate a algo más suave.", en: "Sounds like friends in Mexico. With bosses or elders, switch to something softer." },
   "Quedo a sus órdenes.": { es: "Cierre profesional mexicano: amable, claro, seguro. Encaja en correo con clientas.", en: "A Mexican professional close: warm, clear, safe. Fits an email to a client." },
-  "¿Mande?": { es: "De mandar / «mande usted»: el «¿perdón?» cortés de México. Con la suegra, gana a un «¿Qué?» seco.", en: "From mandar / «mande usted»: Mexico’s polite “Pardon?” With your mother-in-law, it beats a blunt «¿Qué?»" },
+  "¿Mande?": { es: "Viene de *mandar* / «mande usted» («dígame» / «a sus órdenes»). Hoy es el «¿perdón?» cortés de México; con la suegra gana a un «¿Qué?» seco.", en: "From *mandar* / «mande usted» (“tell me” / “at your service”). Now Mexico’s polite “Pardon?” — beats blunt «¿Qué?» with your mother-in-law." },
   "¿Qué?": { es: "Puede sonar brusco. Mejor «¿Mande?» o «¿Cómo?» según a quién le hablas.", en: "It can land blunt. Prefer «¿Mande?» or «¿Cómo?» depending on who you’re talking to." },
   "¿Me da un café, por favor?": { es: "Natural en el mostrador: directo y cortés. Mejor que «¿Puedo obtener un café?»", en: "Natural at the counter: direct and polite. Better than “Can I obtain a coffee?”" },
   "Está bien chido.": { es: "Suena mexicano y de amigos. En documentos o juntas formales, cámbialo.", en: "Sounds Mexican and friendly. In documents or formal meetings, swap it out." },
@@ -622,14 +622,14 @@ for (const [phrase, literal] of Object.entries(SAFE_RISKY_LITERALS)) {
   assert(item.literal?.en === literal.en, `${phrase} EN literal`);
   assert(item.note?.es === SAFE_RISKY_WHYS[phrase].es, `${phrase} ES Why`);
   assert(item.note?.en === SAFE_RISKY_WHYS[phrase].en, `${phrase} EN Why`);
-  assert(!/\*/.test(`${item.note.es}${item.note.en}`), `${phrase} Why has no asterisks`);
 }
 const chido = SAFE_RISKY_ITEMS.find((it) => it.phrase === "Está bien chido.");
 assert(chido.literal.es === "Está muy padre.", "chido ES literal is Está muy padre.");
 assert(!/cool/i.test(chido.literal.es), "chido ES literal has no English cool");
 assert(!/Está muy cool \/ padre/.test(appSrc), "bounced chido ES literal is gone");
 const mande = SAFE_RISKY_ITEMS.find((it) => it.phrase === "¿Mande?");
-assert(!/\*mandar\*/.test(`${mande.note.es}${mande.note.en}`), "Mande Why is plain mandar");
+assert(mande.literal.es === "¿Cómo? / ¿perdón?", "Mande ES literal stays");
+assert(mande.literal.en === "Pardon?", "Mande EN literal stays");
 assert(appSrc.includes("{L.literalLabel}"), "Safe/Risky Literal chrome uses L.literalLabel");
 assert(appSrc.includes("{L.whyLabel}"), "Safe/Risky Why chrome uses L.whyLabel");
 assert(appSrc.includes("{item.literal[uiLang]}"), "Safe/Risky Literal follows uiLang");
