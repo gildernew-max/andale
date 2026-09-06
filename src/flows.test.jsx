@@ -461,6 +461,49 @@ describe("simulated learner flows", () => {
     });
   });
 
+  it("Safe/Risky reveal shows Literal then Why above CONTINUE", async () => {
+    const literals = {
+      "No manches.": { es: "Vaya / no me digas.", en: "No way. / Come on." },
+      "Quedo a sus órdenes.": { es: "Quedo a su disposición.", en: "I’m at your service." },
+      "¿Mande?": { es: "¿Cómo? / ¿perdón?", en: "Pardon?" },
+      "¿Qué?": { es: "¿Qué?", en: "What?" },
+      "¿Me da un café, por favor?": { es: "¿Me da un café, por favor?", en: "Can I have a coffee, please?" },
+      "Está bien chido.": { es: "Está muy padre.", en: "It’s really cool." },
+      "No obstante lo anterior...": { es: "A pesar de lo anterior...", en: "Notwithstanding the foregoing..." },
+      "Ahorita vengo.": { es: "Vuelvo en un momento.", en: "I’ll be right back." },
+    };
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("safe-risky-start"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-choice-safe")).toBeTruthy());
+    const phrase = Object.keys(literals).find((p) => document.body.textContent.includes(p));
+    expect(phrase).toBeTruthy();
+    expect(screen.queryByTestId("safe-risky-literal")).toBeNull();
+    expect(screen.queryByTestId("safe-risky-why")).toBeNull();
+    await user.click(screen.getByTestId("safe-risky-choice-safe"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-literal")).toBeTruthy());
+    const literal = screen.getByTestId("safe-risky-literal");
+    const why = screen.getByTestId("safe-risky-why");
+    const cont = screen.getByTestId("safe-risky-continue");
+    expect(literal.textContent).toContain("Traducción");
+    expect(literal.textContent).toContain(literals[phrase].es);
+    expect(why.textContent).toContain("Por qué");
+    expect(why.textContent).not.toMatch(/^¿Por qué\?/);
+    expect(cont.textContent).toMatch(/Continuar|Terminar/);
+    expect(literal.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(why.compareDocumentPosition(cont) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    if (phrase === "Está bien chido.") {
+      expect(literal.textContent).toContain("Está muy padre.");
+      expect(literal.textContent).not.toMatch(/cool/i);
+    }
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-literal").textContent).toContain("Literal"));
+    expect(screen.getByTestId("safe-risky-literal").textContent).toContain(literals[phrase].en);
+    expect(screen.getByTestId("safe-risky-why").textContent).toContain("Why");
+    expect(screen.getByTestId("safe-risky-why").textContent).not.toMatch(/^Why\?/);
+    expect(screen.getByTestId("safe-risky-continue").textContent).toMatch(/Continue|Finish/);
+  });
+
   const playMatchRound = async (user) => {
     await waitFor(() => expect(screen.getByTestId("match-pairs-board")).toBeTruthy());
     const lefts = [...document.querySelectorAll("[data-testid^='match-tile-left-']")];

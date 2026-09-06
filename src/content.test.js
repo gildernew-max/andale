@@ -587,6 +587,43 @@ assert(UI.es.safeRiskyReward === "5 rondas · extra por racha · gemas", "UI.es.
 assert(UI.en.safeRiskyReward === "5 rounds · streak extra · gems", "UI.en.safeRiskyReward");
 assert(!/bonus/i.test(UI.es.safeRiskyReward), "ES Safe/Risky reward has no bonus");
 assert(!/bonus/i.test(UI.en.safeRiskyReward), "EN Safe/Risky reward has no bonus");
+assert(UI.es.literalLabel === "Traducción", "UI.es.literalLabel");
+assert(UI.en.literalLabel === "Literal", "UI.en.literalLabel");
+assert(UI.es.whyLabel === "Por qué", "UI.es.whyLabel");
+assert(UI.en.whyLabel === "Why", "UI.en.whyLabel");
+assert(UI.es.why === "¿Por qué?", "existing L.why stays ¿Por qué?");
+assert(UI.en.why === "Why?", "existing L.why stays Why?");
+const SAFE_RISKY_ITEMS = Function(`"use strict"; return (${extractConst(appSrc, "SAFE_RISKY_ITEMS")});`)();
+const SAFE_RISKY_LITERALS = {
+  "No manches.": { es: "Vaya / no me digas.", en: "No way. / Come on." },
+  "Quedo a sus órdenes.": { es: "Quedo a su disposición.", en: "I’m at your service." },
+  "¿Mande?": { es: "¿Cómo? / ¿perdón?", en: "Pardon?" },
+  "¿Qué?": { es: "¿Qué?", en: "What?" },
+  "¿Me da un café, por favor?": { es: "¿Me da un café, por favor?", en: "Can I have a coffee, please?" },
+  "Está bien chido.": { es: "Está muy padre.", en: "It’s really cool." },
+  "No obstante lo anterior...": { es: "A pesar de lo anterior...", en: "Notwithstanding the foregoing..." },
+  "Ahorita vengo.": { es: "Vuelvo en un momento.", en: "I’ll be right back." },
+};
+assert(SAFE_RISKY_ITEMS.length === 8, "Safe/Risky pack is eight items");
+for (const [phrase, literal] of Object.entries(SAFE_RISKY_LITERALS)) {
+  const item = SAFE_RISKY_ITEMS.find((it) => it.phrase === phrase);
+  assert(item, `Safe/Risky has ${phrase}`);
+  assert(item.literal?.es === literal.es, `${phrase} ES literal`);
+  assert(item.literal?.en === literal.en, `${phrase} EN literal`);
+  assert(item.note?.es && item.note?.en, `${phrase} keeps note Why`);
+}
+const chido = SAFE_RISKY_ITEMS.find((it) => it.phrase === "Está bien chido.");
+assert(chido.literal.es === "Está muy padre.", "chido ES literal is Está muy padre.");
+assert(!/cool/i.test(chido.literal.es), "chido ES literal has no English cool");
+assert(!/Está muy cool \/ padre/.test(appSrc), "bounced chido ES literal is gone");
+assert(appSrc.includes("{L.literalLabel}"), "Safe/Risky Literal chrome uses L.literalLabel");
+assert(appSrc.includes("{L.whyLabel}"), "Safe/Risky Why chrome uses L.whyLabel");
+assert(appSrc.includes("{item.literal[uiLang]}"), "Safe/Risky Literal follows uiLang");
+assert(appSrc.includes("{item.note[uiLang]}"), "Safe/Risky Why is existing note");
+const revealAt = appSrc.indexOf("data-testid=\"safe-risky-literal\"");
+const whyAt = appSrc.indexOf("data-testid=\"safe-risky-why\"");
+const continueAt = appSrc.indexOf("data-testid=\"safe-risky-continue\"");
+assert(revealAt > 0 && whyAt > revealAt && continueAt > whyAt, "reveal order is Literal then Why above CONTINUE");
 assert(UI.es.narrationLabel === "NARRACIÓN", "UI.es.narrationLabel");
 assert(UI.en.narrationLabel === "NARRATION", "UI.en.narrationLabel");
 assert(!/LAB/.test(UI.es.narrationLabel + UI.en.narrationLabel), "narration chrome is not a LAB");
