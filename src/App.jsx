@@ -12,7 +12,7 @@ import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
-import { gatedLiftStoryQuiz, pickCompletedStory, storyQuizCue } from "./storyQuiz.js";
+import { gatedLiftStoryQuiz, pickCompletedStory, storyQuizCue, storyQuizCueLine, storyQuizEyebrow } from "./storyQuiz.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
@@ -7697,8 +7697,9 @@ export default function App() {
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                       <button onClick={() => speak(q.type === "order" ? q.answer : q.prompt)} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                       <div>
+                        {storyQuizCue(q, uiLang) ? <div data-testid="story-quiz-cue" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".06em", color: D.sub, marginBottom: 4 }}>{storyQuizCue(q, uiLang)}</div> : null}
+                        {storyQuizCueLine(q, uiLang) ? <div data-testid="story-quiz-cue-line" style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginBottom: 4 }}>{storyQuizCueLine(q, uiLang)}</div> : null}
                         <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{q.prompt}</div>
-                        {storyQuizCue(q, uiLang) ? <div data-testid="story-quiz-cue" style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginTop: 3 }}>{storyQuizCue(q, uiLang)}</div> : null}
                         {q.note ? <div style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
                       </div>
                     </div>
@@ -8667,6 +8668,7 @@ export default function App() {
               ← {uiLang === "en" ? "Back to the story" : "Volver al cuento"}
             </Btn>
             <div style={{ borderTop: `2px solid ${D.line}`, marginTop: 12, paddingTop: 20 }}>
+              <div data-testid="story-quiz-cue" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".06em", color: D.sub, marginBottom: 4 }}>{storyQuizEyebrow(uiLang)}</div>
 	              <h3 style={{ fontWeight: 900, fontSize: 19, margin: "0 0 4px" }}>{L.comprehension}</h3>
               <p style={{ fontSize: 13, fontWeight: 800, color: D.sub, margin: "0 0 16px" }}>
 	                {L.easyQuestions} <IcBolt size={13} /> 35 XP · {checkDone}/{checkpoints.length} {uiLang === "en" ? "checkpoints" : "pausas"} {claimed && <span style={{ color: D.okText }}>— {uiLang === "en" ? "collectible unlocked" : "coleccionable desbloqueado"}</span>}

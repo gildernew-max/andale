@@ -228,6 +228,9 @@ async function collectStoryLifts(user, { maxBeats = 8 } = {}) {
   for (let i = 0; i < maxBeats; i++) {
     if (!screen.queryByTestId("lesson-exit")) break;
     const text = document.body.textContent || "";
+    const cue = screen.queryByTestId("story-quiz-cue");
+    if (cue) lifts.push(`CUE:${cue.textContent}`);
+    expect(screen.queryByTestId("story-quiz-cue-line")).toBeNull();
     if (STORY_LIFT_RE.test(text) || CEREZAS_Q_RE.test(text)) {
       const from = text.search(STORY_LIFT_RE);
       const qAt = text.search(CEREZAS_Q_RE);
@@ -1347,6 +1350,8 @@ describe("simulated learner flows", () => {
     const lifts = await collectStoryLifts(user);
     expect(lifts.join(" ")).toMatch(/Del cuento/);
     expect(lifts.join(" ")).toMatch(CEREZAS_Q_RE);
+    expect(lifts.join(" ")).toMatch(/CUE:Según el cuento/);
+    expect(lifts.join(" ")).not.toMatch(/Responde según lo que acabas de leer|Answer from what you just read/);
   });
 
   it("Lectura still shows comprehension after the last paragraph (ungated in-reader)", async () => {
@@ -1360,6 +1365,12 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByText(/¿Por qué se negó a vender toda su cosecha/)).toBeTruthy());
     expect(screen.getByText(/¿Cuánto recibe don Adán por cada kilo/)).toBeTruthy();
     expect(screen.getByRole("button", { name: /Volver al cuento|Back to the story/ })).toBeTruthy();
+    expect(screen.getByTestId("story-quiz-cue").textContent).toBe("Según el cuento");
+    expect(screen.queryByTestId("story-quiz-cue-line")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Responde según lo que acabas de leer|Answer from what you just read/);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("story-quiz-cue").textContent).toBe("From the story"));
+    expect(screen.queryByTestId("story-quiz-cue-line")).toBeNull();
   });
 
   it("cerezas reading quiz Why + Focus follow uiLang after the refused item", async () => {

@@ -1,12 +1,24 @@
 import {
+  STORY_QUIZ_CUE,
+  STORY_QUIZ_CUE_LINE,
   gatedLiftStoryQuiz,
   isStoryLecturaDone,
   liftStoryQuizItem,
   pickCompletedStory,
   storyQuizCue,
+  storyQuizCueLine,
+  storyQuizEyebrow,
 } from "./storyQuiz.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
+
+assert(STORY_QUIZ_CUE.es === "Según el cuento", "George ES eyebrow is Según el cuento");
+assert(STORY_QUIZ_CUE.en === "From the story", "George EN eyebrow is From the story");
+assert(STORY_QUIZ_CUE_LINE.es === "Responde según lo que acabas de leer.", "George ES cue line is locked");
+assert(STORY_QUIZ_CUE_LINE.en === "Answer from what you just read.", "George EN cue line is locked");
+assert(storyQuizEyebrow("es") === "Según el cuento", "eyebrow helper ES");
+assert(storyQuizEyebrow("en") === "From the story", "eyebrow helper EN");
+assert(storyQuizEyebrow() === "Según el cuento", "eyebrow helper default is ES");
 
 const cerezas = {
   id: "story-9",
@@ -50,9 +62,13 @@ assert(afterRead.type === "mc", "lift is multiple choice");
 assert(afterRead.prompt === `Postal de ${cerezas.title}: ${cerezas.questions[1].prompt}`, "lift keeps the caller prompt");
 assert(afterRead.answer === "Porque no quería depender de una sola empresa", "lift keeps the story answer");
 assert(afterRead.explain === "Lectura rápida.", "unstamped Why uses the caller fallback");
-assert(afterRead.cue == null, "no invented from-the-story cue");
-assert(storyQuizCue(afterRead, "es") === "", "cue helper is empty until George stamps");
-assert(storyQuizCue(afterRead, "en") === "", "cue helper EN is empty until George stamps");
+assert(afterRead.cue.es === "Según el cuento", "default lift cue is George ES eyebrow");
+assert(afterRead.cueLine == null, "second line is not set by default");
+assert(storyQuizCue(afterRead, "es") === "Según el cuento", "default cue ES is the eyebrow");
+assert(storyQuizCue(afterRead, "en") === "From the story", "default cue EN is the eyebrow");
+assert(storyQuizCueLine(afterRead, "es") === "", "second line stays off by default ES");
+assert(storyQuizCueLine(afterRead, "en") === "", "second line stays off by default EN");
+assert(storyQuizCue({ type: "mc", prompt: "x" }, "en") === "", "non-story items have no cue");
 
 const stamped = liftStoryQuizItem(
   { ...cerezas.questions[1], explain: { es: "Why ES", en: "Why EN" }, cue: { es: "Del cuento", en: "From the story" } },
@@ -67,6 +83,11 @@ assert(storyQuizCue(stamped, "en") === "From the story", "cue helper reads a sta
 assert(storyQuizCue({}, "en") === "", "missing item has no cue");
 assert(storyQuizCue({ cue: "" }, "es") === "", "empty cue string stays empty");
 
+const withLine = liftStoryQuizItem({ ...cerezas.questions[0], cueLine: true }, "prompt", fallback);
+assert(storyQuizCueLine(withLine, "es") === "Responde según lo que acabas de leer.", "cueLine true uses George ES line");
+assert(storyQuizCueLine(withLine, "en") === "Answer from what you just read.", "cueLine true uses George EN line");
+assert(storyQuizCue(withLine, "es") === "Según el cuento", "eyebrow still shows when the line hook is on");
+
 assert(pickCompletedStory([cerezas, ofrenda], {}) == null, "no completed story when Lectura is unread");
 assert(pickCompletedStory([cerezas, ofrenda], { "story-9": true })?.id === "story-9", "only the claimed story is pickable");
 assert(pickCompletedStory([cerezas, ofrenda], { "story-0": true, "story-9": true }, () => 0)?.id === "story-9", "rng 0 picks the first completed");
@@ -75,4 +96,4 @@ assert(pickCompletedStory([cerezas, ofrenda], { "story-0": true, "story-9": true
 const none = gatedLiftStoryQuiz({ "story-9": true }, { id: "story-9", questions: [] }, null, "x", fallback);
 assert(none == null, "claimed story with no questions does not lift");
 
-console.log("ok: story quiz Lectura gate");
+console.log("ok: story quiz Lectura gate + George cue");

@@ -252,16 +252,16 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **Why**
 - Brand lock: Cenzontle faces RIGHT. Full fly-in stays next.
 
-## 2026-09-06 (Story comprehension gate — after Lectura)
+## 2026-09-06 (Story comprehension cue — George eyebrow)
 
 **What changed**
-- Hoy / misión / rutina lifts of story comprehension Qs wait until that story’s Lectura is claimed (`prog.stories[id]`). Unread cerezas (and any other cuento) cannot appear as a Postal / Del cuento / Lectura relámpago item.
-- Lectura reader still shows its own questions after the last paragraph. No same-screen passage on practice lifts.
-- Optional `cue` on the lifted item + `storyQuizCue` / `data-testid="story-quiz-cue"` for a George “from the story” stamp. Empty until then — no invented copy.
-- Soft chrome parked. PR 108 multi-correct untouched. Do not merge.
+- George stamp wired as the default eyebrow on story comprehension: ES `Según el cuento` · EN `From the story`.
+- Optional second line stays off: ES `Responde según lo que acabas de leer.` · EN `Answer from what you just read.` Hook is `cueLine` / `storyQuizCueLine` / `data-testid="story-quiz-cue-line"`.
+- Lectura gate stays: Hoy / misión / rutina lifts wait until that story’s Lectura is claimed. In-reader Qs still follow the last paragraph.
+- Soft chrome parked. Do not merge.
 
 **Why**
-- Dave miss: a cerezas quiz item before the story. Answer depends on the text.
+- George locked the cue. Eyebrow alone by default.
 
 ## 2026-09-06 (Cenzontle lockup — abandons axolotl)
 
