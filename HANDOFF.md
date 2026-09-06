@@ -5,12 +5,13 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 ## 2026-09-06 (Safe/Risky Literal then Why)
 
 **What changed**
-- Safe/Risky reveal (above CONTINUE) shows stamped chrome: ES `Traducción` / `Por qué` · EN `Literal` / `Why`. Order is Literal first, Why second (`note` unchanged).
+- Safe/Risky reveal (above CONTINUE) shows stamped chrome: ES `Traducción` / `Por qué` · EN `Literal` / `Why`. Order is Literal first, Why second.
 - Each of the eight items has `literal: { es, en }` from the pack. Chido ES is `Está muy padre.` — no English in Traducción.
-- Soft chrome parked. No Face CLEARed chrome only. Lectura / Yucatán untouched.
+- **Why HOLD:** existing `note` strings are not final. George is rewriting ¿Mande? Why + the full pack in teacher voice before we stamp. Do not invent Why prose.
+- Soft chrome parked. Lectura / Yucatán untouched. Do not merge.
 
 **Why**
-- Hand / No Face stamp: literal pack + labels. Soft chrome stays parked.
+- Hand lock: Literal + chrome first. Teacher-voice Why waits on George.
 
 ## 2026-09-06 (Recuerdos Yucatán pin — peninsula land)
 
