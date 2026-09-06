@@ -830,6 +830,11 @@ assert(!/id: "home"|id: "library"/.test(navTabs), "bottom nav has no Home/Librar
 assert(!/data-testid="first-door-hero"/.test(appSrc), "v01c hub has no hero card");
 assert(/gridTemplateColumns:\s*"1fr 1fr"/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 400)), "hub is a 2-column equal grid");
 assert(/height:\s*168/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 700)), "hub tiles share one equal height");
+assert(appSrc.includes("gatedLiftStoryQuiz"), "Hoy / misión / rutina story Qs are Lectura-gated");
+assert(appSrc.includes("pickCompletedStory"), "rutina picks only claimed Lectura stories");
+assert(appSrc.includes("storyQuizCue"), "practice prompt has a slot for a George story cue");
+assert(appSrc.includes("data-testid=\"story-quiz-cue\""), "story cue slot is testable when stamped");
+assert(!/data-testid="story-quiz-cue"[\s\S]{0,80}From the story/.test(appSrc), "do not invent from-the-story cue copy");
 assert(appSrc.includes("come-back-tomorrow"), "home line after win is wired");
 assert(appSrc.includes("path-entry"), "Subjuntivo path stays under Empieza");
 assert(/camino-more[\s\S]{0,900}path-entry/.test(appSrc), "EMPIEZA is buried under Más/More");

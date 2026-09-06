@@ -252,6 +252,17 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **Why**
 - Brand lock: Cenzontle faces RIGHT. Full fly-in stays next.
 
+## 2026-09-06 (Story comprehension gate — after Lectura)
+
+**What changed**
+- Hoy / misión / rutina lifts of story comprehension Qs wait until that story’s Lectura is claimed (`prog.stories[id]`). Unread cerezas (and any other cuento) cannot appear as a Postal / Del cuento / Lectura relámpago item.
+- Lectura reader still shows its own questions after the last paragraph. No same-screen passage on practice lifts.
+- Optional `cue` on the lifted item + `storyQuizCue` / `data-testid="story-quiz-cue"` for a George “from the story” stamp. Empty until then — no invented copy.
+- Soft chrome parked. PR 108 multi-correct untouched. Do not merge.
+
+**Why**
+- Dave miss: a cerezas quiz item before the story. Answer depends on the text.
+
 ## 2026-09-06 (Cenzontle lockup — abandons axolotl)
 
 **What changed**
