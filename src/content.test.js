@@ -604,22 +604,36 @@ const SAFE_RISKY_LITERALS = {
   "No obstante lo anterior...": { es: "A pesar de lo anterior...", en: "Notwithstanding the foregoing..." },
   "Ahorita vengo.": { es: "Vuelvo en un momento.", en: "I’ll be right back." },
 };
+const SAFE_RISKY_WHYS = {
+  "No manches.": { es: "Suena a amigos en México. Con jefes o personas mayores, pásate a algo más suave.", en: "Sounds like friends in Mexico. With bosses or elders, switch to something softer." },
+  "Quedo a sus órdenes.": { es: "Cierre profesional mexicano: amable, claro, seguro. Encaja en correo con clientas.", en: "A Mexican professional close: warm, clear, safe. Fits an email to a client." },
+  "¿Mande?": { es: "De mandar / «mande usted»: el «¿perdón?» cortés de México. Con la suegra, gana a un «¿Qué?» seco.", en: "From mandar / «mande usted»: Mexico’s polite “Pardon?” With your mother-in-law, it beats a blunt «¿Qué?»" },
+  "¿Qué?": { es: "Puede sonar brusco. Mejor «¿Mande?» o «¿Cómo?» según a quién le hablas.", en: "It can land blunt. Prefer «¿Mande?» or «¿Cómo?» depending on who you’re talking to." },
+  "¿Me da un café, por favor?": { es: "Natural en el mostrador: directo y cortés. Mejor que «¿Puedo obtener un café?»", en: "Natural at the counter: direct and polite. Better than “Can I obtain a coffee?”" },
+  "Está bien chido.": { es: "Suena mexicano y de amigos. En documentos o juntas formales, cámbialo.", en: "Sounds Mexican and friendly. In documents or formal meetings, swap it out." },
+  "No obstante lo anterior...": { es: "Registro de contrato. En una charla normal pesa demasiado; guárdalo para el papel.", en: "Contract register. In normal chat it feels heavy — save it for the page." },
+  "Ahorita vengo.": { es: "Muy mexicano. «Ahorita» puede ser pronto… o un poco más. El tono lo decide el contexto.", en: "Very Mexican. «Ahorita» can mean soon… or a bit later. Context sets the clock." },
+};
 assert(SAFE_RISKY_ITEMS.length === 8, "Safe/Risky pack is eight items");
 for (const [phrase, literal] of Object.entries(SAFE_RISKY_LITERALS)) {
   const item = SAFE_RISKY_ITEMS.find((it) => it.phrase === phrase);
   assert(item, `Safe/Risky has ${phrase}`);
   assert(item.literal?.es === literal.es, `${phrase} ES literal`);
   assert(item.literal?.en === literal.en, `${phrase} EN literal`);
-  assert(item.note?.es && item.note?.en, `${phrase} keeps note Why`);
+  assert(item.note?.es === SAFE_RISKY_WHYS[phrase].es, `${phrase} ES Why`);
+  assert(item.note?.en === SAFE_RISKY_WHYS[phrase].en, `${phrase} EN Why`);
+  assert(!/\*/.test(`${item.note.es}${item.note.en}`), `${phrase} Why has no asterisks`);
 }
 const chido = SAFE_RISKY_ITEMS.find((it) => it.phrase === "Está bien chido.");
 assert(chido.literal.es === "Está muy padre.", "chido ES literal is Está muy padre.");
 assert(!/cool/i.test(chido.literal.es), "chido ES literal has no English cool");
 assert(!/Está muy cool \/ padre/.test(appSrc), "bounced chido ES literal is gone");
+const mande = SAFE_RISKY_ITEMS.find((it) => it.phrase === "¿Mande?");
+assert(!/\*mandar\*/.test(`${mande.note.es}${mande.note.en}`), "Mande Why is plain mandar");
 assert(appSrc.includes("{L.literalLabel}"), "Safe/Risky Literal chrome uses L.literalLabel");
 assert(appSrc.includes("{L.whyLabel}"), "Safe/Risky Why chrome uses L.whyLabel");
 assert(appSrc.includes("{item.literal[uiLang]}"), "Safe/Risky Literal follows uiLang");
-assert(appSrc.includes("{item.note[uiLang]}"), "Safe/Risky Why is existing note");
+assert(appSrc.includes("{item.note[uiLang]}"), "Safe/Risky Why uses note");
 const revealAt = appSrc.indexOf("data-testid=\"safe-risky-literal\"");
 const whyAt = appSrc.indexOf("data-testid=\"safe-risky-why\"");
 const continueAt = appSrc.indexOf("data-testid=\"safe-risky-continue\"");
