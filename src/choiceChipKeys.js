@@ -6,3 +6,7 @@ export function choiceChipIndexForKey(key) {
   const i = CHOICE_CHIP_KEYS.indexOf(key);
   return i < 0 ? null : i;
 }
+
+export function choiceChipKeyForIndex(i) {
+  return CHOICE_CHIP_KEYS[i] ?? null;
+}

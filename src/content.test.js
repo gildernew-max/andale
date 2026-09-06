@@ -803,6 +803,9 @@ assert(appSrc.includes("choiceChipIndexForKey"), "blank chips use second-row key
 assert(appSrc.includes("insertChoiceChipFromKey"), "blank chips bind keys on the practice input");
 assert(appSrc.includes("e.target !== inputRef.current"), "chip keys do not steal other inputs");
 assert(appSrc.includes('q?.answerAid?.mode !== "choices"'), "chip keys only bind TAP AN ANSWER / choices");
+assert(appSrc.includes("choiceChipKeyForIndex"), "quiet chip digits use the same key map");
+assert(appSrc.includes("data-testid=\"choice-chip-key\""), "quiet chip digits are testable");
+assert(!/press 1|Press 1|pulsa 1|Pulsa 1/.test(appSrc), "no press-1 banner chrome");
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const viteSrc = readFileSync(join(repoRoot, "vite.config.js"), "utf8");
 assert(viteSrc.includes("base: '/andale/'"), "Pages vite base stays /andale/");

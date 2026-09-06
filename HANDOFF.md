@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (No Face — quiet digits under blank chips)
+
+**What changed**
+- TAP AN ANSWER / choices chips show a quiet digit under each chip (`1` `2` `3` … `0` `-` `=`) matching the insert key. Same in ES and EN — no language-specific banner, no “press 1” chrome.
+- Keyboard map + George miss / Focus / Why stamps stay. Soft chrome parked. Do not merge.
+
+**Why**
+- No Face stamp: the key hint is the digit under the chip, not a banner.
+
 ## 2026-09-06 (TAP AN ANSWER second-row keys — Dave / Hand)
 
 **What changed**

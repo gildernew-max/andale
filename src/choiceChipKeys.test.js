@@ -1,4 +1,4 @@
-import { CHOICE_CHIP_KEYS, choiceChipIndexForKey } from "./choiceChipKeys.js";
+import { CHOICE_CHIP_KEYS, choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -11,5 +11,10 @@ assert(choiceChipIndexForKey("=") === 11, "= → twelfth chip");
 assert(choiceChipIndexForKey("!") == null, "shift-1 does not bind");
 assert(choiceChipIndexForKey("Enter") == null, "Enter is not a chip key");
 assert(choiceChipIndexForKey("a") == null, "letters do not bind");
+assert(choiceChipKeyForIndex(0) === "1", "first chip hint is 1");
+assert(choiceChipKeyForIndex(9) === "0", "tenth chip hint is 0");
+assert(choiceChipKeyForIndex(10) === "-", "eleventh chip hint is -");
+assert(choiceChipKeyForIndex(11) === "=", "twelfth chip hint is =");
+assert(choiceChipKeyForIndex(12) == null, "no hint past twelve chips");
 
 console.log("ok: choice-chip second-row keys");

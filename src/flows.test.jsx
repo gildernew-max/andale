@@ -3581,7 +3581,16 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(document.body.textContent).toMatch(/Te llamo cuando/));
     const tiles = screen.getAllByTestId("bank-tile");
     expect(tiles.length).toBeGreaterThan(1);
-    const saldreIdx = tiles.findIndex((el) => el.textContent.trim() === "saldré");
+    const hints = screen.getAllByTestId("choice-chip-key");
+    expect(hints.map((el) => el.textContent)).toEqual(CHOICE_CHIP_KEYS.slice(0, tiles.length));
+    expect(document.body.textContent).not.toMatch(/press 1|Press 1|pulsa 1|Pulsa 1/);
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("lang-es").getAttribute("aria-pressed")).toBe("true"));
+    expect(screen.getAllByTestId("choice-chip-key").map((el) => el.textContent)).toEqual(CHOICE_CHIP_KEYS.slice(0, tiles.length));
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true"));
+    const tilesAfter = screen.getAllByTestId("bank-tile");
+    const saldreIdx = tilesAfter.findIndex((el) => el.textContent.trim() === "saldré");
     expect(saldreIdx).toBeGreaterThanOrEqual(0);
     const key = CHOICE_CHIP_KEYS[saldreIdx];
     expect(key).toBeTruthy();

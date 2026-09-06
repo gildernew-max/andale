@@ -12,7 +12,7 @@ import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
-import { choiceChipIndexForKey } from "./choiceChipKeys.js";
+import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -7613,12 +7613,14 @@ export default function App() {
                       </div>
                     )}
                     <div className="tile-bank">
-                      {q.answerAid.tiles.map((tile) => {
+                      {q.answerAid.tiles.map((tile, chipIdx) => {
                         const used = typedTileIds.includes(tile.id);
                         const hide = q.answerAid.mode === "bank" && used;
+                        const chipKey = q.answerAid.mode === "choices" ? choiceChipKeyForIndex(chipIdx) : null;
                         return (
                           <div key={tile.id} className="tile-slot" data-tile-slot={tile.id}
-                            onClick={() => { if (hide) removeAnswerTile(tile.id); }}>
+                            onClick={() => { if (hide) removeAnswerTile(tile.id); }}
+                            style={chipKey ? { flexDirection: "column", alignItems: "center", gap: 3 } : undefined}>
                             <button type="button" data-tile-id={hide ? undefined : tile.id} data-testid={hide ? undefined : "bank-tile"} className="tile"
                               disabled={status !== "idle"}
                               aria-pressed={used}
@@ -7634,9 +7636,16 @@ export default function App() {
                                 color: used ? D.greenDark : D.ink,
                                 padding: "8px 11px",
                                 fontSize: 14,
+                                width: "100%",
                               }}>
                               {tile.w}
                             </button>
+                            {chipKey && (
+                              <span data-testid="choice-chip-key" aria-hidden="true"
+                                style={{ fontSize: 10, fontWeight: 800, color: D.sub, letterSpacing: ".02em", lineHeight: 1 }}>
+                                {chipKey}
+                              </span>
+                            )}
                           </div>
                         );
                       })}
