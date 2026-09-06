@@ -2605,6 +2605,7 @@ const TODAY_SCENES = [
     line: "Oye, ¿puedes venir hoy en la tarde? No toqué nada.",
     answers: ["Oye, ¿puedes venir hoy en la tarde? No toqué nada.", "¿Puedes venir hoy en la tarde? No toqué nada."],
     explain: "Plomero por WhatsApp: hora corta + «no toqué nada».",
+    explainEn: "Plumber WhatsApp: short time ask + «no toqué nada».",
     question: "En WhatsApp con el plomero, «Oye, ¿puedes venir hoy en la tarde?» suena:",
     questionEn: "On WhatsApp with the plumber, «Oye, ¿puedes venir hoy en la tarde?» sounds:",
     choices: ["natural y claro", "de correo formal", "agresivo"],
