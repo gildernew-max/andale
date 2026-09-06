@@ -634,6 +634,31 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("story-tip").textContent).toMatch(/Read the paragraph\. Tap a word only if it stops you\./));
   });
 
+  it("Lectura + story Qs show a one-line gloss for stamped words only", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByTestId("gloss-word").length).toBeGreaterThan(0));
+    const cerezas = screen.getAllByTestId("gloss-word").find((el) => el.getAttribute("data-gloss-key") === "cerezas");
+    expect(cerezas).toBeTruthy();
+    expect(screen.queryAllByTestId("gloss-word").every((el) => el.getAttribute("data-gloss-key") !== "si")).toBe(true);
+    await user.click(cerezas);
+    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("frutos del café"));
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("story-tip").textContent).toMatch(/Read the paragraph/));
+    const cerezasEn = screen.getAllByTestId("gloss-word").find((el) => el.getAttribute("data-gloss-key") === "cerezas");
+    await user.hover(cerezasEn);
+    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("coffee cherries"));
+    await user.click(screen.getByRole("button", { name: "Questions" }));
+    await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
+    const cosecha = screen.getAllByTestId("gloss-word").find((el) => el.getAttribute("data-gloss-key") === "cosecha");
+    expect(cosecha).toBeTruthy();
+    await user.hover(cosecha);
+    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("harvest"));
+  });
+
   it("header ES|EN toggle flips uiLang, persists andale-v3, and stays in sync with Perfil", async () => {
     const user = await boot();
     const toggle = screen.getByTestId("lang-toggle");

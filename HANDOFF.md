@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (Lectura word tap / hover gloss — Dave + Hand)
+
+**What changed**
+- Lectura paragraph text and story comprehension Qs: stamped words are tappable (mobile), hoverable, and keyboard-focusable. One-line gloss popover near the word.
+- Only words in `src/storyGloss.js` `STORY_GLOSSES` glow. `{ en, es }` per lemma; `GLOSS_ALIASES` for inflected forms. George extends the map — no invented dictionary.
+- Starter cerezas stamps include `cosecha` → EN `harvest` / ES `recolección`. Unmapped words keep the existing tap card.
+- Soft chrome parked. Do not merge.
+
+**Why**
+- Dave: hover/tap a word (e.g. cosecha) for a short translation reminder. Hand: mechanic + extendable map; George stamps the rest.
+
 ## 2026-09-06 (Cenzontle lockup — abandons axolotl)
 
 **What changed**
