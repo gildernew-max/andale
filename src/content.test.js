@@ -781,9 +781,9 @@ for (const sc of TODAY_SCENES) {
 assert(focusLabel("Modo verbal", "es") === "Modo verbal", "Focus Modo verbal stays ES");
 assert(focusLabel("Modo verbal", "en") === "Verb mood", "Focus Modo verbal follows uiLang");
 assert(FOCUS_LABELS.Subjuntivo.en === "Subjunctive", "Focus Subjuntivo EN");
-assert(uiText({ es: "La idea está; falta precisión.", en: "The idea is there; it needs precision." }, "en") === "The idea is there; it needs precision.", "feedback pair follows EN");
+assert(uiText({ es: "La idea está; falta precisión.", en: "The idea’s there; it needs precision." }, "en") === "The idea’s there; it needs precision.", "George stamp feedback EN");
 const cuando = PRACTICE_EXPLAIN.find((row) => row.es.startsWith("«Cuando» + acción futura"));
-assert(cuando && cuando.en.includes("future action") && /subjunctive/i.test(cuando.en), "screenshot Why has temporary EN");
+assert(cuando && cuando.en === "«Cuando» + future action → subjunctive. Habit would be indicative: «cuando salgo».", "George stamp Why EN");
 assert(appSrc.includes("{uiText(quip, uiLang)}"), "practice quip follows uiLang");
 assert(appSrc.includes("{explainText(q, uiLang)}"), "practice Why follows uiLang");
 assert(appSrc.includes("{focusLabel(errorKind, uiLang)}"), "practice Focus follows uiLang");
@@ -798,7 +798,7 @@ for (const [host, voice] of Object.entries(VOICES)) {
     });
   }
 }
-assert(VOICES.luna.wrong.some((line) => line.es === "La idea está; falta precisión." && line.en === "The idea is there; it needs precision."), "screenshot Luna miss has EN");
+assert(VOICES.luna.wrong.some((line) => line.es === "La idea está; falta precisión." && line.en === "The idea’s there; it needs precision."), "George stamp Luna miss EN");
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const viteSrc = readFileSync(join(repoRoot, "vite.config.js"), "utf8");
 assert(viteSrc.includes("base: '/andale/'"), "Pages vite base stays /andale/");

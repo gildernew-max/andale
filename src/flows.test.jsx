@@ -3553,7 +3553,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("practice-focus").textContent).toBe("Focus: Verb mood");
     expect(screen.getByTestId("practice-focus").textContent).not.toMatch(/Modo verbal/);
     await user.click(screen.getByRole("button", { name: /Why\?/ }));
-    expect(screen.getByTestId("practice-why").textContent).toBe("«Cuando» + a future action → subjunctive. A habit would be indicative: «cuando salgo».");
+    expect(screen.getByTestId("practice-why").textContent).toBe("«Cuando» + future action → subjunctive. Habit would be indicative: «cuando salgo».");
     expect(screen.getByTestId("practice-why").textContent).not.toMatch(/acción futura|Hábito sería/);
 
     await user.click(screen.getByTestId("lang-es"));

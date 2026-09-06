@@ -74,7 +74,7 @@ export const PRACTICE_EXPLAIN = [
   { es: "«Ojalá» siempre va con subjuntivo: llueva.", en: "«Ojalá» always takes the subjunctive: llueva." },
   { es: "Antecedente indefinido (no sé si existe) → subjuntivo.", en: "Indefinite antecedent (you don’t know if it exists) → subjunctive." },
   { es: "Trampa: «es obvio que» expresa certeza → indicativo. Compara: «No es obvio que tenga razón».", en: "Trap: «es obvio que» states certainty → indicative. Compare: «No es obvio que tenga razón»." },
-  { es: "«Cuando» + acción futura → subjuntivo. Hábito sería indicativo: «cuando salgo».", en: "«Cuando» + a future action → subjunctive. A habit would be indicative: «cuando salgo»." },
+  { es: "«Cuando» + acción futura → subjuntivo. Hábito sería indicativo: «cuando salgo».", en: "«Cuando» + future action → subjunctive. Habit would be indicative: «cuando salgo»." },
   { es: "Negar una creencia → subjuntivo.", en: "Negating a belief → subjunctive." },
   { es: "Verbo de voluntad + cambio de sujeto → subjuntivo.", en: "Verb of will + change of subject → subjunctive." },
   { es: "«Aunque» + información desconocida → subjuntivo. Si ya sabes que es caro: «aunque es caro».", en: "«Aunque» + unknown information → subjunctive. If you already know it’s expensive: «aunque es caro»." },

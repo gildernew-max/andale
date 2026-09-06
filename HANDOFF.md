@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (George stamp — practice miss / Focus / Why)
+
+**What changed**
+- George EN exact, wired: `The idea’s there; it needs precision.` · Focus `Verb mood` · Why `«Cuando» + future action → subjunctive. Habit would be indicative: «cuando salgo».`
+- ES stays `La idea está; falta precisión.` / `Modo verbal` / `«Cuando» + acción futura → subjuntivo. Hábito sería indicativo: «cuando salgo».`
+- Other VOICES / FOCUS / PRACTICE_EXPLAIN EN still temporary until George stamps. Soft chrome parked. Do not merge.
+
+**Why**
+- Hand / George lock on the live miss trio. Remaining EN still on the previous HANDOFF list.
+
 ## 2026-09-06 (Practice feedback / Why / Focus follow uiLang)
 
 **What changed**

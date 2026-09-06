@@ -1657,7 +1657,7 @@ const VOICES = {
     ],
     wrong: [
       { es: "Cerca. Vamos a afinarlo.", en: "Close. Let's sharpen it." },
-      { es: "La idea está; falta precisión.", en: "The idea is there; it needs precision." },
+      { es: "La idea está; falta precisión.", en: "The idea’s there; it needs precision." },
       { es: "Respira. Esta es justo la parte que se entrena.", en: "Breathe. This is exactly the part you train." },
       { es: "No está perdido, solo mal estacionado.", en: "Not lost — just parked in the wrong spot." },
     ],
