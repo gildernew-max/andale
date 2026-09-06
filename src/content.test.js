@@ -5,6 +5,7 @@ import { prepQuestion } from "./prepQuestion.js";
 import { hoyStillFor, LANTERN_STILL } from "./hoyStill.js";
 import { comeBackTomorrowLine, hoySceneForDay, nextDayKey } from "./firstDoor.js";
 import { hoySceneBeatCount, shouldParkHoyUnderMas } from "./hoyWin.js";
+import { FOCUS_LABELS, PRACTICE_EXPLAIN, explainText, focusLabel, uiText } from "./practiceI18n.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -758,6 +759,53 @@ assert(appSrc.includes('aria-label={uiLang === "en" ? "Questions" : "Preguntas"}
 assert(!/aria-label="Preguntas"/.test(appSrc), "story questions nav aria is not hardcoded Preguntas");
 assert(appSrc.includes("`Paragraph ${i + 1}`") && appSrc.includes("`Párrafo ${i + 1}`"), "story paragraph nav aria follows uiLang");
 assert(!/aria-label=\{`Párrafo \$\{i \+ 1\}`\}/.test(appSrc), "story paragraph nav aria is not hardcoded Párrafo");
+
+const explainByEs = new Map(PRACTICE_EXPLAIN.map((row) => [row.es, row]));
+for (const u of UNITS) {
+  u.questions.forEach((q, i) => {
+    if (typeof q.explain !== "string") return;
+    const row = explainByEs.get(q.explain);
+    assert(row && row.en && row.en !== q.explain, `${u.id} Q${i} Why needs temporary EN`);
+    assert(explainText(q, "es") === q.explain, `${u.id} Q${i} ES Why stays authored`);
+    assert(explainText(q, "en") === row.en, `${u.id} Q${i} EN Why follows map`);
+  });
+}
+for (const sc of TODAY_SCENES) {
+  if (sc.explainEn) {
+    assert(explainText(sc, "es") === sc.explain, `${sc.id} prefers authored ES explain`);
+    assert(explainText(sc, "en") === sc.explainEn, `${sc.id} prefers existing explainEn`);
+  } else if (typeof sc.explain === "string" && explainByEs.has(sc.explain)) {
+    assert(explainText(sc, "en") === explainByEs.get(sc.explain).en, `${sc.id} Spanish-only explain has EN map`);
+  }
+}
+assert(focusLabel("Modo verbal", "es") === "Modo verbal", "Focus Modo verbal stays ES");
+assert(focusLabel("Modo verbal", "en") === "Verb mood", "Focus Modo verbal follows uiLang");
+assert(FOCUS_LABELS.Subjuntivo.en === "Subjunctive", "Focus Subjuntivo EN");
+assert(uiText({ es: "La idea está; falta precisión.", en: "The idea’s there; it needs precision." }, "en") === "The idea’s there; it needs precision.", "George stamp feedback EN");
+const cuando = PRACTICE_EXPLAIN.find((row) => row.es.startsWith("«Cuando» + acción futura"));
+assert(cuando && cuando.en === "«Cuando» + future action → subjunctive. Habit would be indicative: «cuando salgo».", "George stamp Why EN");
+assert(appSrc.includes("{uiText(quip, uiLang)}"), "practice quip follows uiLang");
+assert(appSrc.includes("{explainText(q, uiLang)}"), "practice Why follows uiLang");
+assert(appSrc.includes("{focusLabel(errorKind, uiLang)}"), "practice Focus follows uiLang");
+assert(appSrc.includes("data-testid=\"practice-quip\"") && appSrc.includes("data-testid=\"practice-focus\"") && appSrc.includes("data-testid=\"practice-why\""), "practice feedback is testable");
+const VOICES = Function(`"use strict"; return (${extractConst(appSrc, "VOICES")});`)();
+for (const [host, voice] of Object.entries(VOICES)) {
+  for (const kind of ["correct", "wrong", "win", "sad"]) {
+    assert(Array.isArray(voice[kind]) && voice[kind].length, `${host}.${kind} pool`);
+    voice[kind].forEach((line, i) => {
+      assert(line && typeof line.es === "string" && line.es.trim(), `${host}.${kind}[${i}] es`);
+      assert(typeof line.en === "string" && line.en.trim() && line.en !== line.es, `${host}.${kind}[${i}] temporary EN`);
+    });
+  }
+}
+assert(VOICES.luna.wrong.some((line) => line.es === "La idea está; falta precisión." && line.en === "The idea’s there; it needs precision."), "George stamp Luna miss EN");
+assert(appSrc.includes("choiceChipIndexForKey"), "blank chips use second-row key map");
+assert(appSrc.includes("insertChoiceChipFromKey"), "blank chips bind keys on the practice input");
+assert(appSrc.includes("e.target !== inputRef.current"), "chip keys do not steal other inputs");
+assert(appSrc.includes('q?.answerAid?.mode !== "choices"'), "chip keys only bind TAP AN ANSWER / choices");
+assert(appSrc.includes("choiceChipKeyForIndex"), "quiet chip digits use the same key map");
+assert(appSrc.includes("data-testid=\"choice-chip-key\""), "quiet chip digits are testable");
+assert(!/press 1|Press 1|pulsa 1|Pulsa 1/.test(appSrc), "no press-1 banner chrome");
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const viteSrc = readFileSync(join(repoRoot, "vite.config.js"), "utf8");
 assert(viteSrc.includes("base: '/andale/'"), "Pages vite base stays /andale/");

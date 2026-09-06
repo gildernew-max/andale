@@ -11,6 +11,8 @@ import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
+import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
+import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -838,7 +840,7 @@ if (typeof window !== "undefined") {
 const skillFor = (q) => {
   if (!q) return "Precisión";
   if (q.skill) return q.skill;
-  if (q._u === "subj1" || /subjuntivo|ojalá|duda|antecedente/i.test(q.explain || "")) return "Subjuntivo";
+  if (q._u === "subj1" || /subjuntivo|ojalá|duda|antecedente/i.test(explainHaystack(q))) return "Subjuntivo";
   if (q._u === "pret") return "Pasado";
   if (q._u === "porpara") return "Por/para";
   if (q._u === "mex") return "Mexicanismos";
@@ -856,7 +858,7 @@ const diagnoseAnswer = (q, typed) => {
   const target = q.type === "listen" ? q.text : q.answers?.[0] || q.answer;
   if (!target) return null;
   if (strip(target) === strip(typed) && exactish(target) !== exactish(typed)) return "Acentos y signos";
-  if (q._u === "subj1" || /subjuntivo/i.test(q.explain || "")) return "Modo verbal";
+  if (q._u === "subj1" || /subjuntivo/i.test(explainHaystack(q))) return "Modo verbal";
   if (q._u === "pret") return "Tiempo narrativo";
   if (q._u === "pronombres") return "Pronombre / orden";
   if (q._u === "registro") return "Registro";
@@ -1647,31 +1649,106 @@ const INTERSTITIALS = ["¡PERFECTO!", "¡INCREÍBLE!", "¡IMPARABLE!", "¡QUÉ P
 const VOICES = {
   luna: {
     name: "Luna",
-    correct: ["Eso suena natural.", "Perfecto: claro y mexicano.", "Ahí está la fluidez.", "Muy bien. Ya no estás traduciendo.", "Ese giro sí vive en la calle."],
-    wrong: ["Cerca. Vamos a afinarlo.", "La idea está; falta precisión.", "Respira. Esta es justo la parte que se entrena.", "No está perdido, solo mal estacionado."],
-    win: ["Buenísima sesión. Hoy hablaste más fino.", "Eso ya se siente como español real.", "La racha tiene estilo.", "Te estás volviendo peligroso en conversación."],
-    sad: ["Pausa breve. La fluidez vuelve.", "Sin vidas, no sin progreso."],
+    correct: [
+      { es: "Eso suena natural.", en: "That sounds natural." },
+      { es: "Perfecto: claro y mexicano.", en: "Perfect: clear and Mexican." },
+      { es: "Ahí está la fluidez.", en: "There's the fluency." },
+      { es: "Muy bien. Ya no estás traduciendo.", en: "Nice. You're not translating anymore." },
+      { es: "Ese giro sí vive en la calle.", en: "That turn actually lives on the street." },
+    ],
+    wrong: [
+      { es: "Cerca. Vamos a afinarlo.", en: "Close. Let's sharpen it." },
+      { es: "La idea está; falta precisión.", en: "The idea’s there; it needs precision." },
+      { es: "Respira. Esta es justo la parte que se entrena.", en: "Breathe. This is exactly the part you train." },
+      { es: "No está perdido, solo mal estacionado.", en: "Not lost — just parked in the wrong spot." },
+    ],
+    win: [
+      { es: "Buenísima sesión. Hoy hablaste más fino.", en: "Great session. You sounded sharper today." },
+      { es: "Eso ya se siente como español real.", en: "That already feels like real Spanish." },
+      { es: "La racha tiene estilo.", en: "The streak has style." },
+      { es: "Te estás volviendo peligroso en conversación.", en: "You're getting dangerous in conversation." },
+    ],
+    sad: [
+      { es: "Pausa breve. La fluidez vuelve.", en: "Short pause. The fluency comes back." },
+      { es: "Sin vidas, no sin progreso.", en: "Out of lives, not out of progress." },
+    ],
   },
   rafa: {
     name: "Don Rafa",
-    correct: ["Así se cuenta.", "Eso tiene sabor.", "Muy bien: ya oíste el contexto.", "Esa palabra ya es tuya.", "Buen oído, joven."],
-    wrong: ["La historia te dio la pista.", "No corras; escucha la frase completa.", "Casi. El contexto manda.", "Lee otra vez la línea, ahí está."],
-    win: ["Buen lector. Así crece el vocabulario.", "Ya tienes más mundo en el oído.", "Ese cuento dejó vocabulario.", "Te llevas una postal y varias palabras."],
-    sad: ["Las historias esperan. Vuelve cuando quieras.", "Un descanso también cuenta."],
+    correct: [
+      { es: "Así se cuenta.", en: "That's how you tell it." },
+      { es: "Eso tiene sabor.", en: "That has flavor." },
+      { es: "Muy bien: ya oíste el contexto.", en: "Good: you heard the context." },
+      { es: "Esa palabra ya es tuya.", en: "That word is yours now." },
+      { es: "Buen oído, joven.", en: "Good ear, kid." },
+    ],
+    wrong: [
+      { es: "La historia te dio la pista.", en: "The story gave you the clue." },
+      { es: "No corras; escucha la frase completa.", en: "Don't rush; hear the whole line." },
+      { es: "Casi. El contexto manda.", en: "Almost. Context decides." },
+      { es: "Lee otra vez la línea, ahí está.", en: "Read the line again — it's there." },
+    ],
+    win: [
+      { es: "Buen lector. Así crece el vocabulario.", en: "Good reader. That's how vocabulary grows." },
+      { es: "Ya tienes más mundo en el oído.", en: "You've got more of the world in your ear." },
+      { es: "Ese cuento dejó vocabulario.", en: "That story left you vocabulary." },
+      { es: "Te llevas una postal y varias palabras.", en: "You take a postcard and several words." },
+    ],
+    sad: [
+      { es: "Las historias esperan. Vuelve cuando quieras.", en: "The stories can wait. Come back when you want." },
+      { es: "Un descanso también cuenta.", en: "A rest counts too." },
+    ],
   },
   valeria: {
     name: "Valeria",
-    correct: ["Correcto. Preciso y defendible.", "Bien. Eso sí lo firmaría.", "Claro, formal y sin ruido.", "Exacto. Esa es la versión profesional.", "Buen control del registro."],
-    wrong: ["No. El matiz importa.", "Cuidado: suena menos formal de lo que crees.", "La estructura no sostiene la idea.", "Eso se entiende, pero no convence.", "Vuelve a mirar el modo verbal."],
-    win: ["Aprobado. Ahora suena ejecutivo.", "Precisión notable.", "Buen trabajo. Se nota el control.", "Listo para una llamada difícil."],
-    sad: ["No pasó. Se corrige con método.", "Sin precisión no hay trato. Practiquemos."],
+    correct: [
+      { es: "Correcto. Preciso y defendible.", en: "Correct. Precise and defensible." },
+      { es: "Bien. Eso sí lo firmaría.", en: "Good. I'd sign off on that." },
+      { es: "Claro, formal y sin ruido.", en: "Clear, formal, no noise." },
+      { es: "Exacto. Esa es la versión profesional.", en: "Exactly. That's the professional version." },
+      { es: "Buen control del registro.", en: "Good control of register." },
+    ],
+    wrong: [
+      { es: "No. El matiz importa.", en: "No. The nuance matters." },
+      { es: "Cuidado: suena menos formal de lo que crees.", en: "Careful: it sounds less formal than you think." },
+      { es: "La estructura no sostiene la idea.", en: "The structure doesn't hold the idea." },
+      { es: "Eso se entiende, pero no convence.", en: "That's understandable, but it doesn't persuade." },
+      { es: "Vuelve a mirar el modo verbal.", en: "Look at the verb mood again." },
+    ],
+    win: [
+      { es: "Aprobado. Ahora suena ejecutivo.", en: "Approved. Now it sounds executive." },
+      { es: "Precisión notable.", en: "Notable precision." },
+      { es: "Buen trabajo. Se nota el control.", en: "Good work. The control shows." },
+      { es: "Listo para una llamada difícil.", en: "Ready for a hard call." },
+    ],
+    sad: [
+      { es: "No pasó. Se corrige con método.", en: "It didn't pass. We fix it with method." },
+      { es: "Sin precisión no hay trato. Practiquemos.", en: "Without precision there's no deal. Let's practice." },
+    ],
   },
   diego: {
     name: "Diego",
-    correct: ["No estuvo mal. Me sorprende.", "Bien jugado.", "Te salió rápido.", "Ok, esa respuesta sí pega."],
-    wrong: ["Demasiado lento.", "Eso suena traducido.", "Yo no respondería así.", "Te faltó calle y timing."],
-    win: ["Ganaste esta. No te acostumbres.", "Bien. Te debo una revancha.", "Acepto la derrota, con condiciones."],
-    sad: ["Te gané la llamada.", "Otra ronda cuando quieras."],
+    correct: [
+      { es: "No estuvo mal. Me sorprende.", en: "Not bad. I'm surprised." },
+      { es: "Bien jugado.", en: "Well played." },
+      { es: "Te salió rápido.", en: "That came out fast." },
+      { es: "Ok, esa respuesta sí pega.", en: "Ok, that answer lands." },
+    ],
+    wrong: [
+      { es: "Demasiado lento.", en: "Too slow." },
+      { es: "Eso suena traducido.", en: "That sounds translated." },
+      { es: "Yo no respondería así.", en: "I wouldn't answer like that." },
+      { es: "Te faltó calle y timing.", en: "You lacked street and timing." },
+    ],
+    win: [
+      { es: "Ganaste esta. No te acostumbres.", en: "You won this one. Don't get used to it." },
+      { es: "Bien. Te debo una revancha.", en: "Fine. I owe you a rematch." },
+      { es: "Acepto la derrota, con condiciones.", en: "I accept the loss — with conditions." },
+    ],
+    sad: [
+      { es: "Te gané la llamada.", en: "I won the call." },
+      { es: "Otra ronda cuando quieras.", en: "Another round whenever you want." },
+    ],
   },
 };
 
@@ -3866,7 +3943,8 @@ export default function App() {
       prompt: `Lectura relámpago: ${story.questions[0].prompt}`,
       choices: story.questions[0].choices,
       answer: story.questions[0].answer,
-      explain: `Esta pista viene del cuento «${story.title}».`,
+      explain: storyClueExplain(story.title, "es"),
+      explainEn: storyClueExplain(story.title, "en"),
       _u: "_story",
       _i: -1,
       skill: "Lectura",
@@ -3895,11 +3973,11 @@ export default function App() {
     const story = STORIES[Math.floor(Math.random() * STORIES.length)];
     const storyQ = story.questions[Math.floor(Math.random() * story.questions.length)];
     const items = [
-      sampleQuestion("subj1", (q) => q.type === "mc" && /Trampa|duda|subjuntivo|certeza/i.test(q.explain || "")),
+      sampleQuestion("subj1", (q) => q.type === "mc" && /Trampa|duda|subjuntivo|certeza/i.test(explainHaystack(q))),
       sampleQuestion("pret", (q) => q.type === "listen" || q.type === "order"),
       sampleQuestion("mex", (q) => q.type === "mc" || q.type === "type"),
       reviewQ || sampleQuestion("pronombres", (q) => q.type !== "match"),
-      { type: "mc", prompt: `Del cuento «${story.title}»: ${storyQ.prompt}`, choices: storyQ.choices, answer: storyQ.answer, explain: "Lectura rápida: contexto, no traducción palabra por palabra.", _u: "_story", _i: -1, skill: "Lectura" },
+      { type: "mc", prompt: `Del cuento «${story.title}»: ${storyQ.prompt}`, choices: storyQ.choices, answer: storyQ.answer, explain: "Lectura rápida: contexto, no traducción palabra por palabra.", explainEn: explainText({ explain: "Lectura rápida: contexto, no traducción palabra por palabra." }, "en"), _u: "_story", _i: -1, skill: "Lectura" },
     ].filter(Boolean);
     beginSession({ title: L.workoutToday, color: D.gold, dark: D.goldDark, unitId: "_daily", daily: true, review: false, host: "luna", questions: items.map(prepQuestion) });
   };
@@ -3928,6 +4006,7 @@ export default function App() {
       text: scene.line,
       answers: scene.answers,
       explain: scene.explain,
+      explainEn: scene.explainEn,
       _u: "_today",
       _i: -1,
       skill: "Escucha real",
@@ -3938,6 +4017,7 @@ export default function App() {
       choices: scene.choices,
       answer: scene.answer,
       explain: scene.explain,
+      explainEn: scene.explainEn,
       _u: "_today",
       _i: -1,
       skill: "Vida real",
@@ -3947,7 +4027,8 @@ export default function App() {
       prompt: `Postal de ${story.title}: ${storyQ.prompt}`,
       choices: storyQ.choices,
       answer: storyQ.answer,
-      explain: `Pista cultural desbloqueada desde «${story.title}».`,
+      explain: culturalHintExplain(story.title, "es"),
+      explainEn: culturalHintExplain(story.title, "en"),
       _u: "_story",
       _i: -1,
       skill: "Lectura",
@@ -4164,6 +4245,7 @@ export default function App() {
       answer,
       choices: snakeChoicesFor(qq),
       explain: qq.explain || qq.note || "",
+      explainEn: qq.explainEn,
       skill: qq.skill || skillFor(qq),
     };
   };
@@ -4296,7 +4378,9 @@ export default function App() {
       prompt: qj.type === "type" ? `${qj.prompt}${qj.note ? ` ${qj.note}` : ""}` : qj.prompt,
       answer,
       choices: shuffle(choices),
-      explain: qj.explain || qj.note || focus.desc.es,
+      explain: qj.explain || qj.note || "",
+      explainEn: qj.explainEn,
+      focusDesc: focus.desc,
       host: focus.host,
     };
   };
@@ -5095,10 +5179,25 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timedOut]);
 
+  const insertChoiceChipFromKey = (e) => {
+    if (screen !== "lesson" || status !== "idle" || q?.answerAid?.mode !== "choices") return false;
+    if (e.altKey || e.ctrlKey || e.metaKey) return false;
+    const tag = e.target?.tagName;
+    const inField = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+    if (inField && e.target !== inputRef.current) return false;
+    const idx = choiceChipIndexForKey(e.key);
+    const tile = idx == null ? null : q.answerAid.tiles[idx];
+    if (!tile) return false;
+    e.preventDefault();
+    chooseAnswerTile(tile);
+    return true;
+  };
+
   useEffect(() => {
     if (screen !== "lesson") return;
 	    const h = (e) => {
-	      const inInput = e.target.tagName === "INPUT";
+	      if (insertChoiceChipFromKey(e)) return;
+	      const inInput = e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA";
 	      if (inInput) return;
 	      if (e.key === "Enter") {
 	        e.preventDefault();
@@ -7470,7 +7569,7 @@ export default function App() {
               <div>
                 <input ref={inputRef} value={typed} disabled={status !== "idle"}
                   onChange={(e) => { setTypedTileIds([]); setPlaceAt(null); setTyped(e.target.value); }}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); status === "idle" ? check() : next(); } }}
+                  onKeyDown={(e) => { if (insertChoiceChipFromKey(e)) return; if (e.key === "Enter") { e.preventDefault(); status === "idle" ? check() : next(); } }}
 	                  placeholder={q.type === "listen" ? (uiLang === "en" ? "Write the full sentence…" : "Escribe la oración completa…") : q.type === "transform" ? (uiLang === "en" ? "Write the transformed sentence…" : "Escribe la oración transformada…") : (uiLang === "en" ? "Write the missing word…" : "Escribe la palabra que falta…")}
                   autoCapitalize="off" autoCorrect="off" spellCheck={false}
                   style={{ width: "100%", boxSizing: "border-box", padding: "15px 16px", fontSize: 17, fontWeight: 700, fontFamily: "inherit", borderRadius: 14, border: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, background: status === "idle" ? "#F7F7F7" : status === "wrong" ? D.badBg : D.okBg }} />
@@ -7514,12 +7613,14 @@ export default function App() {
                       </div>
                     )}
                     <div className="tile-bank">
-                      {q.answerAid.tiles.map((tile) => {
+                      {q.answerAid.tiles.map((tile, chipIdx) => {
                         const used = typedTileIds.includes(tile.id);
                         const hide = q.answerAid.mode === "bank" && used;
+                        const chipKey = q.answerAid.mode === "choices" ? choiceChipKeyForIndex(chipIdx) : null;
                         return (
                           <div key={tile.id} className="tile-slot" data-tile-slot={tile.id}
-                            onClick={() => { if (hide) removeAnswerTile(tile.id); }}>
+                            onClick={() => { if (hide) removeAnswerTile(tile.id); }}
+                            style={chipKey ? { flexDirection: "column", alignItems: "center", gap: 3 } : undefined}>
                             <button type="button" data-tile-id={hide ? undefined : tile.id} data-testid={hide ? undefined : "bank-tile"} className="tile"
                               disabled={status !== "idle"}
                               aria-pressed={used}
@@ -7535,9 +7636,16 @@ export default function App() {
                                 color: used ? D.greenDark : D.ink,
                                 padding: "8px 11px",
                                 fontSize: 14,
+                                width: "100%",
                               }}>
                               {tile.w}
                             </button>
+                            {chipKey && (
+                              <span data-testid="choice-chip-key" aria-hidden="true"
+                                style={{ fontSize: 10, fontWeight: 800, color: D.sub, letterSpacing: ".02em", lineHeight: 1 }}>
+                                {chipKey}
+                              </span>
+                            )}
                           </div>
                         );
                       })}
@@ -7644,8 +7752,8 @@ export default function App() {
                     </div>
                   </div>
                 )}
-                {status === "correct" && <span><b>{quip}</b> {q.explain}</span>}
-	                {status === "almost" && <span><b>{quip}</b> {L.spelling}: <b>{q.answers?.[0]}</b>. {q.explain}</span>}
+                {status === "correct" && <span data-testid="practice-quip"><b>{uiText(quip, uiLang)}</b> {explainText(q, uiLang)}</span>}
+	                {status === "almost" && <span data-testid="practice-quip"><b>{uiText(quip, uiLang)}</b> {L.spelling}: <b>{q.answers?.[0]}</b>. {explainText(q, uiLang)}</span>}
                 {status === "wrong" && (() => {
 	                  const correctText = q.type === "mc" ? q.answer : q.type === "order" ? q.answer : q.type === "listen" ? q.text : q.answers?.[0]; // type & transform → answers[0]
 	                  const showDiff = (q.type === "type" || q.type === "listen" || q.type === "transform") && typed.trim();
@@ -7654,8 +7762,8 @@ export default function App() {
 	                  const errorKind = showDiff ? diagnoseAnswer(q, typed) : skillFor(q);
 	                  return (
 	                    <div>
-		                      <div style={{ fontWeight: 900, marginBottom: 2 }}>{wasTimeout && <span><IcBolt size={14} /> {L.time} </span>}{quip}</div>
-		                      {errorKind && <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: D.card, border: `1.5px solid ${D.red}`, borderRadius: 99, padding: "1px 8px", fontSize: 11, fontWeight: 900, marginBottom: 5 }}>{L.focus}: {errorKind}</div>}
+		                      <div data-testid="practice-quip" style={{ fontWeight: 900, marginBottom: 2 }}>{wasTimeout && <span><IcBolt size={14} /> {L.time} </span>}{uiText(quip, uiLang)}</div>
+		                      {errorKind && <div data-testid="practice-focus" style={{ display: "inline-flex", alignItems: "center", gap: 5, background: D.card, border: `1.5px solid ${D.red}`, borderRadius: 99, padding: "1px 8px", fontSize: 11, fontWeight: 900, marginBottom: 5 }}>{L.focus}: {focusLabel(errorKind, uiLang)}</div>}
 	                      {showDiff ? (
                         <div>
 	                          <div style={{ fontSize: 12.5, opacity: 0.8 }}>{L.yourAnswer}: <span style={{ textDecoration: "line-through", textDecorationThickness: 2 }}>{typed}</span></div>
@@ -7674,7 +7782,7 @@ export default function App() {
                         style={{ background: "none", border: "none", padding: 0, marginTop: 5, cursor: "pointer", fontFamily: "inherit", fontWeight: 900, fontSize: 13, color: D.blue, textDecoration: "underline" }}>
 	                        {L.why} {showWhy ? "▴" : "▾"}
                       </button>
-                      {showWhy && <div className="pop" style={{ marginTop: 4, color: D.ink, background: D.card, border: `2px solid ${D.line}`, borderRadius: 10, padding: "8px 11px", fontSize: 13.5 }}>{q.explain}</div>}
+                      {showWhy && <div data-testid="practice-why" className="pop" style={{ marginTop: 4, color: D.ink, background: D.card, border: `2px solid ${D.line}`, borderRadius: 10, padding: "8px 11px", fontSize: 13.5 }}>{explainText(q, uiLang)}</div>}
                     </div>
                   );
                 })()}
@@ -7837,7 +7945,7 @@ export default function App() {
                 <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
                   <CoachPortrait id={snakeGame.focus.host || "luna"} mood={snakeGame.status === "wrong" ? "sad" : "happy"} size={60} />
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".06em" }}>{snakeGame.focus.title[uiLang]} · {qg.skill}</div>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".06em" }}>{snakeGame.focus.title[uiLang]} · {focusLabel(qg.skill, uiLang)}</div>
                     <div style={{ fontSize: 17, fontWeight: 900, lineHeight: 1.25 }}>{qg.prompt}</div>
                   </div>
                 </div>
@@ -7863,7 +7971,7 @@ export default function App() {
                         : `${uiLang === "en" ? "Slide back" : "Retrocede"} ${snakeGame.roll}: ${snakeGame.tile} → ${snakeGame.finalTile}`}
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>
-                      {snakeGame.link?.kind === "ladder" ? (uiLang === "en" ? "Shortcut unlocked." : "Atajo desbloqueado.") : snakeGame.link?.kind === "snake" ? (uiLang === "en" ? "A slide tile pulled you back." : "Una casilla de resbalón te bajó.") : qg.explain}
+                      {snakeGame.link?.kind === "ladder" ? (uiLang === "en" ? "Shortcut unlocked." : "Atajo desbloqueado.") : snakeGame.link?.kind === "snake" ? (uiLang === "en" ? "A slide tile pulled you back." : "Una casilla de resbalón te bajó.") : explainText(qg, uiLang)}
                     </div>
                     <Btn color={D.green} dark={D.greenDark} onClick={nextSnake} style={{ width: "100%", marginTop: 12 }}>{snakeGame.finalTile >= 24 ? (uiLang === "en" ? "Claim prize" : "Cobrar premio") : L.continue}</Btn>
                   </div>
@@ -8175,7 +8283,7 @@ export default function App() {
                   <div style={{ fontWeight: 900, color: jeopardy.status === "correct" ? D.greenDark : D.redDark }}>
                     {jeopardy.status === "correct" ? `+${jeopardy.active.stake || jeopardy.active.value}` : `${jeopardy.active.double ? `-${Math.floor((jeopardy.active.stake || jeopardy.active.value) / 2)} · ` : ""}${uiLang === "en" ? "Answer" : "Respuesta"}: ${jeopardy.active.answer}`}
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>{jeopardy.active.explain}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>{explainText(jeopardy.active, uiLang) || uiText(jeopardy.active.focusDesc, uiLang)}</div>
                   <Btn color={D.blue} dark={D.blueDark} onClick={closeJeopardyPrompt} style={{ width: "100%", marginTop: 12 }}>{L.continue}</Btn>
                 </div>
               )}
@@ -8504,7 +8612,7 @@ export default function App() {
             ))}
           </div>
           {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
-            <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{screenQuip}»
+            <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
           <h2 data-testid={winTestId} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
@@ -8594,7 +8702,7 @@ export default function App() {
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "70px 20px", textAlign: "center" }}>
           <CoachPortrait id={session.host} mood="sad" size={120} />
           {screenQuip && <div style={{ fontWeight: 800, fontStyle: "italic", margin: "6px 0 0", fontSize: 15 }}>
-            <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{screenQuip}»
+            <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
           {failKind === "test" ? (
             <>

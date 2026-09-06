@@ -2,6 +2,51 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (No Face — quiet digits under blank chips)
+
+**What changed**
+- TAP AN ANSWER / choices chips show a quiet digit under each chip (`1` `2` `3` … `0` `-` `=`) matching the insert key. Same in ES and EN — no language-specific banner, no “press 1” chrome.
+- Keyboard map + George miss / Focus / Why stamps stay. Soft chrome parked. Do not merge.
+
+**Why**
+- No Face stamp: the key hint is the digit under the chip, not a banner.
+
+## 2026-09-06 (TAP AN ANSWER second-row keys — Dave / Hand)
+
+**What changed**
+- Complete-the-sentence / TAP AN ANSWER chips (`answerAid.mode === "choices"`): second-row keys insert the chip in order — `1` `2` `3` `4` `5` `6` `7` `8` `9` `0` then `-` `=` if more than 10. Same as tapping. Invisible map, no new chrome.
+- Binds while the blank exercise is active, including when the blank input is focused (so `1` inserts the word, not the digit). Does not steal other inputs. Mobile tap unchanged.
+- George miss / Focus / Why stamps stay. Soft chrome parked. Do not merge.
+
+**Why**
+- Dave / Hand lock: keyboard should fill the blank the way the chip tap does.
+
+## 2026-09-06 (George stamp — practice miss / Focus / Why)
+
+**What changed**
+- George EN exact, wired: `The idea’s there; it needs precision.` · Focus `Verb mood` · Why `«Cuando» + future action → subjunctive. Habit would be indicative: «cuando salgo».`
+- ES stays `La idea está; falta precisión.` / `Modo verbal` / `«Cuando» + acción futura → subjuntivo. Hábito sería indicativo: «cuando salgo».`
+- Other VOICES / FOCUS / PRACTICE_EXPLAIN EN still temporary until George stamps. Soft chrome parked. Do not merge.
+
+**Why**
+- Hand / George lock on the live miss trio. Remaining EN still on the previous HANDOFF list.
+
+## 2026-09-06 (Practice feedback / Why / Focus follow uiLang)
+
+**What changed**
+- Practice / reveal chrome already followed ES|EN. The miss line, Focus chip, and Why bubble did not. They now pick `{es,en}` (or existing `explainEn`) via `uiText` / `explainText` / `focusLabel`.
+- Coach quips (`VOICES`) are `{es,en}` pairs. Focus keys stay Spanish for `prog.weak` / SMART_FOCUS; display localizes.
+- Authored `explain` strings stay ES. Temporary EN lives in `PRACTICE_EXPLAIN` until George stamps. Hoy `explainEn` wins when present.
+
+**HANDOFF — George must stamp EN (temporary meaning-match until then)**
+- All `VOICES.*.correct|wrong|win|sad[].en` (Luna / Rafa / Valeria / Diego).
+- All `FOCUS_LABELS.*.en` (`Modo verbal` → Verb mood, `Subjuntivo` → Subjunctive, etc.).
+- All `PRACTICE_EXPLAIN[].en` (unit Why lines + landlord / farmacia / lectura-rápida).
+- Templates: `culturalHintExplain` EN (`Cultural clue unlocked from “{title}”.`) and `storyClueExplain` EN (`This clue comes from the story “{title}”.`).
+
+**Why**
+- Live miss: Complete the sentence with EN still showed `La idea está; falta precisión.` / `Modo verbal` / Spanish Why. Soft chrome parked. Lectura stills untouched. Do not merge — Hand CLEAR after George EN stamp.
+
 ## 2026-09-06 (Safe/Risky Literal then Why)
 
 **What changed**
