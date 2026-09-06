@@ -43,6 +43,16 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **Why**
 - Dave: hover/tap a word (e.g. cosecha) for a short translation reminder. Hand: mechanic + extendable map; George stamps the rest.
 
+## 2026-09-06 (George expanded Why — cerezas + Calle)
+
+**What changed**
+- Cerezas `¿Por qué se negó…` Why superseded with favorite-teacher (kills «no pagaba bien»). Focus stays `Lectura` / `Reading`.
+- Calle / Disculpe Hoy Why superseded: street stays short (`Disculpe` + where + `por aquí`); long address-ask is the trap.
+- Soft chrome parked. Do not merge.
+
+**Why**
+- George expanded Why stamps. Short cerezas / short calle lines killed.
+
 ## 2026-09-06 (Reading Why stamp — cerezas quiz)
 
 **What changed**

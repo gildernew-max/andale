@@ -1235,11 +1235,11 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: "Porque no quería depender de una sola empresa" }));
     await waitFor(() => expect(screen.getByTestId("story-quiz-why")).toBeTruthy());
     expect(screen.getByTestId("story-quiz-focus").textContent).toBe("Foco: Lectura");
-    expect(screen.getByTestId("story-quiz-why").textContent).toBe("La oferta era premium. Se negó por independencia, no por mal pago.");
+    expect(screen.getByTestId("story-quiz-why").textContent).toBe("El texto dice que la empresa japonesa ofreció un precio premium — así que «no pagaba bien» no es lo que pasó. Aun así don Adán dijo que no: si vendía toda la cosecha a un solo comprador, dependería de uno solo. Eligió independencia sobre un mejor cheque. Por eso gana: no quería depender de una sola empresa.");
     expect(screen.getAllByTestId("story-quiz-why")).toHaveLength(1);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("story-quiz-focus").textContent).toBe("Focus: Reading"));
-    expect(screen.getByTestId("story-quiz-why").textContent).toBe("The offer was premium. He refused for independence, not bad pay.");
+    expect(screen.getByTestId("story-quiz-why").textContent).toBe("The text says the Japanese company offered a premium price — so “they didn’t pay well” isn’t what happened. Don Adán still said no: if he sold the whole harvest to one buyer, he’d depend on one buyer. He chose independence over a better check. That’s why the right line is he didn’t want to depend on a single company.");
   });
 
   it("first-door hero is Hoy or Phrase Doctor, not Subjuntivo Continuar", async () => {
