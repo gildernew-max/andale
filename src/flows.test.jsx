@@ -857,7 +857,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByRole("button", { name: "¡Empezar!" })).toBeTruthy();
   });
 
-  it("splash locks exact line + one primary CTA, no equal Saltar, axolotl hero", async () => {
+  it("splash locks exact line + one primary CTA, no equal Saltar, cenzontle hero", async () => {
     localStorage.clear();
     mockBrowser();
     const user = userEvent.setup();
@@ -871,7 +871,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("splash-actions").textContent.trim()).toBe("Start!");
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Start! ?Skip/);
     expect(screen.getByTestId("splash").textContent).not.toMatch(/\bSkip\b/);
-    expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
+    expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByTestId("splash").querySelector("img[src*='sma-']")).toBeNull();
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Orden distinto|Different order, same meaning/);
@@ -887,7 +887,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("splash-actions").textContent.trim()).toBe("¡Empezar!");
     expect(screen.getByTestId("splash").textContent).not.toMatch(/¡Empezar! ?Saltar/);
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Saltar/);
-    expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
+    expect(screen.getByTestId("splash-hero").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Subjuntivo/);
     expect(screen.getByTestId("splash").textContent).not.toMatch(/Orden distinto|Different order, same meaning/);
     expect(screen.queryByTestId("word-order-tip")).toBeNull();
@@ -3495,7 +3495,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("recuerdos-fog-yucatan")).toBeTruthy();
     expect(screen.getByTestId("recuerdos-fog-norte")).toBeTruthy();
     expect(screen.queryByTestId("recuerdos-fog-bajio")).toBeNull();
-    expect(screen.getByTestId("recuerdos-axolotl").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
+    expect(screen.getByTestId("recuerdos-cenzontle").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByTestId("recuerdos-bajio-glow")).toBeTruthy();
     expect(screen.getByTestId("recuerdos-bajio-glow").className).toMatch(/bajio-glow/);
     expect(screen.getByTestId("recuerdos-bajio-glow").style.boxShadow).toBe(RECUERDOS_PIN_SHADOW);

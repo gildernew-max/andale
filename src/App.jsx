@@ -20,7 +20,7 @@ import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
    Spanish only · intermediate & advanced · Mexican Spanish
    Duolingo formula: serpentine node path, sequential unlock,
    mascot reactions, global hearts w/ regen, gems, match pairs,
-   chunky 3D buttons, bottom tabs. Original mascot: an axolotl.
+   chunky 3D buttons, bottom tabs. Lockup mascot: Cenzontle (Mexican mockingbird).
    ============================================================ */
 
 /* ============================================================
@@ -1553,7 +1553,7 @@ const FlagMX = ({ size = 22 }) => (
 );
 const LogoMark = ({ size = 30, ...rest }) => (
   <img
-    src={`${import.meta.env.BASE_URL}mascot/axolotl.png`}
+    src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
     alt=""
     width={size}
     height={size}
@@ -6271,7 +6271,7 @@ export default function App() {
 	          </div>
           <div data-testid="recuerdos-map" style={{ border: `2px solid ${D.line}`, borderBottom: `5px solid ${D.line}`, borderRadius: 18, background: D.card, padding: 14, marginBottom: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <LogoMark size={36} data-testid="recuerdos-axolotl" />
+              <LogoMark size={36} data-testid="recuerdos-cenzontle" />
               <div>
                 <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", color: D.blueDark }}>{uiLang === "en" ? "MEXICO" : "MÉXICO"}</div>
                 <div style={{ fontWeight: 900, fontSize: 17 }}>{L.recuerdosTitle}</div>

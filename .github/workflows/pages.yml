@@ -53,7 +53,7 @@ jobs:
         env:
           LIVE_HOME: https://gildernew-max.github.io/andale/
           LIVE_LUNA: https://gildernew-max.github.io/andale/coaches/luna-happy.png
-          LIVE_MASCOT: https://gildernew-max.github.io/andale/mascot/axolotl.png
+          LIVE_MASCOT: https://gildernew-max.github.io/andale/mascot/cenzontle.png
           LIVE_STILL: https://gildernew-max.github.io/andale/stills/sma-lanterns.png
         run: |
           set -euo pipefail

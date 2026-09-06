@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (Cenzontle lockup — abandons axolotl)
+
+**What changed**
+- No Face pick: **Cenzontle** (Mexican mockingbird). Guide Axolotl / Comal Sun / Confident v1 axolotl stay rejected.
+- `LogoMark` + splash hero + Recuerdos mark use `public/mascot/cenzontle.png`. `public/mascot/axolotl.png` removed.
+- Favicon / apple-touch / og:image / twitter / Pages smoke point at the same Cenzontle PNG. Real PNG (`file`), not JPEG-named-`.png`.
+- Soft chrome parked. Theme-color / `MARK_INK` sage, coaches, Camino nodes, Lectura stills, Duo lime buttons untouched.
+- Dave CLEAR + No Face CLEAR. Squash-merged onto main after GitHub merge API 404.
+
+**Why**
+- Language/listening metaphor. Axolotl lockup is gone.
+
 ## 2026-09-06 (Recuerdos map contrast — No Face stamp)
 
 **What changed**
