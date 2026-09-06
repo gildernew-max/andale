@@ -100,6 +100,7 @@ const snapshotLive = (s) => {
     jeopardy: s.jeopardy,
     snakeGame: s.snakeGame,
     matchGame: s.matchGame,
+    ahorcado: s.ahorcado,
   };
 };
 
@@ -3315,6 +3316,7 @@ export default function App() {
   const [jeopardy, setJeopardy] = useState(null);
   const [snakeGame, setSnakeGame] = useState(null);
   const [matchGame, setMatchGame] = useState(null);
+  const [ahorcado, setAhorcado] = useState(null);
   const [burst, setBurst] = useState(0); // mini confetti trigger
   const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
@@ -3865,6 +3867,54 @@ export default function App() {
     // paid another +4 every replay (Hand, live 645c3cb).
     setMatchGame(startMatchRun(pairs));
     setScreen("matchPairs");
+  };
+
+  const AHORCADO_MAX = 6;
+  const ahorcadoPool = SECTIONS[0].unitIds.flatMap((uid) => {
+    const u = UNITS.find((x) => x.id === uid);
+    return (u?.pairs || []).map((pr) => ({ es: Array.isArray(pr) ? pr[0] : pr?.es, en: Array.isArray(pr) ? pr[1] : pr?.en }));
+  }).filter((p) => p.es && !/\s/.test(p.es.trim()) && p.es.trim().length >= 4);
+
+  const startAhorcado = () => {
+    awardLockRef.current.delete("ahorcado");
+    const pool = ahorcadoPool.length ? ahorcadoPool : [{ es: "dudar", en: "to doubt" }];
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    const wordNorm = pick.es.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-ZÑ]/g, "");
+    setAhorcado({ word: pick.es, wordNorm, hint: pick.en, guessed: [], done: false, won: false, awarded: false, xp: 0, gems: 0 });
+    setScreen("ahorcado");
+  };
+
+  const guessAhorcadoLetter = (letter) => {
+    setAhorcado((cur) => {
+      if (!cur || cur.done) return cur;
+      const L = letter.toUpperCase();
+      if (cur.guessed.includes(L)) return cur;
+      const guessed = [...cur.guessed, L];
+      const inWord = cur.wordNorm.includes(L);
+      if (inWord) beep("ok"); else beep("bad");
+      const wrong = guessed.filter((g) => !cur.wordNorm.includes(g));
+      const allRevealed = [...cur.wordNorm].every((c) => guessed.includes(c));
+      const dead = wrong.length >= AHORCADO_MAX;
+      const done = allRevealed || dead;
+      const won = allRevealed && !dead;
+      if (done) queueMicrotask(() => finishAhorcado(won));
+      return { ...cur, guessed, done, won };
+    });
+  };
+
+  const finishAhorcado = (won) => {
+    if (!lockAward("ahorcado")) return;
+    const xp = won ? 10 : 4;
+    const gems = won ? 6 : 2;
+    const t = todayStr();
+    const y = yesterdayStr();
+    save((prev) => {
+      const streak = prev.lastDay === t ? prev.streak || 0 : prev.lastDay === y ? (prev.streak || 0) + 1 : 1;
+      return { ...prev, xp: (prev.xp || 0) + xp, xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + xp, streak, lastDay: t };
+    });
+    setAhorcado((g) => (g ? { ...g, done: true, awarded: true, xp, gems } : g));
+    setBurst(Date.now());
+    if (won) beep("win");
   };
 
   const onMatchPracticeTap = (side, id) => {
@@ -4737,7 +4787,7 @@ export default function App() {
     screen, tab, session, qi, status, selected, typed, typedTileIds, placed,
     matchSel, matched, sessionXP, itemXpLock: [...itemXpLockRef.current], combo, lessonStats, showWhy, failKind, quip,
     screenQuip, storyView, paraIdx, storyMode, ansSel, wordReveal, dialogue,
-    rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame,
+    rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame, ahorcado,
   };
 
   const applyLive = (live) => {
@@ -4804,6 +4854,10 @@ export default function App() {
       setMatchGame(live.matchGame);
       if (live.matchGame.awarded || live.matchGame.done) awardLockRef.current.add("match");
     }
+    if (live.ahorcado) {
+      setAhorcado(live.ahorcado);
+      if (live.ahorcado.awarded || live.ahorcado.done) awardLockRef.current.add("ahorcado");
+    }
     setScreen(live.screen);
   };
 
@@ -4844,7 +4898,7 @@ export default function App() {
   useEffect(() => {
     if (!liveReady.current) return;
     writeLive(snapshotLive(liveRef.current));
-  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, dialogue, safeGame, jeopardy, snakeGame, matchGame]);
+  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado]);
 
   useEffect(() => {
     const flush = () => {
@@ -5771,6 +5825,28 @@ export default function App() {
                           <div style={{ fontSize: 11, fontWeight: 900, color: D.ink, marginTop: 6, maxWidth: 130, marginLeft: "auto", marginRight: "auto" }}>
 	                            {L.storyPrefix}: {story.title}
                           </div>
+                        </div>
+                      );
+                    })()}
+                    {/* ── per-section game CTA ── */}
+                    {(() => {
+                      const gameDefs = [
+                        { testid: "ahorcado-section-start", act: startAhorcado, color: D.green, dark: D.greenDark, icon: "🔤", labelEs: "Ahorcado / Hangman", labelEn: "Ahorcado / Hangman", subEs: "Adivina la palabra letra por letra.", subEn: "Guess the word letter by letter." },
+                        { testid: "jeopardy-section-start", act: startJeopardy, color: D.purple, dark: D.purpleDark, icon: "🎯", labelEs: "JEOPARDY SOLO", labelEn: "JEOPARDY SOLO", subEs: "Elige categoría, elige valor, responde.", subEn: "Pick a category, pick a value, answer." },
+                        { testid: "emparejar-section-start", act: startMatchPairs, color: D.blue, dark: D.blueDark, icon: "🔗", labelEs: "Emparejar / Match", labelEn: "Emparejar / Match", subEs: "Una ronda de parejas español–inglés.", subEn: "One round of Spanish–English pair tiles." },
+                      ][si];
+                      if (!gameDefs) return null;
+                      return (
+                        <div style={{ padding: "14px 20px 6px", width: "100%", boxSizing: "border-box", zIndex: 1, position: "relative" }}>
+                          <button onClick={gameDefs.act} data-testid={gameDefs.testid}
+                            style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: D.card, border: `2px solid ${gameDefs.color}`, borderBottom: `5px solid ${gameDefs.dark}`, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+                            <span style={{ width: 44, height: 44, borderRadius: 14, background: gameDefs.color, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${gameDefs.dark}` }}>{gameDefs.icon}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{uiLang === "en" ? gameDefs.labelEn : gameDefs.labelEs}</div>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? gameDefs.subEn : gameDefs.subEs}</div>
+                            </div>
+                            <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+                          </button>
                         </div>
                       );
                     })()}
@@ -7781,6 +7857,96 @@ export default function App() {
                       })}
                     </div>
                   ))}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ---------- JEOPARDY SOLO ---------- */}
+      {screen === "ahorcado" && ahorcado && (() => {
+        const { word, wordNorm, hint, guessed, done, won } = ahorcado;
+        const wrong = guessed.filter((g) => !wordNorm.includes(g));
+        const ALPHA = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
+        const gallowParts = [
+          <circle key="h" cx="60" cy="30" r="10" stroke="currentColor" strokeWidth="3" fill="none" />,
+          <line key="b" x1="60" y1="40" x2="60" y2="70" stroke="currentColor" strokeWidth="3" />,
+          <line key="la" x1="60" y1="50" x2="45" y2="62" stroke="currentColor" strokeWidth="3" />,
+          <line key="ra" x1="60" y1="50" x2="75" y2="62" stroke="currentColor" strokeWidth="3" />,
+          <line key="ll" x1="60" y1="70" x2="45" y2="85" stroke="currentColor" strokeWidth="3" />,
+          <line key="rl" x1="60" y1="70" x2="75" y2="85" stroke="currentColor" strokeWidth="3" />,
+        ];
+        const goHome = () => { setScreen("home"); setTab("camino"); };
+        return (
+          <div style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 130px" }}>
+            {burst > 0 && done && <Confetti key={burst} count={36} />}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+              <button onClick={goHome} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".08em" }}>AHORCADO / HANGMAN</div>
+                <div style={{ fontWeight: 900, fontSize: 18 }}>{uiLang === "en" ? "Guess the word" : "Adivina la palabra"}</div>
+              </div>
+              <div style={{ border: `2px solid ${D.red}`, borderBottom: `4px solid ${D.redDark}`, borderRadius: 12, padding: "5px 10px", background: D.redBg, fontWeight: 900, fontSize: 13, color: D.redDark }}>
+                {wrong.length}/{AHORCADO_MAX}
+              </div>
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+            </div>
+            {done ? (
+              <div className="pop" style={{ textAlign: "center", border: `2px solid ${won ? D.gold : D.red}`, borderBottom: `5px solid ${won ? D.goldDark : D.redDark}`, borderRadius: 16, padding: 18, background: won ? D.goldBg : D.redBg }}>
+                <div style={{ fontSize: 48 }}>{won ? "🎉" : "💀"}</div>
+                <h2 style={{ fontWeight: 900, margin: "8px 0 4px" }}>{won ? (uiLang === "en" ? "Got it!" : "¡Lo adivinaste!") : (uiLang === "en" ? "Hanged!" : "¡Ahorcado!")}</h2>
+                <div style={{ fontWeight: 900, fontSize: 22, margin: "8px 0", letterSpacing: ".15em", color: D.ink }}>{word.toUpperCase()}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: D.sub, marginBottom: 12 }}>{hint}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, margin: "0 0 16px" }}>
+                  {[["XP", `+${ahorcado.xp || 0}`], [uiLang === "en" ? "Gems" : "Gemas", `+${ahorcado.gems || 0}`]].map(([l, v]) => (
+                    <div key={l} style={{ background: D.card, border: `1.5px solid ${won ? D.gold : D.red}`, borderRadius: 12, padding: "7px 6px" }}>
+                      <div style={{ fontSize: 10, fontWeight: 900, color: D.sub }}>{l}</div>
+                      <div style={{ fontSize: 16, fontWeight: 900, color: won ? D.goldDark : D.redDark }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                <Btn color={D.green} dark={D.greenDark} onClick={startAhorcado}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
+                <Btn outline onClick={goHome} style={{ marginLeft: 10 }}>{uiLang === "en" ? "Close" : "Cerrar"}</Btn>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                  <svg width="120" height="100" viewBox="0 0 120 100" style={{ color: D.ink }} aria-hidden="true">
+                    <line x1="10" y1="98" x2="110" y2="98" stroke="currentColor" strokeWidth="3" />
+                    <line x1="30" y1="98" x2="30" y2="5" stroke="currentColor" strokeWidth="3" />
+                    <line x1="30" y1="5" x2="60" y2="5" stroke="currentColor" strokeWidth="3" />
+                    <line x1="60" y1="5" x2="60" y2="20" stroke="currentColor" strokeWidth="3" />
+                    {gallowParts.slice(0, wrong.length)}
+                  </svg>
+                </div>
+                <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, textAlign: "center", marginBottom: 10 }}>
+                  {uiLang === "en" ? `Hint: ${hint}` : `Pista: ${hint}`}
+                </div>
+                <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                  {[...wordNorm].map((letter, i) => (
+                    <div key={i} style={{ width: 28, height: 38, borderBottom: `3px solid ${D.ink}`, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 3, fontWeight: 900, fontSize: 18, color: D.ink }}>
+                      {guessed.includes(letter) ? letter : ""}
+                    </div>
+                  ))}
+                </div>
+                {wrong.length > 0 && (
+                  <div style={{ textAlign: "center", marginBottom: 14, fontSize: 13, fontWeight: 800, color: D.red }}>
+                    {uiLang === "en" ? "Missed: " : "Fallidas: "}{wrong.join(", ")}
+                  </div>
+                )}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
+                  {ALPHA.map((letter) => {
+                    const inWord = wordNorm.includes(letter);
+                    const picked = guessed.includes(letter);
+                    return (
+                      <button key={letter} disabled={picked} onClick={() => guessAhorcadoLetter(letter)}
+                        aria-label={letter}
+                        style={{ width: 38, height: 38, borderRadius: 10, border: `2px solid ${picked ? (inWord ? D.green : D.red) : D.line}`, borderBottom: `4px solid ${picked ? (inWord ? D.greenDark : D.redDark) : D.line}`, background: picked ? (inWord ? D.okBg : D.badBg) : D.card, color: picked ? (inWord ? D.okText : D.badText) : D.ink, fontWeight: 900, fontSize: 14, fontFamily: "inherit", cursor: picked ? "default" : "pointer" }}>
+                        {letter}
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             )}
