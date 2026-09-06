@@ -14,7 +14,7 @@ import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLO
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
-import { lookupGloss } from "./storyGloss.js";
+import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 
 /* ============================================================
@@ -8491,14 +8491,15 @@ export default function App() {
                   <IcSpeaker size={15} color={"#1CB0F6"} />
                 </button>
                 <p style={{ margin: 0, fontSize: 17, lineHeight: 1.75, fontWeight: 600 }}>
-                  {para.split(/(\s+)/).map((tok, ti) => {
-                    if (/^\s+$/.test(tok) || !tok) return tok;
+                  {segmentGlossText(para).map((seg, ti) => {
+                    if (/^\s+$/.test(seg.raw) || !seg.raw) return seg.raw;
+                    const tok = seg.raw;
                     const def = lookupStoryWord(story, tok);
                     const clean = cleanStoryToken(tok);
                     const hitKey = keyWords.includes(def?.source) ? def.source : keyWords.includes(clean) ? clean : null;
                     const isSel = wordSel && wordSel.pi === pi && wordSel.ti === ti;
                     const known = !!def?.en;
-                    if (lookupGloss(tok, uiLang)) {
+                    if (seg.key || lookupGloss(tok, uiLang)) {
                       return (
                         <GlossWord
                           key={ti}

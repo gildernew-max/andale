@@ -640,7 +640,10 @@ describe("simulated learner flows", () => {
     const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
     await user.click(openers[openers.length - 1]);
     await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
-    expect(screen.queryAllByTestId("gloss-word").every((el) => el.getAttribute("data-gloss-key") !== "cerezas")).toBe(true);
+    const cerezas = screen.getAllByTestId("gloss-word").find((el) => el.getAttribute("data-gloss-key") === "cerezas");
+    expect(cerezas).toBeTruthy();
+    await user.click(cerezas);
+    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("el fruto del café (no la fruta de postre)"));
     await user.click(screen.getByRole("button", { name: "Preguntas" }));
     await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
     const cosecha = screen.getAllByTestId("gloss-word").find((el) => el.getAttribute("data-gloss-key") === "cosecha");

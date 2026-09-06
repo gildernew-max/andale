@@ -49,4 +49,15 @@ describe("GlossedText", () => {
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByTestId("gloss-tip")).toBeNull());
   });
+
+  it("keeps George phrase stamps as one target", async () => {
+    const user = userEvent.setup();
+    render(<GlossedText text="sobre el comercio justo, una etiqueta" uiLang="en" D={D} />);
+    const phrase = glossByKey("comercio justo");
+    expect(phrase).toBeTruthy();
+    expect(phrase.textContent).toMatch(/comercio\s+justo/);
+    expect(screen.getAllByTestId("gloss-word")).toHaveLength(1);
+    await user.hover(phrase);
+    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("fair trade"));
+  });
 });

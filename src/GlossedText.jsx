@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from "react";
-import { lookupGloss, splitGlossTokens } from "./storyGloss.js";
+import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 
 /** One-line gloss near a stamped word. Tap / hover / keyboard focus. */
 export function GlossWord({ token, uiLang, D, accent, onActivate }) {
@@ -136,14 +136,13 @@ export function GlossWord({ token, uiLang, D, accent, onActivate }) {
 
 /** Wrap a string so only stamped words become gloss targets. */
 export function GlossedText({ text, uiLang, D, accent, onActivate }) {
-  return splitGlossTokens(text).map((tok, i) => {
-    if (/^\s+$/.test(tok) || !tok) return tok;
-    const hit = lookupGloss(tok, uiLang);
-    if (!hit) return <span key={i}>{tok}</span>;
+  return segmentGlossText(text).map((seg, i) => {
+    if (/^\s+$/.test(seg.raw) || !seg.raw) return seg.raw;
+    if (!seg.key) return <span key={i}>{seg.raw}</span>;
     return (
       <GlossWord
         key={i}
-        token={tok}
+        token={seg.raw}
         uiLang={uiLang}
         D={D}
         accent={accent}

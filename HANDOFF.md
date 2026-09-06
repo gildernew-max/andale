@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (George FULL cerezas gloss table)
+
+**What changed**
+- `STORY_GLOSSES` now has George’s exact cerezas table (23 `{en,es}` rows). `cosecha` stays `harvest` / `la recolección de ese año`.
+- Phrase stamp `comercio justo` is one target. Unlisted words stay off the map.
+- Soft chrome parked. Do not merge.
+
+**Why**
+- George full table. Wire exact. Follow uiLang.
+
 ## 2026-09-06 (George gloss stamp — cosecha first lock)
 
 **What changed**
