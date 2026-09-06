@@ -3688,12 +3688,13 @@ describe("simulated learner flows", () => {
     });
 
     cleanup();
+    localStorage.removeItem(LIVE_KEY);
     const user2 = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
     await user2.click(screen.getByTestId("ahorcado-section-start"));
     await waitFor(() => expect(screen.getByTestId("letter-board")).toBeTruthy());
-    expect(screen.getByTestId("letter-board").getAttribute("data-layout")).toBe("abc");
+    await waitFor(() => expect(screen.getByTestId("letter-board").getAttribute("data-layout")).toBe("abc"));
     expect(screen.getAllByTestId("letter-chip").map((el) => el.textContent).join("")).toBe(lettersForLayout("abc").join(""));
   });
 });
