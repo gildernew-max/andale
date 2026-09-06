@@ -10,15 +10,11 @@ export const RECUERDOS_LOCKED_EN = "Locked";
 
 export const FIRST_GLOW_PIN = "bajio";
 
-/** Clean Mexico outline (viewBox 0 0 300 190). Baja hook · Yucatán thumb. */
-export const MEXICO_OUTLINE_PATH =
-  "M34,52 C28,36 36,20 52,22 L44,50 36,78 30,108 26,128 36,132 46,114 56,86 66,58 78,38 " +
-  "L100,26 134,24 168,30 190,40 L204,34 238,40 270,54 276,68 260,78 230,70 204,62 " +
-  "L190,74 178,100 166,120 146,130 126,122 116,108 L104,120 86,128 72,116 68,98 " +
-  "L54,104 42,94 44,74 40,60 Z";
+/** Dave-cleared illustrated Mexico map. Not the PR 81 SVG silhouette. */
+export const MEXICO_MAP_SRC = "assets/dave-cleared-mexico-map.png";
 
 /**
- * Five regional pins. Percent positions sit on the Mexico outline.
+ * Five regional pins. Percent positions sit on the illustrated Mexico map.
  * Bajío is the first-glow pin and starts open.
  */
 export const RECUERDOS_PINS = [

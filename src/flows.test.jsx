@@ -3360,6 +3360,8 @@ describe("simulated learner flows", () => {
     expect(map.textContent).toMatch(/Recuerdos/);
     expect(map.textContent).not.toMatch(/Ruta de recuerdos/);
     expect(screen.getByTestId("recuerdos-outline")).toBeTruthy();
+    expect(screen.getByTestId("recuerdos-outline").tagName).toBe("IMG");
+    expect(screen.getByTestId("recuerdos-outline").getAttribute("src")).toMatch(/assets\/dave-cleared-mexico-map\.png/);
     expect(screen.getByTestId("recuerdos-fog")).toBeTruthy();
     expect(screen.getByTestId("recuerdos-fog-cdmx")).toBeTruthy();
     expect(screen.getByTestId("recuerdos-fog-oaxaca")).toBeTruthy();

@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
+import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -1556,6 +1556,26 @@ const LogoMark = ({ size = 30, ...rest }) => (
     aria-hidden="true"
     style={{ display: "block", width: size, height: size, objectFit: "contain" }}
     {...rest}
+  />
+);
+
+/** Dave-cleared illustrated Mexico. Pins / glow / fog sit on top. */
+const RecuerdosMexicoMap = ({ testId, theme }) => (
+  <img
+    data-testid={testId}
+    src={`${import.meta.env.BASE_URL}${MEXICO_MAP_SRC}`}
+    alt=""
+    aria-hidden="true"
+    style={{
+      position: "absolute",
+      inset: 0,
+      width: "100%",
+      height: "100%",
+      objectFit: "contain",
+      pointerEvents: "none",
+      userSelect: "none",
+      filter: theme === "dark" ? "brightness(.78) saturate(.88)" : "none",
+    }}
   />
 );
 
@@ -5870,10 +5890,8 @@ export default function App() {
                 <div style={{ fontWeight: 900, fontSize: 17 }}>{L.recuerdosTitle}</div>
               </div>
             </div>
-            <div style={{ position: "relative", height: 228, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
-              <svg data-testid="recuerdos-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
-                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
-              </svg>
+            <div style={{ position: "relative", height: 228, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "#F4EDE0", border: `2px solid ${D.line}` }}>
+              <RecuerdosMexicoMap testId="recuerdos-outline" theme={theme} />
               <div data-testid="recuerdos-fog" aria-hidden="true" style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
                 background: recuerdosFogBackground(RECUERDOS_PINS, prog.stories, theme, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen, oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen, yucatanUnlockSeen: !!prog.yucatanUnlockSeen, norteUnlockSeen: !!prog.norteUnlockSeen }),
@@ -6765,10 +6783,8 @@ export default function App() {
         return (
         <div data-testid="bajio-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 62, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
-            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
-              <svg data-testid="bajio-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
-                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
-              </svg>
+            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "#F4EDE0", border: `2px solid ${D.line}` }}>
+              <RecuerdosMexicoMap testId="bajio-unlock-flash-outline" theme={theme} />
               <div aria-hidden="true" style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
                 background: recuerdosFogBackground(RECUERDOS_PINS, {}, theme),
@@ -6802,10 +6818,8 @@ export default function App() {
         return (
         <div data-testid="cdmx-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 62, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
-            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
-              <svg data-testid="cdmx-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
-                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
-              </svg>
+            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "#F4EDE0", border: `2px solid ${D.line}` }}>
+              <RecuerdosMexicoMap testId="cdmx-unlock-flash-outline" theme={theme} />
               <div aria-hidden="true" style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
                 background: recuerdosFogBackground(RECUERDOS_PINS, {}, theme, { cdmxUnlockSeen: true }),
@@ -6839,10 +6853,8 @@ export default function App() {
         return (
         <div data-testid="oaxaca-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 62, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
-            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
-              <svg data-testid="oaxaca-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
-                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
-              </svg>
+            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "#F4EDE0", border: `2px solid ${D.line}` }}>
+              <RecuerdosMexicoMap testId="oaxaca-unlock-flash-outline" theme={theme} />
               <div aria-hidden="true" style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
                 background: recuerdosFogBackground(RECUERDOS_PINS, {}, theme, { cdmxUnlockSeen: true, oaxacaUnlockSeen: true }),
@@ -6876,10 +6888,8 @@ export default function App() {
         return (
         <div data-testid="yucatan-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 62, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
-            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
-              <svg data-testid="yucatan-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
-                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
-              </svg>
+            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "#F4EDE0", border: `2px solid ${D.line}` }}>
+              <RecuerdosMexicoMap testId="yucatan-unlock-flash-outline" theme={theme} />
               <div aria-hidden="true" style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
                 background: recuerdosFogBackground(RECUERDOS_PINS, {}, theme, { cdmxUnlockSeen: true, oaxacaUnlockSeen: true, yucatanUnlockSeen: true }),
@@ -6913,10 +6923,8 @@ export default function App() {
         return (
         <div data-testid="norte-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 62, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
-            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
-              <svg data-testid="norte-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
-                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
-              </svg>
+            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "#F4EDE0", border: `2px solid ${D.line}` }}>
+              <RecuerdosMexicoMap testId="norte-unlock-flash-outline" theme={theme} />
               <div aria-hidden="true" style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
                 background: recuerdosFogBackground(RECUERDOS_PINS, {}, theme, { cdmxUnlockSeen: true, oaxacaUnlockSeen: true, yucatanUnlockSeen: true, norteUnlockSeen: true }),
