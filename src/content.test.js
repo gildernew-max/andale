@@ -607,7 +607,7 @@ const SAFE_RISKY_LITERALS = {
 const SAFE_RISKY_WHYS = {
   "No manches.": { es: "Suena a amigos en México. Con jefes o personas mayores, pásate a algo más suave.", en: "Sounds like friends in Mexico. With bosses or elders, switch to something softer." },
   "Quedo a sus órdenes.": { es: "Cierre profesional mexicano: amable, claro, seguro. Encaja en correo con clientas.", en: "A Mexican professional close: warm, clear, safe. Fits an email to a client." },
-  "¿Mande?": { es: "Viene de *mandar* / «mande usted» («dígame» / «a sus órdenes»). Hoy es el «¿perdón?» cortés de México; con la suegra gana a un «¿Qué?» seco.", en: "From *mandar* / «mande usted» (“tell me” / “at your service”). Now Mexico’s polite “Pardon?” — beats blunt «¿Qué?» with your mother-in-law." },
+  "¿Mande?": { es: "De *mandar* / «mande usted»: el «¿perdón?» cortés de México; gana a «¿Qué?» con la suegra.", en: "From *mandar* / «mande usted»: Mexico’s polite “Pardon?” — beats blunt «¿Qué?» with your mother-in-law." },
   "¿Qué?": { es: "Puede sonar brusco. Mejor «¿Mande?» o «¿Cómo?» según a quién le hablas.", en: "It can land blunt. Prefer «¿Mande?» or «¿Cómo?» depending on who you’re talking to." },
   "¿Me da un café, por favor?": { es: "Natural en el mostrador: directo y cortés. Mejor que «¿Puedo obtener un café?»", en: "Natural at the counter: direct and polite. Better than “Can I obtain a coffee?”" },
   "Está bien chido.": { es: "Suena mexicano y de amigos. En documentos o juntas formales, cámbialo.", en: "Sounds Mexican and friendly. In documents or formal meetings, swap it out." },
