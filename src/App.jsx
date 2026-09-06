@@ -13,6 +13,7 @@ import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
+import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -3414,6 +3415,59 @@ const diegoReaction = (won, delta, lang) => {
 
 
 
+
+const LetterBoard = ({ D, layout, onLayoutChange, picked = [], inWord, disabled, onPick }) => {
+  const mode = normalizeLetterLayout(layout);
+  const rows = rowsForLayout(mode);
+  return (
+    <div data-testid="letter-board" data-layout={mode}>
+      <div style={{ display: "grid", gap: 6 }}>
+        {rows.map((row, ri) => (
+          <div key={ri} data-testid="letter-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+            {row.map((letter) => {
+              const wasPicked = picked.includes(letter);
+              const hit = wasPicked && inWord?.(letter);
+              return (
+                <button key={letter} type="button" data-testid="letter-chip" data-letter={letter}
+                  disabled={disabled || wasPicked} onClick={() => onPick(letter)}
+                  aria-label={letter}
+                  style={{
+                    flex: "1 1 0", maxWidth: 38, minWidth: 0, height: 38, borderRadius: 10,
+                    border: `2px solid ${wasPicked ? (hit ? D.green : D.red) : D.line}`,
+                    borderBottom: `4px solid ${wasPicked ? (hit ? D.greenDark : D.redDark) : D.line}`,
+                    background: wasPicked ? (hit ? D.okBg : D.badBg) : "#fff",
+                    color: wasPicked ? (hit ? D.okText : D.badText) : D.green,
+                    fontWeight: 800, fontSize: 14, fontFamily: "inherit",
+                    cursor: wasPicked || disabled ? "default" : "pointer",
+                  }}>
+                  {letter}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div data-testid="letter-layout-toggle" role="group" aria-label="ABC QWERTY"
+        style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 10 }}>
+        <button type="button" data-testid="letter-layout-abc" aria-pressed={mode === "abc"}
+          onClick={() => onLayoutChange("abc")}
+          style={{
+            border: "none", background: "none", fontFamily: "inherit", padding: "4px 2px", cursor: "pointer",
+            fontWeight: mode === "abc" ? 900 : 700, fontSize: 11, letterSpacing: ".04em", lineHeight: 1,
+            color: mode === "abc" ? D.ink : D.sub,
+          }}>ABC</button>
+        <span aria-hidden="true" style={{ color: D.sub, fontWeight: 700, fontSize: 11, lineHeight: 1 }}>·</span>
+        <button type="button" data-testid="letter-layout-qwerty" aria-pressed={mode === "qwerty"}
+          onClick={() => onLayoutChange("qwerty")}
+          style={{
+            border: "none", background: "none", fontFamily: "inherit", padding: "4px 2px", cursor: "pointer",
+            fontWeight: mode === "qwerty" ? 900 : 700, fontSize: 11, letterSpacing: ".04em", lineHeight: 1,
+            color: mode === "qwerty" ? D.ink : D.sub,
+          }}>QWERTY</button>
+      </div>
+    </div>
+  );
+};
 
 const LangToggle = ({ uiLang, D, onPick, style }) => (
   <div data-testid="lang-toggle" role="group"
@@ -8142,7 +8196,7 @@ export default function App() {
       {screen === "ahorcado" && ahorcado && (() => {
         const { word, wordNorm, hint, guessed, done, won } = ahorcado;
         const wrong = guessed.filter((g) => !wordNorm.includes(g));
-        const ALPHA = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
+        const letterLayout = normalizeLetterLayout(prog.letterLayout);
         const gallowParts = [
           <circle key="h" cx="60" cy="30" r="10" stroke="currentColor" strokeWidth="3" fill="none" />,
           <line key="b" x1="60" y1="40" x2="60" y2="70" stroke="currentColor" strokeWidth="3" />,
@@ -8209,19 +8263,15 @@ export default function App() {
                     {uiLang === "en" ? "Missed: " : "Fallidas: "}{wrong.join(", ")}
                   </div>
                 )}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
-                  {ALPHA.map((letter) => {
-                    const inWord = wordNorm.includes(letter);
-                    const picked = guessed.includes(letter);
-                    return (
-                      <button key={letter} disabled={picked} onClick={() => guessAhorcadoLetter(letter)}
-                        aria-label={letter}
-                        style={{ width: 38, height: 38, borderRadius: 10, border: `2px solid ${picked ? (inWord ? D.green : D.red) : D.line}`, borderBottom: `4px solid ${picked ? (inWord ? D.greenDark : D.redDark) : D.line}`, background: picked ? (inWord ? D.okBg : D.badBg) : D.card, color: picked ? (inWord ? D.okText : D.badText) : D.ink, fontWeight: 900, fontSize: 14, fontFamily: "inherit", cursor: picked ? "default" : "pointer" }}>
-                        {letter}
-                      </button>
-                    );
-                  })}
-                </div>
+                <LetterBoard
+                  D={D}
+                  layout={letterLayout}
+                  onLayoutChange={(next) => save({ letterLayout: normalizeLetterLayout(next) })}
+                  picked={guessed}
+                  inWord={(letter) => wordNorm.includes(letter)}
+                  disabled={done}
+                  onPick={guessAhorcadoLetter}
+                />
               </>
             )}
           </div>

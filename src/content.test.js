@@ -6,6 +6,7 @@ import { hoyStillFor, LANTERN_STILL } from "./hoyStill.js";
 import { comeBackTomorrowLine, hoySceneForDay, nextDayKey } from "./firstDoor.js";
 import { hoySceneBeatCount, shouldParkHoyUnderMas } from "./hoyWin.js";
 import { FOCUS_LABELS, PRACTICE_EXPLAIN, explainText, focusLabel, uiText } from "./practiceI18n.js";
+import { DEFAULT_LETTER_LAYOUT, lettersForLayout } from "./letterBoard.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -828,6 +829,19 @@ assert(!appSrc.includes("color: used ? D.greenDark : D.ink"), "BUILD WITH WORDS 
 assert(appSrc.includes('green: "#58CC02"'), "CHECK / chip lime stays the stamped D.green token");
 assert(/color: used \? D\.greenDark : D\.green,\s*fontWeight: 800,/.test(appSrc), "BUILD WITH WORDS unused chip label is No Face stamp weight 800+");
 assert(!/press 1|Press 1|pulsa 1|Pulsa 1/.test(appSrc), "no press-1 banner chrome");
+assert(DEFAULT_LETTER_LAYOUT === "qwerty", "letter boards default to QWERTY");
+assert(lettersForLayout("qwerty").join("") === "QWERTYUIOPASDFGHJKLÑZXCVBNM", "QWERTY has Ñ after L");
+assert(lettersForLayout("abc").join("") === "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ", "ABC is the A–Z grid");
+assert(appSrc.includes("<LetterBoard"), "letter-pick surfaces share LetterBoard");
+assert(appSrc.includes("data-testid=\"letter-board\""), "letter board is testable");
+assert(appSrc.includes("data-testid=\"letter-layout-toggle\""), "ABC / QWERTY toggle is testable");
+assert(appSrc.includes(">ABC</button>") && appSrc.includes(">QWERTY</button>"), "quiet toggle stamps are ABC / QWERTY");
+assert(appSrc.includes("save({ letterLayout:"), "letter layout persists on the progress store");
+assert(appSrc.includes("normalizeLetterLayout(prog.letterLayout)"), "Hangman reads persisted letter layout");
+assert(!appSrc.includes('const ALPHA = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"'), "no hardcoded A–Z wrap on Hangman");
+assert(!/switch to ABC|cambia a ABC|keyboard layout|elige el teclado|press QWERTY/i.test(appSrc), "no instructional letter-layout banner");
+assert(appSrc.includes("color: wasPicked ? (hit ? D.okText : D.badText) : D.green"), "unused letter chips use CHECK lime");
+assert(appSrc.includes('background: wasPicked ? (hit ? D.okBg : D.badBg) : "#fff"'), "unused letter chips stay on a white chip");
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const pngMagic = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const mascotPng = join(repoRoot, "public", "mascot", "axolotl.png");
