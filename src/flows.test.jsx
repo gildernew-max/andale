@@ -3545,8 +3545,8 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
     await waitFor(() => expect(document.body.textContent).toMatch(/Te llamo cuando/));
     const saldre = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() === "saldré");
-    expect(saldré).toBeTruthy();
-    await user.click(saldré);
+    expect(saldre).toBeTruthy();
+    await user.click(saldre);
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByTestId("practice-quip")).toBeTruthy());
     expect(screen.getByTestId("practice-quip").textContent).not.toMatch(/La idea está|Cerca\.|Respira\.|mal estacionado/);
