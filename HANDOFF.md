@@ -43,6 +43,16 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **Why**
 - Dave: hover/tap a word (e.g. cosecha) for a short translation reminder. Hand: mechanic + extendable map; George stamps the rest.
 
+## 2026-09-06 (George TRIM — cerezas Why card)
+
+**What changed**
+- Cerezas `¿Por qué se negó…` Why trimmed to a ≤3-sentence card. Focus stays `Lectura` / `Reading`.
+- Calle / Disculpe Why stays the previous street-short stamp.
+- Soft chrome parked. Do not merge.
+
+**Why**
+- George trim: teacher Why, card length.
+
 ## 2026-09-06 (George expanded Why — cerezas + Calle)
 
 **What changed**
