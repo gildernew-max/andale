@@ -231,7 +231,7 @@ async function collectStoryLifts(user, { maxBeats = 8 } = {}) {
     const cue = screen.queryByTestId("story-quiz-cue");
     const passage = screen.queryByTestId("story-quiz-passage");
     if (cue) lifts.push(`CUE:${cue.textContent}`);
-    if (passage) lifts.push(`PASSAGE:${passage.textContent.slice(0, 120)}`);
+    if (passage) lifts.push(`PASSAGE:${passage.textContent}`);
     if (cue) expect(passage).toBeTruthy();
     expect(screen.queryByTestId("story-quiz-cue-line")).toBeNull();
     if (STORY_LIFT_RE.test(text) || CEREZAS_Q_RE.test(text)) {
