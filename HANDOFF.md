@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (Safe/Risky Quedo — George Why stamp)
+
+**What changed**
+- Quedo Why superseded. Literal stays hard gloss: ES `Quedo bajo sus órdenes.` · EN `I remain under your orders.`
+- Why EN: `Soft English: I’m at your service. Mexican professional close — warm, clear, safe for a client email.`
+- Why ES: `En tono suave: estoy a su disposición. Cierre profesional mexicano — amable, claro, seguro en correo con clientas.`
+- Soft chrome parked. Do not merge.
+
+**Why**
+- House rule: hard gloss → Literal; soft meaning → Why.
+
 ## 2026-09-06 (Safe/Risky Quedo — Dave/George hard gloss)
 
 **What changed**

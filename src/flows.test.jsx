@@ -475,7 +475,7 @@ describe("simulated learner flows", () => {
     };
     const whys = {
       "No manches.": { es: "Suena a amigos en México. Con jefes o personas mayores, pásate a algo más suave.", en: "Sounds like friends in Mexico. With bosses or elders, switch to something softer." },
-      "Quedo a sus órdenes.": { es: "Cierre profesional mexicano: amable, claro, seguro. Encaja en correo con clientas.", en: "A Mexican professional close: warm, clear, safe. Fits an email to a client." },
+      "Quedo a sus órdenes.": { es: "En tono suave: estoy a su disposición. Cierre profesional mexicano — amable, claro, seguro en correo con clientas.", en: "Soft English: I’m at your service. Mexican professional close — warm, clear, safe for a client email." },
       "¿Mande?": { es: "De mandar / «mande usted»: el «¿perdón?» cortés de México. Con la suegra, gana a un «¿Qué?» seco.", en: "From mandar / «mande usted»: Mexico’s polite “Pardon?” With your mother-in-law, it beats a blunt «¿Qué?»" },
       "¿Qué?": { es: "Puede sonar brusco. Mejor «¿Mande?» o «¿Cómo?» según a quién le hablas.", en: "It can land blunt. Prefer «¿Mande?» or «¿Cómo?» depending on who you’re talking to." },
       "¿Me da un café, por favor?": { es: "Natural en el mostrador: directo y cortés. Mejor que «¿Puedo obtener un café?»", en: "Natural at the counter: direct and polite. Better than “Can I obtain a coffee?”" },
@@ -508,6 +508,8 @@ describe("simulated learner flows", () => {
       expect(literal.textContent).toContain("Quedo bajo sus órdenes.");
       expect(literal.textContent).not.toMatch(/at your service/i);
       expect(literal.textContent).not.toMatch(/disposición/i);
+      expect(why.textContent).toContain("En tono suave: estoy a su disposición.");
+      expect(why.textContent).not.toContain("Encaja en correo con clientas.");
     }
     if (phrase === "Está bien chido.") {
       expect(literal.textContent).toContain("Está muy padre.");
@@ -519,6 +521,7 @@ describe("simulated learner flows", () => {
     if (phrase === "Quedo a sus órdenes.") {
       expect(screen.getByTestId("safe-risky-literal").textContent).toContain("I remain under your orders.");
       expect(screen.getByTestId("safe-risky-literal").textContent).not.toMatch(/at your service/i);
+      expect(screen.getByTestId("safe-risky-why").textContent).toContain("Soft English: I’m at your service.");
     }
     expect(screen.getByTestId("safe-risky-why").textContent).toContain("Why");
     expect(screen.getByTestId("safe-risky-why").textContent).toContain(whys[phrase].en);
@@ -559,6 +562,7 @@ describe("simulated learner flows", () => {
       expect(literal.textContent).toContain("Quedo bajo sus órdenes.");
       expect(literal.textContent).not.toMatch(/at your service/i);
       expect(literal.textContent).not.toMatch(/disposición/i);
+      expect(why.textContent).toContain("En tono suave: estoy a su disposición.");
     }
     if (phrase === "Está bien chido.") {
       expect(literal.textContent).toContain("Está muy padre.");

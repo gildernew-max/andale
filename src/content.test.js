@@ -607,7 +607,7 @@ const SAFE_RISKY_LITERALS = {
 };
 const SAFE_RISKY_WHYS = {
   "No manches.": { es: "Suena a amigos en México. Con jefes o personas mayores, pásate a algo más suave.", en: "Sounds like friends in Mexico. With bosses or elders, switch to something softer." },
-  "Quedo a sus órdenes.": { es: "Cierre profesional mexicano: amable, claro, seguro. Encaja en correo con clientas.", en: "A Mexican professional close: warm, clear, safe. Fits an email to a client." },
+  "Quedo a sus órdenes.": { es: "En tono suave: estoy a su disposición. Cierre profesional mexicano — amable, claro, seguro en correo con clientas.", en: "Soft English: I’m at your service. Mexican professional close — warm, clear, safe for a client email." },
   "¿Mande?": { es: "De mandar / «mande usted»: el «¿perdón?» cortés de México. Con la suegra, gana a un «¿Qué?» seco.", en: "From mandar / «mande usted»: Mexico’s polite “Pardon?” With your mother-in-law, it beats a blunt «¿Qué?»" },
   "¿Qué?": { es: "Puede sonar brusco. Mejor «¿Mande?» o «¿Cómo?» según a quién le hablas.", en: "It can land blunt. Prefer «¿Mande?» or «¿Cómo?» depending on who you’re talking to." },
   "¿Me da un café, por favor?": { es: "Natural en el mostrador: directo y cortés. Mejor que «¿Puedo obtener un café?»", en: "Natural at the counter: direct and polite. Better than “Can I obtain a coffee?”" },
@@ -627,8 +627,14 @@ for (const [phrase, literal] of Object.entries(SAFE_RISKY_LITERALS)) {
 const quedo = SAFE_RISKY_ITEMS.find((it) => it.phrase === "Quedo a sus órdenes.");
 assert(quedo.literal.es === "Quedo bajo sus órdenes.", "quedo ES literal is hard gloss");
 assert(quedo.literal.en === "I remain under your orders.", "quedo EN literal is hard gloss");
+assert(quedo.note.es === "En tono suave: estoy a su disposición. Cierre profesional mexicano — amable, claro, seguro en correo con clientas.", "quedo ES Why is George stamp");
+assert(quedo.note.en === "Soft English: I’m at your service. Mexican professional close — warm, clear, safe for a client email.", "quedo EN Why is George stamp");
 assert(!/at your service/i.test(quedo.literal.en), "quedo EN literal is not soft I’m at your service");
 assert(!/disposición/i.test(quedo.literal.es), "quedo ES literal is not soft disposición");
+assert(/I’m at your service/.test(quedo.note.en), "soft EN lives in Why");
+assert(/estoy a su disposición/.test(quedo.note.es), "soft ES lives in Why");
+assert(!/A Mexican professional close: warm, clear, safe/.test(quedo.note.en), "old EN Why superseded");
+assert(!/Encaja en correo con clientas/.test(quedo.note.es), "old ES Why superseded");
 assert(!/I’m at your service/.test(`${quedo.literal.es}${quedo.literal.en}`), "curly soft EN literal gone");
 assert(!/I'm at your service/.test(`${quedo.literal.es}${quedo.literal.en}`), "straight soft EN literal gone");
 assert(!SAFE_RISKY_ITEMS.some((it) => /at your service/i.test(`${it.literal?.es}${it.literal?.en}`)), "Safe/Risky pack has no at-your-service literal");
