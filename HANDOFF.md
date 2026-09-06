@@ -7,7 +7,7 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **What changed**
 - Safe/Risky reveal (above CONTINUE, correct and wrong) shows stamped chrome: ES `Traducción` / `Por qué` · EN `Literal` / `Why`. Order is Literal first, Why second.
 - Eight `literal: { es, en }` from the pack. Chido ES is `Está muy padre.` — no English in Traducción.
-- Why/`note` is George’s teacher-voice pack. ¿Mande? Why is plain `mandar` / «mande usted» (no markdown asterisks). Literal stays `¿Cómo? / ¿perdón?` / `Pardon?`.
+- Why/`note` is George’s favorite-teacher pack (exact, no asterisks). ¿Mande? Why: plain `mandar` / «mande usted». Literal stays `¿Cómo? / ¿perdón?` / `Pardon?`.
 - Soft chrome parked. Lectura / Yucatán untouched. Do not merge.
 
 **Why**

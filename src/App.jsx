@@ -2847,7 +2847,7 @@ const SAFE_RISKY_ITEMS = [
     context: { es: "No escuchaste lo que dijo alguien en México.", en: "You did not hear what someone said in Mexico." },
     answer: "regional",
     literal: { es: "¿Cómo? / ¿perdón?", en: "Pardon?" },
-    note: { es: "De mandar / «mande usted»: el «¿perdón?» cortés de México; gana a «¿Qué?» con la suegra.", en: "From mandar / «mande usted»: Mexico’s polite “Pardon?” — beats blunt «¿Qué?» with your mother-in-law." },
+    note: { es: "De mandar / «mande usted»: el «¿perdón?» cortés de México. Con la suegra, gana a un «¿Qué?» seco.", en: "From mandar / «mande usted»: Mexico’s polite “Pardon?” With your mother-in-law, it beats a blunt «¿Qué?»" },
   },
   {
     phrase: "¿Qué?",
