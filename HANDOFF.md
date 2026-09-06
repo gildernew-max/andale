@@ -43,6 +43,18 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **Why**
 - Dave: hover/tap a word (e.g. cosecha) for a short translation reminder. Hand: mechanic + extendable map; George stamps the rest.
 
+## 2026-09-06 (Reading Why stamp — cerezas quiz)
+
+**What changed**
+- `story-9` «Las cerezas de don Adán» quiz item `¿Por qué se negó…` Why + Focus follow `uiLang`.
+- George Why exact: ES `La oferta era premium. Se negó por independencia, no por mal pago.` · EN `The offer was premium. He refused for independence, not bad pay.`
+- Focus stays the existing key `Lectura` → ES `Lectura` · EN `Reading`.
+- Lectura comprehension shows Why + Focus after that answer. Practice lifts (`liftStoryQuizItem`) keep the authored Why instead of the generic lectura line.
+- Soft chrome parked. Other story quiz items unstamped. Do not merge.
+
+**Why**
+- George stamp on the refused-harvest reading item. Soft meaning lives in Why; Focus is Lectura.
+
 ## 2026-09-06 (Cenzontle lockup — abandons axolotl)
 
 **What changed**

@@ -1224,6 +1224,24 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB/);
   });
 
+  it("cerezas reading quiz Why + Focus follow uiLang after the refused item", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: "Preguntas" }));
+    await waitFor(() => expect(screen.getByText(/¿Por qué se negó a vender toda su cosecha/)).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: "Porque no quería depender de una sola empresa" }));
+    await waitFor(() => expect(screen.getByTestId("story-quiz-why")).toBeTruthy());
+    expect(screen.getByTestId("story-quiz-focus").textContent).toBe("Foco: Lectura");
+    expect(screen.getByTestId("story-quiz-why").textContent).toBe("La oferta era premium. Se negó por independencia, no por mal pago.");
+    expect(screen.getAllByTestId("story-quiz-why")).toHaveLength(1);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("story-quiz-focus").textContent).toBe("Focus: Reading"));
+    expect(screen.getByTestId("story-quiz-why").textContent).toBe("The offer was premium. He refused for independence, not bad pay.");
+  });
+
   it("first-door hero is Hoy or Phrase Doctor, not Subjuntivo Continuar", async () => {
     const user = await boot();
     const hero = screen.getByTestId("hero-cta");
