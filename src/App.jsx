@@ -835,8 +835,9 @@ const storage = {
   },
 };
 
-/* WRAP PREP — speech/storage flags only. Enroll off. No PrivacyInfo until Mon wrap.
+/* WRAP PREP — speech/storage flags. Enroll off.
    Pages stays vite base '/andale/'. Wrap/WKWebView rebuild uses base '/'.
+   PrivacyInfo.xcprivacy is the iOS privacy manifest (copy into ios/App/App after `cap add ios`).
    Wrap may set window.__andaleSpeech / window.__andaleStorage before boot. */
 if (typeof window !== "undefined") {
   if (window.__andaleSpeech == null) window.__andaleSpeech = !!window.speechSynthesis;

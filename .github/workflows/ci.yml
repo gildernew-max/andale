@@ -18,3 +18,13 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - name: Pages build keeps /andale/ assets
+        run: grep -q 'src="/andale/assets/' dist/index.html
+      - name: Wrap build uses base /
+        run: |
+          npm run build:wrap
+          grep -q 'src="/assets/' dist/index.html
+          if grep -E '(src|href)="/andale/' dist/index.html; then
+            echo "FAIL: wrap index.html still references /andale/ assets" >&2
+            exit 1
+          fi
