@@ -80,13 +80,14 @@ const continueBtn = () => screen.getByRole("button", { name: /^Continuar$/i });
 
 const localToday = () => dayKeyFromDate(new Date());
 
-/** Same eight Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
+/** Same nine Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
 const HOY_TITLES = [
   { title: "Noche de faroles", titleEn: "Night of lanterns" },
   { title: "En la farmacia", titleEn: "At the pharmacy" },
   { title: "WhatsApp del plomero", titleEn: "Plumber WhatsApp" },
   { title: "WhatsApp del vecino", titleEn: "Neighbor WhatsApp" },
   { title: "En la calle", titleEn: "On the street" },
+  { title: "Cita en el banco", titleEn: "Bank appointment" },
   { title: "WhatsApp del casero", titleEn: "Landlord WhatsApp" },
   { title: "Mostrador en caos", titleEn: "Airport Counter Chaos" },
   { title: "Cena con la suegra", titleEn: "Dinner With the In-Laws" },
@@ -1400,7 +1401,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     expect(screen.getByTestId("camino-more-panel")).toBeTruthy();
     expect(screen.getByTestId("first-door-hero").textContent).toMatch(/Jugar la escena|Play the scene/);
-    expect(promised.title).toMatch(/WhatsApp del casero|Mostrador en caos|Noche de faroles|Cena con la suegra|En la farmacia|WhatsApp del plomero|WhatsApp del vecino|En la calle/);
+    expect(promised.title).toMatch(/WhatsApp del casero|Mostrador en caos|Noche de faroles|Cena con la suegra|En la farmacia|WhatsApp del plomero|WhatsApp del vecino|En la calle|Cita en el banco/);
   });
 
   it("undismissed soft paywall clears when the day rolls — no stale Doctora handoff", async () => {
@@ -1420,7 +1421,7 @@ describe("simulated learner flows", () => {
       expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
       expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena|Play the scene/);
-      expect(screen.getByTestId("hoy-title").textContent).toBe("WhatsApp del plomero");
+      expect(screen.getByTestId("hoy-title").textContent).toBe("WhatsApp del vecino");
       expect(screen.queryByTestId("first-door-title")).toBeNull();
       expect(document.body.textContent).not.toMatch(/Ya empezó tu racha|Your streak just started/);
     } finally {
