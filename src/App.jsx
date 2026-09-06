@@ -1561,6 +1561,8 @@ const LogoMark = ({ size = 30, ...rest }) => (
     {...rest}
   />
 );
+/** Adult sage from Confident v1 belly/tail. Lockup wordmark only — Duo lime chrome stays parked. */
+const MARK_INK = "#5C7356";
 
 /** Dave-cleared illustrated Mexico. Pins / glow / fog sit on top. */
 const RecuerdosMexicoMap = ({ testId, theme }) => (
@@ -5773,7 +5775,7 @@ export default function App() {
           <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
               <LogoMark size={34} />
-              <span style={{ fontWeight: 900, fontSize: 23, color: D.green, letterSpacing: "-0.02em" }}>ándale</span>
+              <span style={{ fontWeight: 900, fontSize: 23, color: MARK_INK, letterSpacing: "-0.02em" }}>ándale</span>
             </div>
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
               <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>
@@ -7042,7 +7044,7 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
               <LogoMark size={130} data-testid="splash-hero" />
             </div>
-            <div style={{ fontWeight: 900, fontSize: 30, color: D.green, letterSpacing: "-0.02em", marginBottom: 4 }}>¡ándale!</div>
+            <div style={{ fontWeight: 900, fontSize: 30, color: MARK_INK, letterSpacing: "-0.02em", marginBottom: 4 }}>¡ándale!</div>
             <div data-testid="splash-line" style={{ fontWeight: 800, fontSize: 14.5, color: D.sub, marginBottom: 22, lineHeight: 1.4 }}>
               {L.splashLine}
             </div>
