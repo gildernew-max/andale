@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (Norte unlock flash — streak-5 Hoy ¡Eso!)
+
+**What changed**
+- Streak-5 Hoy `¡Eso!` / `That's it.` CONTINUE plays a Norte glow beat with **`Abierto` / `Open` only** (same stamps as Bajío / CDMX / Oaxaca / Yucatán). Placement is **before close or idle**, not before the soft paywall.
+- CONTINUE uses earned streak (`norteUnlockFlashStreak`: yesterday → 5) so raw streak 4 cannot skip. Stale Yucatán due cannot steal the beat once Yucatán was seen. `norteUnlockSeen` waits until the overlay is on screen (map pin opens after glow). Pin id stays `norte`; map stamps stay `Norte` / `North`.
+- Once-only. No pep, no new copy, no backpack, no enroll/IAP. Door / paywall / A2HS / Bajío streak-1 → glow → wall / CDMX day-2 → glow before idle / Oaxaca streak-3 → glow before idle / Yucatán streak-4 → glow before idle stay.
+
+**Why**
+- Same class as Yucatán streak-4 (PR 87): return map beat after earned streak, glow before idle, do not flip Open before the overlay.
+
 ## 2026-09-05 (Yucatán unlock flash — streak-4 Hoy ¡Eso!)
 
 **What changed**

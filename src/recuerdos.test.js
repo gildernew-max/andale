@@ -1,6 +1,7 @@
 import {
   CDMX_PIN,
   FIRST_GLOW_PIN,
+  NORTE_PIN,
   OAXACA_PIN,
   YUCATAN_PIN,
   MEXICO_OUTLINE_PATH,
@@ -22,7 +23,10 @@ import {
   isOaxacaUnlockFlashDue,
   isOaxacaUnlockFlashLive,
   isStreak3HoyEsoWin,
+  isNorteUnlockFlashDue,
+  isNorteUnlockFlashLive,
   isStreak4HoyEsoWin,
+  isStreak5HoyEsoWin,
   isYucatanUnlockFlashDue,
   isYucatanUnlockFlashLive,
   isFirstStreakEsoWin,
@@ -33,6 +37,8 @@ import {
   markCdmxUnlockFlashLive,
   markOaxacaUnlockFlashDue,
   markOaxacaUnlockFlashLive,
+  markNorteUnlockFlashDue,
+  markNorteUnlockFlashLive,
   markYucatanUnlockFlashDue,
   markYucatanUnlockFlashLive,
   recuerdosFogBackground,
@@ -45,7 +51,10 @@ import {
   shouldShowBajioUnlockFlash,
   shouldShowCdmxUnlockFlash,
   shouldShowOaxacaUnlockFlash,
+  shouldShowNorteUnlockFlash,
   shouldShowYucatanUnlockFlash,
+  norteUnlockFlashCopy,
+  norteUnlockFlashStreak,
   oaxacaUnlockFlashCopy,
   oaxacaUnlockFlashStreak,
   yucatanUnlockFlashCopy,
@@ -99,6 +108,9 @@ assert(RECUERDOS_PINS.find((p) => p.id === "yucatan")?.id === YUCATAN_PIN, "Yuca
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "yucatan"), {}, { yucatanUnlockSeen: true }), "streak-4 Hoy unlock opens Yucatán");
 assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "oaxaca"), {}, { yucatanUnlockSeen: true }), "Yucatán unlock does not open Oaxaca");
 assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "norte"), {}, { yucatanUnlockSeen: true }), "Yucatán unlock does not open Norte");
+assert(RECUERDOS_PINS.find((p) => p.id === "norte")?.id === NORTE_PIN, "Norte pin id is norte");
+assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "norte"), {}, { norteUnlockSeen: true }), "streak-5 Hoy unlock opens Norte");
+assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "yucatan"), {}, { norteUnlockSeen: true }), "Norte unlock does not open Yucatán");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "yucatan"), { "story-2": true }), "Yucatán opens on Cancún");
 assert(isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "norte"), { "story-5": true }), "Norte opens on Tijuana");
 assert(!isRecuerdosPinOpen(RECUERDOS_PINS.find((p) => p.id === "cdmx"), { "story-0": true }), "Bajío claim does not open CDMX");
@@ -350,5 +362,71 @@ markYucatanUnlockFlashDue(true);
 assert(isYucatanUnlockFlashDue(), "Yucatán due flag survives a tab remount after Eso CONTINUE");
 markYucatanUnlockFlashDue(false);
 assert(!isYucatanUnlockFlashDue(), "Yucatán due flag clears after the glow");
+
+assert(isStreak5HoyEsoWin({ day2Hoy: true }), "day2Hoy stamp still counts as streak-5 Hoy Eso");
+assert(isStreak5HoyEsoWin({ firstHoy: true }), "short Hoy Eso still counts on streak-5");
+assert(isStreak5HoyEsoWin({ esoWin: true }), "esoWin stamp still counts if firstHoy dropped");
+assert(isStreak5HoyEsoWin({ todaySceneId: "taqueria" }), "streak-5 Hoy scene id counts");
+assert(isStreak5HoyEsoWin({ unitId: "_today:taqueria" }), "Hoy unitId still counts if todaySceneId dropped");
+assert(!isStreak5HoyEsoWin({ firstDoctora: true, todaySceneId: "taqueria" }), "first Doctora stays on the Bajío path");
+assert(!isStreak5HoyEsoWin({}), "empty session is not a streak-5 Hoy Eso");
+
+const streak5Hoy = { streak5HoyEso: true, streak: 5 };
+assert(shouldShowNorteUnlockFlash(streak5Hoy), "streak-5 Hoy Eso CONTINUE arms the Norte glow beat");
+assert(norteUnlockFlashStreak({
+  streak: 4,
+  lastDay: "2026-09-07",
+  today: "2026-09-08",
+  yesterday: "2026-09-07",
+}) === 5, "streak-5 CONTINUE earns streak 5 before persist");
+assert(norteUnlockFlashStreak({
+  streak: 5,
+  lastDay: "2026-09-08",
+  today: "2026-09-08",
+  yesterday: "2026-09-07",
+}) === 5, "already-committed streak-5 win stays streak 5");
+assert(norteUnlockFlashStreak({
+  streak: 4,
+  lastDay: "2026-09-07",
+  today: "2026-09-07",
+  yesterday: "2026-09-06",
+}) === 4, "same-day streak-4 stays Yucatán, not Norte");
+assert(shouldShowNorteUnlockFlash({
+  streak5HoyEso: isStreak5HoyEsoWin({ todaySceneId: "taqueria" }),
+  streak: 5,
+}), "streak-5 Hoy scene CONTINUE arms Norte");
+assert(shouldShowNorteUnlockFlash({
+  streak5HoyEso: isStreak5HoyEsoWin({ todaySceneId: "taqueria" }),
+  streak: norteUnlockFlashStreak({
+    streak: 4,
+    lastDay: "2026-09-07",
+    today: "2026-09-08",
+    yesterday: "2026-09-07",
+  }),
+}), "raw streak 4 on streak-5 Hoy CONTINUE still arms Norte");
+assert(!shouldShowNorteUnlockFlash({ ...streak5Hoy, norteUnlockSeen: true }), "Norte seen flag never re-flashes");
+assert(!shouldShowNorteUnlockFlash({ streak5HoyEso: false, streak: 5 }), "later win without streak-5 Hoy Eso does not flash Norte");
+assert(!shouldShowNorteUnlockFlash({ streak5HoyEso: true, streak: 1 }), "first streak-1 Eso stays Bajío, not Norte");
+assert(!shouldShowNorteUnlockFlash({ streak5HoyEso: true, streak: 2 }), "day-2 streak Eso stays CDMX, not Norte");
+assert(!shouldShowNorteUnlockFlash({ streak5HoyEso: true, streak: 3 }), "streak-3 Eso stays Oaxaca, not Norte");
+assert(!shouldShowNorteUnlockFlash({ streak5HoyEso: true, streak: 4 }), "streak-4 Eso stays Yucatán, not Norte");
+assert(!shouldShowNorteUnlockFlash({ streak5HoyEso: true, streak: 6 }), "day-6 / later streak does not re-flash Norte");
+assert(!shouldShowNorteUnlockFlash({}), "empty args do not flash Norte");
+assert(norteUnlockFlashCopy("es") === "Abierto", "Norte flash ES copy is Abierto only");
+assert(norteUnlockFlashCopy("en") === "Open", "Norte flash EN copy is Open only");
+assert(norteUnlockFlashCopy("es") === bajioUnlockFlashCopy("es"), "Norte reuses Bajío Abierto stamp");
+assert(norteUnlockFlashCopy("en") === bajioUnlockFlashCopy("en"), "Norte reuses Bajío Open stamp");
+assert(!/Norte|North|Yucatán|Yucatan|Oaxaca|CDMX|Bajío|¡Sigue explorando!|Sigue explorando|12\/25|backpack|Unlocked|Cerrado|Locked/i.test(
+  `${norteUnlockFlashCopy("es")}${norteUnlockFlashCopy("en")}`
+), "Norte flash copy is Abierto/Open only — no pep, no new lines");
+
+markNorteUnlockFlashLive(true);
+assert(isNorteUnlockFlashLive(), "Norte live flag stays up across a remount");
+markNorteUnlockFlashLive(false);
+assert(!isNorteUnlockFlashLive(), "Norte live flag clears after the flash");
+markNorteUnlockFlashDue(true);
+assert(isNorteUnlockFlashDue(), "Norte due flag survives a tab remount after Eso CONTINUE");
+markNorteUnlockFlashDue(false);
+assert(!isNorteUnlockFlashDue(), "Norte due flag clears after the glow");
 
 console.log("recuerdos.test.js: ok");
