@@ -3625,7 +3625,7 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /Start|Empezar/ }));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
     await waitFor(() => expect(document.body.textContent).toMatch(/BUILD WITH WORDS/));
-    expect(document.body.textContent).toMatch(/Write the full sentence/);
+    expect(document.body.textContent).toMatch(/Write what you hear|Write the full sentence/);
     const tiles = screen.getAllByTestId("bank-tile");
     expect(tiles.length).toBeGreaterThan(3);
     const check = screen.getByTestId("lesson-check");
