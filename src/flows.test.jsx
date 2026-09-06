@@ -13,6 +13,7 @@ import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isO
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
+import { SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -487,6 +488,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  setSafeRiskyPackOverride(null);
   markBajioUnlockFlashDue(false);
   markBajioUnlockFlashLive(false);
   markCdmxUnlockFlashDue(false);
@@ -690,6 +692,68 @@ describe("simulated learner flows", () => {
     if (phrase === "¿Qué?") {
       expect(literal.textContent).toContain("¿Qué?");
     }
+  });
+
+  it("Safe/Risky multi-correct waits for every right chip before CONTINUE", async () => {
+    setSafeRiskyPackOverride([SAFE_RISKY_MULTI_FIXTURE]);
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("safe-risky-start"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-choice-safe")).toBeTruthy());
+    expect(document.body.textContent).toContain("MULTI_CORRECT_FIXTURE");
+    expect(screen.queryByTestId("safe-risky-continue")).toBeNull();
+    expect(screen.queryByTestId("safe-risky-literal")).toBeNull();
+
+    await user.click(screen.getByTestId("safe-risky-choice-safe"));
+    expect(screen.getByTestId("safe-risky-choice-safe").getAttribute("data-safe-risky-state")).toBe("correct");
+    expect(screen.queryByTestId("safe-risky-continue")).toBeNull();
+    expect(screen.queryByTestId("safe-risky-literal")).toBeNull();
+    expect(screen.getByTestId("safe-risky-choice-casual")).not.toBeDisabled();
+
+    await user.click(screen.getByTestId("safe-risky-choice-risky"));
+    expect(screen.getByTestId("safe-risky-choice-risky").getAttribute("data-safe-risky-state")).toBe("wrong");
+    expect(screen.queryByTestId("safe-risky-continue")).toBeNull();
+    expect(screen.queryByTestId("safe-risky-why")).toBeNull();
+
+    await user.click(screen.getByTestId("safe-risky-choice-casual"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-continue")).toBeTruthy());
+    expect(screen.getByTestId("safe-risky-choice-casual").getAttribute("data-safe-risky-state")).toBe("correct");
+    expect(screen.getByTestId("safe-risky-literal").textContent).toContain("Traducción");
+    expect(screen.getByTestId("safe-risky-literal").textContent).toContain("Fixture literal.");
+    expect(screen.getByTestId("safe-risky-why").textContent).toContain("Por qué");
+    expect(screen.getByTestId("safe-risky-why").textContent).toContain("Fixture why.");
+    expect(document.body.textContent).toMatch(/Mejor respuesta/);
+    expect(document.body.textContent).toMatch(/Seguro · Casual|Casual · Seguro/);
+    const literal = screen.getByTestId("safe-risky-literal");
+    const why = screen.getByTestId("safe-risky-why");
+    const cont = screen.getByTestId("safe-risky-continue");
+    expect(literal.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(why.compareDocumentPosition(cont) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(cont.textContent).toMatch(/Continuar|Terminar/);
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-literal").textContent).toContain("Literal"));
+    expect(screen.getByTestId("safe-risky-why").textContent).toContain("Why");
+    expect(screen.getByTestId("safe-risky-why").textContent).toContain("Fixture why.");
+    expect(document.body.textContent).toMatch(/Better answer/);
+    expect(screen.getByTestId("safe-risky-continue").textContent).toMatch(/Continue|Finish/);
+  });
+
+  it("Safe/Risky multi-correct clean tap-all unlocks CONTINUE with Literal then Why", async () => {
+    setSafeRiskyPackOverride([SAFE_RISKY_MULTI_FIXTURE]);
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("safe-risky-start"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-choice-safe")).toBeTruthy());
+    await user.click(screen.getByTestId("safe-risky-choice-casual"));
+    expect(screen.queryByTestId("safe-risky-continue")).toBeNull();
+    await user.click(screen.getByTestId("safe-risky-choice-safe"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-continue")).toBeTruthy());
+    expect(document.body.textContent).toMatch(/Buen juicio|Good judgment/);
+    expect(screen.getByTestId("safe-risky-literal").textContent).toContain("Traducción");
+    expect(screen.getByTestId("safe-risky-why").textContent).toContain("Por qué");
+    expect(screen.getByTestId("safe-risky-choice-risky").getAttribute("data-safe-risky-state")).toBe("idle");
+    expect(screen.getByTestId("safe-risky-choice-risky")).toBeDisabled();
   });
 
   const playMatchRound = async (user) => {
