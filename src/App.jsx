@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
+import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_OUTLINE_PATH, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -3268,6 +3268,9 @@ export default function App() {
   const [yucatanUnlockFlash, setYucatanUnlockFlash] = useState(false);
   const [yucatanFlashPending, setYucatanFlashPending] = useState(false);
   const yucatanFlashNextRef = useRef(null);
+  const [norteUnlockFlash, setNorteUnlockFlash] = useState(false);
+  const [norteFlashPending, setNorteFlashPending] = useState(false);
+  const norteFlashNextRef = useRef(null);
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
@@ -5118,6 +5121,42 @@ export default function App() {
     }, YUCATAN_UNLOCK_FLASH_MS);
     return () => clearTimeout(hide);
   }, [yucatanUnlockFlash]);
+  useEffect(() => {
+    if (isNorteUnlockFlashLive() || isNorteUnlockFlashDue()) {
+      setNorteUnlockFlash(true);
+    }
+  }, []);
+  useEffect(() => {
+    if (screen !== "done") return;
+    if (!shouldShowNorteUnlockFlash({
+      norteUnlockSeen: !!prog.norteUnlockSeen,
+      streak5HoyEso: isStreak5HoyEsoWin(session),
+      streak: norteUnlockFlashStreak({
+        streak: Number(prog.streak) || 0,
+        lastDay: prog.lastDay,
+        today: todayStr(),
+        yesterday: yesterdayStr(),
+      }),
+    })) return;
+    markNorteUnlockFlashDue(true);
+    setNorteFlashPending(true);
+  }, [screen, session, prog.norteUnlockSeen, prog.streak, prog.lastDay]);
+  useEffect(() => {
+    if (!norteUnlockFlash) return undefined;
+    // Persist Open only once the glow is on screen — CONTINUE must not flip the
+    // map pin and then race past the overlay (same class as Yucatán persist-on-CONTINUE).
+    save((prev) => (prev.norteUnlockSeen ? prev : { ...prev, norteUnlockSeen: true }));
+    const hide = setTimeout(() => {
+      markNorteUnlockFlashDue(false);
+      setNorteUnlockFlash(false);
+      const dest = norteFlashNextRef.current || "home";
+      norteFlashNextRef.current = null;
+      setNorteFlashPending(false);
+      setScreen(dest);
+      if (dest === "home") setTab("camino");
+    }, NORTE_UNLOCK_FLASH_MS);
+    return () => clearTimeout(hide);
+  }, [norteUnlockFlash]);
   const dismissSoftPaywall = (plan, { fromBackdrop } = {}) => {
     if (fromBackdrop && !paywallArmed) return;
     setSoftPaywall(false);
@@ -5227,6 +5266,7 @@ export default function App() {
         }),
       }) || (!prog.oaxacaUnlockSeen && (oaxacaFlashPending || isOaxacaUnlockFlashDue()))
     );
+    // Stale Yucatán due from streak-4 must not steal streak-5 Norte once Yucatán was seen.
     const willYucatanFlash = !willFlash && !willCdmxFlash && !willOaxacaFlash && (
       shouldShowYucatanUnlockFlash({
         yucatanUnlockSeen: !!prog.yucatanUnlockSeen,
@@ -5238,6 +5278,18 @@ export default function App() {
           yesterday: yesterdayStr(),
         }),
       }) || (!prog.yucatanUnlockSeen && (yucatanFlashPending || isYucatanUnlockFlashDue()))
+    );
+    const willNorteFlash = !willFlash && !willCdmxFlash && !willOaxacaFlash && !willYucatanFlash && (
+      shouldShowNorteUnlockFlash({
+        norteUnlockSeen: !!prog.norteUnlockSeen,
+        streak5HoyEso: isStreak5HoyEsoWin(session),
+        streak: norteUnlockFlashStreak({
+          streak: Number(prog.streak) || 0,
+          lastDay: prog.lastDay,
+          today: t,
+          yesterday: yesterdayStr(),
+        }),
+      }) || (!prog.norteUnlockSeen && (norteFlashPending || isNorteUnlockFlashDue()))
     );
     save((prev) => ({
       ...progressAfterWinContinue(prev, {
@@ -5284,6 +5336,16 @@ export default function App() {
       setYucatanFlashPending(true);
       yucatanFlashNextRef.current = next;
     }
+    if (willNorteFlash && next === "home") {
+      markNorteUnlockFlashDue(true);
+      setNorteFlashPending(false);
+      norteFlashNextRef.current = next;
+      setNorteUnlockFlash(true);
+    } else if (willNorteFlash) {
+      markNorteUnlockFlashDue(true);
+      setNorteFlashPending(true);
+      norteFlashNextRef.current = next;
+    }
     setScreen(next);
     if (next === "home") setTab("camino");
   };
@@ -5310,6 +5372,11 @@ export default function App() {
       yucatanFlashNextRef.current = "home";
       markYucatanUnlockFlashDue(true);
       setYucatanUnlockFlash(true);
+    } else if (norteFlashPending || isNorteUnlockFlashDue()) {
+      setNorteFlashPending(false);
+      norteFlashNextRef.current = "home";
+      markNorteUnlockFlashDue(true);
+      setNorteUnlockFlash(true);
     }
   };
 
@@ -5809,9 +5876,9 @@ export default function App() {
               </svg>
               <div data-testid="recuerdos-fog" aria-hidden="true" style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
-                background: recuerdosFogBackground(RECUERDOS_PINS, prog.stories, theme, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen, oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen, yucatanUnlockSeen: !!prog.yucatanUnlockSeen }),
+                background: recuerdosFogBackground(RECUERDOS_PINS, prog.stories, theme, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen, oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen, yucatanUnlockSeen: !!prog.yucatanUnlockSeen, norteUnlockSeen: !!prog.norteUnlockSeen }),
               }} />
-              {recuerdosLockedPins(RECUERDOS_PINS, prog.stories, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen, oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen, yucatanUnlockSeen: !!prog.yucatanUnlockSeen }).map((pin) => (
+              {recuerdosLockedPins(RECUERDOS_PINS, prog.stories, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen, oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen, yucatanUnlockSeen: !!prog.yucatanUnlockSeen, norteUnlockSeen: !!prog.norteUnlockSeen }).map((pin) => (
                 <div
                   key={`fog-${pin.id}`}
                   data-testid={`recuerdos-fog-${pin.id}`}
@@ -5832,7 +5899,7 @@ export default function App() {
                 />
               ))}
               {RECUERDOS_PINS.map((pin) => {
-                const open = isRecuerdosPinOpen(pin, prog.stories, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen, oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen, yucatanUnlockSeen: !!prog.yucatanUnlockSeen });
+                const open = isRecuerdosPinOpen(pin, prog.stories, { cdmxUnlockSeen: !!prog.cdmxUnlockSeen, oaxacaUnlockSeen: !!prog.oaxacaUnlockSeen, yucatanUnlockSeen: !!prog.yucatanUnlockSeen, norteUnlockSeen: !!prog.norteUnlockSeen });
                 const label = recuerdosPinLabel(pin, uiLang);
                 const state = recuerdosPinState(open, uiLang);
                 const storyId = storyIdForRecuerdosPin(pin, prog.stories);
@@ -6832,6 +6899,43 @@ export default function App() {
                   boxShadow: "0 3px 8px rgba(0,0,0,.22)",
                 }} />
                 <span data-testid="yucatan-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
+
+      {/* Norte unlock flash: once on streak-5 Hoy ¡Eso! / That's it. Then close or idle. */}
+      {norteUnlockFlash && (() => {
+        const norte = RECUERDOS_PINS.find((p) => p.id === "norte");
+        const flashCopy = norteUnlockFlashCopy(uiLang);
+        return (
+        <div data-testid="norte-unlock-flash" aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 62, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div className="pop" style={{ background: D.card, borderRadius: 20, padding: 16, maxWidth: 320, width: "100%" }}>
+            <div style={{ position: "relative", height: 168, borderRadius: 16, overflow: "hidden", background: theme === "dark" ? D.subtle : "linear-gradient(180deg,#DDF4FF 0%,#E8F6D8 55%,#F3FBEA 100%)", border: `2px solid ${D.line}` }}>
+              <svg data-testid="norte-unlock-flash-outline" viewBox="0 0 300 190" width="100%" height="100%" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+                <path d={MEXICO_OUTLINE_PATH} fill={theme === "dark" ? "#2A3A2C" : "#8FCB6A"} stroke={theme === "dark" ? "#3D5A40" : "#6BAA4A"} strokeWidth="1.6" />
+              </svg>
+              <div aria-hidden="true" style={{
+                position: "absolute", inset: 0, pointerEvents: "none",
+                background: recuerdosFogBackground(RECUERDOS_PINS, {}, theme, { cdmxUnlockSeen: true, oaxacaUnlockSeen: true, yucatanUnlockSeen: true, norteUnlockSeen: true }),
+              }} />
+              <div
+                data-testid="norte-unlock-flash-pin"
+                style={{
+                  position: "absolute", left: `${norte.x}%`, top: `${norte.y}%`,
+                  transform: "translate(-50%, -50%)",
+                  display: "flex", flexDirection: "column", alignItems: "center", minWidth: 52, zIndex: 2,
+                }}
+              >
+                <span data-testid="norte-unlock-flash-glow" className="bajio-glow" style={{
+                  width: 18, height: 18,
+                  borderRadius: "50% 50% 50% 8px", transform: "rotate(-45deg)",
+                  background: D.gold, border: "2px solid #fff",
+                  boxShadow: "0 3px 8px rgba(0,0,0,.22)",
+                }} />
+                <span data-testid="norte-unlock-flash-copy" style={{ marginTop: 6, display: "block", fontSize: 11, fontWeight: 900, color: D.greenDark }}>{flashCopy}</span>
               </div>
             </div>
           </div>

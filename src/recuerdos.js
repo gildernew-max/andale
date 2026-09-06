@@ -46,14 +46,16 @@ export function recuerdosPinState(open, lang) {
 export const CDMX_PIN = "cdmx";
 export const OAXACA_PIN = "oaxaca";
 export const YUCATAN_PIN = "yucatan";
+export const NORTE_PIN = "norte";
 
-/** Bajío first-glow always open. CDMX / Oaxaca / Yucatán open on souvenir claim or streak unlock. */
+/** Bajío first-glow always open. CDMX / Oaxaca / Yucatán / Norte open on souvenir claim or streak unlock. */
 export function isRecuerdosPinOpen(pin, claimedStories = {}, unlocks = {}) {
   if (!pin) return false;
   if (pin.firstGlow || pin.id === FIRST_GLOW_PIN) return true;
   if (pin.id === CDMX_PIN && unlocks.cdmxUnlockSeen) return true;
   if (pin.id === OAXACA_PIN && unlocks.oaxacaUnlockSeen) return true;
   if (pin.id === YUCATAN_PIN && unlocks.yucatanUnlockSeen) return true;
+  if (pin.id === NORTE_PIN && unlocks.norteUnlockSeen) return true;
   return (pin.storyIds || []).some((id) => !!claimedStories[id]);
 }
 
@@ -338,6 +340,69 @@ export function shouldShowYucatanUnlockFlash({
   if (yucatanUnlockSeen) return false;
   if (!streak4HoyEso) return false;
   return (Number(streak) || 0) === 4;
+}
+
+/** Same Abierto / Open stamps as Bajío / CDMX / Oaxaca / Yucatán. No new copy. */
+export function norteUnlockFlashCopy(lang) {
+  return bajioUnlockFlashCopy(lang);
+}
+
+export const NORTE_UNLOCK_FLASH_MS = BAJIO_UNLOCK_FLASH_MS;
+
+let norteUnlockFlashLive = false;
+
+export const NORTE_UNLOCK_FLASH_DUE_KEY = "andale-norte-flash-due";
+
+export function isNorteUnlockFlashLive() {
+  return norteUnlockFlashLive;
+}
+
+export function markNorteUnlockFlashLive(on) {
+  norteUnlockFlashLive = !!on;
+}
+
+export function isNorteUnlockFlashDue() {
+  if (norteUnlockFlashLive) return true;
+  try {
+    return sessionStorage.getItem(NORTE_UNLOCK_FLASH_DUE_KEY) === "1";
+  } catch (e) {
+    return false;
+  }
+}
+
+export function markNorteUnlockFlashDue(on) {
+  markNorteUnlockFlashLive(on);
+  try {
+    if (on) sessionStorage.setItem(NORTE_UNLOCK_FLASH_DUE_KEY, "1");
+    else sessionStorage.removeItem(NORTE_UNLOCK_FLASH_DUE_KEY);
+  } catch (e) {}
+}
+
+/**
+ * Streak-5 Hoy ¡Eso! / That's it. Same scene stamps as day-2
+ * (`todaySceneId` / `_today:` / firstHoy / esoWin). Not first-Doctora.
+ */
+export function isStreak5HoyEsoWin(session) {
+  return isDay2HoyEsoWin(session);
+}
+
+/**
+ * Streak CONTINUE must pass. Raw `prog.streak` can still be 4 on day-5
+ * (lastDay = yesterday) if persist has not committed yet.
+ */
+export function norteUnlockFlashStreak(opts) {
+  return cdmxUnlockFlashStreak(opts);
+}
+
+/** After streak-5 Hoy ¡Eso! / That's it. CONTINUE — glow beat, then close or idle. Once only. */
+export function shouldShowNorteUnlockFlash({
+  norteUnlockSeen,
+  streak5HoyEso,
+  streak,
+} = {}) {
+  if (norteUnlockSeen) return false;
+  if (!streak5HoyEso) return false;
+  return (Number(streak) || 0) === 5;
 }
 
 /** Fog-of-war: mist over the map, clear around open pins (Bajío first). */
