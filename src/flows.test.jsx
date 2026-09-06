@@ -461,6 +461,99 @@ describe("simulated learner flows", () => {
     });
   });
 
+  it("Safe/Risky reveal shows Literal then Why above CONTINUE", async () => {
+    const literals = {
+      "No manches.": { es: "Vaya / no me digas.", en: "No way. / Come on." },
+      "Quedo a sus órdenes.": { es: "Quedo a su disposición.", en: "I’m at your service." },
+      "¿Mande?": { es: "¿Cómo? / ¿perdón?", en: "Pardon?" },
+      "¿Qué?": { es: "¿Qué?", en: "What?" },
+      "¿Me da un café, por favor?": { es: "¿Me da un café, por favor?", en: "Can I have a coffee, please?" },
+      "Está bien chido.": { es: "Está muy padre.", en: "It’s really cool." },
+      "No obstante lo anterior...": { es: "A pesar de lo anterior...", en: "Notwithstanding the foregoing..." },
+      "Ahorita vengo.": { es: "Vuelvo en un momento.", en: "I’ll be right back." },
+    };
+    const whys = {
+      "No manches.": { es: "Suena a amigos en México. Con jefes o personas mayores, pásate a algo más suave.", en: "Sounds like friends in Mexico. With bosses or elders, switch to something softer." },
+      "Quedo a sus órdenes.": { es: "Cierre profesional mexicano: amable, claro, seguro. Encaja en correo con clientas.", en: "A Mexican professional close: warm, clear, safe. Fits an email to a client." },
+      "¿Mande?": { es: "De mandar / «mande usted»: el «¿perdón?» cortés de México. Con la suegra, gana a un «¿Qué?» seco.", en: "From mandar / «mande usted»: Mexico’s polite “Pardon?” With your mother-in-law, it beats a blunt «¿Qué?»" },
+      "¿Qué?": { es: "Puede sonar brusco. Mejor «¿Mande?» o «¿Cómo?» según a quién le hablas.", en: "It can land blunt. Prefer «¿Mande?» or «¿Cómo?» depending on who you’re talking to." },
+      "¿Me da un café, por favor?": { es: "Natural en el mostrador: directo y cortés. Mejor que «¿Puedo obtener un café?»", en: "Natural at the counter: direct and polite. Better than “Can I obtain a coffee?”" },
+      "Está bien chido.": { es: "Suena mexicano y de amigos. En documentos o juntas formales, cámbialo.", en: "Sounds Mexican and friendly. In documents or formal meetings, swap it out." },
+      "No obstante lo anterior...": { es: "Registro de contrato. En una charla normal pesa demasiado; guárdalo para el papel.", en: "Contract register. In normal chat it feels heavy — save it for the page." },
+      "Ahorita vengo.": { es: "Muy mexicano. «Ahorita» puede ser pronto… o un poco más. El tono lo decide el contexto.", en: "Very Mexican. «Ahorita» can mean soon… or a bit later. Context sets the clock." },
+    };
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("safe-risky-start"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-choice-safe")).toBeTruthy());
+    const phrase = Object.keys(literals).find((p) => document.body.textContent.includes(p));
+    expect(phrase).toBeTruthy();
+    expect(screen.queryByTestId("safe-risky-literal")).toBeNull();
+    expect(screen.queryByTestId("safe-risky-why")).toBeNull();
+    await user.click(screen.getByTestId("safe-risky-choice-safe"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-literal")).toBeTruthy());
+    const literal = screen.getByTestId("safe-risky-literal");
+    const why = screen.getByTestId("safe-risky-why");
+    const cont = screen.getByTestId("safe-risky-continue");
+    expect(literal.textContent).toContain("Traducción");
+    expect(literal.textContent).toContain(literals[phrase].es);
+    expect(why.textContent).toContain("Por qué");
+    expect(why.textContent).toContain(whys[phrase].es);
+    expect(why.textContent).not.toMatch(/^¿Por qué\?/);
+    expect(cont.textContent).toMatch(/Continuar|Terminar/);
+    expect(literal.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(why.compareDocumentPosition(cont) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    if (phrase === "Está bien chido.") {
+      expect(literal.textContent).toContain("Está muy padre.");
+      expect(literal.textContent).not.toMatch(/cool/i);
+    }
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-literal").textContent).toContain("Literal"));
+    expect(screen.getByTestId("safe-risky-literal").textContent).toContain(literals[phrase].en);
+    expect(screen.getByTestId("safe-risky-why").textContent).toContain("Why");
+    expect(screen.getByTestId("safe-risky-why").textContent).toContain(whys[phrase].en);
+    expect(screen.getByTestId("safe-risky-why").textContent).not.toMatch(/^Why\?/);
+    expect(screen.getByTestId("safe-risky-continue").textContent).toMatch(/Continue|Finish/);
+  });
+
+  it("Safe/Risky wrong/better-answer reveal still shows Literal then Why above CONTINUE", async () => {
+    const literals = {
+      "No manches.": { es: "Vaya / no me digas.", answer: "casual" },
+      "Quedo a sus órdenes.": { es: "Quedo a su disposición.", answer: "formal" },
+      "¿Mande?": { es: "¿Cómo? / ¿perdón?", answer: "regional" },
+      "¿Qué?": { es: "¿Qué?", answer: "risky" },
+      "¿Me da un café, por favor?": { es: "¿Me da un café, por favor?", answer: "safe" },
+      "Está bien chido.": { es: "Está muy padre.", answer: "casual" },
+      "No obstante lo anterior...": { es: "A pesar de lo anterior...", answer: "formal" },
+      "Ahorita vengo.": { es: "Vuelvo en un momento.", answer: "regional" },
+    };
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("safe-risky-start"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-choice-safe")).toBeTruthy());
+    const phrase = Object.keys(literals).find((p) => document.body.textContent.includes(p));
+    expect(phrase).toBeTruthy();
+    const wrong = literals[phrase].answer === "safe" ? "risky" : "safe";
+    await user.click(screen.getByTestId(`safe-risky-choice-${wrong}`));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-literal")).toBeTruthy());
+    expect(document.body.textContent).toMatch(/Mejor respuesta|Better answer/);
+    const literal = screen.getByTestId("safe-risky-literal");
+    const why = screen.getByTestId("safe-risky-why");
+    const cont = screen.getByTestId("safe-risky-continue");
+    expect(literal.textContent).toContain("Traducción");
+    expect(literal.textContent).toContain(literals[phrase].es);
+    expect(why.textContent).toContain("Por qué");
+    expect(literal.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(why.compareDocumentPosition(cont) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    if (phrase === "Está bien chido.") {
+      expect(literal.textContent).toContain("Está muy padre.");
+      expect(literal.textContent).not.toMatch(/cool/i);
+    }
+    if (phrase === "¿Qué?") {
+      expect(literal.textContent).toContain("¿Qué?");
+    }
+  });
+
   const playMatchRound = async (user) => {
     await waitFor(() => expect(screen.getByTestId("match-pairs-board")).toBeTruthy());
     const lefts = [...document.querySelectorAll("[data-testid^='match-tile-left-']")];

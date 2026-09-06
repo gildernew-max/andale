@@ -2832,49 +2832,57 @@ const SAFE_RISKY_ITEMS = [
     phrase: "No manches.",
     context: { es: "Tu amigo te cuenta que pagó $300 por dos cafés.", en: "Your friend says they paid $300 for two coffees." },
     answer: "casual",
-    note: { es: "Muy natural con amigos en México; demasiado informal para jefes o personas mayores.", en: "Very natural with friends in Mexico; too informal for bosses or elders." },
+    literal: { es: "Vaya / no me digas.", en: "No way. / Come on." },
+    note: { es: "Suena a amigos en México. Con jefes o personas mayores, pásate a algo más suave.", en: "Sounds like friends in Mexico. With bosses or elders, switch to something softer." },
   },
   {
     phrase: "Quedo a sus órdenes.",
     context: { es: "Cierras un correo con una clienta.", en: "You are closing an email to a client." },
     answer: "formal",
-    note: { es: "Fórmula profesional mexicana: amable, servicial y segura.", en: "A professional Mexican closing: polite, helpful, and safe." },
+    literal: { es: "Quedo a su disposición.", en: "I’m at your service." },
+    note: { es: "Cierre profesional mexicano: amable, claro, seguro. Encaja en correo con clientas.", en: "A Mexican professional close: warm, clear, safe. Fits an email to a client." },
   },
   {
     phrase: "¿Mande?",
     context: { es: "No escuchaste lo que dijo alguien en México.", en: "You did not hear what someone said in Mexico." },
     answer: "regional",
-    note: { es: "Muy mexicano y cortés. En otros países puede sonar raro, pero en México es oro.", en: "Very Mexican and polite. It may sound odd elsewhere, but in Mexico it is gold." },
+    literal: { es: "¿Cómo? / ¿perdón?", en: "Pardon?" },
+    note: { es: "De mandar / «mande usted»: el «¿perdón?» cortés de México. Con la suegra, gana a un «¿Qué?» seco.", en: "From mandar / «mande usted»: Mexico’s polite “Pardon?” With your mother-in-law, it beats a blunt «¿Qué?»" },
   },
   {
     phrase: "¿Qué?",
     context: { es: "No escuchaste a tu suegra en la cena.", en: "You did not hear your mother-in-law at dinner." },
     answer: "risky",
-    note: { es: "Puede sonar brusco. Mejor: «¿Mande?» o «¿Cómo?» según la relación.", en: "It can sound blunt. Better: «¿Mande?» or «¿Cómo?» depending on the relationship." },
+    literal: { es: "¿Qué?", en: "What?" },
+    note: { es: "Puede sonar brusco. Mejor «¿Mande?» o «¿Cómo?» según a quién le hablas.", en: "It can land blunt. Prefer «¿Mande?» or «¿Cómo?» depending on who you’re talking to." },
   },
   {
     phrase: "¿Me da un café, por favor?",
     context: { es: "Pides algo en una cafetería.", en: "You are ordering at a cafe." },
     answer: "safe",
-    note: { es: "Natural, directo y cortés. Mucho mejor que «¿Puedo obtener un café?».", en: "Natural, direct, and polite. Much better than «¿Puedo obtener un café?»." },
+    literal: { es: "¿Me da un café, por favor?", en: "Can I have a coffee, please?" },
+    note: { es: "Natural en el mostrador: directo y cortés. Mejor que «¿Puedo obtener un café?»", en: "Natural at the counter: direct and polite. Better than “Can I obtain a coffee?”" },
   },
   {
     phrase: "Está bien chido.",
     context: { es: "Comentas el departamento nuevo de un amigo.", en: "You are commenting on a friend's new apartment." },
     answer: "casual",
-    note: { es: "Suena mexicano y amistoso. Evítalo en documentos o juntas formales.", en: "It sounds Mexican and friendly. Avoid it in documents or formal meetings." },
+    literal: { es: "Está muy padre.", en: "It’s really cool." },
+    note: { es: "Suena mexicano y de amigos. En documentos o juntas formales, cámbialo.", en: "Sounds Mexican and friendly. In documents or formal meetings, swap it out." },
   },
   {
     phrase: "No obstante lo anterior...",
     context: { es: "Redactas una cláusula de contrato.", en: "You are writing a contract clause." },
     answer: "formal",
-    note: { es: "Registro legal/formal. En una charla normal pesa demasiado.", en: "Legal/formal register. In normal conversation it feels too heavy." },
+    literal: { es: "A pesar de lo anterior...", en: "Notwithstanding the foregoing..." },
+    note: { es: "Registro de contrato. En una charla normal pesa demasiado; guárdalo para el papel.", en: "Contract register. In normal chat it feels heavy — save it for the page." },
   },
   {
     phrase: "Ahorita vengo.",
     context: { es: "Sales un momento por un café.", en: "You step out for a coffee." },
     answer: "regional",
-    note: { es: "«Ahorita» es muy mexicano y depende del contexto: puede ser pronto... o no tanto.", en: "«Ahorita» is very Mexican and context-dependent: soon... or not quite." },
+    literal: { es: "Vuelvo en un momento.", en: "I’ll be right back." },
+    note: { es: "Muy mexicano. «Ahorita» puede ser pronto… o un poco más. El tono lo decide el contexto.", en: "Very Mexican. «Ahorita» can mean soon… or a bit later. Context sets the clock." },
   },
 ];
 
@@ -3149,6 +3157,8 @@ const UI = {
     phraseDoctorTag: "GANA EN 60 SEGUNDOS",
     phraseDoctorCta: "Arreglar una frase",
     safeRiskyReward: "5 rondas · extra por racha · gemas",
+    literalLabel: "Traducción",
+    whyLabel: "Por qué",
     narrationLabel: "NARRACIÓN",
     splashLine: "Español mexicano real. Más allá de lo básico.",
     splashCta: "¡Empezar!",
@@ -3209,6 +3219,8 @@ const UI = {
     phraseDoctorTag: "WIN IN 60 SECONDS",
     phraseDoctorCta: "Fix a phrase",
     safeRiskyReward: "5 rounds · streak extra · gems",
+    literalLabel: "Literal",
+    whyLabel: "Why",
     narrationLabel: "NARRATION",
     splashLine: "Real Mexican Spanish. Past the basics.",
     splashCta: "Start!",
@@ -7941,8 +7953,15 @@ export default function App() {
                     <div style={{ fontWeight: 900, color: safeGame.selected === item.answer ? D.greenDark : D.redDark, marginBottom: 4 }}>
                       {safeGame.selected === item.answer ? (safeGame.streak >= 3 ? (uiLang === "en" ? "Combo judgment." : "Juicio en combo.") : (uiLang === "en" ? "Good judgment." : "Buen juicio.")) : `${uiLang === "en" ? "Better answer" : "Mejor respuesta"}: ${labels[item.answer]}`}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{item.note[uiLang]}</div>
-                    <Btn color={D.red} dark={D.redDark} onClick={nextSafeRisky} style={{ width: "100%", marginTop: 12 }}>{safeGame.idx + 1 >= safeGame.items.length ? (uiLang === "en" ? "Finish" : "Terminar") : L.continue}</Btn>
+                    <div data-testid="safe-risky-literal" style={{ marginTop: 8 }}>
+                      <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.literalLabel}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{item.literal[uiLang]}</div>
+                    </div>
+                    <div data-testid="safe-risky-why" style={{ marginTop: 8 }}>
+                      <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.whyLabel}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{item.note[uiLang]}</div>
+                    </div>
+                    <Btn data-testid="safe-risky-continue" color={D.red} dark={D.redDark} onClick={nextSafeRisky} style={{ width: "100%", marginTop: 12 }}>{safeGame.idx + 1 >= safeGame.items.length ? (uiLang === "en" ? "Finish" : "Terminar") : L.continue}</Btn>
                   </div>
                 )}
               </>

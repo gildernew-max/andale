@@ -587,6 +587,62 @@ assert(UI.es.safeRiskyReward === "5 rondas · extra por racha · gemas", "UI.es.
 assert(UI.en.safeRiskyReward === "5 rounds · streak extra · gems", "UI.en.safeRiskyReward");
 assert(!/bonus/i.test(UI.es.safeRiskyReward), "ES Safe/Risky reward has no bonus");
 assert(!/bonus/i.test(UI.en.safeRiskyReward), "EN Safe/Risky reward has no bonus");
+assert(UI.es.literalLabel === "Traducción", "UI.es.literalLabel");
+assert(UI.en.literalLabel === "Literal", "UI.en.literalLabel");
+assert(UI.es.whyLabel === "Por qué", "UI.es.whyLabel");
+assert(UI.en.whyLabel === "Why", "UI.en.whyLabel");
+assert(UI.es.why === "¿Por qué?", "existing L.why stays ¿Por qué?");
+assert(UI.en.why === "Why?", "existing L.why stays Why?");
+const SAFE_RISKY_ITEMS = Function(`"use strict"; return (${extractConst(appSrc, "SAFE_RISKY_ITEMS")});`)();
+const SAFE_RISKY_LITERALS = {
+  "No manches.": { es: "Vaya / no me digas.", en: "No way. / Come on." },
+  "Quedo a sus órdenes.": { es: "Quedo a su disposición.", en: "I’m at your service." },
+  "¿Mande?": { es: "¿Cómo? / ¿perdón?", en: "Pardon?" },
+  "¿Qué?": { es: "¿Qué?", en: "What?" },
+  "¿Me da un café, por favor?": { es: "¿Me da un café, por favor?", en: "Can I have a coffee, please?" },
+  "Está bien chido.": { es: "Está muy padre.", en: "It’s really cool." },
+  "No obstante lo anterior...": { es: "A pesar de lo anterior...", en: "Notwithstanding the foregoing..." },
+  "Ahorita vengo.": { es: "Vuelvo en un momento.", en: "I’ll be right back." },
+};
+const SAFE_RISKY_WHYS = {
+  "No manches.": { es: "Suena a amigos en México. Con jefes o personas mayores, pásate a algo más suave.", en: "Sounds like friends in Mexico. With bosses or elders, switch to something softer." },
+  "Quedo a sus órdenes.": { es: "Cierre profesional mexicano: amable, claro, seguro. Encaja en correo con clientas.", en: "A Mexican professional close: warm, clear, safe. Fits an email to a client." },
+  "¿Mande?": { es: "De mandar / «mande usted»: el «¿perdón?» cortés de México. Con la suegra, gana a un «¿Qué?» seco.", en: "From mandar / «mande usted»: Mexico’s polite “Pardon?” With your mother-in-law, it beats a blunt «¿Qué?»" },
+  "¿Qué?": { es: "Puede sonar brusco. Mejor «¿Mande?» o «¿Cómo?» según a quién le hablas.", en: "It can land blunt. Prefer «¿Mande?» or «¿Cómo?» depending on who you’re talking to." },
+  "¿Me da un café, por favor?": { es: "Natural en el mostrador: directo y cortés. Mejor que «¿Puedo obtener un café?»", en: "Natural at the counter: direct and polite. Better than “Can I obtain a coffee?”" },
+  "Está bien chido.": { es: "Suena mexicano y de amigos. En documentos o juntas formales, cámbialo.", en: "Sounds Mexican and friendly. In documents or formal meetings, swap it out." },
+  "No obstante lo anterior...": { es: "Registro de contrato. En una charla normal pesa demasiado; guárdalo para el papel.", en: "Contract register. In normal chat it feels heavy — save it for the page." },
+  "Ahorita vengo.": { es: "Muy mexicano. «Ahorita» puede ser pronto… o un poco más. El tono lo decide el contexto.", en: "Very Mexican. «Ahorita» can mean soon… or a bit later. Context sets the clock." },
+};
+assert(SAFE_RISKY_ITEMS.length === 8, "Safe/Risky pack is eight items");
+for (const [phrase, literal] of Object.entries(SAFE_RISKY_LITERALS)) {
+  const item = SAFE_RISKY_ITEMS.find((it) => it.phrase === phrase);
+  assert(item, `Safe/Risky has ${phrase}`);
+  assert(item.literal?.es === literal.es, `${phrase} ES literal`);
+  assert(item.literal?.en === literal.en, `${phrase} EN literal`);
+  assert(item.note?.es === SAFE_RISKY_WHYS[phrase].es, `${phrase} ES Why`);
+  assert(item.note?.en === SAFE_RISKY_WHYS[phrase].en, `${phrase} EN Why`);
+}
+const chido = SAFE_RISKY_ITEMS.find((it) => it.phrase === "Está bien chido.");
+assert(chido.literal.es === "Está muy padre.", "chido ES literal is Está muy padre.");
+assert(!/cool/i.test(chido.literal.es), "chido ES literal has no English cool");
+assert(!/Está muy cool \/ padre/.test(appSrc), "bounced chido ES literal is gone");
+const mande = SAFE_RISKY_ITEMS.find((it) => it.phrase === "¿Mande?");
+assert(mande.literal.es === "¿Cómo? / ¿perdón?", "Mande ES literal stays");
+assert(mande.literal.en === "Pardon?", "Mande EN literal stays");
+assert(!/\*/.test(`${mande.note.es}${mande.note.en}`), "Mande Why has no asterisks");
+assert(!/\*mandar\*/.test(appSrc), "no *mandar* markdown in App");
+assert(appSrc.includes("{L.literalLabel}"), "Safe/Risky Literal chrome uses L.literalLabel");
+assert(appSrc.includes("{L.whyLabel}"), "Safe/Risky Why chrome uses L.whyLabel");
+assert(appSrc.includes("{item.literal[uiLang]}"), "Safe/Risky Literal follows uiLang");
+assert(appSrc.includes("{item.note[uiLang]}"), "Safe/Risky Why uses note");
+const revealAt = appSrc.indexOf("data-testid=\"safe-risky-literal\"");
+const whyAt = appSrc.indexOf("data-testid=\"safe-risky-why\"");
+const continueAt = appSrc.indexOf("data-testid=\"safe-risky-continue\"");
+assert(revealAt > 0 && whyAt > revealAt && continueAt > whyAt, "reveal order is Literal then Why above CONTINUE");
+const selectedBlock = appSrc.slice(appSrc.indexOf("{safeGame.selected &&"), continueAt);
+assert(selectedBlock.includes("Better answer") && selectedBlock.includes("Mejor respuesta"), "wrong-answer chrome stays in the same reveal");
+assert(selectedBlock.includes("data-testid=\"safe-risky-literal\""), "wrong/better-answer path includes Literal");
 assert(UI.es.narrationLabel === "NARRACIÓN", "UI.es.narrationLabel");
 assert(UI.en.narrationLabel === "NARRATION", "UI.en.narrationLabel");
 assert(!/LAB/.test(UI.es.narrationLabel + UI.en.narrationLabel), "narration chrome is not a LAB");
