@@ -708,7 +708,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("safe-risky-choice-safe").getAttribute("data-safe-risky-state")).toBe("correct");
     expect(screen.queryByTestId("safe-risky-continue")).toBeNull();
     expect(screen.queryByTestId("safe-risky-literal")).toBeNull();
-    expect(screen.getByTestId("safe-risky-choice-casual")).not.toBeDisabled();
+    expect(screen.getByTestId("safe-risky-choice-casual").disabled).toBe(false);
 
     await user.click(screen.getByTestId("safe-risky-choice-risky"));
     expect(screen.getByTestId("safe-risky-choice-risky").getAttribute("data-safe-risky-state")).toBe("wrong");
@@ -753,7 +753,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("safe-risky-literal").textContent).toContain("Traducción");
     expect(screen.getByTestId("safe-risky-why").textContent).toContain("Por qué");
     expect(screen.getByTestId("safe-risky-choice-risky").getAttribute("data-safe-risky-state")).toBe("idle");
-    expect(screen.getByTestId("safe-risky-choice-risky")).toBeDisabled();
+    expect(screen.getByTestId("safe-risky-choice-risky").disabled).toBe(true);
   });
 
   const playMatchRound = async (user) => {
