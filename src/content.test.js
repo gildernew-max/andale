@@ -9,7 +9,7 @@ import { hoyStillFor, LANTERN_STILL } from "./hoyStill.js";
 import { comeBackTomorrowLine, hoySceneForDay, nextDayKey } from "./firstDoor.js";
 import { hoySceneBeatCount, shouldParkHoyUnderMas } from "./hoyWin.js";
 import { FOCUS_LABELS, PRACTICE_EXPLAIN, explainText, focusLabel, uiText } from "./practiceI18n.js";
-import { STORY_QUIZ_CUE, STORY_QUIZ_CUE_LINE, storyQuizCueLine, storyQuizEyebrow } from "./storyQuiz.js";
+import { STORY_QUIZ_CUE, STORY_QUIZ_CUE_LINE, passageForStoryQuestion, storyQuizCue, storyQuizCueLine, storyQuizEyebrow } from "./storyQuiz.js";
 import { DEFAULT_LETTER_LAYOUT, lettersForLayout } from "./letterBoard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
 
@@ -835,16 +835,27 @@ assert(appSrc.includes("gatedLiftStoryQuiz"), "Hoy / misión / rutina story Qs a
 assert(appSrc.includes("pickCompletedStory"), "rutina picks only claimed Lectura stories");
 assert(appSrc.includes("storyQuizCue"), "practice prompt has a slot for a George story cue");
 assert(appSrc.includes("storyQuizCueLine"), "optional second cue line is hooked, off by default");
-assert(appSrc.includes("storyQuizEyebrow"), "Lectura comprehension uses the George eyebrow");
+assert(appSrc.includes("storyQuizPassage"), "practice shows the matching Lectura passage");
+assert(appSrc.includes("passageForStoryQuestion"), "Lectura Qs resolve a same-screen passage");
 assert(appSrc.includes("data-testid=\"story-quiz-cue\""), "story cue eyebrow is testable");
 assert(appSrc.includes("data-testid=\"story-quiz-cue-line\""), "optional cue line slot is testable");
+assert(appSrc.includes("data-testid=\"story-quiz-passage\""), "on-screen passage is testable");
 assert(STORY_QUIZ_CUE.es === "Según el cuento", "George ES eyebrow");
 assert(STORY_QUIZ_CUE.en === "From the story", "George EN eyebrow");
 assert(STORY_QUIZ_CUE_LINE.es === "Responde según lo que acabas de leer.", "George ES cue line");
 assert(STORY_QUIZ_CUE_LINE.en === "Answer from what you just read.", "George EN cue line");
 assert(storyQuizEyebrow("es") === "Según el cuento", "eyebrow helper ES");
 assert(storyQuizEyebrow("en") === "From the story", "eyebrow helper EN");
+assert(storyQuizCue({ _u: "_story" }, "en") === "", "eyebrow stays off without a passage");
 assert(storyQuizCueLine({}, "en") === "", "second line stays off by default");
+const cerezasStory = STORIES.find((s) => s.id === "story-9");
+const cerezasRefused = cerezasStory.questions.find((qq) => /¿Por qué se negó/.test(qq.prompt));
+assert(/dependo de una sola empresa|empresa japonesa/.test(passageForStoryQuestion(cerezasStory, cerezasRefused)), "cerezas refused Q shows the harvest paragraph");
+for (const s of STORIES) {
+  for (const qq of s.questions) {
+    assert(!!passageForStoryQuestion(s, qq), `${s.id} comprehension Q has a same-screen passage`);
+  }
+}
 assert(appSrc.includes("come-back-tomorrow"), "home line after win is wired");
 assert(appSrc.includes("path-entry"), "Subjuntivo path stays under Empieza");
 assert(/camino-more[\s\S]{0,900}path-entry/.test(appSrc), "EMPIEZA is buried under Más/More");

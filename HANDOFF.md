@@ -252,16 +252,16 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **Why**
 - Brand lock: Cenzontle faces RIGHT. Full fly-in stays next.
 
-## 2026-09-06 (Story comprehension cue — George eyebrow)
+## 2026-09-06 (Story Qs — gate + on-screen passage)
 
 **What changed**
-- George stamp wired as the default eyebrow on story comprehension: ES `Según el cuento` · EN `From the story`.
-- Optional second line stays off: ES `Responde según lo que acabas de leer.` · EN `Answer from what you just read.` Hook is `cueLine` / `storyQuizCueLine` / `data-testid="story-quiz-cue-line"`.
-- Lectura gate stays: Hoy / misión / rutina lifts wait until that story’s Lectura is claimed. In-reader Qs still follow the last paragraph.
-- Soft chrome parked. Do not merge.
+- George + Dave lock: story comprehension = Lectura gate **and** the matching passage on the same screen. Eyebrow alone is not enough for a week-old read.
+- Hoy / misión / rutina still wait on `prog.stories[id]`. When the Q lifts, `passage` is the relevant paragraph (`data-testid="story-quiz-passage"`).
+- Eyebrow ES `Según el cuento` · EN `From the story` only when that passage is visible. Second line stays hooked and off.
+- Lectura in-reader Qs also show the matching paragraph. Soft chrome parked. Do not merge.
 
 **Why**
-- George locked the cue. Eyebrow alone by default.
+- Locked fix: findable from the text on screen, not from a cue label.
 
 ## 2026-09-06 (Cenzontle lockup — abandons axolotl)
 

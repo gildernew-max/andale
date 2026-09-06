@@ -229,7 +229,10 @@ async function collectStoryLifts(user, { maxBeats = 8 } = {}) {
     if (!screen.queryByTestId("lesson-exit")) break;
     const text = document.body.textContent || "";
     const cue = screen.queryByTestId("story-quiz-cue");
+    const passage = screen.queryByTestId("story-quiz-passage");
     if (cue) lifts.push(`CUE:${cue.textContent}`);
+    if (passage) lifts.push(`PASSAGE:${passage.textContent.slice(0, 120)}`);
+    if (cue) expect(passage).toBeTruthy();
     expect(screen.queryByTestId("story-quiz-cue-line")).toBeNull();
     if (STORY_LIFT_RE.test(text) || CEREZAS_Q_RE.test(text)) {
       const from = text.search(STORY_LIFT_RE);
@@ -1351,6 +1354,8 @@ describe("simulated learner flows", () => {
     expect(lifts.join(" ")).toMatch(/Del cuento/);
     expect(lifts.join(" ")).toMatch(CEREZAS_Q_RE);
     expect(lifts.join(" ")).toMatch(/CUE:Según el cuento/);
+    expect(lifts.join(" ")).toMatch(/PASSAGE:/);
+    expect(lifts.join(" ")).toMatch(/quince y veinte pesos|dependo de una sola empresa|cambio climático|roya/);
     expect(lifts.join(" ")).not.toMatch(/Responde según lo que acabas de leer|Answer from what you just read/);
   });
 
@@ -1365,11 +1370,15 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByText(/¿Por qué se negó a vender toda su cosecha/)).toBeTruthy());
     expect(screen.getByText(/¿Cuánto recibe don Adán por cada kilo/)).toBeTruthy();
     expect(screen.getByRole("button", { name: /Volver al cuento|Back to the story/ })).toBeTruthy();
-    expect(screen.getByTestId("story-quiz-cue").textContent).toBe("Según el cuento");
+    const passages = screen.getAllByTestId("story-quiz-passage");
+    expect(passages.length).toBe(3);
+    expect(passages.some((el) => /dependo de una sola empresa/.test(el.textContent))).toBe(true);
+    expect(screen.getAllByTestId("story-quiz-cue").every((el) => el.textContent === "Según el cuento")).toBe(true);
     expect(screen.queryByTestId("story-quiz-cue-line")).toBeNull();
     expect(document.body.textContent).not.toMatch(/Responde según lo que acabas de leer|Answer from what you just read/);
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("story-quiz-cue").textContent).toBe("From the story"));
+    await waitFor(() => expect(screen.getAllByTestId("story-quiz-cue")[0].textContent).toBe("From the story"));
+    expect(screen.getAllByTestId("story-quiz-cue").every((el) => el.textContent === "From the story")).toBe(true);
     expect(screen.queryByTestId("story-quiz-cue-line")).toBeNull();
   });
 
