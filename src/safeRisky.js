@@ -1,9 +1,21 @@
-/** Safe/Risky multi-correct: `correct: [ids]` plus leftover `answer` string. */
+/** Safe/Risky multi-correct: `answers: [ids]` plus leftover `answer` string. */
 
 export const SAFE_RISKY_CHOICE_KEYS = ["safe", "casual", "formal", "regional", "risky"];
 export const SAFE_RISKY_ROUND_CAP = 5;
 
-/** Test-only item with two rights. Not live pack — George has not stamped a list. */
+/** George stamp — live pack `answers` must match this exact list. */
+export const SAFE_RISKY_ANSWERS = {
+  "No manches.": ["casual", "regional"],
+  "¿Mande?": ["regional", "safe"],
+  "Está bien chido.": ["casual", "regional"],
+  "Ahorita vengo.": ["regional", "casual"],
+  "Quedo a sus órdenes.": ["formal"],
+  "¿Qué?": ["risky"],
+  "¿Me da un café, por favor?": ["safe"],
+  "No obstante lo anterior...": ["formal"],
+};
+
+/** Test-only item with two rights. Not live pack. */
 export const SAFE_RISKY_MULTI_FIXTURE = {
   phrase: "MULTI_CORRECT_FIXTURE",
   context: {
@@ -11,7 +23,7 @@ export const SAFE_RISKY_MULTI_FIXTURE = {
     en: "Fixture: tap both correct answers.",
   },
   answer: "safe",
-  correct: ["safe", "casual"],
+  answers: ["safe", "casual"],
   literal: { es: "Fixture literal.", en: "Fixture literal." },
   note: { es: "Fixture why.", en: "Fixture why." },
 };
@@ -26,11 +38,15 @@ export function resolveSafeRiskyPack(fallback) {
   return packOverride || fallback;
 }
 
+function listKeys(raw) {
+  return Array.isArray(raw) ? raw.filter((k) => typeof k === "string" && k.trim()) : [];
+}
+
 export function safeRiskyCorrectKeys(item) {
   if (!item) return [];
-  const fromCorrect = Array.isArray(item.correct)
-    ? item.correct.filter((k) => typeof k === "string" && k.trim())
-    : [];
+  const fromAnswers = listKeys(item.answers);
+  if (fromAnswers.length) return [...new Set(fromAnswers)];
+  const fromCorrect = listKeys(item.correct);
   if (fromCorrect.length) return [...new Set(fromCorrect)];
   if (typeof item.answer === "string" && item.answer.trim()) return [item.answer];
   return [];

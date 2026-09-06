@@ -13,7 +13,7 @@ import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isO
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
-import { SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
+import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -612,7 +612,13 @@ describe("simulated learner flows", () => {
     expect(phrase).toBeTruthy();
     expect(screen.queryByTestId("safe-risky-literal")).toBeNull();
     expect(screen.queryByTestId("safe-risky-why")).toBeNull();
-    await user.click(screen.getByTestId("safe-risky-choice-safe"));
+    const rights = SAFE_RISKY_ANSWERS[phrase];
+    expect(rights.length).toBeGreaterThan(0);
+    for (const key of rights) {
+      if (screen.queryByTestId("safe-risky-continue")) break;
+      await user.click(screen.getByTestId(`safe-risky-choice-${key}`));
+    }
+    await waitFor(() => expect(screen.getByTestId("safe-risky-continue")).toBeTruthy());
     await waitFor(() => expect(screen.getByTestId("safe-risky-literal")).toBeTruthy());
     const literal = screen.getByTestId("safe-risky-literal");
     const why = screen.getByTestId("safe-risky-why");
@@ -652,14 +658,14 @@ describe("simulated learner flows", () => {
 
   it("Safe/Risky wrong/better-answer reveal still shows Literal then Why above CONTINUE", async () => {
     const literals = {
-      "No manches.": { es: "Vaya / no me digas.", answer: "casual" },
-      "Quedo a sus órdenes.": { es: "Quedo bajo sus órdenes.", answer: "formal" },
-      "¿Mande?": { es: "¿Cómo? / ¿perdón?", answer: "regional" },
-      "¿Qué?": { es: "¿Qué?", answer: "risky" },
-      "¿Me da un café, por favor?": { es: "¿Me da un café, por favor?", answer: "safe" },
-      "Está bien chido.": { es: "Está muy padre.", answer: "casual" },
-      "No obstante lo anterior...": { es: "A pesar de lo anterior...", answer: "formal" },
-      "Ahorita vengo.": { es: "Vuelvo en un momento.", answer: "regional" },
+      "No manches.": { es: "Vaya / no me digas." },
+      "Quedo a sus órdenes.": { es: "Quedo bajo sus órdenes." },
+      "¿Mande?": { es: "¿Cómo? / ¿perdón?" },
+      "¿Qué?": { es: "¿Qué?" },
+      "¿Me da un café, por favor?": { es: "¿Me da un café, por favor?" },
+      "Está bien chido.": { es: "Está muy padre." },
+      "No obstante lo anterior...": { es: "A pesar de lo anterior..." },
+      "Ahorita vengo.": { es: "Vuelvo en un momento." },
     };
     const user = await boot();
     await user.click(screen.getByTestId("nav-practica"));
@@ -667,8 +673,16 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("safe-risky-choice-safe")).toBeTruthy());
     const phrase = Object.keys(literals).find((p) => document.body.textContent.includes(p));
     expect(phrase).toBeTruthy();
-    const wrong = literals[phrase].answer === "safe" ? "risky" : "safe";
+    const rights = SAFE_RISKY_ANSWERS[phrase];
+    const wrong = ["safe", "casual", "formal", "regional", "risky"].find((k) => !rights.includes(k));
     await user.click(screen.getByTestId(`safe-risky-choice-${wrong}`));
+    if (rights.length > 1) {
+      expect(screen.getByTestId(`safe-risky-choice-${wrong}`).getAttribute("data-safe-risky-state")).toBe("wrong");
+      expect(screen.queryByTestId("safe-risky-continue")).toBeNull();
+      for (const key of rights) {
+        await user.click(screen.getByTestId(`safe-risky-choice-${key}`));
+      }
+    }
     await waitFor(() => expect(screen.getByTestId("safe-risky-literal")).toBeTruthy());
     expect(document.body.textContent).toMatch(/Mejor respuesta|Better answer/);
     const literal = screen.getByTestId("safe-risky-literal");
@@ -754,6 +768,32 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("safe-risky-why").textContent).toContain("Por qué");
     expect(screen.getByTestId("safe-risky-choice-risky").getAttribute("data-safe-risky-state")).toBe("idle");
     expect(screen.getByTestId("safe-risky-choice-risky").disabled).toBe(true);
+  });
+
+  it("Safe/Risky live No manches waits for casual + regional before CONTINUE", async () => {
+    expect(SAFE_RISKY_ANSWERS["No manches."]).toEqual(["casual", "regional"]);
+    setSafeRiskyPackOverride([{
+      phrase: "No manches.",
+      context: { es: "Tu amigo te cuenta que pagó $300 por dos cafés.", en: "Your friend says they paid $300 for two coffees." },
+      answer: "casual",
+      answers: ["casual", "regional"],
+      literal: { es: "Vaya / no me digas.", en: "No way. / Come on." },
+      note: { es: "Suena a amigos en México. Con jefes o personas mayores, pásate a algo más suave.", en: "Sounds like friends in Mexico. With bosses or elders, switch to something softer." },
+    }]);
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("safe-risky-start"));
+    await waitFor(() => expect(screen.getByText("No manches.")).toBeTruthy());
+    await user.click(screen.getByTestId("safe-risky-choice-casual"));
+    expect(screen.queryByTestId("safe-risky-continue")).toBeNull();
+    await user.click(screen.getByTestId("safe-risky-choice-formal"));
+    expect(screen.getByTestId("safe-risky-choice-formal").getAttribute("data-safe-risky-state")).toBe("wrong");
+    expect(screen.queryByTestId("safe-risky-continue")).toBeNull();
+    await user.click(screen.getByTestId("safe-risky-choice-regional"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-continue")).toBeTruthy());
+    expect(screen.getByTestId("safe-risky-literal").textContent).toContain("Traducción");
+    expect(screen.getByTestId("safe-risky-why").textContent).toContain("Por qué");
+    expect(document.body.textContent).toMatch(/Mejor respuesta/);
   });
 
   const playMatchRound = async (user) => {

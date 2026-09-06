@@ -1,4 +1,5 @@
 import {
+  SAFE_RISKY_ANSWERS,
   SAFE_RISKY_MULTI_FIXTURE,
   advanceSafeRiskyItem,
   applySafeRiskyTap,
@@ -13,17 +14,29 @@ import {
   startSafeRiskyRun,
 } from "./safeRisky.js";
 
-const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
+const assert = (cond, msg) => { if (!cond) throw new Error(msg); }
 
-const single = { phrase: "One.", answer: "formal", correct: ["formal"] };
+const single = { phrase: "One.", answer: "formal", answers: ["formal"] };
 const legacy = { phrase: "Legacy.", answer: "risky" };
+const alias = { phrase: "Alias.", correct: ["casual", "regional"] };
 const labels = { safe: "Safe", casual: "Casual", formal: "Formal", regional: "Regional", risky: "Risky" };
 
-assert(SAFE_RISKY_MULTI_FIXTURE.correct.length === 2, "fixture has 2+ correct keys");
-assert(SAFE_RISKY_MULTI_FIXTURE.correct.includes("safe") && SAFE_RISKY_MULTI_FIXTURE.correct.includes("casual"), "fixture rights are safe + casual");
-assert(safeRiskyCorrectKeys(SAFE_RISKY_MULTI_FIXTURE).join(",") === "safe,casual", "correct[] wins");
-assert(safeRiskyCorrectKeys(single).join(",") === "formal", "single-correct correct[]");
+assert(SAFE_RISKY_ANSWERS["No manches."].join(",") === "casual,regional", "George: No manches casual+regional");
+assert(SAFE_RISKY_ANSWERS["¿Mande?"].join(",") === "regional,safe", "George: Mande regional+safe");
+assert(SAFE_RISKY_ANSWERS["Está bien chido."].join(",") === "casual,regional", "George: chido casual+regional");
+assert(SAFE_RISKY_ANSWERS["Ahorita vengo."].join(",") === "regional,casual", "George: ahorita regional+casual");
+assert(SAFE_RISKY_ANSWERS["Quedo a sus órdenes."].join(",") === "formal", "George: Quedo formal");
+assert(SAFE_RISKY_ANSWERS["¿Qué?"].join(",") === "risky", "George: Qué risky");
+assert(SAFE_RISKY_ANSWERS["¿Me da un café, por favor?"].join(",") === "safe", "George: café safe");
+assert(SAFE_RISKY_ANSWERS["No obstante lo anterior..."].join(",") === "formal", "George: no obstante formal");
+
+assert(SAFE_RISKY_MULTI_FIXTURE.answers.length === 2, "fixture has 2+ answers");
+assert(SAFE_RISKY_MULTI_FIXTURE.answers.includes("safe") && SAFE_RISKY_MULTI_FIXTURE.answers.includes("casual"), "fixture rights are safe + casual");
+assert(safeRiskyCorrectKeys(SAFE_RISKY_MULTI_FIXTURE).join(",") === "safe,casual", "answers[] wins");
+assert(safeRiskyCorrectKeys(single).join(",") === "formal", "single-correct answers[]");
 assert(safeRiskyCorrectKeys(legacy).join(",") === "risky", "legacy answer string still works");
+assert(safeRiskyCorrectKeys(alias).join(",") === "casual,regional", "correct[] alias still works");
+assert(safeRiskyCorrectKeys({ answer: "safe", answers: ["casual", "regional"] }).join(",") === "casual,regional", "answers[] beats answer");
 assert(safeRiskyCorrectKeys({}).length === 0, "empty item has no keys");
 assert(isSafeRiskyCorrect(SAFE_RISKY_MULTI_FIXTURE, "safe"), "safe is a right");
 assert(isSafeRiskyCorrect(SAFE_RISKY_MULTI_FIXTURE, "casual"), "casual is a right");
