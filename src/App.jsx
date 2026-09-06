@@ -5831,9 +5831,9 @@ export default function App() {
                     {/* ── per-section game CTA ── */}
                     {(() => {
                       const gameDefs = [
-                        { testid: "ahorcado-section-start", act: startAhorcado, color: D.green, dark: D.greenDark, icon: "🔤", labelEs: "Ahorcado", labelEn: "Hangman", subEs: "Adivina la palabra letra por letra.", subEn: "Guess the word letter by letter." },
-                        { testid: "jeopardy-section-start", act: startJeopardy, color: D.purple, dark: D.purpleDark, icon: "🎯", labelEs: "Jeopardy Solo", labelEn: "Jeopardy Solo", subEs: "Elige categoría, elige valor, responde.", subEn: "Pick a category, pick a value, answer." },
-                        { testid: "emparejar-section-start", act: startMatchPairs, color: D.blue, dark: D.blueDark, icon: "🔗", labelEs: "Emparejar", labelEn: "Match pairs", subEs: "Una ronda de parejas español–inglés.", subEn: "One round of Spanish–English pair tiles." },
+                        { testid: "ahorcado-section-start", act: startAhorcado, color: D.green, dark: D.greenDark, icon: "🔤", labelEs: "Ahorcado / Hangman", labelEn: "Ahorcado / Hangman", subEs: "Adivina la palabra letra por letra.", subEn: "Guess the word letter by letter." },
+                        { testid: "jeopardy-section-start", act: startJeopardy, color: D.purple, dark: D.purpleDark, icon: "🎯", labelEs: "JEOPARDY SOLO", labelEn: "JEOPARDY SOLO", subEs: "Elige categoría, elige valor, responde.", subEn: "Pick a category, pick a value, answer." },
+                        { testid: "emparejar-section-start", act: startMatchPairs, color: D.blue, dark: D.blueDark, icon: "🔗", labelEs: "Emparejar / Match", labelEn: "Emparejar / Match", subEs: "Una ronda de parejas español–inglés.", subEn: "One round of Spanish–English pair tiles." },
                       ][si];
                       if (!gameDefs) return null;
                       return (
@@ -7884,7 +7884,7 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <button onClick={goHome} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".08em" }}>AHORCADO · {uiLang === "en" ? "HANGMAN" : "HANGMAN"}</div>
+                <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".08em" }}>AHORCADO / HANGMAN</div>
                 <div style={{ fontWeight: 900, fontSize: 18 }}>{uiLang === "en" ? "Guess the word" : "Adivina la palabra"}</div>
               </div>
               <div style={{ border: `2px solid ${D.red}`, borderBottom: `4px solid ${D.redDark}`, borderRadius: 12, padding: "5px 10px", background: D.redBg, fontWeight: 900, fontSize: 13, color: D.redDark }}>
