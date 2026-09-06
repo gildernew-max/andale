@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey, prevDayKey } from "./firstDoor.js";
 import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
-import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts } from "./recuerdos.js";
+import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED } from "./recuerdos.js";
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
 
@@ -3498,6 +3498,9 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("recuerdos-axolotl").getAttribute("src")).toMatch(/mascot\/axolotl\.png/);
     expect(screen.getByTestId("recuerdos-bajio-glow")).toBeTruthy();
     expect(screen.getByTestId("recuerdos-bajio-glow").className).toMatch(/bajio-glow/);
+    expect(screen.getByTestId("recuerdos-bajio-glow").style.boxShadow).toBe(RECUERDOS_PIN_SHADOW);
+    const cdmxDot = screen.getByTestId("recuerdos-pin-cdmx").querySelector("span");
+    expect(cdmxDot.style.boxShadow).toBe(RECUERDOS_PIN_SHADOW_LOCKED);
     expect(map.querySelector("nav")).toBeNull();
     expect(screen.queryByTestId("nav-recuerdos")).toBeNull();
 

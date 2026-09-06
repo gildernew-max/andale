@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (Recuerdos map contrast — Dave / Hand)
+
+**What changed**
+- Recuerdos / Souvenir trail Mexico PNG land darkened for cream-card contrast. Paper cream `#f8f0e8` unchanged.
+- Fills: terracotta `#e0a888` → `#b37856` · sage `#b8c0a0` → `#858e69` · yellow `#f8e8b8` → `#9f8d59`.
+- Silhouette / region stroke → `#564834`. Pin coords unchanged. Pin ring slightly stronger so gold / lime / lock stay readable.
+- Soft chrome parked. Cenzontle / PR 106 untouched. Do not merge.
+
+**Why**
+- Dave: the map is hard to see. Hand: darken silhouette + region fills only.
+
 ## 2026-09-06 (No Face — QWERTY letter board)
 
 **What changed**

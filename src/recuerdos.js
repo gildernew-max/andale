@@ -14,6 +14,22 @@ export const FIRST_GLOW_PIN = "bajio";
 export const MEXICO_MAP_SRC = "assets/dave-cleared-mexico-map.png";
 
 /**
+ * Contrast-darkened land fills on the Recuerdos PNG (cream paper unchanged).
+ * Pastel source → darker earth tones so the silhouette reads on #F4EDE0.
+ */
+export const MEXICO_MAP_COLORS = {
+  paper: "#f8f0e8",
+  terracotta: "#b37856",
+  sage: "#858e69",
+  yellow: "#9f8d59",
+  stroke: "#564834",
+};
+
+/** Pin marker ring — slightly stronger so gold / lime / lock stay readable on darker land. */
+export const RECUERDOS_PIN_SHADOW = "0 0 0 1px rgba(58,42,24,.42), 0 3px 8px rgba(0,0,0,.34)";
+export const RECUERDOS_PIN_SHADOW_LOCKED = "0 0 0 1px rgba(58,42,24,.28)";
+
+/**
  * Five regional pins. Percent positions sit on the illustrated Mexico map.
  * Bajío is the first-glow pin and starts open.
  * Yucatán 75,66 sits the pin *dot* on peninsula land (button % is center of dot+label).
