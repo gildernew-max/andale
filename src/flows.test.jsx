@@ -10,6 +10,7 @@ import App from "./App.jsx";
 import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey, prevDayKey } from "./firstDoor.js";
 import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
 import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts } from "./recuerdos.js";
+import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -3560,5 +3561,41 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("practice-focus").textContent).toBe("Foco: Modo verbal"));
     expect(screen.getByTestId("practice-quip").textContent).toMatch(/Cerca\.|La idea está|Respira\.|mal estacionado/);
     expect(screen.getByTestId("practice-why").textContent).toBe("«Cuando» + acción futura → subjuntivo. Hábito sería indicativo: «cuando salgo».");
+  });
+
+  it("number-row keys insert TAP AN ANSWER chips without breaking tap", async () => {
+    cleanup();
+    seedProgress({
+      uiLang: "en",
+      hearts: 5,
+      resume: { unitId: "subj1", order: [{ u: "subj1", i: 4 }], qi: 0, xp: 0, right: 0, wrong: 0 },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    const unitBtn = screen.queryByRole("button", { name: "Subjuntivo presente" })
+      || (await openCaminoMore(user), screen.getByRole("button", { name: "Subjuntivo presente" }));
+    await user.click(unitBtn);
+    await user.click(screen.getByRole("button", { name: /Start|Empezar/ }));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await waitFor(() => expect(document.body.textContent).toMatch(/Te llamo cuando/));
+    const tiles = screen.getAllByTestId("bank-tile");
+    expect(tiles.length).toBeGreaterThan(1);
+    const saldreIdx = tiles.findIndex((el) => el.textContent.trim() === "saldré");
+    expect(saldreIdx).toBeGreaterThanOrEqual(0);
+    const key = CHOICE_CHIP_KEYS[saldreIdx];
+    expect(key).toBeTruthy();
+    const blank = document.querySelector("input[placeholder]");
+    expect(blank).toBeTruthy();
+    blank.focus();
+    await user.keyboard(key);
+    expect(blank.value).toBe("saldré");
+    expect(blank.value).not.toBe(key);
+
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByTestId("practice-focus")).toBeTruthy());
+    expect(screen.getByTestId("practice-focus").textContent).toBe("Focus: Verb mood");
+    await user.click(screen.getByRole("button", { name: /Why\?/ }));
+    expect(screen.getByTestId("practice-why").textContent).toBe("«Cuando» + future action → subjunctive. Habit would be indicative: «cuando salgo».");
   });
 });

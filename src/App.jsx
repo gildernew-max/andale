@@ -12,6 +12,7 @@ import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
+import { choiceChipIndexForKey } from "./choiceChipKeys.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -5178,10 +5179,25 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timedOut]);
 
+  const insertChoiceChipFromKey = (e) => {
+    if (screen !== "lesson" || status !== "idle" || q?.answerAid?.mode !== "choices") return false;
+    if (e.altKey || e.ctrlKey || e.metaKey) return false;
+    const tag = e.target?.tagName;
+    const inField = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+    if (inField && e.target !== inputRef.current) return false;
+    const idx = choiceChipIndexForKey(e.key);
+    const tile = idx == null ? null : q.answerAid.tiles[idx];
+    if (!tile) return false;
+    e.preventDefault();
+    chooseAnswerTile(tile);
+    return true;
+  };
+
   useEffect(() => {
     if (screen !== "lesson") return;
 	    const h = (e) => {
-	      const inInput = e.target.tagName === "INPUT";
+	      if (insertChoiceChipFromKey(e)) return;
+	      const inInput = e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA";
 	      if (inInput) return;
 	      if (e.key === "Enter") {
 	        e.preventDefault();
@@ -7553,7 +7569,7 @@ export default function App() {
               <div>
                 <input ref={inputRef} value={typed} disabled={status !== "idle"}
                   onChange={(e) => { setTypedTileIds([]); setPlaceAt(null); setTyped(e.target.value); }}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); status === "idle" ? check() : next(); } }}
+                  onKeyDown={(e) => { if (insertChoiceChipFromKey(e)) return; if (e.key === "Enter") { e.preventDefault(); status === "idle" ? check() : next(); } }}
 	                  placeholder={q.type === "listen" ? (uiLang === "en" ? "Write the full sentence…" : "Escribe la oración completa…") : q.type === "transform" ? (uiLang === "en" ? "Write the transformed sentence…" : "Escribe la oración transformada…") : (uiLang === "en" ? "Write the missing word…" : "Escribe la palabra que falta…")}
                   autoCapitalize="off" autoCorrect="off" spellCheck={false}
                   style={{ width: "100%", boxSizing: "border-box", padding: "15px 16px", fontSize: 17, fontWeight: 700, fontFamily: "inherit", borderRadius: 14, border: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, background: status === "idle" ? "#F7F7F7" : status === "wrong" ? D.badBg : D.okBg }} />

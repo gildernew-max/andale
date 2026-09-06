@@ -799,6 +799,10 @@ for (const [host, voice] of Object.entries(VOICES)) {
   }
 }
 assert(VOICES.luna.wrong.some((line) => line.es === "La idea está; falta precisión." && line.en === "The idea’s there; it needs precision."), "George stamp Luna miss EN");
+assert(appSrc.includes("choiceChipIndexForKey"), "blank chips use second-row key map");
+assert(appSrc.includes("insertChoiceChipFromKey"), "blank chips bind keys on the practice input");
+assert(appSrc.includes("e.target !== inputRef.current"), "chip keys do not steal other inputs");
+assert(appSrc.includes('q?.answerAid?.mode !== "choices"'), "chip keys only bind TAP AN ANSWER / choices");
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const viteSrc = readFileSync(join(repoRoot, "vite.config.js"), "utf8");
 assert(viteSrc.includes("base: '/andale/'"), "Pages vite base stays /andale/");

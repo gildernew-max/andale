@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (TAP AN ANSWER second-row keys — Dave / Hand)
+
+**What changed**
+- Complete-the-sentence / TAP AN ANSWER chips (`answerAid.mode === "choices"`): second-row keys insert the chip in order — `1` `2` `3` `4` `5` `6` `7` `8` `9` `0` then `-` `=` if more than 10. Same as tapping. Invisible map, no new chrome.
+- Binds while the blank exercise is active, including when the blank input is focused (so `1` inserts the word, not the digit). Does not steal other inputs. Mobile tap unchanged.
+- George miss / Focus / Why stamps stay. Soft chrome parked. Do not merge.
+
+**Why**
+- Dave / Hand lock: keyboard should fill the blank the way the chip tap does.
+
 ## 2026-09-06 (George stamp — practice miss / Focus / Why)
 
 **What changed**
