@@ -155,8 +155,13 @@ assert(!shouldShowSoftPaywall({
   splash: false,
 }), "paywall waits until after the come-back card");
 
+/** Same eight Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
 const HOY_TITLES = [
   { title: "Noche de faroles", titleEn: "Night of lanterns" },
+  { title: "En la farmacia", titleEn: "At the pharmacy" },
+  { title: "WhatsApp del plomero", titleEn: "Plumber WhatsApp" },
+  { title: "WhatsApp del vecino", titleEn: "Neighbor WhatsApp" },
+  { title: "En la calle", titleEn: "On the street" },
   { title: "WhatsApp del casero", titleEn: "Landlord WhatsApp" },
   { title: "Mostrador en caos", titleEn: "Airport Counter Chaos" },
   { title: "Cena con la suegra", titleEn: "Dinner With the In-Laws" },
@@ -169,13 +174,13 @@ assert(prevDayKey("2026-10-01") === "2026-09-30", "prevDayKey rolls the month");
 assert(prevDayKey("") === "", "prevDayKey unknown stays empty");
 assert(dayKeyFromDate(new Date(2026, 8, 4)) === "2026-09-04", "dayKeyFromDate is local YYYY-MM-DD");
 const tomorrowHoy = hoySceneForDay(HOY_TITLES, nextDayKey("2026-09-04"));
-assert(tomorrowHoy?.title === "Mostrador en caos", "2026-09-05 Hoy title is Mostrador en caos");
-assert(hoyTitleForLang(tomorrowHoy, "es") === "Mostrador en caos", "ES tomorrow title");
-assert(hoyTitleForLang(tomorrowHoy, "en") === "Airport Counter Chaos", "EN tomorrow title");
+assert(tomorrowHoy?.title === "WhatsApp del plomero", "2026-09-05 Hoy title is WhatsApp del plomero (day-hash 8 scenes)");
+assert(hoyTitleForLang(tomorrowHoy, "es") === "WhatsApp del plomero", "ES tomorrow title");
+assert(hoyTitleForLang(tomorrowHoy, "en") === "Plumber WhatsApp", "EN tomorrow title");
 assert(hoySceneForDay([], "2026-09-05") === null, "empty list → no invented title");
 assert(hoySceneForDay(HOY_TITLES, "") === null, "missing day → no invented title");
-assert(comeBackTomorrowLine({ lang: "es", nextTitle: "Mostrador en caos" }) === "Vuelve mañana por «Mostrador en caos».", "George ES lock: Vuelve mañana por «{title}».");
-assert(comeBackTomorrowLine({ lang: "en", nextTitle: "Airport Counter Chaos" }) === "Come back tomorrow for “Airport Counter Chaos”.", "George EN lock: Come back tomorrow for “{title}”.");
+assert(comeBackTomorrowLine({ lang: "es", nextTitle: "WhatsApp del plomero" }) === "Vuelve mañana por «WhatsApp del plomero».", "George ES lock: Vuelve mañana por «{title}».");
+assert(comeBackTomorrowLine({ lang: "en", nextTitle: "Plumber WhatsApp" }) === "Come back tomorrow for “Plumber WhatsApp”.", "George EN lock: Come back tomorrow for “{title}”.");
 assert(comeBackTomorrowLine({ lang: "es" }) === COME_BACK_GENERIC_ES, "ES fallback when title unknown");
 assert(comeBackTomorrowLine({ lang: "en", nextTitle: "" }) === COME_BACK_GENERIC_EN, "EN fallback when title empty");
 assert(comeBackTomorrowLine({ lang: "es", nextTitle: "   " }) === COME_BACK_GENERIC_ES, "whitespace title is unknown");
@@ -183,8 +188,8 @@ assert(comeBackTomorrowLine({ lang: "en", nextTitle: null, fallback: COME_BACK_G
 const day1 = "2026-09-04";
 const day2 = nextDayKey(day1);
 const promisedHoy = hoySceneForDay(HOY_TITLES, day2);
-assert(promisedHoy?.title === "Mostrador en caos", "day-1 teaser promise is day-2 Hoy");
-assert(comeBackTomorrowLine({ lang: "es", nextTitle: promisedHoy.title }) === "Vuelve mañana por «Mostrador en caos».", "day-1 ES promise names day-2 Hoy");
+assert(promisedHoy?.title === "WhatsApp del plomero", "day-1 teaser promise is day-2 Hoy (WhatsApp del plomero with 8 scenes)");
+assert(comeBackTomorrowLine({ lang: "es", nextTitle: promisedHoy.title }) === "Vuelve mañana por «WhatsApp del plomero».", "day-1 ES promise names day-2 Hoy");
 assert(firstDoorHero({
   todayScene: promisedHoy,
   todaySceneDone: false,
