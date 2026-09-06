@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (No Face — QWERTY letter board)
+
+**What changed**
+- Letter-pick boards (Hangman / shared `LetterBoard`) default to Spanish **QWERTY**. Ñ sits after L.
+- Quiet toggle under the board: `ABC` / `QWERTY`. ABC is the A–Z grid. Choice persists on `prog.letterLayout` (local progress store). Missing/junk → QWERTY.
+- Unused chips stay CHECK lime (`D.green` #58CC02, weight 800) on a white chip — same readability as BUILD WITH WORDS. Soft chrome parked. Do not merge.
+
+**Why**
+- No Face stamp: default the board learners already have in their fingers. Toggle is two quiet labels, not a banner.
+
 ## 2026-09-06 (Safe/Risky Quedo — George Why stamp)
 
 **What changed**

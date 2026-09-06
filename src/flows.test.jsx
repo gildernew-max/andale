@@ -11,6 +11,7 @@ import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, 
 import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
 import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts } from "./recuerdos.js";
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
+import { lettersForLayout } from "./letterBoard.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -3656,5 +3657,43 @@ describe("simulated learner flows", () => {
       expect(Number.parseInt(tile.style.fontWeight, 10)).toBeGreaterThanOrEqual(800);
     });
     expect(tiles.some((tile) => /llegues|temprano|reunión/i.test(tile.textContent))).toBe(true);
+  });
+
+  it("letter boards default to QWERTY with Ñ after L; ABC toggle persists", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("ahorcado-section-start"));
+    await waitFor(() => expect(screen.getByTestId("letter-board")).toBeTruthy());
+    expect(screen.getByTestId("letter-board").getAttribute("data-layout")).toBe("qwerty");
+    const qwertyChips = screen.getAllByTestId("letter-chip");
+    expect(qwertyChips.map((el) => el.textContent).join("")).toBe(lettersForLayout("qwerty").join(""));
+    expect(qwertyChips.map((el) => el.textContent).join("")).toContain("LÑ");
+    expect(screen.getByTestId("letter-layout-qwerty").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByTestId("letter-layout-abc").getAttribute("aria-pressed")).toBe("false");
+    expect(document.body.textContent).not.toMatch(/switch to ABC|keyboard layout|elige el teclado|press QWERTY/i);
+    const lime = /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i;
+    qwertyChips.forEach((chip) => {
+      expect(chip.style.color).toMatch(lime);
+      expect(chip.style.background).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+      expect(Number.parseInt(chip.style.fontWeight, 10)).toBeGreaterThanOrEqual(800);
+    });
+
+    await user.click(screen.getByTestId("letter-layout-abc"));
+    await waitFor(() => expect(screen.getByTestId("letter-board").getAttribute("data-layout")).toBe("abc"));
+    const abcChips = screen.getAllByTestId("letter-chip");
+    expect(abcChips.map((el) => el.textContent).join("")).toBe(lettersForLayout("abc").join(""));
+    expect(abcChips.map((el) => el.textContent).join("")).toContain("NÑ");
+    expect(screen.getByTestId("letter-layout-abc").getAttribute("aria-pressed")).toBe("true");
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).letterLayout).toBe("abc");
+    });
+
+    cleanup();
+    const user2 = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    await user2.click(screen.getByTestId("ahorcado-section-start"));
+    await waitFor(() => expect(screen.getByTestId("letter-board")).toBeTruthy());
+    expect(screen.getByTestId("letter-board").getAttribute("data-layout")).toBe("abc");
+    expect(screen.getAllByTestId("letter-chip").map((el) => el.textContent).join("")).toBe(lettersForLayout("abc").join(""));
   });
 });
