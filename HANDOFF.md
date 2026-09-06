@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (Safe/Risky Quedo — Dave/George hard gloss)
+
+**What changed**
+- Safe/Risky item `Quedo a sus órdenes.` Literal is hard gloss only: ES `Quedo bajo sus órdenes.` · EN `I remain under your orders.`
+- Soft EN Literal `I’m at your service.` (and `Quedo a su disposición.`) killed for this item.
+- Why stays: EN `A Mexican professional close: warm, clear, safe. Fits an email to a client.` · ES `Cierre profesional mexicano: amable, claro, seguro. Encaja en correo con clientas.`
+- Soft chrome parked. Do not merge.
+
+**Why**
+- Dave/George lock: Literal/Traducción = hard gloss. Soft English / register teach = Why (second beat).
+
 ## 2026-09-06 (No Face — quiet digits under blank chips)
 
 **What changed**

@@ -465,7 +465,7 @@ describe("simulated learner flows", () => {
   it("Safe/Risky reveal shows Literal then Why above CONTINUE", async () => {
     const literals = {
       "No manches.": { es: "Vaya / no me digas.", en: "No way. / Come on." },
-      "Quedo a sus órdenes.": { es: "Quedo a su disposición.", en: "I’m at your service." },
+      "Quedo a sus órdenes.": { es: "Quedo bajo sus órdenes.", en: "I remain under your orders." },
       "¿Mande?": { es: "¿Cómo? / ¿perdón?", en: "Pardon?" },
       "¿Qué?": { es: "¿Qué?", en: "What?" },
       "¿Me da un café, por favor?": { es: "¿Me da un café, por favor?", en: "Can I have a coffee, please?" },
@@ -504,6 +504,11 @@ describe("simulated learner flows", () => {
     expect(cont.textContent).toMatch(/Continuar|Terminar/);
     expect(literal.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(why.compareDocumentPosition(cont) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    if (phrase === "Quedo a sus órdenes.") {
+      expect(literal.textContent).toContain("Quedo bajo sus órdenes.");
+      expect(literal.textContent).not.toMatch(/at your service/i);
+      expect(literal.textContent).not.toMatch(/disposición/i);
+    }
     if (phrase === "Está bien chido.") {
       expect(literal.textContent).toContain("Está muy padre.");
       expect(literal.textContent).not.toMatch(/cool/i);
@@ -511,6 +516,10 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("safe-risky-literal").textContent).toContain("Literal"));
     expect(screen.getByTestId("safe-risky-literal").textContent).toContain(literals[phrase].en);
+    if (phrase === "Quedo a sus órdenes.") {
+      expect(screen.getByTestId("safe-risky-literal").textContent).toContain("I remain under your orders.");
+      expect(screen.getByTestId("safe-risky-literal").textContent).not.toMatch(/at your service/i);
+    }
     expect(screen.getByTestId("safe-risky-why").textContent).toContain("Why");
     expect(screen.getByTestId("safe-risky-why").textContent).toContain(whys[phrase].en);
     expect(screen.getByTestId("safe-risky-why").textContent).not.toMatch(/^Why\?/);
@@ -520,7 +529,7 @@ describe("simulated learner flows", () => {
   it("Safe/Risky wrong/better-answer reveal still shows Literal then Why above CONTINUE", async () => {
     const literals = {
       "No manches.": { es: "Vaya / no me digas.", answer: "casual" },
-      "Quedo a sus órdenes.": { es: "Quedo a su disposición.", answer: "formal" },
+      "Quedo a sus órdenes.": { es: "Quedo bajo sus órdenes.", answer: "formal" },
       "¿Mande?": { es: "¿Cómo? / ¿perdón?", answer: "regional" },
       "¿Qué?": { es: "¿Qué?", answer: "risky" },
       "¿Me da un café, por favor?": { es: "¿Me da un café, por favor?", answer: "safe" },
@@ -546,6 +555,11 @@ describe("simulated learner flows", () => {
     expect(why.textContent).toContain("Por qué");
     expect(literal.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(why.compareDocumentPosition(cont) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    if (phrase === "Quedo a sus órdenes.") {
+      expect(literal.textContent).toContain("Quedo bajo sus órdenes.");
+      expect(literal.textContent).not.toMatch(/at your service/i);
+      expect(literal.textContent).not.toMatch(/disposición/i);
+    }
     if (phrase === "Está bien chido.") {
       expect(literal.textContent).toContain("Está muy padre.");
       expect(literal.textContent).not.toMatch(/cool/i);

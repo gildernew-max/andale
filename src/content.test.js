@@ -597,7 +597,7 @@ assert(UI.en.why === "Why?", "existing L.why stays Why?");
 const SAFE_RISKY_ITEMS = Function(`"use strict"; return (${extractConst(appSrc, "SAFE_RISKY_ITEMS")});`)();
 const SAFE_RISKY_LITERALS = {
   "No manches.": { es: "Vaya / no me digas.", en: "No way. / Come on." },
-  "Quedo a sus órdenes.": { es: "Quedo a su disposición.", en: "I’m at your service." },
+  "Quedo a sus órdenes.": { es: "Quedo bajo sus órdenes.", en: "I remain under your orders." },
   "¿Mande?": { es: "¿Cómo? / ¿perdón?", en: "Pardon?" },
   "¿Qué?": { es: "¿Qué?", en: "What?" },
   "¿Me da un café, por favor?": { es: "¿Me da un café, por favor?", en: "Can I have a coffee, please?" },
@@ -624,6 +624,15 @@ for (const [phrase, literal] of Object.entries(SAFE_RISKY_LITERALS)) {
   assert(item.note?.es === SAFE_RISKY_WHYS[phrase].es, `${phrase} ES Why`);
   assert(item.note?.en === SAFE_RISKY_WHYS[phrase].en, `${phrase} EN Why`);
 }
+const quedo = SAFE_RISKY_ITEMS.find((it) => it.phrase === "Quedo a sus órdenes.");
+assert(quedo.literal.es === "Quedo bajo sus órdenes.", "quedo ES literal is hard gloss");
+assert(quedo.literal.en === "I remain under your orders.", "quedo EN literal is hard gloss");
+assert(!/at your service/i.test(quedo.literal.en), "quedo EN literal is not soft I’m at your service");
+assert(!/disposición/i.test(quedo.literal.es), "quedo ES literal is not soft disposición");
+assert(!/I’m at your service/.test(`${quedo.literal.es}${quedo.literal.en}`), "curly soft EN literal gone");
+assert(!/I'm at your service/.test(`${quedo.literal.es}${quedo.literal.en}`), "straight soft EN literal gone");
+assert(!SAFE_RISKY_ITEMS.some((it) => /at your service/i.test(`${it.literal?.es}${it.literal?.en}`)), "Safe/Risky pack has no at-your-service literal");
+assert(!SAFE_RISKY_ITEMS.some((it) => /disposición/i.test(`${it.literal?.es}${it.literal?.en}`)), "Safe/Risky pack has no disposición literal");
 const chido = SAFE_RISKY_ITEMS.find((it) => it.phrase === "Está bien chido.");
 assert(chido.literal.es === "Está muy padre.", "chido ES literal is Está muy padre.");
 assert(!/cool/i.test(chido.literal.es), "chido ES literal has no English cool");
