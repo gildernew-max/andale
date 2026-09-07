@@ -12,6 +12,7 @@ import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
 import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED } from "./recuerdos.js";
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
+import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -3743,5 +3744,38 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("letter-board")).toBeTruthy());
     await waitFor(() => expect(screen.getByTestId("letter-board").getAttribute("data-layout")).toBe("abc"));
     expect(screen.getAllByTestId("letter-chip").map((el) => el.textContent).join("")).toBe(lettersForLayout("abc").join(""));
+  });
+
+  it("Learn first CTA is 80/20 Subjuntivo in five — George exact, no deck, no pep", async () => {
+    const user = await boot();
+    const cta = screen.getByTestId("eighty-twenty-cta");
+    expect(cta).toBeTruthy();
+    expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(SUBJ_FIVE_LABEL);
+    expect(screen.getByTestId("eighty-twenty-sub").textContent).toBe(SUBJ_FIVE_SUB.es);
+    expect(cta.closest("[data-testid='first-door-hero']")).toBeNull();
+    const pathNode = screen.getByRole("button", { name: "Subjuntivo presente" });
+    expect(cta.compareDocumentPosition(pathNode) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(cta.querySelector("img, svg")).toBeNull();
+    expect(screen.queryByTestId("eighty-twenty-sheet")).toBeNull();
+
+    await user.click(cta);
+    await waitFor(() => expect(screen.getByTestId("eighty-twenty-sheet")).toBeTruthy());
+    expect(screen.getAllByTestId("eighty-twenty-line").map((el) => el.textContent)).toEqual(SUBJ_FIVE.es);
+    const sheet = screen.getByTestId("eighty-twenty-sheet");
+    expect(sheet.querySelector("img")).toBeNull();
+    expect(sheet.textContent).not.toMatch(/Deck|Practice this now|Practicar ahora|You've got this|¡Tú puedes|Master the/);
+    expect(screen.queryByTestId("eighty-twenty-title")).toBeNull();
+
+    await user.click(screen.getByTestId("eighty-twenty-close"));
+    await waitFor(() => expect(screen.queryByTestId("eighty-twenty-sheet")).toBeNull());
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("eighty-twenty-sub").textContent).toBe(SUBJ_FIVE_SUB.en));
+    expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(SUBJ_FIVE_LABEL);
+
+    await user.click(screen.getByTestId("eighty-twenty-cta"));
+    await waitFor(() => expect(screen.getByTestId("eighty-twenty-sheet")).toBeTruthy());
+    expect(screen.getAllByTestId("eighty-twenty-line").map((el) => el.textContent)).toEqual(SUBJ_FIVE.en);
+    expect(screen.getByTestId("first-door-hero")).toBeTruthy();
   });
 });

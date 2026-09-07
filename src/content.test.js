@@ -8,6 +8,7 @@ import { comeBackTomorrowLine, hoySceneForDay, nextDayKey } from "./firstDoor.js
 import { hoySceneBeatCount, shouldParkHoyUnderMas } from "./hoyWin.js";
 import { FOCUS_LABELS, PRACTICE_EXPLAIN, explainText, focusLabel, uiText } from "./practiceI18n.js";
 import { DEFAULT_LETTER_LAYOUT, lettersForLayout } from "./letterBoard.js";
+import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -1016,6 +1017,31 @@ assert(appSrc.includes("window.__andaleSpeech"), "wrap-prep speech flag");
 assert(appSrc.includes("window.__andaleStorage"), "wrap-prep storage flag");
 assert(!existsSync(join(repoRoot, "PrivacyInfo.xcprivacy")), "no PrivacyInfo until Mon wrap");
 assert(!existsSync(join(repoRoot, "ios", "App", "PrivacyInfo.xcprivacy")), "no ios PrivacyInfo until Mon wrap");
+
+assert(SUBJ_FIVE_LABEL === "80/20", "80/20 label is the loan in both langs");
+assert(SUBJ_FIVE_SUB.es === "Subjuntivo en cinco", "ES 80/20 second line");
+assert(SUBJ_FIVE_SUB.en === "Subjunctive in five", "EN 80/20 second line");
+assert(SUBJ_FIVE.es.length === 5 && SUBJ_FIVE.en.length === 5, "George five sentences each lang");
+assert(SUBJ_FIVE.es[0] === "Usa el subjuntivo después de un deseo, emoción o duda + que: Quiero que vengas.", "George ES 1");
+assert(SUBJ_FIVE.en[0] === "Use the subjunctive after a wish, emotion, or doubt + que: Quiero que vengas.", "George EN 1");
+assert(SUBJ_FIVE.es[4] === "Prueba mental: ¿Es real/seguro, o deseado/incierto/todavía no? Real → indicativo; lo demás → subjuntivo.", "George ES 5");
+assert(SUBJ_FIVE.en[4] === "Soft test: Is this real/certain, or wished-for/uncertain/not yet? Real → indicative; the other side → subjunctive.", "George EN 5");
+assert(appSrc.includes("data-testid=\"eighty-twenty-cta\""), "80/20 CTA is testable");
+assert(appSrc.includes("data-testid=\"eighty-twenty-label\""), "80/20 label is testable");
+assert(appSrc.includes("data-testid=\"eighty-twenty-sub\""), "80/20 second line is testable");
+assert(appSrc.includes("data-testid=\"eighty-twenty-sheet\""), "80/20 sheet is testable");
+assert(appSrc.includes("{SUBJ_FIVE_LABEL}"), "CTA label is the 80/20 loan");
+assert(appSrc.includes("{subjFiveSub(uiLang)}"), "CTA second line follows uiLang");
+assert(appSrc.includes("{subjFiveLines(uiLang).map"), "sheet lines follow uiLang");
+const eightyCtaAt = appSrc.indexOf('data-testid="eighty-twenty-cta"');
+const firstDoorAt = appSrc.indexOf("First door: Hoy scene or Phrase Doctor");
+const pathCardsAt = appSrc.indexOf("let g = -1; // global node index");
+assert(eightyCtaAt > 0 && firstDoorAt > eightyCtaAt, "80/20 is the first CTA — before first-door");
+assert(pathCardsAt > eightyCtaAt, "80/20 CTA sits before path cards");
+const eightySheet = appSrc.slice(appSrc.indexOf("eighty-twenty-sheet"), appSrc.indexOf("Grammar guide modal"));
+assert(!/CoachPortrait/.test(eightySheet), "80/20 sheet has no face");
+assert(!/pep|You've got this|Practice this now|Practicar ahora|Deck|flashRun|tapReveal/.test(eightySheet), "80/20 sheet has no pep header or deck");
+assert(!/eighty-twenty-title|eighty-twenty-header/.test(appSrc), "80/20 sheet has no pep header chrome");
 
 const qCount = UNITS.reduce((n, u) => n + u.questions.length, 0);
 console.log(`ok: content schema — ${UNITS.length} units / ${qCount} questions after prepQuestion; ${SECTIONS.length} sections; FLAT ${FLAT.length}; ${STORIES.length} stories (story-0); ${MISSIONS.length} missions; ${TODAY_SCENES.length} today scenes`);
