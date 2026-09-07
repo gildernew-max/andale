@@ -83,6 +83,17 @@ const boot = async () => {
 
 const continueBtn = () => screen.getByRole("button", { name: /^Continuar$/i });
 
+/** First short-Hoy beat is the scene MC. Read the live answer — do not hardcode a day-hash list. */
+const clickHoySceneMc = async (user) => {
+  const live = JSON.parse(localStorage.getItem(LIVE_KEY) || "null");
+  const q = live?.session?.questions?.[0];
+  const answer = q?.answer || (Array.isArray(q?.answers) ? q.answers[0] : "");
+  const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
+    answer && el.textContent.includes(answer));
+  expect(choice).toBeTruthy();
+  await user.click(choice);
+};
+
 const localToday = () => dayKeyFromDate(new Date());
 
 /** Same nine Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
@@ -1456,19 +1467,7 @@ describe("simulated learner flows", () => {
     expect(liveShort.session.firstHoy).toBe(true);
     expect(liveShort.session.questions.length).toBeLessThanOrEqual(4);
     expect(liveShort.session.questions.length).toBeGreaterThan(0);
-    const hoyAnswers = [
-      "cilantro, cebolla, salsa y guarnición",
-      "natural y práctico",
-      "natural y claro",
-      "cordial y claro",
-      "natural y firme",
-      "contraste",
-      "habla de un momento futuro",
-    ];
-    const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
-      hoyAnswers.some((ans) => el.textContent.includes(ans)));
-    expect(choice).toBeTruthy();
-    await user.click(choice);
+    await clickHoySceneMc(user);
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
@@ -1711,19 +1710,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("hero-cta"));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
-    const hoyAnswers = [
-      "cilantro, cebolla, salsa y guarnición",
-      "natural y práctico",
-      "natural y claro",
-      "cordial y claro",
-      "natural y firme",
-      "contraste",
-      "habla de un momento futuro",
-    ];
-    const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
-      hoyAnswers.some((ans) => el.textContent.includes(ans)));
-    expect(choice).toBeTruthy();
-    await user.click(choice);
+    await clickHoySceneMc(user);
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
