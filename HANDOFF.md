@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (HOLD merge — hub10 bake-off)
+
+**What changed**
+- HOLD merge on Learn hub v5.1 (`#118`, draft). v5.1 is **not** final ship.
+- Dave ordered a 10-mock bake-off under `/workspace/andale-art/hub10/`. Team picks highest after Gemini ≥9.5 filter.
+- Keep hierarchy direction only: Hoy loud; Stories/Games quieter equals; one label per tile. Await winner stamp before polish-to-merge.
+- Soft chrome parked.
+
+**Why**
+- Bake-off first. Do not treat v5.1 as the face.
+
 ## 2026-09-07 (Dave lock — one tile label, no slash tails)
 
 **What changed**
