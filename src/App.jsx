@@ -25,7 +25,6 @@ import {
   CUBETAS_BUCKETS,
   CUBETAS_GEM,
   CUBETAS_SHAKE_MS,
-  CUBETAS_SQUASH_MS,
   CUBETAS_TITLE,
   CUBETAS_WIN_MS,
   CUBETAS_XP,
@@ -1671,7 +1670,6 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
               {CUBETAS_BUCKETS.map((id) => {
                 const active = hover === id;
                 const wrong = run.status === "wrong" && run.lastBucket === id;
-                const squash = run.status === "squash" && run.lastBucket === id;
                 const takeoff = flying && run.lastBucket === id;
                 return (
                   <button
@@ -1681,7 +1679,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
                     data-testid={`cubetas-bucket-${id}`}
                     disabled={!idle && run.status !== "wrong"}
                     onClick={() => { if (idle || run.status === "wrong") onDrop(id); }}
-                    className={squash ? "cubetas-squash" : takeoff ? "cubetas-bucket-fly" : wrong ? "wiggle" : undefined}
+                    className={takeoff ? "cubetas-bucket-fly" : wrong ? "wiggle" : undefined}
                     style={{
                       position: "relative",
                       minHeight: 168,
@@ -1698,61 +1696,39 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
                       padding: "28px 12px 16px",
                     }}
                   >
-                    <svg viewBox="0 0 80 18" width="54" height="14" aria-hidden="true" style={{ position: "absolute", top: 8, left: "50%", marginLeft: -27, overflow: "visible" }}>
+                    <svg viewBox="0 0 80 18" width="54" height="14" aria-hidden="true" style={{ position: "absolute", top: 8, left: "50%", marginLeft: -27 }}>
                       <path d="M10 14 C10 4 70 4 70 14" fill="none" stroke={D.ink} strokeWidth="3.2" strokeLinecap="round" />
                     </svg>
-                    {(flying || run.status === "squash") && run.lastBucket === id && (
-                      <img
-                        data-testid="cubetas-cenzontle"
-                        data-state="win"
-                        src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
-                        alt=""
-                        width={64}
-                        height={64}
-                        aria-hidden="true"
-                        className={flying ? "cubetas-bird-win" : "cubetas-bird-off"}
-                        style={{
-                          position: "absolute",
-                          top: -18,
-                          left: "50%",
-                          marginLeft: -32,
-                          width: 64,
-                          height: 64,
-                          objectFit: "contain",
-                          pointerEvents: "none",
-                          zIndex: 4,
-                          overflow: "visible",
-                        }}
-                      />
-                    )}
                     {bucketLabel(id, uiLang)}
                   </button>
                 );
               })}
             </div>
-            {!(flying || run.status === "squash") && (
-              <img
-                data-testid="cubetas-cenzontle"
-                data-state={clearing ? "eso" : "offstage"}
-                src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
-                alt=""
-                width={72}
-                height={72}
-                aria-hidden="true"
-                className={clearing ? "cubetas-eso-fly" : "cubetas-bird-off"}
-                style={{
-                  position: "absolute",
-                  right: 8,
-                  top: 18,
-                  width: 72,
-                  height: 72,
-                  objectFit: "contain",
-                  pointerEvents: "none",
-                  zIndex: 3,
-                }}
-              />
-            )}
-            {run.status === "squash" && (
+            <img
+              data-testid="cubetas-cenzontle"
+              data-state={flying ? "win" : clearing ? "eso" : "offstage"}
+              src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
+              alt=""
+              width={72}
+              height={72}
+              aria-hidden="true"
+              draggable={false}
+              className={flying ? "cubetas-bird-win" : clearing ? "cubetas-eso-fly" : "cubetas-bird-off"}
+              style={{
+                position: "absolute",
+                top: flying ? -6 : 18,
+                left: flying && run.lastBucket === "subjunctive" ? "25%" : flying && run.lastBucket === "indicative" ? "75%" : "auto",
+                right: flying ? "auto" : 8,
+                marginLeft: flying ? -36 : 0,
+                width: 72,
+                height: 72,
+                objectFit: "contain",
+                pointerEvents: "none",
+                zIndex: 5,
+                background: "transparent",
+              }}
+            />
+            {flying && (
               <div data-testid="cubetas-gem-tick" className="cubetas-gem-tick" style={{ position: "absolute", left: "50%", top: 8, marginLeft: -18, zIndex: 4, display: "flex", alignItems: "center", gap: 4, fontWeight: 900, color: D.blueDark }}>
                 <IcGem size={18} />+{CUBETAS_GEM}
               </div>
@@ -4506,16 +4482,12 @@ export default function App() {
       if (next.status === "squash") {
         beep("chest");
         save((prev) => ({ ...prev, gems: (prev.gems || 0) + CUBETAS_GEM }));
-        const skipFly = cubetasReduced();
-        scheduleCubetas(CUBETAS_SQUASH_MS, () => {
-          setCubetasGame((g) => {
-            if (skipFly) return advanceCubetasReveal(advanceCubetasWin(g));
-            const win = advanceCubetasWin(g);
-            scheduleCubetas(CUBETAS_WIN_MS, () => setCubetasGame((w) => advanceCubetasReveal(w)));
-            return win;
-          });
-        });
-        return next;
+        const win = advanceCubetasWin(next);
+        if (cubetasReduced()) {
+          return advanceCubetasReveal(win);
+        }
+        scheduleCubetas(CUBETAS_WIN_MS, () => setCubetasGame((g) => advanceCubetasReveal(g)));
+        return win;
       }
       return next;
     });
@@ -6236,11 +6208,16 @@ export default function App() {
           9%{transform:translate(96px,-8px) rotate(4deg) scaleY(.82)}
           17.14%{transform:translate(20px,-4px) rotate(0) scaleY(1)}
           28%{transform:translate(4px,2px) rotate(-2deg)}
-          40%,100%{transform:translate(0,-10px) rotate(0);opacity:1}
+          40%{transform:translate(0,-10px) rotate(0);opacity:1}
+          46%{transform:translate(-6px,-2px) scale(.92,1.08) rotate(-4deg)}
+          100%{transform:translate(-200px,-120px) rotate(-14deg);opacity:0}
         }
         .cubetas-bird-win { animation: cubetasBirdWin 700ms ease-out forwards; }
         @keyframes cubetasBucketFly {
-          0%,39%{transform:none;opacity:1}
+          0%{transform:scale(1);opacity:1}
+          11%{transform:scale(1.07,0.86)}
+          17%{transform:scale(1)}
+          40%{transform:none;opacity:1}
           46%{transform:translate(-6px,8px) scale(.92,1.08) rotate(-6deg)}
           100%{transform:translate(-200px,-110px) rotate(-16deg);opacity:0}
         }
