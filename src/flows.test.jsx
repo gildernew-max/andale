@@ -1321,6 +1321,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("coach-strip")).toBeTruthy();
     expect(screen.getByTestId("coach-strip").querySelector("img[src*='valeria-happy.png']")).toBeTruthy();
     expect(screen.getByTestId("coach-strip").querySelector("img[src*='luna-happy.png']")).toBeTruthy();
+    expect(screen.getByTestId("coach-strip").querySelector("img[src*='rafa-happy.png']")).toBeTruthy();
+    expect(screen.getByTestId("coach-strip").querySelector("img[src*='diego-happy.png']")).toBeTruthy();
     expect(screen.getByTestId("luna-greeting")).toBeTruthy();
     expect(screen.getByTestId("luna-greeting").textContent).toMatch(/¡Hola, Dave!/);
     expect(screen.getByText("Coach del día")).toBeTruthy();
