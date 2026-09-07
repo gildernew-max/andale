@@ -840,6 +840,22 @@ if (typeof window !== "undefined") {
   if (window.__andaleStorage == null) window.__andaleStorage = !!(window.storage?.get || window.localStorage);
 }
 
+/** Prefer a George-stamped story Why/Focus; generic lectura fallback otherwise. */
+const liftStoryQuizItem = (storyQ, prompt, fallback) => {
+  const authored = storyQ?.explain != null;
+  return {
+    type: "mc",
+    prompt,
+    choices: storyQ.choices,
+    answer: storyQ.answer,
+    explain: authored ? storyQ.explain : fallback.es,
+    explainEn: (typeof storyQ?.explain === "object" && storyQ.explain?.en) || storyQ?.explainEn || fallback.en,
+    _u: "_story",
+    _i: -1,
+    skill: storyQ?.skill || "Lectura",
+  };
+};
+
 const skillFor = (q) => {
   if (!q) return "Precisión";
   if (q.skill) return q.skill;
@@ -2548,7 +2564,7 @@ const STORIES = [
   },
   questions: [
     { prompt: "¿Cuánto recibe don Adán por cada kilo de café que entrega a la cooperativa?", choices: ["Entre quince y veinte pesos", "Seis dólares", "Cien pesos", "Veinte gramos"], answer: "Entre quince y veinte pesos" },
-    { prompt: "¿Por qué se negó a vender toda su cosecha a una sola empresa japonesa?", choices: ["Porque no quería depender de una sola empresa", "Porque la empresa no pagaba bien", "Porque la cooperativa no se lo permitía", "Porque la cosecha era demasiado pequeña"], answer: "Porque no quería depender de una sola empresa" },
+    { prompt: "¿Por qué se negó a vender toda su cosecha a una sola empresa japonesa?", choices: ["Porque no quería depender de una sola empresa", "Porque la empresa no pagaba bien", "Porque la cooperativa no se lo permitía", "Porque la cosecha era demasiado pequeña"], answer: "Porque no quería depender de una sola empresa", skill: "Lectura", explain: { es: "El texto dice que la oferta japonesa era premium — «no pagaba bien» no es lo que pasó. Se negó para no depender de un solo comprador. La independencia ganó al mejor cheque.", en: "The text says the Japanese offer was premium — so “didn’t pay well” isn’t what happened. He refused so he wouldn’t depend on one buyer. Independence beat the better check." } },
     { prompt: "¿Qué le preocupa más a don Adán que los precios del mercado?", choices: ["El cambio climático y la roya del café", "La falta de obreros para la cosecha", "El precio de la canasta de mimbre", "Los periodistas urbanos"], answer: "El cambio climático y la roya del café" },
   ],
 },
@@ -2728,8 +2744,8 @@ const TODAY_SCENES = [
     setupEn: "You're lost near the jardin. You ask someone walking by — short, not like a guidebook.",
     line: "Disculpe, ¿para el mercado por aquí?",
     answers: ["Disculpe, ¿para el mercado por aquí?", "¿Para el mercado por aquí?"],
-    explain: "Calle: «disculpe» + destino + «por aquí». Corto. Sin «podría decirme la dirección».",
-    explainEn: "Street: «disculpe» + where + «por aquí». Short. Not a full address ask.",
+    explain: "En la calle va corto: «Disculpe» + destino + «por aquí». Un «¿me podría indicar la dirección?» suena a formulario, no a alguien que camina.",
+    explainEn: "On the street you keep it short: «Disculpe» + where + «por aquí». A long “could you please indicate the address” sounds like a form, not a passerby.",
     question: "En la calle, «Disculpe, ¿para el mercado por aquí?» suena:",
     questionEn: "On the street, «Disculpe, ¿para el mercado por aquí?» sounds:",
     choices: ["natural y claro", "de correo formal", "agresivo"],
@@ -3996,17 +4012,11 @@ export default function App() {
       return [q1, q2].filter(Boolean);
     }).slice(0, 7);
     const story = STORIES.find((st) => st.id === mission.storyId) || STORIES[0];
-    const storyCheck = story?.questions?.[0] ? {
-      type: "mc",
-      prompt: `Lectura relámpago: ${story.questions[0].prompt}`,
-      choices: story.questions[0].choices,
-      answer: story.questions[0].answer,
-      explain: storyClueExplain(story.title, "es"),
-      explainEn: storyClueExplain(story.title, "en"),
-      _u: "_story",
-      _i: -1,
-      skill: "Lectura",
-    } : null;
+    const storyCheck = story?.questions?.[0] ? liftStoryQuizItem(
+      story.questions[0],
+      `Lectura relámpago: ${story.questions[0].prompt}`,
+      { es: storyClueExplain(story.title, "es"), en: storyClueExplain(story.title, "en") },
+    ) : null;
     beginSession({
       title: mission.title,
       color: mission.color,
@@ -4035,7 +4045,11 @@ export default function App() {
       sampleQuestion("pret", (q) => q.type === "listen" || q.type === "order"),
       sampleQuestion("mex", (q) => q.type === "mc" || q.type === "type"),
       reviewQ || sampleQuestion("pronombres", (q) => q.type !== "match"),
-      { type: "mc", prompt: `Del cuento «${story.title}»: ${storyQ.prompt}`, choices: storyQ.choices, answer: storyQ.answer, explain: "Lectura rápida: contexto, no traducción palabra por palabra.", explainEn: explainText({ explain: "Lectura rápida: contexto, no traducción palabra por palabra." }, "en"), _u: "_story", _i: -1, skill: "Lectura" },
+      liftStoryQuizItem(
+        storyQ,
+        `Del cuento «${story.title}»: ${storyQ.prompt}`,
+        { es: "Lectura rápida: contexto, no traducción palabra por palabra.", en: explainText({ explain: "Lectura rápida: contexto, no traducción palabra por palabra." }, "en") },
+      ),
     ].filter(Boolean);
     beginSession({ title: L.workoutToday, color: D.gold, dark: D.goldDark, unitId: "_daily", daily: true, review: false, host: "luna", questions: items.map(prepQuestion) });
   };
@@ -4080,17 +4094,11 @@ export default function App() {
       _i: -1,
       skill: "Vida real",
     };
-    const storyBeat = {
-      type: "mc",
-      prompt: `Postal de ${story.title}: ${storyQ.prompt}`,
-      choices: storyQ.choices,
-      answer: storyQ.answer,
-      explain: culturalHintExplain(story.title, "es"),
-      explainEn: culturalHintExplain(story.title, "en"),
-      _u: "_story",
-      _i: -1,
-      skill: "Lectura",
-    };
+    const storyBeat = liftStoryQuizItem(
+      storyQ,
+      `Postal de ${story.title}: ${storyQ.prompt}`,
+      { es: culturalHintExplain(story.title, "es"), en: culturalHintExplain(story.title, "en") },
+    );
     // Day-2 return: native setup · line · Q only (already ≤4). First session keeps extras, cap 4.
     // Full / Más path only when a scene grows past 4.
     const shortQueue = day2Hoy ? [sceneBeat, listenBeat] : [sceneBeat, listenBeat, ...picks];
@@ -8586,6 +8594,12 @@ export default function App() {
                         );
                       })}
                     </div>
+                    {done && explainText(qq, uiLang) && (
+                      <div data-testid="story-quiz-why-pack" style={{ marginTop: 8 }}>
+                        <div data-testid="story-quiz-focus" style={{ display: "inline-flex", alignItems: "center", gap: 5, background: D.card, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "1px 8px", fontSize: 11, fontWeight: 900, marginBottom: 5 }}>{L.focus}: {focusLabel(qq.skill || "Lectura", uiLang)}</div>
+                        <div data-testid="story-quiz-why" className="pop" style={{ marginTop: 4, color: D.ink, background: D.card, border: `2px solid ${D.line}`, borderRadius: 10, padding: "8px 11px", fontSize: 13.5 }}>{explainText(qq, uiLang)}</div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
