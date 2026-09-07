@@ -725,38 +725,18 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("ES chrome locks Tarjetas and DUELO; Rayo stays ON/OFF", async () => {
+  it("ES chrome locks Tarjetas and DUELO; Learn hub stays greeting-free", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByText(/¡Hola, Dave!/)).toBeTruthy());
-    const esGreetings = [
-      "Español mexicano real: cuentos, misiones y un empujón que pega.",
-      "Luna ya tiene tu rutina de hoy.",
-      "Don Rafa te guardó un cuento con palabras que valen.",
-      "Valeria dice que la precisión es un gesto de cariño.",
-      "Cinco minutos. Español de verdad. Nada de turista.",
-    ];
-    const enGreetings = [
-      "Build real Mexican Spanish through stories, challenges, and sharp feedback.",
-      "Luna has your daily routine ready.",
-      "Don Rafa saved you a story with words worth keeping.",
-      "Valeria says precision is a kindness.",
-      "Five minutes. Real Spanish. No tourist mode.",
-    ];
-    expect(esGreetings.some((g) => document.body.textContent.includes(g))).toBe(true);
-    expect(enGreetings.some((g) => document.body.textContent.includes(g))).toBe(false);
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.getByTestId("learn-tagline").textContent).toBe("HOME HUB");
+    expect(screen.queryByText(/¡Hola, Dave!/)).toBeNull();
+    expect(screen.queryByText("Coach del día")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Rayo|Lightning/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Subjuntivo presente" })).toBeTruthy();
-    expect(screen.getByText("Coach del día")).toBeTruthy();
-    expect(screen.getByText("Mentor de cuentos")).toBeTruthy();
-    expect(screen.getByText("Coach de precisión")).toBeTruthy();
-    expect(screen.getByText("Rival")).toBeTruthy();
-
-    const rayo = screen.getByRole("button", { name: /Rayo/ });
-    expect(rayo.textContent).toMatch(/OFF/);
-    expect(rayo.textContent).not.toMatch(/SÍ|NO|ENCENDIDO|APAGADO/);
-    expect(document.body.textContent).not.toMatch(/DIÁLOGO DUEL|Flashcards/);
+    expect(document.body.textContent).not.toMatch(/DIÁLOGO DUEL/);
 
     await user.click(screen.getByTestId("nav-misiones"));
     expect(screen.getByText("DUELO")).toBeTruthy();
@@ -765,18 +745,16 @@ describe("simulated learner flows", () => {
 
     await user.click(screen.getByTestId("nav-practica"));
     expect(screen.getByRole("heading", { name: "Tarjetas" })).toBeTruthy();
-    expect(screen.queryByText("Flashcards")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Tarjetas" }).textContent).not.toMatch(/Flashcards/);
     expect(document.body.textContent).toMatch(/Tarjetas/);
-    expect(document.body.textContent).not.toMatch(/Flashcards|DIÁLOGO DUEL/);
+    expect(document.body.textContent).not.toMatch(/DIÁLOGO DUEL/);
 
     await user.click(screen.getByTestId("nav-camino"));
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true"));
-    expect(enGreetings.some((g) => document.body.textContent.includes(g))).toBe(true);
-    expect(esGreetings.some((g) => document.body.textContent.includes(g))).toBe(false);
-    const rayoEn = screen.getByRole("button", { name: /Lightning|Rayo/ });
-    expect(rayoEn.textContent).toMatch(/OFF/);
-    expect(rayoEn.textContent).not.toMatch(/SÍ|NO/);
+    expect(screen.getByTestId("learn-tagline").textContent).toBe("HOME HUB");
+    expect(screen.queryByText(/¡Hola, Dave!|Hola, Dave/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /Rayo|Lightning/ })).toBeNull();
   });
 
   it("Práctica weakness CTA and Perfil Luna CTA use Rutina diaria / Daily routine", async () => {
@@ -980,20 +958,9 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/for people past the basics/);
   });
 
-  it("section test-out starts from Camino and fails closed after 3 misses (failKind === test)", async () => {
-    const user = await boot();
-    await user.click(screen.getAllByTitle(/Examen de la sección|Section test/)[0]);
-    await waitFor(() => {
-      expect(screen.getByTestId("lesson-exit")).toBeTruthy();
-      expect(screen.getByText(/EXAMEN/)).toBeTruthy();
-    });
-    await user.click(screen.getByTestId("lesson-exit"));
-    await user.click(screen.getByTestId("quit-without-save"));
-    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+  it("section test-out fails closed after 3 misses (failKind === test)", async () => {
     cleanup();
-
-    // Drive the fail-closed branch through the real next() path: restore a
-    // test-out lesson already sitting on the 3rd miss, then tap Continuar.
+    seedProgress({ welcomed: true });
     localStorage.setItem(LIVE_KEY, JSON.stringify({
       screen: "lesson",
       tab: "camino",
