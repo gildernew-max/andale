@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (HOLD again — Dave in flight toward v01b)
+
+**What changed**
+- HOLD merge on `#118`. Do not merge v5.1 / v07.
+- Dave lock **in flight** toward v01b: **no hero card**, **equal tiles**, **icon on each**. Markups: `/workspace/andale-art/hub10/v01b-equal.png` and `v01b-icons.png` (not on this checkout).
+- Await Dave lock + No face stamp of the **final winner** before polish-to-merge.
+- Soft chrome parked.
+
+**Why**
+- Bake-off still open. v01b is the in-flight direction, not a ship stamp.
+
 ## 2026-09-07 (HOLD merge — hub10 bake-off)
 
 **What changed**
