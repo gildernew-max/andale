@@ -1649,9 +1649,6 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
     if (over) onDrop(over);
   };
 
-  const birdClass = flying ? "cubetas-bird-win" : clearing ? "cubetas-eso-fly" : "cubetas-bird-off";
-  const birdLive = flying || clearing;
-
   return (
     <div data-testid="cubetas-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
@@ -1688,6 +1685,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
                     style={{
                       position: "relative",
                       minHeight: 168,
+                      overflow: "visible",
                       border: `2px solid ${active ? D.green : D.line}`,
                       borderBottom: `6px solid ${active ? D.greenDark : D.line}`,
                       borderRadius: 22,
@@ -1700,34 +1698,60 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
                       padding: "28px 12px 16px",
                     }}
                   >
-                    <svg viewBox="0 0 80 18" width="54" height="14" aria-hidden="true" style={{ position: "absolute", top: 8, left: "50%", marginLeft: -27 }}>
+                    <svg viewBox="0 0 80 18" width="54" height="14" aria-hidden="true" style={{ position: "absolute", top: 8, left: "50%", marginLeft: -27, overflow: "visible" }}>
                       <path d="M10 14 C10 4 70 4 70 14" fill="none" stroke={D.ink} strokeWidth="3.2" strokeLinecap="round" />
                     </svg>
+                    {(flying || run.status === "squash") && run.lastBucket === id && (
+                      <img
+                        data-testid="cubetas-cenzontle"
+                        data-state="win"
+                        src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
+                        alt=""
+                        width={64}
+                        height={64}
+                        aria-hidden="true"
+                        className={flying ? "cubetas-bird-win" : "cubetas-bird-off"}
+                        style={{
+                          position: "absolute",
+                          top: -18,
+                          left: "50%",
+                          marginLeft: -32,
+                          width: 64,
+                          height: 64,
+                          objectFit: "contain",
+                          pointerEvents: "none",
+                          zIndex: 4,
+                          overflow: "visible",
+                        }}
+                      />
+                    )}
                     {bucketLabel(id, uiLang)}
                   </button>
                 );
               })}
             </div>
-            <img
-              data-testid="cubetas-cenzontle"
-              data-state={birdLive ? (flying ? "win" : "eso") : "offstage"}
-              src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
-              alt=""
-              width={72}
-              height={72}
-              aria-hidden="true"
-              className={birdClass}
-              style={{
-                position: "absolute",
-                right: 8,
-                top: 18,
-                width: 72,
-                height: 72,
-                objectFit: "contain",
-                pointerEvents: "none",
-                zIndex: 3,
-              }}
-            />
+            {!(flying || run.status === "squash") && (
+              <img
+                data-testid="cubetas-cenzontle"
+                data-state={clearing ? "eso" : "offstage"}
+                src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
+                alt=""
+                width={72}
+                height={72}
+                aria-hidden="true"
+                className={clearing ? "cubetas-eso-fly" : "cubetas-bird-off"}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: 18,
+                  width: 72,
+                  height: 72,
+                  objectFit: "contain",
+                  pointerEvents: "none",
+                  zIndex: 3,
+                }}
+              />
+            )}
             {run.status === "squash" && (
               <div data-testid="cubetas-gem-tick" className="cubetas-gem-tick" style={{ position: "absolute", left: "50%", top: 8, marginLeft: -18, zIndex: 4, display: "flex", alignItems: "center", gap: 4, fontWeight: 900, color: D.blueDark }}>
                 <IcGem size={18} />+{CUBETAS_GEM}
@@ -6207,14 +6231,12 @@ export default function App() {
         @keyframes cubetasSquash { 0%{transform:scale(1)} 55%{transform:scale(1.07,0.86)} 100%{transform:scale(1)} }
         .cubetas-squash { animation: cubetasSquash 80ms ease-out; }
         @keyframes cubetasBirdWin {
-          0%{transform:translate(168px,-10px) rotate(6deg);opacity:0}
+          0%{transform:translate(150px,-14px) rotate(6deg);opacity:0}
           6%{opacity:1}
-          9%{transform:translate(118px,-4px) rotate(4deg) scaleY(.82)}
-          17.14%{transform:translate(36px,0) rotate(0) scaleY(1)}
-          28%{transform:translate(8px,4px) rotate(-2deg)}
-          40%{transform:translate(0,2px) rotate(0)}
-          46%{transform:translate(-6px,8px) scale(.92,1.08) rotate(-4deg)}
-          100%{transform:translate(-200px,-110px) rotate(-14deg);opacity:0}
+          9%{transform:translate(96px,-8px) rotate(4deg) scaleY(.82)}
+          17.14%{transform:translate(20px,-4px) rotate(0) scaleY(1)}
+          28%{transform:translate(4px,2px) rotate(-2deg)}
+          40%,100%{transform:translate(0,-10px) rotate(0);opacity:1}
         }
         .cubetas-bird-win { animation: cubetasBirdWin 700ms ease-out forwards; }
         @keyframes cubetasBucketFly {
