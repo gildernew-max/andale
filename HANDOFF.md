@@ -5,7 +5,7 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 ## 2026-09-07 (Valeria Phrase Doctor — flat geometric)
 
 **What changed**
-- `public/coaches/valeria-happy.png` is the Cenzontle-family flat geometric Valeria (1024 square, real PNG). Soft painterly / cartoon still is out.
+- `public/coaches/valeria-happy.png` is the Cenzontle-family flat geometric Valeria (1024 square cropped, real PNG). Soft painterly / cartoon still is out. Wide 1280×720 drop is not used.
 - Happy `CoachPortrait` path unchanged (`coaches/{id}-happy.png`). Sad / party / focused stay inline SVG.
 - Soft chrome parked. Do not merge.
 
