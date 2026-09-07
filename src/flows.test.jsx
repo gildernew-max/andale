@@ -1713,8 +1713,13 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
-    await waitFor(() => expect(screen.getByTestId("hoy-win")).toBeTruthy());
+    await waitFor(() => {
+      expect(screen.getByTestId("hoy-win")).toBeTruthy();
+      expect(screen.getByTestId("win-bounce")).toBeTruthy();
+    });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
+    expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("win-bounce-chip")).toBeTruthy();
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
     expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
@@ -3057,6 +3062,7 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
     expect(screen.queryByTestId("hoy-win")).toBeNull();
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(screen.queryByRole("heading", { name: /^¡Eso!$|^That's it\.$/ })).toBeNull();
     expect(document.body.textContent).toMatch(/later Hoy beat 2/);
     expect(document.body.textContent).not.toMatch(/¡Eso!|That's it\./);
@@ -3080,8 +3086,12 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("doctora-win")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("phrase-doctor-fix"));
-    await waitFor(() => expect(screen.getByTestId("doctora-win")).toBeTruthy());
+    await waitFor(() => {
+      expect(screen.getByTestId("doctora-win")).toBeTruthy();
+      expect(screen.getByTestId("win-bounce")).toBeTruthy();
+    });
     expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
+    expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
     expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);

@@ -2,6 +2,19 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Cenzontle win bounce — ¡Eso! first-win of day)
+
+**What changed**
+- Soft ETA section 1 only: 720ms courier fly-in / points drop on first-win `¡Eso!` / `That's it.`
+- Triggers on the existing quiet-win flags (`firstHoy` or `firstDoctora`) when the done screen lands. Overlay unmounts at 720ms.
+- Live `public/mascot/cenzontle.png` (faces RIGHT). No `scaleX(-1)`. One wing stroke. No flap loop, hover, confetti, or soft chrome.
+- Soft chrome parked. Hub / map pin unlock (brief §2) untouched. Do not merge.
+
+**Why**
+- Motion brief: bird is a courier. Reward hit, then gone.
+
+
+
 ## 2026-09-07 (No face HOLD — hub-faces-v2 verbatim copy blocked)
 
 **What changed**

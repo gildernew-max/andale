@@ -17,6 +17,8 @@ import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { SUBJ_FIVE_LABEL, subjFiveLines, subjFiveSub } from "./subjFive.js";
+import { shouldPlayWinBounce } from "./winBounce.js";
+import { WinBounce } from "./WinBounce.jsx";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -1570,7 +1572,7 @@ const FlagMX = ({ size = 22 }) => (
     <circle cx="13.5" cy="9" r="2.4" fill="#B08A4F" /><circle cx="13.5" cy="9" r="1.2" fill="#6B5530" />
   </svg>
 );
-/** Cenzontle lockup. PNG faces RIGHT. Future win-motion fly-in stays right-facing — do not scaleX(-1). Soft chrome parked. */
+/** Cenzontle lockup. PNG faces RIGHT. Win-bounce fly-in stays right-facing — do not scaleX(-1). Soft chrome parked. */
 const LogoMark = ({ size = 30, ...rest }) => (
   <img
     src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
@@ -3657,6 +3659,8 @@ export default function App() {
   const [doctorGrade, setDoctorGrade] = useState(null);
   const [doctorFailed, setDoctorFailed] = useState(false);
   const [firstDoctora, setFirstDoctora] = useState(false);
+  const [winBounce, setWinBounce] = useState(false);
+  const winBouncePlayed = useRef(false);
   const [doctorHits, setDoctorHits] = useState(0);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [wordOrderMiss, setWordOrderMiss] = useState("");
@@ -5426,6 +5430,23 @@ export default function App() {
     return () => clearTimeout(arm);
   }, [showSoftPaywall]);
   useEffect(() => {
+    if (!shouldPlayWinBounce(session)) return undefined;
+    const img = new Image();
+    img.src = `${import.meta.env.BASE_URL}mascot/cenzontle.png`;
+    return undefined;
+  }, [session]);
+  useEffect(() => {
+    if (screen !== "done") {
+      winBouncePlayed.current = false;
+      setWinBounce(false);
+      return;
+    }
+    if (winBouncePlayed.current) return;
+    if (!shouldPlayWinBounce(session)) return;
+    winBouncePlayed.current = true;
+    setWinBounce(true);
+  }, [screen, session]);
+  useEffect(() => {
     if (isBajioUnlockFlashLive() || isBajioUnlockFlashDue()) {
       setBajioUnlockFlash(true);
     }
@@ -5859,8 +5880,10 @@ export default function App() {
         .spin { animation: spinK 1.4s linear infinite; transform-box: fill-box; transform-origin: center; }
         @keyframes jumpK { 0%{transform:translateY(0)} 30%{transform:translateY(-11px)} 55%{transform:translateY(0)} 72%{transform:translateY(-4px)} 100%{transform:translateY(0)} }
         .jump { animation: jumpK .55s ease; }
+        @keyframes esoRise { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+        .eso-rise { animation: esoRise .18s ease-out both; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
-        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump { animation:none !important; } }
+        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
         .node-btn:active:not(:disabled) { transform: translateY(3px); }
@@ -8696,6 +8719,7 @@ export default function App() {
         const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : undefined;
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
+          {winBounce && <WinBounce onComplete={() => setWinBounce(false)} />}
           <Confetti count={perfect ? 160 : 70} />
           <div style={{ display: "flex", justifyContent: "center", gap: 0, alignItems: "flex-end" }}>
             {[session.host, "luna", "rafa"].filter((id, i, arr) => arr.indexOf(id) === i).slice(0, 3).map((id, i) => (
@@ -8707,7 +8731,7 @@ export default function App() {
           {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
             <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
-          <h2 data-testid={winTestId} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
+          <h2 data-testid={winTestId} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
           {levelUp && (
