@@ -900,6 +900,18 @@ assert(existsSync(mascotPng), "Cenzontle mark lives at public/mascot/cenzontle.p
 assert(!existsSync(join(repoRoot, "public", "mascot", "axolotl.png")), "axolotl.png is gone from public/mascot");
 assert(readFileSync(mascotPng).subarray(0, 8).equals(pngMagic), "mascot/cenzontle.png is a real PNG, not JPEG-named-.png");
 assert(readFileSync(appleTouch).subarray(0, 8).equals(pngMagic), "apple-touch-icon.png is a real PNG");
+for (const id of ["luna", "rafa", "valeria", "diego"]) {
+  const coachPng = join(repoRoot, "public", "coaches", `${id}-happy.png`);
+  assert(existsSync(coachPng), `${id} lives at public/coaches/${id}-happy.png`);
+  const coachBuf = readFileSync(coachPng);
+  assert(coachBuf.subarray(0, 8).equals(pngMagic), `coaches/${id}-happy.png is a real PNG, not JPEG-named-.png`);
+}
+for (const id of ["luna", "rafa", "valeria", "diego"]) {
+  const coachPng = join(repoRoot, "public", "coaches", `${id}-happy.png`);
+  const coachBuf = readFileSync(coachPng);
+  assert(coachBuf.readUInt32BE(16) === 1024 && coachBuf.readUInt32BE(20) === 1024, `${id} flat drop is a 1024 square PNG`);
+}
+assert(appSrc.includes("coaches/${coachId}-happy.png"), "CoachPortrait happy stills stay on public/coaches/{id}-happy.png");
 assert(faviconSvg.includes("data:image/png;base64,"), "favicon.svg embeds a PNG, not a JPEG");
 assert(!faviconSvg.includes("data:image/jpeg"), "favicon.svg does not embed JPEG bytes");
 const pngHeadFacesRight = (buf, label) => {
