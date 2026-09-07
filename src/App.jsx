@@ -1597,7 +1597,7 @@ const HUB_FACES = {
   eighty: "hub/eighty.png",
   pins: "hub/pin-chase.png",
   flash: "hub/flashcards.png",
-  sobre: "hub/sobremesa.png",
+  sendero: "hub/sendero.png",
 };
 
 const HubTileArt = ({ face }) => (
@@ -3278,12 +3278,19 @@ const UI = {
     a2hsDismiss: "Ahora no",
     playScene: "Jugar la escena",
     hubHoy: "Hoy",
+    hubHoyQuiet: "Plan de 10 minutos",
+    hoyPlanEyebrow: "HOY · 10 MIN",
+    hoyPlanSell: "Un plan corto para hoy. Diez minutos. Luego paras.",
+    hoyPlanCta: "Empezar el plan",
     hubStories: "Stories",
     hubGames: "Games",
     hubDoctor: "Phrase Doctor",
     hubEighty: "80/20",
     hubPins: "Pin chase",
     hubFlash: "Flashcards",
+    hubSendero: "Sendero",
+    hubSenderoQuiet: "Camino que crece",
+    // WRAP PARK — Sobremesa name/quiet/sell for later Lectura/Intermedio tab. Not a hub tile. Do not delete.
     hubSobremesa: "Sobremesa",
     phraseDoctor: "Doctora de frases",
     phraseDoctorTag: "GANA EN 60 SEGUNDOS",
@@ -3348,12 +3355,19 @@ const UI = {
     a2hsDismiss: "Not now",
     playScene: "Play the scene",
     hubHoy: "Hoy",
+    hubHoyQuiet: "10-minute plan",
+    hoyPlanEyebrow: "TODAY · 10 MIN",
+    hoyPlanSell: "A short plan for today. Ten minutes. Then you stop.",
+    hoyPlanCta: "Start the plan",
     hubStories: "Stories",
     hubGames: "Games",
     hubDoctor: "Phrase Doctor",
     hubEighty: "80/20",
     hubPins: "Pin chase",
     hubFlash: "Flashcards",
+    hubSendero: "Sendero",
+    hubSenderoQuiet: "A path that grows",
+    // WRAP PARK — Sobremesa name/quiet/sell for later Lectura/Intermedio tab. Not a hub tile. Do not delete.
     hubSobremesa: "Sobremesa",
     phraseDoctor: "Phrase Doctor",
     phraseDoctorTag: "WIN IN 60 SECONDS",
@@ -3644,6 +3658,7 @@ export default function App() {
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [subjFiveOpen, setSubjFiveOpen] = useState(false);
+  const [hoyPlanOpen, setHoyPlanOpen] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
   const [guideUnit, setGuideUnit] = useState(null);
   const [dialogue, setDialogue] = useState({ idx: 0, score: 0, done: false, log: [] });
@@ -5973,32 +5988,33 @@ export default function App() {
             };
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
-            const hoySelected = doorKind === FIRST_DOOR_HOY && !todaySceneDone;
+            const hoyLoud = doorKind === FIRST_DOOR_HOY && !todaySceneDone;
             const hubTiles = [
-              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, art: <HubTileArt face="hoy" />, selected: hoySelected, act: () => todayScene && !todaySceneDone && startTodayScene(todayScene) },
+              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
               { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => startAhorcado() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
               { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
               { id: "pins", testid: "hub-pins", title: L.hubPins, art: <HubTileArt face="pins" />, act: () => setTab("lectura") },
               { id: "flash", testid: "hub-flashcards", title: L.hubFlash, art: <HubTileArt face="flash" />, act: () => { setTab("practica"); startFlashRun(); } },
-              { id: "sobre", testid: "hub-sobremesa", title: L.hubSobremesa, art: <HubTileArt face="sobre" />, act: () => {} },
+              { id: "sendero", testid: "hub-sendero", title: L.hubSendero, quiet: L.hubSenderoQuiet, art: <HubTileArt face="sendero" />, act: openPath },
             ];
             return (
               <div style={{ margin: "6px 0 18px" }}>
                 <div data-testid="learn-hub-tiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   {hubTiles.map((tile) => (
                     <button key={tile.id} data-testid={tile.testid} type="button" onClick={tile.act}
+                      data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : undefined}
                       style={{
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "space-between",
                         width: "100%",
-                        height: 152,
+                        height: 168,
                         boxSizing: "border-box",
                         background: theme === "dark" ? D.card : HUB_CREAM,
-                        border: `1.5px solid ${tile.selected ? D.green : D.line}`,
+                        border: `1.5px solid ${tile.id === "hoy" && hoyLoud ? D.green : D.line}`,
                         borderRadius: 18,
                         padding: "8px 8px 10px",
                         fontFamily: "inherit",
@@ -6008,7 +6024,8 @@ export default function App() {
                       }}>
                       <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
                       <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
-                      <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
+                      <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
+                      {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{tile.quiet}</div>}
                       </span>
                     </button>
                   ))}
@@ -7088,7 +7105,7 @@ export default function App() {
 
       {/* ---------- NODE PREVIEW SHEET ---------- */}
       {sheet && (
-        <div onClick={() => setSheet(null)} style={{ position: "fixed", inset: 0, background: "rgba(60,60,60,.5)", zIndex: 40, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+        <div data-testid="path-sheet" onClick={() => setSheet(null)} style={{ position: "fixed", inset: 0, background: "rgba(60,60,60,.5)", zIndex: 40, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
           <div onClick={(e) => e.stopPropagation()} className="pop" style={{ background: D.card, borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 480, padding: "10px 22px 28px", boxShadow: "0 -8px 30px rgba(0,0,0,.18)" }}>
             <div style={{ width: 44, height: 5, background: D.line, borderRadius: 99, margin: "6px auto 18px" }} />
             <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 6 }}>
@@ -7453,6 +7470,25 @@ export default function App() {
       )}
 
       
+      {/* Hoy — 10-min daily plan. George stamps exact. Soft chrome parked. */}
+      {hoyPlanOpen && todayScene && !todaySceneDone && (
+        <div data-testid="hoy-plan" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setHoyPlanOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "18px 20px 20px", maxWidth: 420, width: "100%" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button type="button" data-testid="hoy-plan-close" onClick={() => setHoyPlanOpen(false)} aria-label={uiLang === "en" ? "Close" : "Cerrar"}
+                style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", lineHeight: 1, minWidth: 44, minHeight: 44 }}>✕</button>
+            </div>
+            <div data-testid="hoy-plan-eyebrow" style={{ fontSize: 11, fontWeight: 900, color: D.sub, letterSpacing: ".06em" }}>{L.hoyPlanEyebrow}</div>
+            <p data-testid="hoy-plan-sell" style={{ margin: "8px 0 0", fontSize: 15, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{L.hoyPlanSell}</p>
+            <div data-testid="hoy-plan-step" style={{ margin: "14px 0 0", fontSize: 13.5, fontWeight: 800, color: D.sub }}>{L.playScene}</div>
+            <button type="button" data-testid="hoy-plan-start" onClick={() => { setHoyPlanOpen(false); startTodayScene(todayScene); }}
+              style={{ display: "block", width: "100%", marginTop: 16, background: D.green, border: "none", borderBottom: `4px solid ${D.greenDark}`, color: "#fff", borderRadius: 14, padding: "12px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 16, cursor: "pointer" }}>
+              {L.hoyPlanCta}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 80/20 Subjuntivo in five — George exact. No deck. No pep header. */}
       {subjFiveOpen && (
         <div data-testid="eighty-twenty-sheet" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setSubjFiveOpen(false)}>

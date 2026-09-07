@@ -2,6 +2,26 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Hand/Varys — Hoy only loud first tap)
+
+**What changed**
+- Hoy is the only loud first tap: green `#58CC02` border when the scene is open (`hoyLoud`). `data-hub-loud="hoy"`.
+- Sendero stays the quieter tier — same line stroke as Stories / Games. No selected flag. No green border.
+- George + No face stamps unchanged (Sendero quiet, Hoy 10-min plan words, exact face). Soft chrome parked.
+
+**Why**
+- Hand/Varys Soft ETA lock. Do not merge.
+
+## 2026-09-07 (Sendero face exact — hub-faces-v2 lock)
+
+**What changed**
+- `public/hub/sendero.png` is the exact attached face: 1024 PNG, 511079 bytes, md5 `afee6ac8eec81ea2241527f1b3164d34`. Byte-match Drive `hub-faces-v2/sendero.png`. Blank art, no titles.
+- Quiet stays ES `Camino que crece` · EN `A path that grows`. Soft chrome parked.
+- Content test now locks that md5.
+
+**Why**
+- Confirm exact face. Soft ETA wire continues. Do not merge.
+
 ## 2026-09-07 (Soft ETA — first-win bounce actually visible)
 
 **What changed**
@@ -11,6 +31,18 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 
 **Why**
 - Dual CSS animations let exit steal `left`/`top` — bird stayed at y -18% (off-screen). Confetti z-50 sat on top of the 720ms overlay.
+
+## 2026-09-07 (Sendero hub tile + Hoy 10-min plan words)
+
+**What changed**
+- Hub tile Sobremesa is gone. Sendero takes that slot: ES/EN `Sendero` + quiet ES `Camino que crece` · EN `A path that grows`. Face is `public/hub/sendero.png` (verbatim Drive/launch attach, 1024 PNG).
+- Sendero opens the existing Camino path sheet (`openPath` — next/resume unit, same surface as Empieza). No new path UI.
+- Sobremesa wrap stamps stay parked (`L.hubSobremesa` + WRAP PARK comment) for later Lectura/Intermedio. `public/hub/sobremesa.png` stays on disk. Not a hub tile.
+- Hoy tile stays. Quiet ES `Plan de 10 minutos` · EN `10-minute plan`. Tile opens a lean plan card: eyebrow `HOY · 10 MIN` / `TODAY · 10 MIN`, sell, primary `Empezar el plan` / `Start the plan`. Scene step stays `Jugar la escena` / `Play the scene`.
+- Equal 2×4, one label each. 80/20 stays live. Live Camino nav unchanged. Soft chrome parked. Do not merge.
+
+**Why**
+- Soft ETA wire. Sendero = longer Camino path. Hoy = the day’s 10-min plan. No face look + Hand CLEAR still open.
 
 ## 2026-09-07 (Cenzontle win bounce — ¡Eso! first-win of day)
 
@@ -22,8 +54,6 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 
 **Why**
 - Motion brief: bird is a courier. Reward hit, then gone.
-
-
 
 ## 2026-09-07 (No face HOLD — hub-faces-v2 verbatim copy blocked)
 

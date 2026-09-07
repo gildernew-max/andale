@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { existsSync, readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -338,7 +339,7 @@ assert(!/come-back-tomorrow[^>]*cursor:\s*["']?pointer/.test(appSrc), "teaser ha
 assert(/come-back-tomorrow[^>]*pointerEvents:\s*["']none/.test(appSrc), "teaser is not a tap target");
 assert(!/come-back-tomorrow[^>]*borderBottom:\s*`4px/.test(appSrc), "teaser has no pressable 4px chrome");
 assert(!/come-back-tomorrow[^>]*border:\s*`2px solid/.test(appSrc), "teaser has no card border");
-assert(/learn-hub-tiles[\s\S]{0,1800}\{showLine && \(\s*<p data-testid="come-back-tomorrow"/.test(appSrc), "titled teaser sits outside the equal hub grid — not a CTA");
+assert(/learn-hub-tiles[\s\S]{0,2800}\{showLine && \(\s*<p data-testid="come-back-tomorrow"/.test(appSrc), "titled teaser sits outside the equal hub grid — not a CTA");
 assert(appSrc.includes("hoySceneForDay"), "Hoy day pick is shared");
 assert(appSrc.includes("nextDayKey(todayKey)"), "tomorrow Hoy uses the same day hash");
 assert(UI.es.paywallHeadline === "Ya empezó tu racha.", "UI.es.paywallHeadline");
@@ -749,7 +750,8 @@ assert(appSrc.includes("hub/phrase-doctor.png"), "Phrase Doctor face is public/h
 assert(appSrc.includes("hub/eighty.png"), "80/20 face is public/hub/eighty.png");
 assert(appSrc.includes("hub/pin-chase.png"), "Pin chase face is public/hub/pin-chase.png");
 assert(appSrc.includes("hub/flashcards.png"), "Flashcards face is public/hub/flashcards.png");
-assert(appSrc.includes("hub/sobremesa.png"), "Sobremesa face is public/hub/sobremesa.png");
+assert(appSrc.includes("hub/sendero.png"), "Sendero face is public/hub/sendero.png");
+assert(!/hub\/sobremesa\.png/.test(appSrc.slice(appSrc.indexOf("const HUB_FACES"), appSrc.indexOf("const RecuerdosMexicoMap"))), "Sobremesa is not a live hub face");
 assert(!/scaleX\s*\(\s*-1\s*\)/.test(appSrc.slice(appSrc.indexOf("const HUB_FACES"), appSrc.indexOf("const RecuerdosMexicoMap"))), "hub stamp faces must not CSS-mirror");
 assert(!appSrc.includes("const HubHoyArt"), "geometric Hoy placeholder is gone");
 assert(!appSrc.includes("HubArtFrame"), "geometric hub frame overlay is gone");
@@ -768,28 +770,50 @@ assert(appSrc.includes('from "./storyGloss.js"'), "Lectura gloss map is imported
 assert(appSrc.includes("<GlossedText"), "story Qs use GlossedText");
 assert(appSrc.includes("<GlossWord"), "Lectura paragraphs use GlossWord for stamped lemmas");
 assert(appSrc.includes("firstDoorHero"), "Hoy selected stroke still uses first-door Hoy vs Phrase Doctor");
+assert(appSrc.includes("const hoyLoud = doorKind === FIRST_DOOR_HOY && !todaySceneDone"), "Hoy is the only loud first-tap tile");
+assert(appSrc.includes('data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : undefined}'), "loud stroke attribute is Hoy-only");
+assert(appSrc.includes("tile.id === \"hoy\" && hoyLoud ? D.green : D.line"), "green border is Hoy-only; Sendero uses the quiet line stroke");
+assert(!/id: "sendero"[\s\S]{0,220}selected/.test(appSrc), "Sendero has no selected/loud tile flag");
 assert(appSrc.includes('testid: "hub-hoy"'), "Hoy is an equal hub tile");
 assert(appSrc.includes('testid: "hub-stories"'), "Stories is an equal hub tile");
 assert(appSrc.includes('testid: "hub-games"'), "Games is an equal hub tile");
 assert(appSrc.includes('testid: "hub-phrase-doctor"'), "Phrase Doctor is an equal hub tile");
 assert(appSrc.includes('testid: "hub-pins"'), "Pin chase is an equal hub tile");
 assert(appSrc.includes('testid: "hub-flashcards"'), "Flashcards is an equal hub tile");
-assert(appSrc.includes('testid: "hub-sobremesa"'), "Sobremesa is an equal hub tile");
+assert(appSrc.includes('testid: "hub-sendero"'), "Sendero is an equal hub tile");
+assert(!appSrc.includes('testid: "hub-sobremesa"'), "Sobremesa is not a hub tile");
 assert(appSrc.includes("title: L.hubHoy"), "Hoy tile label follows uiLang");
 assert(appSrc.includes("title: L.hubStories"), "Stories tile label follows uiLang");
 assert(appSrc.includes("title: L.hubGames"), "Games tile label follows uiLang");
 assert(appSrc.includes("title: L.hubDoctor"), "Phrase Doctor tile label follows uiLang");
 assert(appSrc.includes("title: L.hubPins"), "Pin chase tile label follows uiLang");
 assert(appSrc.includes("title: L.hubFlash"), "Flashcards tile label follows uiLang");
-assert(appSrc.includes("title: L.hubSobremesa"), "Sobremesa tile label follows uiLang");
+assert(appSrc.includes("title: L.hubSendero"), "Sendero tile label follows uiLang");
+assert(!appSrc.includes("title: L.hubSobremesa"), "Sobremesa wrap stamp is not a hub tile title");
 assert(UI.es.hubHoy === "Hoy" && UI.en.hubHoy === "Hoy", "Hoy label is Hoy");
+assert(UI.es.hubHoyQuiet === "Plan de 10 minutos" && UI.en.hubHoyQuiet === "10-minute plan", "Hoy quiet is the 10-min plan");
+assert(UI.es.hoyPlanEyebrow === "HOY · 10 MIN" && UI.en.hoyPlanEyebrow === "TODAY · 10 MIN", "Hoy plan eyebrow is George stamp");
+assert(UI.es.hoyPlanSell === "Un plan corto para hoy. Diez minutos. Luego paras." && UI.en.hoyPlanSell === "A short plan for today. Ten minutes. Then you stop.", "Hoy plan sell is George stamp");
+assert(UI.es.hoyPlanCta === "Empezar el plan" && UI.en.hoyPlanCta === "Start the plan", "Hoy plan CTA is George stamp");
+assert(UI.es.playScene === "Jugar la escena" && UI.en.playScene === "Play the scene", "scene step stays playScene");
 assert(UI.es.hubStories === "Stories" && UI.en.hubStories === "Stories", "Stories is the loan in both langs");
 assert(UI.es.hubGames === "Games" && UI.en.hubGames === "Games", "Games is the loan in both langs");
 assert(UI.es.hubDoctor === "Phrase Doctor" && UI.en.hubDoctor === "Phrase Doctor", "hub Phrase Doctor is the loan");
 assert(UI.es.hubEighty === "80/20" && UI.en.hubEighty === "80/20", "80/20 is the loan");
 assert(UI.es.hubPins === "Pin chase" && UI.en.hubPins === "Pin chase", "Pin chase is the loan");
 assert(UI.es.hubFlash === "Flashcards" && UI.en.hubFlash === "Flashcards", "Flashcards is the loan");
-assert(UI.es.hubSobremesa === "Sobremesa" && UI.en.hubSobremesa === "Sobremesa", "Sobremesa is brand-locked");
+assert(UI.es.hubSendero === "Sendero" && UI.en.hubSendero === "Sendero", "Sendero is the loan in both langs");
+assert(UI.es.hubSenderoQuiet === "Camino que crece" && UI.en.hubSenderoQuiet === "A path that grows", "Sendero quiet is George stamp");
+assert(UI.es.hubSobremesa === "Sobremesa" && UI.en.hubSobremesa === "Sobremesa", "Sobremesa name stays parked in wrap");
+assert(appSrc.includes("WRAP PARK — Sobremesa"), "Sobremesa wrap park comment stays");
+assert(appSrc.includes("data-testid=\"hoy-plan\""), "Hoy plan card is testable");
+assert(appSrc.includes("data-testid=\"hoy-plan-eyebrow\""), "Hoy plan eyebrow is testable");
+assert(appSrc.includes("data-testid=\"hoy-plan-sell\""), "Hoy plan sell is testable");
+assert(appSrc.includes("data-testid=\"hoy-plan-step\""), "Hoy scene step is testable");
+assert(appSrc.includes("data-testid=\"hoy-plan-start\""), "Hoy plan CTA is testable");
+assert(appSrc.includes("{L.playScene}"), "plan step uses playScene — not the tile");
+assert(appSrc.includes("act: openPath"), "Sendero opens the existing Camino path sheet");
+assert(appSrc.includes('data-testid="path-sheet"'), "Camino path sheet is the existing unit preview");
 assert(!/Cuentos|Match & play|Arregla|Prioriza|Unlock Mexico|Flip & keep/.test([UI.es.hubStories, UI.es.hubGames, UI.es.hubDoctor, UI.es.hubPins, UI.es.hubFlash].join("\n")), "hub tiles have no slash tails");
 assert(UI.es.camino === "Camino" && UI.es.missions === "Misiones" && UI.es.reading === "Lectura" && UI.es.practice === "Práctica" && UI.es.profile === "Perfil", "George CLEAR: live ES Camino nav set");
 assert(UI.en.camino === "Learn" && UI.en.missions === "Challenges" && UI.en.reading === "Stories" && UI.en.practice === "Review" && UI.en.profile === "Profile", "live EN Camino set — not Home/Library/Profile trio");
@@ -799,7 +823,7 @@ assert(/id: "camino"[\s\S]*id: "misiones"[\s\S]*id: "lectura"[\s\S]*id: "practic
 assert(!/id: "home"|id: "library"/.test(navTabs), "bottom nav has no Home/Library tab ids");
 assert(!/data-testid="first-door-hero"/.test(appSrc), "v01c hub has no hero card");
 assert(/gridTemplateColumns:\s*"1fr 1fr"/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 400)), "hub is a 2-column equal grid");
-assert(appSrc.includes("height: 152"), "hub tiles share one equal height");
+assert(/height:\s*168/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 700)), "hub tiles share one equal height");
 assert(appSrc.includes("come-back-tomorrow"), "home line after win is wired");
 assert(appSrc.includes("path-entry"), "Subjuntivo path stays under Empieza");
 assert(/camino-more[\s\S]{0,900}path-entry/.test(appSrc), "EMPIEZA is buried under Más/More");
@@ -965,13 +989,15 @@ for (const id of ["luna", "rafa", "valeria", "diego"]) {
   assert(coachBuf.readUInt32BE(16) === 1024 && coachBuf.readUInt32BE(20) === 1024, `${id} flat drop is a 1024 square PNG`);
 }
 assert(appSrc.includes("coaches/${coachId}-happy.png"), "CoachPortrait happy stills stay on public/coaches/{id}-happy.png");
-for (const face of ["hoy", "stories", "games", "phrase-doctor", "eighty", "pin-chase", "flashcards", "sobremesa"]) {
+for (const face of ["hoy", "stories", "games", "phrase-doctor", "eighty", "pin-chase", "flashcards", "sendero", "sobremesa"]) {
   const hubPng = join(repoRoot, "public", "hub", `${face}.png`);
   assert(existsSync(hubPng), `${face} lives at public/hub/${face}.png`);
   const hubBuf = readFileSync(hubPng);
   assert(hubBuf.subarray(0, 8).equals(pngMagic), `hub/${face}.png is a real PNG, not JPEG-named-.png`);
   assert(hubBuf.readUInt32BE(16) === 1024 && hubBuf.readUInt32BE(20) === 1024, `hub/${face}.png is a 1024 square PNG`);
 }
+const senderoFace = readFileSync(join(repoRoot, "public", "hub", "sendero.png"));
+assert(createHash("md5").update(senderoFace).digest("hex") === "afee6ac8eec81ea2241527f1b3164d34", "Sendero face is the exact attached hub-faces-v2 PNG");
 assert(faviconSvg.includes("data:image/png;base64,"), "favicon.svg embeds a PNG, not a JPEG");
 assert(!faviconSvg.includes("data:image/jpeg"), "favicon.svg does not embed JPEG bytes");
 const pngHeadFacesRight = (buf, label) => {
