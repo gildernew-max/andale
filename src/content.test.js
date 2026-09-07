@@ -906,17 +906,11 @@ for (const id of ["luna", "rafa", "valeria", "diego"]) {
   const coachBuf = readFileSync(coachPng);
   assert(coachBuf.subarray(0, 8).equals(pngMagic), `coaches/${id}-happy.png is a real PNG, not JPEG-named-.png`);
 }
-for (const id of ["luna", "rafa", "diego"]) {
+for (const id of ["luna", "rafa", "valeria", "diego"]) {
   const coachPng = join(repoRoot, "public", "coaches", `${id}-happy.png`);
   const coachBuf = readFileSync(coachPng);
   assert(coachBuf.readUInt32BE(16) === 1024 && coachBuf.readUInt32BE(20) === 1024, `${id} flat drop is a 1024 square PNG`);
 }
-const valeriaPng = join(repoRoot, "public", "coaches", "valeria-happy.png");
-const valeriaBuf = readFileSync(valeriaPng);
-assert(
-  !(valeriaBuf.readUInt32BE(16) === 1024 && valeriaBuf.readUInt32BE(20) === 1024),
-  "Valeria stays the pre-flat still until a clean white/transparent + blank-clipboard drop lands"
-);
 assert(appSrc.includes("coaches/${coachId}-happy.png"), "CoachPortrait happy stills stay on public/coaches/{id}-happy.png");
 assert(faviconSvg.includes("data:image/png;base64,"), "favicon.svg embeds a PNG, not a JPEG");
 assert(!faviconSvg.includes("data:image/jpeg"), "favicon.svg does not embed JPEG bytes");
