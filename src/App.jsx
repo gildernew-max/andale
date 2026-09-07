@@ -14,6 +14,8 @@ import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLO
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
+import { lookupGloss, segmentGlossText } from "./storyGloss.js";
+import { GlossWord, GlossedText } from "./GlossedText.jsx";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -8489,13 +8491,26 @@ export default function App() {
                   <IcSpeaker size={15} color={"#1CB0F6"} />
                 </button>
                 <p style={{ margin: 0, fontSize: 17, lineHeight: 1.75, fontWeight: 600 }}>
-                  {para.split(/(\s+)/).map((tok, ti) => {
-                    if (/^\s+$/.test(tok) || !tok) return tok;
+                  {segmentGlossText(para).map((seg, ti) => {
+                    if (/^\s+$/.test(seg.raw) || !seg.raw) return seg.raw;
+                    const tok = seg.raw;
                     const def = lookupStoryWord(story, tok);
                     const clean = cleanStoryToken(tok);
                     const hitKey = keyWords.includes(def?.source) ? def.source : keyWords.includes(clean) ? clean : null;
                     const isSel = wordSel && wordSel.pi === pi && wordSel.ti === ti;
                     const known = !!def?.en;
+                    if (seg.key || lookupGloss(tok, uiLang)) {
+                      return (
+                        <GlossWord
+                          key={ti}
+                          token={tok}
+                          uiLang={uiLang}
+                          D={D}
+                          accent={sec.color}
+                          onActivate={() => { if (hitKey) discoverStoryWord(story, hitKey); }}
+                        />
+                      );
+                    }
                     return (
 	                      <span key={ti} onClick={(e) => { if (hitKey) discoverStoryWord(story, hitKey); setWordReveal(storyMode !== "challenge"); setWordSel({ display: tok.replace(/[«»".,;:¡!¿?—()]/g, ""), clean, key: hitKey, ...def, sentence: para, pi, ti, x: e.clientX, y: e.clientY }); }}
                         style={{ cursor: "pointer", borderRadius: 4, padding: "0 1px", background: isSel ? "#FFE9A8" : "transparent", borderBottom: known ? `2px dotted ${sec.color}66` : "none" }}>
@@ -8555,7 +8570,7 @@ export default function App() {
                 const done = sel != null;
                 return (
                   <div key={i} style={{ marginBottom: 18 }}>
-                    <div style={{ fontWeight: 800, fontSize: 15.5, marginBottom: 8 }}>{i + 1}. {qq.prompt}</div>
+                    <div data-testid="story-q-prompt" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: 8 }}>{i + 1}. <GlossedText text={qq.prompt} uiLang={uiLang} D={D} accent={sec.color} /></div>
                     <div style={{ display: "grid", gap: 8 }}>
                       {qq.choices.map((c, ci) => {
                         const isAns = c === qq.answer;
@@ -8566,7 +8581,7 @@ export default function App() {
                           <button key={ci} className="choice-card" disabled={done}
                             onClick={() => { setAnsSel({ ...ansSel, [i]: ci }); beep(isAns ? "ok" : "bad"); }}
                             style={{ textAlign: "left", padding: "11px 14px", fontSize: 14.5, fontWeight: 700, fontFamily: "inherit", cursor: done ? "default" : "pointer", background: bg, borderColor: bd, borderBottomColor: bd, color: col }}>
-                            {c}
+                            <GlossedText text={c} uiLang={uiLang} D={D} accent={sec.color} />
                           </button>
                         );
                       })}

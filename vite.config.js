@@ -8,6 +8,6 @@ export default defineConfig({
   base: '/andale/',
   test: {
     environment: 'jsdom',
-    include: ['src/flows.test.jsx'],
+    include: ['src/flows.test.jsx', 'src/GlossedText.test.jsx'],
   },
 })

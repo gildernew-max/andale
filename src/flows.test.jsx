@@ -634,6 +634,29 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("story-tip").textContent).toMatch(/Read the paragraph\. Tap a word only if it stops you\./));
   });
 
+  it("Lectura + story Qs show a one-line gloss for stamped words only", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
+    const cerezas = screen.getAllByTestId("gloss-word").find((el) => el.getAttribute("data-gloss-key") === "cerezas");
+    expect(cerezas).toBeTruthy();
+    await user.click(cerezas);
+    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("el fruto del café (no la fruta de postre)"));
+    await user.click(screen.getByRole("button", { name: "Preguntas" }));
+    await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
+    const cosecha = screen.getAllByTestId("gloss-word").find((el) => el.getAttribute("data-gloss-key") === "cosecha");
+    expect(cosecha).toBeTruthy();
+    await user.click(cosecha);
+    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("la recolección de ese año"));
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByText("Comprehension")).toBeTruthy());
+    const cosechaEn = screen.getAllByTestId("gloss-word").find((el) => el.getAttribute("data-gloss-key") === "cosecha");
+    await user.hover(cosechaEn);
+    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("harvest"));
+  });
+
   it("header ES|EN toggle flips uiLang, persists andale-v3, and stays in sync with Perfil", async () => {
     const user = await boot();
     const toggle = screen.getByTestId("lang-toggle");

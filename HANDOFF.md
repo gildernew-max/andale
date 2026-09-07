@@ -2,6 +2,37 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-06 (George FULL cerezas gloss table)
+
+**What changed**
+- `STORY_GLOSSES` now has George’s exact cerezas table (23 `{en,es}` rows). `cosecha` stays `harvest` / `la recolección de ese año`.
+- Phrase stamp `comercio justo` is one target. Unlisted words stay off the map.
+- Soft chrome parked. Do not merge.
+
+**Why**
+- George full table. Wire exact. Follow uiLang.
+
+## 2026-09-06 (George gloss stamp — cosecha first lock)
+
+**What changed**
+- `STORY_GLOSSES.cosecha` is the George lock: EN `harvest` · ES `la recolección de ese año`.
+- Map holds only that row. Full cerezas table (cerezas, ladera, mimbre, cooperativa, comercio justo, roya, heladas, independencia, …) waits on his exact lines.
+- Mechanic unchanged. Soft chrome parked. Do not merge.
+
+**Why**
+- George first lock. Do not invent the rest.
+
+## 2026-09-06 (Lectura word tap / hover gloss — Dave + Hand)
+
+**What changed**
+- Lectura paragraph text and story comprehension Qs: stamped words are tappable (mobile), hoverable, and keyboard-focusable. One-line gloss popover near the word.
+- Only words in `src/storyGloss.js` `STORY_GLOSSES` glow. `{ en, es }` per lemma; `GLOSS_ALIASES` for inflected forms. George extends the map — no invented dictionary.
+- Starter cerezas stamps include `cosecha` → EN `harvest` / ES `la recolección de ese año`. Unmapped words keep the existing tap card.
+- Soft chrome parked. Do not merge.
+
+**Why**
+- Dave: hover/tap a word (e.g. cosecha) for a short translation reminder. Hand: mechanic + extendable map; George stamps the rest.
+
 ## 2026-09-06 (Cenzontle lockup — abandons axolotl)
 
 **What changed**
