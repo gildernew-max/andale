@@ -3,7 +3,8 @@
  *  George stamps Literal / Why — hooks are one-liners until then.
  */
 
-export const CUBETAS_TITLE = "Bucket fly · Cubetas";
+/** George + No Face CLEAR: language-split title, not a bilingual lockup. */
+export const CUBETAS_TITLE = { es: "Cubetas", en: "Bucket fly" };
 export const CUBETAS_HUB = "match-play";
 export const CUBETAS_FEEDS = "eighty-twenty";
 export const CUBETAS_PACK_ID = "ojala-que";
@@ -78,6 +79,10 @@ const shuffleRest = (arr, rng = Math.random) => {
   }
   return [head, ...a];
 };
+
+export function cubetasTitle(uiLang) {
+  return uiLang === "en" ? CUBETAS_TITLE.en : CUBETAS_TITLE.es;
+}
 
 export function bucketLabel(id, uiLang) {
   const row = CUBETAS_LABELS[id];

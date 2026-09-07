@@ -22,6 +22,7 @@ import {
   cubetasHasDeadLabel,
   cubetasLiteral,
   cubetasNextLabel,
+  cubetasTitle,
   cubetasWhy,
   currentChip,
   finishCubetasClear,
@@ -32,7 +33,10 @@ import {
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
-assert(CUBETAS_TITLE === "Bucket fly · Cubetas", "quiet title is Bucket fly · Cubetas");
+assert(CUBETAS_TITLE.es === "Cubetas" && CUBETAS_TITLE.en === "Bucket fly", "title is ES Cubetas / EN Bucket fly");
+assert(cubetasTitle("es") === "Cubetas", "ES title is Cubetas");
+assert(cubetasTitle("en") === "Bucket fly", "EN title is Bucket fly");
+assert(cubetasTitle("es") !== "Bucket fly · Cubetas" && cubetasTitle("en") !== "Bucket fly · Cubetas", "no bilingual lockup title");
 assert(CUBETAS_HUB === "match-play", "lives under Match & play");
 assert(CUBETAS_FEEDS === "eighty-twenty", "feeds 80/20");
 assert(CUBETAS_PACK_ID === "ojala-que", "first pack is Ojalá que");

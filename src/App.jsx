@@ -25,7 +25,6 @@ import {
   CUBETAS_BUCKETS,
   CUBETAS_GEM,
   CUBETAS_SHAKE_MS,
-  CUBETAS_TITLE,
   CUBETAS_WIN_MS,
   CUBETAS_XP,
   advanceCubetasReveal,
@@ -35,6 +34,7 @@ import {
   clearCubetasWrong,
   cubetasLiteral,
   cubetasNextLabel,
+  cubetasTitle,
   cubetasWhy,
   currentChip,
   finishCubetasClear,
@@ -1652,7 +1652,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
     <div data-testid="cubetas-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
         <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
-        <div data-testid="cubetas-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{CUBETAS_TITLE}</div>
+        <div data-testid="cubetas-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{cubetasTitle(uiLang)}</div>
         <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
       </div>
 
@@ -6954,7 +6954,7 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 44, height: 44, borderRadius: 14, background: D.green, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.greenDark}` }}>🪣</span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{CUBETAS_TITLE}</div>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{cubetasTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Sort the phrase. Subjunctive or indicative." : "Clasifica la frase. Subjuntivo o indicativo."}</div>
               </div>
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
@@ -7139,7 +7139,7 @@ export default function App() {
                 reward: L.safeRiskyReward,
               },
               {
-                title: CUBETAS_TITLE,
+                title: cubetasTitle(uiLang),
                 tag: uiLang === "en" ? "MATCH & PLAY" : "EMPAREJA Y JUEGA",
                 desc: uiLang === "en" ? "Sort the phrase. Subjunctive or indicative." : "Clasifica la frase. Subjuntivo o indicativo.",
                 color: D.green,

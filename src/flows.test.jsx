@@ -1399,7 +1399,11 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("match-pairs-start").textContent).toMatch(/Emparejar|Match pairs/);
     expect(screen.getByTestId("match-play")).toBeTruthy();
     expect(screen.getByTestId("match-play").textContent).toMatch(/Match & play|Empareja y juega/);
-    expect(screen.getByTestId("cubetas-start").textContent).toContain("Bucket fly · Cubetas");
+    expect(screen.getByTestId("cubetas-start").textContent).toContain("Cubetas");
+    expect(screen.getByTestId("cubetas-start").textContent).not.toContain("Bucket fly");
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("cubetas-start").textContent).toContain("Bucket fly"));
+    expect(screen.getByTestId("cubetas-start").textContent).not.toContain("Cubetas");
   });
 
   it("Cubetas: one chip, two mood buckets, wrong returns, correct flies then Literal/Why", async () => {
@@ -1407,7 +1411,7 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("nav-practica"));
     await user.click(screen.getByTestId("cubetas-start"));
     await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
-    expect(screen.getByTestId("cubetas-title").textContent).toBe("Bucket fly · Cubetas");
+    expect(screen.getByTestId("cubetas-title").textContent).toBe("Cubetas");
     expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que");
     expect(screen.getByTestId("cubetas-bucket-subjunctive").textContent).toBe("Subjuntivo");
     expect(screen.getByTestId("cubetas-bucket-indicative").textContent).toBe("Indicativo");
@@ -1443,6 +1447,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("cubetas-why").textContent).toContain("Why");
     expect(screen.getByTestId("cubetas-why").textContent).toContain("«Ojalá» always takes the subjunctive.");
     expect(screen.getByTestId("cubetas-next").textContent).toMatch(/Next chip/i);
+    expect(screen.getByTestId("cubetas-title").textContent).toBe("Bucket fly");
     expect(screen.getByTestId("cubetas-bucket-subjunctive").textContent).toBe("Subjunctive");
     expect(screen.getByTestId("cubetas-bucket-indicative").textContent).toBe("Indicative");
   });
