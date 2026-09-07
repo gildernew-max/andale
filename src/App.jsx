@@ -1584,6 +1584,28 @@ const LogoMark = ({ size = 30, ...rest }) => (
 );
 /** Adult sage from Confident v1 belly/tail. Lockup wordmark only — Duo lime chrome stays parked. */
 const MARK_INK = "#5C7356";
+const HUB_CREAM = "#F6EFE4";
+
+/** v01c-fun-clean tile faces — stamp illustrations as real PNGs. Soft chrome parked. */
+const HUB_FACES = {
+  hoy: "hub/hoy.png",
+  stories: "hub/stories.png",
+  games: "hub/games.png",
+  doctor: "hub/phrase-doctor.png",
+  eighty: "hub/eighty.png",
+  pins: "hub/pin-chase.png",
+  flash: "hub/flashcards.png",
+  sobre: "hub/sobremesa.png",
+};
+
+const HubTileArt = ({ face }) => (
+  <img
+    src={`${import.meta.env.BASE_URL}${HUB_FACES[face]}`}
+    alt=""
+    aria-hidden="true"
+    style={{ display: "block", width: "100%", height: 96, objectFit: "contain" }}
+  />
+);
 
 /** Dave-cleared illustrated Mexico. Pins / glow / fog sit on top. */
 const RecuerdosMexicoMap = ({ testId, theme }) => (
@@ -3253,6 +3275,14 @@ const UI = {
     a2hsHow: "Toca Compartir, luego «Agregar a pantalla de inicio».",
     a2hsDismiss: "Ahora no",
     playScene: "Jugar la escena",
+    hubHoy: "Hoy",
+    hubStories: "Stories",
+    hubGames: "Games",
+    hubDoctor: "Phrase Doctor",
+    hubEighty: "80/20",
+    hubPins: "Pin chase",
+    hubFlash: "Flashcards",
+    hubSobremesa: "Sobremesa",
     phraseDoctor: "Doctora de frases",
     phraseDoctorTag: "GANA EN 60 SEGUNDOS",
     phraseDoctorCta: "Arreglar una frase",
@@ -3315,6 +3345,14 @@ const UI = {
     a2hsHow: "Tap Share, then Add to Home Screen.",
     a2hsDismiss: "Not now",
     playScene: "Play the scene",
+    hubHoy: "Hoy",
+    hubStories: "Stories",
+    hubGames: "Games",
+    hubDoctor: "Phrase Doctor",
+    hubEighty: "80/20",
+    hubPins: "Pin chase",
+    hubFlash: "Flashcards",
+    hubSobremesa: "Sobremesa",
     phraseDoctor: "Phrase Doctor",
     phraseDoctorTag: "WIN IN 60 SECONDS",
     phraseDoctorCta: "Fix a phrase",
@@ -5873,29 +5911,7 @@ export default function App() {
 
       {/* ---------- CAMINO (path) ---------- */}
       {!inLesson && tab === "camino" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: "10px 20px 40px" }}>
-          {/* host greeting — same streak ≥ 1 gate as Meta / Rayo / coach-strip */}
-          {showDoorMeta && (
-          <div data-testid="luna-greeting" style={{ display: "flex", gap: 10, alignItems: "flex-end", margin: "10px 0 2px" }}>
-	            <div className="idle" style={{ flexShrink: 0, lineHeight: 0 }}><CoachPortrait id="luna" mood="happy" size={58} badge={dailyDone} /></div>
-            <div style={{ position: "relative", border: `2px solid ${D.line}`, borderRadius: 14, padding: "9px 14px", background: D.card, marginBottom: 10, fontWeight: 800, fontSize: 14, transform: "rotate(-.4deg)" }}>
-              <div style={{ position: "absolute", left: -8, bottom: 12, width: 12, height: 12, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
-              {prog.name ? `¡Hola, ${prog.name}! ` : ""}{greeting}
-            </div>
-          </div>
-          )}
-          {showPitch && (
-          <div data-testid="home-pitch" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>
-            {L.splashLine}
-          </div>
-          )}
-          {/* 80/20 first CTA — before path cards. No face. Quiet second line. */}
-          <button data-testid="eighty-twenty-cta" type="button" onClick={() => setSubjFiveOpen(true)}
-            style={{ display: "block", width: "100%", margin: "12px 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div data-testid="eighty-twenty-label" style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{SUBJ_FIVE_LABEL}</div>
-            <div data-testid="eighty-twenty-sub" style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{subjFiveSub(uiLang)}</div>
-          </button>
-          {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
+        <div data-testid="learn-hub" style={{ maxWidth: 480, margin: "0 auto", padding: "10px 16px 40px", background: theme === "dark" ? "transparent" : HUB_CREAM }}>
           {(() => {
             const doorKind = firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff });
             const showHandoff = showPostDismissHandoff({ armed: postDismissHandoff });
@@ -5923,75 +5939,45 @@ export default function App() {
             };
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
-            const sceneStory = todayScene ? STORIES.find((st) => st.id === todayScene.storyId) : null;
-            const renderHoyCard = (asHero) => {
-              if (!todayScene) return null;
-              return (
-                <div data-testid="hoy-card" style={{ margin: asHero ? "0 0 10px" : "2px 0 16px", border: `2px solid ${todayScene.color}`, borderBottom: `5px solid ${todayScene.dark}`, borderRadius: 18, background: D.card, overflow: "hidden" }}>
-                  {hoyStill && (
-                    <img
-                      data-testid="hoy-still"
-                      src={`${import.meta.env.BASE_URL}${hoyStill}`}
-                      alt=""
-                      width={1024}
-                      height={1024}
-                      aria-hidden="true"
-                      style={{ display: "block", width: "100%", height: 148, objectFit: "cover", objectPosition: "center 38%" }}
-                    />
-                  )}
-                  <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 14px 11px", background: theme === "dark" ? D.subtle : "#FFFBEF" }}>
-                    <div style={{ width: 58, height: 58, borderRadius: 17, background: todayScene.color, borderBottom: `5px solid ${todayScene.dark}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <CoachPortrait id={todayScene.host} mood={todaySceneDone ? "party" : "focused"} size={54} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 900, letterSpacing: ".08em", color: todayScene.dark }}>{uiLang === "en" ? "TODAY IN MEXICO" : "HOY EN MÉXICO"}</span>
-                        <span data-testid="hoy-city" style={{ fontSize: 10.5, fontWeight: 900, color: D.sub, background: D.card, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "1px 7px" }}>{todayScene.city}</span>
-                      </div>
-                      <div data-testid="hoy-title" style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.15, marginTop: 2 }}>{uiLang === "en" ? todayScene.titleEn : todayScene.title}</div>
-                      <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, marginTop: 3 }}>{uiLang === "en" ? todayScene.setupEn : todayScene.setup}</div>
-                    </div>
-                  </div>
-                  <div style={{ padding: "11px 14px 13px" }}>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                      {todayScene.units.map((uid) => (
-                        <span key={uid} style={{ fontSize: 10.5, fontWeight: 900, color: D.ink, background: D.subtle, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "2px 8px" }}>
-                          {getUnit(uid)?.title}
-                        </span>
-                      ))}
-                      {sceneStory && (
-                        <span style={{ fontSize: 10.5, fontWeight: 900, color: todayScene.dark, background: theme === "dark" ? D.subtle : D.greenBg, border: `1.5px solid ${todayScene.color}`, borderRadius: 99, padding: "2px 8px" }}>
-                          {sceneStory.title}
-                        </span>
-                      )}
-                    </div>
-                    <button data-testid={asHero ? "hero-cta" : undefined} onClick={() => !todaySceneDone && startTodayScene(todayScene)} disabled={todaySceneDone}
-                      style={{ width: "100%", border: "none", borderBottom: `4px solid ${todaySceneDone ? D.line : todayScene.dark}`, background: todaySceneDone ? D.subtle : todayScene.color, color: todaySceneDone ? D.sub : "#fff", borderRadius: 13, padding: "11px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 14.5, cursor: todaySceneDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                      <IcBolt size={18} color={todaySceneDone ? D.sub : "#fff"} />
-                      {todaySceneDone ? (uiLang === "en" ? "Scene cleared" : "Escena superada") : L.playScene}
-                    </button>
-                  </div>
-                </div>
-              );
-            };
+            const hoySelected = doorKind === FIRST_DOOR_HOY && !todaySceneDone;
+            const hubTiles = [
+              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, art: <HubTileArt face="hoy" />, selected: hoySelected, act: () => todayScene && !todaySceneDone && startTodayScene(todayScene) },
+              { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
+              { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => startAhorcado() },
+              { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
+              { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
+              { id: "pins", testid: "hub-pins", title: L.hubPins, art: <HubTileArt face="pins" />, act: () => setTab("lectura") },
+              { id: "flash", testid: "hub-flashcards", title: L.hubFlash, art: <HubTileArt face="flash" />, act: () => { setTab("practica"); startFlashRun(); } },
+              { id: "sobre", testid: "hub-sobremesa", title: L.hubSobremesa, art: <HubTileArt face="sobre" />, act: () => {} },
+            ];
             return (
-              <div style={{ margin: "14px 0 18px" }}>
-                <div data-testid="first-door-hero">
-                  {doorKind === FIRST_DOOR_HOY ? renderHoyCard(true) : (
-                    <div data-testid={showHandoff ? "post-dismiss-handoff" : undefined} style={{ background: D.purple, borderRadius: 20, padding: "16px 18px 18px", color: "#fff", boxShadow: "0 6px 18px rgba(0,0,0,.10)", marginBottom: 10 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                        <div style={{ flexShrink: 0 }}><CoachPortrait id="valeria" mood="happy" size={68} /></div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div data-testid="first-door-tag" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", opacity: .85 }}>{L.phraseDoctorTag}</div>
-                          <div data-testid="first-door-title" style={{ fontWeight: 900, fontSize: 19, lineHeight: 1.2, marginTop: 2 }}>{L.phraseDoctor}</div>
-                        </div>
-                      </div>
-                      <button data-testid="hero-cta" onClick={openDoctor}
-                        style={{ display: "block", width: "100%", marginTop: 14, background: "#fff", color: D.purpleDark, border: "none", borderBottom: "4px solid rgba(0,0,0,.15)", borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 900, fontSize: 16, cursor: "pointer", letterSpacing: ".01em" }}>
-                        {L.phraseDoctorCta} →
-                      </button>
-                    </div>
-                  )}
+              <div style={{ margin: "6px 0 18px" }}>
+                <div data-testid="learn-hub-tiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  {hubTiles.map((tile) => (
+                    <button key={tile.id} data-testid={tile.testid} type="button" onClick={tile.act}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        height: 152,
+                        boxSizing: "border-box",
+                        background: theme === "dark" ? D.card : HUB_CREAM,
+                        border: `1.5px solid ${tile.selected ? D.green : D.line}`,
+                        borderRadius: 18,
+                        padding: "8px 8px 10px",
+                        fontFamily: "inherit",
+                        cursor: "pointer",
+                        textAlign: "center",
+                        color: D.ink,
+                      }}>
+                      <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
+                      <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
+                      <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
+                      </span>
+                    </button>
+                  ))}
                 </div>
                 {showLine && (
                   <p data-testid="come-back-tomorrow" style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
@@ -6002,13 +5988,12 @@ export default function App() {
                     })}
                   </p>
                 )}
-                {doorKind === FIRST_DOOR_HOY && (
-                  <button data-testid="first-door-alt" onClick={openDoctor}
-                    style={{ display: "block", width: "100%", marginTop: 8, background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
-                    {L.phraseDoctorCta}
-                  </button>
+                {showHandoff && (
+                  <div data-testid="post-dismiss-handoff" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+                    <span data-testid="first-door-tag">{L.phraseDoctorTag}</span>
+                    <span data-testid="first-door-title">{L.phraseDoctor}</span>
+                  </div>
                 )}
-                {doorKind !== FIRST_DOOR_HOY && renderHoyCard(false)}
                 <button data-testid="camino-more" type="button" aria-expanded={caminoMore}
                   onClick={() => setCaminoMore((open) => !open)}
                   style={{ display: "block", margin: "10px auto 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", padding: "4px 8px", letterSpacing: ".01em" }}>

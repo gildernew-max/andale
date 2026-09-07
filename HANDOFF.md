@@ -2,6 +2,54 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (No face HOLD — hub-faces-v2 verbatim copy blocked)
+
+**What changed**
+- Nothing in `public/hub/*.png`. Launch attached eight tile faces for a verbatim copy. Those bytes never landed on disk (`/workspace/andale-art/hub-faces-v2/` missing; Drive `andale-art` has coaches + SMA stills only). Did not invent or regenerate. Tiles stay the `62ea2f7` Cenzontle + Valeria restamp.
+- Structure HOLD unchanged: equal 2×4, one label each, live Camino nav. Soft chrome parked. Do not merge.
+
+**Why**
+- User lock: copy attached bytes only. No face look bounce still open until the real pack is on disk.
+
+## 2026-09-07 (No face HOLD — restamp hub faces, Cenzontle + Valeria)
+
+**What changed**
+- `public/hub/*.png` restamped. Every bird tile uses the locked right-facing `mascot/cenzontle.png` mark (Hoy, Stories, Games, Pin chase, Sobremesa). Phrase Doctor uses flat Valeria with a blank clipboard. 80/20 + Flashcards stay blank geometry (no baked 80%/20% / perro/casa/agua).
+- Green glasses bird / alternate species is gone. No titles in the PNGs. Structure HOLD: equal 2×4, one label each, no hero, live Camino nav. Soft chrome parked. Do not merge.
+
+**Why**
+- Platform rule: ONE iconic Cenzontle. No face look bounce still open.
+
+## 2026-09-07 (No face — v01c hub stamp faces)
+
+**What changed**
+- Learn hub tiles now use real stamp-face PNGs under `public/hub/` (hoy, stories, games, phrase-doctor, eighty, pin-chase, flashcards, sobremesa). Geometric SVG placeholders are gone.
+- Structure HOLD: equal 2×4, one label each, no hero, live Camino nav (Camino · Misiones · Lectura · Práctica · Perfil). Soft chrome parked. Do not merge.
+
+**Why**
+- No face must brand-CLEAR the look after faces land. Stamp faces replace the wire placeholders.
+
+## 2026-09-07 (George + No face CLEAR — hub labels + live Camino nav)
+
+**What changed**
+- George + No face CLEAR on the equal-funnier hub face. Tile labels stay one each, no slash tails: Hoy · Stories · Games · Phrase Doctor · 80/20 · Pin chase · Flashcards · Sobremesa.
+- Bottom nav stays the live Camino set: Camino · Misiones · Lectura · Práctica · Perfil. Not the mock Home/Library/Profile English trio.
+- Equal funnier tiles stay wired. Soft chrome parked. Do not merge.
+
+**Why**
+- George + No face CLEAR. Keep live nav. Do not take the mock’s three-tab chrome.
+
+## 2026-09-07 (Learn home → v01c-fun-clean)
+
+**What changed**
+- Learn home is a **2×4 equal-tile hub**. No hero card. More fun, less clutter than v01b-funnier.
+- One label per tile: Hoy · Stories · Games · Phrase Doctor · 80/20 · Pin chase · Flashcards · Sobremesa.
+- Fun geometric tile faces (stamp PNG not on checkout). Header stays lean: ándale + Cenzontle + live streak/hearts + ES|EN. Nav stays live Camino set.
+- Soft chrome parked. Do not merge — No face / Hand CLEAR first.
+
+**Why**
+- Dave lock: v01c-fun-clean supersedes v01b-funnier.
+
 ## 2026-09-07 (Valeria only — blank clipboard re-bounce)
 
 **What changed**
