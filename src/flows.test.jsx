@@ -1231,8 +1231,14 @@ describe("simulated learner flows", () => {
     await user.click(openers[openers.length - 1]);
     await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
     await user.click(screen.getByRole("button", { name: "Preguntas" }));
-    await waitFor(() => expect(screen.getByText(/¿Por qué se negó a vender toda su cosecha/)).toBeTruthy());
-    await user.click(screen.getByRole("button", { name: "Porque no quería depender de una sola empresa" }));
+    await waitFor(() => {
+      const prompts = screen.getAllByTestId("story-q-prompt");
+      expect(prompts.some((el) => el.textContent.includes("¿Por qué se negó"))).toBe(true);
+    });
+    const refused = [...document.querySelectorAll(".choice-card")].find((el) =>
+      el.textContent.includes("Porque no quería depender de una sola empresa"));
+    expect(refused).toBeTruthy();
+    await user.click(refused);
     await waitFor(() => expect(screen.getByTestId("story-quiz-why")).toBeTruthy());
     expect(screen.getByTestId("story-quiz-focus").textContent).toBe("Foco: Lectura");
     expect(screen.getByTestId("story-quiz-why").textContent).toBe("El texto dice que la oferta japonesa era premium — «no pagaba bien» no es lo que pasó. Se negó para no depender de un solo comprador. La independencia ganó al mejor cheque.");
