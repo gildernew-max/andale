@@ -2,6 +2,19 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Learn fun hub v5.1 — Varys hierarchy)
+
+**What changed**
+- Learn home is hub v5.1. Header: Cenzontle + ándale + house wordmark `HOME HUB` (soft chrome lean). Streak / hearts / ES|EN stay.
+- **Hoy en México** is the only loud first tap: green hero banner, scene title, `¡Vamos!` + `Jugar la escena` / `Play the scene`.
+- **EXPLORA**: Stories/Cuentos + Games/Match & play — equal co-energy tiles, quieter than Hoy, not co-hero.
+- **MÁS ACTIVIDADES**: one row of four smaller equal tiles — Phrase Doctor/Arregla · 80/20/Prioriza · Pin chase/Unlock Mexico · Flashcards/Flip & keep.
+- Path / unit nodes sit under the hub. Más, EMPIEZA, SALTAR, coach bubble, door-meta stay off the first screen.
+- tramites-cita stays untagged (no cerezas story chip). Soft chrome parked. Do not merge — Dave eye on hierarchy.
+
+**Why**
+- Hand lock + Varys: Hoy owns first tap. v5.1 stamp supersedes v5.
+
 ## 2026-09-07 (Learn tab first CTA — 80/20 Subjuntivo in five)
 
 **What changed**

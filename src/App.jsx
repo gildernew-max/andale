@@ -5,8 +5,8 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
-import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
+import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showComeBackTomorrow, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { isShortHoy, shouldHoyEarlyWin, trimHoyBeats } from "./hoyWin.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
@@ -16,7 +16,7 @@ import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.j
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
-import { SUBJ_FIVE_LABEL, subjFiveLines, subjFiveSub } from "./subjFive.js";
+import { subjFiveLines } from "./subjFive.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -1570,6 +1570,38 @@ const FlagMX = ({ size = 22 }) => (
     <circle cx="13.5" cy="9" r="2.4" fill="#B08A4F" /><circle cx="13.5" cy="9" r="1.2" fill="#6B5530" />
   </svg>
 );
+const HUB_FOREST = "#2F6B45";
+
+/** Fun hub v5.1 Hoy art — mountains + sun from the hierarchy stamp. Decorative only. */
+const HoyHubArt = () => (
+  <svg data-testid="hoy-hub-art" viewBox="0 0 360 160" width="100%" height="160" aria-hidden="true" style={{ display: "block" }}>
+    <circle cx="292" cy="42" r="22" fill="#C6E88A" />
+    <path d="M40 160 118 78l46 38 62-72 94 96v20H40z" fill="#2F6B45" />
+    <path d="M118 160 176 96l38 28 48-54 80 90v20H118z" fill="#3E8A58" />
+  </svg>
+);
+
+const HubStoriesArt = () => (
+  <svg viewBox="0 0 160 56" width="100%" height="48" aria-hidden="true" style={{ display: "block" }}>
+    <rect width="160" height="56" fill="#E8D9F4" rx="8" />
+    <circle cx="118" cy="14" r="8" fill="#F4E27A" />
+    <path d="M8 56 48 28l22 14 28-24 54 38v20H8z" fill="#6B4C9A" />
+    <circle cx="28" cy="12" r="1.4" fill="#F4E27A" />
+    <circle cx="44" cy="8" r="1.1" fill="#F4E27A" />
+    <circle cx="70" cy="14" r="1.2" fill="#F4E27A" />
+  </svg>
+);
+
+const HubGamesArt = () => (
+  <svg viewBox="0 0 160 56" width="100%" height="48" aria-hidden="true" style={{ display: "block" }}>
+    <rect width="160" height="56" fill="#D7EBD0" rx="8" />
+    <rect x="44" y="16" width="72" height="28" rx="12" fill="#2F6B45" />
+    <circle cx="60" cy="30" r="4" fill="#F4EDE0" />
+    <circle cx="100" cy="30" r="4" fill="#F4EDE0" />
+    <path d="M78 24v12M72 30h12" stroke="#F4EDE0" strokeWidth="2.2" strokeLinecap="round" />
+  </svg>
+);
+
 /** Cenzontle lockup. PNG faces RIGHT. Future win-motion fly-in stays right-facing — do not scaleX(-1). Soft chrome parked. */
 const LogoMark = ({ size = 30, ...rest }) => (
   <img
@@ -2761,7 +2793,6 @@ const TODAY_SCENES = [
     color: D.green,
     dark: D.greenDark,
     host: "luna",
-    storyId: "story-9",
     units: ["mex", "registro", "pronombres"],
     setup: "Quieres abrir una cuenta. El banco te pide el motivo por WhatsApp — una línea.",
     setupEn: "You want to open an account. The bank wants the reason on WhatsApp — one line.",
@@ -3253,6 +3284,23 @@ const UI = {
     a2hsHow: "Toca Compartir, luego «Agregar a pantalla de inicio».",
     a2hsDismiss: "Ahora no",
     playScene: "Jugar la escena",
+    vamos: "¡Vamos!",
+    learnTagline: "HOME HUB",
+    hoyPracticeLine: "Una escena rápida. Mucha diferencia.",
+    hubExplora: "EXPLORA",
+    hubMore: "MÁS ACTIVIDADES",
+    hubStories: "Stories",
+    hubStoriesSub: "Cuentos",
+    hubGames: "Games",
+    hubGamesSub: "Match & play",
+    hubDoctor: "Phrase Doctor",
+    hubDoctorSub: "Arregla",
+    hubEighty: "80/20",
+    hubEightySub: "Prioriza",
+    hubPins: "Pin chase",
+    hubPinsSub: "Unlock Mexico",
+    hubFlash: "Flashcards",
+    hubFlashSub: "Flip & keep",
     phraseDoctor: "Doctora de frases",
     phraseDoctorTag: "GANA EN 60 SEGUNDOS",
     phraseDoctorCta: "Arreglar una frase",
@@ -3315,6 +3363,23 @@ const UI = {
     a2hsHow: "Tap Share, then Add to Home Screen.",
     a2hsDismiss: "Not now",
     playScene: "Play the scene",
+    vamos: "¡Vamos!",
+    learnTagline: "HOME HUB",
+    hoyPracticeLine: "A quick scene. A real difference.",
+    hubExplora: "EXPLORE",
+    hubMore: "MORE ACTIVITIES",
+    hubStories: "Stories",
+    hubStoriesSub: "Cuentos",
+    hubGames: "Games",
+    hubGamesSub: "Match & play",
+    hubDoctor: "Phrase Doctor",
+    hubDoctorSub: "Arregla",
+    hubEighty: "80/20",
+    hubEightySub: "Prioriza",
+    hubPins: "Pin chase",
+    hubPinsSub: "Unlock Mexico",
+    hubFlash: "Flashcards",
+    hubFlashSub: "Flip & keep",
     phraseDoctor: "Phrase Doctor",
     phraseDoctorTag: "WIN IN 60 SECONDS",
     phraseDoctorCta: "Fix a phrase",
@@ -3602,7 +3667,6 @@ export default function App() {
   const [norteFlashPending, setNorteFlashPending] = useState(false);
   const norteFlashNextRef = useRef(null);
   const [nameDraft, setNameDraft] = useState("");
-  const [caminoMore, setCaminoMore] = useState(false);
   const [subjFiveOpen, setSubjFiveOpen] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
   const [guideUnit, setGuideUnit] = useState(null);
@@ -4074,8 +4138,8 @@ export default function App() {
       const q2 = sampleQuestion(uid, (q) => q.type === "mc" || q.type === "type");
       return [q1, q2].filter(Boolean);
     }).slice(0, 3);
-    const story = STORIES.find((st) => st.id === scene.storyId) || STORIES[0];
-    const storyQ = story.questions[Math.floor(Math.random() * story.questions.length)];
+    const story = hoyStoryForScene(scene, STORIES);
+    const storyQ = story?.questions?.[Math.floor(Math.random() * story.questions.length)];
     const listenBeat = {
       type: "listen",
       text: scene.line,
@@ -4097,17 +4161,19 @@ export default function App() {
       _i: -1,
       skill: "Vida real",
     };
-    const storyBeat = liftStoryQuizItem(
-      storyQ,
-      `Postal de ${story.title}: ${storyQ.prompt}`,
-      { es: culturalHintExplain(story.title, "es"), en: culturalHintExplain(story.title, "en") },
-    );
+    const storyBeat = story && storyQ
+      ? liftStoryQuizItem(
+        storyQ,
+        `Postal de ${story.title}: ${storyQ.prompt}`,
+        { es: culturalHintExplain(story.title, "es"), en: culturalHintExplain(story.title, "en") },
+      )
+      : null;
     // Day-2 return: native setup · line · Q only (already ≤4). First session keeps extras, cap 4.
     // Full / Más path only when a scene grows past 4.
     const shortQueue = day2Hoy ? [sceneBeat, listenBeat] : [sceneBeat, listenBeat, ...picks];
     const items = firstHoy
       ? trimHoyBeats(shortQueue, { firstHoy: true })
-      : trimHoyBeats(shuffle([listenBeat, sceneBeat, ...picks, storyBeat]), { firstHoy: false });
+      : trimHoyBeats(shuffle([listenBeat, sceneBeat, ...picks, storyBeat].filter(Boolean)), { firstHoy: false });
     beginSession({
       title: uiLang === "en" ? scene.titleEn : scene.title,
       color: scene.color,
@@ -5301,8 +5367,6 @@ export default function App() {
   const showLevelTheater = hasLearnerProgress(prog);
   const showWeaknessMap = hasWeaknessData(prog);
   const showAtajos = hasUnlockedShortcuts(prog);
-  const showDoorMeta = showDoorMetaChrome({ streak: prog.streak });
-  const showPitch = showColdPitch({ streak: prog.streak });
   const todaySceneDone = !!prog.missions?.[`scene-${todayKey}`];
   const dailyDone = !!prog.missions?.[`daily-${todayKey}`];
   const storyCount = STORIES.filter((st) => prog.stories?.[st.id]).length;
@@ -5840,9 +5904,14 @@ export default function App() {
       {!inLesson && (
         <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 10, background: D.card, borderBottom: `2px solid ${D.line}` }}>
           <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <div style={{ display: "flex", alignItems: tab === "camino" ? "flex-start" : "center", gap: 7 }}>
               <LogoMark size={34} />
-              <span style={{ fontWeight: 900, fontSize: 23, color: MARK_INK, letterSpacing: "-0.02em" }}>ándale</span>
+              <div>
+                <span style={{ fontWeight: 900, fontSize: 23, color: MARK_INK, letterSpacing: "-0.02em", display: "block", lineHeight: 1 }}>ándale</span>
+                {tab === "camino" && (
+                  <div data-testid="learn-tagline" style={{ color: MARK_INK, fontWeight: 800, fontSize: 9, letterSpacing: ".14em", lineHeight: 1, marginTop: 4 }}>{L.learnTagline}</div>
+                )}
+              </div>
             </div>
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
               <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>
@@ -5873,128 +5942,76 @@ export default function App() {
 
       {/* ---------- CAMINO (path) ---------- */}
       {!inLesson && tab === "camino" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: "10px 20px 40px" }}>
-          {/* host greeting — same streak ≥ 1 gate as Meta / Rayo / coach-strip */}
-          {showDoorMeta && (
-          <div data-testid="luna-greeting" style={{ display: "flex", gap: 10, alignItems: "flex-end", margin: "10px 0 2px" }}>
-	            <div className="idle" style={{ flexShrink: 0, lineHeight: 0 }}><CoachPortrait id="luna" mood="happy" size={58} badge={dailyDone} /></div>
-            <div style={{ position: "relative", border: `2px solid ${D.line}`, borderRadius: 14, padding: "9px 14px", background: D.card, marginBottom: 10, fontWeight: 800, fontSize: 14, transform: "rotate(-.4deg)" }}>
-              <div style={{ position: "absolute", left: -8, bottom: 12, width: 12, height: 12, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
-              {prog.name ? `¡Hola, ${prog.name}! ` : ""}{greeting}
-            </div>
-          </div>
-          )}
-          {showPitch && (
-          <div data-testid="home-pitch" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>
-            {L.splashLine}
-          </div>
-          )}
-          {/* 80/20 first CTA — before path cards. No face. Quiet second line. */}
-          <button data-testid="eighty-twenty-cta" type="button" onClick={() => setSubjFiveOpen(true)}
-            style={{ display: "block", width: "100%", margin: "12px 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div data-testid="eighty-twenty-label" style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{SUBJ_FIVE_LABEL}</div>
-            <div data-testid="eighty-twenty-sub" style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{subjFiveSub(uiLang)}</div>
-          </button>
-          {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
+        <div data-testid="learn-hub" style={{ maxWidth: 480, margin: "0 auto", padding: "10px 16px 40px" }}>
           {(() => {
-            const doorKind = firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff });
             const showHandoff = showPostDismissHandoff({ armed: postDismissHandoff });
             const day2Return = isDay2Return({
               streak: prog.streak,
               lastDay: prog.lastDay,
               today: todayKey,
             });
-            const parkLongHoy = shouldParkHoyUnderMas(todayScene) && (day2Return || todaySceneDone);
             const showLine = showComeBackTomorrow({
               todaySceneDone,
               streak: prog.streak,
               lastDay: prog.lastDay,
               today: todayKey,
             }) && !day2Return;
-            const resumeU = prog.resume && UNITS.find((u) => u.id === prog.resume.unitId);
-            const nextF = FLAT.find((f) => !((prog.done || {})[f.unit.id] > 0));
-            const pathUnit = resumeU || nextF?.unit;
-            const pathSection = resumeU
-              ? (FLAT.find((x) => x.unit.id === resumeU.id)?.section || SECTIONS[0])
-              : nextF?.section;
-            const openPath = () => {
-              if (!pathUnit) return;
-              setSheet({ unit: pathUnit, section: pathSection || SECTIONS[0], crowns: prog.done?.[pathUnit.id] || 0 });
-            };
-            const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
-            const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
-            const sceneStory = todayScene ? STORIES.find((st) => st.id === todayScene.storyId) : null;
-            const renderHoyCard = (asHero) => {
-              if (!todayScene) return null;
+            const energyTiles = [
+              { id: "stories", testid: "hub-stories", title: L.hubStories, sub: L.hubStoriesSub, art: <HubStoriesArt />, act: () => setTab("lectura") },
+              { id: "games", testid: "hub-games", title: L.hubGames, sub: L.hubGamesSub, art: <HubGamesArt />, act: () => setTab("practica") },
+            ];
+            const quietTiles = [
+              { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, sub: L.hubDoctorSub, color: "#7B61C7", icon: "⚕", act: openDoctor },
+              { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, sub: L.hubEightySub, color: "#E6A800", icon: "◎", act: () => setSubjFiveOpen(true) },
+              { id: "pins", testid: "hub-pins", title: L.hubPins, sub: L.hubPinsSub, color: HUB_FOREST, icon: "📍", act: () => setTab("lectura") },
+              { id: "flash", testid: "hub-flashcards", title: L.hubFlash, sub: L.hubFlashSub, color: "#3D8BDB", icon: "▣", act: () => setTab("practica") },
+            ];
+            const renderHubTile = (tile, tier) => {
+              const energy = tier === "energy";
               return (
-                <div data-testid="hoy-card" style={{ margin: asHero ? "0 0 10px" : "2px 0 16px", border: `2px solid ${todayScene.color}`, borderBottom: `5px solid ${todayScene.dark}`, borderRadius: 18, background: D.card, overflow: "hidden" }}>
-                  {hoyStill && (
-                    <img
-                      data-testid="hoy-still"
-                      src={`${import.meta.env.BASE_URL}${hoyStill}`}
-                      alt=""
-                      width={1024}
-                      height={1024}
-                      aria-hidden="true"
-                      style={{ display: "block", width: "100%", height: 148, objectFit: "cover", objectPosition: "center 38%" }}
-                    />
+                <button key={tile.id} data-testid={tile.testid} type="button" onClick={tile.act}
+                  style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: energy ? "stretch" : "flex-start", justifyContent: energy ? "flex-start" : "center", gap: energy ? 4 : 2, width: "100%", height: energy ? 96 : 78, background: D.card, border: `2px solid ${D.line}`, borderRadius: energy ? 16 : 12, padding: energy ? "6px 8px 8px" : "6px 6px 7px", fontFamily: "inherit", cursor: "pointer", textAlign: "left", color: D.ink, overflow: "hidden" }}>
+                  {energy ? tile.art : (
+                    <span style={{ width: 22, height: 22, borderRadius: 7, background: tile.color, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 12, flexShrink: 0 }}>{tile.icon}</span>
                   )}
-                  <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 14px 11px", background: theme === "dark" ? D.subtle : "#FFFBEF" }}>
-                    <div style={{ width: 58, height: 58, borderRadius: 17, background: todayScene.color, borderBottom: `5px solid ${todayScene.dark}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <CoachPortrait id={todayScene.host} mood={todaySceneDone ? "party" : "focused"} size={54} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 900, letterSpacing: ".08em", color: todayScene.dark }}>{uiLang === "en" ? "TODAY IN MEXICO" : "HOY EN MÉXICO"}</span>
-                        <span data-testid="hoy-city" style={{ fontSize: 10.5, fontWeight: 900, color: D.sub, background: D.card, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "1px 7px" }}>{todayScene.city}</span>
-                      </div>
-                      <div data-testid="hoy-title" style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.15, marginTop: 2 }}>{uiLang === "en" ? todayScene.titleEn : todayScene.title}</div>
-                      <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, marginTop: 3 }}>{uiLang === "en" ? todayScene.setupEn : todayScene.setup}</div>
-                    </div>
-                  </div>
-                  <div style={{ padding: "11px 14px 13px" }}>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                      {todayScene.units.map((uid) => (
-                        <span key={uid} style={{ fontSize: 10.5, fontWeight: 900, color: D.ink, background: D.subtle, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "2px 8px" }}>
-                          {getUnit(uid)?.title}
-                        </span>
-                      ))}
-                      {sceneStory && (
-                        <span style={{ fontSize: 10.5, fontWeight: 900, color: todayScene.dark, background: theme === "dark" ? D.subtle : D.greenBg, border: `1.5px solid ${todayScene.color}`, borderRadius: 99, padding: "2px 8px" }}>
-                          {sceneStory.title}
-                        </span>
-                      )}
-                    </div>
-                    <button data-testid={asHero ? "hero-cta" : undefined} onClick={() => !todaySceneDone && startTodayScene(todayScene)} disabled={todaySceneDone}
-                      style={{ width: "100%", border: "none", borderBottom: `4px solid ${todaySceneDone ? D.line : todayScene.dark}`, background: todaySceneDone ? D.subtle : todayScene.color, color: todaySceneDone ? D.sub : "#fff", borderRadius: 13, padding: "11px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 14.5, cursor: todaySceneDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                      <IcBolt size={18} color={todaySceneDone ? D.sub : "#fff"} />
-                      {todaySceneDone ? (uiLang === "en" ? "Scene cleared" : "Escena superada") : L.playScene}
-                    </button>
-                  </div>
-                </div>
+                  <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : undefined} style={{ fontWeight: 900, fontSize: energy ? 12 : 9.5, lineHeight: 1.15, marginTop: energy ? 2 : 3 }}>{tile.title}</div>
+                  <div data-testid={tile.id === "eighty" ? "eighty-twenty-sub" : undefined} style={{ fontSize: energy ? 11 : 9, fontWeight: 700, color: D.sub, lineHeight: 1.15 }}>{tile.sub}</div>
+                </button>
               );
             };
             return (
-              <div style={{ margin: "14px 0 18px" }}>
-                <div data-testid="first-door-hero">
-                  {doorKind === FIRST_DOOR_HOY ? renderHoyCard(true) : (
-                    <div data-testid={showHandoff ? "post-dismiss-handoff" : undefined} style={{ background: D.purple, borderRadius: 20, padding: "16px 18px 18px", color: "#fff", boxShadow: "0 6px 18px rgba(0,0,0,.10)", marginBottom: 10 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                        <div style={{ flexShrink: 0 }}><CoachPortrait id="valeria" mood="happy" size={68} /></div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div data-testid="first-door-tag" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", opacity: .85 }}>{L.phraseDoctorTag}</div>
-                          <div data-testid="first-door-title" style={{ fontWeight: 900, fontSize: 19, lineHeight: 1.2, marginTop: 2 }}>{L.phraseDoctor}</div>
-                        </div>
+              <>
+                {todayScene && (
+                  <div data-testid="first-door-hero" style={{ margin: "6px 0 14px" }}>
+                    <div data-testid="hoy-card" style={{ position: "relative", borderRadius: 22, background: theme === "dark" ? "linear-gradient(180deg, #2A3A24 0%, #1E2C1A 100%)" : "linear-gradient(180deg, #E8F5D4 0%, #D4E8B0 100%)", overflow: "hidden", padding: "16px 16px 18px", minHeight: 176 }}>
+                      <div style={{ position: "absolute", inset: "auto 0 0 auto", width: "58%", pointerEvents: "none", opacity: .92 }}>
+                        <HoyHubArt />
                       </div>
-                      <button data-testid="hero-cta" onClick={openDoctor}
-                        style={{ display: "block", width: "100%", marginTop: 14, background: "#fff", color: D.purpleDark, border: "none", borderBottom: "4px solid rgba(0,0,0,.15)", borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 900, fontSize: 16, cursor: "pointer", letterSpacing: ".01em" }}>
-                        {L.phraseDoctorCta} →
+                      <div style={{ position: "relative", zIndex: 1, maxWidth: "72%" }}>
+                        <div data-testid="hoy-eyebrow" style={{ display: "inline-block", background: HUB_FOREST, color: "#fff", borderRadius: 99, fontSize: 9.5, fontWeight: 900, letterSpacing: ".08em", padding: "3px 8px" }}>{uiLang === "en" ? "TODAY IN MEXICO" : "HOY EN MÉXICO"}</div>
+                        <div data-testid="hoy-title" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.15, marginTop: 8, color: theme === "dark" ? "#F4EDE0" : "#1B3A4B" }}>{uiLang === "en" ? todayScene.titleEn : todayScene.title}</div>
+                        <div data-testid="hoy-city" style={{ fontSize: 11, fontWeight: 800, color: theme === "dark" ? "#C5D4B8" : "#5C7356", marginTop: 2 }}>{todayScene.city}</div>
+                        <div data-testid="hoy-practice-line" style={{ fontSize: 13, fontWeight: 800, color: theme === "dark" ? "#E4EED8" : "#3F5344", marginTop: 6 }}>{L.hoyPracticeLine}</div>
+                      </div>
+                      <button data-testid="hero-cta" type="button" onClick={() => !todaySceneDone && startTodayScene(todayScene)} disabled={todaySceneDone}
+                        style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10, width: "100%", marginTop: 14, border: "none", background: "none", padding: 0, fontFamily: "inherit", cursor: todaySceneDone ? "default" : "pointer", textAlign: "left" }}>
+                        {todaySceneDone ? (
+                          <span style={{ display: "inline-flex", alignItems: "center", background: D.subtle, color: D.sub, borderRadius: 999, padding: "10px 14px", fontWeight: 900, fontSize: 14.5 }}>{uiLang === "en" ? "Scene cleared" : "Escena superada"}</span>
+                        ) : (
+                          <>
+                            <span style={{ display: "inline-flex", alignItems: "center", background: HUB_FOREST, color: "#fff", borderRadius: 999, padding: "10px 16px", fontWeight: 900, fontSize: 14.5 }}>{L.vamos} →</span>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: D.green, fontWeight: 900, fontSize: 15.5 }}>
+                              {L.playScene}
+                              <IcBolt size={16} color={D.green} />
+                            </span>
+                          </>
+                        )}
                       </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
                 {showLine && (
-                  <p data-testid="come-back-tomorrow" style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
+                  <p data-testid="come-back-tomorrow" style={{ margin: "-4px 0 12px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
                     {comeBackTomorrowLine({
                       lang: uiLang,
                       nextTitle: hoyTitleForLang(tomorrowScene, uiLang),
@@ -6002,65 +6019,29 @@ export default function App() {
                     })}
                   </p>
                 )}
-                {doorKind === FIRST_DOOR_HOY && (
-                  <button data-testid="first-door-alt" onClick={openDoctor}
-                    style={{ display: "block", width: "100%", marginTop: 8, background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
-                    {L.phraseDoctorCta}
-                  </button>
-                )}
-                {doorKind !== FIRST_DOOR_HOY && renderHoyCard(false)}
-                <button data-testid="camino-more" type="button" aria-expanded={caminoMore}
-                  onClick={() => setCaminoMore((open) => !open)}
-                  style={{ display: "block", margin: "10px auto 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", padding: "4px 8px", letterSpacing: ".01em" }}>
-                  {L.more}
-                </button>
-                {caminoMore && (
-                  <div data-testid="camino-more-panel" style={{ marginTop: 8 }}>
-                    {parkLongHoy && todayScene && (
-                      <button data-testid="camino-more-full-hoy" type="button" onClick={() => startTodayScene(todayScene, { full: true })}
-                        style={{ display: "block", width: "100%", margin: "0 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.sub, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
-                        {uiLang === "en" ? todayScene.titleEn : todayScene.title}
-                      </button>
-                    )}
-                    {pathUnit && (
-                      <button data-testid="path-entry" onClick={openPath}
-                        style={{ display: "block", width: "100%", margin: "0 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.sub, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
-                        {L.start}
-                      </button>
-                    )}
-                    <div style={{ display: "grid", gridTemplateColumns: dueCount > 0 ? "1fr 1fr" : "1fr", gap: 8, marginTop: 0 }}>
-                      {dueCount > 0 && (
-                        <button data-testid="camino-review" onClick={() => startReview(false)}
-                          style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                          <IcBarbell size={16} color={D.blue} /> {reviewLabel} ({dueCount})
-                        </button>
-                      )}
-                      <button data-testid="camino-daily-workout" onClick={() => { if (!dailyDone) startDailyWorkout(); }} disabled={dailyDone}
-                        style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: dailyDone ? D.sub : D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: dailyDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: dailyDone ? .6 : 1 }}>
-                        <IcBolt size={16} color={D.gold} /> {dailyLabel}
-                      </button>
-                    </div>
+                {showHandoff && (
+                  <div data-testid="post-dismiss-handoff" style={{ margin: "0 0 12px", background: D.purple, borderRadius: 18, padding: "12px 14px 14px", color: "#fff" }}>
+                    <div data-testid="first-door-tag" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", opacity: .85 }}>{L.phraseDoctorTag}</div>
+                    <div data-testid="first-door-title" style={{ fontWeight: 900, fontSize: 17, lineHeight: 1.2, marginTop: 2 }}>{L.phraseDoctor}</div>
+                    <button data-testid="handoff-cta" type="button" onClick={openDoctor}
+                      style={{ display: "block", width: "100%", marginTop: 10, background: "#fff", color: D.purpleDark, border: "none", borderBottom: "4px solid rgba(0,0,0,.15)", borderRadius: 14, padding: "11px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 15, cursor: "pointer" }}>
+                      {L.phraseDoctorCta} →
+                    </button>
                   </div>
                 )}
-              </div>
-            );
-          })()}
-          {/* daily goal + Rayo: after first win only — empty 0/40 theater stays off the door */}
-          {showDoorMeta && (
-          <div data-testid="door-meta" style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0 6px", fontSize: 13, fontWeight: 800, color: D.sub }}>
-            <div style={{ flex: 1, height: 12, background: D.line, borderRadius: 99, overflow: "hidden", position: "relative" }}>
-              <div style={{ width: `${Math.min(100, Math.round(((prog.xpToday || 0) / DAILY_GOAL) * 100))}%`, height: "100%", background: D.gold, transition: "width .3s", position: "relative", overflow: "hidden", borderRadius: 99 }}>
-                <div className="shimmer" />
-              </div>
-            </div>
-	            <span>{L.goal}: {prog.xpToday || 0}/{DAILY_GOAL} XP</span>
-	            <button data-testid="rayo-toggle" aria-pressed={!!prog.rayo} onClick={() => save({ rayo: !prog.rayo })} title={uiLang === "en" ? "Lightning mode: answer against the clock. Correct in time: +3 XP. Time out counts as a mistake." : "Modo Rayo: responde contra reloj. Acierta a tiempo: +3 XP. Se acaba el tiempo: cuenta como error."}
-	              style={{ display: "flex", alignItems: "center", gap: 5, border: `2px solid ${prog.rayo ? D.gold : D.line}`, borderBottom: `3px solid ${prog.rayo ? D.goldDark : D.line}`, background: prog.rayo ? "#FFF6DC" : "#fff", color: prog.rayo ? D.goldDark : D.sub, borderRadius: 99, padding: "4px 12px", fontWeight: 900, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
-	              <IcBolt size={14} /> {L.rayo} {prog.rayo ? L.on : L.off}
-            </button>
-          </div>
-          )}
-
+                <div data-testid="learn-hub-explora" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 900, letterSpacing: ".08em", color: D.sub, margin: "2px 0 8px" }}>
+                  <span aria-hidden="true">✦</span>{L.hubExplora}
+                </div>
+                <div data-testid="learn-hub-energy" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                  {energyTiles.map((tile) => renderHubTile(tile, "energy"))}
+                </div>
+                <div data-testid="learn-hub-more" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 900, letterSpacing: ".08em", color: D.sub, margin: "0 0 8px" }}>
+                  <span aria-hidden="true">+</span>{L.hubMore}
+                </div>
+                <div data-testid="learn-hub-tiles" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                  {quietTiles.map((tile) => renderHubTile(tile, "quiet"))}
+                </div>
+                <div data-testid="learn-path" style={{ marginTop: 22 }}>
           {(() => {
             let g = -1; // global node index
             return SECTIONS.map((sec, si) => {
@@ -6075,13 +6056,6 @@ export default function App() {
                       <div style={{ fontWeight: 900, fontSize: 16 }}>{sec.title}</div>
 	                      <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.85 }}>{sec.unitIds.length} {L.sectionSkills}</div>
                     </div>
-                    {!sectionDone && (
-                      <button onClick={() => startTestOut(sec, si)} className="duo-btn"
-	                        title={uiLang === "en" ? "Section test: 10 questions, max 2 mistakes. Pass to unlock the whole section." : "Examen de la sección: 10 preguntas, máximo 2 errores. Apruébalo y desbloqueas toda la sección."}
-                        style={{ background: "rgba(255,255,255,.18)", border: "2px solid rgba(255,255,255,.6)", borderBottom: "4px solid rgba(255,255,255,.6)", color: "#fff", borderRadius: 12, padding: "8px 14px", fontWeight: 900, fontSize: 12, letterSpacing: ".06em", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
-	                        {L.skip} ⤓
-                      </button>
-                    )}
                   </div>
                   <div style={{ position: "relative", background: bg, borderRadius: "0 0 22px 22px", padding: "20px 0 26px", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
                     <div aria-hidden="true" style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,.9), rgba(255,255,255,0) 70%)", top: -60, right: -60, pointerEvents: "none" }} />
@@ -6098,13 +6072,7 @@ export default function App() {
                       const nodeDark = crowns > 0 ? D.goldDark : unlocked ? sec.dark : "#CFCFCF";
                       return (
                         <div key={uid} style={{ position: "relative", margin: "14px 0", transform: `translateX(${off}px)`, zIndex: 1 }}>
-                          {isCurrent && (
-                            <div className="bounce" style={{ position: "absolute", top: -38, left: "50%", transform: "translateX(-50%)", background: D.card, border: `2px solid ${D.line}`, borderRadius: 10, padding: "4px 12px", fontWeight: 900, fontSize: 12, color: sec.color, whiteSpace: "nowrap", zIndex: 2, boxShadow: "0 2px 6px rgba(0,0,0,.08)" }}>
-	                              {L.start}
-                              <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%) rotate(45deg)", width: 10, height: 10, background: D.card, borderRight: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}` }} />
-                            </div>
-                          )}
-                          <button className={`node-btn ${isCurrent ? "pulse" : ""}`} disabled={!unlocked} onClick={() => setSheet({ unit: u, section: sec, crowns })}
+                                                    <button className={`node-btn ${isCurrent ? "pulse" : ""}`} disabled={!unlocked} onClick={() => setSheet({ unit: u, section: sec, crowns })}
                             aria-label={`${u.title}${unlocked ? "" : (uiLang === "en" ? " (blocked)" : " (bloqueado)")}`}
                             title={unlocked ? `${u.title}${u.desc || u.blurb ? ` — ${u.desc || u.blurb}` : ""}` : "Completa la habilidad anterior para desbloquear"}
                             style={{ width: 78, height: 78, borderRadius: "50%", border: "none", cursor: unlocked ? "pointer" : "default", background: nodeColor, borderBottom: `7px solid ${nodeDark}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: unlocked ? "0 4px 10px rgba(0,0,0,.12)" : "none" }}>
@@ -6186,18 +6154,11 @@ export default function App() {
             });
           })()}
 
-	          {showDoorMeta && (
-	          <div data-testid="coach-strip" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 30 }}>
-	            {["luna", "rafa", "valeria", "diego"].map((id) => (
-	              <div key={id} className="pop" style={{ border: `2px solid ${COACHES[id].color}`, borderBottom: `4px solid ${COACHES[id].dark}`, borderRadius: 14, padding: "9px 6px", textAlign: "center", background: D.card }}>
-	                <CoachPortrait id={id} mood="happy" size={64} />
-	                <div style={{ fontWeight: 900, fontSize: 12 }}>{COACHES[id].name}</div>
-	                <div style={{ fontWeight: 800, fontSize: 10.5, color: D.sub }}>{COACHES[id].role}</div>
-	              </div>
-	            ))}
-	          </div>
-	          )}
-	          {showAtajos && <p data-testid="atajos" style={{ textAlign: "center", fontSize: 12, color: D.sub, fontWeight: 700 }}>{L.shortcuts}</p>}
+                </div>
+                {showAtajos && <p data-testid="atajos" style={{ textAlign: "center", fontSize: 12, color: D.sub, fontWeight: 700, marginTop: 22 }}>{L.shortcuts}</p>}
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -6588,7 +6549,13 @@ export default function App() {
                 <span style={{ flex: 1 }}>{uiLang === "en" ? "Snakes & Ladders" : "Serpientes y Escaleras"}</span>
                 <span style={{ fontSize: 14, color: D.sub }}>→</span>
               </button>
-              <button onClick={startJeopardy}
+              <button data-testid="ahorcado-section-start" onClick={startAhorcado}
+                style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", background: D.card, border: `2px solid ${D.line}`, borderBottom: `3px solid ${D.line}`, color: D.ink, borderRadius: 12, padding: "9px 12px", fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: 18 }}>🔤</span>
+                <span style={{ flex: 1 }}>{uiLang === "en" ? "Ahorcado / Hangman" : "Ahorcado / Hangman"}</span>
+                <span style={{ fontSize: 14, color: D.sub }}>→</span>
+              </button>
+              <button data-testid="jeopardy-section-start" onClick={startJeopardy}
                 style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", background: D.card, border: `2px solid ${D.line}`, borderBottom: `3px solid ${D.line}`, color: D.ink, borderRadius: 12, padding: "9px 12px", fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
                 <span style={{ fontSize: 18 }}>🎯</span>
                 <span style={{ flex: 1 }}>{uiLang === "en" ? "Reto Ándale" : "Reto Ándale"}</span>

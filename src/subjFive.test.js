@@ -1,8 +1,9 @@
-import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB, subjFiveLines, subjFiveSub } from "./subjFive.js";
+import { SUBJ_FIVE, SUBJ_FIVE_HUB, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB, subjFiveLines, subjFiveSub } from "./subjFive.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
 assert(SUBJ_FIVE_LABEL === "80/20", "label is the 80/20 loan in both langs");
+assert(SUBJ_FIVE_HUB === "80/20", "hub tile title is the 80/20 loan");
 assert(SUBJ_FIVE_SUB.es === "Subjuntivo en cinco", "ES second line");
 assert(SUBJ_FIVE_SUB.en === "Subjunctive in five", "EN second line");
 assert(subjFiveSub("es") === "Subjuntivo en cinco", "subjFiveSub follows ES");

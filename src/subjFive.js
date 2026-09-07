@@ -3,6 +3,7 @@
  */
 
 export const SUBJ_FIVE_LABEL = "80/20";
+export const SUBJ_FIVE_HUB = "80/20";
 
 export const SUBJ_FIVE_SUB = {
   es: "Subjuntivo en cinco",
