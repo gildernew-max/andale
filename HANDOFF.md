@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Hoy MC answers — day-hash CI)
+
+**What changed**
+- `flows.test.jsx` `HOY_MC_ANSWERS` lists all existing `TODAY_SCENES` sceneBeat answers, including `claro y práctico` (Cita en el banco).
+- Day-2 return + cold first Hoy CONTINUE no longer miss the first `.choice-card` when the day-hash lands on `tramites-cita`.
+- No new scene. No invented answer.
+
+**Why**
+- `main` CI `test` failed on `98c1338`: hardcoded answer list omitted the bank scene. 2026-09-07 hashes to that beat first.
+
 ## 2026-09-06 (George FULL cerezas gloss table)
 
 **What changed**
