@@ -770,6 +770,12 @@ assert(UI.es.hubPins === "Pin chase" && UI.en.hubPins === "Pin chase", "Pin chas
 assert(UI.es.hubFlash === "Flashcards" && UI.en.hubFlash === "Flashcards", "Flashcards is the loan");
 assert(UI.es.hubSobremesa === "Sobremesa" && UI.en.hubSobremesa === "Sobremesa", "Sobremesa is brand-locked");
 assert(!/Cuentos|Match & play|Arregla|Prioriza|Unlock Mexico|Flip & keep/.test([UI.es.hubStories, UI.es.hubGames, UI.es.hubDoctor, UI.es.hubPins, UI.es.hubFlash].join("\n")), "hub tiles have no slash tails");
+assert(UI.es.camino === "Camino" && UI.es.missions === "Misiones" && UI.es.reading === "Lectura" && UI.es.practice === "Práctica" && UI.es.profile === "Perfil", "George CLEAR: live ES Camino nav set");
+assert(UI.en.camino === "Learn" && UI.en.missions === "Challenges" && UI.en.reading === "Stories" && UI.en.practice === "Review" && UI.en.profile === "Profile", "live EN Camino set — not Home/Library/Profile trio");
+assert(UI.en.camino !== "Home" && UI.en.reading !== "Library", "nav is not the mock Home/Library English trio");
+const navTabs = appSrc.slice(appSrc.indexOf("BOTTOM TABS"), appSrc.indexOf("BOTTOM TABS") + 900);
+assert(/id: "camino"[\s\S]*id: "misiones"[\s\S]*id: "lectura"[\s\S]*id: "practica"[\s\S]*id: "perfil"/.test(navTabs), "bottom nav is the five live Camino tabs");
+assert(!/id: "home"|id: "library"/.test(navTabs), "bottom nav has no Home/Library tab ids");
 assert(!/data-testid="first-door-hero"/.test(appSrc), "v01c hub has no hero card");
 assert(/gridTemplateColumns:\s*"1fr 1fr"/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 400)), "hub is a 2-column equal grid");
 assert(appSrc.includes("height: 152"), "hub tiles share one equal height");

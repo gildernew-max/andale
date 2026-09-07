@@ -1006,10 +1006,20 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/cuentos, misiones, tarjetas y cuatro coaches/);
     expect(document.body.textContent).not.toMatch(/for people past the basics/);
     expect(document.body.textContent).not.toMatch(/stories, challenges, flashcards, and four coaches/);
+    expect(["nav-camino", "nav-misiones", "nav-lectura", "nav-practica", "nav-perfil"].map((id) => screen.getByTestId(id).textContent.trim())).toEqual([
+      "Camino", "Misiones", "Lectura", "Práctica", "Perfil",
+    ]);
+    expect(screen.queryByRole("button", { name: /^Home$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Library$/ })).toBeNull();
 
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/));
     assertEqualHub();
+    expect(["nav-camino", "nav-misiones", "nav-lectura", "nav-practica", "nav-perfil"].map((id) => screen.getByTestId(id).textContent.trim())).toEqual([
+      "Learn", "Challenges", "Stories", "Review", "Profile",
+    ]);
+    expect(screen.queryByRole("button", { name: /^Home$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Library$/ })).toBeNull();
     expect(document.body.textContent).not.toMatch(/para quien ya pasó lo básico/);
     expect(document.body.textContent).not.toMatch(/for people past the basics/);
   });

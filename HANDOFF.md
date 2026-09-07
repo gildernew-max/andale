@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (George + No face CLEAR — hub labels + live Camino nav)
+
+**What changed**
+- George + No face CLEAR on the equal-funnier hub face. Tile labels stay one each, no slash tails: Hoy · Stories · Games · Phrase Doctor · 80/20 · Pin chase · Flashcards · Sobremesa.
+- Bottom nav stays the live Camino set: Camino · Misiones · Lectura · Práctica · Perfil. Not the mock Home/Library/Profile English trio.
+- Equal funnier tiles stay wired. Soft chrome parked. Do not merge.
+
+**Why**
+- George + No face CLEAR. Keep live nav. Do not take the mock’s three-tab chrome.
+
 ## 2026-09-07 (Learn home → v01c-fun-clean)
 
 **What changed**
