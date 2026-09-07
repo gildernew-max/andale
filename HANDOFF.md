@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Learn home → v01c-fun-clean)
+
+**What changed**
+- Learn home is a **2×4 equal-tile hub**. No hero card. More fun, less clutter than v01b-funnier.
+- One label per tile: Hoy · Stories · Games · Phrase Doctor · 80/20 · Pin chase · Flashcards · Sobremesa.
+- Fun geometric tile faces (stamp PNG not on checkout). Header stays lean: ándale + Cenzontle + live streak/hearts + ES|EN. Nav stays live Camino set.
+- Soft chrome parked. Do not merge — No face / Hand CLEAR first.
+
+**Why**
+- Dave lock: v01c-fun-clean supersedes v01b-funnier.
+
 ## 2026-09-07 (Valeria only — blank clipboard re-bounce)
 
 **What changed**

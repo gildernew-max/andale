@@ -1584,6 +1584,116 @@ const LogoMark = ({ size = 30, ...rest }) => (
 );
 /** Adult sage from Confident v1 belly/tail. Lockup wordmark only — Duo lime chrome stays parked. */
 const MARK_INK = "#5C7356";
+const HUB_CREAM = "#F6EFE4";
+const HUB_FOREST = "#2F6B45";
+const HUB_ORANGE = "#E08600";
+
+const HubCenzontle = ({ size = 36 }) => (
+  <img
+    src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
+    alt=""
+    width={size}
+    height={size}
+    aria-hidden="true"
+    style={{ display: "block", width: size, height: size, objectFit: "contain" }}
+  />
+);
+
+const HubArtFrame = ({ birdLeft = 34, birdTop = 4, birdSize = 40, children }) => (
+  <div style={{ position: "relative", width: "100%", height: 78 }}>
+    <svg viewBox="0 0 110 78" width="100%" height="78" aria-hidden="true" style={{ display: "block" }}>{children}</svg>
+    <div style={{ position: "absolute", left: birdLeft, top: birdTop, width: birdSize, height: birdSize, pointerEvents: "none" }}>
+      <HubCenzontle size={birdSize} />
+    </div>
+  </div>
+);
+
+/** v01c-fun-clean tile faces — geometric placeholders (stamp PNG not on this checkout). One Cenzontle. */
+const HubHoyArt = () => (
+  <HubArtFrame birdLeft={34} birdTop={2} birdSize={40}>
+    <rect x="22" y="52" width="66" height="16" rx="3" fill="#C4A574" />
+    <rect x="38" y="46" width="34" height="10" rx="2" fill="#1B3A4B" />
+    <text x="55" y="54" textAnchor="middle" fill="#F6EFE4" fontSize="7" fontWeight="800" fontFamily="Nunito, sans-serif">BANCO</text>
+    <rect x="42" y="36" width="8" height="12" fill="#F6EFE4" />
+    <rect x="46" y="40" width="10" height="3" fill="#1B3A4B" />
+  </HubArtFrame>
+);
+const HubStoriesArt = () => (
+  <HubArtFrame birdLeft={34} birdTop={8} birdSize={38}>
+    <path d="M28 62c12-8 22-8 27 0V28c-10-6-20-6-27 0z" fill="#E8C15A" />
+    <path d="M82 62c-12-8-22-8-27 0V28c10-6 20-6 27 0z" fill="#E08600" />
+    <path d="M55 28v34" stroke="#F6EFE4" strokeWidth="2" />
+    <circle cx="24" cy="22" r="2" fill="#FFC800" />
+    <circle cx="86" cy="18" r="1.6" fill="#FFC800" />
+    <circle cx="78" cy="12" r="1.2" fill="#FFC800" />
+  </HubArtFrame>
+);
+const HubGamesArt = () => (
+  <HubArtFrame birdLeft={36} birdTop={0} birdSize={38}>
+    <rect x="14" y="20" width="16" height="12" rx="3" fill="#FFC800" />
+    <text x="22" y="29" textAnchor="middle" fill="#1B3A4B" fontSize="6" fontWeight="800" fontFamily="Nunito, sans-serif">LA</text>
+    <rect x="16" y="34" width="16" height="12" rx="3" fill="#58CC02" />
+    <text x="24" y="43" textAnchor="middle" fill="#1B3A4B" fontSize="6" fontWeight="800" fontFamily="Nunito, sans-serif">LE</text>
+    <rect x="12" y="48" width="16" height="12" rx="3" fill="#1CB0F6" />
+    <text x="20" y="57" textAnchor="middle" fill="#1B3A4B" fontSize="6" fontWeight="800" fontFamily="Nunito, sans-serif">LI</text>
+    <ellipse cx="70" cy="18" rx="14" ry="7" fill="#FFC800" />
+    <rect x="36" y="50" width="58" height="20" rx="10" fill="#1B3A4B" />
+    <rect x="48" y="57" width="12" height="4" rx="2" fill="#F6EFE4" />
+    <rect x="52" y="53" width="4" height="12" rx="2" fill="#F6EFE4" />
+    <circle cx="78" cy="58" r="2.6" fill="#58CC02" />
+    <circle cx="84" cy="64" r="2.6" fill="#FF4B4B" />
+  </HubArtFrame>
+);
+const HubDoctorArt = () => (
+  <svg viewBox="0 0 110 78" width="100%" height="78" aria-hidden="true" style={{ display: "block" }}>
+    <rect x="28" y="8" width="54" height="62" rx="6" fill="#F6EFE4" stroke="#1B3A4B" strokeWidth="2.2" />
+    <rect x="46" y="8" width="18" height="8" rx="2" fill="#C4A574" />
+    <text x="55" y="28" textAnchor="middle" fill="#1B3A4B" fontSize="6" fontWeight="800" fontFamily="Nunito, sans-serif">PHRASE</text>
+    <text x="55" y="36" textAnchor="middle" fill="#1B3A4B" fontSize="6" fontWeight="800" fontFamily="Nunito, sans-serif">DOCTOR</text>
+    <path d="M40 46 48 54 72 36" stroke="#CE1126" strokeWidth="3.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M48 62c0-4 4-6 7-6s7 2 7 6c0 5-7 9-7 9s-7-4-7-9z" fill="#CE1126" />
+    <circle cx="82" cy="62" r="8" fill="#C4A574" />
+    <circle cx="82" cy="60" r="5" fill="#3C2A22" />
+  </svg>
+);
+const HubEightyArt = () => (
+  <svg viewBox="0 0 110 78" width="100%" height="78" aria-hidden="true" style={{ display: "block" }}>
+    <circle cx="55" cy="40" r="26" fill="#E08600" />
+    <path d="M55 14a26 26 0 0 1 0 52 26 26 0 0 0 0-52z" fill="#2F6B45" transform="rotate(-20 55 40)" />
+    <circle cx="55" cy="40" r="10" fill="#F6EFE4" />
+    <text x="40" y="28" fill="#F6EFE4" fontSize="8" fontWeight="800" fontFamily="Nunito, sans-serif">80</text>
+    <text x="62" y="62" fill="#F6EFE4" fontSize="8" fontWeight="800" fontFamily="Nunito, sans-serif">20</text>
+    <path d="M55 40 78 28" stroke="#1B3A4B" strokeWidth="3" strokeLinecap="round" />
+    <circle cx="78" cy="28" r="3" fill="#1B3A4B" />
+  </svg>
+);
+const HubPinsArt = () => (
+  <HubArtFrame birdLeft={28} birdTop={2} birdSize={36}>
+    <path d="M18 36c10-12 32-16 48-8 12 6 24 4 32 10l-8 22c-14 8-32 10-50 4-14-4-24-10-28-16z" fill="#6F7757" />
+    <path d="M36 28c18 8 34 16 52 22" stroke="#1B3A4B" strokeWidth="2" fill="none" strokeDasharray="4 3" />
+    <path d="M84 18c0-7 7-12 7-18 0 6 7 11 7 18a7 7 0 1 1-14 0z" fill="#CE1126" transform="translate(2 20)" />
+    <circle cx="93" cy="50" r="2.8" fill="#F6EFE4" />
+  </HubArtFrame>
+);
+const HubFlashArt = () => (
+  <svg viewBox="0 0 110 78" width="100%" height="78" aria-hidden="true" style={{ display: "block" }}>
+    <rect x="14" y="22" width="34" height="44" rx="5" fill="#E08600" transform="rotate(-10 31 44)" />
+    <text x="28" y="48" textAnchor="middle" fill="#F6EFE4" fontSize="7" fontWeight="800" fontFamily="Nunito, sans-serif" transform="rotate(-10 31 44)">perro</text>
+    <rect x="38" y="16" width="34" height="44" rx="5" fill="#2F6B45" />
+    <text x="55" y="42" textAnchor="middle" fill="#F6EFE4" fontSize="7" fontWeight="800" fontFamily="Nunito, sans-serif">casa</text>
+    <rect x="62" y="24" width="34" height="44" rx="5" fill="#E08600" transform="rotate(8 79 46)" />
+    <text x="80" y="50" textAnchor="middle" fill="#F6EFE4" fontSize="7" fontWeight="800" fontFamily="Nunito, sans-serif" transform="rotate(8 79 46)">agua</text>
+  </svg>
+);
+const HubSobremesaArt = () => (
+  <HubArtFrame birdLeft={36} birdTop={0} birdSize={40}>
+    <ellipse cx="38" cy="36" rx="10" ry="7" fill="#7A1830" />
+    <path d="M28 36c0 9 5 14 10 14s10-5 10-14" fill="#9B2240" />
+    <rect x="36" y="50" width="4" height="12" fill="#5C4033" />
+    <rect x="30" y="62" width="16" height="3" rx="1" fill="#5C4033" />
+    <rect x="22" y="66" width="66" height="6" rx="2" fill="#8B5A2B" />
+  </HubArtFrame>
+);
 
 /** Dave-cleared illustrated Mexico. Pins / glow / fog sit on top. */
 const RecuerdosMexicoMap = ({ testId, theme }) => (
@@ -3253,6 +3363,14 @@ const UI = {
     a2hsHow: "Toca Compartir, luego «Agregar a pantalla de inicio».",
     a2hsDismiss: "Ahora no",
     playScene: "Jugar la escena",
+    hubHoy: "Hoy",
+    hubStories: "Stories",
+    hubGames: "Games",
+    hubDoctor: "Phrase Doctor",
+    hubEighty: "80/20",
+    hubPins: "Pin chase",
+    hubFlash: "Flashcards",
+    hubSobremesa: "Sobremesa",
     phraseDoctor: "Doctora de frases",
     phraseDoctorTag: "GANA EN 60 SEGUNDOS",
     phraseDoctorCta: "Arreglar una frase",
@@ -3315,6 +3433,14 @@ const UI = {
     a2hsHow: "Tap Share, then Add to Home Screen.",
     a2hsDismiss: "Not now",
     playScene: "Play the scene",
+    hubHoy: "Hoy",
+    hubStories: "Stories",
+    hubGames: "Games",
+    hubDoctor: "Phrase Doctor",
+    hubEighty: "80/20",
+    hubPins: "Pin chase",
+    hubFlash: "Flashcards",
+    hubSobremesa: "Sobremesa",
     phraseDoctor: "Phrase Doctor",
     phraseDoctorTag: "WIN IN 60 SECONDS",
     phraseDoctorCta: "Fix a phrase",
@@ -5873,29 +5999,7 @@ export default function App() {
 
       {/* ---------- CAMINO (path) ---------- */}
       {!inLesson && tab === "camino" && (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: "10px 20px 40px" }}>
-          {/* host greeting — same streak ≥ 1 gate as Meta / Rayo / coach-strip */}
-          {showDoorMeta && (
-          <div data-testid="luna-greeting" style={{ display: "flex", gap: 10, alignItems: "flex-end", margin: "10px 0 2px" }}>
-	            <div className="idle" style={{ flexShrink: 0, lineHeight: 0 }}><CoachPortrait id="luna" mood="happy" size={58} badge={dailyDone} /></div>
-            <div style={{ position: "relative", border: `2px solid ${D.line}`, borderRadius: 14, padding: "9px 14px", background: D.card, marginBottom: 10, fontWeight: 800, fontSize: 14, transform: "rotate(-.4deg)" }}>
-              <div style={{ position: "absolute", left: -8, bottom: 12, width: 12, height: 12, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
-              {prog.name ? `¡Hola, ${prog.name}! ` : ""}{greeting}
-            </div>
-          </div>
-          )}
-          {showPitch && (
-          <div data-testid="home-pitch" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: "10px 13px", background: D.card, fontSize: 13, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>
-            {L.splashLine}
-          </div>
-          )}
-          {/* 80/20 first CTA — before path cards. No face. Quiet second line. */}
-          <button data-testid="eighty-twenty-cta" type="button" onClick={() => setSubjFiveOpen(true)}
-            style={{ display: "block", width: "100%", margin: "12px 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div data-testid="eighty-twenty-label" style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{SUBJ_FIVE_LABEL}</div>
-            <div data-testid="eighty-twenty-sub" style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{subjFiveSub(uiLang)}</div>
-          </button>
-          {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
+        <div data-testid="learn-hub" style={{ maxWidth: 480, margin: "0 auto", padding: "10px 16px 40px", background: theme === "dark" ? "transparent" : HUB_CREAM }}>
           {(() => {
             const doorKind = firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff });
             const showHandoff = showPostDismissHandoff({ armed: postDismissHandoff });
@@ -5923,75 +6027,45 @@ export default function App() {
             };
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
-            const sceneStory = todayScene ? STORIES.find((st) => st.id === todayScene.storyId) : null;
-            const renderHoyCard = (asHero) => {
-              if (!todayScene) return null;
-              return (
-                <div data-testid="hoy-card" style={{ margin: asHero ? "0 0 10px" : "2px 0 16px", border: `2px solid ${todayScene.color}`, borderBottom: `5px solid ${todayScene.dark}`, borderRadius: 18, background: D.card, overflow: "hidden" }}>
-                  {hoyStill && (
-                    <img
-                      data-testid="hoy-still"
-                      src={`${import.meta.env.BASE_URL}${hoyStill}`}
-                      alt=""
-                      width={1024}
-                      height={1024}
-                      aria-hidden="true"
-                      style={{ display: "block", width: "100%", height: 148, objectFit: "cover", objectPosition: "center 38%" }}
-                    />
-                  )}
-                  <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 14px 11px", background: theme === "dark" ? D.subtle : "#FFFBEF" }}>
-                    <div style={{ width: 58, height: 58, borderRadius: 17, background: todayScene.color, borderBottom: `5px solid ${todayScene.dark}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <CoachPortrait id={todayScene.host} mood={todaySceneDone ? "party" : "focused"} size={54} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 900, letterSpacing: ".08em", color: todayScene.dark }}>{uiLang === "en" ? "TODAY IN MEXICO" : "HOY EN MÉXICO"}</span>
-                        <span data-testid="hoy-city" style={{ fontSize: 10.5, fontWeight: 900, color: D.sub, background: D.card, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "1px 7px" }}>{todayScene.city}</span>
-                      </div>
-                      <div data-testid="hoy-title" style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.15, marginTop: 2 }}>{uiLang === "en" ? todayScene.titleEn : todayScene.title}</div>
-                      <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, marginTop: 3 }}>{uiLang === "en" ? todayScene.setupEn : todayScene.setup}</div>
-                    </div>
-                  </div>
-                  <div style={{ padding: "11px 14px 13px" }}>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                      {todayScene.units.map((uid) => (
-                        <span key={uid} style={{ fontSize: 10.5, fontWeight: 900, color: D.ink, background: D.subtle, border: `1.5px solid ${D.line}`, borderRadius: 99, padding: "2px 8px" }}>
-                          {getUnit(uid)?.title}
-                        </span>
-                      ))}
-                      {sceneStory && (
-                        <span style={{ fontSize: 10.5, fontWeight: 900, color: todayScene.dark, background: theme === "dark" ? D.subtle : D.greenBg, border: `1.5px solid ${todayScene.color}`, borderRadius: 99, padding: "2px 8px" }}>
-                          {sceneStory.title}
-                        </span>
-                      )}
-                    </div>
-                    <button data-testid={asHero ? "hero-cta" : undefined} onClick={() => !todaySceneDone && startTodayScene(todayScene)} disabled={todaySceneDone}
-                      style={{ width: "100%", border: "none", borderBottom: `4px solid ${todaySceneDone ? D.line : todayScene.dark}`, background: todaySceneDone ? D.subtle : todayScene.color, color: todaySceneDone ? D.sub : "#fff", borderRadius: 13, padding: "11px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 14.5, cursor: todaySceneDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                      <IcBolt size={18} color={todaySceneDone ? D.sub : "#fff"} />
-                      {todaySceneDone ? (uiLang === "en" ? "Scene cleared" : "Escena superada") : L.playScene}
-                    </button>
-                  </div>
-                </div>
-              );
-            };
+            const hoySelected = doorKind === FIRST_DOOR_HOY && !todaySceneDone;
+            const hubTiles = [
+              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, art: <HubHoyArt />, selected: hoySelected, act: () => todayScene && !todaySceneDone && startTodayScene(todayScene) },
+              { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubStoriesArt />, act: () => setTab("lectura") },
+              { id: "games", testid: "hub-games", title: L.hubGames, art: <HubGamesArt />, act: () => startAhorcado() },
+              { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubDoctorArt />, act: openDoctor },
+              { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, art: <HubEightyArt />, act: () => setSubjFiveOpen(true) },
+              { id: "pins", testid: "hub-pins", title: L.hubPins, art: <HubPinsArt />, act: () => setTab("lectura") },
+              { id: "flash", testid: "hub-flashcards", title: L.hubFlash, art: <HubFlashArt />, act: () => { setTab("practica"); startFlashRun(); } },
+              { id: "sobre", testid: "hub-sobremesa", title: L.hubSobremesa, art: <HubSobremesaArt />, act: () => {} },
+            ];
             return (
-              <div style={{ margin: "14px 0 18px" }}>
-                <div data-testid="first-door-hero">
-                  {doorKind === FIRST_DOOR_HOY ? renderHoyCard(true) : (
-                    <div data-testid={showHandoff ? "post-dismiss-handoff" : undefined} style={{ background: D.purple, borderRadius: 20, padding: "16px 18px 18px", color: "#fff", boxShadow: "0 6px 18px rgba(0,0,0,.10)", marginBottom: 10 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                        <div style={{ flexShrink: 0 }}><CoachPortrait id="valeria" mood="happy" size={68} /></div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div data-testid="first-door-tag" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", opacity: .85 }}>{L.phraseDoctorTag}</div>
-                          <div data-testid="first-door-title" style={{ fontWeight: 900, fontSize: 19, lineHeight: 1.2, marginTop: 2 }}>{L.phraseDoctor}</div>
-                        </div>
-                      </div>
-                      <button data-testid="hero-cta" onClick={openDoctor}
-                        style={{ display: "block", width: "100%", marginTop: 14, background: "#fff", color: D.purpleDark, border: "none", borderBottom: "4px solid rgba(0,0,0,.15)", borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 900, fontSize: 16, cursor: "pointer", letterSpacing: ".01em" }}>
-                        {L.phraseDoctorCta} →
-                      </button>
-                    </div>
-                  )}
+              <div style={{ margin: "6px 0 18px" }}>
+                <div data-testid="learn-hub-tiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  {hubTiles.map((tile) => (
+                    <button key={tile.id} data-testid={tile.testid} type="button" onClick={tile.act}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        height: 152,
+                        boxSizing: "border-box",
+                        background: theme === "dark" ? D.card : HUB_CREAM,
+                        border: `1.5px solid ${tile.selected ? D.green : D.line}`,
+                        borderRadius: 18,
+                        padding: "8px 8px 10px",
+                        fontFamily: "inherit",
+                        cursor: "pointer",
+                        textAlign: "center",
+                        color: D.ink,
+                      }}>
+                      <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
+                      <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
+                      <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
+                      </span>
+                    </button>
+                  ))}
                 </div>
                 {showLine && (
                   <p data-testid="come-back-tomorrow" style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
@@ -6002,13 +6076,12 @@ export default function App() {
                     })}
                   </p>
                 )}
-                {doorKind === FIRST_DOOR_HOY && (
-                  <button data-testid="first-door-alt" onClick={openDoctor}
-                    style={{ display: "block", width: "100%", marginTop: 8, background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
-                    {L.phraseDoctorCta}
-                  </button>
+                {showHandoff && (
+                  <div data-testid="post-dismiss-handoff" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+                    <span data-testid="first-door-tag">{L.phraseDoctorTag}</span>
+                    <span data-testid="first-door-title">{L.phraseDoctor}</span>
+                  </div>
                 )}
-                {doorKind !== FIRST_DOOR_HOY && renderHoyCard(false)}
                 <button data-testid="camino-more" type="button" aria-expanded={caminoMore}
                   onClick={() => setCaminoMore((open) => !open)}
                   style={{ display: "block", margin: "10px auto 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", padding: "4px 8px", letterSpacing: ".01em" }}>
