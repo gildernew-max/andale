@@ -1720,6 +1720,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
     expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByTestId("win-bounce-chip")).toBeTruthy();
+    expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
+    expect(document.querySelectorAll(".jump").length).toBe(0);
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
     expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
@@ -1766,6 +1768,59 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
+  });
+
+  it("bank Hoy first-win That's it. plays the Cenzontle bounce, not avatars + confetti", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["claro y práctico"],
+      answer: "claro y práctico",
+      shuffledChoices: ["claro y práctico"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Cita en el banco",
+        unitId: "_today:tramites-cita",
+        todaySceneId: "tramites-cita",
+        firstHoy: true,
+        host: "luna",
+        questions: [
+          hoyMc("En WhatsApp con el banco, «Quiero agendar una cita para abrir una cuenta» suena:"),
+          hoyMc("beat 2 must not run — early checkpoint"),
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    expect(document.body.textContent).toMatch(/Cita en el banco|agendar una cita/);
+    const choices = document.querySelectorAll(".choice-card");
+    expect(choices.length).toBeGreaterThan(0);
+    await user.click(choices[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => {
+      expect(screen.getByTestId("hoy-win")).toBeTruthy();
+      expect(screen.getByTestId("win-bounce")).toBeTruthy();
+    });
+    expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
+    expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("win-bounce-chip")).toBeTruthy();
+    expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
+    expect(document.querySelectorAll(".jump").length).toBe(0);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
   });
 
   it("cold first Hoy CONTINUE shows soft paywall once before idle home", async () => {
@@ -3092,6 +3147,8 @@ describe("simulated learner flows", () => {
     });
     expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
     expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
+    expect(document.querySelectorAll(".jump").length).toBe(0);
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
     expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
