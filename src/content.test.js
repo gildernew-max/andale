@@ -905,6 +905,11 @@ assert(existsSync(valeriaPng), "Valeria / Phrase Doctor lives at public/coaches/
 const valeriaBuf = readFileSync(valeriaPng);
 assert(valeriaBuf.subarray(0, 8).equals(pngMagic), "coaches/valeria-happy.png is a real PNG, not JPEG-named-.png");
 assert(valeriaBuf.readUInt32BE(16) === 1024 && valeriaBuf.readUInt32BE(20) === 1024, "Valeria flat drop is a 1024 square PNG");
+const lunaPng = join(repoRoot, "public", "coaches", "luna-happy.png");
+assert(existsSync(lunaPng), "Luna lives at public/coaches/luna-happy.png");
+const lunaBuf = readFileSync(lunaPng);
+assert(lunaBuf.subarray(0, 8).equals(pngMagic), "coaches/luna-happy.png is a real PNG, not JPEG-named-.png");
+assert(lunaBuf.readUInt32BE(16) === 1024 && lunaBuf.readUInt32BE(20) === 1024, "Luna flat drop is a 1024 square PNG");
 assert(appSrc.includes("coaches/${coachId}-happy.png"), "CoachPortrait happy stills stay on public/coaches/{id}-happy.png");
 assert(faviconSvg.includes("data:image/png;base64,"), "favicon.svg embeds a PNG, not a JPEG");
 assert(!faviconSvg.includes("data:image/jpeg"), "favicon.svg does not embed JPEG bytes");

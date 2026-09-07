@@ -2,15 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
-## 2026-09-07 (Valeria Phrase Doctor — flat geometric)
+## 2026-09-07 (Valeria + Luna — flat geometric)
 
 **What changed**
-- `public/coaches/valeria-happy.png` is the Cenzontle-family flat geometric Valeria (1024 square cropped, real PNG). Soft painterly / cartoon still is out. Wide 1280×720 drop is not used.
+- `public/coaches/valeria-happy.png` and `public/coaches/luna-happy.png` are Cenzontle-family flat geometric stills (1024 square, real PNG). Soft painterly / cartoon stills are out.
 - Happy `CoachPortrait` path unchanged (`coaches/{id}-happy.png`). Sad / party / focused stay inline SVG.
 - Soft chrome parked. Do not merge.
 
 **Why**
-- No Face art swap. Phrase Doctor / Valeria coach art matches the Cenzontle lockup family.
+- No Face art swap. Phrase Doctor / daily coach art matches the Cenzontle lockup family.
 
 ## 2026-09-07 (Learn tab first CTA — 80/20 Subjuntivo in five)
 
