@@ -900,6 +900,12 @@ assert(existsSync(mascotPng), "Cenzontle mark lives at public/mascot/cenzontle.p
 assert(!existsSync(join(repoRoot, "public", "mascot", "axolotl.png")), "axolotl.png is gone from public/mascot");
 assert(readFileSync(mascotPng).subarray(0, 8).equals(pngMagic), "mascot/cenzontle.png is a real PNG, not JPEG-named-.png");
 assert(readFileSync(appleTouch).subarray(0, 8).equals(pngMagic), "apple-touch-icon.png is a real PNG");
+const valeriaPng = join(repoRoot, "public", "coaches", "valeria-happy.png");
+assert(existsSync(valeriaPng), "Valeria / Phrase Doctor lives at public/coaches/valeria-happy.png");
+const valeriaBuf = readFileSync(valeriaPng);
+assert(valeriaBuf.subarray(0, 8).equals(pngMagic), "coaches/valeria-happy.png is a real PNG, not JPEG-named-.png");
+assert(valeriaBuf.readUInt32BE(16) === 1024 && valeriaBuf.readUInt32BE(20) === 1024, "Valeria flat drop is a 1024 square PNG");
+assert(appSrc.includes("coaches/${coachId}-happy.png"), "CoachPortrait happy stills stay on public/coaches/{id}-happy.png");
 assert(faviconSvg.includes("data:image/png;base64,"), "favicon.svg embeds a PNG, not a JPEG");
 assert(!faviconSvg.includes("data:image/jpeg"), "favicon.svg does not embed JPEG bytes");
 const pngHeadFacesRight = (buf, label) => {

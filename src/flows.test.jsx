@@ -457,6 +457,7 @@ describe("simulated learner flows", () => {
 
     await user.click(screen.getByTestId("nav-misiones"));
     expect(screen.getByRole("heading", { name: /Misiones/ })).toBeTruthy();
+    expect([...document.querySelectorAll("img")].some((img) => /coaches\/valeria-happy\.png/.test(img.getAttribute("src") || ""))).toBe(true);
 
     await user.click(screen.getByTestId("nav-lectura"));
     expect(screen.getByRole("heading", { name: /Biblioteca/ })).toBeTruthy();
@@ -1318,6 +1319,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*0\/40/);
     expect(screen.getByTestId("rayo-toggle").textContent).toMatch(/Rayo\s*OFF/);
     expect(screen.getByTestId("coach-strip")).toBeTruthy();
+    expect(screen.getByTestId("coach-strip").querySelector("img[src*='valeria-happy.png']")).toBeTruthy();
     expect(screen.getByTestId("luna-greeting")).toBeTruthy();
     expect(screen.getByTestId("luna-greeting").textContent).toMatch(/¡Hola, Dave!/);
     expect(screen.getByText("Coach del día")).toBeTruthy();
@@ -1743,6 +1745,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("first-door-tag").textContent).toBe("WIN IN 60 SECONDS");
     expect(screen.getByTestId("first-door-title").textContent).toBe("Phrase Doctor");
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Fix a phrase/);
+    expect(screen.getByTestId("first-door-hero").querySelector("img")?.getAttribute("src")).toMatch(/coaches\/valeria-happy\.png/);
   });
 
   it("cold first Hoy CONTINUE shows soft paywall once before idle home", async () => {
