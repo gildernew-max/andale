@@ -48,7 +48,7 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **What changed**
 - Cerezas `¿Por qué se negó…` Why trimmed to a ≤3-sentence card. Focus stays `Lectura` / `Reading`.
 - Calle / Disculpe Why stays the previous street-short stamp.
-- Soft chrome parked. Do not merge.
+- Flow Hoy answer list includes `claro y práctico` (Cita en el banco / Sep 7 day-hash). Soft chrome parked. Do not merge.
 
 **Why**
 - George trim: teacher Why, card length.
