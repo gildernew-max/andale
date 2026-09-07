@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (No face HOLD — restamp hub faces, Cenzontle + Valeria)
+
+**What changed**
+- `public/hub/*.png` restamped. Every bird tile uses the locked right-facing `mascot/cenzontle.png` mark (Hoy, Stories, Games, Pin chase, Sobremesa). Phrase Doctor uses flat Valeria with a blank clipboard. 80/20 + Flashcards stay blank geometry (no baked 80%/20% / perro/casa/agua).
+- Green glasses bird / alternate species is gone. No titles in the PNGs. Structure HOLD: equal 2×4, one label each, no hero, live Camino nav. Soft chrome parked. Do not merge.
+
+**Why**
+- Platform rule: ONE iconic Cenzontle. No face look bounce still open.
+
 ## 2026-09-07 (No face — v01c hub stamp faces)
 
 **What changed**
