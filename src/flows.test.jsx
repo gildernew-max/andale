@@ -98,6 +98,18 @@ const HOY_TITLES = [
   { title: "Cena con la suegra", titleEn: "Dinner With the In-Laws" },
 ];
 
+/** Existing TODAY_SCENES sceneBeat answers (8 unique across 9 scenes; calle + plomero share «natural y claro»). Day-hash rotates which is first. */
+const HOY_MC_ANSWERS = [
+  "cilantro, cebolla, salsa y guarnición",
+  "natural y práctico",
+  "natural y claro",
+  "cordial y claro",
+  "claro y práctico",
+  "natural y firme",
+  "contraste",
+  "habla de un momento futuro",
+];
+
 const expectedComeBack = (lang) => {
   const next = hoySceneForDay(HOY_TITLES, nextDayKey(localToday()));
   return comeBackTomorrowLine({ lang, nextTitle: hoyTitleForLang(next, lang) });
@@ -1479,17 +1491,8 @@ describe("simulated learner flows", () => {
     expect(liveShort.session.firstHoy).toBe(true);
     expect(liveShort.session.questions.length).toBeLessThanOrEqual(4);
     expect(liveShort.session.questions.length).toBeGreaterThan(0);
-    const hoyAnswers = [
-      "cilantro, cebolla, salsa y guarnición",
-      "natural y práctico",
-      "natural y claro",
-      "cordial y claro",
-      "natural y firme",
-      "contraste",
-      "habla de un momento futuro",
-    ];
     const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
-      hoyAnswers.some((ans) => el.textContent.includes(ans)));
+      HOY_MC_ANSWERS.some((ans) => el.textContent.includes(ans)));
     expect(choice).toBeTruthy();
     await user.click(choice);
     await user.click(screen.getByTestId("lesson-check"));
@@ -1734,17 +1737,8 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("hero-cta"));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
-    const hoyAnswers = [
-      "cilantro, cebolla, salsa y guarnición",
-      "natural y práctico",
-      "natural y claro",
-      "cordial y claro",
-      "natural y firme",
-      "contraste",
-      "habla de un momento futuro",
-    ];
     const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
-      hoyAnswers.some((ans) => el.textContent.includes(ans)));
+      HOY_MC_ANSWERS.some((ans) => el.textContent.includes(ans)));
     expect(choice).toBeTruthy();
     await user.click(choice);
     await user.click(screen.getByTestId("lesson-check"));
