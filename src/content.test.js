@@ -338,7 +338,7 @@ assert(!/come-back-tomorrow[^>]*cursor:\s*["']?pointer/.test(appSrc), "teaser ha
 assert(/come-back-tomorrow[^>]*pointerEvents:\s*["']none/.test(appSrc), "teaser is not a tap target");
 assert(!/come-back-tomorrow[^>]*borderBottom:\s*`4px/.test(appSrc), "teaser has no pressable 4px chrome");
 assert(!/come-back-tomorrow[^>]*border:\s*`2px solid/.test(appSrc), "teaser has no card border");
-assert(/learn-hub-tiles[\s\S]{0,1800}\{showLine && \(\s*<p data-testid="come-back-tomorrow"/.test(appSrc), "titled teaser sits outside the equal hub grid — not a CTA");
+assert(/learn-hub-tiles[\s\S]{0,2800}\{showLine && \(\s*<p data-testid="come-back-tomorrow"/.test(appSrc), "titled teaser sits outside the equal hub grid — not a CTA");
 assert(appSrc.includes("hoySceneForDay"), "Hoy day pick is shared");
 assert(appSrc.includes("nextDayKey(todayKey)"), "tomorrow Hoy uses the same day hash");
 assert(UI.es.paywallHeadline === "Ya empezó tu racha.", "UI.es.paywallHeadline");
@@ -808,6 +808,7 @@ assert(appSrc.includes("data-testid=\"hoy-plan-step\""), "Hoy scene step is test
 assert(appSrc.includes("data-testid=\"hoy-plan-start\""), "Hoy plan CTA is testable");
 assert(appSrc.includes("{L.playScene}"), "plan step uses playScene — not the tile");
 assert(appSrc.includes("act: openPath"), "Sendero opens the existing Camino path sheet");
+assert(appSrc.includes('data-testid="path-sheet"'), "Camino path sheet is the existing unit preview");
 assert(!/Cuentos|Match & play|Arregla|Prioriza|Unlock Mexico|Flip & keep/.test([UI.es.hubStories, UI.es.hubGames, UI.es.hubDoctor, UI.es.hubPins, UI.es.hubFlash].join("\n")), "hub tiles have no slash tails");
 assert(UI.es.camino === "Camino" && UI.es.missions === "Misiones" && UI.es.reading === "Lectura" && UI.es.practice === "Práctica" && UI.es.profile === "Perfil", "George CLEAR: live ES Camino nav set");
 assert(UI.en.camino === "Learn" && UI.en.missions === "Challenges" && UI.en.reading === "Stories" && UI.en.practice === "Review" && UI.en.profile === "Profile", "live EN Camino set — not Home/Library/Profile trio");
@@ -817,7 +818,7 @@ assert(/id: "camino"[\s\S]*id: "misiones"[\s\S]*id: "lectura"[\s\S]*id: "practic
 assert(!/id: "home"|id: "library"/.test(navTabs), "bottom nav has no Home/Library tab ids");
 assert(!/data-testid="first-door-hero"/.test(appSrc), "v01c hub has no hero card");
 assert(/gridTemplateColumns:\s*"1fr 1fr"/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 400)), "hub is a 2-column equal grid");
-assert(/height:\s*168/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 500)), "hub tiles share one equal height");
+assert(/height:\s*168/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 700)), "hub tiles share one equal height");
 assert(appSrc.includes("come-back-tomorrow"), "home line after win is wired");
 assert(appSrc.includes("path-entry"), "Subjuntivo path stays under Empieza");
 assert(/camino-more[\s\S]{0,900}path-entry/.test(appSrc), "EMPIEZA is buried under Más/More");

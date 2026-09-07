@@ -7104,7 +7104,7 @@ export default function App() {
 
       {/* ---------- NODE PREVIEW SHEET ---------- */}
       {sheet && (
-        <div onClick={() => setSheet(null)} style={{ position: "fixed", inset: 0, background: "rgba(60,60,60,.5)", zIndex: 40, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+        <div data-testid="path-sheet" onClick={() => setSheet(null)} style={{ position: "fixed", inset: 0, background: "rgba(60,60,60,.5)", zIndex: 40, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
           <div onClick={(e) => e.stopPropagation()} className="pop" style={{ background: D.card, borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 480, padding: "10px 22px 28px", boxShadow: "0 -8px 30px rgba(0,0,0,.18)" }}>
             <div style={{ width: 44, height: 5, background: D.line, borderRadius: 99, margin: "6px auto 18px" }} />
             <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 6 }}>

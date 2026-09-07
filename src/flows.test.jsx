@@ -3849,10 +3849,11 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
 
     await user.click(screen.getByTestId("hub-sendero"));
-    await waitFor(() => expect(screen.getByRole("button", { name: /Empezar · \+XP|Start · \+XP/ })).toBeTruthy());
-    expect(screen.getByText("Subjuntivo presente")).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
+    expect(screen.getByTestId("path-sheet").textContent).toMatch(/Subjuntivo presente/);
+    expect(screen.getByRole("button", { name: /Empezar · \+XP|Start · \+XP/ })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: /^Cerrar$|^Close$/ }));
-    await waitFor(() => expect(screen.queryByRole("button", { name: /Empezar · \+XP|Start · \+XP/ })).toBeNull());
+    await waitFor(() => expect(screen.queryByTestId("path-sheet")).toBeNull());
 
     await user.click(screen.getByTestId("hub-hoy"));
     await waitFor(() => expect(screen.getByTestId("hoy-plan")).toBeTruthy());
