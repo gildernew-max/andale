@@ -109,6 +109,14 @@ const assertEqualHub = () => {
     "eighty-twenty-cta", "hub-pins", "hub-flashcards", "hub-sobremesa",
   ].map((id) => screen.getByTestId(id).style.height);
   expect(new Set(heights).size).toBe(1);
+  expect(screen.getByTestId("hub-hoy").querySelector("img")?.getAttribute("src")).toMatch(/hub\/hoy\.png/);
+  expect(screen.getByTestId("hub-stories").querySelector("img")?.getAttribute("src")).toMatch(/hub\/stories\.png/);
+  expect(screen.getByTestId("hub-games").querySelector("img")?.getAttribute("src")).toMatch(/hub\/games\.png/);
+  expect(screen.getByTestId("hub-phrase-doctor").querySelector("img")?.getAttribute("src")).toMatch(/hub\/phrase-doctor\.png/);
+  expect(screen.getByTestId("eighty-twenty-cta").querySelector("img")?.getAttribute("src")).toMatch(/hub\/eighty\.png/);
+  expect(screen.getByTestId("hub-pins").querySelector("img")?.getAttribute("src")).toMatch(/hub\/pin-chase\.png/);
+  expect(screen.getByTestId("hub-flashcards").querySelector("img")?.getAttribute("src")).toMatch(/hub\/flashcards\.png/);
+  expect(screen.getByTestId("hub-sobremesa").querySelector("img")?.getAttribute("src")).toMatch(/hub\/sobremesa\.png/);
 };
 
 const continueBtn = () => screen.getByRole("button", { name: /^Continuar$/i });
