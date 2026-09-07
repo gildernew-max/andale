@@ -18,7 +18,7 @@ import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { SUBJ_FIVE_LABEL, subjFiveLines, subjFiveSub } from "./subjFive.js";
 import { shouldPlayWinBounce } from "./winBounce.js";
-import { WinBounce } from "./WinBounce.jsx";
+import { WinBounce, WinPerch } from "./WinBounce.jsx";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -5995,8 +5995,6 @@ export default function App() {
               { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => startAhorcado() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
               { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
-              { id: "pins", testid: "hub-pins", title: L.hubPins, art: <HubTileArt face="pins" />, act: () => setTab("lectura") },
-              { id: "flash", testid: "hub-flashcards", title: L.hubFlash, art: <HubTileArt face="flash" />, act: () => { setTab("practica"); startFlashRun(); } },
               { id: "sendero", testid: "hub-sendero", title: L.hubSendero, quiet: L.hubSenderoQuiet, art: <HubTileArt face="sendero" />, act: openPath },
             ];
             return (
@@ -6074,6 +6072,16 @@ export default function App() {
                       <button data-testid="camino-daily-workout" onClick={() => { if (!dailyDone) startDailyWorkout(); }} disabled={dailyDone}
                         style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: dailyDone ? D.sub : D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: dailyDone ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: dailyDone ? .6 : 1 }}>
                         <IcBolt size={16} color={D.gold} /> {dailyLabel}
+                      </button>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+                      <button data-testid="hub-pins" type="button" onClick={() => setTab("lectura")}
+                        style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
+                        {L.hubPins}
+                      </button>
+                      <button data-testid="hub-flashcards" type="button" onClick={() => { setTab("practica"); startFlashRun(); }}
+                        style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 13.5, cursor: "pointer" }}>
+                        {L.hubFlash}
                       </button>
                     </div>
                   </div>
@@ -8775,6 +8783,11 @@ export default function App() {
               </div>
             ))}
           </div>
+          )}
+          {quietWin && (
+            <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {!winBounce && <WinPerch />}
+            </div>
           )}
           {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
             <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»

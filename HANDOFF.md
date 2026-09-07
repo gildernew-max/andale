@@ -2,6 +2,20 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Live Pages — first-win bird + Sendero 6-grid)
+
+**What was wrong**
+- First-win courier still started at `top: -18%` with `animation-fill-mode: both`, then flew to `-22%` and unmounted at 720ms. Varys pixel walk of the settled `That's it.` screen found no bird. `left`/`top`+`transform` on one timeline kept the miss class from PR 122. Reduced motion returned `null`.
+- Sendero was wired (asset 200, `hub/sendero.png` in `HUB_FACES`) but sat as tile 8 of a 2×4. The Learn hub 6-grid Hand walks is the first three rows — Pin chase held slot 6, Sendero was below the fold / behind the nav.
+
+**What changed**
+- Courier is transform-only and stays inside the viewport (enter from `28vw` right, land at center 22%). Reduced motion keeps the landed bird + XP chip.
+- First-win screen reserves `win-perch-slot`. After the 720ms courier, `WinPerch` keeps one right-facing Cenzontle + XP drop on screen until CONTINUE.
+- Learn hub is the 6-grid: Hoy · Stories · Games · Phrase Doctor · 80/20 · Sendero (`/hub/sendero.png`, quiet `Camino que crece` / `A path that grows`). Sobremesa is not a hub tile. Pin chase + Flashcards stay under Más. Hoy remains the only loud first tap.
+
+**Why**
+- Live `index-CegyPoQF.js` after #121/#122: asset ≠ tile, courier ≠ on screen.
+
 ## 2026-09-07 (Hand/Varys — Hoy only loud first tap)
 
 **What changed**

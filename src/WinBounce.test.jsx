@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { WinBounce } from "./WinBounce.jsx";
+import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { WIN_BOUNCE_MS } from "./winBounce.js";
 
 afterEach(() => {
@@ -25,7 +25,7 @@ describe("WinBounce", () => {
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
-  it("skips the overlay when motion is reduced", () => {
+  it("keeps a landed bird + chip when motion is reduced", () => {
     const prev = window.matchMedia;
     window.matchMedia = (query) => ({
       matches: String(query).includes("prefers-reduced-motion"),
@@ -36,10 +36,17 @@ describe("WinBounce", () => {
       removeListener() {},
     });
     const onComplete = vi.fn();
-    const { container } = render(<WinBounce onComplete={onComplete} />);
-    expect(screen.queryByTestId("win-bounce")).toBeNull();
-    expect(container.textContent).toBe("");
+    render(<WinBounce onComplete={onComplete} />);
+    expect(screen.getByTestId("win-bounce")).toBeTruthy();
+    expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("win-bounce-chip")).toBeTruthy();
     expect(onComplete).toHaveBeenCalledTimes(1);
     window.matchMedia = prev;
+  });
+
+  it("perch keeps the live Cenzontle and XP chip on screen", () => {
+    render(<WinPerch />);
+    expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("win-perch-chip").textContent).toMatch(/XP/);
   });
 });
