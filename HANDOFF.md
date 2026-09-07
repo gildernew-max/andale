@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Sendero face exact — hub-faces-v2 lock)
+
+**What changed**
+- `public/hub/sendero.png` is the exact attached face: 1024 PNG, 511079 bytes, md5 `afee6ac8eec81ea2241527f1b3164d34`. Byte-match Drive `hub-faces-v2/sendero.png`. Blank art, no titles.
+- Quiet stays ES `Camino que crece` · EN `A path that grows`. Soft chrome parked.
+- Content test now locks that md5.
+
+**Why**
+- Confirm exact face. Soft ETA wire continues. Do not merge.
+
 ## 2026-09-07 (Soft ETA — first-win bounce actually visible)
 
 **What changed**

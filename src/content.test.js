@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { existsSync, readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -991,6 +992,8 @@ for (const face of ["hoy", "stories", "games", "phrase-doctor", "eighty", "pin-c
   assert(hubBuf.subarray(0, 8).equals(pngMagic), `hub/${face}.png is a real PNG, not JPEG-named-.png`);
   assert(hubBuf.readUInt32BE(16) === 1024 && hubBuf.readUInt32BE(20) === 1024, `hub/${face}.png is a 1024 square PNG`);
 }
+const senderoFace = readFileSync(join(repoRoot, "public", "hub", "sendero.png"));
+assert(createHash("md5").update(senderoFace).digest("hex") === "afee6ac8eec81ea2241527f1b3164d34", "Sendero face is the exact attached hub-faces-v2 PNG");
 assert(faviconSvg.includes("data:image/png;base64,"), "favicon.svg embeds a PNG, not a JPEG");
 assert(!faviconSvg.includes("data:image/jpeg"), "favicon.svg does not embed JPEG bytes");
 const pngHeadFacesRight = (buf, label) => {
