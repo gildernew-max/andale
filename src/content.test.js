@@ -731,6 +731,7 @@ assert(appSrc.includes("from \"./winBounce.js\""), "App imports the first-win bo
 assert(appSrc.includes("from \"./WinBounce.jsx\""), "App imports the Cenzontle bounce overlay");
 assert(appSrc.includes("shouldPlayWinBounce(session)"), "bounce triggers on the live first-win / ¡Eso! flags");
 assert(appSrc.includes("<WinBounce"), "done screen mounts the bounce overlay");
+assert(appSrc.includes("img.src = `${import.meta.env.BASE_URL}mascot/cenzontle.png`"), "first-win session preloads the live Cenzontle mark");
 assert(appSrc.includes("data-testid={winTestId}"), "¡Eso! heading stays the existing win test id");
 assert(appSrc.includes("className={quietWin ? \"eso-rise\" : undefined}"), "¡Eso! copy is opacity / 3px rise only");
 assert(appSrc.includes('const MARK_INK = "#5C7356"'), "lockup wordmark uses adult sage, not Duo lime");

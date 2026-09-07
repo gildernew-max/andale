@@ -5430,6 +5430,12 @@ export default function App() {
     return () => clearTimeout(arm);
   }, [showSoftPaywall]);
   useEffect(() => {
+    if (!shouldPlayWinBounce(session)) return undefined;
+    const img = new Image();
+    img.src = `${import.meta.env.BASE_URL}mascot/cenzontle.png`;
+    return undefined;
+  }, [session]);
+  useEffect(() => {
     if (screen !== "done") {
       winBouncePlayed.current = false;
       setWinBounce(false);

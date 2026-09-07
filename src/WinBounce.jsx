@@ -39,7 +39,7 @@ export function WinBounce({ onComplete }) {
       <style>{`
         .cenzontle-bounce { position: fixed; inset: 0; pointer-events: none; z-index: 40; overflow: hidden; }
         .cenzontle-bird {
-          position: absolute; left: 72%; top: -18%; width: 112px; height: 112px;
+          position: absolute; left: 72%; top: -18%; width: 144px; height: 144px;
           transform: translate(-50%, -50%) rotate(-12deg);
           transform-origin: 50% 50%;
           animation:
@@ -47,7 +47,7 @@ export function WinBounce({ onComplete }) {
             cenzontle-exit 420ms cubic-bezier(.45,0,.8,.45) 300ms forwards;
         }
         .cenzontle-bird-img {
-          display: block; width: 112px; height: 112px; object-fit: contain;
+          display: block; width: 144px; height: 144px; object-fit: contain;
         }
         .cenzontle-wing {
           position: absolute; left: 18%; top: 38%; width: 52px; height: 34px;
@@ -107,8 +107,8 @@ export function WinBounce({ onComplete }) {
           data-testid="win-bounce-bird"
           src={src}
           alt=""
-          width={112}
-          height={112}
+          width={144}
+          height={144}
           className="cenzontle-bird-img"
         />
         <svg data-testid="win-bounce-wing" className="cenzontle-wing" viewBox="0 0 52 34" aria-hidden="true">
