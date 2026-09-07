@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { gradeListedPhrase } from "./wordOrder.js";
@@ -2788,7 +2788,6 @@ const TODAY_SCENES = [
     color: D.green,
     dark: D.greenDark,
     host: "luna",
-    storyId: "story-9",
     units: ["mex", "registro", "pronombres"],
     setup: "Quieres abrir una cuenta. El banco te pide el motivo por WhatsApp — una línea.",
     setupEn: "You want to open an account. The bank wants the reason on WhatsApp — one line.",
@@ -4146,7 +4145,7 @@ export default function App() {
       const q2 = sampleQuestion(uid, (q) => q.type === "mc" || q.type === "type");
       return [q1, q2].filter(Boolean);
     }).slice(0, 3);
-    const story = STORIES.find((st) => st.id === scene.storyId) || STORIES[0];
+    const story = hoyStoryForScene(scene, STORIES);
     const storyQ = story?.questions?.[Math.floor(Math.random() * (story.questions?.length || 1))];
     const listenBeat = {
       type: "listen",
@@ -4174,7 +4173,7 @@ export default function App() {
       story,
       storyQ,
       story && storyQ ? `Postal de ${story.title}: ${storyQ.prompt}` : "",
-      { es: culturalHintExplain(story.title, "es"), en: culturalHintExplain(story.title, "en") },
+      story ? { es: culturalHintExplain(story.title, "es"), en: culturalHintExplain(story.title, "en") } : {},
     );
     // Day-2 return: native setup · line · Q only (already ≤4). First session keeps extras, cap 4.
     // Full / Más path only when a scene grows past 4.
