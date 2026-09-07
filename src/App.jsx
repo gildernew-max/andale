@@ -3290,17 +3290,11 @@ const UI = {
     hubExplora: "EXPLORA",
     hubMore: "MÁS ACTIVIDADES",
     hubStories: "Stories",
-    hubStoriesSub: "Cuentos",
     hubGames: "Games",
-    hubGamesSub: "Match & play",
     hubDoctor: "Phrase Doctor",
-    hubDoctorSub: "Arregla",
     hubEighty: "80/20",
-    hubEightySub: "Prioriza",
     hubPins: "Pin chase",
-    hubPinsSub: "Unlock Mexico",
     hubFlash: "Flashcards",
-    hubFlashSub: "Flip & keep",
     phraseDoctor: "Doctora de frases",
     phraseDoctorTag: "GANA EN 60 SEGUNDOS",
     phraseDoctorCta: "Arreglar una frase",
@@ -3369,17 +3363,11 @@ const UI = {
     hubExplora: "EXPLORE",
     hubMore: "MORE ACTIVITIES",
     hubStories: "Stories",
-    hubStoriesSub: "Cuentos",
     hubGames: "Games",
-    hubGamesSub: "Match & play",
     hubDoctor: "Phrase Doctor",
-    hubDoctorSub: "Arregla",
     hubEighty: "80/20",
-    hubEightySub: "Prioriza",
     hubPins: "Pin chase",
-    hubPinsSub: "Unlock Mexico",
     hubFlash: "Flashcards",
-    hubFlashSub: "Flip & keep",
     phraseDoctor: "Phrase Doctor",
     phraseDoctorTag: "WIN IN 60 SECONDS",
     phraseDoctorCta: "Fix a phrase",
@@ -5957,25 +5945,24 @@ export default function App() {
               today: todayKey,
             }) && !day2Return;
             const energyTiles = [
-              { id: "stories", testid: "hub-stories", title: L.hubStories, sub: L.hubStoriesSub, art: <HubStoriesArt />, act: () => setTab("lectura") },
-              { id: "games", testid: "hub-games", title: L.hubGames, sub: L.hubGamesSub, art: <HubGamesArt />, act: () => setTab("practica") },
+              { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubStoriesArt />, act: () => setTab("lectura") },
+              { id: "games", testid: "hub-games", title: L.hubGames, art: <HubGamesArt />, act: () => setTab("practica") },
             ];
             const quietTiles = [
-              { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, sub: L.hubDoctorSub, color: "#7B61C7", icon: "⚕", act: openDoctor },
-              { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, sub: L.hubEightySub, color: "#E6A800", icon: "◎", act: () => setSubjFiveOpen(true) },
-              { id: "pins", testid: "hub-pins", title: L.hubPins, sub: L.hubPinsSub, color: HUB_FOREST, icon: "📍", act: () => setTab("lectura") },
-              { id: "flash", testid: "hub-flashcards", title: L.hubFlash, sub: L.hubFlashSub, color: "#3D8BDB", icon: "▣", act: () => setTab("practica") },
+              { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, color: "#7B61C7", icon: "⚕", act: openDoctor },
+              { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, color: "#E6A800", icon: "◎", act: () => setSubjFiveOpen(true) },
+              { id: "pins", testid: "hub-pins", title: L.hubPins, color: HUB_FOREST, icon: "📍", act: () => setTab("lectura") },
+              { id: "flash", testid: "hub-flashcards", title: L.hubFlash, color: "#3D8BDB", icon: "▣", act: () => setTab("practica") },
             ];
             const renderHubTile = (tile, tier) => {
               const energy = tier === "energy";
               return (
                 <button key={tile.id} data-testid={tile.testid} type="button" onClick={tile.act}
-                  style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: energy ? "stretch" : "flex-start", justifyContent: energy ? "flex-start" : "center", gap: energy ? 4 : 2, width: "100%", height: energy ? 96 : 78, background: D.card, border: `2px solid ${D.line}`, borderRadius: energy ? 16 : 12, padding: energy ? "6px 8px 8px" : "6px 6px 7px", fontFamily: "inherit", cursor: "pointer", textAlign: "left", color: D.ink, overflow: "hidden" }}>
+                  style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: energy ? "stretch" : "flex-start", justifyContent: energy ? "flex-end" : "center", gap: energy ? 4 : 2, width: "100%", height: energy ? 96 : 78, background: D.card, border: `2px solid ${D.line}`, borderRadius: energy ? 16 : 12, padding: energy ? "6px 8px 8px" : "6px 6px 7px", fontFamily: "inherit", cursor: "pointer", textAlign: "left", color: D.ink, overflow: "hidden" }}>
                   {energy ? tile.art : (
                     <span style={{ width: 22, height: 22, borderRadius: 7, background: tile.color, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 12, flexShrink: 0 }}>{tile.icon}</span>
                   )}
-                  <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : undefined} style={{ fontWeight: 900, fontSize: energy ? 12 : 9.5, lineHeight: 1.15, marginTop: energy ? 2 : 3 }}>{tile.title}</div>
-                  <div data-testid={tile.id === "eighty" ? "eighty-twenty-sub" : undefined} style={{ fontSize: energy ? 11 : 9, fontWeight: 700, color: D.sub, lineHeight: 1.15 }}>{tile.sub}</div>
+                  <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : undefined} style={{ fontWeight: 900, fontSize: energy ? 13 : 10.5, lineHeight: 1.15, marginTop: energy ? 2 : 3 }}>{tile.title}</div>
                 </button>
               );
             };

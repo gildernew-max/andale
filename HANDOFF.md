@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Dave lock — one tile label, no slash tails)
+
+**What changed**
+- Hub tiles are one label only: Stories, Games, Phrase Doctor, 80/20, Pin chase, Flashcards. Same in both langs.
+- Cut Cuentos / Match & play / Arregla / Prioriza / Unlock Mexico / Flip & keep. No EN/ES slash pairs.
+- v5.1 hierarchy stands. Soft chrome parked.
+
+**Why**
+- Dave lock while folding v5.1.
+
 ## 2026-09-07 (Learn fun hub v5.1 — Varys hierarchy)
 
 **What changed**

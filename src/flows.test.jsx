@@ -1218,15 +1218,14 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("learn-hub-energy")).toBeTruthy();
     expect(screen.getByTestId("learn-hub-more").textContent).toMatch(/MÁS ACTIVIDADES/);
     expect(screen.getByTestId("hub-stories").textContent).toMatch(/Stories/);
-    expect(screen.getByTestId("hub-stories").textContent).toMatch(/Cuentos/);
     expect(screen.getByTestId("hub-games").textContent).toMatch(/Games/);
-    expect(screen.getByTestId("hub-games").textContent).toMatch(/Match & play/);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Arregla/);
     expect(screen.getByTestId("eighty-twenty-label").textContent).toBe("80/20");
-    expect(screen.getByTestId("eighty-twenty-sub").textContent).toBe("Prioriza");
+    expect(screen.queryByTestId("eighty-twenty-sub")).toBeNull();
     expect(screen.getByTestId("hub-pins").textContent).toMatch(/Pin chase/);
     expect(screen.getByTestId("hub-flashcards").textContent).toMatch(/Flashcards/);
+    expect(screen.getByTestId("learn-hub-energy").textContent).not.toMatch(/Cuentos|Match & play/);
+    expect(screen.getByTestId("learn-hub-tiles").textContent).not.toMatch(/Arregla|Prioriza|Unlock Mexico|Flip & keep/);
     expect(screen.getByTestId("hoy-card").style.minHeight).toBe("176px");
     expect(screen.getByTestId("hub-stories").style.height).toBe("96px");
     expect(screen.getByTestId("hub-games").style.height).toBe("96px");
@@ -1316,7 +1315,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/¡Vamos!/);
     expect(screen.getByTestId("hero-cta").textContent).toMatch(/Jugar la escena/);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Arregla/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).not.toMatch(/Arregla/);
     expect(screen.getByTestId("nav-camino").textContent).toBe("Camino");
     expect(screen.queryByTestId("camino-more")).toBeNull();
     expect(screen.queryByTestId("camino-more-panel")).toBeNull();
@@ -3710,7 +3709,7 @@ describe("simulated learner flows", () => {
     const cta = screen.getByTestId("eighty-twenty-cta");
     expect(cta).toBeTruthy();
     expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(SUBJ_FIVE_LABEL);
-    expect(screen.getByTestId("eighty-twenty-sub").textContent).toBe("Prioriza");
+    expect(screen.queryByTestId("eighty-twenty-sub")).toBeNull();
     expect(cta.closest("[data-testid='first-door-hero']")).toBeNull();
     const pathNode = screen.getByRole("button", { name: "Subjuntivo presente" });
     expect(cta.compareDocumentPosition(pathNode) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -3729,8 +3728,8 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.queryByTestId("eighty-twenty-sheet")).toBeNull());
 
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("eighty-twenty-sub").textContent).toBe("Prioriza"));
-    expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(SUBJ_FIVE_LABEL);
+    await waitFor(() => expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(SUBJ_FIVE_LABEL));
+    expect(screen.queryByTestId("eighty-twenty-sub")).toBeNull();
 
     await user.click(screen.getByTestId("eighty-twenty-cta"));
     await waitFor(() => expect(screen.getByTestId("eighty-twenty-sheet")).toBeTruthy());
