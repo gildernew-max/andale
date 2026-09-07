@@ -785,7 +785,7 @@ assert(!/const hubTiles = \[[^\]]*testid: "hub-flashcards"/.test(appSrc), "Flash
 const hubTilesSrc = appSrc.slice(appSrc.indexOf("const hubTiles = ["), appSrc.indexOf("];", appSrc.indexOf("const hubTiles = [")) + 2);
 assert(/hub-hoy[\s\S]*hub-stories[\s\S]*hub-games[\s\S]*hub-phrase-doctor[\s\S]*eighty-twenty-cta[\s\S]*hub-sendero/.test(hubTilesSrc), "Learn hub 6-grid is Hoy · Stories · Games · Phrase Doctor · 80/20 · Sendero");
 assert(!hubTilesSrc.includes("hub-sobremesa"), "Sobremesa is not in the hub tile list");
-assert((hubTilesSrc.match(/id: "/g) || []).length === 6, "Learn hub is a 6-tile grid");
+assert((hubTilesSrc.match(/\{ id: "/g) || []).length === 6, "Learn hub is a 6-tile grid");
 assert(!appSrc.includes('testid: "hub-sobremesa"'), "Sobremesa is not a hub tile");
 assert(appSrc.includes("title: L.hubHoy"), "Hoy tile label follows uiLang");
 assert(appSrc.includes("title: L.hubStories"), "Stories tile label follows uiLang");
