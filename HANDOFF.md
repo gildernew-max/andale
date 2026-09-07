@@ -5,12 +5,13 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 ## 2026-09-07 (Coach pack — flat geometric)
 
 **What changed**
-- `public/coaches/{luna,rafa,valeria,diego}-happy.png` are Cenzontle-family flat geometric stills (1024 square, real PNG). Soft painterly / cartoon stills are out.
+- `public/coaches/{luna,rafa,diego}-happy.png` are Cenzontle-family flat geometric stills (1024 square, real PNG). Soft painterly / cartoon stills for those three are out.
+- Valeria HOLD: `public/coaches/valeria-happy.png` restored to the pre-PR still. The flat drop had baked `VALERIA / THE PHRASE DOCTOR` on the clipboard. Clean white/transparent + blank-clipboard Valeria is not attached — follow-up PR needed.
 - Happy `CoachPortrait` path unchanged (`coaches/{id}-happy.png`). Sad / party / focused stay inline SVG.
-- Soft chrome parked. Do not merge.
+- Soft chrome parked.
 
 **Why**
-- No Face art swap. All four coaches match the Cenzontle lockup family.
+- Hand: Luna, Rafa, Diego CLEAR. Do not ship baked-title Valeria to main.
 
 ## 2026-09-07 (Learn tab first CTA — 80/20 Subjuntivo in five)
 
