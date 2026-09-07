@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (No face HOLD — hub-faces-v2 verbatim copy blocked)
+
+**What changed**
+- Nothing in `public/hub/*.png`. Launch attached eight tile faces for a verbatim copy. Those bytes never landed on disk (`/workspace/andale-art/hub-faces-v2/` missing; Drive `andale-art` has coaches + SMA stills only). Did not invent or regenerate. Tiles stay the `62ea2f7` Cenzontle + Valeria restamp.
+- Structure HOLD unchanged: equal 2×4, one label each, live Camino nav. Soft chrome parked. Do not merge.
+
+**Why**
+- User lock: copy attached bytes only. No face look bounce still open until the real pack is on disk.
+
 ## 2026-09-07 (No face HOLD — restamp hub faces, Cenzontle + Valeria)
 
 **What changed**
