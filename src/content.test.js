@@ -727,6 +727,12 @@ assert(!/scaleX\s*\(\s*-1\s*\)/.test(logoMarkSrc), "LogoMark must not CSS-mirror
 assert(!/rotateY\s*\(\s*180/.test(logoMarkSrc), "LogoMark must not rotateY the right-facing mark");
 assert(appSrc.includes("PNG faces RIGHT"), "LogoMark documents right-facing lock");
 assert(appSrc.includes("do not scaleX(-1)"), "LogoMark documents no CSS flip for win-motion");
+assert(appSrc.includes("from \"./winBounce.js\""), "App imports the first-win bounce gate");
+assert(appSrc.includes("from \"./WinBounce.jsx\""), "App imports the Cenzontle bounce overlay");
+assert(appSrc.includes("shouldPlayWinBounce(session)"), "bounce triggers on the live first-win / ¡Eso! flags");
+assert(appSrc.includes("<WinBounce"), "done screen mounts the bounce overlay");
+assert(appSrc.includes("data-testid={winTestId}"), "¡Eso! heading stays the existing win test id");
+assert(appSrc.includes("className={quietWin ? \"eso-rise\" : undefined}"), "¡Eso! copy is opacity / 3px rise only");
 assert(appSrc.includes('const MARK_INK = "#5C7356"'), "lockup wordmark uses adult sage, not Duo lime");
 assert(appSrc.includes("color: MARK_INK"), "header/splash wordmark reads MARK_INK");
 assert(appSrc.includes("data-testid=\"learn-hub\""), "Learn home is the equal-tile hub");
