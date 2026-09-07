@@ -37,14 +37,12 @@ export function WinBounce({ onComplete }) {
   return (
     <div data-testid="win-bounce" aria-hidden="true" className="cenzontle-bounce">
       <style>{`
-        .cenzontle-bounce { position: fixed; inset: 0; pointer-events: none; z-index: 40; overflow: hidden; }
+        .cenzontle-bounce { position: fixed; inset: 0; pointer-events: none; z-index: 80; overflow: hidden; }
         .cenzontle-bird {
-          position: absolute; left: 72%; top: -18%; width: 144px; height: 144px;
-          transform: translate(-50%, -50%) rotate(-12deg);
+          position: absolute; left: 54%; top: 24%; width: 144px; height: 144px;
+          transform: translate(-50%, -50%) rotate(4deg);
           transform-origin: 50% 50%;
-          animation:
-            cenzontle-entry 220ms cubic-bezier(.22,.75,.25,1) both,
-            cenzontle-exit 420ms cubic-bezier(.45,0,.8,.45) 300ms forwards;
+          animation: cenzontle-courier 720ms linear both;
         }
         .cenzontle-bird-img {
           display: block; width: 144px; height: 144px; object-fit: contain;
@@ -75,13 +73,12 @@ export function WinBounce({ onComplete }) {
           opacity: 0;
           animation: cenzontle-spark 160ms ease-out 340ms both;
         }
-        @keyframes cenzontle-entry {
-          from { left: 72%; top: -18%; transform: translate(-50%, -50%) rotate(-12deg); }
-          to { left: 54%; top: 24%; transform: translate(-50%, -50%) rotate(4deg); }
-        }
-        @keyframes cenzontle-exit {
-          from { left: 54%; top: 24%; transform: translate(-50%, -50%) rotate(4deg); opacity: 1; }
-          to { left: 18%; top: -22%; transform: translate(-50%, -50%) rotate(-8deg); opacity: 0; }
+        /* One timeline so entry/exit cannot claim the same left/top/transform. */
+        @keyframes cenzontle-courier {
+          0% { left: 72%; top: -18%; transform: translate(-50%, -50%) rotate(-12deg); opacity: 1; animation-timing-function: cubic-bezier(.22,.75,.25,1); }
+          30.555% { left: 54%; top: 24%; transform: translate(-50%, -50%) rotate(4deg); opacity: 1; animation-timing-function: linear; }
+          41.667% { left: 54%; top: 24%; transform: translate(-50%, -50%) rotate(4deg); opacity: 1; animation-timing-function: cubic-bezier(.45,0,.8,.45); }
+          100% { left: 18%; top: -22%; transform: translate(-50%, -50%) rotate(-8deg); opacity: 0; }
         }
         @keyframes cenzontle-wing {
           0% { transform: rotate(-20deg); }

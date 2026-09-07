@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Soft ETA — first-win bounce actually visible)
+
+**What changed**
+- Live fail on 57cbe15: That's it. showed avatars + confetti; `cenzontle.png` preloaded; courier never appeared.
+- One 720ms `cenzontle-courier` timeline (entry+exit no longer two animations on the same left/top/transform). Overlay z-index 80. First-win mutes confetti + jumping coaches. Arms `winBounce` in the same turn as `done`.
+- Soft chrome parked. Hub / Sendero / Hoy plan untouched.
+
+**Why**
+- Dual CSS animations let exit steal `left`/`top` — bird stayed at y -18% (off-screen). Confetti z-50 sat on top of the 720ms overlay.
+
 ## 2026-09-07 (Cenzontle win bounce — ¡Eso! first-win of day)
 
 **What changed**

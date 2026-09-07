@@ -4847,7 +4847,13 @@ export default function App() {
       return { ...prev, ...patch };
     });
     if (rivalOut) { setRivalOutcome(rivalOut); setScreen("rivalDone"); }
-    else setScreen("done");
+    else {
+      if (shouldPlayWinBounce(session)) {
+        winBouncePlayed.current = true;
+        setWinBounce(true);
+      }
+      setScreen("done");
+    }
   };
 
   const refillHearts = () => {
@@ -5663,6 +5669,8 @@ export default function App() {
     setLessonStats({ right: Math.max(doctorHits, 1), wrong: 0 });
     setScreenQuip("");
     setDoctorOpen(false);
+    winBouncePlayed.current = true;
+    setWinBounce(true);
     setScreen("done");
   };
 
@@ -5882,6 +5890,7 @@ export default function App() {
         .jump { animation: jumpK .55s ease; }
         @keyframes esoRise { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
         .eso-rise { animation: esoRise .18s ease-out both; }
+        .cenzontle-bounce { z-index: 80; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
         @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise { animation:none !important; } }
         .node-btn { transition: transform .08s; }
@@ -5896,6 +5905,8 @@ export default function App() {
         .tile-slot { display:flex; min-width:4.6rem; min-height:2.55rem; }
         .tile-slot .tile { flex:1; }
       `}</style>
+
+      {winBounce && <WinBounce onComplete={() => setWinBounce(false)} />}
 
       {/* ---------- TOP STAT BAR ---------- */}
       {!inLesson && (
@@ -8719,8 +8730,8 @@ export default function App() {
         const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : undefined;
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
-          {winBounce && <WinBounce onComplete={() => setWinBounce(false)} />}
-          <Confetti count={perfect ? 160 : 70} />
+          {!quietWin && <Confetti count={perfect ? 160 : 70} />}
+          {!quietWin && (
           <div style={{ display: "flex", justifyContent: "center", gap: 0, alignItems: "flex-end" }}>
             {[session.host, "luna", "rafa"].filter((id, i, arr) => arr.indexOf(id) === i).slice(0, 3).map((id, i) => (
               <div key={id} className="jump" style={{ marginLeft: i ? -18 : 0, zIndex: 3 - i }}>
@@ -8728,6 +8739,7 @@ export default function App() {
               </div>
             ))}
           </div>
+          )}
           {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
             <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
