@@ -16,6 +16,7 @@ import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.j
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
+import { SUBJ_FIVE_LABEL, subjFiveLines, subjFiveSub } from "./subjFive.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -3602,6 +3603,7 @@ export default function App() {
   const norteFlashNextRef = useRef(null);
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
+  const [subjFiveOpen, setSubjFiveOpen] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
   const [guideUnit, setGuideUnit] = useState(null);
   const [dialogue, setDialogue] = useState({ idx: 0, score: 0, done: false, log: [] });
@@ -5887,6 +5889,12 @@ export default function App() {
             {L.splashLine}
           </div>
           )}
+          {/* 80/20 first CTA — before path cards. No face. Quiet second line. */}
+          <button data-testid="eighty-twenty-cta" type="button" onClick={() => setSubjFiveOpen(true)}
+            style={{ display: "block", width: "100%", margin: "12px 0 10px", background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div data-testid="eighty-twenty-label" style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{SUBJ_FIVE_LABEL}</div>
+            <div data-testid="eighty-twenty-sub" style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{subjFiveSub(uiLang)}</div>
+          </button>
           {/* First door: Hoy scene or Phrase Doctor. Subjuntivo stays under Empieza. */}
           {(() => {
             const doorKind = firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff });
@@ -7426,6 +7434,23 @@ export default function App() {
       )}
 
       
+      {/* 80/20 Subjuntivo in five — George exact. No deck. No pep header. */}
+      {subjFiveOpen && (
+        <div data-testid="eighty-twenty-sheet" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setSubjFiveOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "16px 20px 20px", maxWidth: 420, width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button type="button" data-testid="eighty-twenty-close" onClick={() => setSubjFiveOpen(false)} aria-label={uiLang === "en" ? "Close" : "Cerrar"}
+                style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", lineHeight: 1, minWidth: 44, minHeight: 44 }}>✕</button>
+            </div>
+            <ol data-testid="eighty-twenty-lines" style={{ margin: "4px 0 0", padding: "0 0 0 1.25em", display: "grid", gap: 12 }}>
+              {subjFiveLines(uiLang).map((line) => (
+                <li key={line} data-testid="eighty-twenty-line" style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.45, color: D.ink }}>{line}</li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      )}
+
       {/* Grammar guide modal */}
       {guideUnit && GRAMMAR_GUIDES[guideUnit.id] && (() => {
         const g = GRAMMAR_GUIDES[guideUnit.id];

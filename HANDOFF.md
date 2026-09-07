@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Learn tab first CTA — 80/20 Subjuntivo in five)
+
+**What changed**
+- Learn first CTA is a no-face button: label `80/20` (loan, both langs) + quiet second line ES `Subjuntivo en cinco` · EN `Subjunctive in five`.
+- Sits before path cards. Opens George’s five sentences exact. No deck. No pep header. Follows uiLang.
+- Soft chrome parked. Do not merge.
+
+**Why**
+- Hand CLEAR. No Face stamp. ChatGPT cut supersedes earlier draft.
+
 ## 2026-09-07 (Hoy MC answers — day-hash CI)
 
 **What changed**
