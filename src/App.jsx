@@ -21,6 +21,28 @@ import { SUBJ_FIVE_LABEL, subjFiveLines, subjFiveSub } from "./subjFive.js";
 import { shouldPlayWinBounce } from "./winBounce.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
+import {
+  CUBETAS_BUCKETS,
+  CUBETAS_GEM,
+  CUBETAS_SHAKE_MS,
+  CUBETAS_SQUASH_MS,
+  CUBETAS_TITLE,
+  CUBETAS_WIN_MS,
+  CUBETAS_XP,
+  advanceCubetasReveal,
+  advanceCubetasWin,
+  applyCubetasDrop,
+  bucketLabel,
+  clearCubetasWrong,
+  cubetasLiteral,
+  cubetasNextLabel,
+  cubetasWhy,
+  currentChip,
+  finishCubetasClear,
+  nextCubetasChip,
+  scoredChip,
+  startCubetasRun,
+} from "./cubetas.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -111,6 +133,7 @@ const snapshotLive = (s) => {
     snakeGame: s.snakeGame,
     matchGame: s.matchGame,
     ahorcado: s.ahorcado,
+    cubetasGame: s.cubetasGame,
   };
 };
 
@@ -1575,7 +1598,7 @@ const FlagMX = ({ size = 22 }) => (
     <circle cx="13.5" cy="9" r="2.4" fill="#B08A4F" /><circle cx="13.5" cy="9" r="1.2" fill="#6B5530" />
   </svg>
 );
-/** Cenzontle lockup. PNG faces RIGHT. Win-bounce fly-in stays right-facing — do not scaleX(-1). Soft chrome parked. */
+/** Cenzontle lockup. PNG faces RIGHT. Win-bounce + Cubetas fly-in stay right-facing — do not scaleX(-1). Soft chrome parked. */
 const LogoMark = ({ size = 30, ...rest }) => (
   <img
     src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
@@ -1587,6 +1610,189 @@ const LogoMark = ({ size = 30, ...rest }) => (
     {...rest}
   />
 );
+
+const cubetasBucketAt = (refs, x, y) => {
+  for (const id of CUBETAS_BUCKETS) {
+    const el = refs[id];
+    if (!el) continue;
+    const r = el.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return id;
+  }
+  return null;
+};
+
+/** One-screen Cubetas playfield. Same Cenzontle PNG as the mark. Win motion ON. */
+const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain, onLang }) => {
+  const [drag, setDrag] = useState(null);
+  const bucketsRef = useRef({ subjunctive: null, indicative: null });
+  const chip = currentChip(run);
+  const taught = scoredChip(run);
+  const idle = run.status === "idle";
+  const showChip = (idle || run.status === "wrong") && chip;
+  const flying = run.status === "win";
+  const clearing = run.status === "clear" || run.status === "done";
+  const hover = drag?.hover || null;
+
+  const onChipPointerDown = (e) => {
+    if ((!idle && run.status !== "wrong") || !chip) return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    setDrag({ x: e.clientX, y: e.clientY, hover: null });
+  };
+  const onChipPointerMove = (e) => {
+    if (!drag) return;
+    setDrag({ x: e.clientX, y: e.clientY, hover: cubetasBucketAt(bucketsRef.current, e.clientX, e.clientY) });
+  };
+  const onChipPointerUp = (e) => {
+    if (!drag) return;
+    const over = cubetasBucketAt(bucketsRef.current, e.clientX, e.clientY);
+    setDrag(null);
+    if (over) onDrop(over);
+  };
+
+  const birdClass = flying ? "cubetas-bird-win" : clearing ? "cubetas-eso-fly" : "cubetas-bird-off";
+  const birdLive = flying || clearing;
+
+  return (
+    <div data-testid="cubetas-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+        <div data-testid="cubetas-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{CUBETAS_TITLE}</div>
+        <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
+      </div>
+
+      {run.status === "done" ? (
+        <div data-testid="cubetas-done" className="pop" style={{ textAlign: "center", border: `2px solid ${D.gold}`, borderBottom: `5px solid ${D.goldDark}`, borderRadius: 16, padding: 18, background: D.goldBg }}>
+          <h2 data-testid="cubetas-eso" style={{ fontWeight: 900, margin: "8px 0 4px" }}>{L.hoyWin}</h2>
+          <p style={{ color: D.sub, fontWeight: 800, margin: "0 0 16px" }}>{run.xp ? `+${run.xp} XP` : ""}</p>
+          <Btn color={D.green} dark={D.greenDark} data-testid="cubetas-again" onClick={onAgain}>{uiLang === "en" ? "Another round" : "Otra ronda"}</Btn>
+          <Btn outline data-testid="cubetas-back" onClick={onClose} style={{ marginLeft: 10 }}>{L.games}</Btn>
+        </div>
+      ) : (
+        <>
+          <div style={{ position: "relative", minHeight: 210 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              {CUBETAS_BUCKETS.map((id) => {
+                const active = hover === id;
+                const wrong = run.status === "wrong" && run.lastBucket === id;
+                const squash = run.status === "squash" && run.lastBucket === id;
+                const takeoff = flying && run.lastBucket === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    ref={(el) => { bucketsRef.current[id] = el; }}
+                    data-testid={`cubetas-bucket-${id}`}
+                    disabled={!idle && run.status !== "wrong"}
+                    onClick={() => { if (idle || run.status === "wrong") onDrop(id); }}
+                    className={squash ? "cubetas-squash" : takeoff ? "cubetas-bucket-fly" : wrong ? "wiggle" : undefined}
+                    style={{
+                      position: "relative",
+                      minHeight: 168,
+                      border: `2px solid ${active ? D.green : D.line}`,
+                      borderBottom: `6px solid ${active ? D.greenDark : D.line}`,
+                      borderRadius: 22,
+                      background: active ? D.greenBg : D.card,
+                      color: D.ink,
+                      fontFamily: "inherit",
+                      fontWeight: 900,
+                      fontSize: 16,
+                      cursor: idle ? "pointer" : "default",
+                      padding: "28px 12px 16px",
+                    }}
+                  >
+                    <svg viewBox="0 0 80 18" width="54" height="14" aria-hidden="true" style={{ position: "absolute", top: 8, left: "50%", marginLeft: -27 }}>
+                      <path d="M10 14 C10 4 70 4 70 14" fill="none" stroke={D.ink} strokeWidth="3.2" strokeLinecap="round" />
+                    </svg>
+                    {bucketLabel(id, uiLang)}
+                  </button>
+                );
+              })}
+            </div>
+            <img
+              data-testid="cubetas-cenzontle"
+              data-state={birdLive ? (flying ? "win" : "eso") : "offstage"}
+              src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
+              alt=""
+              width={72}
+              height={72}
+              aria-hidden="true"
+              className={birdClass}
+              style={{
+                position: "absolute",
+                right: 8,
+                top: 18,
+                width: 72,
+                height: 72,
+                objectFit: "contain",
+                pointerEvents: "none",
+                zIndex: 3,
+              }}
+            />
+            {run.status === "squash" && (
+              <div data-testid="cubetas-gem-tick" className="cubetas-gem-tick" style={{ position: "absolute", left: "50%", top: 8, marginLeft: -18, zIndex: 4, display: "flex", alignItems: "center", gap: 4, fontWeight: 900, color: D.blueDark }}>
+                <IcGem size={18} />+{CUBETAS_GEM}
+              </div>
+            )}
+          </div>
+
+          {showChip && (
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 22 }}>
+              <button
+                type="button"
+                data-testid="cubetas-chip"
+                data-chip={chip.id}
+                onPointerDown={onChipPointerDown}
+                onPointerMove={onChipPointerMove}
+                onPointerUp={onChipPointerUp}
+                onPointerCancel={() => setDrag(null)}
+                className={run.status === "wrong" ? "wiggle" : undefined}
+                style={{
+                  display: "inline-flex",
+                  position: drag ? "fixed" : "relative",
+                  left: drag ? drag.x - 70 : undefined,
+                  top: drag ? drag.y - 22 : undefined,
+                  zIndex: drag ? 20 : 1,
+                  margin: 0,
+                  border: `2px solid ${D.green}`,
+                  borderBottom: `4px solid ${D.greenDark}`,
+                  background: "#fff",
+                  color: D.green,
+                  borderRadius: 99,
+                  padding: "10px 18px",
+                  fontFamily: "inherit",
+                  fontWeight: 800,
+                  fontSize: 16,
+                  cursor: "grab",
+                  touchAction: "none",
+                }}
+              >
+                {chip.phrase}
+              </button>
+            </div>
+          )}
+
+          {run.status === "reveal" && taught && (
+            <div className="pop" style={{ marginTop: 18, border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, textAlign: "left" }}>
+              <div data-testid="cubetas-literal" style={{ marginTop: 2 }}>
+                <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.literalLabel}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasLiteral(taught, uiLang)}</div>
+              </div>
+              <div data-testid="cubetas-why" style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.whyLabel}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasWhy(taught, uiLang)}</div>
+              </div>
+              <Btn data-testid="cubetas-next" color={D.green} dark={D.greenDark} onClick={onNext} style={{ width: "100%", marginTop: 12 }}>{cubetasNextLabel(uiLang)}</Btn>
+            </div>
+          )}
+
+          {run.status === "clear" && (
+            <div data-testid="cubetas-eso" className="pop" style={{ marginTop: 18, textAlign: "center", fontWeight: 900, fontSize: 26, color: D.gold }}>{L.hoyWin}</div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
 /** Adult sage from Confident v1 belly/tail. Lockup wordmark only — Duo lime chrome stays parked. */
 const MARK_INK = "#5C7356";
 const HUB_CREAM = "#F6EFE4";
@@ -3694,6 +3900,8 @@ export default function App() {
   const [snakeGame, setSnakeGame] = useState(null);
   const [matchGame, setMatchGame] = useState(null);
   const [ahorcado, setAhorcado] = useState(null);
+  const [cubetasGame, setCubetasGame] = useState(null);
+  const cubetasTimerRef = useRef(null);
   const [burst, setBurst] = useState(0); // mini confetti trigger
   const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
@@ -4246,6 +4454,76 @@ export default function App() {
     // paid another +4 every replay (Hand, live 645c3cb).
     setMatchGame(startMatchRun(pairs));
     setScreen("matchPairs");
+  };
+
+  const startCubetas = () => {
+    awardLockRef.current.delete("cubetas");
+    if (cubetasTimerRef.current) clearTimeout(cubetasTimerRef.current);
+    setCubetasGame(startCubetasRun());
+    setScreen("cubetas");
+  };
+
+  const scheduleCubetas = (ms, fn) => {
+    if (cubetasTimerRef.current) clearTimeout(cubetasTimerRef.current);
+    cubetasTimerRef.current = setTimeout(fn, ms);
+  };
+
+  const cubetasReduced = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
+  const onCubetasDrop = (bucket) => {
+    setCubetasGame((cur) => {
+      if (!cur) return cur;
+      const next = applyCubetasDrop(cur, bucket);
+      if (next.status === "wrong") {
+        beep("bad");
+        scheduleCubetas(CUBETAS_SHAKE_MS, () => setCubetasGame((g) => clearCubetasWrong(g)));
+        return next;
+      }
+      if (next.status === "squash") {
+        beep("chest");
+        save((prev) => ({ ...prev, gems: (prev.gems || 0) + CUBETAS_GEM }));
+        const skipFly = cubetasReduced();
+        scheduleCubetas(CUBETAS_SQUASH_MS, () => {
+          setCubetasGame((g) => {
+            if (skipFly) return advanceCubetasReveal(advanceCubetasWin(g));
+            const win = advanceCubetasWin(g);
+            scheduleCubetas(CUBETAS_WIN_MS, () => setCubetasGame((w) => advanceCubetasReveal(w)));
+            return win;
+          });
+        });
+        return next;
+      }
+      return next;
+    });
+  };
+
+  const awardCubetasClear = () => {
+    if (!lockAward("cubetas")) return;
+    const t = todayStr();
+    const y = yesterdayStr();
+    save((prev) => {
+      const streak = prev.lastDay === t ? prev.streak || 0 : prev.lastDay === y ? (prev.streak || 0) + 1 : 1;
+      return {
+        ...prev,
+        xp: (prev.xp || 0) + CUBETAS_XP,
+        xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + CUBETAS_XP,
+        streak,
+        lastDay: t,
+      };
+    });
+    setCubetasGame((g) => (g ? finishCubetasClear({ ...g, status: "clear" }) : g));
+    beep("win");
+  };
+
+  const onCubetasNext = () => {
+    setCubetasGame((cur) => {
+      const next = nextCubetasChip(cur);
+      if (next.status === "clear") {
+        beep("win");
+        scheduleCubetas(CUBETAS_WIN_MS, () => awardCubetasClear());
+      }
+      return next;
+    });
   };
 
   const AHORCADO_MAX = 6;
@@ -5175,7 +5453,7 @@ export default function App() {
     screen, tab, session, qi, status, selected, typed, typedTileIds, placed,
     matchSel, matched, sessionXP, itemXpLock: [...itemXpLockRef.current], combo, lessonStats, showWhy, failKind, quip,
     screenQuip, storyView, paraIdx, storyMode, ansSel, wordReveal, dialogue,
-    rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame, ahorcado,
+    rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame,
   };
 
   const applyLive = (live) => {
@@ -5246,6 +5524,10 @@ export default function App() {
       setAhorcado(live.ahorcado);
       if (live.ahorcado.awarded || live.ahorcado.done) awardLockRef.current.add("ahorcado");
     }
+    if (live.cubetasGame) {
+      setCubetasGame(live.cubetasGame);
+      if (live.cubetasGame.awarded || live.cubetasGame.status === "done") awardLockRef.current.add("cubetas");
+    }
     setScreen(live.screen);
   };
 
@@ -5286,7 +5568,7 @@ export default function App() {
   useEffect(() => {
     if (!liveReady.current) return;
     writeLive(snapshotLive(liveRef.current));
-  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado]);
+  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame]);
 
   useEffect(() => {
     const flush = () => {
@@ -5922,8 +6204,37 @@ export default function App() {
         @keyframes esoRise { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
         .eso-rise { animation: esoRise .18s ease-out both; }
         .cenzontle-bounce { z-index: 80; }
+        @keyframes cubetasSquash { 0%{transform:scale(1)} 55%{transform:scale(1.07,0.86)} 100%{transform:scale(1)} }
+        .cubetas-squash { animation: cubetasSquash 80ms ease-out; }
+        @keyframes cubetasBirdWin {
+          0%{transform:translate(168px,-10px) rotate(6deg);opacity:0}
+          6%{opacity:1}
+          9%{transform:translate(118px,-4px) rotate(4deg) scaleY(.82)}
+          17.14%{transform:translate(36px,0) rotate(0) scaleY(1)}
+          28%{transform:translate(8px,4px) rotate(-2deg)}
+          40%{transform:translate(0,2px) rotate(0)}
+          46%{transform:translate(-6px,8px) scale(.92,1.08) rotate(-4deg)}
+          100%{transform:translate(-200px,-110px) rotate(-14deg);opacity:0}
+        }
+        .cubetas-bird-win { animation: cubetasBirdWin 700ms ease-out forwards; }
+        @keyframes cubetasBucketFly {
+          0%,39%{transform:none;opacity:1}
+          46%{transform:translate(-6px,8px) scale(.92,1.08) rotate(-6deg)}
+          100%{transform:translate(-200px,-110px) rotate(-16deg);opacity:0}
+        }
+        .cubetas-bucket-fly { animation: cubetasBucketFly 700ms ease-out forwards; }
+        @keyframes cubetasEsoFly {
+          0%{transform:translate(140px,0);opacity:0}
+          18%{opacity:1;transform:translate(40px,-6px) scaleY(.84)}
+          35%{transform:translate(0,0) scaleY(1)}
+          100%{transform:translate(-160px,-80px);opacity:0}
+        }
+        .cubetas-eso-fly { animation: cubetasEsoFly 700ms ease-out forwards; }
+        .cubetas-bird-off { transform:translate(160px,0); opacity:0; pointer-events:none; }
+        @keyframes cubetasGemTick { 0%{transform:translateY(8px) scale(.6);opacity:0} 35%{transform:translateY(-4px) scale(1.1);opacity:1} 100%{transform:translateY(-18px) scale(1);opacity:0} }
+        .cubetas-gem-tick { animation: cubetasGemTick 520ms ease-out forwards; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
-        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise { animation:none !important; } }
+        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
         .node-btn:active:not(:disabled) { transform: translateY(3px); }
@@ -6463,7 +6774,7 @@ export default function App() {
             <h2 style={{ fontWeight: 900, fontSize: 22, margin: 0 }}>{L.practiceTitle}</h2>
           </div>
 
-          {/* Above the fold: Phrase Doctor, Safe-or-Risky, Emparejar. Other chrome stays below. */}
+          {/* Above the fold: Phrase Doctor, Safe-or-Risky, Match & play (Emparejar + Cubetas). Other chrome stays below. */}
           <div data-testid="practica-fold">
           <button onClick={() => (doctorOpen ? setDoctorOpen(false) : openDoctor())} data-testid="phrase-doctor"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.purple}`, borderBottom: `5px solid ${D.purpleDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
@@ -6625,6 +6936,8 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
+          <div data-testid="match-play">
+          <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", color: D.sub, textAlign: "left", padding: "4px 2px 6px" }}>{uiLang === "en" ? "Match & play" : "Empareja y juega"}</div>
           <button onClick={startMatchPairs} data-testid="match-pairs-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.blue}`, borderBottom: `5px solid ${D.blueDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -6636,6 +6949,18 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
+          <button onClick={startCubetas} data-testid="cubetas-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.green, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.greenDark}` }}>🪣</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{CUBETAS_TITLE}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Sort the phrase. Subjunctive or indicative." : "Clasifica la frase. Subjuntivo o indicativo."}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          </div>
           </div>
           <details style={{ margin: "0 0 14px", textAlign: "left" }}>
             <summary style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, cursor: "pointer", padding: "8px 4px", listStyle: "none" }}>
@@ -6812,6 +7137,18 @@ export default function App() {
                 testid: "safe-risky-start",
                 stat: `${prog.missions?.safeRiskyBest || 0}/5 ${uiLang === "en" ? "best" : "mejor"}`,
                 reward: L.safeRiskyReward,
+              },
+              {
+                title: CUBETAS_TITLE,
+                tag: uiLang === "en" ? "MATCH & PLAY" : "EMPAREJA Y JUEGA",
+                desc: uiLang === "en" ? "Sort the phrase. Subjunctive or indicative." : "Clasifica la frase. Subjuntivo o indicativo.",
+                color: D.green,
+                dark: D.greenDark,
+                icon: "🪣",
+                act: startCubetas,
+                testid: "cubetas-start",
+                stat: uiLang === "en" ? "Ojalá que" : "Ojalá que",
+                reward: uiLang === "en" ? "80/20 · one chip" : "80/20 · una ficha",
               },
               {
                 title: "Reto Ándale",
@@ -8261,6 +8598,20 @@ export default function App() {
           </div>
         );
       })()}
+
+      {screen === "cubetas" && cubetasGame && (
+        <CubetasPlayfield
+          run={cubetasGame}
+          uiLang={uiLang}
+          D={D}
+          L={L}
+          onDrop={onCubetasDrop}
+          onNext={onCubetasNext}
+          onClose={() => { setScreen("home"); setTab("practica"); }}
+          onAgain={startCubetas}
+          onLang={(code) => save({ uiLang: code })}
+        />
+      )}
 
       {/* ---------- MATCH PAIRS (Práctica) ---------- */}
       {screen === "matchPairs" && matchGame && (() => {
