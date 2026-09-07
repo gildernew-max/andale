@@ -1709,19 +1709,20 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
               data-state={flying ? "win" : clearing ? "eso" : "offstage"}
               src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
               alt=""
-              width={72}
-              height={72}
+              width={88}
+              height={88}
               aria-hidden="true"
               draggable={false}
+              key={flying ? `win-${run.scored.length}` : clearing ? "eso" : "off"}
               className={flying ? "cubetas-bird-win" : clearing ? "cubetas-eso-fly" : "cubetas-bird-off"}
               style={{
                 position: "absolute",
-                top: flying ? -6 : 18,
+                top: flying ? -10 : 18,
                 left: flying && run.lastBucket === "subjunctive" ? "25%" : flying && run.lastBucket === "indicative" ? "75%" : "auto",
                 right: flying ? "auto" : 8,
-                marginLeft: flying ? -36 : 0,
-                width: 72,
-                height: 72,
+                marginLeft: flying ? -44 : 0,
+                width: 88,
+                height: 88,
                 objectFit: "contain",
                 pointerEvents: "none",
                 zIndex: 5,
@@ -6203,10 +6204,10 @@ export default function App() {
         @keyframes cubetasSquash { 0%{transform:scale(1)} 55%{transform:scale(1.07,0.86)} 100%{transform:scale(1)} }
         .cubetas-squash { animation: cubetasSquash 80ms ease-out; }
         @keyframes cubetasBirdWin {
-          0%{transform:translate(150px,-14px) rotate(6deg);opacity:0}
+          0%{transform:translate(64px,-14px) rotate(6deg);opacity:0}
           6%{opacity:1}
-          9%{transform:translate(96px,-8px) rotate(4deg) scaleY(.82)}
-          17.14%{transform:translate(20px,-4px) rotate(0) scaleY(1)}
+          9%{transform:translate(40px,-8px) rotate(4deg) scaleY(.82)}
+          17.14%{transform:translate(12px,-4px) rotate(0) scaleY(1)}
           28%{transform:translate(4px,2px) rotate(-2deg)}
           40%{transform:translate(0,-10px) rotate(0);opacity:1}
           46%{transform:translate(-6px,-2px) scale(.92,1.08) rotate(-4deg)}
