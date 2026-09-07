@@ -730,8 +730,19 @@ assert(appSrc.includes("do not scaleX(-1)"), "LogoMark documents no CSS flip for
 assert(appSrc.includes('const MARK_INK = "#5C7356"'), "lockup wordmark uses adult sage, not Duo lime");
 assert(appSrc.includes("color: MARK_INK"), "header/splash wordmark reads MARK_INK");
 assert(appSrc.includes("data-testid=\"learn-hub\""), "Learn home is the equal-tile hub");
-assert(appSrc.includes("const HubCenzontle"), "v01c tiles draw one Cenzontle");
-assert(!/scaleX\s*\(\s*-1\s*\)/.test(appSrc.slice(appSrc.indexOf("const HubCenzontle"), appSrc.indexOf("const HubEightyArt"))), "hub Cenzontle must not CSS-mirror the right-facing PNG");
+assert(appSrc.includes("const HUB_FACES"), "v01c tiles use stamp PNG faces");
+assert(appSrc.includes("const HubTileArt"), "hub tiles share HubTileArt");
+assert(appSrc.includes("hub/hoy.png"), "Hoy face is public/hub/hoy.png");
+assert(appSrc.includes("hub/stories.png"), "Stories face is public/hub/stories.png");
+assert(appSrc.includes("hub/games.png"), "Games face is public/hub/games.png");
+assert(appSrc.includes("hub/phrase-doctor.png"), "Phrase Doctor face is public/hub/phrase-doctor.png");
+assert(appSrc.includes("hub/eighty.png"), "80/20 face is public/hub/eighty.png");
+assert(appSrc.includes("hub/pin-chase.png"), "Pin chase face is public/hub/pin-chase.png");
+assert(appSrc.includes("hub/flashcards.png"), "Flashcards face is public/hub/flashcards.png");
+assert(appSrc.includes("hub/sobremesa.png"), "Sobremesa face is public/hub/sobremesa.png");
+assert(!/scaleX\s*\(\s*-1\s*\)/.test(appSrc.slice(appSrc.indexOf("const HUB_FACES"), appSrc.indexOf("const RecuerdosMexicoMap"))), "hub stamp faces must not CSS-mirror");
+assert(!appSrc.includes("const HubHoyArt"), "geometric Hoy placeholder is gone");
+assert(!appSrc.includes("HubArtFrame"), "geometric hub frame overlay is gone");
 assert(!/HOME HUB|EXPLORA|MÁS ACTIVIDADES/.test(appSrc), "v01c hub has no section chrome");
 assert(!/data-testid="home-pitch"/.test(appSrc), "home pitch is parked off the v01c hub face");
 assert(!/splashSkip|splash-skip|{L\.splashSkip}/.test(appSrc), "Saltar/Skip is gone from splash");
@@ -944,6 +955,13 @@ for (const id of ["luna", "rafa", "valeria", "diego"]) {
   assert(coachBuf.readUInt32BE(16) === 1024 && coachBuf.readUInt32BE(20) === 1024, `${id} flat drop is a 1024 square PNG`);
 }
 assert(appSrc.includes("coaches/${coachId}-happy.png"), "CoachPortrait happy stills stay on public/coaches/{id}-happy.png");
+for (const face of ["hoy", "stories", "games", "phrase-doctor", "eighty", "pin-chase", "flashcards", "sobremesa"]) {
+  const hubPng = join(repoRoot, "public", "hub", `${face}.png`);
+  assert(existsSync(hubPng), `${face} lives at public/hub/${face}.png`);
+  const hubBuf = readFileSync(hubPng);
+  assert(hubBuf.subarray(0, 8).equals(pngMagic), `hub/${face}.png is a real PNG, not JPEG-named-.png`);
+  assert(hubBuf.readUInt32BE(16) === 1024 && hubBuf.readUInt32BE(20) === 1024, `hub/${face}.png is a 1024 square PNG`);
+}
 assert(faviconSvg.includes("data:image/png;base64,"), "favicon.svg embeds a PNG, not a JPEG");
 assert(!faviconSvg.includes("data:image/jpeg"), "favicon.svg does not embed JPEG bytes");
 const pngHeadFacesRight = (buf, label) => {

@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (No face — v01c hub stamp faces)
+
+**What changed**
+- Learn hub tiles now use real stamp-face PNGs under `public/hub/` (hoy, stories, games, phrase-doctor, eighty, pin-chase, flashcards, sobremesa). Geometric SVG placeholders are gone.
+- Structure HOLD: equal 2×4, one label each, no hero, live Camino nav (Camino · Misiones · Lectura · Práctica · Perfil). Soft chrome parked. Do not merge.
+
+**Why**
+- No face must brand-CLEAR the look after faces land. Stamp faces replace the wire placeholders.
+
 ## 2026-09-07 (George + No face CLEAR — hub labels + live Camino nav)
 
 **What changed**

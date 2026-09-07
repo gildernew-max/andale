@@ -1585,114 +1585,26 @@ const LogoMark = ({ size = 30, ...rest }) => (
 /** Adult sage from Confident v1 belly/tail. Lockup wordmark only — Duo lime chrome stays parked. */
 const MARK_INK = "#5C7356";
 const HUB_CREAM = "#F6EFE4";
-const HUB_FOREST = "#2F6B45";
-const HUB_ORANGE = "#E08600";
 
-const HubCenzontle = ({ size = 36 }) => (
+/** v01c-fun-clean tile faces — stamp illustrations as real PNGs. Soft chrome parked. */
+const HUB_FACES = {
+  hoy: "hub/hoy.png",
+  stories: "hub/stories.png",
+  games: "hub/games.png",
+  doctor: "hub/phrase-doctor.png",
+  eighty: "hub/eighty.png",
+  pins: "hub/pin-chase.png",
+  flash: "hub/flashcards.png",
+  sobre: "hub/sobremesa.png",
+};
+
+const HubTileArt = ({ face }) => (
   <img
-    src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
+    src={`${import.meta.env.BASE_URL}${HUB_FACES[face]}`}
     alt=""
-    width={size}
-    height={size}
     aria-hidden="true"
-    style={{ display: "block", width: size, height: size, objectFit: "contain" }}
+    style={{ display: "block", width: "100%", height: 96, objectFit: "contain" }}
   />
-);
-
-const HubArtFrame = ({ birdLeft = 34, birdTop = 4, birdSize = 40, children }) => (
-  <div style={{ position: "relative", width: "100%", height: 78 }}>
-    <svg viewBox="0 0 110 78" width="100%" height="78" aria-hidden="true" style={{ display: "block" }}>{children}</svg>
-    <div style={{ position: "absolute", left: birdLeft, top: birdTop, width: birdSize, height: birdSize, pointerEvents: "none" }}>
-      <HubCenzontle size={birdSize} />
-    </div>
-  </div>
-);
-
-/** v01c-fun-clean tile faces — geometric placeholders (stamp PNG not on this checkout). One Cenzontle. */
-const HubHoyArt = () => (
-  <HubArtFrame birdLeft={34} birdTop={2} birdSize={40}>
-    <rect x="22" y="52" width="66" height="16" rx="3" fill="#C4A574" />
-    <rect x="38" y="46" width="34" height="10" rx="2" fill="#1B3A4B" />
-    <text x="55" y="54" textAnchor="middle" fill="#F6EFE4" fontSize="7" fontWeight="800" fontFamily="Nunito, sans-serif">BANCO</text>
-    <rect x="42" y="36" width="8" height="12" fill="#F6EFE4" />
-    <rect x="46" y="40" width="10" height="3" fill="#1B3A4B" />
-  </HubArtFrame>
-);
-const HubStoriesArt = () => (
-  <HubArtFrame birdLeft={34} birdTop={8} birdSize={38}>
-    <path d="M28 62c12-8 22-8 27 0V28c-10-6-20-6-27 0z" fill="#E8C15A" />
-    <path d="M82 62c-12-8-22-8-27 0V28c10-6 20-6 27 0z" fill="#E08600" />
-    <path d="M55 28v34" stroke="#F6EFE4" strokeWidth="2" />
-    <circle cx="24" cy="22" r="2" fill="#FFC800" />
-    <circle cx="86" cy="18" r="1.6" fill="#FFC800" />
-    <circle cx="78" cy="12" r="1.2" fill="#FFC800" />
-  </HubArtFrame>
-);
-const HubGamesArt = () => (
-  <HubArtFrame birdLeft={36} birdTop={0} birdSize={38}>
-    <rect x="14" y="20" width="16" height="12" rx="3" fill="#FFC800" />
-    <text x="22" y="29" textAnchor="middle" fill="#1B3A4B" fontSize="6" fontWeight="800" fontFamily="Nunito, sans-serif">LA</text>
-    <rect x="16" y="34" width="16" height="12" rx="3" fill="#58CC02" />
-    <text x="24" y="43" textAnchor="middle" fill="#1B3A4B" fontSize="6" fontWeight="800" fontFamily="Nunito, sans-serif">LE</text>
-    <rect x="12" y="48" width="16" height="12" rx="3" fill="#1CB0F6" />
-    <text x="20" y="57" textAnchor="middle" fill="#1B3A4B" fontSize="6" fontWeight="800" fontFamily="Nunito, sans-serif">LI</text>
-    <ellipse cx="70" cy="18" rx="14" ry="7" fill="#FFC800" />
-    <rect x="36" y="50" width="58" height="20" rx="10" fill="#1B3A4B" />
-    <rect x="48" y="57" width="12" height="4" rx="2" fill="#F6EFE4" />
-    <rect x="52" y="53" width="4" height="12" rx="2" fill="#F6EFE4" />
-    <circle cx="78" cy="58" r="2.6" fill="#58CC02" />
-    <circle cx="84" cy="64" r="2.6" fill="#FF4B4B" />
-  </HubArtFrame>
-);
-const HubDoctorArt = () => (
-  <svg viewBox="0 0 110 78" width="100%" height="78" aria-hidden="true" style={{ display: "block" }}>
-    <rect x="28" y="8" width="54" height="62" rx="6" fill="#F6EFE4" stroke="#1B3A4B" strokeWidth="2.2" />
-    <rect x="46" y="8" width="18" height="8" rx="2" fill="#C4A574" />
-    <text x="55" y="28" textAnchor="middle" fill="#1B3A4B" fontSize="6" fontWeight="800" fontFamily="Nunito, sans-serif">PHRASE</text>
-    <text x="55" y="36" textAnchor="middle" fill="#1B3A4B" fontSize="6" fontWeight="800" fontFamily="Nunito, sans-serif">DOCTOR</text>
-    <path d="M40 46 48 54 72 36" stroke="#CE1126" strokeWidth="3.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M48 62c0-4 4-6 7-6s7 2 7 6c0 5-7 9-7 9s-7-4-7-9z" fill="#CE1126" />
-    <circle cx="82" cy="62" r="8" fill="#C4A574" />
-    <circle cx="82" cy="60" r="5" fill="#3C2A22" />
-  </svg>
-);
-const HubEightyArt = () => (
-  <svg viewBox="0 0 110 78" width="100%" height="78" aria-hidden="true" style={{ display: "block" }}>
-    <circle cx="55" cy="40" r="26" fill="#E08600" />
-    <path d="M55 14a26 26 0 0 1 0 52 26 26 0 0 0 0-52z" fill="#2F6B45" transform="rotate(-20 55 40)" />
-    <circle cx="55" cy="40" r="10" fill="#F6EFE4" />
-    <text x="40" y="28" fill="#F6EFE4" fontSize="8" fontWeight="800" fontFamily="Nunito, sans-serif">80</text>
-    <text x="62" y="62" fill="#F6EFE4" fontSize="8" fontWeight="800" fontFamily="Nunito, sans-serif">20</text>
-    <path d="M55 40 78 28" stroke="#1B3A4B" strokeWidth="3" strokeLinecap="round" />
-    <circle cx="78" cy="28" r="3" fill="#1B3A4B" />
-  </svg>
-);
-const HubPinsArt = () => (
-  <HubArtFrame birdLeft={28} birdTop={2} birdSize={36}>
-    <path d="M18 36c10-12 32-16 48-8 12 6 24 4 32 10l-8 22c-14 8-32 10-50 4-14-4-24-10-28-16z" fill="#6F7757" />
-    <path d="M36 28c18 8 34 16 52 22" stroke="#1B3A4B" strokeWidth="2" fill="none" strokeDasharray="4 3" />
-    <path d="M84 18c0-7 7-12 7-18 0 6 7 11 7 18a7 7 0 1 1-14 0z" fill="#CE1126" transform="translate(2 20)" />
-    <circle cx="93" cy="50" r="2.8" fill="#F6EFE4" />
-  </HubArtFrame>
-);
-const HubFlashArt = () => (
-  <svg viewBox="0 0 110 78" width="100%" height="78" aria-hidden="true" style={{ display: "block" }}>
-    <rect x="14" y="22" width="34" height="44" rx="5" fill="#E08600" transform="rotate(-10 31 44)" />
-    <text x="28" y="48" textAnchor="middle" fill="#F6EFE4" fontSize="7" fontWeight="800" fontFamily="Nunito, sans-serif" transform="rotate(-10 31 44)">perro</text>
-    <rect x="38" y="16" width="34" height="44" rx="5" fill="#2F6B45" />
-    <text x="55" y="42" textAnchor="middle" fill="#F6EFE4" fontSize="7" fontWeight="800" fontFamily="Nunito, sans-serif">casa</text>
-    <rect x="62" y="24" width="34" height="44" rx="5" fill="#E08600" transform="rotate(8 79 46)" />
-    <text x="80" y="50" textAnchor="middle" fill="#F6EFE4" fontSize="7" fontWeight="800" fontFamily="Nunito, sans-serif" transform="rotate(8 79 46)">agua</text>
-  </svg>
-);
-const HubSobremesaArt = () => (
-  <HubArtFrame birdLeft={36} birdTop={0} birdSize={40}>
-    <ellipse cx="38" cy="36" rx="10" ry="7" fill="#7A1830" />
-    <path d="M28 36c0 9 5 14 10 14s10-5 10-14" fill="#9B2240" />
-    <rect x="36" y="50" width="4" height="12" fill="#5C4033" />
-    <rect x="30" y="62" width="16" height="3" rx="1" fill="#5C4033" />
-    <rect x="22" y="66" width="66" height="6" rx="2" fill="#8B5A2B" />
-  </HubArtFrame>
 );
 
 /** Dave-cleared illustrated Mexico. Pins / glow / fog sit on top. */
@@ -6029,14 +5941,14 @@ export default function App() {
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
             const hoySelected = doorKind === FIRST_DOOR_HOY && !todaySceneDone;
             const hubTiles = [
-              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, art: <HubHoyArt />, selected: hoySelected, act: () => todayScene && !todaySceneDone && startTodayScene(todayScene) },
-              { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubStoriesArt />, act: () => setTab("lectura") },
-              { id: "games", testid: "hub-games", title: L.hubGames, art: <HubGamesArt />, act: () => startAhorcado() },
-              { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubDoctorArt />, act: openDoctor },
-              { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, art: <HubEightyArt />, act: () => setSubjFiveOpen(true) },
-              { id: "pins", testid: "hub-pins", title: L.hubPins, art: <HubPinsArt />, act: () => setTab("lectura") },
-              { id: "flash", testid: "hub-flashcards", title: L.hubFlash, art: <HubFlashArt />, act: () => { setTab("practica"); startFlashRun(); } },
-              { id: "sobre", testid: "hub-sobremesa", title: L.hubSobremesa, art: <HubSobremesaArt />, act: () => {} },
+              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, art: <HubTileArt face="hoy" />, selected: hoySelected, act: () => todayScene && !todaySceneDone && startTodayScene(todayScene) },
+              { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
+              { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => startAhorcado() },
+              { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
+              { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
+              { id: "pins", testid: "hub-pins", title: L.hubPins, art: <HubTileArt face="pins" />, act: () => setTab("lectura") },
+              { id: "flash", testid: "hub-flashcards", title: L.hubFlash, art: <HubTileArt face="flash" />, act: () => { setTab("practica"); startFlashRun(); } },
+              { id: "sobre", testid: "hub-sobremesa", title: L.hubSobremesa, art: <HubTileArt face="sobre" />, act: () => {} },
             ];
             return (
               <div style={{ margin: "6px 0 18px" }}>
