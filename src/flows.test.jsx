@@ -3765,7 +3765,7 @@ describe("simulated learner flows", () => {
     expect(cta.closest("[data-testid='first-door-hero']")).toBeNull();
     const pathNode = screen.getByRole("button", { name: "Subjuntivo presente" });
     expect(cta.compareDocumentPosition(pathNode) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(cta.querySelector("svg")).toBeTruthy();
+    expect(cta.querySelector("img")?.getAttribute("src")).toMatch(/hub\/eighty\.png/);
     expect(screen.queryByTestId("eighty-twenty-sheet")).toBeNull();
 
     await user.click(cta);
