@@ -98,26 +98,24 @@ const assertEqualHub = () => {
   expect(screen.getByTestId("hub-games").textContent).toMatch(/Games/);
   expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
   expect(screen.getByTestId("eighty-twenty-cta").textContent).toMatch(/80\/20/);
-  expect(screen.getByTestId("hub-pins").textContent).toMatch(/Pin chase/);
-  expect(screen.getByTestId("hub-flashcards").textContent).toMatch(/Flashcards/);
   expect(screen.getByTestId("hub-sendero").textContent).toMatch(/Sendero/);
   expect(screen.getByTestId("hub-sendero-quiet").textContent).toMatch(/Camino que crece|A path that grows/);
   expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
-  expect(tiles.textContent).not.toMatch(/Cuentos|Match & play|Arregla|Prioriza|Unlock Mexico|Flip & keep|Sobremesa/);
+  expect(tiles.textContent).not.toMatch(/Cuentos|Match & play|Arregla|Prioriza|Unlock Mexico|Flip & keep|Sobremesa|Pin chase|Flashcards/);
   expect(screen.queryByTestId("first-door-hero")).toBeNull();
   expect(screen.queryByTestId("home-pitch")).toBeNull();
-  const heights = [
+  const gridIds = [...tiles.querySelectorAll("button")].map((el) => el.getAttribute("data-testid"));
+  expect(gridIds).toEqual([
     "hub-hoy", "hub-stories", "hub-games", "hub-phrase-doctor",
-    "eighty-twenty-cta", "hub-pins", "hub-flashcards", "hub-sendero",
-  ].map((id) => screen.getByTestId(id).style.height);
+    "eighty-twenty-cta", "hub-sendero",
+  ]);
+  const heights = gridIds.map((id) => screen.getByTestId(id).style.height);
   expect(new Set(heights).size).toBe(1);
   expect(screen.getByTestId("hub-hoy").querySelector("img")?.getAttribute("src")).toMatch(/hub\/hoy\.png/);
   expect(screen.getByTestId("hub-stories").querySelector("img")?.getAttribute("src")).toMatch(/hub\/stories\.png/);
   expect(screen.getByTestId("hub-games").querySelector("img")?.getAttribute("src")).toMatch(/hub\/games\.png/);
   expect(screen.getByTestId("hub-phrase-doctor").querySelector("img")?.getAttribute("src")).toMatch(/hub\/phrase-doctor\.png/);
   expect(screen.getByTestId("eighty-twenty-cta").querySelector("img")?.getAttribute("src")).toMatch(/hub\/eighty\.png/);
-  expect(screen.getByTestId("hub-pins").querySelector("img")?.getAttribute("src")).toMatch(/hub\/pin-chase\.png/);
-  expect(screen.getByTestId("hub-flashcards").querySelector("img")?.getAttribute("src")).toMatch(/hub\/flashcards\.png/);
   expect(screen.getByTestId("hub-sendero").querySelector("img")?.getAttribute("src")).toMatch(/hub\/sendero\.png/);
   const quietBorder = screen.getByTestId("hub-stories").style.border;
   expect(screen.getByTestId("hub-games").style.border).toBe(quietBorder);
@@ -800,6 +798,7 @@ describe("simulated learner flows", () => {
     expect(rayo.textContent).toMatch(/OFF/);
     expect(rayo.textContent).not.toMatch(/SÍ|NO|ENCENDIDO|APAGADO/);
     expect(document.body.textContent).not.toMatch(/DIÁLOGO DUEL/);
+    await user.click(screen.getByTestId("camino-more"));
     expect(screen.getByTestId("hub-flashcards").textContent).toMatch(/Flashcards/);
 
     await user.click(screen.getByTestId("nav-misiones"));
@@ -1735,6 +1734,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
     expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByTestId("win-bounce-chip")).toBeTruthy();
+    expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
@@ -1832,8 +1832,13 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
     expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByTestId("win-bounce-chip")).toBeTruthy();
+    expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
+    await waitFor(() => {
+      expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+      expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
+    }, { timeout: 1500 });
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
   });
@@ -3162,6 +3167,7 @@ describe("simulated learner flows", () => {
     });
     expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
     expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
