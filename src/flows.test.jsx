@@ -748,7 +748,9 @@ describe("simulated learner flows", () => {
     });
     const user2 = userEvent.setup();
     await user2.click(screen.getByTestId("nav-camino"));
-    await waitFor(() => expect(screen.getByText(/TODAY IN MEXICO/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
     await user2.click(screen.getByRole("button", { name: "Subjuntivo presente" }));
     await user2.click(screen.getByRole("button", { name: /Start|Empezar/ }));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
@@ -761,23 +763,10 @@ describe("simulated learner flows", () => {
     seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByText(/¡Hola, Dave!/)).toBeTruthy());
-    const esGreetings = [
-      "Español mexicano real: cuentos, misiones y un empujón que pega.",
-      "Luna ya tiene tu rutina de hoy.",
-      "Don Rafa te guardó un cuento con palabras que valen.",
-      "Valeria dice que la precisión es un gesto de cariño.",
-      "Cinco minutos. Español de verdad. Nada de turista.",
-    ];
-    const enGreetings = [
-      "Build real Mexican Spanish through stories, challenges, and sharp feedback.",
-      "Luna has your daily routine ready.",
-      "Don Rafa saved you a story with words worth keeping.",
-      "Valeria says precision is a kindness.",
-      "Five minutes. Real Spanish. No tourist mode.",
-    ];
-    expect(esGreetings.some((g) => document.body.textContent.includes(g))).toBe(true);
-    expect(enGreetings.some((g) => document.body.textContent.includes(g))).toBe(false);
+    await awaitHome();
+    assertEqualHub();
+    expect(screen.queryByTestId("luna-greeting")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/¡Hola, Dave!|Español mexicano real: cuentos, misiones/);
     expect(screen.getByRole("button", { name: "Subjuntivo presente" })).toBeTruthy();
     expect(screen.getByText("Coach del día")).toBeTruthy();
     expect(screen.getByText("Mentor de cuentos")).toBeTruthy();
@@ -787,7 +776,8 @@ describe("simulated learner flows", () => {
     const rayo = screen.getByRole("button", { name: /Rayo/ });
     expect(rayo.textContent).toMatch(/OFF/);
     expect(rayo.textContent).not.toMatch(/SÍ|NO|ENCENDIDO|APAGADO/);
-    expect(document.body.textContent).not.toMatch(/DIÁLOGO DUEL|Flashcards/);
+    expect(document.body.textContent).not.toMatch(/DIÁLOGO DUEL/);
+    expect(screen.getByTestId("hub-flashcards").textContent).toMatch(/Flashcards/);
 
     await user.click(screen.getByTestId("nav-misiones"));
     expect(screen.getByText("DUELO")).toBeTruthy();
@@ -803,8 +793,9 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("nav-camino"));
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true"));
-    expect(enGreetings.some((g) => document.body.textContent.includes(g))).toBe(true);
-    expect(esGreetings.some((g) => document.body.textContent.includes(g))).toBe(false);
+    expect(screen.getByTestId("learn-hub")).toBeTruthy();
+    expect(screen.queryByTestId("luna-greeting")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/¡Hola, Dave!|Luna ya tiene tu rutina/);
     const rayoEn = screen.getByRole("button", { name: /Lightning|Rayo/ });
     expect(rayoEn.textContent).toMatch(/OFF/);
     expect(rayoEn.textContent).not.toMatch(/SÍ|NO/);
@@ -2997,7 +2988,7 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/));
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-    await user.click(screen.getByTestId("hero-cta"));
+    await user.click(screen.getByTestId("hub-phrase-doctor"));
     await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
   });
