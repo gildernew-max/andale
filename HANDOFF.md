@@ -75,6 +75,21 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **Why**
 - George stamp on the refused-harvest reading item. Soft meaning lives in Why; Focus is Lectura.
 
+## 2026-09-06 (Cenzontle faces RIGHT)
+
+**What changed**
+- PR 106 / live mark faced LEFT. Horizontally flipped the PNGs used as the mark so the bird faces RIGHT.
+- Flipped: `public/mascot/cenzontle.png` (LogoMark / splash / Recuerdos / og), `apple-touch-icon.png`, `favicon.ico` (16/32/48 PNG-in-ICO), `favicon.svg` embed.
+- `LogoMark` has no `scaleX(-1)` / `rotateY(180)` — CSS must not reverse the asset.
+- No Face art STAMP: faces RIGHT.
+- Soft chrome parked. Do not merge — Hand CLEAR.
+
+**Follow-on (not this PR)**
+- First-story mascot beat: ES `¡Eso!` · EN `That's it.` — flat, no pep, no second caption. Bird flies in right-facing on that win only (same lean as win-motion brief).
+
+**Why**
+- Brand lock: Cenzontle faces RIGHT. Full fly-in stays next.
+
 ## 2026-09-06 (Cenzontle lockup — abandons axolotl)
 
 **What changed**

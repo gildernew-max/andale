@@ -83,6 +83,17 @@ const boot = async () => {
 
 const continueBtn = () => screen.getByRole("button", { name: /^Continuar$/i });
 
+/** First short-Hoy beat is the scene MC. Read the live answer — do not hardcode a day-hash list. */
+const clickHoySceneMc = async (user) => {
+  const live = JSON.parse(localStorage.getItem(LIVE_KEY) || "null");
+  const q = live?.session?.questions?.[0];
+  const answer = q?.answer || (Array.isArray(q?.answers) ? q.answers[0] : "");
+  const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
+    answer && el.textContent.includes(answer));
+  expect(choice).toBeTruthy();
+  await user.click(choice);
+};
+
 const localToday = () => dayKeyFromDate(new Date());
 
 /** Same nine Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
@@ -96,18 +107,6 @@ const HOY_TITLES = [
   { title: "WhatsApp del casero", titleEn: "Landlord WhatsApp" },
   { title: "Mostrador en caos", titleEn: "Airport Counter Chaos" },
   { title: "Cena con la suegra", titleEn: "Dinner With the In-Laws" },
-];
-
-/** Existing TODAY_SCENES sceneBeat answers (8 unique across 9 scenes; calle + plomero share «natural y claro»). Day-hash rotates which is first. */
-const HOY_MC_ANSWERS = [
-  "cilantro, cebolla, salsa y guarnición",
-  "natural y práctico",
-  "natural y claro",
-  "cordial y claro",
-  "claro y práctico",
-  "natural y firme",
-  "contraste",
-  "habla de un momento futuro",
 ];
 
 const expectedComeBack = (lang) => {
@@ -1515,10 +1514,7 @@ describe("simulated learner flows", () => {
     expect(liveShort.session.firstHoy).toBe(true);
     expect(liveShort.session.questions.length).toBeLessThanOrEqual(4);
     expect(liveShort.session.questions.length).toBeGreaterThan(0);
-    const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
-      HOY_MC_ANSWERS.some((ans) => el.textContent.includes(ans)));
-    expect(choice).toBeTruthy();
-    await user.click(choice);
+    await clickHoySceneMc(user);
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
@@ -1761,10 +1757,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("hero-cta"));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
-    const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
-      HOY_MC_ANSWERS.some((ans) => el.textContent.includes(ans)));
-    expect(choice).toBeTruthy();
-    await user.click(choice);
+    await clickHoySceneMc(user);
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
