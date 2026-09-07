@@ -119,6 +119,13 @@ const assertEqualHub = () => {
   expect(screen.getByTestId("hub-pins").querySelector("img")?.getAttribute("src")).toMatch(/hub\/pin-chase\.png/);
   expect(screen.getByTestId("hub-flashcards").querySelector("img")?.getAttribute("src")).toMatch(/hub\/flashcards\.png/);
   expect(screen.getByTestId("hub-sendero").querySelector("img")?.getAttribute("src")).toMatch(/hub\/sendero\.png/);
+  const quietBorder = screen.getByTestId("hub-stories").style.border;
+  expect(screen.getByTestId("hub-games").style.border).toBe(quietBorder);
+  expect(screen.getByTestId("hub-sendero").style.border).toBe(quietBorder);
+  expect(quietBorder).not.toMatch(/58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+  expect(screen.getByTestId("hub-sendero").getAttribute("data-hub-loud")).toBeNull();
+  expect(screen.getByTestId("hub-stories").getAttribute("data-hub-loud")).toBeNull();
+  expect(screen.getByTestId("hub-games").getAttribute("data-hub-loud")).toBeNull();
 };
 
 const startHoyFromHub = async (user) => {
@@ -3847,6 +3854,11 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("Camino que crece");
     expect(screen.getByTestId("eighty-twenty-cta")).toBeTruthy();
     expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
+    expect(screen.getByTestId("hub-hoy").style.border).toMatch(/58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("hub-sendero").getAttribute("data-hub-loud")).toBeNull();
+    expect(screen.getByTestId("hub-sendero").style.border).toBe(screen.getByTestId("hub-stories").style.border);
+    expect(screen.getByTestId("hub-sendero").style.border).toBe(screen.getByTestId("hub-games").style.border);
 
     await user.click(screen.getByTestId("hub-sendero"));
     await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());

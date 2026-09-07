@@ -770,6 +770,10 @@ assert(appSrc.includes('from "./storyGloss.js"'), "Lectura gloss map is imported
 assert(appSrc.includes("<GlossedText"), "story Qs use GlossedText");
 assert(appSrc.includes("<GlossWord"), "Lectura paragraphs use GlossWord for stamped lemmas");
 assert(appSrc.includes("firstDoorHero"), "Hoy selected stroke still uses first-door Hoy vs Phrase Doctor");
+assert(appSrc.includes("const hoyLoud = doorKind === FIRST_DOOR_HOY && !todaySceneDone"), "Hoy is the only loud first-tap tile");
+assert(appSrc.includes('data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : undefined}'), "loud stroke attribute is Hoy-only");
+assert(appSrc.includes("tile.id === \"hoy\" && hoyLoud ? D.green : D.line"), "green border is Hoy-only; Sendero uses the quiet line stroke");
+assert(!/id: "sendero"[\s\S]{0,220}selected/.test(appSrc), "Sendero has no selected/loud tile flag");
 assert(appSrc.includes('testid: "hub-hoy"'), "Hoy is an equal hub tile");
 assert(appSrc.includes('testid: "hub-stories"'), "Stories is an equal hub tile");
 assert(appSrc.includes('testid: "hub-games"'), "Games is an equal hub tile");

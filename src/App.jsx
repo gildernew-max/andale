@@ -5988,9 +5988,9 @@ export default function App() {
             };
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
-            const hoySelected = doorKind === FIRST_DOOR_HOY && !todaySceneDone;
+            const hoyLoud = doorKind === FIRST_DOOR_HOY && !todaySceneDone;
             const hubTiles = [
-              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" />, selected: hoySelected, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
+              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
               { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => startAhorcado() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
@@ -6004,6 +6004,7 @@ export default function App() {
                 <div data-testid="learn-hub-tiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   {hubTiles.map((tile) => (
                     <button key={tile.id} data-testid={tile.testid} type="button" onClick={tile.act}
+                      data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : undefined}
                       style={{
                         display: "flex",
                         flexDirection: "column",
@@ -6013,7 +6014,7 @@ export default function App() {
                         height: 168,
                         boxSizing: "border-box",
                         background: theme === "dark" ? D.card : HUB_CREAM,
-                        border: `1.5px solid ${tile.selected ? D.green : D.line}`,
+                        border: `1.5px solid ${tile.id === "hoy" && hoyLoud ? D.green : D.line}`,
                         borderRadius: 18,
                         padding: "8px 8px 10px",
                         fontFamily: "inherit",

@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-07 (Hand/Varys — Hoy only loud first tap)
+
+**What changed**
+- Hoy is the only loud first tap: green `#58CC02` border when the scene is open (`hoyLoud`). `data-hub-loud="hoy"`.
+- Sendero stays the quieter tier — same line stroke as Stories / Games. No selected flag. No green border.
+- George + No face stamps unchanged (Sendero quiet, Hoy 10-min plan words, exact face). Soft chrome parked.
+
+**Why**
+- Hand/Varys Soft ETA lock. Do not merge.
+
 ## 2026-09-07 (Sendero face exact — hub-faces-v2 lock)
 
 **What changed**
