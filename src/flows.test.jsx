@@ -1204,6 +1204,17 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/for people past the basics/);
   });
 
+  it("Learn hub Games tile opens Cubetas, not Hangman", async () => {
+    const user = await boot();
+    await awaitHome();
+    await user.click(screen.getByTestId("hub-games"));
+    await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
+    expect(screen.getByTestId("cubetas-title").textContent).toBe("Cubetas");
+    expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que");
+    expect(document.body.textContent).not.toMatch(/AHORCADO \/ HANGMAN/);
+    expect(screen.queryByText(/Guess the word|Adivina la palabra/)).toBeNull();
+  });
+
   it("section test-out starts from Camino and fails closed after 3 misses (failKind === test)", async () => {
     const user = await boot();
     await user.click(screen.getAllByTitle(/Examen de la sección|Section test/)[0]);

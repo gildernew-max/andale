@@ -6319,7 +6319,7 @@ export default function App() {
             const hubTiles = [
               { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
-              { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => startAhorcado() },
+              { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => startCubetas() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
               { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
               { id: "sendero", testid: "hub-sendero", title: L.hubSendero, quiet: L.hubSenderoQuiet, art: <HubTileArt face="sendero" />, act: openPath },
