@@ -1131,6 +1131,58 @@ for (const [storyId, slot, bytes, md5] of waveAStills) {
   assert(buf.length === bytes, `lectura/${storyId}/${slot}.png is ${bytes} bytes`);
   assert(createHash("md5").update(buf).digest("hex") === md5, `${storyId} ${slot} is the exact Wave A still`);
 }
+const waveBStills = [
+  ["story-3", "p0", 1392583, "f768b2f3a1eb0d076bbaf80a862de608"],
+  ["story-3", "p1", 1506923, "aed3849d4f96bfcd6fe22b8e9632c509"],
+  ["story-3", "p2", 1465245, "862919bc69b0689194df9effee182103"],
+  ["story-3", "p3", 1282416, "9d55ca9728c0219263343ecf3fe66a18"],
+  ["story-3", "p4", 1286468, "42b9044abff9783608382469fa65a299"],
+  ["story-3", "p5", 1221775, "8fdb1e686d1f432631c87c43244a7274"],
+  ["story-4", "p0", 1301162, "b02bd4a7e436f855b10258f8919e6ecf"],
+  ["story-4", "p1", 1689964, "e4ce97da4fe7b3c510eed977947224a0"],
+  ["story-4", "p2", 1407011, "0d7304e46d18c3d99f86ad529ed29af6"],
+  ["story-4", "p3", 1582508, "0d9c715edd52d86d112e77841ffab26e"],
+  ["story-4", "p4", 1612197, "c2a2e8be0e7cc82fea8245cbacfad0d6"],
+  ["story-4", "p5", 1416282, "5e89715edb1aca1bc97e37305918a3a7"],
+  ["story-5", "p0", 1173942, "dd567086b1de6e9d75461bca43232fce"],
+  ["story-5", "p1", 1229795, "2ba3cacdb1b0e14eb93860e4e2638a30"],
+  ["story-5", "p2", 1078901, "322a388dca04222bec63a71b62c98878"],
+  ["story-5", "p3", 1159507, "5c14d38342467bf64c60311fc94bbadd"],
+  ["story-5", "p4", 1095494, "6c22398a7eda9cb9903adc2f9c912e16"],
+  ["story-5", "p5", 1139848, "86e884f19c5dfd69acc77b6f29c7332b"],
+  ["story-6", "p0", 1211154, "97c84796a45d891b8fd0e75371180414"],
+  ["story-6", "p1", 1074002, "2e7c1404412eafe303dccea848d5bfc6"],
+  ["story-6", "p2", 1301262, "b801dd9f03d09188934bab76031db19b"],
+  ["story-6", "p3", 1284986, "a58f58ba4015eae799ac5449188b5394"],
+  ["story-6", "p4", 1360888, "eae2b6c3fa70554ff1d3a38597fda1d8"],
+  ["story-6", "p5", 948517, "c55876724bf5f0bc778f7b745a695ea5"],
+  ["story-7", "p0", 1266491, "f2c5759f4b1eb46ca3cafa3fd9e8b337"],
+  ["story-7", "p1", 1325155, "b88de913d68e568bc132013e5f786349"],
+  ["story-7", "p2", 1034105, "e5f11ac07287173bedebab61b4d0c067"],
+  ["story-7", "p3", 1156116, "04352bca6b87d844c08af6df70f51b13"],
+  ["story-7", "p4", 988712, "2a187da3c9642edf466acba5e2d6db4b"],
+  ["story-7", "p5", 1221594, "b149aef4ef231c93e5c7cec26be6fa78"],
+  ["story-8", "p0", 1163608, "1799148c42588249f12a6ad280985775"],
+  ["story-8", "p1", 1397780, "ca315af20cba72c7fa1850995abb0a1d"],
+  ["story-8", "p2", 1203018, "91148d75835b8e31b4995af4a4f8ac16"],
+  ["story-8", "p3", 1259195, "d0f67783fae380ed0b27da7a92d2bec3"],
+  ["story-8", "p4", 1274529, "226e878e3743957d48a75a6a79e7933c"],
+  ["story-8", "p5", 1480648, "85b8f8bc1661633c35225b25e70f0278"],
+  ["story-9", "p0", 1440524, "9673a0f135ae21160188caad3a733ea7"],
+  ["story-9", "p1", 1460999, "42387daecfde440cc741d3cbd1e60110"],
+  ["story-9", "p2", 1370898, "15525508182ff4c00e1658e7b1290850"],
+  ["story-9", "p3", 1363434, "a700d41617ee720d14dcbe39b35cc9db"],
+  ["story-9", "p4", 1352841, "0f580a645d8b0c379d3819cc1c30176f"],
+  ["story-9", "p5", 1763491, "16d11ddc2d45cc0dc543a3bc8d312c22"],
+];
+for (const [storyId, slot, bytes, md5] of waveBStills) {
+  const stillPng = join(repoRoot, "public", "lectura", storyId, `${slot}.png`);
+  assert(existsSync(stillPng), `${storyId} ${slot} lives at public/lectura/${storyId}/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/${storyId}/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/${storyId}/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `${storyId} ${slot} is the exact Wave B still`);
+}
 for (const id of ["luna", "rafa", "valeria", "diego"]) {
   const coachPng = join(repoRoot, "public", "coaches", `${id}-happy.png`);
   assert(existsSync(coachPng), `${id} lives at public/coaches/${id}-happy.png`);

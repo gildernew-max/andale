@@ -881,6 +881,21 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-2/p0.png`);
   });
 
+  it("Lectura Wave B stills resolve via BASE_URL for story-3 and story-9", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const story3 = screen.getAllByRole("button", { name: /El hijo del Rey Tigre/ });
+    await user.click(story3[story3.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-3/p0.png`);
+    await user.click(screen.getByRole("button", { name: /Cerrar|Close/ }));
+    await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
+    const story9 = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
+    await user.click(story9[story9.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-9/p0.png`);
+  });
+
   it("Lectura + story Qs show a one-line gloss for stamped words only", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
