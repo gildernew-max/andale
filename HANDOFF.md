@@ -133,6 +133,20 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **Why**
 - Dave lock: v01c-fun-clean supersedes v01b-funnier.
 
+## 2026-09-07 (Bucket fly / Cubetas — Games · Match & play)
+
+**What changed**
+- Games fold: Match & play hosts Emparejar + Cubetas. Title ES `Cubetas` · EN `Bucket fly`. Feeds 80/20. Soft ETA with hub v5.
+- One-screen field: one draggable chip (Ojalá que pack first), two buckets only — Subjuntivo/Subjunctive · Indicativo/Indicative.
+- Dead labels never shown: Trigger / Use / Disparador / Uso.
+- Correct: 80ms squash + gem tick, then one right-facing Cenzontle (logo PNG) enters from right, grabs handle, exits up-left with that bucket (700ms, ease-out). Chip already scored.
+- Teach beat: Literal then Why (George one-liner hooks). Next chip. Wrong = shake, chip returns, no bird, no lecture.
+- Round clear: short ¡Eso! / That's it. fly-by on the same Cenzontle rig. No second bird.
+- Soft chrome parked. Win motion ON. Do not merge.
+
+**Why**
+- George + No Face CLEAR on title / buckets / one right-facing Cenzontle. Hand LOCK + Dave CLEAR still stand. Soft chrome parked.
+
 ## 2026-09-07 (Valeria only — blank clipboard re-bounce)
 
 **What changed**

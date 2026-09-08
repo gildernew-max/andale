@@ -13,6 +13,7 @@ import { STORY_QUIZ_CUE, STORY_QUIZ_CUE_LINE, passageForStoryQuestion, storyQuiz
 import { DEFAULT_LETTER_LAYOUT, lettersForLayout } from "./letterBoard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, safeRiskyCorrectKeys } from "./safeRisky.js";
+import { CUBETAS_DEAD_LABELS, CUBETAS_TITLE, CUBETAS_WIN_MS, OJALA_QUE_PACK } from "./cubetas.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -876,7 +877,33 @@ for (const s of STORIES) {
 assert(appSrc.includes("come-back-tomorrow"), "home line after win is wired");
 assert(appSrc.includes("path-entry"), "Subjuntivo path stays under Empieza");
 assert(/camino-more[\s\S]{0,900}path-entry/.test(appSrc), "EMPIEZA is buried under Más/More");
-assert(appSrc.includes("practica-fold"), "Práctica fold hosts Phrase Doctor / Safe-Risky / Emparejar");
+assert(appSrc.includes("practica-fold"), "Práctica fold hosts Phrase Doctor / Safe-Risky / Match & play");
+assert(appSrc.includes("data-testid=\"match-play\""), "Match & play hub group is testable");
+assert(appSrc.includes("data-testid=\"cubetas-start\""), "Cubetas lives under Games / Match & play");
+assert(appSrc.includes("data-testid=\"cubetas-board\""), "Cubetas playfield is testable");
+assert(appSrc.includes("data-testid=\"cubetas-chip\""), "Cubetas chip is a draggable pill");
+assert(appSrc.includes("cubetas-bucket-${id}"), "mood buckets are testable");
+assert(appSrc.includes("CUBETAS_BUCKETS.map"), "only the two mood buckets are mapped");
+assert(!appSrc.includes("cubetas-bucket-trigger"), "no Trigger bucket");
+assert(!appSrc.includes("cubetas-bucket-use"), "no Use bucket");
+assert(appSrc.includes("data-testid=\"cubetas-cenzontle\""), "one Cenzontle rig on Cubetas");
+assert(appSrc.includes("data-testid=\"cubetas-literal\""), "Cubetas Literal hook is testable");
+assert(appSrc.includes("data-testid=\"cubetas-why\""), "Cubetas Why hook is testable");
+assert(appSrc.includes("{L.literalLabel}"), "Cubetas Literal chrome uses L.literalLabel");
+assert(appSrc.includes("{L.whyLabel}"), "Cubetas Why chrome uses L.whyLabel");
+assert(appSrc.includes("cubetas-bird-win"), "Cubetas win motion class is wired");
+assert(appSrc.includes("700ms ease-out"), "Cubetas fly is 700ms ease-out");
+assert(CUBETAS_WIN_MS === 700, "Cubetas win lock is 700ms");
+assert(CUBETAS_TITLE.es === "Cubetas" && CUBETAS_TITLE.en === "Bucket fly", "title is ES Cubetas / EN Bucket fly");
+assert(appSrc.includes("cubetasTitle(uiLang)"), "Cubetas title follows uiLang");
+assert(!appSrc.includes("Bucket fly · Cubetas"), "no bilingual lockup title in App");
+assert(OJALA_QUE_PACK[0].phrase === "Ojalá que", "Ojalá que pack leads");
+assert(appSrc.includes("mascot/cenzontle.png"), "Cubetas reuses the logo Cenzontle");
+const cubetasSlice = appSrc.slice(appSrc.indexOf("const CubetasPlayfield"), appSrc.indexOf("const MARK_INK"));
+assert(!/scaleX\s*\(\s*-1\s*\)/.test(cubetasSlice), "Cubetas must not CSS-mirror Cenzontle");
+CUBETAS_DEAD_LABELS.forEach((dead) => {
+  assert(!new RegExp(`cubetas-bucket-${dead.toLowerCase()}`).test(appSrc), `no ${dead} bucket`);
+});
 assert(appSrc.includes("{L.dailyWorkout}"), "Práctica weakness / Perfil Luna CTAs use L.dailyWorkout");
 assert(appSrc.includes("L.dailyWorkout"), "Camino hero secondary uses L.dailyWorkout");
 assert(appSrc.includes("L.workoutDone"), "Camino hero done-state uses L.workoutDone");

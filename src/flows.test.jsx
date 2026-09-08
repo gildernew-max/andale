@@ -1387,8 +1387,8 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("nav-practica"));
     const fold = screen.getByTestId("practica-fold");
     const ids = [...fold.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
-    expect(ids.filter((id) => ["phrase-doctor", "safe-risky-start", "match-pairs-start"].includes(id)))
-      .toEqual(["phrase-doctor", "safe-risky-start", "match-pairs-start"]);
+    expect(ids.filter((id) => ["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start"].includes(id)))
+      .toEqual(["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start"]);
     const html = document.body.innerHTML;
     const foldAt = html.indexOf('data-testid="practica-fold"');
     const smartAt = html.search(/PRÁCTICA INTELIGENTE|SMART PRACTICE/);
@@ -1399,6 +1399,59 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("phrase-doctor").textContent).toMatch(/Doctora de frases|Phrase Doctor/);
     expect(screen.getByTestId("safe-risky-start").textContent).toMatch(/¿Seguro o riesgoso\?|Safe or Risky\?/);
     expect(screen.getByTestId("match-pairs-start").textContent).toMatch(/Emparejar|Match pairs/);
+    expect(screen.getByTestId("match-play")).toBeTruthy();
+    expect(screen.getByTestId("match-play").textContent).toMatch(/Match & play|Empareja y juega/);
+    expect(screen.getByTestId("cubetas-start").textContent).toContain("Cubetas");
+    expect(screen.getByTestId("cubetas-start").textContent).not.toContain("Bucket fly");
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("cubetas-start").textContent).toContain("Bucket fly"));
+    expect(screen.getByTestId("cubetas-start").textContent).not.toContain("Cubetas");
+  });
+
+  it("Cubetas: one chip, two mood buckets, wrong returns, correct flies then Literal/Why", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("cubetas-start"));
+    await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
+    expect(screen.getByTestId("cubetas-title").textContent).toBe("Cubetas");
+    expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que");
+    expect(screen.getByTestId("cubetas-bucket-subjunctive").textContent).toBe("Subjuntivo");
+    expect(screen.getByTestId("cubetas-bucket-indicative").textContent).toBe("Indicativo");
+    expect(screen.queryByTestId("cubetas-bucket-trigger")).toBeNull();
+    expect(screen.queryByTestId("cubetas-bucket-use")).toBeNull();
+    expect(screen.getByTestId("cubetas-board").textContent).not.toMatch(/Trigger|Disparador|\bUso\b/);
+    expect(screen.getByTestId("cubetas-cenzontle").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("cubetas-cenzontle").getAttribute("data-state")).toBe("offstage");
+    expect(screen.queryByTestId("cubetas-literal")).toBeNull();
+
+    await user.click(screen.getByTestId("cubetas-bucket-indicative"));
+    await waitFor(() => expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que"));
+    expect(screen.getByTestId("cubetas-cenzontle").getAttribute("data-state")).toBe("offstage");
+    expect(screen.queryByTestId("cubetas-literal")).toBeNull();
+    expect(screen.queryByTestId("cubetas-why")).toBeNull();
+    expect(screen.getByTestId("cubetas-board").textContent).not.toMatch(/Mejor respuesta|Better answer|shame/i);
+
+    await user.click(screen.getByTestId("cubetas-bucket-subjunctive"));
+    await waitFor(() => expect(screen.queryByTestId("cubetas-chip")).toBeNull());
+    await waitFor(() => expect(screen.getByTestId("cubetas-literal")).toBeTruthy(), { timeout: 2000 });
+    const literal = screen.getByTestId("cubetas-literal");
+    const why = screen.getByTestId("cubetas-why");
+    const next = screen.getByTestId("cubetas-next");
+    expect(literal.textContent).toContain("Traducción");
+    expect(literal.textContent).toContain("Ojalá que");
+    expect(why.textContent).toContain("Por qué");
+    expect(why.textContent).toContain("«Ojalá» siempre va con subjuntivo.");
+    expect(literal.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(why.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(next.textContent).toMatch(/Siguiente/i);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("cubetas-literal").textContent).toContain("Literal"));
+    expect(screen.getByTestId("cubetas-why").textContent).toContain("Why");
+    expect(screen.getByTestId("cubetas-why").textContent).toContain("«Ojalá» always takes the subjunctive.");
+    expect(screen.getByTestId("cubetas-next").textContent).toMatch(/Next chip/i);
+    expect(screen.getByTestId("cubetas-title").textContent).toBe("Bucket fly");
+    expect(screen.getByTestId("cubetas-bucket-subjunctive").textContent).toBe("Subjunctive");
+    expect(screen.getByTestId("cubetas-bucket-indicative").textContent).toBe("Indicative");
   });
 
   it("Safe/Risky hub reward is extra por racha / streak extra, not bonus", async () => {
