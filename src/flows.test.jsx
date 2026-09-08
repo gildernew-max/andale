@@ -855,6 +855,31 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("story-tip").textContent).toMatch(/Read the paragraph\. Tap a word only if it stops you\./));
   });
 
+  it("Lectura Wave A stills resolve via BASE_URL for story-0 p3, story-1, and story-2", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const story0 = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
+    await user.click(story0[story0.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-3")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-3").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-0/p3.png`);
+    await user.click(screen.getByRole("button", { name: /Cerrar|Close/ }));
+    await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
+    const story1 = screen.getAllByRole("button", { name: /La casa azul/ });
+    await user.click(story1[story1.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-1/p0.png`);
+    await user.click(screen.getByRole("button", { name: /Cerrar|Close/ }));
+    await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
+    const story2 = screen.getAllByRole("button", { name: /Más allá de la playa/ });
+    await user.click(story2[story2.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-2/p0.png`);
+  });
+
   it("Lectura + story Qs show a one-line gloss for stamped words only", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
