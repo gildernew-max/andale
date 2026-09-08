@@ -2,6 +2,26 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-08 (Tue — Capacitor iOS wrap first cut)
+
+**What changed**
+- Pinned `@capacitor/core` `@capacitor/cli` `@capacitor/ios` **8.5.1**.
+- `npm run build:wrap` then `npx cap add ios` (Cap 8 **SPM** template). Bundle id stays `com.andale.app`. No Team / signing secrets.
+- Root `PrivacyInfo.xcprivacy` copied to `ios/App/App/PrivacyInfo.xcprivacy` and added to App **Copy Bundle Resources**.
+- `npx cap sync` after wrap build. Cap’s `ios/.gitignore` excludes `App/App/public` (no LFS). Pages `npm run build` still `/andale/`.
+
+**Next (Mac / Xcode — after Apple membership attaches)**
+1. `npm ci && npm run build:wrap && npx cap sync`
+2. Open `ios/App/App.xcodeproj` (SPM — not `.xcworkspace`).
+3. Signing & Capabilities → **Team** (do not invent). Keep or replace placeholder `com.andale.app`.
+4. Select `PrivacyInfo.xcprivacy` → File inspector → Target Membership → **App** (already wired; confirm).
+5. App Icon 1024 → `Assets.xcassets/AppIcon` (template has no PNG).
+6. Launch screen / `Splash.imageset` (Contents.json names PNGs that are not in-repo).
+7. Archive → TestFlight. Enroll / IAP / Store stay **OFF**. No real-device signing this cut.
+
+**Why**
+- Hand CLEAR wrap first cut. Soft ETA 11:00 AM CT. TestFlight path once membership attaches.
+
 ## 2026-09-08 (Tue polish — PrivacyInfo + Capacitor base `/`)
 
 **What changed**

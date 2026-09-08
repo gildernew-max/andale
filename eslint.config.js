@@ -6,7 +6,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 // ~494KB and a style pass would force a rewrite. Compiler-hook extras
 // (set-state-in-effect, immutability, …) stay off for the same reason.
 export default defineConfig([
-  { ignores: ["dist/**", "node_modules/**"] },
+  { ignores: ["dist/**", "node_modules/**", "ios/**"] },
   {
     files: ["**/*.{js,jsx}"],
     languageOptions: {
