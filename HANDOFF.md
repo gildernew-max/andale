@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-08 (Sobremesa Intermedio pack — words-only)
+
+**What changed**
+- `src/sobremesa.js` is George’s Intermedio pack: face name ES/EN `Sobremesa`, quiet `Plática de verdad` / `Real talk`, sell under quiet, five first-face rules, tips only after the five, optional subjunctive + por/para deepen.
+- Learn entry is a no-face CTA under the 6-grid (`sobremesa-cta`), not a hub tile. Opens the existing 80/20-style sheet. 80/20 Subjuntivo en cinco stays its own tile + sheet.
+- Hub `hub-sobremesa` stays dead. Wrap stamps (`L.hubSobremesa` + quiet/sell) stay. Soft chrome parked.
+
+**Why**
+- Words-only Soft ETA. Not Club, not 80%, not Intermedio as the tab name.
+
+
 ## 2026-09-08 (Learn hub Games → Cubetas)
 
 **What changed**

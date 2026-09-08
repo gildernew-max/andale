@@ -18,6 +18,16 @@ import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { SUBJ_FIVE_LABEL, subjFiveLines, subjFiveSub } from "./subjFive.js";
+import {
+  sobremesaDeepen,
+  sobremesaDeepenLabel,
+  sobremesaFive,
+  sobremesaQuiet,
+  sobremesaSell,
+  sobremesaTipText,
+  sobremesaTips,
+  sobremesaTipsLabel,
+} from "./sobremesa.js";
 import { shouldPlayWinBounce } from "./winBounce.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -3507,8 +3517,10 @@ const UI = {
     hubFlash: "Flashcards",
     hubSendero: "Sendero",
     hubSenderoQuiet: "Camino que crece",
-    // WRAP PARK — Sobremesa name/quiet/sell for later Lectura/Intermedio tab. Not a hub tile. Do not delete.
+    // WRAP PARK — Sobremesa name/quiet/sell. Intermedio words tab, not a hub tile. Do not delete.
     hubSobremesa: "Sobremesa",
+    hubSobremesaQuiet: "Plática de verdad",
+    hubSobremesaSell: "Los atajos que se te pegan — para que la plática deje de sentirse tarea.",
     phraseDoctor: "Doctora de frases",
     phraseDoctorTag: "GANA EN 60 SEGUNDOS",
     phraseDoctorCta: "Arreglar una frase",
@@ -3584,8 +3596,10 @@ const UI = {
     hubFlash: "Flashcards",
     hubSendero: "Sendero",
     hubSenderoQuiet: "A path that grows",
-    // WRAP PARK — Sobremesa name/quiet/sell for later Lectura/Intermedio tab. Not a hub tile. Do not delete.
+    // WRAP PARK — Sobremesa name/quiet/sell. Intermedio words tab, not a hub tile. Do not delete.
     hubSobremesa: "Sobremesa",
+    hubSobremesaQuiet: "Real talk",
+    hubSobremesaSell: "The shortcuts that stick — so real talk stops feeling like homework.",
     phraseDoctor: "Phrase Doctor",
     phraseDoctorTag: "WIN IN 60 SECONDS",
     phraseDoctorCta: "Fix a phrase",
@@ -3875,6 +3889,14 @@ export default function App() {
   const [nameDraft, setNameDraft] = useState("");
   const [caminoMore, setCaminoMore] = useState(false);
   const [subjFiveOpen, setSubjFiveOpen] = useState(false);
+  const [sobremesaOpen, setSobremesaOpen] = useState(false);
+  const [sobremesaTipsOpen, setSobremesaTipsOpen] = useState(false);
+  const [sobremesaDeepenOpen, setSobremesaDeepenOpen] = useState(false);
+  const closeSobremesa = () => {
+    setSobremesaOpen(false);
+    setSobremesaTipsOpen(false);
+    setSobremesaDeepenOpen(false);
+  };
   const [hoyPlanOpen, setHoyPlanOpen] = useState(false);
   const [activeDuel, setActiveDuel] = useState(DUELS[0]);
   const [guideUnit, setGuideUnit] = useState(null);
@@ -6370,6 +6392,11 @@ export default function App() {
                     <span data-testid="first-door-title">{L.phraseDoctor}</span>
                   </div>
                 )}
+                <button data-testid="sobremesa-cta" type="button" onClick={() => setSobremesaOpen(true)}
+                  style={{ display: "block", width: "100%", margin: "0 0 10px", background: theme === "dark" ? D.card : HUB_CREAM, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+                  <div data-testid="sobremesa-cta-label" style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15 }}>{L.hubSobremesa}</div>
+                  <div data-testid="sobremesa-cta-quiet" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{L.hubSobremesaQuiet}</div>
+                </button>
                 <button data-testid="camino-more" type="button" aria-expanded={caminoMore}
                   onClick={() => setCaminoMore((open) => !open)}
                   style={{ display: "block", margin: "10px auto 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", padding: "4px 8px", letterSpacing: ".01em" }}>
@@ -7863,6 +7890,59 @@ export default function App() {
                 <li key={line} data-testid="eighty-twenty-line" style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.45, color: D.ink }}>{line}</li>
               ))}
             </ol>
+          </div>
+        </div>
+      )}
+
+      {/* Sobremesa — Intermedio words. First face = name + quiet + sell + five. Tips after. Not a hub tile. */}
+      {sobremesaOpen && (
+        <div data-testid="sobremesa-sheet" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={closeSobremesa}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "16px 20px 20px", maxWidth: 420, width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button type="button" data-testid="sobremesa-close" onClick={closeSobremesa} aria-label={uiLang === "en" ? "Close" : "Cerrar"}
+                style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", lineHeight: 1, minWidth: 44, minHeight: 44 }}>✕</button>
+            </div>
+            <div data-testid="sobremesa-face">
+              <div data-testid="sobremesa-name" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.15, color: D.ink }}>{L.hubSobremesa}</div>
+              <div data-testid="sobremesa-quiet" style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.3, color: D.sub, marginTop: 4 }}>{sobremesaQuiet(uiLang)}</div>
+              <div data-testid="sobremesa-sell" style={{ fontWeight: 800, fontSize: 13.5, lineHeight: 1.4, color: D.ink, margin: "8px 0 14px" }}>{sobremesaSell(uiLang)}</div>
+              <ol data-testid="sobremesa-five" style={{ margin: "0 0 14px", padding: "0 0 0 1.25em", display: "grid", gap: 12 }}>
+                {sobremesaFive(uiLang).map((line) => (
+                  <li key={line} data-testid="sobremesa-line" style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.45, color: D.ink }}>{line}</li>
+                ))}
+              </ol>
+            </div>
+            <div data-testid="sobremesa-tips">
+              <button type="button" data-testid="sobremesa-tips-summary" aria-expanded={sobremesaTipsOpen}
+                onClick={() => setSobremesaTipsOpen((open) => !open)}
+                style={{ background: "none", border: "none", fontFamily: "inherit", fontSize: 13, fontWeight: 900, color: D.sub, cursor: "pointer", padding: "6px 0" }}>
+                {sobremesaTipsLabel(uiLang)}
+              </button>
+              {sobremesaTipsOpen && (
+                <ul data-testid="sobremesa-tips-list" style={{ margin: "6px 0 0", padding: "0 0 0 1.15em", display: "grid", gap: 8 }}>
+                  {sobremesaTips(uiLang).map((tip) => (
+                    <li key={tip.line} data-testid="sobremesa-tip" data-mexico={tip.mexico ? "1" : undefined} style={{ fontSize: 13.5, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{sobremesaTipText(tip)}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div data-testid="sobremesa-deepen">
+              <button type="button" data-testid="sobremesa-deepen-summary" aria-expanded={sobremesaDeepenOpen}
+                onClick={() => setSobremesaDeepenOpen((open) => !open)}
+                style={{ background: "none", border: "none", fontFamily: "inherit", fontSize: 13, fontWeight: 900, color: D.sub, cursor: "pointer", padding: "10px 0 6px" }}>
+                {sobremesaDeepenLabel(uiLang)}
+              </button>
+              {sobremesaDeepenOpen && (
+                <div data-testid="sobremesa-deepen-body" style={{ display: "grid", gap: 12, marginTop: 4 }}>
+                  {sobremesaDeepen(uiLang).subjunctive.map((line) => (
+                    <div key={line} data-testid="sobremesa-deepen-line" style={{ fontSize: 13.5, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{line}</div>
+                  ))}
+                  {sobremesaDeepen(uiLang).porpara.map((line) => (
+                    <div key={line} data-testid="sobremesa-deepen-line" style={{ fontSize: 13.5, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{line}</div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
