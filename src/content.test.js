@@ -226,6 +226,8 @@ assert(!/parroquia/i.test(hoyCopy), "Hoy card must not mention parroquia");
 const appSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "App.jsx"), "utf8");
 assert(appSrc.includes("stills/sma-lanterns.png"), "Hoy card still stays sma-lanterns.png");
 assert(appSrc.includes("hoyStillFor"), "Hoy still is gated so a mismatched city cannot keep lanterns");
+assert(appSrc.includes("${import.meta.env.BASE_URL}lectura/"), "Lectura stills use BASE_URL so Pages /andale/ loads them");
+assert(!appSrc.includes("src={`/lectura/"), "Lectura stills must not use root-absolute /lectura/ (breaks Pages)");
 assert(hoyStillFor(hoy) === LANTERN_STILL, "San Miguel / Noche de faroles keeps the lantern still");
 const sceneIds = new Set();
 for (const sc of TODAY_SCENES) {
@@ -983,6 +985,11 @@ assert(existsSync(mascotPng), "Cenzontle mark lives at public/mascot/cenzontle.p
 assert(!existsSync(join(repoRoot, "public", "mascot", "axolotl.png")), "axolotl.png is gone from public/mascot");
 assert(readFileSync(mascotPng).subarray(0, 8).equals(pngMagic), "mascot/cenzontle.png is a real PNG, not JPEG-named-.png");
 assert(readFileSync(appleTouch).subarray(0, 8).equals(pngMagic), "apple-touch-icon.png is a real PNG");
+for (const slot of ["p0", "p1", "p2"]) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-0", `${slot}.png`);
+  assert(existsSync(stillPng), `story-0 ${slot} lives at public/lectura/story-0/${slot}.png`);
+  assert(readFileSync(stillPng).subarray(0, 8).equals(pngMagic), `lectura/story-0/${slot}.png is a real PNG, not JPEG-named-.png`);
+}
 for (const id of ["luna", "rafa", "valeria", "diego"]) {
   const coachPng = join(repoRoot, "public", "coaches", `${id}-happy.png`);
   assert(existsSync(coachPng), `${id} lives at public/coaches/${id}-happy.png`);

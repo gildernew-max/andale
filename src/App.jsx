@@ -8584,7 +8584,7 @@ export default function App() {
             {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
               <div key={pi} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
                 <img
-                  src={`/lectura/${story.id}/p${pi}.png`}
+                  src={`${import.meta.env.BASE_URL}lectura/${story.id}/p${pi}.png`}
                   alt=""
                   aria-hidden="true"
                   data-testid={`lectura-still-${pi}`}

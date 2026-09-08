@@ -686,6 +686,8 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
     expect(screen.getByTestId("story-tip").textContent).toMatch(/Lee el párrafo\. Toca una palabra solo si te frena\./);
     expect(screen.getByTestId("lectura-paragraph-first")).toBeTruthy();
+    const still = screen.getByTestId("lectura-still-0");
+    expect(still.getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-0/p0.png`);
     await waitFor(() => expect(screen.getAllByText(/cempasúchil/).length).toBeGreaterThan(0));
     const storyWord = [...document.querySelectorAll("span")].find((el) =>
       el.textContent === "cempasúchil" && el.style.cursor === "pointer");
