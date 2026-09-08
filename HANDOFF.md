@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-08 (Learn hub Games → Cubetas)
+
+**What changed**
+- Learn hub `hub-games` act is `startCubetas()` — same entry as Match & play Bucket fly. No longer `startAhorcado()`.
+- Hangman stays on the Camino section CTA (`ahorcado-section-start`). Soft chrome parked. Cubetas George/No face chrome unchanged.
+
+**Why**
+- Hand CLEAR after wrap: Games tile on live Pages opened Hangman. Cubetas is the Soft ETA.
+
 ## 2026-09-08 (Tue — Capacitor iOS wrap first cut)
 
 **What changed**

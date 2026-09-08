@@ -810,6 +810,8 @@ assert(!appSrc.includes('testid: "hub-sobremesa"'), "Sobremesa is not a hub tile
 assert(appSrc.includes("title: L.hubHoy"), "Hoy tile label follows uiLang");
 assert(appSrc.includes("title: L.hubStories"), "Stories tile label follows uiLang");
 assert(appSrc.includes("title: L.hubGames"), "Games tile label follows uiLang");
+assert(hubTilesSrc.includes("act: () => startCubetas()"), "Learn hub Games tile opens Cubetas");
+assert(!hubTilesSrc.includes("startAhorcado"), "Learn hub Games tile does not open Hangman");
 assert(appSrc.includes("title: L.hubDoctor"), "Phrase Doctor tile label follows uiLang");
 assert(appSrc.includes("{L.hubPins}"), "Pin chase label follows uiLang under Más");
 assert(appSrc.includes("{L.hubFlash}"), "Flashcards label follows uiLang under Más");
