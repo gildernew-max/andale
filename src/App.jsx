@@ -20,6 +20,7 @@ import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { SUBJ_FIVE_LABEL, subjFiveLines, subjFiveSub } from "./subjFive.js";
 import { shouldPlayWinBounce } from "./winBounce.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
+import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -2958,6 +2959,7 @@ const SAFE_RISKY_ITEMS = [
     phrase: "No manches.",
     context: { es: "Tu amigo te cuenta que pagó $300 por dos cafés.", en: "Your friend says they paid $300 for two coffees." },
     answer: "casual",
+    answers: ["casual", "regional"],
     literal: { es: "Vaya / no me digas.", en: "No way. / Come on." },
     note: { es: "Suena a amigos en México. Con jefes o personas mayores, pásate a algo más suave.", en: "Sounds like friends in Mexico. With bosses or elders, switch to something softer." },
   },
@@ -2965,6 +2967,7 @@ const SAFE_RISKY_ITEMS = [
     phrase: "Quedo a sus órdenes.",
     context: { es: "Cierras un correo con una clienta.", en: "You are closing an email to a client." },
     answer: "formal",
+    answers: ["formal"],
     literal: { es: "Quedo bajo sus órdenes.", en: "I remain under your orders." },
     note: { es: "En tono suave: estoy a su disposición. Cierre profesional mexicano — amable, claro, seguro en correo con clientas.", en: "Soft English: I’m at your service. Mexican professional close — warm, clear, safe for a client email." },
   },
@@ -2972,6 +2975,7 @@ const SAFE_RISKY_ITEMS = [
     phrase: "¿Mande?",
     context: { es: "No escuchaste lo que dijo alguien en México.", en: "You did not hear what someone said in Mexico." },
     answer: "regional",
+    answers: ["regional", "safe"],
     literal: { es: "¿Cómo? / ¿perdón?", en: "Pardon?" },
     note: { es: "De mandar / «mande usted»: el «¿perdón?» cortés de México. Con la suegra, gana a un «¿Qué?» seco.", en: "From mandar / «mande usted»: Mexico’s polite “Pardon?” With your mother-in-law, it beats a blunt «¿Qué?»" },
   },
@@ -2979,6 +2983,7 @@ const SAFE_RISKY_ITEMS = [
     phrase: "¿Qué?",
     context: { es: "No escuchaste a tu suegra en la cena.", en: "You did not hear your mother-in-law at dinner." },
     answer: "risky",
+    answers: ["risky"],
     literal: { es: "¿Qué?", en: "What?" },
     note: { es: "Puede sonar brusco. Mejor «¿Mande?» o «¿Cómo?» según a quién le hablas.", en: "It can land blunt. Prefer «¿Mande?» or «¿Cómo?» depending on who you’re talking to." },
   },
@@ -2986,6 +2991,7 @@ const SAFE_RISKY_ITEMS = [
     phrase: "¿Me da un café, por favor?",
     context: { es: "Pides algo en una cafetería.", en: "You are ordering at a cafe." },
     answer: "safe",
+    answers: ["safe"],
     literal: { es: "¿Me da un café, por favor?", en: "Can I have a coffee, please?" },
     note: { es: "Natural en el mostrador: directo y cortés. Mejor que «¿Puedo obtener un café?»", en: "Natural at the counter: direct and polite. Better than “Can I obtain a coffee?”" },
   },
@@ -2993,6 +2999,7 @@ const SAFE_RISKY_ITEMS = [
     phrase: "Está bien chido.",
     context: { es: "Comentas el departamento nuevo de un amigo.", en: "You are commenting on a friend's new apartment." },
     answer: "casual",
+    answers: ["casual", "regional"],
     literal: { es: "Está muy padre.", en: "It’s really cool." },
     note: { es: "Suena mexicano y de amigos. En documentos o juntas formales, cámbialo.", en: "Sounds Mexican and friendly. In documents or formal meetings, swap it out." },
   },
@@ -3000,6 +3007,7 @@ const SAFE_RISKY_ITEMS = [
     phrase: "No obstante lo anterior...",
     context: { es: "Redactas una cláusula de contrato.", en: "You are writing a contract clause." },
     answer: "formal",
+    answers: ["formal"],
     literal: { es: "A pesar de lo anterior...", en: "Notwithstanding the foregoing..." },
     note: { es: "Registro de contrato. En una charla normal pesa demasiado; guárdalo para el papel.", en: "Contract register. In normal chat it feels heavy — save it for the page." },
   },
@@ -3007,6 +3015,7 @@ const SAFE_RISKY_ITEMS = [
     phrase: "Ahorita vengo.",
     context: { es: "Sales un momento por un café.", en: "You step out for a coffee." },
     answer: "regional",
+    answers: ["regional", "casual"],
     literal: { es: "Vuelvo en un momento.", en: "I’ll be right back." },
     note: { es: "Muy mexicano. «Ahorita» puede ser pronto… o un poco más. El tono lo decide el contexto.", en: "Very Mexican. «Ahorita» can mean soon… or a bit later. Context sets the clock." },
   },
@@ -4227,7 +4236,7 @@ export default function App() {
 
   const startSafeRisky = () => {
     awardLockRef.current.delete("safe");
-    setSafeGame({ items: shuffle(SAFE_RISKY_ITEMS).slice(0, 5), idx: 0, score: 0, streak: 0, bestStreak: 0, selected: null, done: false, awarded: false });
+    setSafeGame(startSafeRiskyRun(SAFE_RISKY_ITEMS));
     setScreen("safeRisky");
   };
 
@@ -4324,12 +4333,12 @@ export default function App() {
   };
 
   const chooseSafeRisky = (choice) => {
-    if (!safeGame || safeGame.selected) return;
+    if (!safeGame) return;
     const item = safeGame.items[safeGame.idx];
-    const correct = choice === item.answer;
-    if (correct) beep("ok"); else beep("bad");
-    const streak = correct ? (safeGame.streak || 0) + 1 : 0;
-    setSafeGame({ ...safeGame, selected: choice, score: safeGame.score + (correct ? 1 : 0), streak, bestStreak: Math.max(safeGame.bestStreak || 0, streak) });
+    const next = applySafeRiskyTap(safeGame, choice);
+    if (next === safeGame) return;
+    if (isSafeRiskyCorrect(item, choice)) beep("ok"); else beep("bad");
+    setSafeGame(next);
   };
 
   const nextSafeRisky = () => {
@@ -4359,7 +4368,7 @@ export default function App() {
       beep("win");
       return;
     }
-    setSafeGame({ ...safeGame, idx: safeGame.idx + 1, selected: null });
+    setSafeGame(advanceSafeRiskyItem(safeGame));
   };
 
   const snakeChoicesFor = (qq) => {
@@ -8165,6 +8174,10 @@ export default function App() {
         };
         const order = ["safe", "casual", "formal", "regional", "risky"];
         const palette = { safe: D.green, casual: D.goldDark, formal: D.blue, regional: D.purpleDark, risky: D.red };
+        const tapped = safeRiskyTappedCorrect(item, safeGame);
+        const tappedWrong = safeRiskyTappedWrong(item, safeGame);
+        const revealed = safeRiskyIsRevealed(item, safeGame);
+        const hit = revealed && tappedWrong.length === 0;
         return (
           <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
             {burst > 0 && safeGame.done && <Confetti key={burst} count={36} />}
@@ -8203,7 +8216,7 @@ export default function App() {
                   <span style={{ border: `2px solid ${D.gold}`, borderRadius: 99, padding: "4px 10px", color: D.goldDark, background: D.goldBg, fontSize: 11, fontWeight: 900 }}><IcFlame size={13} /> {safeGame.streak || 0} {uiLang === "en" ? "streak" : "racha"}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 12, marginBottom: 16 }}>
-                  <CoachPortrait id="valeria" mood={safeGame.selected && safeGame.selected !== item.answer ? "sad" : "happy"} size={86} />
+                  <CoachPortrait id="valeria" mood={tappedWrong.length ? "sad" : "happy"} size={86} />
                   <div style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: "13px 15px", flex: 1, position: "relative", background: D.card }}>
                     <div style={{ position: "absolute", left: -9, bottom: 17, width: 14, height: 14, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
                     <div className="nametag" style={{ marginBottom: 6 }}>{uiLang === "en" ? "Would you say it?" : "¿Lo dirías?"}</div>
@@ -8215,22 +8228,23 @@ export default function App() {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
                   {order.map((key) => {
-                    const chosen = safeGame.selected === key;
-                    const revealed = !!safeGame.selected;
-                    const correct = item.answer === key;
+                    const chosen = tapped.includes(key) || tappedWrong.includes(key);
+                    const correct = isSafeRiskyCorrect(item, key);
+                    const showCorrect = (revealed && correct) || tapped.includes(key);
+                    const showWrong = tappedWrong.includes(key);
                     const color = palette[key];
                     return (
-                      <button key={key} data-testid={`safe-risky-choice-${key}`} disabled={revealed} onClick={() => chooseSafeRisky(key)}
-                        style={{ border: `2px solid ${revealed && correct ? D.green : revealed && chosen ? D.red : color}`, borderBottom: `5px solid ${revealed && correct ? D.greenDark : revealed && chosen ? D.redDark : color}`, background: revealed && correct ? D.greenBg : revealed && chosen ? D.redBg : D.card, color: revealed && correct ? D.greenDark : revealed && chosen ? D.red : D.ink, borderRadius: 14, padding: "12px 10px", fontFamily: "inherit", fontWeight: 900, fontSize: 14, cursor: revealed ? "default" : "pointer" }}>
+                      <button key={key} data-testid={`safe-risky-choice-${key}`} data-safe-risky-state={showCorrect ? "correct" : showWrong ? "wrong" : "idle"} disabled={revealed || chosen} onClick={() => chooseSafeRisky(key)}
+                        style={{ border: `2px solid ${showCorrect ? D.green : showWrong ? D.red : color}`, borderBottom: `5px solid ${showCorrect ? D.greenDark : showWrong ? D.redDark : color}`, background: showCorrect ? D.greenBg : showWrong ? D.redBg : D.card, color: showCorrect ? D.greenDark : showWrong ? D.red : D.ink, borderRadius: 14, padding: "12px 10px", fontFamily: "inherit", fontWeight: 900, fontSize: 14, cursor: revealed || chosen ? "default" : "pointer" }}>
                         {labels[key]}
                       </button>
                     );
                   })}
                 </div>
-                {safeGame.selected && (
-                  <div className="pop" style={{ marginTop: 14, border: `2px solid ${safeGame.selected === item.answer ? D.green : D.red}`, borderRadius: 14, padding: "11px 13px", background: safeGame.selected === item.answer ? D.greenBg : D.redBg, textAlign: "left" }}>
-                    <div style={{ fontWeight: 900, color: safeGame.selected === item.answer ? D.greenDark : D.redDark, marginBottom: 4 }}>
-                      {safeGame.selected === item.answer ? (safeGame.streak >= 3 ? (uiLang === "en" ? "Combo judgment." : "Juicio en combo.") : (uiLang === "en" ? "Good judgment." : "Buen juicio.")) : `${uiLang === "en" ? "Better answer" : "Mejor respuesta"}: ${labels[item.answer]}`}
+                {revealed && (
+                  <div className="pop" style={{ marginTop: 14, border: `2px solid ${hit ? D.green : D.red}`, borderRadius: 14, padding: "11px 13px", background: hit ? D.greenBg : D.redBg, textAlign: "left" }}>
+                    <div style={{ fontWeight: 900, color: hit ? D.greenDark : D.redDark, marginBottom: 4 }}>
+                      {hit ? (safeGame.streak >= 3 ? (uiLang === "en" ? "Combo judgment." : "Juicio en combo.") : (uiLang === "en" ? "Good judgment." : "Buen juicio.")) : `${uiLang === "en" ? "Better answer" : "Mejor respuesta"}: ${safeRiskyAnswerLabel(item, labels)}`}
                     </div>
                     <div data-testid="safe-risky-literal" style={{ marginTop: 8 }}>
                       <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.literalLabel}</div>

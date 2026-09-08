@@ -12,6 +12,7 @@ import { FOCUS_LABELS, PRACTICE_EXPLAIN, explainText, focusLabel, uiText } from 
 import { STORY_QUIZ_CUE, STORY_QUIZ_CUE_LINE, passageForStoryQuestion, storyQuizCue, storyQuizCueLine, storyQuizEyebrow } from "./storyQuiz.js";
 import { DEFAULT_LETTER_LAYOUT, lettersForLayout } from "./letterBoard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
+import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, safeRiskyCorrectKeys } from "./safeRisky.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -627,6 +628,9 @@ const SAFE_RISKY_WHYS = {
   "Ahorita vengo.": { es: "Muy mexicano. «Ahorita» puede ser pronto… o un poco más. El tono lo decide el contexto.", en: "Very Mexican. «Ahorita» can mean soon… or a bit later. Context sets the clock." },
 };
 assert(SAFE_RISKY_ITEMS.length === 8, "Safe/Risky pack is eight items");
+assert(!SAFE_RISKY_ITEMS.some((it) => it.phrase === SAFE_RISKY_MULTI_FIXTURE.phrase), "multi-correct fixture is not live pack");
+assert(SAFE_RISKY_MULTI_FIXTURE.answers.length >= 2, "multi-correct fixture has 2+ rights");
+assert(Object.keys(SAFE_RISKY_ANSWERS).length === 8, "George answers stamp is eight phrases");
 for (const [phrase, literal] of Object.entries(SAFE_RISKY_LITERALS)) {
   const item = SAFE_RISKY_ITEMS.find((it) => it.phrase === phrase);
   assert(item, `Safe/Risky has ${phrase}`);
@@ -634,7 +638,17 @@ for (const [phrase, literal] of Object.entries(SAFE_RISKY_LITERALS)) {
   assert(item.literal?.en === literal.en, `${phrase} EN literal`);
   assert(item.note?.es === SAFE_RISKY_WHYS[phrase].es, `${phrase} ES Why`);
   assert(item.note?.en === SAFE_RISKY_WHYS[phrase].en, `${phrase} EN Why`);
+  const stamped = SAFE_RISKY_ANSWERS[phrase];
+  assert(Array.isArray(stamped) && stamped.length >= 1, `${phrase} is in George answers stamp`);
+  assert(JSON.stringify(item.answers) === JSON.stringify(stamped), `${phrase} answers is George stamp`);
+  const keys = safeRiskyCorrectKeys(item);
+  assert(JSON.stringify(keys) === JSON.stringify(stamped), `${phrase} correct keys follow answers[]`);
+  assert(item.answer && keys.includes(item.answer), `${phrase} answer is in answers[]`);
+  assert(!item.correct, `${phrase} uses answers[] not correct[]`);
 }
+assert(SAFE_RISKY_ITEMS.filter((it) => safeRiskyCorrectKeys(it).length > 1).length === 4, "four live items are multi-correct");
+assert(appSrc.includes("applySafeRiskyTap"), "Safe/Risky taps use shared engine");
+assert(appSrc.includes("safeRiskyIsRevealed"), "Safe/Risky CONTINUE uses shared reveal gate");
 const quedo = SAFE_RISKY_ITEMS.find((it) => it.phrase === "Quedo a sus órdenes.");
 assert(quedo.literal.es === "Quedo bajo sus órdenes.", "quedo ES literal is hard gloss");
 assert(quedo.literal.en === "I remain under your orders.", "quedo EN literal is hard gloss");
@@ -667,9 +681,10 @@ const revealAt = appSrc.indexOf("data-testid=\"safe-risky-literal\"");
 const whyAt = appSrc.indexOf("data-testid=\"safe-risky-why\"");
 const continueAt = appSrc.indexOf("data-testid=\"safe-risky-continue\"");
 assert(revealAt > 0 && whyAt > revealAt && continueAt > whyAt, "reveal order is Literal then Why above CONTINUE");
-const selectedBlock = appSrc.slice(appSrc.indexOf("{safeGame.selected &&"), continueAt);
+const selectedBlock = appSrc.slice(appSrc.lastIndexOf("{revealed &&", continueAt), continueAt);
 assert(selectedBlock.includes("Better answer") && selectedBlock.includes("Mejor respuesta"), "wrong-answer chrome stays in the same reveal");
 assert(selectedBlock.includes("data-testid=\"safe-risky-literal\""), "wrong/better-answer path includes Literal");
+assert(selectedBlock.includes("safeRiskyAnswerLabel"), "Better answer lists every correct key");
 assert(UI.es.narrationLabel === "NARRACIÓN", "UI.es.narrationLabel");
 assert(UI.en.narrationLabel === "NARRATION", "UI.en.narrationLabel");
 assert(!/LAB/.test(UI.es.narrationLabel + UI.en.narrationLabel), "narration chrome is not a LAB");
