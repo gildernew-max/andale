@@ -9,7 +9,7 @@
     "build:wrap": "ANDALE_WRAP=1 vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "node src/flashDeck.test.js && node src/schema.test.js && node src/content.test.js && node src/matchPairs.test.js && node src/hoyStill.test.js && node src/theaterGate.test.js && node src/firstDoor.test.js && node src/wordOrder.test.js && node src/choiceChipKeys.test.js && node src/hoyWin.test.js && node src/doctoraWin.test.js && node src/a2hs.test.js && node src/recuerdos.test.js && node src/letterBoard.test.js && node src/storyGloss.test.js && node src/subjFive.test.js && node src/winBounce.test.js && vitest run"
+    "test": "node src/flashDeck.test.js && node src/schema.test.js && node src/content.test.js && node src/matchPairs.test.js && node src/hoyStill.test.js && node src/theaterGate.test.js && node src/firstDoor.test.js && node src/wordOrder.test.js && node src/choiceChipKeys.test.js && node src/hoyWin.test.js && node src/doctoraWin.test.js && node src/a2hs.test.js && node src/recuerdos.test.js && node src/letterBoard.test.js && node src/storyGloss.test.js && node src/subjFive.test.js && node src/winBounce.test.js && node src/storyQuiz.test.js && vitest run"
   },
   "dependencies": {
     "react": "^19.1.1",

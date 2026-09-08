@@ -252,6 +252,17 @@ Running log between audits and execution. Newest entry first. Keep each entry sh
 **Why**
 - Brand lock: Cenzontle faces RIGHT. Full fly-in stays next.
 
+## 2026-09-06 (Story Qs — gate + on-screen passage)
+
+**What changed**
+- George + Dave lock: story comprehension = Lectura gate **and** the matching passage on the same screen. Eyebrow alone is not enough for a week-old read.
+- Hoy / misión / rutina still wait on `prog.stories[id]`. When the Q lifts, `passage` is the relevant paragraph (`data-testid="story-quiz-passage"`).
+- Eyebrow ES `Según el cuento` · EN `From the story` only when that passage is visible. Second line stays hooked and off.
+- Lectura in-reader Qs also show the matching paragraph. Soft chrome parked. Do not merge.
+
+**Why**
+- Locked fix: findable from the text on screen, not from a cue label.
+
 ## 2026-09-06 (Cenzontle lockup — abandons axolotl)
 
 **What changed**

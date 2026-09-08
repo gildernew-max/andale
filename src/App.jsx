@@ -12,6 +12,7 @@ import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
+import { gatedLiftStoryQuiz, passageForStoryQuestion, pickCompletedStory, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
@@ -4073,11 +4074,13 @@ export default function App() {
       return [q1, q2].filter(Boolean);
     }).slice(0, 7);
     const story = STORIES.find((st) => st.id === mission.storyId) || STORIES[0];
-    const storyCheck = story?.questions?.[0] ? liftStoryQuizItem(
-      story.questions[0],
-      `Lectura relámpago: ${story.questions[0].prompt}`,
+    const storyCheck = gatedLiftStoryQuiz(
+      prog.stories,
+      story,
+      story?.questions?.[0],
+      story?.questions?.[0] ? `Lectura relámpago: ${story.questions[0].prompt}` : "",
       { es: storyClueExplain(story.title, "es"), en: storyClueExplain(story.title, "en") },
-    ) : null;
+    );
     beginSession({
       title: mission.title,
       color: mission.color,
@@ -4099,16 +4102,18 @@ export default function App() {
       const qq = getUnit(uid)?.questions[i];
       return qq ? { ...qq, _u: uid, _i: i, skill: "Repaso" } : null;
     })() : null;
-    const story = STORIES[Math.floor(Math.random() * STORIES.length)];
-    const storyQ = story.questions[Math.floor(Math.random() * story.questions.length)];
+    const story = pickCompletedStory(STORIES, prog.stories);
+    const storyQ = story ? story.questions[Math.floor(Math.random() * story.questions.length)] : null;
     const items = [
       sampleQuestion("subj1", (q) => q.type === "mc" && /Trampa|duda|subjuntivo|certeza/i.test(explainHaystack(q))),
       sampleQuestion("pret", (q) => q.type === "listen" || q.type === "order"),
       sampleQuestion("mex", (q) => q.type === "mc" || q.type === "type"),
       reviewQ || sampleQuestion("pronombres", (q) => q.type !== "match"),
-      liftStoryQuizItem(
+      gatedLiftStoryQuiz(
+        prog.stories,
+        story,
         storyQ,
-        `Del cuento «${story.title}»: ${storyQ.prompt}`,
+        story && storyQ ? `Del cuento «${story.title}»: ${storyQ.prompt}` : "",
         { es: "Lectura rápida: contexto, no traducción palabra por palabra.", en: explainText({ explain: "Lectura rápida: contexto, no traducción palabra por palabra." }, "en") },
       ),
     ].filter(Boolean);
@@ -4133,7 +4138,7 @@ export default function App() {
       return [q1, q2].filter(Boolean);
     }).slice(0, 3);
     const story = STORIES.find((st) => st.id === scene.storyId) || STORIES[0];
-    const storyQ = story.questions[Math.floor(Math.random() * story.questions.length)];
+    const storyQ = story?.questions?.[Math.floor(Math.random() * (story.questions?.length || 1))];
     const listenBeat = {
       type: "listen",
       text: scene.line,
@@ -4155,9 +4160,11 @@ export default function App() {
       _i: -1,
       skill: "Vida real",
     };
-    const storyBeat = liftStoryQuizItem(
+    const storyBeat = gatedLiftStoryQuiz(
+      prog.stories,
+      story,
       storyQ,
-      `Postal de ${story.title}: ${storyQ.prompt}`,
+      story && storyQ ? `Postal de ${story.title}: ${storyQ.prompt}` : "",
       { es: culturalHintExplain(story.title, "es"), en: culturalHintExplain(story.title, "en") },
     );
     // Day-2 return: native setup · line · Q only (already ≤4). First session keeps extras, cap 4.
@@ -4165,7 +4172,7 @@ export default function App() {
     const shortQueue = day2Hoy ? [sceneBeat, listenBeat] : [sceneBeat, listenBeat, ...picks];
     const items = firstHoy
       ? trimHoyBeats(shortQueue, { firstHoy: true })
-      : trimHoyBeats(shuffle([listenBeat, sceneBeat, ...picks, storyBeat]), { firstHoy: false });
+      : trimHoyBeats(shuffle([listenBeat, sceneBeat, ...picks, storyBeat].filter(Boolean)), { firstHoy: false });
     beginSession({
       title: uiLang === "en" ? scene.titleEn : scene.title,
       color: scene.color,
@@ -7680,6 +7687,13 @@ export default function App() {
                 <h2 style={{ fontWeight: 900, fontSize: 22, margin: "0 0 14px" }}>
 	                  {q.type === "order" ? L.buildSentence : q.type === "type" ? L.completeSentence : L.chooseCorrect}
                 </h2>
+                {storyQuizPassage(q) ? (
+                  <div data-testid="story-quiz-passage" style={{ border: `2px solid ${D.line}`, borderRadius: 14, padding: "12px 14px", background: D.subtle, margin: "0 0 14px" }}>
+                    {storyQuizCue(q, uiLang) ? <div data-testid="story-quiz-cue" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".06em", color: D.sub, marginBottom: 6 }}>{storyQuizCue(q, uiLang)}</div> : null}
+                    {storyQuizCueLine(q, uiLang) ? <div data-testid="story-quiz-cue-line" style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginBottom: 6 }}>{storyQuizCueLine(q, uiLang)}</div> : null}
+                    <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.55 }}>{storyQuizPassage(q)}</div>
+                  </div>
+                ) : null}
                 <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
                     <div className="idle"><CoachPortrait id={session.host} mood="happy" size={86} /></div>
@@ -8666,8 +8680,15 @@ export default function App() {
               {story.questions.map((qq, i) => {
                 const sel = ansSel[i];
                 const done = sel != null;
+                const passage = passageForStoryQuestion(story, qq);
                 return (
                   <div key={i} style={{ marginBottom: 18 }}>
+                    {passage ? (
+                      <div data-testid="story-quiz-passage" style={{ border: `2px solid ${D.line}`, borderRadius: 14, padding: "12px 14px", background: D.subtle, margin: "0 0 10px" }}>
+                        <div data-testid="story-quiz-cue" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".06em", color: D.sub, marginBottom: 6 }}>{storyQuizEyebrow(uiLang)}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.55 }}>{passage}</div>
+                      </div>
+                    ) : null}
                     <div data-testid="story-q-prompt" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: 8 }}>{i + 1}. <GlossedText text={qq.prompt} uiLang={uiLang} D={D} accent={sec.color} /></div>
                     <div style={{ display: "grid", gap: 8 }}>
                       {qq.choices.map((c, ci) => {

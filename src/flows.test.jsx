@@ -194,6 +194,58 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(dismiss.style.background).toMatch(/#fff|#ffffff|rgb\(255,\s*255,\s*255\)/i);
 };
 
+const STORY_LIFT_RE = /Del cuento|Postal de|Lectura relámpago/;
+const CEREZAS_Q_RE = /¿Por qué se negó a vender toda su cosecha|¿Cuánto recibe don Adán por cada kilo|¿Qué le preocupa más a don Adán/;
+
+const laterHoySeed = (extra = {}) => seedProgress({
+  streak: 1,
+  lastDay: localToday(),
+  paywallSeen: true,
+  ...extra,
+});
+
+async function advanceLessonBeat(user) {
+  const choices = document.querySelectorAll(".choice-card:not([disabled])");
+  const input = document.querySelector("input[placeholder]");
+  const tiles = screen.queryAllByTestId("bank-tile");
+  if (choices.length) {
+    await user.click(choices[0]);
+  } else if (input) {
+    await user.type(input, "x");
+  } else if (tiles.length) {
+    await user.click(tiles[0]);
+  }
+  const check = screen.queryByTestId("lesson-check");
+  if (!check) return false;
+  await user.click(check);
+  const cont = screen.queryByRole("button", { name: /^Continuar$/i });
+  if (cont) await user.click(cont);
+  return true;
+}
+
+async function collectStoryLifts(user, { maxBeats = 8 } = {}) {
+  const lifts = [];
+  for (let i = 0; i < maxBeats; i++) {
+    if (!screen.queryByTestId("lesson-exit")) break;
+    const text = document.body.textContent || "";
+    const cue = screen.queryByTestId("story-quiz-cue");
+    const passage = screen.queryByTestId("story-quiz-passage");
+    if (cue) lifts.push(`CUE:${cue.textContent}`);
+    if (passage) lifts.push(`PASSAGE:${passage.textContent}`);
+    if (cue) expect(passage).toBeTruthy();
+    expect(screen.queryByTestId("story-quiz-cue-line")).toBeNull();
+    if (STORY_LIFT_RE.test(text) || CEREZAS_Q_RE.test(text)) {
+      const from = text.search(STORY_LIFT_RE);
+      const qAt = text.search(CEREZAS_Q_RE);
+      const start = from >= 0 ? from : qAt;
+      lifts.push(text.slice(start, start + 160));
+    }
+    const advanced = await advanceLessonBeat(user);
+    if (!advanced) break;
+  }
+  return lifts;
+}
+
 /** Eso → Bajío glow beat → paywall. Skips wait when the glow already fired. */
 const awaitSoftPaywallAfterFirstWin = async () => {
   await waitFor(() => {
@@ -1267,6 +1319,70 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("narration-label").textContent).toBe("NARRATION"));
     expect(screen.getByTestId("narration-label").textContent).not.toMatch(/LAB/);
     expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB/);
+  });
+
+  it("unread Lectura does not lift cerezas / story comprehension into later Hoy", async () => {
+    laterHoySeed();
+    const user = await boot();
+    await startHoyFromHub(user);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const hoyLifts = await collectStoryLifts(user);
+    expect(hoyLifts).toEqual([]);
+    expect(document.body.textContent).not.toMatch(STORY_LIFT_RE);
+    expect(document.body.textContent).not.toMatch(CEREZAS_Q_RE);
+  });
+
+  it("unread Lectura does not lift cerezas / story comprehension into rutina", async () => {
+    laterHoySeed();
+    const user = await boot();
+    await openCaminoMore(user);
+    await user.click(screen.getByTestId("camino-daily-workout"));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const dailyLifts = await collectStoryLifts(user);
+    expect(dailyLifts).toEqual([]);
+    expect(document.body.textContent).not.toMatch(STORY_LIFT_RE);
+    expect(document.body.textContent).not.toMatch(CEREZAS_Q_RE);
+  });
+
+  it("after Lectura claim, that story’s comprehension can lift into rutina", async () => {
+    laterHoySeed({ stories: { "story-9": true } });
+    const user = await boot();
+    await openCaminoMore(user);
+    await user.click(screen.getByTestId("camino-daily-workout"));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const lifts = await collectStoryLifts(user);
+    expect(lifts.join(" ")).toMatch(/Del cuento/);
+    expect(lifts.join(" ")).toMatch(CEREZAS_Q_RE);
+    expect(lifts.join(" ")).toMatch(/CUE:Según el cuento/);
+    expect(lifts.join(" ")).toMatch(/PASSAGE:/);
+    expect(lifts.join(" ")).toMatch(/quince y veinte pesos|dependo de una sola empresa|cambio climático|roya/);
+    expect(lifts.join(" ")).not.toMatch(/Responde según lo que acabas de leer|Answer from what you just read/);
+  });
+
+  it("Lectura still shows comprehension after the last paragraph (ungated in-reader)", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
+    expect(document.body.textContent).not.toMatch(CEREZAS_Q_RE);
+    await user.click(screen.getByRole("button", { name: "Preguntas" }));
+    await waitFor(() => {
+      const prompts = screen.getAllByTestId("story-q-prompt");
+      expect(prompts.some((el) => el.textContent.includes("¿Por qué se negó"))).toBe(true);
+      expect(prompts.some((el) => el.textContent.includes("¿Cuánto recibe don Adán por cada kilo"))).toBe(true);
+    });
+    expect(screen.getByRole("button", { name: /Volver al cuento|Back to the story/ })).toBeTruthy();
+    const passages = screen.getAllByTestId("story-quiz-passage");
+    expect(passages.length).toBe(3);
+    expect(passages.some((el) => /dependo de una sola empresa/.test(el.textContent))).toBe(true);
+    expect(screen.getAllByTestId("story-quiz-cue").every((el) => el.textContent === "Según el cuento")).toBe(true);
+    expect(screen.queryByTestId("story-quiz-cue-line")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Responde según lo que acabas de leer|Answer from what you just read/);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getAllByTestId("story-quiz-cue")[0].textContent).toBe("From the story"));
+    expect(screen.getAllByTestId("story-quiz-cue").every((el) => el.textContent === "From the story")).toBe(true);
+    expect(screen.queryByTestId("story-quiz-cue-line")).toBeNull();
   });
 
   it("cerezas reading quiz Why + Focus follow uiLang after the refused item", async () => {
