@@ -1367,8 +1367,11 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
     expect(document.body.textContent).not.toMatch(CEREZAS_Q_RE);
     await user.click(screen.getByRole("button", { name: "Preguntas" }));
-    await waitFor(() => expect(screen.getByText(/¿Por qué se negó a vender toda su cosecha/)).toBeTruthy());
-    expect(screen.getByText(/¿Cuánto recibe don Adán por cada kilo/)).toBeTruthy();
+    await waitFor(() => {
+      const prompts = screen.getAllByTestId("story-q-prompt");
+      expect(prompts.some((el) => el.textContent.includes("¿Por qué se negó"))).toBe(true);
+      expect(prompts.some((el) => el.textContent.includes("¿Cuánto recibe don Adán por cada kilo"))).toBe(true);
+    });
     expect(screen.getByRole("button", { name: /Volver al cuento|Back to the story/ })).toBeTruthy();
     const passages = screen.getAllByTestId("story-quiz-passage");
     expect(passages.length).toBe(3);
