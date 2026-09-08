@@ -8610,6 +8610,14 @@ export default function App() {
 
             {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
               <div key={pi} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
+                <img
+                  src={`${import.meta.env.BASE_URL}lectura/${story.id}/p${pi}.png`}
+                  alt=""
+                  aria-hidden="true"
+                  data-testid={`lectura-still-${pi}`}
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  style={{ display: "block", width: "100%", borderRadius: 10, marginBottom: 12, objectFit: "cover" }}
+                />
                 <div style={{ display: "flex", gap: 10 }}>
                 <button onClick={() => playStoryParagraph(story, pi, para)} aria-label={uiLang === "en" ? "Listen to paragraph" : "Escuchar párrafo"}
                   style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "4px 7px", flexShrink: 0, alignSelf: "flex-start", lineHeight: 0, marginTop: 3 }}>
