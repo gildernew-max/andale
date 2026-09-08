@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { inflateSync } from "zlib";
+import { andaleViteBase } from "../vite.config.js";
 import { prepQuestion } from "./prepQuestion.js";
 import { hoyStillFor, LANTERN_STILL } from "./hoyStill.js";
 import { comeBackTomorrowLine, hoySceneForDay, nextDayKey } from "./firstDoor.js";
@@ -1114,12 +1115,31 @@ const pagesYml = readFileSync(join(repoRoot, ".github", "workflows", "pages.yml"
 assert(pagesYml.includes("mascot/cenzontle.png"), "Pages smoke GETs Cenzontle PNG");
 assert(!pagesYml.includes("mascot/axolotl.png"), "Pages smoke no longer GETs axolotl.png");
 const viteSrc = readFileSync(join(repoRoot, "vite.config.js"), "utf8");
-assert(viteSrc.includes("base: '/andale/'"), "Pages vite base stays /andale/");
+assert(viteSrc.includes("'/andale/'"), "Pages vite base stays /andale/");
 assert(/Wrap\/WKWebView rebuilds with base '\/'/.test(viteSrc), "wrap-prep notes base /");
+assert(viteSrc.includes("ANDALE_WRAP"), "wrap build flips base via ANDALE_WRAP");
 assert(appSrc.includes("window.__andaleSpeech"), "wrap-prep speech flag");
 assert(appSrc.includes("window.__andaleStorage"), "wrap-prep storage flag");
-assert(!existsSync(join(repoRoot, "PrivacyInfo.xcprivacy")), "no PrivacyInfo until Mon wrap");
-assert(!existsSync(join(repoRoot, "ios", "App", "PrivacyInfo.xcprivacy")), "no ios PrivacyInfo until Mon wrap");
+
+assert(andaleViteBase({}) === "/andale/", "default / Pages vite base is /andale/");
+assert(andaleViteBase({ ANDALE_WRAP: "1" }) === "/", "wrap vite base is /");
+
+const privacyPath = join(repoRoot, "PrivacyInfo.xcprivacy");
+assert(existsSync(privacyPath), "PrivacyInfo.xcprivacy for Tue wrap");
+const privacySrc = readFileSync(privacyPath, "utf8");
+assert(privacySrc.includes("NSPrivacyTracking"), "privacy manifest declares tracking");
+assert(/<key>NSPrivacyTracking<\/key>\s*<false\s*\/>/.test(privacySrc), "no tracking");
+assert(privacySrc.includes("NSPrivacyCollectedDataTypes"), "privacy manifest declares collected types");
+assert(privacySrc.includes("NSPrivacyAccessedAPICategoryUserDefaults"), "UserDefaults required-reason API");
+assert(privacySrc.includes("CA92.1"), "UserDefaults reason CA92.1");
+assert(!existsSync(join(repoRoot, "ios", "App", "PrivacyInfo.xcprivacy")), "no partial ios tree — copy PrivacyInfo after cap add ios");
+
+const capCfg = JSON.parse(readFileSync(join(repoRoot, "capacitor.config.json"), "utf8"));
+assert(capCfg.webDir === "dist", "Capacitor webDir is dist");
+assert(!capCfg.server?.url, "no remote server.url — bundled webDir loads at /");
+assert(!JSON.stringify(capCfg).includes("/andale/"), "Capacitor config is not Pages /andale/");
+assert(capCfg.server?.hostname === "localhost", "Capacitor hostname is localhost (origin /)");
+assert(capCfg.server?.iosScheme === "https", "Capacitor iosScheme is https so wrap origin is /");
 
 assert(SUBJ_FIVE_LABEL === "80/20", "80/20 label is the loan in both langs");
 assert(SUBJ_FIVE_SUB.es === "Subjuntivo en cinco", "ES 80/20 second line");

@@ -2,6 +2,22 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-08 (Tue polish — PrivacyInfo + Capacitor base `/`)
+
+**What changed**
+- `PrivacyInfo.xcprivacy`: no tracking, no collected data types, UserDefaults `CA92.1` (Capacitor/WKWebView local progress). Copy into `ios/App/App/` after `npx cap add ios`.
+- `capacitor.config.json`: `webDir: dist`, hostname `localhost`, iosScheme `https`, **no** `server.url`. Do not point WKWebView at Pages `/andale/`.
+- Pages `npm run build` stays `base: '/andale/'`. Wrap rebuild is `ANDALE_WRAP=1` / `npm run build:wrap` → `base: '/'`.
+- No native Xcode project yet (a partial `ios/` would block `cap add ios`). Soft chrome parked. Lectura stills / PR 97 untouched.
+
+**Still for TestFlight (Dave phone Sep 13)**
+- `npm i @capacitor/core @capacitor/cli @capacitor/ios` then `npx cap add ios` + `npx cap sync` after `npm run build:wrap`.
+- Replace Capacitor’s generated PrivacyInfo with this one; confirm target membership.
+- Real Apple Team / bundle id (placeholder `com.andale.app`), signing, icons, launch screen. Enroll / IAP / Store still off.
+
+**Why**
+- Tue 2026-09-08 wrap polish gate: PrivacyInfo + device load from `/`, not a subdirectory. Pages stay put.
+
 ## 2026-09-07 (Live Pages — first-win bird + Sendero 6-grid)
 
 **What was wrong**

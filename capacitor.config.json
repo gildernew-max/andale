@@ -1,0 +1,9 @@
+{
+  "appId": "com.andale.app",
+  "appName": "Ándale",
+  "webDir": "dist",
+  "server": {
+    "iosScheme": "https",
+    "hostname": "localhost"
+  }
+}
