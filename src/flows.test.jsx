@@ -13,6 +13,7 @@ import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isO
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
+import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
 
 const STORAGE_KEY = "andale-v3";
@@ -4262,6 +4263,72 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("eighty-twenty-cta"));
     await waitFor(() => expect(screen.getByTestId("eighty-twenty-sheet")).toBeTruthy());
     expect(screen.getAllByTestId("eighty-twenty-line").map((el) => el.textContent)).toEqual(SUBJ_FIVE.en);
+    expect(screen.getByTestId("learn-hub")).toBeTruthy();
+  });
+
+  it("Sobremesa is the Intermedio entry — five first, tips not first, hub tile stays dead", async () => {
+    const user = await boot();
+    expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
+    expect(screen.getByTestId("learn-hub-tiles").textContent).not.toMatch(/Sobremesa/);
+    expect(screen.getByTestId("eighty-twenty-cta").textContent).toMatch(/80\/20/);
+    expect(screen.getByTestId("eighty-twenty-cta").textContent).not.toMatch(/Sobremesa|Subjuntivo en cinco|Subjunctive in five/);
+    const cta = screen.getByTestId("sobremesa-cta");
+    expect(screen.getByTestId("sobremesa-cta-label").textContent).toBe(SOBREMESA_NAME);
+    expect(screen.getByTestId("sobremesa-cta-quiet").textContent).toBe(SOBREMESA_QUIET.es);
+    expect(cta.textContent).not.toMatch(/Club|80%|Intermedio/);
+    expect(screen.queryByTestId("sobremesa-sheet")).toBeNull();
+
+    await user.click(cta);
+    await waitFor(() => expect(screen.getByTestId("sobremesa-sheet")).toBeTruthy());
+    expect(screen.getByTestId("sobremesa-name").textContent).toBe(SOBREMESA_NAME);
+    expect(screen.getByTestId("sobremesa-quiet").textContent).toBe(SOBREMESA_QUIET.es);
+    expect(screen.getByTestId("sobremesa-sell").textContent).toBe(SOBREMESA_SELL.es);
+    const five = screen.getByTestId("sobremesa-five");
+    const tips = screen.getByTestId("sobremesa-tips");
+    const deepen = screen.getByTestId("sobremesa-deepen");
+    expect(five.compareDocumentPosition(tips) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(tips.compareDocumentPosition(deepen) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByTestId("sobremesa-line").map((el) => el.textContent)).toEqual(SOBREMESA_FIVE.es);
+    expect(screen.getByTestId("sobremesa-tips-summary").getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByTestId("sobremesa-deepen-summary").getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("sobremesa-tips-list")).toBeNull();
+    expect(screen.queryByTestId("sobremesa-tip")).toBeNull();
+    expect(screen.queryByTestId("sobremesa-deepen-body")).toBeNull();
+    expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
+    expect(screen.queryByTestId("eighty-twenty-sheet")).toBeNull();
+    const sheet = screen.getByTestId("sobremesa-sheet");
+    expect(sheet.querySelector("img")).toBeNull();
+    expect(sheet.textContent).not.toMatch(/Club|Practice this now|Practicar ahora|You've got this|Deck/);
+
+    await user.click(screen.getByTestId("sobremesa-tips-summary"));
+    await waitFor(() => expect(screen.getByTestId("sobremesa-tips-list")).toBeTruthy());
+    expect(screen.getAllByTestId("sobremesa-tip").map((el) => el.textContent)).toEqual(
+      sobremesaTips("es").map((tip) => sobremesaTipText(tip)),
+    );
+    expect(screen.getAllByTestId("sobremesa-tip").filter((el) => el.getAttribute("data-mexico") === "1").length).toBe(8);
+    expect(screen.getAllByTestId("sobremesa-tip").some((el) => el.textContent.includes("🇲🇽"))).toBe(true);
+
+    await user.click(screen.getByTestId("sobremesa-deepen-summary"));
+    await waitFor(() => expect(screen.getByTestId("sobremesa-deepen-body")).toBeTruthy());
+    expect(screen.getAllByTestId("sobremesa-deepen-line").map((el) => el.textContent)).toEqual([
+      ...sobremesaDeepen("es").subjunctive,
+      ...sobremesaDeepen("es").porpara,
+    ]);
+
+    await user.click(screen.getByTestId("sobremesa-close"));
+    await waitFor(() => expect(screen.queryByTestId("sobremesa-sheet")).toBeNull());
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("sobremesa-cta-quiet").textContent).toBe(SOBREMESA_QUIET.en));
+    expect(screen.getByTestId("sobremesa-cta-label").textContent).toBe(SOBREMESA_NAME);
+    await user.click(screen.getByTestId("sobremesa-cta"));
+    await waitFor(() => expect(screen.getByTestId("sobremesa-sheet")).toBeTruthy());
+    expect(screen.getByTestId("sobremesa-quiet").textContent).toBe(SOBREMESA_QUIET.en);
+    expect(screen.getByTestId("sobremesa-sell").textContent).toBe(SOBREMESA_SELL.en);
+    expect(screen.getAllByTestId("sobremesa-line").map((el) => el.textContent)).toEqual(SOBREMESA_FIVE.en);
+    expect(screen.getByTestId("sobremesa-tips-summary").getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("sobremesa-tips-list")).toBeNull();
+    expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
   });
 });
