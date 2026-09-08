@@ -7,6 +7,7 @@ import {
   dayKeyFromDate,
   firstDoorHero,
   hoySceneForDay,
+  hoyStoryForScene,
   hoyTitleForLang,
   isDay2Return,
   nextDayKey,
@@ -179,6 +180,15 @@ assert(hoyTitleForLang(tomorrowHoy, "es") === "WhatsApp del plomero", "ES tomorr
 assert(hoyTitleForLang(tomorrowHoy, "en") === "Plumber WhatsApp", "EN tomorrow title");
 assert(hoySceneForDay([], "2026-09-05") === null, "empty list → no invented title");
 assert(hoySceneForDay(HOY_TITLES, "") === null, "missing day → no invented title");
+const HOY_STORIES = [
+  { id: "story-9", title: "Las cerezas de don Adán" },
+  { id: "story-0", title: "La noche en que vuelven" },
+];
+assert(hoyStoryForScene({ storyId: "story-9" }, HOY_STORIES)?.title === "Las cerezas de don Adán", "linked story is the green chip");
+assert(hoyStoryForScene({ id: "tramites-cita", units: ["mex", "registro", "pronombres"] }, HOY_STORIES) === null, "Bank appointment with no storyId has no cerezas chip");
+assert(hoyStoryForScene({ storyId: "nope" }, HOY_STORIES) === null, "unknown storyId does not invent STORIES[0]");
+assert(hoyStoryForScene({ storyId: "story-9" }, null) === null, "missing story list is no chip");
+assert(hoyStoryForScene(null, HOY_STORIES) === null, "missing scene is no chip");
 assert(comeBackTomorrowLine({ lang: "es", nextTitle: "WhatsApp del plomero" }) === "Vuelve mañana por «WhatsApp del plomero».", "George ES lock: Vuelve mañana por «{title}».");
 assert(comeBackTomorrowLine({ lang: "en", nextTitle: "Plumber WhatsApp" }) === "Come back tomorrow for “Plumber WhatsApp”.", "George EN lock: Come back tomorrow for “{title}”.");
 assert(comeBackTomorrowLine({ lang: "es" }) === COME_BACK_GENERIC_ES, "ES fallback when title unknown");

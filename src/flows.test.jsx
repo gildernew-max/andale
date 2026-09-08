@@ -1679,6 +1679,30 @@ describe("simulated learner flows", () => {
     expect(landlord.titleEn).toBe("Landlord WhatsApp");
   });
 
+  it("Bank appointment Hoy card shows unit tags, not Las cerezas de don Adán", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(2026, 8, 7, 12, 0, 0));
+    try {
+      cleanup();
+      seedProgress();
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+      expect(hoySceneForDay(HOY_TITLES, dayKeyFromDate(new Date())).title).toBe("Cita en el banco");
+      await startHoyFromHub(user);
+      await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+      expect(document.body.textContent).toMatch(/Cita en el banco|agendar una cita/);
+      expect(document.body.textContent).not.toMatch(/Las cerezas de don Adán/);
+      expect(document.body.textContent).not.toMatch(CEREZAS_Q_RE);
+      expect(screen.queryByTestId("hoy-story-chip")).toBeNull();
+      await user.click(screen.getByTestId("lang-en"));
+      await waitFor(() => expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true"));
+      expect(document.body.textContent).not.toMatch(/Las cerezas de don Adán/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("return door with streak ≥ 1: Hoy CTA if scene open, Doctora if Hoy done — never Subjuntivo Continuar", async () => {
     const today = localToday();
     cleanup();

@@ -61,6 +61,16 @@ export function hoyTitleForLang(scene, lang) {
 }
 
 /**
+ * Lectura story linked to a Hoy scene — green card chip + optional postal beat.
+ * Missing / unknown storyId → no chip and no invented STORIES[0] fallback.
+ */
+export function hoyStoryForScene(scene, stories) {
+  const id = scene?.storyId;
+  if (!id || !Array.isArray(stories)) return null;
+  return stories.find((st) => st.id === id) || null;
+}
+
+/**
  * George + No face LOCKED titled teaser — plain text only, not a CTA.
  * ES: Vuelve mañana por «{title}».
  * EN: Come back tomorrow for “{title}”.
