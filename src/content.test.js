@@ -1112,8 +1112,8 @@ assert(existsSync(mascotPng), "Cenzontle mark lives at public/mascot/cenzontle.p
 assert(!existsSync(join(repoRoot, "public", "mascot", "axolotl.png")), "axolotl.png is gone from public/mascot");
 assert(readFileSync(mascotPng).subarray(0, 8).equals(pngMagic), "mascot/cenzontle.png is a real PNG, not JPEG-named-.png");
 const cubetasProps = [
-  ["subjunctive", CUBETAS_BUCKET_SRC.subjunctive, 805147, "785352faf3a3ca584ea719d823bff6ef"],
-  ["indicative", CUBETAS_BUCKET_SRC.indicative, 794563, "02fe7d6048bab51e8f0cd9a674cd60d4"],
+  ["subjunctive", CUBETAS_BUCKET_SRC.subjunctive, 576231, "4d67d62487e6869b448115513c8108de"],
+  ["indicative", CUBETAS_BUCKET_SRC.indicative, 607358, "08286dafc4518ca36d56e5ef2d386c12"],
 ];
 for (const [mood, rel, bytes, md5] of cubetasProps) {
   const propPng = join(repoRoot, "public", rel);
