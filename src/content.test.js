@@ -14,7 +14,7 @@ import { DEFAULT_LETTER_LAYOUT, lettersForLayout } from "./letterBoard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL } from "./sobremesa.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, safeRiskyCorrectKeys } from "./safeRisky.js";
-import { CUBETAS_DEAD_LABELS, CUBETAS_TITLE, CUBETAS_WIN_MS, OJALA_QUE_PACK } from "./cubetas.js";
+import { CUBETAS_BIRD_PX, CUBETAS_BUCKET_SRC, CUBETAS_DEAD_LABELS, CUBETAS_EASE_ENTER, CUBETAS_EASE_EXIT, CUBETAS_EASE_LIFT, CUBETAS_TITLE, CUBETAS_WIN_MS, OJALA_QUE_PACK } from "./cubetas.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -921,15 +921,35 @@ assert(appSrc.includes("data-testid=\"cubetas-why\""), "Cubetas Why hook is test
 assert(appSrc.includes("{L.literalLabel}"), "Cubetas Literal chrome uses L.literalLabel");
 assert(appSrc.includes("{L.whyLabel}"), "Cubetas Why chrome uses L.whyLabel");
 assert(appSrc.includes("cubetas-bird-win"), "Cubetas win motion class is wired");
-assert(appSrc.includes("700ms ease-out"), "Cubetas fly is 700ms ease-out");
-assert(CUBETAS_WIN_MS === 700, "Cubetas win lock is 700ms");
+assert(appSrc.includes("cubetasBirdEnter ${CUBETAS_ENTER_MS}ms ${CUBETAS_EASE_ENTER}"), "Cubetas enter is 160ms cubic-bezier(.22,.75,.25,1)");
+assert(appSrc.includes("cubetasBucketFly ${CUBETAS_WIN_MS}ms"), "Cubetas bucket fly is the 780ms lock");
+assert(appSrc.includes("CUBETAS_EASE_LIFT"), "Cubetas lift uses cubic-bezier(.2,.9,.3,1)");
+assert(appSrc.includes("CUBETAS_EASE_EXIT"), "Cubetas exit uses cubic-bezier(.45,0,.8,.45)");
+assert(appSrc.includes("translate(-118px,-158px)"), "Cubetas exit is a real up-left arc, not a straight translate");
+assert(appSrc.includes("cubetas-handle-${id}"), "handle grab target is testable");
+assert(appSrc.includes("cubetas-bucket-art-${id}"), "clay prop imgs are testable");
+assert(appSrc.includes("CUBETAS_BUCKET_SRC"), "mood buckets load clay prop PNGs");
+assert(appSrc.includes("cubetas-bucket-win-glow"), "winning bucket gets cream/terracotta glow");
+assert(appSrc.includes("CUBETAS_GLOW_CREAM") && appSrc.includes("CUBETAS_GLOW_TERRACOTTA"), "win glow is cream/terracotta, not blue UI");
+assert(!appSrc.includes("700ms ease-out"), "stiff 700ms ease-out fly is gone");
+assert(CUBETAS_WIN_MS === 780, "Cubetas win lock is 780ms");
+assert(CUBETAS_BIRD_PX === 64, "Cenzontle grab is 64px on the handle");
+assert(CUBETAS_EASE_ENTER === "cubic-bezier(.22,.75,.25,1)", "enter ease locked");
+assert(CUBETAS_EASE_LIFT === "cubic-bezier(.2,.9,.3,1)", "lift ease locked");
+assert(CUBETAS_EASE_EXIT === "cubic-bezier(.45,0,.8,.45)", "exit ease locked");
 assert(CUBETAS_TITLE.es === "Cubetas" && CUBETAS_TITLE.en === "Bucket fly", "title is ES Cubetas / EN Bucket fly");
 assert(appSrc.includes("cubetasTitle(uiLang)"), "Cubetas title follows uiLang");
 assert(!appSrc.includes("Bucket fly · Cubetas"), "no bilingual lockup title in App");
 assert(OJALA_QUE_PACK[0].phrase === "Ojalá que", "Ojalá que pack leads");
 assert(appSrc.includes("mascot/cenzontle.png"), "Cubetas reuses the logo Cenzontle");
+assert(CUBETAS_BUCKET_SRC.subjunctive === "cubetas/bucket-subjunctive.png", "subjunctive prop path");
+assert(CUBETAS_BUCKET_SRC.indicative === "cubetas/bucket-indicative.png", "indicative prop path");
 const cubetasSlice = appSrc.slice(appSrc.indexOf("const CubetasPlayfield"), appSrc.indexOf("const MARK_INK"));
 assert(!/scaleX\s*\(\s*-1\s*\)/.test(cubetasSlice), "Cubetas must not CSS-mirror Cenzontle");
+assert(!cubetasSlice.includes("viewBox=\"0 0 80 18\""), "SVG card-handle is gone");
+assert(!/background:\s*active \? D\.greenBg : D\.card/.test(cubetasSlice), "white-card buckets are gone");
+assert((cubetasSlice.match(/data-testid="cubetas-cenzontle"/g) || []).length === 2, "one Cenzontle img per state — win on handle, else offstage/eso");
+assert(!/idle flap|cubetas-bird-idle/i.test(cubetasSlice), "no idle flap");
 CUBETAS_DEAD_LABELS.forEach((dead) => {
   assert(!new RegExp(`cubetas-bucket-${dead.toLowerCase()}`).test(appSrc), `no ${dead} bucket`);
 });
@@ -1091,6 +1111,18 @@ const indexHtml = readFileSync(join(repoRoot, "index.html"), "utf8");
 assert(existsSync(mascotPng), "Cenzontle mark lives at public/mascot/cenzontle.png");
 assert(!existsSync(join(repoRoot, "public", "mascot", "axolotl.png")), "axolotl.png is gone from public/mascot");
 assert(readFileSync(mascotPng).subarray(0, 8).equals(pngMagic), "mascot/cenzontle.png is a real PNG, not JPEG-named-.png");
+const cubetasProps = [
+  ["subjunctive", CUBETAS_BUCKET_SRC.subjunctive, 805147, "785352faf3a3ca584ea719d823bff6ef"],
+  ["indicative", CUBETAS_BUCKET_SRC.indicative, 794563, "02fe7d6048bab51e8f0cd9a674cd60d4"],
+];
+for (const [mood, rel, bytes, md5] of cubetasProps) {
+  const propPng = join(repoRoot, "public", rel);
+  assert(existsSync(propPng), `${mood} clay prop lives at public/${rel}`);
+  const buf = readFileSync(propPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `public/${rel} is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `public/${rel} is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `${mood} clay prop stays the wired PNG`);
+}
 assert(readFileSync(appleTouch).subarray(0, 8).equals(pngMagic), "apple-touch-icon.png is a real PNG");
 for (const slot of ["p0", "p1", "p2"]) {
   const stillPng = join(repoRoot, "public", "lectura", "story-0", `${slot}.png`);

@@ -1474,6 +1474,11 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("cubetas-board").textContent).not.toMatch(/Trigger|Disparador|\bUso\b/);
     expect(screen.getByTestId("cubetas-cenzontle").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByTestId("cubetas-cenzontle").getAttribute("data-state")).toBe("offstage");
+    expect(screen.getByTestId("cubetas-bucket-art-subjunctive").getAttribute("src")).toMatch(/cubetas\/bucket-subjunctive\.png/);
+    expect(screen.getByTestId("cubetas-bucket-art-indicative").getAttribute("src")).toMatch(/cubetas\/bucket-indicative\.png/);
+    expect(screen.getByTestId("cubetas-handle-subjunctive").style.width).toBe("64px");
+    expect(screen.getByTestId("cubetas-handle-indicative").style.height).toBe("64px");
+    expect(screen.getByTestId("cubetas-bucket-subjunctive").textContent).toBe("Subjuntivo");
     expect(screen.queryByTestId("cubetas-literal")).toBeNull();
 
     await user.click(screen.getByTestId("cubetas-bucket-indicative"));
@@ -1485,6 +1490,11 @@ describe("simulated learner flows", () => {
 
     await user.click(screen.getByTestId("cubetas-bucket-subjunctive"));
     await waitFor(() => expect(screen.queryByTestId("cubetas-chip")).toBeNull());
+    const winBird = screen.getByTestId("cubetas-cenzontle");
+    expect(winBird.getAttribute("data-state")).toBe("win");
+    expect(winBird.getAttribute("width")).toBe("64");
+    expect(winBird.className).toContain("cubetas-bird-win");
+    expect(screen.getByTestId("cubetas-bucket-subjunctive").querySelector(".cubetas-bucket-win-glow")).toBeTruthy();
     await waitFor(() => expect(screen.getByTestId("cubetas-literal")).toBeTruthy(), { timeout: 2000 });
     const literal = screen.getByTestId("cubetas-literal");
     const why = screen.getByTestId("cubetas-why");
