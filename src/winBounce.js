@@ -1,14 +1,58 @@
-/** First-win-of-day Cenzontle bounce. Fly-in / points drop only. Soft chrome parked. */
+/** First-win Cenzontle bounce + story-0 Cubetas v2 beat. Soft chrome parked. */
+
+import {
+  CUBETAS_EASE_ENTER,
+  CUBETAS_EASE_EXIT,
+  CUBETAS_ENTER_MS,
+  CUBETAS_EXIT_MS,
+  CUBETAS_LIFT_MS,
+  CUBETAS_SQUASH_MS,
+  CUBETAS_WIN_MS,
+} from "./cubetas.js";
+import { HOY_WIN_EN, HOY_WIN_ES } from "./hoyWin.js";
 
 export const WIN_BOUNCE_MS = 720;
 export const WIN_BOUNCE_SRC = "mascot/cenzontle.png";
 
+/** Lectura story-0 only. Cubetas v2 780ms family. Do not replay on later stories. */
+export const STORY0_ID = "story-0";
+export const STORY0_BEAT_MS = CUBETAS_WIN_MS;
+export const STORY0_ENTER_MS = CUBETAS_ENTER_MS;
+export const STORY0_DROP_MS = CUBETAS_SQUASH_MS;
+export const STORY0_HOLD_MS = CUBETAS_LIFT_MS;
+export const STORY0_EXIT_MS = CUBETAS_EXIT_MS;
+export const STORY0_EASE_ENTER = CUBETAS_EASE_ENTER;
+export const STORY0_EASE_CHIP = "cubic-bezier(.35,.05,.7,.45)";
+export const STORY0_EASE_EXIT = CUBETAS_EASE_EXIT;
+export const STORY0_WIN_ES = HOY_WIN_ES;
+export const STORY0_WIN_EN = HOY_WIN_EN;
+
 /**
  * Same first-win / ¡Eso! gate the done screen already uses (`quietWin`).
  * firstHoy is today's first Hoy (cold or day-2+ return). firstDoctora is first Phrase Doctor.
+ * firstStory0 is the Lectura story-0 780ms beat — not this 720ms courier.
  * esoWin / todaySceneId are wider unlock stamps — do not use them here.
  */
 export function shouldPlayWinBounce(session) {
   if (!session || typeof session !== "object") return false;
   return !!(session.firstHoy || session.firstDoctora);
+}
+
+/** Arm the 780ms beat only on first claim of Lectura story-0 after every page. Later stories stay quiet. */
+export function shouldArmStory0Beat({ storyId, claimed, pagesSeen, pageCount } = {}) {
+  if (storyId !== STORY0_ID || claimed) return false;
+  const n = Number(pageCount) || 0;
+  if (n < 1) return false;
+  const seen = Array.isArray(pagesSeen) ? pagesSeen : [];
+  return [...Array(n).keys()].every((i) => seen.includes(i));
+}
+
+/** Live done-screen gate. firstStory0 + story-0 only — never later stories or Hoy/Doctora. */
+export function shouldPlayStory0Beat(session) {
+  if (!session || typeof session !== "object") return false;
+  return !!(session.firstStory0 && session.storyId === STORY0_ID);
+}
+
+export function story0WinCopy(lang) {
+  return lang === "en" ? STORY0_WIN_EN : STORY0_WIN_ES;
 }

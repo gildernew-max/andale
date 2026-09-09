@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { WinBounce, WinPerch } from "./WinBounce.jsx";
-import { WIN_BOUNCE_MS } from "./winBounce.js";
+import { Story0Beat, WinBounce, WinPerch } from "./WinBounce.jsx";
+import { STORY0_BEAT_MS, WIN_BOUNCE_MS } from "./winBounce.js";
 
 afterEach(() => {
   cleanup();
@@ -48,5 +48,43 @@ describe("WinBounce", () => {
     render(<WinPerch />);
     expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByTestId("win-perch-chip").textContent).toMatch(/XP/);
+  });
+});
+
+describe("Story0Beat", () => {
+  it("plays the live right-facing Cenzontle for 780ms, then unmounts for WinPerch", () => {
+    vi.useFakeTimers();
+    const onComplete = vi.fn();
+    render(<Story0Beat onComplete={onComplete} />);
+    const bird = screen.getByTestId("story-0-beat-bird");
+    expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)/);
+    expect(screen.getByTestId("story-0-beat-chip")).toBeTruthy();
+    expect(screen.getByTestId("story-0-beat-wing")).toBeTruthy();
+    expect(screen.getByTestId("story-0-beat").textContent).not.toMatch(/¡Eso!|That's it\./);
+    expect(onComplete).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(STORY0_BEAT_MS - 1);
+    expect(onComplete).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a landed bird + chip when motion is reduced", () => {
+    const prev = window.matchMedia;
+    window.matchMedia = (query) => ({
+      matches: String(query).includes("prefers-reduced-motion"),
+      media: query,
+      addEventListener() {},
+      removeEventListener() {},
+      addListener() {},
+      removeListener() {},
+    });
+    const onComplete = vi.fn();
+    render(<Story0Beat onComplete={onComplete} />);
+    expect(screen.getByTestId("story-0-beat")).toBeTruthy();
+    expect(screen.getByTestId("story-0-beat-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("story-0-beat-chip")).toBeTruthy();
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    window.matchMedia = prev;
   });
 });

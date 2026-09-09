@@ -28,8 +28,8 @@ import {
   sobremesaTips,
   sobremesaTipsLabel,
 } from "./sobremesa.js";
-import { shouldPlayWinBounce } from "./winBounce.js";
-import { WinBounce, WinPerch } from "./WinBounce.jsx";
+import { shouldArmStory0Beat, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
+import { Story0Beat, WinBounce, WinPerch } from "./WinBounce.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
 import {
   CUBETAS_BIRD_PX,
@@ -3980,6 +3980,7 @@ export default function App() {
   const [firstDoctora, setFirstDoctora] = useState(false);
   const [winBounce, setWinBounce] = useState(false);
   const winBouncePlayed = useRef(false);
+  const storyPagesSeenRef = useRef({});
   const [doctorHits, setDoctorHits] = useState(0);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [wordOrderMiss, setWordOrderMiss] = useState("");
@@ -5258,9 +5259,25 @@ export default function App() {
     setStoryView(story); setWordSel(null); setWordReveal(true); setAnsSel({}); setParaIdx(0); setScreen("story");
   };
 
+  useEffect(() => {
+    if (screen !== "story" || !storyView?.id) return;
+    const idx = paraIdx;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= storyView.paragraphs.length) return;
+    const prev = storyPagesSeenRef.current[storyView.id] || [];
+    if (prev.includes(idx)) return;
+    storyPagesSeenRef.current = { ...storyPagesSeenRef.current, [storyView.id]: [...prev, idx] };
+  }, [screen, storyView, paraIdx]);
+
   const claimStory = (story, correct) => {
     if (prog.stories?.[story.id]) return;
-    beep("win"); setBurst(Date.now());
+    const playStory0 = shouldArmStory0Beat({
+      storyId: story.id,
+      claimed: prog.stories?.[story.id],
+      pagesSeen: storyPagesSeenRef.current[story.id] || [],
+      pageCount: story.paragraphs.length,
+    });
+    beep("win");
+    if (!playStory0) setBurst(Date.now());
     const earned = 5 + correct * 10;
     const t = todayStr();
     save((prev) => {
@@ -5287,6 +5304,23 @@ export default function App() {
         storyCollectibles: { ...(prev.storyCollectibles || {}), [story.id]: true },
       };
     });
+    if (playStory0) {
+      setSession({
+        firstStory0: true,
+        storyId: story.id,
+        title: story.title,
+        host: "rafa",
+        questions: [{}],
+        awarded: true,
+        earnedXP: earned,
+        earnedGems: 10,
+      });
+      setLessonStats({ right: correct, wrong: story.questions.length - correct });
+      setScreenQuip("");
+      winBouncePlayed.current = true;
+      setWinBounce(true);
+      setScreen("done");
+    }
   };
 
   const discoverStoryWord = (story, key) => {
@@ -5833,7 +5867,7 @@ export default function App() {
     return () => clearTimeout(arm);
   }, [showSoftPaywall]);
   useEffect(() => {
-    if (!shouldPlayWinBounce(session)) return undefined;
+    if (!shouldPlayWinBounce(session) && !shouldPlayStory0Beat(session)) return undefined;
     const img = new Image();
     img.src = `${import.meta.env.BASE_URL}mascot/cenzontle.png`;
     return undefined;
@@ -5845,7 +5879,7 @@ export default function App() {
       return;
     }
     if (winBouncePlayed.current) return;
-    if (!shouldPlayWinBounce(session)) return;
+    if (!shouldPlayWinBounce(session) && !shouldPlayStory0Beat(session)) return;
     winBouncePlayed.current = true;
     setWinBounce(true);
   }, [screen, session]);
@@ -6315,10 +6349,19 @@ export default function App() {
         }
         .cubetas-eso-fly { animation: cubetasEsoFly ${CUBETAS_WIN_MS}ms ${CUBETAS_EASE_EXIT} forwards; }
         .cubetas-bird-off { transform:translate(160px,0); opacity:0; pointer-events:none; }
+        @keyframes story0Courier {
+          0%{transform:translate(160px,8px) rotate(-10deg);opacity:1;animation-timing-function:${CUBETAS_EASE_ENTER}}
+          10.256%{transform:translate(72px,-28px) rotate(-2deg);opacity:1;animation-timing-function:${CUBETAS_EASE_ENTER}}
+          20.513%{transform:translate(0,0) rotate(4deg);opacity:1}
+          38.462%{transform:translate(0,0) rotate(4deg);opacity:1}
+          53.846%{transform:translate(0,0) rotate(0deg);opacity:1;animation-timing-function:${CUBETAS_EASE_EXIT}}
+          76.923%{transform:translate(-118px,-158px) rotate(-16deg);opacity:1;animation-timing-function:${CUBETAS_EASE_EXIT}}
+          100%{transform:translate(-240px,-72px) rotate(-18deg);opacity:0}
+        }
         @keyframes cubetasGemTick { 0%{transform:translateY(8px) scale(.6);opacity:0} 35%{transform:translateY(-4px) scale(1.1);opacity:1} 100%{transform:translateY(-18px) scale(1);opacity:0} }
         .cubetas-gem-tick { animation: cubetasGemTick 360ms ${CUBETAS_EASE_LIFT} ${CUBETAS_GRAB_MS}ms both; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
-        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick { animation:none !important; } }
+        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
         .node-btn:active:not(:disabled) { transform: translateY(3px); }
@@ -6332,7 +6375,7 @@ export default function App() {
         .tile-slot .tile { flex:1; }
       `}</style>
 
-      {winBounce && <WinBounce onComplete={() => setWinBounce(false)} />}
+      {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={() => setWinBounce(false)} />}
 
       {/* ---------- TOP STAT BAR ---------- */}
       {!inLesson && (
@@ -9305,9 +9348,9 @@ export default function App() {
         const perfect = lessonStats.wrong === 0;
         const milestones = [3, 7, 14, 30, 50, 100, 365];
         const hitMilestone = milestones.includes(prog.streak);
-        const quietWin = session.firstHoy || session.firstDoctora;
-        const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : undefined;
-        const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : undefined;
+        const quietWin = session.firstHoy || session.firstDoctora || session.firstStory0;
+        const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : undefined;
+        const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : undefined;
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
           {!quietWin && <Confetti count={perfect ? 160 : 70} />}
@@ -9321,8 +9364,10 @@ export default function App() {
           </div>
           )}
           {quietWin && (
-            <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {!winBounce && <WinPerch />}
+            <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
+              {winBounce && shouldPlayStory0Beat(session)
+                ? <Story0Beat onComplete={() => setWinBounce(false)} />
+                : !winBounce ? <WinPerch /> : null}
             </div>
           )}
           {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>

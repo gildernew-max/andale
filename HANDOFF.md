@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-09 (Story-0 Cenzontle 780ms beat)
+
+**What changed**
+- First Lectura **story-0** finish (all pages, then claim) plays the Cubetas v2 780ms Cenzontle beat, then `WinPerch` until Continue.
+- Motion is story-0 only. Later stories keep in-place claim. No replay after `prog.stories["story-0"]`.
+- One right-facing `mascot/cenzontle.png`. George words ES `¡Eso!` · EN `That's it.` — not baked into the PNG, no second caption under the bird.
+- Confetti + jumping coaches muted for the quiet win. Soft chrome parked. Literal/Why on pages untouched.
+
+**Why**
+- Brand CLEAR story-0 delight. Cubetas v2 family (enter / chip drop / hold / up-left arc). Do not merge until Varys walk.
+
 ## 2026-09-09 (Cubetas v2 — clay props + 780ms grab arc)
 
 **What changed**
