@@ -9,14 +9,30 @@ export const CUBETAS_HUB = "match-play";
 export const CUBETAS_FEEDS = "eighty-twenty";
 export const CUBETAS_PACK_ID = "ojala-que";
 
-/** Win motion: 650–720ms family. 700 sits in the lock. */
-export const CUBETAS_WIN_MS = 700;
-export const CUBETAS_ENTER_MS = 120;
-export const CUBETAS_GRAB_MS = 280;
-export const CUBETAS_SQUASH_MS = 80;
+/** Win motion lock: 780ms grab → arc. Dave / Hand. Soft chrome parked. */
+export const CUBETAS_WIN_MS = 780;
+export const CUBETAS_ENTER_MS = 160;
+export const CUBETAS_GRAB_MS = 300;
+export const CUBETAS_SQUASH_MS = 140;
+export const CUBETAS_LIFT_MS = 120;
+export const CUBETAS_EXIT_MS = 360;
 export const CUBETAS_SHAKE_MS = 250;
+export const CUBETAS_BIRD_PX = 64;
+export const CUBETAS_TILT_DEG = 12;
+export const CUBETAS_SQUASH = [1, 0.92, 1.04];
+export const CUBETAS_EASE_ENTER = "cubic-bezier(.22,.75,.25,1)";
+export const CUBETAS_EASE_LIFT = "cubic-bezier(.2,.9,.3,1)";
+export const CUBETAS_EASE_EXIT = "cubic-bezier(.45,0,.8,.45)";
+export const CUBETAS_GLOW_CREAM = "#F6EFE4";
+export const CUBETAS_GLOW_TERRACOTTA = "#C46B3A";
 export const CUBETAS_GEM = 1;
 export const CUBETAS_XP = 4;
+
+/** Clay prop PNGs. Labels stay live UI under the handle — never baked into the file. */
+export const CUBETAS_BUCKET_SRC = {
+  subjunctive: "cubetas/bucket-subjunctive.png",
+  indicative: "cubetas/bucket-indicative.png",
+};
 
 export const CUBETAS_BUCKETS = ["subjunctive", "indicative"];
 

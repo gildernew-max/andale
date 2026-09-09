@@ -32,9 +32,21 @@ import { shouldPlayWinBounce } from "./winBounce.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
 import {
+  CUBETAS_BIRD_PX,
+  CUBETAS_BUCKET_SRC,
   CUBETAS_BUCKETS,
+  CUBETAS_EASE_ENTER,
+  CUBETAS_EASE_EXIT,
+  CUBETAS_EASE_LIFT,
+  CUBETAS_ENTER_MS,
   CUBETAS_GEM,
+  CUBETAS_GLOW_CREAM,
+  CUBETAS_GLOW_TERRACOTTA,
+  CUBETAS_GRAB_MS,
   CUBETAS_SHAKE_MS,
+  CUBETAS_SQUASH,
+  CUBETAS_SQUASH_MS,
+  CUBETAS_TILT_DEG,
   CUBETAS_WIN_MS,
   CUBETAS_XP,
   advanceCubetasReveal,
@@ -1675,7 +1687,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
         </div>
       ) : (
         <>
-          <div style={{ position: "relative", minHeight: 210 }}>
+          <div style={{ position: "relative", minHeight: 230, overflow: "visible" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               {CUBETAS_BUCKETS.map((id) => {
                 const active = hover === id;
@@ -1689,58 +1701,111 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
                     data-testid={`cubetas-bucket-${id}`}
                     disabled={!idle && run.status !== "wrong"}
                     onClick={() => { if (idle || run.status === "wrong") onDrop(id); }}
-                    className={takeoff ? "cubetas-bucket-fly" : wrong ? "wiggle" : undefined}
+                    className={wrong ? "wiggle" : undefined}
                     style={{
                       position: "relative",
-                      minHeight: 168,
                       overflow: "visible",
-                      border: `2px solid ${active ? D.green : D.line}`,
-                      borderBottom: `6px solid ${active ? D.greenDark : D.line}`,
-                      borderRadius: 22,
-                      background: active ? D.greenBg : D.card,
+                      border: "none",
+                      background: "transparent",
                       color: D.ink,
                       fontFamily: "inherit",
                       fontWeight: 900,
                       fontSize: 16,
                       cursor: idle ? "pointer" : "default",
-                      padding: "28px 12px 16px",
+                      padding: 0,
                     }}
                   >
-                    <svg viewBox="0 0 80 18" width="54" height="14" aria-hidden="true" style={{ position: "absolute", top: 8, left: "50%", marginLeft: -27 }}>
-                      <path d="M10 14 C10 4 70 4 70 14" fill="none" stroke={D.ink} strokeWidth="3.2" strokeLinecap="round" />
-                    </svg>
-                    {bucketLabel(id, uiLang)}
+                    <div
+                      className={takeoff ? "cubetas-bucket-fly cubetas-bucket-win-glow" : undefined}
+                      style={{
+                        position: "relative",
+                        borderRadius: 28,
+                        boxShadow: takeoff || active
+                          ? `0 0 0 3px ${CUBETAS_GLOW_CREAM}, 0 0 20px ${CUBETAS_GLOW_TERRACOTTA}99`
+                          : "none",
+                      }}
+                    >
+                      <img
+                        data-testid={`cubetas-bucket-art-${id}`}
+                        src={`${import.meta.env.BASE_URL}${CUBETAS_BUCKET_SRC[id]}`}
+                        alt=""
+                        draggable={false}
+                        style={{ display: "block", width: "100%", height: 176, objectFit: "contain", pointerEvents: "none", userSelect: "none" }}
+                      />
+                      <span
+                        data-testid={`cubetas-handle-${id}`}
+                        aria-hidden="true"
+                        style={{
+                          position: "absolute",
+                          top: "22%",
+                          left: "50%",
+                          width: CUBETAS_BIRD_PX,
+                          height: CUBETAS_BIRD_PX,
+                          marginLeft: -CUBETAS_BIRD_PX / 2,
+                          marginTop: -CUBETAS_BIRD_PX / 2,
+                          pointerEvents: "none",
+                        }}
+                      />
+                      {takeoff && (
+                        <img
+                          data-testid="cubetas-cenzontle"
+                          data-state="win"
+                          src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
+                          alt=""
+                          width={CUBETAS_BIRD_PX}
+                          height={CUBETAS_BIRD_PX}
+                          aria-hidden="true"
+                          draggable={false}
+                          key={`win-${run.scored.length}`}
+                          className="cubetas-bird-win"
+                          style={{
+                            position: "absolute",
+                            top: "22%",
+                            left: "50%",
+                            marginLeft: -CUBETAS_BIRD_PX / 2,
+                            marginTop: -CUBETAS_BIRD_PX / 2,
+                            width: CUBETAS_BIRD_PX,
+                            height: CUBETAS_BIRD_PX,
+                            objectFit: "contain",
+                            pointerEvents: "none",
+                            zIndex: 5,
+                            background: "transparent",
+                          }}
+                        />
+                      )}
+                    </div>
+                    <span style={{ display: "block", marginTop: 4 }}>{bucketLabel(id, uiLang)}</span>
                   </button>
                 );
               })}
             </div>
-            <img
-              data-testid="cubetas-cenzontle"
-              data-state={flying ? "win" : clearing ? "eso" : "offstage"}
-              src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
-              alt=""
-              width={88}
-              height={88}
-              aria-hidden="true"
-              draggable={false}
-              key={flying ? `win-${run.scored.length}` : clearing ? "eso" : "off"}
-              className={flying ? "cubetas-bird-win" : clearing ? "cubetas-eso-fly" : "cubetas-bird-off"}
-              style={{
-                position: "absolute",
-                top: flying ? -10 : 18,
-                left: flying && run.lastBucket === "subjunctive" ? "25%" : flying && run.lastBucket === "indicative" ? "75%" : "auto",
-                right: flying ? "auto" : 8,
-                marginLeft: flying ? -44 : 0,
-                width: 88,
-                height: 88,
-                objectFit: "contain",
-                pointerEvents: "none",
-                zIndex: 5,
-                background: "transparent",
-              }}
-            />
+            {!flying && (
+              <img
+                data-testid="cubetas-cenzontle"
+                data-state={clearing ? "eso" : "offstage"}
+                src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
+                alt=""
+                width={CUBETAS_BIRD_PX}
+                height={CUBETAS_BIRD_PX}
+                aria-hidden="true"
+                draggable={false}
+                key={clearing ? "eso" : "off"}
+                className={clearing ? "cubetas-eso-fly" : "cubetas-bird-off"}
+                style={{
+                  position: "absolute",
+                  top: 18,
+                  right: 8,
+                  width: CUBETAS_BIRD_PX,
+                  height: CUBETAS_BIRD_PX,
+                  objectFit: "contain",
+                  pointerEvents: "none",
+                  zIndex: 5,
+                  background: "transparent",
+                }}
+              />
+            )}
             {flying && (
-              <div data-testid="cubetas-gem-tick" className="cubetas-gem-tick" style={{ position: "absolute", left: "50%", top: 8, marginLeft: -18, zIndex: 4, display: "flex", alignItems: "center", gap: 4, fontWeight: 900, color: D.blueDark }}>
+              <div data-testid="cubetas-gem-tick" className="cubetas-gem-tick" style={{ position: "absolute", left: "50%", top: 8, marginLeft: -18, zIndex: 6, display: "flex", alignItems: "center", gap: 4, fontWeight: 900, color: CUBETAS_GLOW_TERRACOTTA }}>
                 <IcGem size={18} />+{CUBETAS_GEM}
               </div>
             )}
@@ -6223,38 +6288,35 @@ export default function App() {
         @keyframes esoRise { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
         .eso-rise { animation: esoRise .18s ease-out both; }
         .cenzontle-bounce { z-index: 80; }
-        @keyframes cubetasSquash { 0%{transform:scale(1)} 55%{transform:scale(1.07,0.86)} 100%{transform:scale(1)} }
-        .cubetas-squash { animation: cubetasSquash 80ms ease-out; }
-        @keyframes cubetasBirdWin {
-          0%{transform:translate(64px,-14px) rotate(6deg);opacity:0}
-          6%{opacity:1}
-          9%{transform:translate(40px,-8px) rotate(4deg) scaleY(.82)}
-          17.14%{transform:translate(12px,-4px) rotate(0) scaleY(1)}
-          28%{transform:translate(4px,2px) rotate(-2deg)}
-          40%{transform:translate(0,-10px) rotate(0);opacity:1}
-          46%{transform:translate(-6px,-2px) scale(.92,1.08) rotate(-4deg)}
-          100%{transform:translate(-200px,-120px) rotate(-14deg);opacity:0}
+        @keyframes cubetasSquash { 0%{transform:scale(${CUBETAS_SQUASH[0]})} 50%{transform:scale(${CUBETAS_SQUASH[1]})} 100%{transform:scale(${CUBETAS_SQUASH[2]})} }
+        .cubetas-squash { animation: cubetasSquash ${CUBETAS_SQUASH_MS}ms ease-out; }
+        @keyframes cubetasBirdEnter {
+          0%{transform:translate(148px,18px) rotate(8deg);opacity:0}
+          50%{transform:translate(72px,-20px) rotate(4deg) scaleY(.78);opacity:1}
+          100%{transform:translate(0,0) rotate(0) scaleY(1);opacity:1}
         }
-        .cubetas-bird-win { animation: cubetasBirdWin 700ms ease-out forwards; }
+        .cubetas-bird-win { animation: cubetasBirdEnter ${CUBETAS_ENTER_MS}ms ${CUBETAS_EASE_ENTER} forwards; }
         @keyframes cubetasBucketFly {
-          0%{transform:scale(1);opacity:1}
-          11%{transform:scale(1.07,0.86)}
-          17%{transform:scale(1)}
-          40%{transform:none;opacity:1}
-          46%{transform:translate(-6px,8px) scale(.92,1.08) rotate(-6deg)}
-          100%{transform:translate(-200px,-110px) rotate(-16deg);opacity:0}
+          0%{transform:scale(${CUBETAS_SQUASH[0]});opacity:1;animation-timing-function:linear}
+          20.51%{transform:scale(${CUBETAS_SQUASH[0]});opacity:1;animation-timing-function:linear}
+          29.49%{transform:scale(${CUBETAS_SQUASH[1]});animation-timing-function:linear}
+          38.46%{transform:scale(${CUBETAS_SQUASH[2]});animation-timing-function:${CUBETAS_EASE_LIFT}}
+          53.85%{transform:translate(-10px,-28px) rotate(-${CUBETAS_TILT_DEG}deg) scale(1);opacity:1;animation-timing-function:${CUBETAS_EASE_EXIT}}
+          76.92%{transform:translate(-118px,-158px) rotate(-16deg);opacity:1;animation-timing-function:${CUBETAS_EASE_EXIT}}
+          100%{transform:translate(-240px,-72px) rotate(-18deg);opacity:0}
         }
-        .cubetas-bucket-fly { animation: cubetasBucketFly 700ms ease-out forwards; }
+        .cubetas-bucket-fly { animation: cubetasBucketFly ${CUBETAS_WIN_MS}ms forwards; transform-origin: 50% 22%; }
+        .cubetas-bucket-win-glow { box-shadow: 0 0 0 3px ${CUBETAS_GLOW_CREAM}, 0 0 20px ${CUBETAS_GLOW_TERRACOTTA}99; border-radius: 28px; }
         @keyframes cubetasEsoFly {
           0%{transform:translate(140px,0);opacity:0}
           18%{opacity:1;transform:translate(40px,-6px) scaleY(.84)}
           35%{transform:translate(0,0) scaleY(1)}
           100%{transform:translate(-160px,-80px);opacity:0}
         }
-        .cubetas-eso-fly { animation: cubetasEsoFly 700ms ease-out forwards; }
+        .cubetas-eso-fly { animation: cubetasEsoFly ${CUBETAS_WIN_MS}ms ${CUBETAS_EASE_EXIT} forwards; }
         .cubetas-bird-off { transform:translate(160px,0); opacity:0; pointer-events:none; }
         @keyframes cubetasGemTick { 0%{transform:translateY(8px) scale(.6);opacity:0} 35%{transform:translateY(-4px) scale(1.1);opacity:1} 100%{transform:translateY(-18px) scale(1);opacity:0} }
-        .cubetas-gem-tick { animation: cubetasGemTick 520ms ease-out forwards; }
+        .cubetas-gem-tick { animation: cubetasGemTick 360ms ${CUBETAS_EASE_LIFT} ${CUBETAS_GRAB_MS}ms both; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
         @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick { animation:none !important; } }
         .node-btn { transition: transform .08s; }

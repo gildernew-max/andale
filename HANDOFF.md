@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-09 (Cubetas v2 — clay props + 780ms grab arc)
+
+**What changed**
+- Mood buckets are Brand CLEAR clay prop PNGs at `public/cubetas/bucket-{subjunctive,indicative}.png` (576231 / `4d67d62487e6869b448115513c8108de` · 607358 / `08286dafc4518ca36d56e5ef2d386c12`). Live UI labels sit under the handles. No white cards. No baked type.
+- Win motion lock is 780ms: enter 0–160 · handle lock + squash 160–300 (1.0→0.92→1.04) · lift + 12° 300–420 · up-left arc exit 420–780. Enter / lift / exit easings locked. One right-facing Cenzontle, 64px on the handle, wins only.
+- Winning bucket glow is cream / terracotta. Soft chrome parked. Teaching unchanged: Literal then Why; wrong shakes and returns the chip, no bird.
+
+**Why**
+- Dave rejected white-card buckets + stiff 700ms bird. Soft ETA CLEAR 2026-09-09.
+
 ## 2026-09-08 (Sobremesa Intermedio pack — words-only)
 
 **What changed**

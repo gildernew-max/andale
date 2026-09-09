@@ -1,15 +1,26 @@
 import {
+  CUBETAS_BIRD_PX,
+  CUBETAS_BUCKET_SRC,
   CUBETAS_BUCKETS,
   CUBETAS_DEAD_LABELS,
+  CUBETAS_EASE_ENTER,
+  CUBETAS_EASE_EXIT,
+  CUBETAS_EASE_LIFT,
   CUBETAS_ENTER_MS,
+  CUBETAS_EXIT_MS,
   CUBETAS_FEEDS,
   CUBETAS_GEM,
+  CUBETAS_GLOW_CREAM,
+  CUBETAS_GLOW_TERRACOTTA,
   CUBETAS_GRAB_MS,
   CUBETAS_HUB,
   CUBETAS_LABELS,
+  CUBETAS_LIFT_MS,
   CUBETAS_NEXT,
   CUBETAS_PACK_ID,
+  CUBETAS_SQUASH,
   CUBETAS_SQUASH_MS,
+  CUBETAS_TILT_DEG,
   CUBETAS_TITLE,
   CUBETAS_WIN_MS,
   CUBETAS_XP,
@@ -51,11 +62,23 @@ assert(CUBETAS_DEAD_LABELS.join(" ") === "Trigger Use Disparador Uso", "dead lab
   assert(!Object.values(CUBETAS_LABELS).some((row) => cubetasHasDeadLabel(`${row.es} ${row.en}`)), `bucket labels must not be ${dead}`);
 });
 
-assert(CUBETAS_WIN_MS >= 650 && CUBETAS_WIN_MS <= 720, "win motion 650–720ms");
-assert(CUBETAS_WIN_MS === 700, "win motion lock is 700ms");
-assert(CUBETAS_ENTER_MS === 120, "bird enters 0–120ms");
-assert(CUBETAS_GRAB_MS === 280, "handle grab by 280ms");
-assert(CUBETAS_SQUASH_MS === 80, "correct squash is 80ms");
+assert(CUBETAS_WIN_MS === 780, "win motion lock is 780ms");
+assert(CUBETAS_ENTER_MS === 160, "bird enters 0–160ms");
+assert(CUBETAS_GRAB_MS === 300, "handle lock by 300ms");
+assert(CUBETAS_SQUASH_MS === 140, "squash window is 160–300ms");
+assert(CUBETAS_LIFT_MS === 120, "lift window is 300–420ms");
+assert(CUBETAS_EXIT_MS === 360, "exit window is 420–780ms");
+assert(CUBETAS_ENTER_MS + CUBETAS_SQUASH_MS + CUBETAS_LIFT_MS + CUBETAS_EXIT_MS === CUBETAS_WIN_MS, "phases sum to 780ms");
+assert(CUBETAS_ENTER_MS + CUBETAS_SQUASH_MS === CUBETAS_GRAB_MS, "grab lock is enter+squash");
+assert(CUBETAS_BIRD_PX === 64, "Cenzontle grab target is 64px");
+assert(CUBETAS_TILT_DEG === 12, "lift tilt is 12deg");
+assert(CUBETAS_SQUASH[0] === 1 && CUBETAS_SQUASH[1] === 0.92 && CUBETAS_SQUASH[2] === 1.04, "squash 1.0→0.92→1.04");
+assert(CUBETAS_EASE_ENTER === "cubic-bezier(.22,.75,.25,1)", "enter ease");
+assert(CUBETAS_EASE_LIFT === "cubic-bezier(.2,.9,.3,1)", "lift ease");
+assert(CUBETAS_EASE_EXIT === "cubic-bezier(.45,0,.8,.45)", "exit ease");
+assert(CUBETAS_GLOW_CREAM === "#F6EFE4" && CUBETAS_GLOW_TERRACOTTA === "#C46B3A", "win glow is cream/terracotta");
+assert(CUBETAS_BUCKET_SRC.subjunctive === "cubetas/bucket-subjunctive.png", "subjunctive clay prop path");
+assert(CUBETAS_BUCKET_SRC.indicative === "cubetas/bucket-indicative.png", "indicative clay prop path");
 assert(CUBETAS_GEM === 1, "gem tick is +1");
 assert(CUBETAS_XP === 4, "clear XP matches a practice item");
 assert(CUBETAS_NEXT.en === "Next chip", "teach beat CTA is Next chip");
@@ -124,4 +147,4 @@ assert(done.status === "done" && done.xp === CUBETAS_XP && done.awarded, "clear 
 const frozen = applyCubetasDrop(hit, "subjunctive");
 assert(frozen.status === "squash" && frozen.scored.length === 1, "non-idle drop is a no-op");
 
-console.log("ok: cubetas — Ojalá que pack, two mood buckets, win 700ms, Literal then Why");
+console.log("ok: cubetas — Ojalá que pack, clay props, win 780ms grab-arc, Literal then Why");
