@@ -763,7 +763,11 @@ assert(appSrc.includes("winBounce && shouldPlayStory0Beat(session)"), "story-0 b
 assert(appSrc.includes("@keyframes story0Courier"), "story-0 780ms keyframes live in the Cubetas style sheet");
 assert(appSrc.includes("translate(-118px,-158px)"), "story-0 exit shares the Cubetas up-left arc");
 assert(appSrc.includes("session.firstStory0"), "quiet win includes first story-0 Lectura");
+assert(appSrc.includes("session.lecturaWin"), "quiet win includes later Lectura static WinPerch");
+assert(appSrc.includes("shouldArmLecturaWin"), "later Lectura claim arms static WinPerch");
+assert(appSrc.includes("shouldPlayLecturaWin(session)"), "later Lectura preloads Cenzontle for the perch");
 assert(appSrc.includes("story-0-win"), "story-0 ¡Eso! heading is testable");
+assert(appSrc.includes("lectura-win"), "later Lectura ¡Eso! heading is testable");
 assert(appSrc.includes("{!quietWin && <Confetti"), "first-win mutes confetti so the courier is visible");
 assert(appSrc.includes("{!quietWin && ("), "first-win hides the party-coach row");
 assert(appSrc.includes("data-testid={winTestId}"), "¡Eso! heading stays the existing win test id");

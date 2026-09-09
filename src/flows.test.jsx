@@ -940,7 +940,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("win-bounce")).toBeNull();
   });
 
-  it("later Lectura stories do not replay the story-0 Cenzontle beat", async () => {
+  it("later Lectura stories show WinPerch static only — no 780ms beat", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
     const user = await boot();
@@ -953,11 +953,40 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /El tranvía y Diego/ }));
     await user.click(screen.getByRole("button", { name: /Viva la vida/ }));
     await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
-    await waitFor(() => expect(screen.getByRole("button", { name: /XP ya reclamado|XP already claimed/ })).toBeTruthy());
+    await waitFor(() => {
+      expect(screen.getByTestId("lectura-win")).toBeTruthy();
+      expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    });
+    expect(screen.getByTestId("lectura-win").textContent).toBe("¡Eso!");
+    expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
+    expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
+    expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
+    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
     expect(screen.queryByTestId("story-0-win")).toBeNull();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
-    expect(screen.getByTestId("story-tip")).toBeTruthy();
+    expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
+    expect(document.querySelectorAll(".jump").length).toBe(0);
+    expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("lectura-win").textContent).toBe("That's it."));
+    expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
+    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
+    await user.click(screen.getByTestId("lectura-win-continue"));
+    await awaitHome();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const again = screen.getAllByRole("button", { name: /La casa azul/ });
+    await user.click(again[again.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    await finishStoryPages(user);
+    await user.click(screen.getByRole("button", { name: /Porque era a quien mejor conocía/ }));
+    await user.click(screen.getByRole("button", { name: /El tranvía y Diego/ }));
+    await user.click(screen.getByRole("button", { name: /Viva la vida/ }));
+    expect(screen.getByRole("button", { name: /XP ya reclamado|XP already claimed/ })).toBeTruthy();
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
+    expect(screen.queryByTestId("lectura-win")).toBeNull();
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
+    expect(screen.queryByTestId("win-perch")).toBeNull();
   });
 
   it("Lectura Wave B stills resolve via BASE_URL for story-3 and story-9", async () => {

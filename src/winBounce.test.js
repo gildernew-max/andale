@@ -13,7 +13,9 @@ import {
   STORY0_ID,
   STORY0_WIN_EN,
   STORY0_WIN_ES,
+  shouldArmLecturaWin,
   shouldArmStory0Beat,
+  shouldPlayLecturaWin,
   shouldPlayStory0Beat,
   shouldPlayWinBounce,
   story0WinCopy,
@@ -44,6 +46,7 @@ assert(!shouldPlayWinBounce({}), "empty session does not play the bounce");
 assert(!shouldPlayWinBounce(null), "missing session does not play the bounce");
 assert(!shouldPlayWinBounce({ todaySceneId: "taqueria" }), "today scene alone is not the first-win gate");
 assert(!shouldPlayWinBounce({ firstStory0: true, storyId: "story-0" }), "story-0 uses the 780ms beat, not the 720ms courier");
+assert(!shouldPlayWinBounce({ lecturaWin: true, storyId: "story-1" }), "later Lectura uses static WinPerch, not the 720ms courier");
 
 assert(STORY0_ID === "story-0", "beat is locked to Lectura story-0");
 assert(STORY0_BEAT_MS === 780 && STORY0_BEAT_MS === CUBETAS_WIN_MS, "story-0 beat is the Cubetas v2 780ms lock");
@@ -69,6 +72,14 @@ assert(!shouldArmStory0Beat({ storyId: "story-1", pagesSeen: story0Pages, pageCo
 assert(!shouldArmStory0Beat({ storyId: "story-2", pagesSeen: [0, 1, 2, 3, 4, 5], pageCount: 6 }), "later stories do not arm the beat");
 assert(!shouldArmStory0Beat({}), "missing story id does not arm the beat");
 
+assert(shouldArmLecturaWin({ storyId: "story-1" }), "first story-1 claim arms static WinPerch");
+assert(shouldArmLecturaWin({ storyId: "story-2", claimed: false }), "first story-2 claim arms static WinPerch");
+assert(shouldArmLecturaWin({ storyId: "story-9" }), "later Lectura stories arm static WinPerch");
+assert(!shouldArmLecturaWin({ storyId: STORY0_ID }), "story-0 does not arm static-only WinPerch");
+assert(!shouldArmLecturaWin({ storyId: "story-1", claimed: true }), "already-claimed later story does not replay");
+assert(!shouldArmLecturaWin({}), "missing story id does not arm later Lectura win");
+assert(!shouldArmLecturaWin({ storyId: "hoy" }), "non-Lectura id does not arm later Lectura win");
+
 assert(shouldPlayStory0Beat({ firstStory0: true, storyId: "story-0" }), "done screen plays story-0 beat");
 assert(!shouldPlayStory0Beat({ firstStory0: true, storyId: "story-1" }), "firstStory0 on another id is not story-0");
 assert(!shouldPlayStory0Beat({ firstStory0: true }), "missing storyId does not play");
@@ -78,6 +89,18 @@ assert(!shouldPlayStory0Beat({ firstDoctora: true }), "Doctora uses the 720ms co
 assert(!shouldPlayStory0Beat({ esoWin: true, storyId: "story-0" }), "esoWin stamp is not the story-0 gate");
 assert(!shouldPlayStory0Beat(null), "missing session does not play story-0 beat");
 assert(!shouldPlayStory0Beat({}), "empty session does not play story-0 beat");
+assert(!shouldPlayStory0Beat({ lecturaWin: true, storyId: "story-1" }), "later Lectura win is not the 780ms beat");
+
+assert(shouldPlayLecturaWin({ lecturaWin: true, storyId: "story-1" }), "done screen plays later Lectura WinPerch");
+assert(shouldPlayLecturaWin({ lecturaWin: true, storyId: "story-2" }), "story-2 is a later Lectura win");
+assert(!shouldPlayLecturaWin({ lecturaWin: true, storyId: STORY0_ID }), "story-0 id is not the later-story perch gate");
+assert(!shouldPlayLecturaWin({ lecturaWin: true }), "missing storyId does not play later Lectura win");
+assert(!shouldPlayLecturaWin({ storyId: "story-1" }), "story-1 id without lecturaWin does not play");
+assert(!shouldPlayLecturaWin({ firstStory0: true, storyId: "story-0" }), "story-0 beat is not later Lectura WinPerch");
+assert(!shouldPlayLecturaWin({ firstHoy: true }), "Hoy uses the 720ms courier, not later Lectura WinPerch");
+assert(!shouldPlayLecturaWin({ firstDoctora: true }), "Doctora uses the 720ms courier, not later Lectura WinPerch");
+assert(!shouldPlayLecturaWin(null), "missing session does not play later Lectura win");
+assert(!shouldPlayLecturaWin({}), "empty session does not play later Lectura win");
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bounceSrc = readFileSync(join(here, "WinBounce.jsx"), "utf8");
@@ -129,7 +152,13 @@ assert(appSrc.includes("<Story0Beat"), "story-0 mounts the Cubetas-family beat")
 assert(appSrc.includes("session.firstStory0"), "quiet win includes first story-0");
 assert(appSrc.includes("story-0-win"), "story-0 win heading is testable");
 assert(appSrc.includes("story-0-win-continue"), "story-0 Continue is testable");
-assert(appSrc.includes("if (!playStory0) setBurst"), "story-0 claim skips the burst so confetti stays muted");
+assert(appSrc.includes("if (!playStory0 && !playLecturaWin) setBurst"), "Lectura claim skips the burst so confetti stays muted");
+assert(appSrc.includes("shouldArmLecturaWin"), "claimStory arms later Lectura static WinPerch");
+assert(appSrc.includes("session.lecturaWin"), "quiet win includes later Lectura");
+assert(appSrc.includes("lectura-win"), "later Lectura win heading is testable");
+assert(appSrc.includes("lectura-win-continue"), "later Lectura Continue is testable");
+assert(appSrc.includes("playLecturaWin"), "later stories go to the done screen without the 780ms beat");
+assert(appSrc.includes("if (playStory0) {\n        winBouncePlayed.current = true;\n        setWinBounce(true);"), "only the story-0 path arms the 780ms overlay");
 
 const story0Src = bounceSrc;
 assert(story0Src.includes("data-testid=\"story-0-beat\""), "story-0 overlay is testable");
@@ -162,3 +191,4 @@ assert(!/confetti|hover|idleBob|wink|look-back|lookBack/i.test(story0Src.slice(s
 
 console.log("ok: Cenzontle first-win bounce — on-screen fly-in / points drop / perch.");
 console.log("ok: story-0 Cenzontle 780ms beat — Cubetas v2 family + WinPerch.");
+console.log("ok: later Lectura WinPerch static — no 780ms motion.");
