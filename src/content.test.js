@@ -760,6 +760,8 @@ assert(appSrc.includes("shouldArmStory0Beat"), "story-0 first claim arms the 780
 assert(appSrc.includes("shouldPlayStory0Beat(session)"), "done screen plays the story-0 beat from the session flag");
 assert(appSrc.includes("<Story0Beat"), "done screen mounts the story-0 Cubetas-family overlay");
 assert(appSrc.includes("winBounce && shouldPlayStory0Beat(session)"), "story-0 beat plays in the perch slot");
+assert(appSrc.includes("@keyframes story0Courier"), "story-0 780ms keyframes live in the Cubetas style sheet");
+assert(appSrc.includes("translate(-118px,-158px)"), "story-0 exit shares the Cubetas up-left arc");
 assert(appSrc.includes("session.firstStory0"), "quiet win includes first story-0 Lectura");
 assert(appSrc.includes("story-0-win"), "story-0 ¡Eso! heading is testable");
 assert(appSrc.includes("{!quietWin && <Confetti"), "first-win mutes confetti so the courier is visible");

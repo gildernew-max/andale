@@ -6349,6 +6349,15 @@ export default function App() {
         }
         .cubetas-eso-fly { animation: cubetasEsoFly ${CUBETAS_WIN_MS}ms ${CUBETAS_EASE_EXIT} forwards; }
         .cubetas-bird-off { transform:translate(160px,0); opacity:0; pointer-events:none; }
+        @keyframes story0Courier {
+          0%{transform:translate(160px,8px) rotate(-10deg);opacity:1;animation-timing-function:${CUBETAS_EASE_ENTER}}
+          10.256%{transform:translate(72px,-28px) rotate(-2deg);opacity:1;animation-timing-function:${CUBETAS_EASE_ENTER}}
+          20.513%{transform:translate(0,0) rotate(4deg);opacity:1}
+          38.462%{transform:translate(0,0) rotate(4deg);opacity:1}
+          53.846%{transform:translate(0,0) rotate(0deg);opacity:1;animation-timing-function:${CUBETAS_EASE_EXIT}}
+          76.923%{transform:translate(-118px,-158px) rotate(-16deg);opacity:1;animation-timing-function:${CUBETAS_EASE_EXIT}}
+          100%{transform:translate(-240px,-72px) rotate(-18deg);opacity:0}
+        }
         @keyframes cubetasGemTick { 0%{transform:translateY(8px) scale(.6);opacity:0} 35%{transform:translateY(-4px) scale(1.1);opacity:1} 100%{transform:translateY(-18px) scale(1);opacity:0} }
         .cubetas-gem-tick { animation: cubetasGemTick 360ms ${CUBETAS_EASE_LIFT} ${CUBETAS_GRAB_MS}ms both; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
