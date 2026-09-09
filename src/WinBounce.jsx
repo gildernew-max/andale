@@ -1,5 +1,14 @@
 import React, { useEffect, useRef } from "react";
-import { WIN_BOUNCE_MS, WIN_BOUNCE_SRC } from "./winBounce.js";
+import {
+  STORY0_BEAT_MS,
+  STORY0_DROP_MS,
+  STORY0_EASE_CHIP,
+  STORY0_EASE_ENTER,
+  STORY0_EASE_EXIT,
+  STORY0_ENTER_MS,
+  WIN_BOUNCE_MS,
+  WIN_BOUNCE_SRC,
+} from "./winBounce.js";
 
 function prefersReducedMotion() {
   try {
@@ -174,6 +183,110 @@ export function WinBounce({ onComplete }) {
         <XpChip testId="win-bounce-chip" />
       </div>
       <span data-testid="win-bounce-spark" className="cenzontle-spark" />
+    </div>
+  );
+}
+
+/** Story-0 only. Cubetas v2 780ms grab-arc family. Chip + words stay; bird exits. Then WinPerch. */
+export function Story0Beat({ onComplete }) {
+  const doneRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  const reduce = prefersReducedMotion();
+
+  useEffect(() => {
+    const finish = () => {
+      if (doneRef.current) return;
+      doneRef.current = true;
+      onCompleteRef.current?.();
+    };
+    if (reduce) {
+      finish();
+      return undefined;
+    }
+    const t = setTimeout(finish, STORY0_BEAT_MS);
+    return () => clearTimeout(t);
+  }, [reduce]);
+
+  const src = markSrc();
+
+  return (
+    <div data-testid="story-0-beat" aria-hidden="true" className="story0-beat">
+      <style>{`
+        ${CHIP_CSS}
+        .story0-beat { position: fixed; inset: 0; pointer-events: none; z-index: 80; overflow: visible; }
+        .story0-bird {
+          position: absolute; left: 50%; top: 22%; width: 168px; height: 168px;
+          transform: translate(-50%, -50%) rotate(4deg);
+          transform-origin: 50% 50%;
+          animation: story0Courier ${STORY0_BEAT_MS}ms ${STORY0_EASE_ENTER} both;
+        }
+        .story0-bird-img {
+          display: block; width: 168px; height: 168px; object-fit: contain;
+        }
+        .story0-wing {
+          position: absolute; left: 18%; top: 38%; width: 52px; height: 34px;
+          transform-origin: 12% 35%;
+          animation: story0Wing ${STORY0_ENTER_MS}ms ease-out both;
+        }
+        .story0-chip-track {
+          position: absolute; left: 50%; top: 22%;
+          transform: translate(-50%, 78px);
+          opacity: 1;
+          animation: story0ChipFall ${STORY0_DROP_MS}ms ${STORY0_EASE_CHIP} ${STORY0_ENTER_MS}ms both;
+        }
+        .story0-chip-track .cenzontle-chip {
+          animation: story0ChipHit 90ms cubic-bezier(.2,.8,.3,1) ${STORY0_ENTER_MS + STORY0_DROP_MS}ms both;
+        }
+        @keyframes story0Courier {
+          0% { transform: translate(36vw, -18%) rotate(-10deg); opacity: 1; animation-timing-function: ${STORY0_EASE_ENTER}; }
+          10.256% { transform: translate(10vw, -72%) rotate(-2deg); opacity: 1; animation-timing-function: ${STORY0_EASE_ENTER}; }
+          20.513% { transform: translate(-50%, -50%) rotate(4deg); opacity: 1; animation-timing-function: linear; }
+          38.462% { transform: translate(-50%, -50%) rotate(4deg); opacity: 1; animation-timing-function: ease-out; }
+          53.846% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; animation-timing-function: ${STORY0_EASE_EXIT}; }
+          76.923% { transform: translate(calc(-50% - 118px), calc(-50% - 158px)) rotate(-16deg); opacity: 1; animation-timing-function: ${STORY0_EASE_EXIT}; }
+          100% { transform: translate(calc(-50% - 240px), calc(-50% - 72px)) rotate(-18deg); opacity: 0; }
+        }
+        @keyframes story0Wing {
+          0% { transform: rotate(-20deg); }
+          55% { transform: rotate(15deg); }
+          100% { transform: rotate(0deg); }
+        }
+        @keyframes story0ChipFall {
+          from { transform: translate(-50%, 8px); opacity: 1; }
+          to { transform: translate(-50%, 78px); opacity: 1; }
+        }
+        @keyframes story0ChipHit {
+          0% { transform: scale(.9); }
+          50% { transform: scale(1.08); }
+          100% { transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .story0-bird, .story0-wing, .story0-chip-track, .story0-chip-track .cenzontle-chip {
+            animation: none !important;
+          }
+          .story0-bird { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
+          .story0-chip-track { transform: translate(-50%, 78px); opacity: 1; }
+        }
+      `}</style>
+      <div className="story0-bird" data-testid="story-0-beat-bird-layer">
+        <img
+          data-testid="story-0-beat-bird"
+          src={src}
+          alt=""
+          width={168}
+          height={168}
+          className="story0-bird-img"
+        />
+        <svg data-testid="story-0-beat-wing" className="story0-wing" viewBox="0 0 52 34" aria-hidden="true">
+          <polygon points="6,8 46,2 50,16 38,28 8,22" fill="#1B2A4A" />
+          <polygon points="10,12 42,8 44,16 16,20" fill="#F4EDE0" />
+          <polygon points="12,18 40,16 34,26 14,24" fill="#C45C48" />
+        </svg>
+      </div>
+      <div className="story0-chip-track">
+        <XpChip testId="story-0-beat-chip" />
+      </div>
     </div>
   );
 }
