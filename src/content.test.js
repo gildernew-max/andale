@@ -759,6 +759,7 @@ assert(appSrc.includes("if (shouldPlayWinBounce(session))"), "Hoy finish arms th
 assert(appSrc.includes("shouldArmStory0Beat"), "story-0 first claim arms the 780ms beat");
 assert(appSrc.includes("shouldPlayStory0Beat(session)"), "done screen plays the story-0 beat from the session flag");
 assert(appSrc.includes("<Story0Beat"), "done screen mounts the story-0 Cubetas-family overlay");
+assert(appSrc.includes("winBounce && shouldPlayStory0Beat(session)"), "story-0 beat plays in the perch slot");
 assert(appSrc.includes("session.firstStory0"), "quiet win includes first story-0 Lectura");
 assert(appSrc.includes("story-0-win"), "story-0 ¡Eso! heading is testable");
 assert(appSrc.includes("{!quietWin && <Confetti"), "first-win mutes confetti so the courier is visible");

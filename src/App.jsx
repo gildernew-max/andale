@@ -6366,9 +6366,7 @@ export default function App() {
         .tile-slot .tile { flex:1; }
       `}</style>
 
-      {winBounce && (shouldPlayStory0Beat(session)
-        ? <Story0Beat onComplete={() => setWinBounce(false)} />
-        : <WinBounce onComplete={() => setWinBounce(false)} />)}
+      {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={() => setWinBounce(false)} />}
 
       {/* ---------- TOP STAT BAR ---------- */}
       {!inLesson && (
@@ -9357,8 +9355,10 @@ export default function App() {
           </div>
           )}
           {quietWin && (
-            <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {!winBounce && <WinPerch />}
+            <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
+              {winBounce && shouldPlayStory0Beat(session)
+                ? <Story0Beat onComplete={() => setWinBounce(false)} />
+                : !winBounce ? <WinPerch /> : null}
             </div>
           )}
           {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
