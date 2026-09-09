@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-09 (WinPerch static on later Lectura)
+
+**What changed**
+- Later Lectura stories (1+) show the same static `WinPerch` after claim as story-0 after the beat: one right-facing Cenzontle + XP chip + George words ES `¡Eso!` · EN `That's it.` until Continue.
+- The 780ms grab→arc stay story-0 only. No enter/drop/hold/exit, no wing stroke, no courier on stories 1+.
+- Confetti + jumping coaches muted. Soft chrome parked.
+
+**Why**
+- Brand CLEAR later-story win. Reuse the landed perch. Do not replay the story-0 beat.
+
 ## 2026-09-09 (Story-0 Cenzontle 780ms beat)
 
 **What changed**

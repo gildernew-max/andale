@@ -1,4 +1,4 @@
-/** First-win Cenzontle bounce + story-0 Cubetas v2 beat. Soft chrome parked. */
+/** First-win Cenzontle bounce + story-0 Cubetas v2 beat + later Lectura WinPerch. Soft chrome parked. */
 
 import {
   CUBETAS_EASE_ENTER,
@@ -31,6 +31,7 @@ export const STORY0_WIN_EN = HOY_WIN_EN;
  * Same first-win / ¡Eso! gate the done screen already uses (`quietWin`).
  * firstHoy is today's first Hoy (cold or day-2+ return). firstDoctora is first Phrase Doctor.
  * firstStory0 is the Lectura story-0 780ms beat — not this 720ms courier.
+ * lecturaWin is later Lectura static WinPerch — not this 720ms courier.
  * esoWin / todaySceneId are wider unlock stamps — do not use them here.
  */
 export function shouldPlayWinBounce(session) {
@@ -38,7 +39,7 @@ export function shouldPlayWinBounce(session) {
   return !!(session.firstHoy || session.firstDoctora);
 }
 
-/** Arm the 780ms beat only on first claim of Lectura story-0 after every page. Later stories stay quiet. */
+/** Arm the 780ms beat only on first claim of Lectura story-0 after every page. Later stories stay static. */
 export function shouldArmStory0Beat({ storyId, claimed, pagesSeen, pageCount } = {}) {
   if (storyId !== STORY0_ID || claimed) return false;
   const n = Number(pageCount) || 0;
@@ -51,6 +52,18 @@ export function shouldArmStory0Beat({ storyId, claimed, pagesSeen, pageCount } =
 export function shouldPlayStory0Beat(session) {
   if (!session || typeof session !== "object") return false;
   return !!(session.firstStory0 && session.storyId === STORY0_ID);
+}
+
+/** Static WinPerch on first claim of later Lectura. No 780ms enter/drop/hold/exit. */
+export function shouldArmLecturaWin({ storyId, claimed } = {}) {
+  if (!storyId || claimed || storyId === STORY0_ID) return false;
+  return String(storyId).startsWith("story-");
+}
+
+/** Live done-screen gate. Later Lectura static perch — never the 780ms beat or Hoy/Doctora courier. */
+export function shouldPlayLecturaWin(session) {
+  if (!session || typeof session !== "object") return false;
+  return !!(session.lecturaWin && session.storyId && session.storyId !== STORY0_ID);
 }
 
 export function story0WinCopy(lang) {

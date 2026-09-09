@@ -28,7 +28,7 @@ import {
   sobremesaTips,
   sobremesaTipsLabel,
 } from "./sobremesa.js";
-import { shouldArmStory0Beat, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
+import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { Story0Beat, WinBounce, WinPerch } from "./WinBounce.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
 import {
@@ -5276,8 +5276,12 @@ export default function App() {
       pagesSeen: storyPagesSeenRef.current[story.id] || [],
       pageCount: story.paragraphs.length,
     });
+    const playLecturaWin = shouldArmLecturaWin({
+      storyId: story.id,
+      claimed: prog.stories?.[story.id],
+    });
     beep("win");
-    if (!playStory0) setBurst(Date.now());
+    if (!playStory0 && !playLecturaWin) setBurst(Date.now());
     const earned = 5 + correct * 10;
     const t = todayStr();
     save((prev) => {
@@ -5304,9 +5308,10 @@ export default function App() {
         storyCollectibles: { ...(prev.storyCollectibles || {}), [story.id]: true },
       };
     });
-    if (playStory0) {
+    if (playStory0 || playLecturaWin) {
       setSession({
-        firstStory0: true,
+        firstStory0: playStory0,
+        lecturaWin: playLecturaWin,
         storyId: story.id,
         title: story.title,
         host: "rafa",
@@ -5317,8 +5322,10 @@ export default function App() {
       });
       setLessonStats({ right: correct, wrong: story.questions.length - correct });
       setScreenQuip("");
-      winBouncePlayed.current = true;
-      setWinBounce(true);
+      if (playStory0) {
+        winBouncePlayed.current = true;
+        setWinBounce(true);
+      }
       setScreen("done");
     }
   };
@@ -5867,7 +5874,7 @@ export default function App() {
     return () => clearTimeout(arm);
   }, [showSoftPaywall]);
   useEffect(() => {
-    if (!shouldPlayWinBounce(session) && !shouldPlayStory0Beat(session)) return undefined;
+    if (!shouldPlayWinBounce(session) && !shouldPlayStory0Beat(session) && !shouldPlayLecturaWin(session)) return undefined;
     const img = new Image();
     img.src = `${import.meta.env.BASE_URL}mascot/cenzontle.png`;
     return undefined;
@@ -9348,9 +9355,9 @@ export default function App() {
         const perfect = lessonStats.wrong === 0;
         const milestones = [3, 7, 14, 30, 50, 100, 365];
         const hitMilestone = milestones.includes(prog.streak);
-        const quietWin = session.firstHoy || session.firstDoctora || session.firstStory0;
-        const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : undefined;
-        const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : undefined;
+        const quietWin = session.firstHoy || session.firstDoctora || session.firstStory0 || session.lecturaWin;
+        const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : session.lecturaWin ? "lectura-win" : undefined;
+        const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : session.lecturaWin ? "lectura-win-continue" : undefined;
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
           {!quietWin && <Confetti count={perfect ? 160 : 70} />}
