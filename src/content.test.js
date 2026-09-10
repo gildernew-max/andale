@@ -755,13 +755,15 @@ assert(appSrc.includes("shouldPlayWinBounce(session)"), "bounce triggers on the 
 assert(appSrc.includes("<WinBounce"), "done screen mounts the bounce overlay");
 assert(appSrc.includes("<WinPerch"), "first-win screen keeps a perched Cenzontle after the courier");
 assert(appSrc.includes("img.src = `${import.meta.env.BASE_URL}mascot/cenzontle.png`"), "first-win session preloads the live Cenzontle mark");
-assert(appSrc.includes("if (shouldPlayWinBounce(session) || shouldPlayHoyBeat(session))"), "Hoy finish arms the 780ms beat in the same turn as screen done");
+assert(appSrc.includes("if (shouldPlayWinBounce(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session))"), "Hoy / Doctora finish arms the 780ms beat in the same turn as screen done");
 assert(appSrc.includes("shouldPlayHoyBeat(session)"), "firstHoy plays the Cubetas 780ms beat");
+assert(appSrc.includes("shouldPlayDoctoraBeat(session)"), "firstDoctora plays the Cubetas 780ms beat");
 assert(appSrc.includes("shouldArmStory0Beat"), "story-0 first claim arms the 780ms beat");
 assert(appSrc.includes("shouldPlayStory0Beat(session)"), "done screen plays the story-0 beat from the session flag");
 assert(appSrc.includes("<Story0Beat"), "done screen mounts the story-0 Cubetas-family overlay");
 assert(appSrc.includes("shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session)"), "firstHoy reuses the story-0 overlay");
-assert(appSrc.includes("winBounce && (shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session))"), "story-0 / firstHoy beat plays in the perch slot");
+assert(appSrc.includes("shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session)"), "firstDoctora reuses the story-0 overlay");
+assert(appSrc.includes("winBounce && (shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session))"), "story-0 / firstHoy / firstDoctora beat plays in the perch slot");
 assert(appSrc.includes("@keyframes story0Courier"), "story-0 780ms keyframes live in the Cubetas style sheet");
 assert(appSrc.includes("translate(-118px,-158px)"), "story-0 exit shares the Cubetas up-left arc");
 assert(appSrc.includes("session.firstStory0"), "quiet win includes first story-0 Lectura");

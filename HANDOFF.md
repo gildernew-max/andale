@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-10 (Phrase Doctor first-win Cenzontle 780ms)
+
+**What changed**
+- First Phrase Doctor complete of the day (`firstDoctora`) plays the Cubetas / story-0 / Hoy 780ms Cenzontle beat, then `WinPerch` until Continue.
+- The 720ms courier is retired on firstDoctora. Later Doctora the same day does not replay the flight. Hoy / story-0 / Cubetas gates stay their own.
+- One right-facing `mascot/cenzontle.png`. George words ES `¡Eso!` · EN `That's it.` — live UI heading, not baked into the PNG, no second caption under the bird.
+- Confetti + jumping coaches muted for the beat. Soft chrome parked.
+
+**Why**
+- Brand CLEAR Phrase Doctor first-win. Same Cubetas v2 family as Hoy / story-0. Do not merge until Varys walk.
+
 ## 2026-09-09 (WinPerch static on later Lectura)
 
 **What changed**
