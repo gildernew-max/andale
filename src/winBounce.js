@@ -1,4 +1,4 @@
-/** First-win Cenzontle bounce + story-0 Cubetas v2 beat + later Lectura WinPerch. Soft chrome parked. */
+/** First-win Cenzontle: firstHoy + story-0 Cubetas v2 780ms beat, Doctora 720ms courier, later Lectura WinPerch. Soft chrome parked. */
 
 import {
   CUBETAS_EASE_ENTER,
@@ -28,15 +28,21 @@ export const STORY0_WIN_ES = HOY_WIN_ES;
 export const STORY0_WIN_EN = HOY_WIN_EN;
 
 /**
- * Same first-win / ¡Eso! gate the done screen already uses (`quietWin`).
- * firstHoy is today's first Hoy (cold or day-2+ return). firstDoctora is first Phrase Doctor.
- * firstStory0 is the Lectura story-0 780ms beat — not this 720ms courier.
- * lecturaWin is later Lectura static WinPerch — not this 720ms courier.
+ * Phrase Doctor first-win / ¡Eso! 720ms courier.
+ * firstHoy is the Cubetas 780ms beat — not this courier.
+ * firstStory0 is the Lectura story-0 780ms beat — not this courier.
+ * lecturaWin is later Lectura static WinPerch — not this courier.
  * esoWin / todaySceneId are wider unlock stamps — do not use them here.
  */
 export function shouldPlayWinBounce(session) {
   if (!session || typeof session !== "object") return false;
-  return !!(session.firstHoy || session.firstDoctora);
+  return !!session.firstDoctora;
+}
+
+/** Live done-screen gate. firstHoy only — Cubetas v2 780ms, then WinPerch. Later Hoy same day does not replay. */
+export function shouldPlayHoyBeat(session) {
+  if (!session || typeof session !== "object") return false;
+  return !!session.firstHoy;
 }
 
 /** Arm the 780ms beat only on first claim of Lectura story-0 after every page. Later stories stay static. */
@@ -60,7 +66,7 @@ export function shouldArmLecturaWin({ storyId, claimed } = {}) {
   return String(storyId).startsWith("story-");
 }
 
-/** Live done-screen gate. Later Lectura static perch — never the 780ms beat or Hoy/Doctora courier. */
+/** Live done-screen gate. Later Lectura static perch — never the 780ms beat or Doctora courier. */
 export function shouldPlayLecturaWin(session) {
   if (!session || typeof session !== "object") return false;
   return !!(session.lecturaWin && session.storyId && session.storyId !== STORY0_ID);
