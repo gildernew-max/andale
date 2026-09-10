@@ -28,7 +28,7 @@ import {
   sobremesaTips,
   sobremesaTipsLabel,
 } from "./sobremesa.js";
-import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
+import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { Story0Beat, WinBounce, WinPerch } from "./WinBounce.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
 import {
@@ -5242,7 +5242,7 @@ export default function App() {
     });
     if (rivalOut) { setRivalOutcome(rivalOut); setScreen("rivalDone"); }
     else {
-      if (shouldPlayWinBounce(session)) {
+      if (shouldPlayWinBounce(session) || shouldPlayHoyBeat(session)) {
         winBouncePlayed.current = true;
         setWinBounce(true);
       }
@@ -5874,7 +5874,7 @@ export default function App() {
     return () => clearTimeout(arm);
   }, [showSoftPaywall]);
   useEffect(() => {
-    if (!shouldPlayWinBounce(session) && !shouldPlayStory0Beat(session) && !shouldPlayLecturaWin(session)) return undefined;
+    if (!shouldPlayWinBounce(session) && !shouldPlayStory0Beat(session) && !shouldPlayHoyBeat(session) && !shouldPlayLecturaWin(session)) return undefined;
     const img = new Image();
     img.src = `${import.meta.env.BASE_URL}mascot/cenzontle.png`;
     return undefined;
@@ -5886,7 +5886,7 @@ export default function App() {
       return;
     }
     if (winBouncePlayed.current) return;
-    if (!shouldPlayWinBounce(session) && !shouldPlayStory0Beat(session)) return;
+    if (!shouldPlayWinBounce(session) && !shouldPlayStory0Beat(session) && !shouldPlayHoyBeat(session)) return;
     winBouncePlayed.current = true;
     setWinBounce(true);
   }, [screen, session]);
@@ -9372,7 +9372,7 @@ export default function App() {
           )}
           {quietWin && (
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
-              {winBounce && shouldPlayStory0Beat(session)
+              {winBounce && (shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session))
                 ? <Story0Beat onComplete={() => setWinBounce(false)} />
                 : !winBounce ? <WinPerch /> : null}
             </div>

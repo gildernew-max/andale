@@ -187,7 +187,7 @@ export function WinBounce({ onComplete }) {
   );
 }
 
-/** Story-0 only. Cubetas v2 780ms grab-arc in the perch slot. Chip + words stay; bird exits. Then WinPerch. */
+/** Cubetas v2 780ms grab-arc in the perch slot. Story-0 and firstHoy. Chip + words stay; bird exits. Then WinPerch. */
 export function Story0Beat({ onComplete }) {
   const doneRef = useRef(false);
   const onCompleteRef = useRef(onComplete);

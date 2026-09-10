@@ -2020,8 +2020,15 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
-    await waitFor(() => expect(screen.getByTestId("hoy-win")).toBeTruthy());
+    await waitFor(() => {
+      expect(screen.getByTestId("hoy-win")).toBeTruthy();
+      expect(screen.getByTestId("story-0-beat")).toBeTruthy();
+    });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
+    expect(screen.getByTestId("story-0-beat-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
+    expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
+    expect(document.querySelectorAll(".jump").length).toBe(0);
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
@@ -2198,12 +2205,14 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => {
       expect(screen.getByTestId("hoy-win")).toBeTruthy();
-      expect(screen.getByTestId("win-bounce")).toBeTruthy();
+      expect(screen.getByTestId("story-0-beat")).toBeTruthy();
     });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-    expect(screen.getByTestId("win-bounce-chip")).toBeTruthy();
+    expect(screen.getByTestId("story-0-beat-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("story-0-beat-chip")).toBeTruthy();
     expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
+    expect(screen.getByTestId("story-0-beat").textContent).not.toMatch(/¡Eso!|That's it\./);
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
@@ -2211,10 +2220,17 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
     expect(document.body.textContent).not.toMatch(/¡IMPECABLE!|FLAWLESS!/);
     expect(document.body.textContent).not.toMatch(/beat 2 must not run|beat 5 must not run/);
+    await waitFor(() => {
+      expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+      expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
+    }, { timeout: 1500 });
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
+    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /You won!|¡Ganaste!|Lesson complete/ })).toBeNull();
+    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
     await waitFor(() => {
@@ -2296,18 +2312,21 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => {
       expect(screen.getByTestId("hoy-win")).toBeTruthy();
-      expect(screen.getByTestId("win-bounce")).toBeTruthy();
+      expect(screen.getByTestId("story-0-beat")).toBeTruthy();
     });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-    expect(screen.getByTestId("win-bounce-chip")).toBeTruthy();
+    expect(screen.getByTestId("story-0-beat-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("story-0-beat-chip")).toBeTruthy();
     expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
     await waitFor(() => {
       expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
       expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
     }, { timeout: 1500 });
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
+    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
   });
@@ -3607,9 +3626,57 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
     expect(screen.queryByTestId("hoy-win")).toBeNull();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
     expect(screen.queryByRole("heading", { name: /^¡Eso!$|^That's it\.$/ })).toBeNull();
     expect(document.body.textContent).toMatch(/later Hoy beat 2/);
     expect(document.body.textContent).not.toMatch(/¡Eso!|That's it\./);
+  });
+
+  it("later Hoy same day does not replay the 780ms Cenzontle beat", async () => {
+    const today = localToday();
+    cleanup();
+    seedProgress({ streak: 1, lastDay: today, paywallSeen: true });
+    const laterMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["contraste"],
+      answer: "contraste",
+      shuffledChoices: ["contraste"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Mostrador en caos",
+        unitId: "_today:airport",
+        todaySceneId: "airport",
+        firstHoy: false,
+        host: "diego",
+        questions: [
+          laterMc("«Sin embargo» introduce:"),
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const choices = document.querySelectorAll(".choice-card");
+    expect(choices.length).toBeGreaterThan(0);
+    await user.click(choices[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByRole("heading", { name: /Lección completada|Lesson complete/ })).toBeTruthy());
+    expect(screen.queryByTestId("hoy-win")).toBeNull();
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
+    expect(screen.queryByTestId("win-perch")).toBeNull();
+    expect(screen.queryByRole("heading", { name: /^¡Eso!$|^That's it\.$/ })).toBeNull();
   });
 
   it("first-session Doctora wins early (≤4 beats) with ¡Eso! / That's it.", async () => {
@@ -3637,6 +3704,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
     expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
