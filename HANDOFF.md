@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-11 (Soft paywall conversion look + chrome bank)
+
+**What changed**
+- Soft paywall (post first-win / streak arm) is the conversion look: one static right-facing Cenzontle (`LogoMark` / `mascot/cenzontle.png`) above the title. WinPerch family, **no** 780ms flight, no second bird, no coach crowd in the modal.
+- George words: ES `Sigue con tu racha` / `Escenas, Cubetas y la doctora — sin techo.` / `Un año` / `Un mes` / `Seguir gratis`. EN `Keep your streak` / `Stories, Cubetas, and Phrase Doctor — no ceiling.` / `One year` / `One month` / `Continue free`. No prices in CTA labels. Honesty stays the existing Coin line (`Práctica · sin cobro todavía` / `Practice · no charge yet`).
+- Hierarchy: title loud → benefit quiet → annual green filled → monthly sage outline → continue free quietest text. Cream/white card, sage accent. Hub / nav untouched.
+- Soft chrome bank open: Perfect lesson ES `Lección perfecta — +5 XP` · EN `Perfect lesson — +5 XP` (bonus / bonus +5 XP killed). Mexicanismos unit title ES `Mexicanismos` · EN `Mexicanisms`; desc stays. Store long listing parked. Enroll / IPA out of scope.
+
+**Why**
+- Brand CLEAR soft paywall conversion look. Soft chrome bank is Perfect lesson + Mexicanismos only.
+
 ## 2026-09-10 (Phrase Doctor first-win Cenzontle 780ms)
 
 **What changed**
