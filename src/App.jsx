@@ -6256,6 +6256,21 @@ export default function App() {
     if (next === "home") setTab("camino");
   };
 
+  /** Brand CLEAR: one tap on the header lockup lands on Learn home (6-card hub + Sendero/path). Not Perfil, Lectura, last lesson, Camino-legacy-only, or splash. */
+  const goLearnHome = () => {
+    stopSpeak();
+    setConfirmExit(false);
+    setSheet(null);
+    setGuideUnit(null);
+    setDoctorOpen(false);
+    setHoyPlanOpen(false);
+    setSubjFiveOpen(false);
+    closeSobremesa();
+    setWordSel(null);
+    setScreen("home");
+    setTab("camino");
+  };
+
   const dismissSessionClose = () => {
     setScreen("home");
     setTab("camino");
@@ -6388,13 +6403,14 @@ export default function App() {
       {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={() => setWinBounce(false)} />}
 
       {/* ---------- TOP STAT BAR ---------- */}
-      {!inLesson && (
-        <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 10, background: D.card, borderBottom: `2px solid ${D.line}` }}>
-          <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <LogoMark size={34} />
-              <span style={{ fontWeight: 900, fontSize: 23, color: MARK_INK, letterSpacing: "-0.02em" }}>ándale</span>
-            </div>
+      <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 50, background: D.card, borderBottom: `2px solid ${D.line}` }}>
+        <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
+          <button type="button" data-testid="brand-home" onClick={goLearnHome}
+            style={{ display: "flex", alignItems: "center", gap: 7, border: "none", background: "none", padding: "6px 8px", margin: "-6px -8px", cursor: "pointer", fontFamily: "inherit", minWidth: 44, minHeight: 44 }}>
+            <LogoMark size={34} />
+            <span style={{ fontWeight: 900, fontSize: 23, color: MARK_INK, letterSpacing: "-0.02em" }}>ándale</span>
+          </button>
+          {!inLesson && (
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
               <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>
               <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>
@@ -6408,9 +6424,9 @@ export default function App() {
               )}
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* voice-dead banner: silence should never be mysterious */}
       {voiceDead && !inLesson && (
@@ -8130,7 +8146,7 @@ export default function App() {
       )}
 
       {(screen === "done" || screen === "failed" || screen === "rivalIntro" || screen === "rivalDone" || screen === "sessionClose") && (
-        <div style={{ position: "fixed", top: 14, right: 18, zIndex: 20 }}>
+        <div style={{ position: "fixed", top: 62, right: 18, zIndex: 20 }}>
           <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
         </div>
       )}

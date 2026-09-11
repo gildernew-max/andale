@@ -1385,6 +1385,95 @@ describe("simulated learner flows", () => {
     expect(screen.queryByRole("button", { name: /^Library$/ })).toBeNull();
     expect(document.body.textContent).not.toMatch(/para quien ya pasó lo básico/);
     expect(document.body.textContent).not.toMatch(/for people past the basics/);
+    expect(screen.getByTestId("brand-home").textContent).toMatch(/ándale/);
+    expect(screen.getByTestId("brand-home").querySelector("img")?.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+  });
+
+  const assertBrandLearnHome = () => {
+    expect(screen.getByTestId("learn-hub")).toBeTruthy();
+    assertEqualHub();
+    expect(screen.getByTestId("hub-sendero").textContent).toMatch(/Sendero/);
+    expect(screen.getByRole("button", { name: "Subjuntivo presente" })).toBeTruthy();
+    expect(screen.getByTestId("nav-camino").getAttribute("aria-current")).toBe("page");
+    expect(screen.queryByTestId("splash")).toBeNull();
+    expect(screen.queryByTestId("lesson-exit")).toBeNull();
+    expect(screen.queryByText("¿Salir de la lección?")).toBeNull();
+    expect(screen.queryByText("Leave the lesson?")).toBeNull();
+    expect(screen.getAllByTestId("brand-home")).toHaveLength(1);
+  };
+
+  it("top-left brand from Lectura lands on Learn home, not Lectura", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    await waitFor(() => expect(screen.getByTestId("nav-lectura").getAttribute("aria-current")).toBe("page"));
+    expect(screen.queryByTestId("learn-hub")).toBeNull();
+    expect(screen.getByTestId("recuerdos-cenzontle")).toBeTruthy();
+    await user.click(screen.getByTestId("brand-home"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    assertBrandLearnHome();
+    expect(screen.queryByTestId("recuerdos-map")).toBeNull();
+  });
+
+  it("top-left brand from Perfil lands on Learn home, not Perfil", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-perfil"));
+    await waitFor(() => expect(screen.getByText("Tu perfil")).toBeTruthy());
+    expect(screen.queryByTestId("learn-hub")).toBeNull();
+    await user.click(screen.getByTestId("brand-home"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    assertBrandLearnHome();
+    expect(screen.queryByText("Tu perfil")).toBeNull();
+  });
+
+  it("top-left brand from Phrase Doctor lands on Learn home", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("hub-phrase-doctor"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
+    expect(screen.getByTestId("nav-practica").getAttribute("aria-current")).toBe("page");
+    expect(screen.queryByTestId("learn-hub")).toBeNull();
+    await user.click(screen.getByTestId("brand-home"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    assertBrandLearnHome();
+    expect(screen.queryByTestId("phrase-doctor-board")).toBeNull();
+  });
+
+  it("top-left brand from a lesson lands on Learn home with no confirm", async () => {
+    const user = await boot();
+    await user.click(screen.getByRole("button", { name: "Subjuntivo presente" }));
+    await user.click(screen.getByRole("button", { name: /Start|Empezar/ }));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    expect(screen.queryByTestId("learn-hub")).toBeNull();
+    await user.click(screen.getByTestId("brand-home"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    assertBrandLearnHome();
+  });
+
+  it("top-left brand from a Lectura story lands on Learn home, not Lectura", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
+    expect(screen.queryByTestId("learn-hub")).toBeNull();
+    await user.click(screen.getByTestId("brand-home"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    assertBrandLearnHome();
+    expect(screen.queryByTestId("story-tip")).toBeNull();
+    expect(screen.queryByTestId("recuerdos-map")).toBeNull();
+  });
+
+  it("top-left brand after paywall dismiss stays on Learn home", async () => {
+    cleanup();
+    seedProgress({ streak: 1, lastDay: localToday() });
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    await user.click(screen.getByTestId("brand-home"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    assertBrandLearnHome();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
   it("Learn hub Games tile opens Cubetas, not Hangman", async () => {

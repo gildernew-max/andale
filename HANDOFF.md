@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-11 (Brand CLEAR — top-left → Learn home)
+
+**What changed**
+- Header Ándale wordmark + Cenzontle mark are one control (`brand-home`). One tap calls `goLearnHome`: screen home, tab Camino, overlays closed. No confirm.
+- Lands on Learn home: 6-card hub (Hoy · Stories · Games · Phrase Doctor · 80/20 · Sendero) + Sendero/path. Not Perfil, Lectura, last lesson, Camino-legacy-only, or splash.
+- Lockup stays on deep screens so the tap is there. No second bird. No recolor. Soft chrome parked outside bank. Rebased onto live soft paywall + cream (`5405e37`).
+
+**Why**
+- Dave eye: top-left Ándale / bird is Learn home. Brand CLEAR tap lock.
+
 ## 2026-09-11 (surface cream lock)
 
 **What changed**
