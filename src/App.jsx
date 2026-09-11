@@ -7896,16 +7896,16 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (after first win + vuelve; $0, no IAP) ---------- */}
-      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. No flight beat. */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Surface cream lock = Learn home HUB_CREAM. No flight beat. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div className="pop" onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? D.card : HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
+          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
             <LogoMark size={44} data-testid="soft-paywall-cenzontle" />
             <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: D.ink }}>{L.paywallHeadline}</div>
             <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => dismissSoftPaywall("annual")}>{L.paywallAnnual}</Btn>
-              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")}>{L.paywallMonthly}</Btn>
+              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")} style={{ background: HUB_CREAM }}>{L.paywallMonthly}</Btn>
               <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
               </div>

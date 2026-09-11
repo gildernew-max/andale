@@ -194,11 +194,17 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(wall.querySelector("[data-testid='win-perch']")).toBeNull();
   expect(wall.querySelector("[data-testid='coach-strip']")).toBeNull();
   expect(wall.textContent).not.toMatch(/780ms|bonus \+5 XP|bonus \+5/);
+  const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+  const card = screen.getByTestId("soft-paywall-card");
+  expect(card.style.background).toMatch(cream);
+  expect(screen.getByTestId("learn-hub").style.background).toMatch(cream);
+  expect(card.style.background).not.toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
   expect(annual.className).toMatch(/duo-btn/);
   expect(annual.style.background).toMatch(/#58CC02|rgb\(88,\s*204,\s*2\)/i);
   expect(annual.style.borderBottom).toMatch(/4px solid/);
   expect(monthly.className).toMatch(/duo-btn/);
-  expect(monthly.style.background).toMatch(/#fff|#ffffff|rgb\(255,\s*255,\s*255\)/i);
+  expect(monthly.style.background).toMatch(cream);
+  expect(monthly.style.background).not.toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
   expect(monthly.style.borderBottom).toMatch(/4px solid/);
   expect(dismiss.className).not.toMatch(/duo-btn/);
   expect(dismiss.style.background).toBe("none");
@@ -206,7 +212,7 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(dismiss.style.borderBottom).not.toMatch(/4px/);
   expect(dismiss.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
   const filled = [...wall.querySelectorAll("button.duo-btn")]
-    .filter((el) => !/^(#fff|#ffffff|rgb\(255,\s*255,\s*255\))$/i.test(el.style.background));
+    .filter((el) => /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i.test(el.style.background));
   expect(filled).toHaveLength(1);
   expect(filled[0]).toBe(annual);
 };

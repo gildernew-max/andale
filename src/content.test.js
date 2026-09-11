@@ -428,7 +428,14 @@ assert((paywallLayout.match(/<LogoMark/g) || []).length === 1, "paywall has one 
 assert(!/WinPerch|WinBounce|Story0Beat|win-bounce|story-0-beat|780ms|cenzontle-courier|story0Courier/.test(paywallLayout), "paywall does not replay the 780ms beat");
 assert(!/scaleX\s*\(\s*-1\s*\)/.test(paywallLayout), "paywall Cenzontle stays right-facing");
 assert(!/Confetti|coach-strip|coach jump/.test(paywallLayout), "no confetti / coach crowd inside the modal");
-assert(/HUB_CREAM/.test(paywallLayout), "paywall card stays cream/white");
+assert(/data-testid="soft-paywall-card"/.test(paywallLayout), "paywall card is testable");
+assert(/background:\s*HUB_CREAM/.test(paywallLayout), "paywall card uses Learn home HUB_CREAM");
+assert(!/theme === "dark" \? D\.card : HUB_CREAM/.test(paywallLayout), "paywall card does not fall back to D.card white");
+assert(!/soft-paywall-card[\s\S]{0,220}D\.card/.test(paywallLayout), "paywall card does not read D.card");
+assert(!/soft-paywall-card[\s\S]{0,220}(#fff|#FFFFFF)/.test(paywallLayout), "paywall card kills pure white");
+assert(/soft-paywall-monthly[\s\S]{0,160}background:\s*HUB_CREAM/.test(paywallLayout), "monthly outline sits on cream, not #fff");
+assert(appSrc.includes('const HUB_CREAM = "#F6EFE4"'), "Learn home surface cream is #F6EFE4");
+assert(/learn-hub[\s\S]{0,220}HUB_CREAM/.test(appSrc), "Learn home uses HUB_CREAM");
 assert(/MARK_INK/.test(paywallLayout), "paywall accents stay sage");
 assert(!/learn-hub-tiles[\s\S]{0,80}soft-paywall/.test(appSrc), "paywall chrome does not creep onto hub tiles");
 assert(appSrc.includes("first-door-alt"), "Doctora first-door-alt stays on home");

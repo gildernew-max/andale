@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-11 (Soft paywall surface cream lock)
+
+**What changed**
+- Gate card uses Learn home `HUB_CREAM` (`#F6EFE4`) — same warm cream as the hub surface. No `D.card` / `#fff` fallback on the card.
+- Monthly outline sits on cream, not a white slab. One static Cenzontle, George words, Perfect lesson + Mexicanismos bank, no 780ms — unchanged.
+
+**Why**
+- Surface cream lock. Pure white on the gate card is dead.
+
 ## 2026-09-11 (Soft paywall conversion look + chrome bank)
 
 **What changed**
