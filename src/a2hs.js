@@ -59,7 +59,7 @@ export function a2hsDisplayEnv() {
 }
 
 /**
- * Once after first free dismiss (`Seguir gratis` / `Continue free for now`).
+ * Once after first free dismiss (`Seguir gratis` / `Continue free`).
  * Skip seen / standalone / non-iOS Safari. Not a second paywall.
  */
 export function shouldShowA2hsSheet({

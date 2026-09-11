@@ -3559,12 +3559,13 @@ const UI = {
     testFailed: "Examen no superado", testFailedDesc: "Tres errores — el límite era dos. Tus fallos ya están en Práctica; repásalos y vuelve a intentarlo.",
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
     comeBackTomorrow: "Vuelve mañana por la siguiente escena.",
-    paywallHeadline: "Ya empezó tu racha.",
-    paywallBody: "Camino completo: escenas, Doctora de frases, cuentos. Mexicano real, más allá de lo básico.",
-    paywallAnnual: "$39.99 al año",
-    paywallMonthly: "$6.99 al mes",
+    paywallHeadline: "Sigue con tu racha",
+    paywallBody: "Escenas, Cubetas y la doctora — sin techo.",
+    paywallAnnual: "Un año",
+    paywallMonthly: "Un mes",
     paywallHonesty: "Práctica · sin cobro todavía",
-    paywallDismiss: "Seguir gratis por ahora",
+    paywallDismiss: "Seguir gratis",
+    perfectLesson: "Lección perfecta — +5 XP",
     a2hsTitle: "Agrega Ándale a tu pantalla de inicio",
     a2hsHow: "Toca Compartir, luego «Agregar a pantalla de inicio».",
     a2hsDismiss: "Ahora no",
@@ -3638,12 +3639,13 @@ const UI = {
     testFailed: "Test not passed", testFailedDesc: "Three mistakes — the limit was two. Your misses are in Review; revisit them and try again.",
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
     comeBackTomorrow: "Come back tomorrow for the next scene.",
-    paywallHeadline: "Your streak just started.",
-    paywallBody: "Full path: scenes, Phrase Doctor, stories. Real Mexican Spanish past the basics.",
-    paywallAnnual: "$39.99 / year",
-    paywallMonthly: "$6.99 / month",
+    paywallHeadline: "Keep your streak",
+    paywallBody: "Stories, Cubetas, and Phrase Doctor — no ceiling.",
+    paywallAnnual: "One year",
+    paywallMonthly: "One month",
     paywallHonesty: "Practice · no charge yet",
-    paywallDismiss: "Continue free for now",
+    paywallDismiss: "Continue free",
+    perfectLesson: "Perfect lesson — +5 XP",
     a2hsTitle: "Add Ándale to your Home Screen",
     a2hsHow: "Tap Share, then Add to Home Screen.",
     a2hsDismiss: "Not now",
@@ -3695,7 +3697,7 @@ const SMART_FOCI = [
   { id: "subj", skill: "Subjuntivo", units: ["subj1", "subj2"], host: "luna", title: { es: "Subjuntivo vs. indicativo", en: "Subjunctive vs. indicative" }, desc: { es: "Deseo, duda, futuro y hechos conocidos.", en: "Wishes, doubt, future triggers, and known facts." } },
   { id: "past", skill: "Pasado", units: ["pret", "pluscamp", "reported"], host: "luna", title: { es: "Narrar en pasado", en: "Past-tense storytelling" }, desc: { es: "Pretérito, imperfecto y secuencias anteriores.", en: "Preterite, imperfect, and earlier-past sequencing." } },
   { id: "porpara", skill: "Por/para", units: ["porpara"], host: "luna", title: { es: "Por vs. para", en: "Por vs. para" }, desc: { es: "Causa, destino, intercambio y plazos.", en: "Cause, destination, exchange, and deadlines." } },
-  { id: "mex", skill: "Mexicanismos", units: ["mex", "slang2"], host: "rafa", title: { es: "Mexicanismos útiles", en: "Useful Mexicanisms" }, desc: { es: "Frases que suenan de México, no de libro.", en: "Phrases that sound Mexican, not textbook-ish." } },
+  { id: "mex", skill: "Mexicanismos", units: ["mex", "slang2"], host: "rafa", title: { es: "Mexicanismos", en: "Mexicanisms" }, desc: { es: "Frases que suenan de México, no de libro.", en: "Phrases that sound Mexican, not textbook-ish." } },
   { id: "hyp", skill: "Hipótesis", units: ["siclauses", "futcond", "pluscamp"], host: "valeria", title: { es: "Hipótesis y probabilidad", en: "Hypothesis and probability" }, desc: { es: "Si, condicional, futuro de probabilidad y cortesía.", en: "Si clauses, conditional, probability future, and softening." } },
   { id: "pron", skill: "Pronombres", units: ["pronombres", "pronombres2", "sereflex"], host: "valeria", title: { es: "Pronombres en movimiento", en: "Pronoun placement" }, desc: { es: "Se lo, clíticos, mandatos y accidental se.", en: "Se lo, clitics, commands, and accidental se." } },
   { id: "conn", skill: "Conectores", units: ["conectores", "formal"], host: "valeria", title: { es: "Conectores y registro formal", en: "Connectors and formal register" }, desc: { es: "Sin embargo, no obstante y frases de correo.", en: "Sin embargo, no obstante, and email polish." } },
@@ -7894,21 +7896,23 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (after first win + vuelve; $0, no IAP) ---------- */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Surface cream lock = Learn home HUB_CREAM. No flight beat. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center" }}>
-            <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 19, marginBottom: 6 }}>{L.paywallHeadline}</div>
-            <div data-testid="soft-paywall-body" style={{ fontWeight: 800, fontSize: 13.5, color: D.sub, marginBottom: 16, lineHeight: 1.45 }}>{L.paywallBody}</div>
+          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
+            <LogoMark size={44} data-testid="soft-paywall-cenzontle" />
+            <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: D.ink }}>{L.paywallHeadline}</div>
+            <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => dismissSoftPaywall("annual")}>{L.paywallAnnual}</Btn>
-              <button type="button" data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")}
-                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 800, fontSize: 13, lineHeight: 1.35, cursor: "pointer" }}>
-                {L.paywallMonthly}
-              </button>
-              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 800, fontSize: 12.5, color: D.sub, lineHeight: 1.35 }}>
+              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")} style={{ background: HUB_CREAM }}>{L.paywallMonthly}</Btn>
+              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
               </div>
-              <Btn outline data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}>{L.paywallDismiss}</Btn>
+              <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
+                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
+                {L.paywallDismiss}
+              </button>
             </div>
           </div>
         </div>
@@ -9422,8 +9426,8 @@ export default function App() {
 
           {/* perfect-lesson banner */}
           {perfect && !quietWin && (session.perfectBonus || 0) > 0 && (
-            <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
-              ★ {uiLang === "en" ? "Perfect lesson — bonus +5 XP" : "Lección perfecta — +5 XP extra"}
+            <div data-testid="perfect-lesson" className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
+              ★ {L.perfectLesson}
             </div>
           )}
 
