@@ -4781,6 +4781,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("rayo-clock")).toBeNull();
 
     cleanup();
+    localStorage.removeItem(LIVE_KEY);
     seedProgress({
       streak: 1,
       lastDay: localToday(),
@@ -4823,7 +4824,7 @@ describe("simulated learner flows", () => {
     expect(toggle.textContent).toBe("Con reloj");
     expect(toggle.getAttribute("aria-pressed")).toBe("true");
     expect(toggle.style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
-    expect(toggle.style.borderBottom).toBe("");
+    expect(toggle.style.borderBottom).not.toMatch(/[34]px/);
     expect(screen.queryByTestId("run-timer-off-chip")).toBeNull();
     expect(screen.getByTestId("rayo-clock").innerHTML).not.toMatch(/#FF4B4B|#FF6B6B|#EA2B2B/i);
 

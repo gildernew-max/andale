@@ -770,8 +770,7 @@ assert(UI.en.timerOffChip === "Take your time. Timer’s off.", "George EN timer
 assert(appSrc.includes("data-testid=\"run-timer-toggle\""), "run timer toggle is testable");
 assert(appSrc.includes("data-testid=\"run-timer-off-chip\""), "timer-off chip is testable");
 assert(appSrc.includes("data-testid=\"rayo-clock\""), "Rayo clock is testable");
-assert(appSrc.includes("{L.timerOn}"), "timer-on label uses L.timerOn");
-assert(appSrc.includes("{L.timerOff}"), "timer-off label uses L.timerOff");
+assert(appSrc.includes("session.runTimerOff ? L.timerOff : L.timerOn"), "timer toggle uses George L.timerOn / L.timerOff");
 assert(appSrc.includes("{L.timerOffChip}"), "timer-off chip uses L.timerOffChip");
 assert(/run-timer-toggle[\s\S]{0,500}HUB_CREAM/.test(appSrc), "timer toggle sits on HUB_CREAM");
 assert(/run-timer-off-chip[\s\S]{0,280}HUB_CREAM/.test(appSrc), "timer-off chip sits on HUB_CREAM");
