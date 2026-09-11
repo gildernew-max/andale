@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-11 (surface cream lock)
+
+**What changed**
+- Light page/shell token `D.bg` is the existing Learn cream (`HUB_CREAM` `#F6EFE4`). Body + `app-shell` inherit it — WinPerch / Phrase Doctor / Lectura / lesson chrome sit on the same fill as Learn home.
+- Soft paywall card already uses that cream token from #134. Soft chrome parked: header, nav, tiles-as-accents, #134 conversion look, top-left home tap untouched.
+- Tests lock the shared token and reject `#fff` / `white` as the full-page/shell fill.
+
+**Why**
+- Brand CLEAR one cream surface. Varys: white pages vs cream hub / brownish wash. No third brown.
+
 ## 2026-09-11 (Soft paywall surface cream lock)
 
 **What changed**
