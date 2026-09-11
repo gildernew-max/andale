@@ -3699,12 +3699,14 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("phrase-doctor-fix"));
     await waitFor(() => {
       expect(screen.getByTestId("doctora-win")).toBeTruthy();
-      expect(screen.getByTestId("win-bounce")).toBeTruthy();
+      expect(screen.getByTestId("story-0-beat")).toBeTruthy();
     });
     expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("win-bounce-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("story-0-beat-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(screen.getByTestId("story-0-beat-chip")).toBeTruthy();
     expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
-    expect(screen.queryByTestId("story-0-beat")).toBeNull();
+    expect(screen.getByTestId("story-0-beat").textContent).not.toMatch(/¡Eso!|That's it\./);
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
@@ -3712,10 +3714,17 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
     expect(document.body.textContent).not.toMatch(/¡IMPECABLE!|FLAWLESS!/);
     expect(document.body.textContent).not.toMatch(/Necesito hacer una decisión|Voy a aplicar para el trabajo|beat 5/);
+    await waitFor(() => {
+      expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+      expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
+    }, { timeout: 1500 });
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
+    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /You won!|¡Ganaste!|Lesson complete/ })).toBeNull();
+    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!"));
     await user.click(screen.getByTestId("doctora-win-continue"));
@@ -3805,6 +3814,9 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("phrase-doctor-fix"));
     await waitFor(() => expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/NATURAL/));
     expect(screen.queryByTestId("doctora-win")).toBeNull();
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
+    expect(screen.queryByTestId("win-perch")).toBeNull();
     expect(screen.queryByRole("heading", { name: /^¡Eso!$|^That's it\.$/ })).toBeNull();
     expect(document.body.textContent).not.toMatch(/¡Eso!|That's it\./);
     const otra = [...screen.getByTestId("phrase-doctor-board").querySelectorAll("button")].find((b) => /Otra|New/.test(b.textContent));
@@ -3813,7 +3825,35 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("phrase-doctor-guess")).toBeTruthy());
     expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/¿Puedo obtener un café\?/);
     expect(screen.queryByTestId("doctora-win")).toBeNull();
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(screen.queryByRole("heading", { name: /^¡Eso!$|^That's it\.$/ })).toBeNull();
+  });
+
+  it("later Doctora same day does not replay the 780ms Cenzontle beat", async () => {
+    cleanup();
+    seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-practica")).toBeTruthy());
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("phrase-doctor"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
+    await user.click(screen.getByTestId("phrase-doctor-fix"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board").textContent).toMatch(/NATURAL/));
+    expect(screen.queryByTestId("doctora-win")).toBeNull();
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
+    expect(screen.queryByTestId("win-perch")).toBeNull();
+    expect(screen.queryByRole("heading", { name: /^¡Eso!$|^That's it\.$/ })).toBeNull();
+    const otra = [...screen.getByTestId("phrase-doctor-board").querySelectorAll("button")].find((b) => /Otra|New/.test(b.textContent));
+    expect(otra).toBeTruthy();
+    await user.click(otra);
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-guess")).toBeTruthy());
+    expect(screen.queryByTestId("doctora-win")).toBeNull();
+    expect(screen.queryByTestId("story-0-beat")).toBeNull();
+    expect(screen.queryByTestId("win-bounce")).toBeNull();
+    expect(screen.queryByTestId("win-perch")).toBeNull();
   });
 
   it("soft paywall does not render on splash or boot before a win", async () => {

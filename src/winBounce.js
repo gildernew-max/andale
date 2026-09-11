@@ -1,4 +1,4 @@
-/** First-win Cenzontle: firstHoy + story-0 Cubetas v2 780ms beat, Doctora 720ms courier, later Lectura WinPerch. Soft chrome parked. */
+/** First-win Cenzontle: firstHoy + firstDoctora + story-0 Cubetas v2 780ms beat, later Lectura WinPerch. Soft chrome parked. */
 
 import {
   CUBETAS_EASE_ENTER,
@@ -28,21 +28,26 @@ export const STORY0_WIN_ES = HOY_WIN_ES;
 export const STORY0_WIN_EN = HOY_WIN_EN;
 
 /**
- * Phrase Doctor first-win / ¡Eso! 720ms courier.
- * firstHoy is the Cubetas 780ms beat — not this courier.
- * firstStory0 is the Lectura story-0 780ms beat — not this courier.
+ * Retired 720ms courier. No remaining first-win surface.
+ * firstHoy / firstDoctora / firstStory0 use the Cubetas 780ms beat.
  * lecturaWin is later Lectura static WinPerch — not this courier.
  * esoWin / todaySceneId are wider unlock stamps — do not use them here.
  */
 export function shouldPlayWinBounce(session) {
   if (!session || typeof session !== "object") return false;
-  return !!session.firstDoctora;
+  return false;
 }
 
 /** Live done-screen gate. firstHoy only — Cubetas v2 780ms, then WinPerch. Later Hoy same day does not replay. */
 export function shouldPlayHoyBeat(session) {
   if (!session || typeof session !== "object") return false;
   return !!session.firstHoy;
+}
+
+/** Live done-screen gate. firstDoctora only — Cubetas v2 780ms, then WinPerch. Later Doctora same day does not replay. */
+export function shouldPlayDoctoraBeat(session) {
+  if (!session || typeof session !== "object") return false;
+  return !!session.firstDoctora;
 }
 
 /** Arm the 780ms beat only on first claim of Lectura story-0 after every page. Later stories stay static. */
@@ -54,7 +59,7 @@ export function shouldArmStory0Beat({ storyId, claimed, pagesSeen, pageCount } =
   return [...Array(n).keys()].every((i) => seen.includes(i));
 }
 
-/** Live done-screen gate. firstStory0 + story-0 only — never later stories or Hoy/Doctora. */
+/** Live done-screen gate. firstStory0 + story-0 only — never later stories, Hoy, or Doctora. */
 export function shouldPlayStory0Beat(session) {
   if (!session || typeof session !== "object") return false;
   return !!(session.firstStory0 && session.storyId === STORY0_ID);
@@ -66,7 +71,7 @@ export function shouldArmLecturaWin({ storyId, claimed } = {}) {
   return String(storyId).startsWith("story-");
 }
 
-/** Live done-screen gate. Later Lectura static perch — never the 780ms beat or Doctora courier. */
+/** Live done-screen gate. Later Lectura static perch — never the 780ms beat. */
 export function shouldPlayLecturaWin(session) {
   if (!session || typeof session !== "object") return false;
   return !!(session.lecturaWin && session.storyId && session.storyId !== STORY0_ID);
