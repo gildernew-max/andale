@@ -3604,6 +3604,9 @@ const UI = {
     recuerdosTitle: "Recuerdos",
     recuerdosOpen: "Abierto",
     recuerdosLocked: "Cerrado",
+    timerOn: "Con reloj",
+    timerOff: "Sin reloj",
+    timerOffChip: "Piensa. El reloj está apagado.",
   },
   en: {
     camino: "Learn", missions: "Challenges", reading: "Stories", practice: "Review", games: "Games", cards: "Cards", profile: "Profile",
@@ -3684,6 +3687,9 @@ const UI = {
     recuerdosTitle: "Souvenir trail",
     recuerdosOpen: "Open",
     recuerdosLocked: "Locked",
+    timerOn: "Timer on",
+    timerOff: "No timer",
+    timerOffChip: "Take your time. Timer’s off.",
   },
 };
 
@@ -5715,7 +5721,7 @@ export default function App() {
 
   // Modo Rayo countdown
   useEffect(() => {
-    if (screen !== "lesson" || !prog.rayo || status !== "idle" || !q) { setRayoLeft(null); return; }
+    if (screen !== "lesson" || !prog.rayo || session?.runTimerOff || status !== "idle" || !q) { setRayoLeft(null); return; }
     const total = RAYO_SECS[q.type] || 15;
     setRayoLeft(total);
     const t0 = Date.now();
@@ -8194,19 +8200,35 @@ export default function App() {
 	                {L.test} · {coachName(session.host)}: {lessonStats.wrong}/2 {L.errors}
               </span>
             ) : <span />}
-            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
               {combo >= 2 && <span className="pop" style={{ fontSize: 13, fontWeight: 900, color: "#FF9600" }}><IcFlame size={15} /> combo ×{combo}</span>}
-              {prog.rayo && rayoLeft != null && status === "idle" && (() => {
+              {prog.rayo && (
+                <button type="button" data-testid="run-timer-toggle" aria-pressed={!session.runTimerOff}
+                  onClick={() => setSession((prev) => prev ? { ...prev, runTimerOff: !prev.runTimerOff } : prev)}
+                  style={{
+                    border: `1.5px solid ${D.line}`, background: HUB_CREAM, color: D.ink, borderRadius: 99,
+                    padding: "4px 10px", fontWeight: 800, fontSize: 11, lineHeight: 1.2, cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}>
+                  {session.runTimerOff ? L.timerOff : L.timerOn}
+                </button>
+              )}
+              {prog.rayo && session.runTimerOff && (
+                <span data-testid="run-timer-off-chip" style={{
+                  background: HUB_CREAM, color: D.sub, fontSize: 11, fontWeight: 700, lineHeight: 1.3,
+                  padding: "3px 10px", borderRadius: 99,
+                }}>{L.timerOffChip}</span>
+              )}
+              {prog.rayo && !session.runTimerOff && rayoLeft != null && status === "idle" && (() => {
                 const total = RAYO_SECS[q.type] || 15;
                 const frac = Math.max(0, rayoLeft / total);
                 const r = 12, c = 2 * Math.PI * r;
-                const danger = rayoLeft <= 3;
                 return (
-                  <svg width="30" height="30" viewBox="0 0 30 30" aria-label={`${Math.ceil(rayoLeft)} segundos`}>
+                  <svg data-testid="rayo-clock" width="30" height="30" viewBox="0 0 30 30" aria-label={`${Math.ceil(rayoLeft)} segundos`}>
                     <circle cx="15" cy="15" r={r} fill="none" stroke={D.line} strokeWidth="4" />
-                    <circle cx="15" cy="15" r={r} fill="none" stroke={danger ? D.red : D.gold} strokeWidth="4"
+                    <circle cx="15" cy="15" r={r} fill="none" stroke={D.gold} strokeWidth="4"
                       strokeDasharray={`${frac * c} ${c}`} strokeLinecap="round" transform="rotate(-90 15 15)" />
-                    <text x="15" y="19" textAnchor="middle" fontSize="11" fontWeight="900" fill={danger ? D.red : D.ink}>{Math.ceil(rayoLeft)}</text>
+                    <text x="15" y="19" textAnchor="middle" fontSize="11" fontWeight="900" fill={D.ink}>{Math.ceil(rayoLeft)}</text>
                   </svg>
                 );
               })()}

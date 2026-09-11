@@ -4752,4 +4752,98 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("recuerdos-map")).toBeTruthy());
     assertCreamShell();
   });
+
+  it("timer-off chrome stays off Hoy, Lectura, Doctora, and untimed lessons", async () => {
+    const user = await boot();
+    expect(screen.queryByTestId("run-timer-toggle")).toBeNull();
+    expect(screen.queryByTestId("run-timer-off-chip")).toBeNull();
+    expect(screen.queryByTestId("rayo-clock")).toBeNull();
+
+    await startHoyFromHub(user);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    expect(screen.queryByTestId("run-timer-toggle")).toBeNull();
+    expect(screen.queryByTestId("run-timer-off-chip")).toBeNull();
+    expect(screen.queryByTestId("rayo-clock")).toBeNull();
+    await user.click(screen.getByTestId("lesson-exit"));
+    await user.click(screen.getByTestId("quit-without-save"));
+    await awaitHome();
+
+    await user.click(screen.getByTestId("hub-phrase-doctor"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
+    expect(screen.queryByTestId("run-timer-toggle")).toBeNull();
+    expect(screen.queryByTestId("rayo-clock")).toBeNull();
+
+    await user.click(screen.getByTestId("nav-lectura"));
+    const story0 = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
+    await user.click(story0[story0.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.queryByTestId("run-timer-toggle")).toBeNull();
+    expect(screen.queryByTestId("rayo-clock")).toBeNull();
+
+    cleanup();
+    seedProgress({
+      streak: 1,
+      lastDay: localToday(),
+      paywallSeen: true,
+      hearts: 5,
+      resume: { unitId: "subj1", order: [{ u: "subj1", i: 0 }], qi: 0, xp: 0, right: 0, wrong: 0 },
+    });
+    const user2 = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    const unitBtn = screen.queryByRole("button", { name: "Subjuntivo presente" })
+      || (await openCaminoMore(user2), screen.getByRole("button", { name: "Subjuntivo presente" }));
+    await user2.click(unitBtn);
+    await user2.click(screen.getByRole("button", { name: /Start|Empezar/ }));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    expect(screen.queryByTestId("run-timer-toggle")).toBeNull();
+    expect(screen.queryByTestId("rayo-clock")).toBeNull();
+  });
+
+  it("timed challenge toggle off hides the clock + quiet chip; toggle on restores", async () => {
+    cleanup();
+    seedProgress({
+      streak: 1,
+      lastDay: localToday(),
+      paywallSeen: true,
+      rayo: true,
+      hearts: 5,
+      resume: { unitId: "subj1", order: [{ u: "subj1", i: 0 }], qi: 0, xp: 0, right: 0, wrong: 0 },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    const unitBtn = screen.queryByRole("button", { name: "Subjuntivo presente" })
+      || (await openCaminoMore(user), screen.getByRole("button", { name: "Subjuntivo presente" }));
+    await user.click(unitBtn);
+    await user.click(screen.getByRole("button", { name: /Start|Empezar/ }));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("rayo-clock")).toBeTruthy());
+    const toggle = screen.getByTestId("run-timer-toggle");
+    expect(toggle.textContent).toBe("Con reloj");
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    expect(toggle.style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(toggle.style.borderBottom).toBe("");
+    expect(screen.queryByTestId("run-timer-off-chip")).toBeNull();
+    expect(screen.getByTestId("rayo-clock").innerHTML).not.toMatch(/#FF4B4B|#FF6B6B|#EA2B2B/i);
+
+    await user.click(toggle);
+    await waitFor(() => expect(screen.queryByTestId("rayo-clock")).toBeNull());
+    expect(screen.getByTestId("run-timer-toggle").textContent).toBe("Sin reloj");
+    expect(screen.getByTestId("run-timer-toggle").getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByTestId("run-timer-off-chip").textContent).toBe("Piensa. El reloj está apagado.");
+    expect(screen.getByTestId("run-timer-off-chip").style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(screen.queryByTestId("practice-quip")).toBeNull();
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("run-timer-toggle").textContent).toBe("No timer"));
+    expect(screen.getByTestId("run-timer-off-chip").textContent).toBe("Take your time. Timer’s off.");
+
+    await user.click(screen.getByTestId("run-timer-toggle"));
+    await waitFor(() => expect(screen.getByTestId("rayo-clock")).toBeTruthy());
+    expect(screen.getByTestId("run-timer-toggle").textContent).toBe("Timer on");
+    expect(screen.getByTestId("run-timer-toggle").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.queryByTestId("run-timer-off-chip")).toBeNull();
+    expect(screen.getByTestId("rayo-clock").innerHTML).not.toMatch(/#FF4B4B|#FF6B6B|#EA2B2B/i);
+  });
 });
