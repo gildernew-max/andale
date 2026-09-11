@@ -80,6 +80,8 @@ import {
    Inside the App component, `const D = theme==="dark" ? D_DARK : D_LIGHT`
    is memoized — every existing D.* read works untouched.
    ============================================================ */
+/** Cenzontle house cream. One page/shell fill — not a second brown wash. */
+const HUB_CREAM = "#F6EFE4";
 const D_LIGHT = {
   green: "#58CC02", greenDark: "#46A302",
   blue: "#1CB0F6", blueDark: "#1899D6",
@@ -88,7 +90,7 @@ const D_LIGHT = {
   gold: "#FFC800", goldDark: "#E6A800",
   ink: "#3C3C3C", sub: "#777777",
   line: "#E5E5E5", lockGray: "#E5E5E5", lockIcon: "#AFAFAF",
-  bg: "#FFFFFF", card: "#FFFFFF", subtle: "#F7F7F7",
+  bg: HUB_CREAM, card: "#FFFFFF", subtle: "#F7F7F7",
   okBg: "#D7FFB8", okText: "#58A700",
   badBg: "#FFDFE0", badText: "#EA2B2B",
   goldBg: "#FFFBEF", greenBg: "#F3FBEA", redBg: "#FFF1F1", blueBg: "#DDF4FF", purpleBg: "#F3F0FF", orangeBg: "#FFE9D6",
@@ -1871,7 +1873,6 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
 };
 /** Adult sage from Confident v1 belly/tail. Lockup wordmark only — Duo lime chrome stays parked. */
 const MARK_INK = "#5C7356";
-const HUB_CREAM = "#F6EFE4";
 
 /** v01c-fun-clean tile faces — stamp illustrations as real PNGs. Soft chrome parked. */
 const HUB_FACES = {
@@ -6286,7 +6287,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
+    <div data-testid="app-shell" style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
       <style>{`
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 600; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-600.woff2') format('woff2'); }
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 700; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-700.woff2') format('woff2'); }

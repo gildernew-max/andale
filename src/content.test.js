@@ -810,6 +810,16 @@ assert(appSrc.includes("data-testid={winTestId}"), "¡Eso! heading stays the exi
 assert(appSrc.includes("className={quietWin ? \"eso-rise\" : undefined}"), "¡Eso! copy is opacity / 3px rise only");
 assert(appSrc.includes('const MARK_INK = "#5C7356"'), "lockup wordmark uses adult sage, not Duo lime");
 assert(appSrc.includes("color: MARK_INK"), "header/splash wordmark reads MARK_INK");
+assert(appSrc.includes('const HUB_CREAM = "#F6EFE4"'), "Learn cream token is #F6EFE4");
+const dLight = appSrc.slice(appSrc.indexOf("const D_LIGHT"), appSrc.indexOf("const D_DARK"));
+assert(/bg:\s*HUB_CREAM/.test(dLight), "light page token is the Learn cream");
+assert(!/bg:\s*"#FFFFFF"/.test(dLight), "light page token is not pure white");
+assert(!/bg:\s*"#fff"/.test(dLight), "light page token is not shorthand white");
+assert(appSrc.includes('data-testid="app-shell"'), "app shell is testable");
+assert(/data-testid="app-shell"[\s\S]{0,180}background:\s*D\.bg/.test(appSrc), "app shell fill is the page token");
+assert(appSrc.includes("document.body.style.background = D.bg"), "body fill is the page token");
+assert(/data-testid="learn-hub"[\s\S]{0,220}HUB_CREAM/.test(appSrc), "Learn hub fill is HUB_CREAM");
+assert(!/minHeight:\s*"100vh"[\s\S]{0,80}background:\s*"#fff/.test(appSrc), "no hardcoded white 100vh page fill");
 assert(appSrc.includes("data-testid=\"learn-hub\""), "Learn home is the equal-tile hub");
 assert(appSrc.includes("const HUB_FACES"), "v01c tiles use stamp PNG faces");
 assert(appSrc.includes("const HubTileArt"), "hub tiles share HubTileArt");

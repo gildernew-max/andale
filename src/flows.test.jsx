@@ -91,6 +91,17 @@ const awaitHome = async () => {
   expect(screen.getByTestId("hub-hoy")).toBeTruthy();
 };
 
+const CREAM_FILL = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+const PAGE_WHITE = /^(#fff|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\))$/i;
+
+const assertCreamShell = () => {
+  const shell = screen.getByTestId("app-shell");
+  expect(shell.style.background).toMatch(CREAM_FILL);
+  expect(shell.style.background).not.toMatch(PAGE_WHITE);
+  expect(document.body.style.background).toMatch(CREAM_FILL);
+  expect(document.body.style.background).not.toMatch(PAGE_WHITE);
+};
+
 const assertEqualHub = () => {
   const tiles = screen.getByTestId("learn-hub-tiles");
   expect(tiles).toBeTruthy();
@@ -944,6 +955,7 @@ describe("simulated learner flows", () => {
     }, { timeout: 1500 });
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
     expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
+    assertCreamShell();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("story-0-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
@@ -983,6 +995,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
     expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
     expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
+    assertCreamShell();
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
     expect(screen.queryByTestId("story-0-win")).toBeNull();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
@@ -2247,6 +2260,7 @@ describe("simulated learner flows", () => {
     }, { timeout: 1500 });
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
     expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
+    assertCreamShell();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
@@ -4631,5 +4645,22 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("sobremesa-tips-list")).toBeNull();
     expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
+  });
+
+  it("locks one warm cream on Learn, Phrase Doctor, and Lectura shells", async () => {
+    const user = await boot();
+    assertCreamShell();
+    expect(screen.getByTestId("learn-hub").style.background).toMatch(CREAM_FILL);
+    [...screen.getByTestId("learn-hub-tiles").querySelectorAll("button")].forEach((tile) => {
+      expect(tile.style.background).toMatch(CREAM_FILL);
+    });
+
+    await user.click(screen.getByTestId("hub-phrase-doctor"));
+    await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
+    assertCreamShell();
+
+    await user.click(screen.getByTestId("nav-lectura"));
+    await waitFor(() => expect(screen.getByTestId("recuerdos-map")).toBeTruthy());
+    assertCreamShell();
   });
 });
