@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-11 (Timer-off on timed challenges)
+
+**What changed**
+- Timed-challenge chrome (Rayo lesson) gets a quiet cream toggle: ES `Con reloj` / `Sin reloj` · EN `Timer on` / `No timer`.
+- Default stays timer on. Off is learner choice for that run: clock gone + quiet chip ES `Piensa. El reloj está apagado.` · EN `Take your time. Timer’s off.`
+- Toggle on restores the clock. No timeout while off. Clock stays gold/ink — no red panic when time is low.
+- Flat `HUB_CREAM` control. No second mascot, no pep, no baked PNG labels.
+- Hoy / Lectura / Doctora stay clean unless that surface is timed. Soft chrome parked outside bank.
+
+**Why**
+- Dave: sometimes you just want to think. Brand CLEAR + George words CLEAR.
+
 ## 2026-09-11 (Brand CLEAR — top-left → Learn home)
 
 **What changed**
