@@ -4006,7 +4006,7 @@ export default function App() {
       document.body.style.color = D.ink;
       document.body.style.transition = "background 200ms ease, color 200ms ease";
     }
-  }, [theme]);
+  }, [theme, D.bg, D.ink]);
   const inputRef = useRef(null);
   const audioCtx = useRef(null);
   const narrationRef = useRef(null);
