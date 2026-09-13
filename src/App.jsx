@@ -9464,8 +9464,8 @@ export default function App() {
 	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, testid: "win-earned-gems" },
 	              { v: <span><IcFlame size={20} className="flame" /> {prog.streak}</span>, l: L.streakDays, c: "#FF9600", testid: "win-earned-streak" },
             ].map((s, i) => (
-              <div key={i} data-testid={s.testid} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
-                <div style={{ fontWeight: 900, fontSize: 22, color: s.c }}>{s.v}</div>
+              <div key={i} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
+                <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: 22, color: s.c }}>{s.v}</div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>
               </div>
             ))}
