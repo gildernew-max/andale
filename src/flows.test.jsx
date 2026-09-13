@@ -3844,6 +3844,12 @@ describe("simulated learner flows", () => {
     }, { timeout: 1500 });
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
     expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
+    await waitFor(() => {
+      expect(screen.getByTestId("win-earned-xp").textContent).toBe("+15");
+      expect(screen.getByTestId("win-earned-gems").textContent).toBe("+15");
+    }, { timeout: 1500 });
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(57);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(24);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
@@ -3899,6 +3905,10 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("phrase-doctor-fix"));
     await waitFor(() => expect(screen.getByTestId("doctora-win")).toBeTruthy());
     expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
+    await waitFor(() => {
+      expect(screen.getByTestId("win-earned-xp").textContent).not.toBe("+0");
+      expect(screen.getByTestId("win-earned-gems").textContent).not.toBe("+0");
+    }, { timeout: 1500 });
     await user.click(screen.getByTestId("doctora-win-continue"));
     await waitFor(() => expect(screen.getByTestId("session-close")).toBeTruthy());
     expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
