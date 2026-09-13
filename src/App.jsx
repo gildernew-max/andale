@@ -7,7 +7,8 @@ import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
-import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
+import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats, doctoraWinReward } from "./doctoraWin.js";
+import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
@@ -5040,12 +5041,15 @@ export default function App() {
       const hard = q.type === "order" || q.type === "listen" || q.type === "transform";
       // Review cards are 4 XP (Bien). Do not use the lesson 10/12 rate — that
       // made a single Repasar item jump +12 and then stack gems on finish.
-      let base = session.review
-        ? (r === "almost" ? 3 : 4)
-        : q._requeued ? 5 : r === "almost" ? 7 : hard ? 12 : 10;
-      if (!session.review && prog.rayo && rayoLeft != null && rayoLeft > 0) base += 3;
+      const base = lessonItemXP({
+        review: !!session.review,
+        requeued: !!q._requeued,
+        almost: r === "almost",
+        hard,
+        rayo: !session.review && prog.rayo && rayoLeft != null && rayoLeft > 0,
+      });
       const newCombo = combo + 1;
-      const bonus = !session.review && newCombo % 4 === 0 ? 5 : 0;
+      const bonus = !session.review && newCombo % 4 === 0 ? LESSON_XP_COMBO : 0;
       if (bonus) {
         setInter({ text: INTERSTITIALS[(newCombo / 4 - 1) % INTERSTITIALS.length], key: Date.now() });
         setBurst(Date.now());
@@ -5134,10 +5138,6 @@ export default function App() {
     beep("win");
     const t = todayStr();
     const xpNow = sessionXPRef.current;
-    // Perfect is a flat +5 once on a real lesson — never on Repasar.
-    // Review spends no hearts, so a clean one-card must stay +4, not 4+5.
-    const perfectBonus = lessonStats.wrong === 0 && !session.review ? 5 : 0;
-    const earned = xpNow + perfectBonus;
 
     // ---- El Reto de Diego: resolve the duel (your hits vs Diego's, ties to the champ) ----
     let rivalOut = null;
@@ -5157,12 +5157,17 @@ export default function App() {
       };
       if (won) setBurst(Date.now());
     }
-    // Flat 10/15 gems only for a real session. A 1-card Repasar must not jump +10.
+    // Perfect +5 / gem cap live in lessonFinishReward — same path Doctora uses.
     const hits = lessonStats.right;
-    const gemCap = session.review ? 10 : 15;
-    const gemsEarned = session.rival
-      ? (rivalOut?.won ? 20 : 5)
-      : (session.questions.length <= 2 ? hits : gemCap);
+    const { earnedXP: earned, earnedGems: gemsEarned, perfectBonus } = lessonFinishReward({
+      sessionXP: xpNow,
+      wrongs: lessonStats.wrong,
+      review: !!session.review,
+      questionCount: session.questions.length,
+      hits,
+      rival: !!session.rival,
+      rivalWon: !!rivalOut?.won,
+    });
     setSession((s) => (s ? {
       ...s,
       awarded: true,
@@ -6089,20 +6094,37 @@ export default function App() {
     setA2hsSheet(false);
     save({ a2hsSeen: true });
   };
-  const awardDoctoraStreak = () => {
-    if (!lockAward("phrase-doctor")) return;
+  const awardDoctoraStreak = ({ xp = 0, gems = 0 } = {}) => {
+    if (!lockAward("phrase-doctor")) return false;
     const t = todayStr();
     const y = yesterdayStr();
+    const earnedXP = Number(xp) || 0;
+    const earnedGems = Number(gems) || 0;
     save((prev) => ({
       ...prev,
       streak: streakAfterWin(prev, t, y),
       lastDay: t,
-      xpToday: prev.lastDay === t ? prev.xpToday || 0 : 0,
+      xp: (prev.xp || 0) + earnedXP,
+      xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + earnedXP,
+      gems: (prev.gems || 0) + earnedGems,
     }));
+    return true;
   };
 
   const finishDoctoraWin = () => {
-    awardDoctoraStreak();
+    const hits = Math.max(doctorHits, 1);
+    const wrongs = doctorFailed ? 1 : 0;
+    const { earnedXP, earnedGems, perfectBonus } = doctoraWinReward({
+      hits,
+      almostHits: doctorGrade === "equivalent" ? 1 : 0,
+      wrongs,
+      firstDoctora: true,
+      streak: prog.streak,
+    });
+    awardDoctoraStreak({ xp: earnedXP, gems: earnedGems });
+    const before = levelOf(prog.xp || 0).idx;
+    const after = levelOf((prog.xp || 0) + earnedXP).idx;
+    setLevelUp(after > before ? LEVELS[after][1] : null);
     setSession({
       firstDoctora: true,
       esoWin: true,
@@ -6110,10 +6132,11 @@ export default function App() {
       host: "valeria",
       questions: [{}],
       awarded: true,
-      earnedXP: 0,
-      earnedGems: 0,
+      earnedXP,
+      earnedGems,
+      perfectBonus,
     });
-    setLessonStats({ right: Math.max(doctorHits, 1), wrong: 0 });
+    setLessonStats({ right: hits, wrong: wrongs });
     setScreenQuip("");
     setDoctorOpen(false);
     winBouncePlayed.current = true;
@@ -9437,12 +9460,12 @@ export default function App() {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", margin: "24px 0", flexWrap: "wrap" }}>
             {[
-              { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold },
-	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue },
-	              { v: <span><IcFlame size={20} className="flame" /> {prog.streak}</span>, l: L.streakDays, c: "#FF9600" },
+              { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, testid: "win-earned-xp" },
+	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, testid: "win-earned-gems" },
+	              { v: <span><IcFlame size={20} className="flame" /> {prog.streak}</span>, l: L.streakDays, c: "#FF9600", testid: "win-earned-streak" },
             ].map((s, i) => (
               <div key={i} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
-                <div style={{ fontWeight: 900, fontSize: 22, color: s.c }}>{s.v}</div>
+                <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: 22, color: s.c }}>{s.v}</div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>
               </div>
             ))}

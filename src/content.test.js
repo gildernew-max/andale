@@ -611,7 +611,17 @@ assert(appSrc.includes("shouldDoctoraEarlyWin"), "first-Doctora early checkpoint
 assert(appSrc.includes("trimDoctoraBeats"), "first-Doctora beat cap is wired");
 assert(appSrc.includes("isFirstDoctoraSession"), "short Doctora path is gated to streak 0");
 assert(appSrc.includes("doctora-win"), "first-Doctora win heading is testable");
+assert(appSrc.includes("doctoraWinReward"), "Doctora finish uses doctoraWinReward");
+assert(appSrc.includes("from \"./lessonAward.js\""), "Hoy / Doctora share lessonAward.js");
+assert(appSrc.includes("win-earned-xp"), "done-screen XP chip is testable");
+assert(appSrc.includes("win-earned-gems"), "done-screen gem chip is testable");
+const finishDoctoraChunk = appSrc.slice(appSrc.indexOf("const finishDoctoraWin"), appSrc.indexOf("const resetDoctorBoard"));
+assert(finishDoctoraChunk.includes("doctoraWinReward"), "finishDoctoraWin calls doctoraWinReward");
+assert(!/earnedXP:\s*0/.test(finishDoctoraChunk), "Doctora win does not hardcode +0 XP");
+assert(!/earnedGems:\s*0/.test(finishDoctoraChunk), "Doctora win does not hardcode +0 gems");
 const doctoraWinSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "doctoraWin.js"), "utf8");
+assert(doctoraWinSrc.includes("lessonFinishReward"), "Doctora reward reuses lessonFinishReward");
+assert(doctoraWinSrc.includes("export function doctoraWinReward"), "doctoraWinReward is exported");
 assert(doctoraWinSrc.includes("¿Me da un café, por favor?"), "first-Doctora keep stamps café");
 assert(doctoraWinSrc.includes("Tengo muchas ganas de verte."), "first-Doctora keep stamps ganas");
 assert(doctoraWinSrc.includes("Eso tiene sentido."), "first-Doctora keep stamps sentido");
