@@ -102,19 +102,61 @@ const assertCreamShell = () => {
   expect(document.body.style.background).not.toMatch(PAGE_WHITE);
 };
 
+const HUB_FACE = {
+  es: {
+    hoy: "Hoy",
+    hoyQuiet: "Plan de 10 minutos",
+    stories: "Cuentos",
+    games: "Juegos",
+    doctor: "Doctora de frases",
+    eighty: "80/20",
+    eightyQuiet: "Subjuntivo en cinco",
+    sendero: "Sendero",
+    senderoQuiet: "Camino largo",
+  },
+  en: {
+    hoy: "Hoy",
+    hoyQuiet: "10-minute plan",
+    stories: "Stories",
+    games: "Games",
+    doctor: "Phrase Doctor",
+    eighty: "80/20",
+    eightyQuiet: "Subjunctive in five",
+    sendero: "Sendero",
+    senderoQuiet: "Longer path",
+  },
+};
+
+const hubUiLang = () => (
+  screen.getByTestId("lang-es").getAttribute("aria-pressed") === "true" ? "es" : "en"
+);
+
+const HUB_DOCTOR_RE = /Doctora de frases|Phrase Doctor/;
+
+const assertHubFace = (lang = hubUiLang()) => {
+  const face = HUB_FACE[lang];
+  const tiles = screen.getByTestId("learn-hub-tiles");
+  expect(screen.getByTestId("hub-hoy-label").textContent).toBe(face.hoy);
+  expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe(face.hoyQuiet);
+  expect(screen.getByTestId("hub-stories").textContent).toContain(face.stories);
+  expect(screen.getByTestId("hub-games").textContent).toContain(face.games);
+  expect(screen.getByTestId("hub-phrase-doctor").textContent).toContain(face.doctor);
+  expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(face.eighty);
+  expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe(face.eightyQuiet);
+  expect(screen.getByTestId("hub-sendero-label").textContent).toBe(face.sendero);
+  expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe(face.senderoQuiet);
+  const salad = lang === "es"
+    ? /Stories|Games|Phrase Doctor|10-minute plan|Subjunctive in five|Longer path/
+    : /Cuentos|Juegos|Doctora de frases|Plan de 10 minutos|Subjuntivo en cinco|Camino largo/;
+  expect(tiles.textContent).not.toMatch(salad);
+};
+
 const assertEqualHub = () => {
   const tiles = screen.getByTestId("learn-hub-tiles");
   expect(tiles).toBeTruthy();
-  expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
-  expect(screen.getByTestId("hub-hoy-quiet").textContent).toMatch(/Plan de 10 minutos|10-minute plan/);
-  expect(screen.getByTestId("hub-stories").textContent).toMatch(/Stories/);
-  expect(screen.getByTestId("hub-games").textContent).toMatch(/Games/);
-  expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-  expect(screen.getByTestId("eighty-twenty-cta").textContent).toMatch(/80\/20/);
-  expect(screen.getByTestId("hub-sendero").textContent).toMatch(/Sendero/);
-  expect(screen.getByTestId("hub-sendero-quiet").textContent).toMatch(/Camino que crece|A path that grows/);
+  assertHubFace();
   expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
-  expect(tiles.textContent).not.toMatch(/Cuentos|Match & play|Arregla|Prioriza|Unlock Mexico|Flip & keep|Sobremesa|Pin chase|Flashcards/);
+  expect(tiles.textContent).not.toMatch(/Match & play|Arregla|Prioriza|Unlock Mexico|Flip & keep|Sobremesa|Pin chase|Flashcards/);
   expect(screen.queryByTestId("first-door-hero")).toBeNull();
   expect(screen.queryByTestId("home-pitch")).toBeNull();
   const gridIds = [...tiles.querySelectorAll("button")].map((el) => el.getAttribute("data-testid"));
@@ -1112,7 +1154,7 @@ describe("simulated learner flows", () => {
     await user2.click(screen.getByTestId("nav-camino"));
     await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
     expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    assertHubFace("en");
     await user2.click(screen.getByRole("button", { name: "Subjuntivo presente" }));
     await user2.click(screen.getByRole("button", { name: /Start|Empezar/ }));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
@@ -1870,7 +1912,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("path-entry")).toBeNull();
     await openCaminoMore(user);
     expect(screen.getByTestId("path-entry").textContent).toMatch(/EMPIEZA|START/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("streak").textContent).toMatch(/0/);
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
@@ -1951,7 +1993,7 @@ describe("simulated learner flows", () => {
     render(<App />);
     await awaitHome();
     expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("nav-camino").textContent).toBe("Camino");
     expect(screen.getByTestId("camino-more").textContent).toBe("Más");
     expect(screen.getByTestId("camino-more").getAttribute("aria-expanded")).toBe("false");
@@ -1996,8 +2038,8 @@ describe("simulated learner flows", () => {
     const user = userEvent.setup();
     render(<App />);
     await awaitHome();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("hub-hoy")).toBeTruthy();
     expect(screen.getByTestId("camino-more").textContent).toBe("Más");
     expect(screen.queryByTestId("path-entry")).toBeNull();
@@ -2076,8 +2118,8 @@ describe("simulated learner flows", () => {
     render(<App />);
     await awaitHome();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Phrase Doctor|Jugar la escena/);
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
     expect(screen.queryByTestId("path-entry")).toBeNull();
@@ -2107,7 +2149,7 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/Español mexicano real\. Más allá de lo básico/);
     expect(document.body.textContent).not.toMatch(/Real Mexican Spanish\. Past the basics/);
     expect(screen.queryByTestId("first-door-title")).toBeNull();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
@@ -2377,11 +2419,11 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
     expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*\d+\/40/);
     expect(screen.getByTestId("rayo-toggle")).toBeTruthy();
     expect(screen.getByTestId("coach-strip")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.queryByTestId("first-door-hero")).toBeNull();
     expect(screen.getByTestId("hub-hoy").textContent).not.toMatch(/Continuar|Subjuntivo/);
     await user.click(screen.getByTestId("lang-en"));
@@ -2389,8 +2431,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Come back tomorrow for “.+”\.$/);
     expect(screen.getByTestId("come-back-tomorrow").textContent).not.toBe("Come back tomorrow for the next scene.");
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
   });
 
@@ -2485,8 +2527,8 @@ describe("simulated learner flows", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
     cleanup();
     render(<App />);
@@ -2909,7 +2951,7 @@ describe("simulated learner flows", () => {
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).norteUnlockSeen).not.toBe(true);
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(2);
       expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^2/);
-      expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+      expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
       expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     } finally {
       vi.useRealTimers();
@@ -3691,13 +3733,13 @@ describe("simulated learner flows", () => {
     const handoff = screen.getByTestId("post-dismiss-handoff");
     expect(handoff).toBeTruthy();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(handoff.textContent).not.toMatch(/Phrase Doctor/);
     expect(screen.queryByTestId("phrase-doctor-board")).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/));
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    await waitFor(() => expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE));
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     await user.click(screen.getByTestId("hub-phrase-doctor"));
     await waitFor(() => expect(screen.getByTestId("phrase-doctor-board")).toBeTruthy());
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
@@ -3880,15 +3922,15 @@ describe("simulated learner flows", () => {
     const handoff = screen.getByTestId("post-dismiss-handoff");
     expect(handoff).toBeTruthy();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Jugar la escena|Continuar|Subjuntivo/);
     expect(handoff.textContent).not.toMatch(/Phrase Doctor/);
     expect(screen.getByTestId("hub-phrase-doctor")).toBeTruthy();
     expect(screen.getByTestId("hub-hoy")).toBeTruthy();
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/));
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    await waitFor(() => expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE));
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
   });
 
   it("first-session Doctora win lands on come-back card only — streak + teaser + Listo/Done", async () => {
@@ -4057,7 +4099,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Subjuntivo/);
     expect(screen.getByTestId("hub-hoy")).toBeTruthy();
     expect(screen.getByTestId("hub-phrase-doctor")).toBeTruthy();
@@ -4126,7 +4168,7 @@ describe("simulated learner flows", () => {
     };
     expect(hubSnap.hoy).toMatch(/Hoy/);
     expect(hubSnap.hoy).toMatch(/Plan de 10 minutos/);
-    expect(hubSnap.sendero).toMatch(/Camino que crece/);
+    expect(hubSnap.sendero).toMatch(/Camino largo/);
     expect(hubSnap.hoy + hubSnap.stories + hubSnap.games).not.toMatch(/Un año|Seguir gratis|Mexicanismos|Lección perfecta/);
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
@@ -4176,8 +4218,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("a2hs-dismiss").textContent).toBe("Ahora no");
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).a2hsSeen).toBe(true);
     expect(document.body.textContent).not.toMatch(/Sigue con tu racha/);
@@ -4188,12 +4230,12 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("a2hs-how").textContent).toBe("Tap Share, then Add to Home Screen.");
     expect(screen.getByTestId("a2hs-dismiss").textContent).toBe("Not now");
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
 
     await user.click(screen.getByTestId("a2hs-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("a2hs-sheet")).toBeNull());
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(/Phrase Doctor/);
+    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
 
     cleanup();
@@ -4602,12 +4644,25 @@ describe("simulated learner flows", () => {
     expect(screen.getAllByTestId("letter-chip").map((el) => el.textContent).join("")).toBe(lettersForLayout("abc").join(""));
   });
 
+  it("Learn hub one face — uiLang flip moves all six tiles, no salad", async () => {
+    const user = await boot();
+    assertHubFace("es");
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("hub-stories").textContent).toContain("Stories"));
+    assertHubFace("en");
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("hub-stories").textContent).toContain("Cuentos"));
+    assertHubFace("es");
+  });
+
   it("Sendero opens Camino path; Hoy is the 10-min plan — George stamps", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("lang-es"));
     assertEqualHub();
+    assertHubFace("es");
     expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe("Plan de 10 minutos");
-    expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("Camino que crece");
+    expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("Camino largo");
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Subjuntivo en cinco");
     expect(screen.getByTestId("eighty-twenty-cta")).toBeTruthy();
     expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
@@ -4635,7 +4690,9 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.queryByTestId("hoy-plan")).toBeNull());
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe("10-minute plan"));
-    expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("A path that grows");
+    assertHubFace("en");
+    expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("Longer path");
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Subjunctive in five");
 
     await user.click(screen.getByTestId("hub-hoy"));
     await waitFor(() => expect(screen.getByTestId("hoy-plan-eyebrow").textContent).toBe("TODAY · 10 MIN"));
@@ -4652,6 +4709,7 @@ describe("simulated learner flows", () => {
     const cta = screen.getByTestId("eighty-twenty-cta");
     expect(cta).toBeTruthy();
     expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(SUBJ_FIVE_LABEL);
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe(SUBJ_FIVE_SUB.es);
     expect(screen.queryByTestId("eighty-twenty-sub")).toBeNull();
     expect(cta.closest("[data-testid='first-door-hero']")).toBeNull();
     const pathNode = screen.getByRole("button", { name: "Subjuntivo presente" });
@@ -4672,6 +4730,7 @@ describe("simulated learner flows", () => {
 
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(SUBJ_FIVE_LABEL));
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe(SUBJ_FIVE_SUB.en);
     expect(screen.queryByTestId("eighty-twenty-sub")).toBeNull();
 
     await user.click(screen.getByTestId("eighty-twenty-cta"));
