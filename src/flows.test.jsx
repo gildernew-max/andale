@@ -4744,7 +4744,8 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
     expect(screen.getByTestId("learn-hub-tiles").textContent).not.toMatch(/Sobremesa/);
     expect(screen.getByTestId("eighty-twenty-cta").textContent).toMatch(/80\/20/);
-    expect(screen.getByTestId("eighty-twenty-cta").textContent).not.toMatch(/Sobremesa|Subjuntivo en cinco|Subjunctive in five/);
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe(SUBJ_FIVE_SUB.es);
+    expect(screen.getByTestId("eighty-twenty-cta").textContent).not.toMatch(/Sobremesa/);
     const cta = screen.getByTestId("sobremesa-cta");
     expect(screen.getByTestId("sobremesa-cta-label").textContent).toBe(SOBREMESA_NAME);
     expect(screen.getByTestId("sobremesa-cta-quiet").textContent).toBe(SOBREMESA_QUIET.es);
