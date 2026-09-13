@@ -3577,14 +3577,15 @@ const UI = {
     hoyPlanEyebrow: "HOY · 10 MIN",
     hoyPlanSell: "Un plan corto para hoy. Diez minutos. Luego paras.",
     hoyPlanCta: "Empezar el plan",
-    hubStories: "Stories",
-    hubGames: "Games",
-    hubDoctor: "Phrase Doctor",
+    hubStories: "Cuentos",
+    hubGames: "Juegos",
+    hubDoctor: "Doctora de frases",
     hubEighty: "80/20",
+    hubEightyQuiet: "Subjuntivo en cinco",
     hubPins: "Pin chase",
     hubFlash: "Flashcards",
     hubSendero: "Sendero",
-    hubSenderoQuiet: "Camino que crece",
+    hubSenderoQuiet: "Camino largo",
     // WRAP PARK — Sobremesa name/quiet/sell. Intermedio words tab, not a hub tile. Do not delete.
     hubSobremesa: "Sobremesa",
     hubSobremesaQuiet: "Plática de verdad",
@@ -3664,10 +3665,11 @@ const UI = {
     hubGames: "Games",
     hubDoctor: "Phrase Doctor",
     hubEighty: "80/20",
+    hubEightyQuiet: "Subjunctive in five",
     hubPins: "Pin chase",
     hubFlash: "Flashcards",
     hubSendero: "Sendero",
-    hubSenderoQuiet: "A path that grows",
+    hubSenderoQuiet: "Longer path",
     // WRAP PARK — Sobremesa name/quiet/sell. Intermedio words tab, not a hub tile. Do not delete.
     hubSobremesa: "Sobremesa",
     hubSobremesaQuiet: "Real talk",
@@ -6503,7 +6505,7 @@ export default function App() {
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
               { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => startCubetas() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
-              { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
+              { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, quiet: L.hubEightyQuiet, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
               { id: "sendero", testid: "hub-sendero", title: L.hubSendero, quiet: L.hubSenderoQuiet, art: <HubTileArt face="sendero" />, act: openPath },
             ];
             return (
@@ -6532,7 +6534,7 @@ export default function App() {
                       <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
                       <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
                       <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
-                      {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{tile.quiet}</div>}
+                      {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{tile.quiet}</div>}
                       </span>
                     </button>
                   ))}
