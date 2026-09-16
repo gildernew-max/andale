@@ -11,6 +11,7 @@ import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats, doctora
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
+import { detectNativeIap, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
 import { gatedLiftStoryQuiz, passageForStoryQuestion, pickCompletedStory, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
@@ -3947,6 +3948,7 @@ export default function App() {
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
   const [paywallArmed, setPaywallArmed] = useState(false);
+  const paywallBusyRef = useRef(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
   const [a2hsSheet, setA2hsSheet] = useState(false);
   const [bajioUnlockFlash, setBajioUnlockFlash] = useState(false);
@@ -5864,6 +5866,7 @@ export default function App() {
   const splashOpen = isFirstVisit(prog);
   const paywallGate = shouldShowSoftPaywall({
     paywallSeen: !!prog.paywallSeen,
+    unlockedPrem: !!prog.unlockedPrem,
     todaySceneDone,
     streak: prog.streak,
     lastDay: prog.lastDay,
@@ -5871,6 +5874,7 @@ export default function App() {
     screen,
     splash: splashOpen,
   });
+  const canCharge = detectNativeIap();
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
   const showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
@@ -6076,22 +6080,48 @@ export default function App() {
   }, [norteUnlockFlash]);
   const dismissSoftPaywall = (plan, { fromBackdrop } = {}) => {
     if (fromBackdrop && !paywallArmed) return;
+    if (plan) return;
     setSoftPaywall(false);
     setPaywallArmed(false);
-    if (!plan) {
-      setPostDismissHandoff(true);
-      setTab("camino");
-      const showA2hs = shouldShowA2hsSheet({
-        a2hsSeen: !!prog.a2hsSeen,
-        freeDismiss: true,
-        ...a2hsDisplayEnv(),
-      });
-      if (showA2hs) setA2hsSheet(true);
-      save({ paywallSeen: true, ...(showA2hs ? { a2hsSeen: true } : {}) });
-      return;
-    }
-    save({ paywallSeen: true, unlockedPrem: true, paywallPlan: plan });
+    setPostDismissHandoff(true);
+    setTab("camino");
+    const showA2hs = shouldShowA2hsSheet({
+      a2hsSeen: !!prog.a2hsSeen,
+      freeDismiss: true,
+      ...a2hsDisplayEnv(),
+    });
+    if (showA2hs) setA2hsSheet(true);
+    save({ paywallSeen: true, ...(showA2hs ? { a2hsSeen: true } : {}) });
   };
+  const buySoftPaywall = async (plan) => {
+    if (paywallBusyRef.current) return;
+    paywallBusyRef.current = true;
+    try {
+      const result = await requestPurchase(plan);
+      if (result.status !== "success" || !result.charged) return;
+      save((prev) => progressAfterPurchaseSuccess(prev, {
+        plan: result.plan,
+        productId: result.productId,
+      }));
+      setSoftPaywall(false);
+      setPaywallArmed(false);
+    } finally {
+      paywallBusyRef.current = false;
+    }
+  };
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!detectNativeIap()) return;
+      const result = await restorePurchases();
+      if (cancelled || result.status !== "success" || !result.charged) return;
+      save((prev) => (prev.unlockedPrem ? prev : progressAfterPurchaseSuccess(prev, {
+        plan: result.plan,
+        productId: result.productId,
+      })));
+    })();
+    return () => { cancelled = true; };
+  }, []);
   const dismissA2hs = () => {
     setA2hsSheet(false);
     save({ a2hsSeen: true });
@@ -7943,8 +7973,8 @@ export default function App() {
         );
       })()}
 
-      {/* ---------- SOFT PAYWALL (after first win + vuelve; $0, no IAP) ---------- */}
-      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Surface cream lock = Learn home HUB_CREAM. No flight beat. */}
+      {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Surface cream lock = Learn home HUB_CREAM. No flight beat. Membership attach stays out of this surface. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
           <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
@@ -7952,11 +7982,13 @@ export default function App() {
             <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: D.ink }}>{L.paywallHeadline}</div>
             <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
-              <Btn data-testid="soft-paywall-annual" onClick={() => dismissSoftPaywall("annual")}>{L.paywallAnnual}</Btn>
-              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => dismissSoftPaywall("monthly")} style={{ background: HUB_CREAM }}>{L.paywallMonthly}</Btn>
+              <Btn data-testid="soft-paywall-annual" onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
+              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: HUB_CREAM }}>{L.paywallMonthly}</Btn>
+              {!canCharge && (
               <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
               </div>
+              )}
               <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
                 style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
                 {L.paywallDismiss}

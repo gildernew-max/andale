@@ -102,6 +102,7 @@ assert(!shouldShowSoftPaywall({ ...firstWinHome, screen: "done" }), "paywall wai
 assert(shouldShowSoftPaywall(firstWinHome), "Phrase Doctor Curarla (home, no done screen) can fire the gate");
 assert(!shouldShowSoftPaywall({ ...firstWinHome, streak: 0, lastDay: null }), "paywall never before a win");
 assert(!shouldShowSoftPaywall({ ...firstWinHome, paywallSeen: true }), "seen flag stops the loop");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, unlockedPrem: true }), "StoreKit unlock skips the wall");
 const day2Home = {
   todaySceneDone: false,
   streak: 1,
