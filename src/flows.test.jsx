@@ -563,6 +563,10 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  delete window.__andaleIapEnv;
+  delete window.__andaleNativePurchase;
+  delete window.__andaleNativeRestore;
+  delete window.__andalePurchaseLog;
   setSafeRiskyPackOverride(null);
   markBajioUnlockFlashDue(false);
   markBajioUnlockFlashLive(false);
@@ -4110,13 +4114,17 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
-  it("soft paywall EN strings after first-win state; annual CTA is local-only", async () => {
+  it("soft paywall EN strings after first-win state; annual CTA on web does not fake a charge", async () => {
     const today = (() => {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     })();
     cleanup();
     seedProgress({ uiLang: "en", streak: 1, lastDay: today });
+    window.__andalePurchaseLog = [];
+    const events = [];
+    const onPurchase = (e) => events.push(e.detail);
+    window.addEventListener("andale-purchase", onPurchase);
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en")));
@@ -4126,15 +4134,74 @@ describe("simulated learner flows", () => {
     assertSoftPaywallAnnualPrimary("en");
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    await waitFor(() => expect(events.length).toBeGreaterThan(0));
+    expect(events[0].status).toBe("failure");
+    expect(events[0].charged).toBe(false);
+    expect(events[0].reason).toBe("web_no_iap");
+    expect(events[0].plan).toBe("annual");
+    expect(events[0].productId).toBe("com.andale.app.premium.annual");
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Practice · no charge yet");
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    expect(stored.paywallSeen).toBe(true);
-    expect(stored.paywallPlan).toBe("annual");
-    expect(stored.unlockedPrem).toBe(true);
+    expect(stored.unlockedPrem).not.toBe(true);
+    expect(stored.paywallPlan).toBeFalsy();
+    expect(stored.paywallSeen).not.toBe(true);
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
     expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
     expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
+    window.removeEventListener("andale-purchase", onPurchase);
+  });
+
+  it("soft paywall monthly CTA on web stays honest and does not unlock", async () => {
+    cleanup();
+    seedProgress({ streak: 1, lastDay: localToday() });
+    const events = [];
+    const onPurchase = (e) => events.push(e.detail);
+    window.addEventListener("andale-purchase", onPurchase);
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    assertSoftPaywallAnnualPrimary("es");
+    await user.click(screen.getByTestId("soft-paywall-monthly"));
+    await waitFor(() => expect(events.at(-1)?.reason).toBe("web_no_iap"));
+    expect(events.at(-1).plan).toBe("monthly");
+    expect(events.at(-1).charged).toBe(false);
+    expect(events.at(-1).productId).toBe("com.andale.app.premium.monthly");
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(stored.unlockedPrem).not.toBe(true);
+    expect(stored.paywallPlan).toBeFalsy();
+    window.removeEventListener("andale-purchase", onPurchase);
+  });
+
+  it("soft paywall annual unlocks only after a real purchase success event", async () => {
+    cleanup();
+    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday() });
+    window.__andaleIapEnv = { isNative: true, platform: "ios" };
+    window.__andaleNativePurchase = async ({ productId }) => ({ status: "success", productId });
+    window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
+    const events = [];
+    const onPurchase = (e) => events.push(e.detail);
+    window.addEventListener("andale-purchase", onPurchase);
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(events.some((e) => e.status === "success" && e.charged === true && e.plan === "annual")).toBe(true);
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(stored.paywallSeen).toBe(true);
+    expect(stored.paywallPlan).toBe("annual");
+    expect(stored.unlockedPrem).toBe(true);
+    expect(stored.iapProductId).toBe("com.andale.app.premium.annual");
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+    expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
+    window.removeEventListener("andale-purchase", onPurchase);
+    delete window.__andaleIapEnv;
+    delete window.__andaleNativePurchase;
+    delete window.__andaleNativeRestore;
   });
 
   it("soft paywall yearly is sole filled primary; monthly is outline; continue free is quiet", async () => {
@@ -4289,10 +4356,11 @@ describe("simulated learner flows", () => {
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     await userEvent.setup().click(screen.getByTestId("soft-paywall-annual"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    await waitFor(() => expect(window.__andalePurchaseLog?.at(-1)?.reason).toBe("web_no_iap"));
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).a2hsSeen).not.toBe(true);
 
     cleanup();

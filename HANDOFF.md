@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-16 (Day-one paywall purchase event)
+
+**What changed**
+- Brand CLEAR soft paywall look stays: one static Cenzontle, loud annual, outline monthly, quiet continue free, cream card. No Enroll. No prices in CTA labels.
+- Annual / monthly now call `requestPurchase`. Unlock writes `unlockedPrem` + `paywallPlan` only on a real success event.
+- iOS wrap: Capacitor local plugin `AndaleIap` → StoreKit 2 (`Product.purchase`). Quiet restore on launch.
+- Web / Pages: tap fires `andale-purchase` `{ status: "failure", charged: false, reason: "web_no_iap" }`. Honesty line stays. No fake charge.
+- Product ID stubs for Coin (no prices): `com.andale.app.premium.annual` · `com.andale.app.premium.monthly`.
+
+**Why**
+- Steve / Hand: no revenue path. Gate must actually purchase the moment ASC / TestFlight attach. Soft chrome parked. Enroll / second $99 out of scope.
+
 ## 2026-09-11 (Timer-off on timed challenges)
 
 **What changed**
