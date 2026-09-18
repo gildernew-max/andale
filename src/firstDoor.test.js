@@ -20,6 +20,7 @@ import {
   showColdPitch,
   showComeBackTomorrow,
   showDoorMetaChrome,
+  showLearnComeBackTeaser,
   showPostDismissHandoff,
   streakAfterWin,
   todaySceneIdFromSession,
@@ -83,6 +84,15 @@ assert(streakAfterWin({ streak: 1, lastDay: "2026-09-03" }, "2026-09-04", "2026-
 assert(showComeBackTomorrow({ todaySceneDone: true, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "cleared scene shows home line");
 assert(showComeBackTomorrow({ todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "first win today shows home line");
 assert(!showComeBackTomorrow({ todaySceneDone: false, streak: 0, lastDay: null, today: "2026-09-04" }), "new session has no home line yet");
+assert(showLearnComeBackTeaser({ todaySceneDone: true, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "cleared Hoy keeps the Learn teaser");
+assert(!showLearnComeBackTeaser({ todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "PD Done hides the Learn teaser while Hoy is still the next beat");
+assert(!showLearnComeBackTeaser({ todaySceneDone: false, streak: 0, lastDay: null, today: "2026-09-04" }), "new session has no Learn teaser");
+assert(!showLearnComeBackTeaser({
+  todaySceneDone: false,
+  streak: 1,
+  lastDay: "2026-09-04",
+  today: "2026-09-05",
+}), "day-2 return still hides the Learn teaser while promised Hoy is hero");
 
 assert(!showDoorMetaChrome({ streak: 0 }), "streak 0 hides Meta / Rayo / coaches / Luna greeting");
 assert(!showDoorMetaChrome({}), "empty progress hides door meta chrome");

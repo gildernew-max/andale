@@ -1839,6 +1839,8 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra o toca la frase en Subjuntivo o Indicativo."));
     expect(screen.getByTestId("cubetas-bucket-subjunctive").textContent).toBe("Subjuntivo");
     expect(screen.getByTestId("cubetas-bucket-indicative").textContent).toBe("Indicativo");
+    expect(screen.getByTestId("cubetas-bucket-label-subjunctive").textContent).toBe("Subjuntivo");
+    expect(screen.getByTestId("cubetas-bucket-label-indicative").textContent).toBe("Indicativo");
     expect(screen.queryByTestId("cubetas-bucket-trigger")).toBeNull();
     expect(screen.queryByTestId("cubetas-bucket-use")).toBeNull();
     expect(screen.getByTestId("cubetas-board").textContent).not.toMatch(/Trigger|Disparador|\bUso\b/);
@@ -1883,8 +1885,13 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("cubetas-why").textContent).toContain("«Ojalá» always takes the subjunctive.");
     expect(screen.getByTestId("cubetas-next").textContent).toMatch(/Next chip/i);
     expect(screen.getByTestId("cubetas-title").textContent).toBe("Bucket fly");
-    expect(screen.getByTestId("cubetas-bucket-subjunctive").textContent).toBe("Subjunctive");
-    expect(screen.getByTestId("cubetas-bucket-indicative").textContent).toBe("Indicative");
+    expect(screen.getByTestId("cubetas-bucket-label-subjunctive").textContent).toBe("Subjunctive");
+    expect(screen.getByTestId("cubetas-bucket-label-indicative").textContent).toBe("Indicative");
+    expect(screen.getByTestId("cubetas-bucket-label-indicative").textContent).not.toMatch(/^Indicate$/);
+    const enIndicative = screen.getByTestId("cubetas-bucket-label-indicative");
+    expect(enIndicative.style.overflow).toBe("visible");
+    expect(enIndicative.style.textOverflow).not.toBe("ellipsis");
+    expect(enIndicative.style.whiteSpace).toBe("normal");
   });
 
   it("Safe/Risky hub reward is extra por racha / streak extra, not bonus", async () => {
@@ -2075,7 +2082,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByText("Mentor de cuentos")).toBeTruthy();
     expect(screen.getByText("Coach de precisión")).toBeTruthy();
     expect(screen.getByText("Rival")).toBeTruthy();
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByTestId("home-pitch")).toBeNull();
     expect(document.body.textContent).not.toMatch(/Español mexicano real\. Más allá de lo básico/);
     assertEqualHub();
@@ -2203,8 +2210,8 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("path-entry")).toBeNull();
     await openCaminoMore(userEvent.setup());
     expect(screen.getByTestId("path-entry").textContent).toMatch(/EMPIEZA|START/);
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/«.+»/);
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
 
     cleanup();
     seedProgress({
@@ -2379,7 +2386,12 @@ describe("simulated learner flows", () => {
   it("tomorrow teaser is inert — plain text, not a button and not clickable", async () => {
     const today = localToday();
     cleanup();
-    seedProgress({ streak: 1, lastDay: today, paywallSeen: true });
+    seedProgress({
+      streak: 1,
+      lastDay: today,
+      paywallSeen: true,
+      missions: { [`scene-${today}`]: "taqueria" },
+    });
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
@@ -4064,7 +4076,9 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("session-close-dismiss"));
     await awaitBajioFlashThenPaywall();
     await awaitHome();
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
+    expect(screen.queryByText(/Vuelve mañana|Come back tomorrow/)).toBeNull();
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
@@ -4077,9 +4091,12 @@ describe("simulated learner flows", () => {
     expect(handoff.textContent).not.toMatch(/Phrase Doctor/);
     expect(screen.getByTestId("hub-phrase-doctor")).toBeTruthy();
     expect(screen.getByTestId("hub-hoy")).toBeTruthy();
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE));
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
+    expect(screen.queryByText(/Come back tomorrow for/)).toBeNull();
   });
 
   it("first-session Doctora win lands on next-beat card — streak + playScene + Listo/Done", async () => {
@@ -4243,7 +4260,9 @@ describe("simulated learner flows", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
 
     await user.click(screen.getByTestId("nav-camino"));
-    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es")));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
+    expect(screen.queryByText(/Vuelve mañana|Come back tomorrow/)).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
@@ -4255,7 +4274,8 @@ describe("simulated learner flows", () => {
 
     cleanup();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
@@ -4272,7 +4292,8 @@ describe("simulated learner flows", () => {
     window.addEventListener("andale-purchase", onPurchase);
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en")));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Keep your streak");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Stories, Cubetas, and Phrase Doctor — no ceiling.");
@@ -4293,7 +4314,8 @@ describe("simulated learner flows", () => {
     expect(stored.paywallSeen).not.toBe(true);
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
     expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
-    expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy();
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
+    expect(screen.queryByText(/Come back tomorrow for/)).toBeNull();
     expect(screen.getByTestId("hero-cta")).toBeTruthy();
     window.removeEventListener("andale-purchase", onPurchase);
   });

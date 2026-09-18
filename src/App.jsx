@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats, doctoraWinReward } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
@@ -1727,8 +1727,8 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
         </div>
       ) : (
         <>
-          <div style={{ position: "relative", minHeight: 230, overflow: "visible" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ position: "relative", minHeight: 248, overflow: "visible" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 14 }}>
               {CUBETAS_BUCKETS.map((id) => {
                 const active = hover === id;
                 const wrong = run.status === "wrong" && run.lastBucket === id;
@@ -1751,6 +1751,8 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
                       fontFamily: "inherit",
                       fontWeight: 900,
                       fontSize: 16,
+                      whiteSpace: "normal",
+                      minWidth: 0,
                       cursor: idle ? "pointer" : "default",
                       padding: 0,
                     }}
@@ -1814,7 +1816,27 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
                         />
                       )}
                     </div>
-                    <span style={{ display: "block", marginTop: 4 }}>{bucketLabel(id, uiLang)}</span>
+                    <span
+                      data-testid={`cubetas-bucket-label-${id}`}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        boxSizing: "border-box",
+                        marginTop: 6,
+                        padding: "0 2px",
+                        fontSize: 13.5,
+                        fontWeight: 900,
+                        lineHeight: 1.2,
+                        letterSpacing: 0,
+                        textAlign: "center",
+                        whiteSpace: "normal",
+                        overflow: "visible",
+                        textOverflow: "clip",
+                        overflowWrap: "normal",
+                        wordBreak: "keep-all",
+                        hyphens: "manual",
+                      }}
+                    >{bucketLabel(id, uiLang)}</span>
                   </button>
                 );
               })}
@@ -6613,7 +6635,7 @@ export default function App() {
               today: todayKey,
             });
             const parkLongHoy = shouldParkHoyUnderMas(todayScene) && (day2Return || todaySceneDone);
-            const showLine = showComeBackTomorrow({
+            const showLine = showLearnComeBackTeaser({
               todaySceneDone,
               streak: prog.streak,
               lastDay: prog.lastDay,

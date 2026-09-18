@@ -60,7 +60,10 @@ assert(CUBETAS_BUCKETS[0] === "subjunctive" && CUBETAS_BUCKETS[1] === "indicativ
 assert(CUBETAS_LABELS.subjunctive.es === "Subjuntivo" && CUBETAS_LABELS.subjunctive.en === "Subjunctive", "Subjuntivo / Subjunctive");
 assert(CUBETAS_LABELS.indicative.es === "Indicativo" && CUBETAS_LABELS.indicative.en === "Indicative", "Indicativo / Indicative");
 assert(bucketLabel("subjunctive", "es") === "Subjuntivo", "ES subjunctive label");
+assert(bucketLabel("indicative", "es") === "Indicativo", "ES indicative label");
+assert(bucketLabel("subjunctive", "en") === "Subjunctive", "EN subjunctive is the full mood name");
 assert(bucketLabel("indicative", "en") === "Indicative", "EN indicative label");
+assert(bucketLabel("indicative", "en") !== "Indicate", "EN indicative is not the clipped Indicate");
 assert(CUBETAS_DEAD_LABELS.join(" ") === "Trigger Use Disparador Uso", "dead labels locked");
 ["Trigger", "Use", "Disparador", "Uso"].forEach((dead) => {
   assert(!Object.values(CUBETAS_LABELS).some((row) => cubetasHasDeadLabel(`${row.es} ${row.en}`)), `bucket labels must not be ${dead}`);
