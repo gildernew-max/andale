@@ -86,11 +86,20 @@ export function comeBackTomorrowLine({ lang = "es", nextTitle, fallback } = {}) 
     : `Vuelve mañana por «${title}».`;
 }
 
-/** Home line after a first win today, or after today's scene is cleared. Hidden on day-2 return while the promised Hoy is the hero. */
+/** Home line after a first win today, or after today's scene is cleared. Hidden on day-2 return while the promised Hoy is the hero. Paywall still uses this gate. */
 export function showComeBackTomorrow({ todaySceneDone, streak, lastDay, today } = {}) {
   if (isDay2Return({ streak, lastDay, today }) && !todaySceneDone) return false;
   if (todaySceneDone) return true;
   return (Number(streak) || 0) >= 1 && lastDay === today;
+}
+
+/**
+ * Learn under-tile teaser. Hidden while today's Hoy is still the next beat
+ * (Phrase Doctor Done / first win without Hoy). Soft chrome parked.
+ */
+export function showLearnComeBackTeaser({ todaySceneDone, streak, lastDay, today } = {}) {
+  if (!todaySceneDone) return false;
+  return showComeBackTomorrow({ todaySceneDone, streak, lastDay, today });
 }
 
 /** Hoy session id from live session — unitId `_today:{id}` if todaySceneId was dropped. */

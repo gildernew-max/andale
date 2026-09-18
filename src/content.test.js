@@ -337,6 +337,7 @@ assert(comeBackTomorrowLine({ lang: "en", nextTitle: nextHoy.titleEn }) === "Com
 assert(comeBackTomorrowLine({ lang: "es" }) === UI.es.comeBackTomorrow, "ES teaser falls back when title unknown");
 assert(comeBackTomorrowLine({ lang: "en", nextTitle: "" }) === UI.en.comeBackTomorrow, "EN teaser falls back when title unknown");
 assert(appSrc.includes("comeBackTomorrowLine"), "Camino teaser uses comeBackTomorrowLine");
+assert(appSrc.includes("showLearnComeBackTeaser"), "Learn teaser hides while Hoy is still the next beat");
 assert(appSrc.includes("isDay2Return"), "day-2 return gate is wired");
 assert(appSrc.includes("showColdPitch"), "cold pitch is gated off the return door");
 const teaserOpen = appSrc.match(/<p data-testid="come-back-tomorrow"[^>]*>/);
@@ -1118,6 +1119,11 @@ assert(appSrc.includes("data-testid=\"cubetas-board\""), "Cubetas playfield is t
 assert(appSrc.includes("data-testid=\"cubetas-chip\""), "Cubetas chip is a draggable pill");
 assert(appSrc.includes("data-testid=\"cubetas-hint\""), "Cubetas open shows a drag/tap line");
 assert(appSrc.includes("cubetas-bucket-${id}"), "mood buckets are testable");
+assert(appSrc.includes("cubetas-bucket-label-${id}"), "bucket titles are live labels under the pots");
+const cubetasLabelChunk = appSrc.slice(appSrc.indexOf("cubetas-bucket-label-${id}"), appSrc.indexOf("cubetas-bucket-label-${id}") + 900);
+assert(cubetasLabelChunk.includes('whiteSpace: "normal"'), "bucket titles wrap instead of clipping Indicate");
+assert(cubetasLabelChunk.includes('overflow: "visible"'), "bucket titles are not overflow-clipped");
+assert(!cubetasLabelChunk.includes('textOverflow: "ellipsis"'), "bucket titles have no ellipsis");
 assert(appSrc.includes("CUBETAS_BUCKETS.map"), "only the two mood buckets are mapped");
 assert(!appSrc.includes("cubetas-bucket-trigger"), "no Trigger bucket");
 assert(!appSrc.includes("cubetas-bucket-use"), "no Use bucket");
