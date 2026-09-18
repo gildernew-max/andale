@@ -522,11 +522,15 @@ assert(lessonListenText({ type: "mc", text: "¿Con todo, joven, o se lo preparo 
 assert(lessonListenText({ type: "mc", prompt: "Why?" }) === "Why?", "MC without a line still has a Listen source");
 assert(lessonListenText({ type: "listen", text: "Se me hace tarde." }) === "Se me hace tarde.", "listen-type plays q.text");
 assert(lessonListenText({}) === "", "empty question is not a silent undefined speak");
-assert(CUBETAS_HINT.es === "Arrastra la ficha o toca una cubeta.", "Cubetas ES hint lock");
-assert(CUBETAS_HINT.en === "Drag the chip or tap a bucket.", "Cubetas EN hint lock");
+assert(CUBETAS_HINT.es === "Arrastra o toca la frase en Subjuntivo o Indicativo.", "Cubetas ES George how-to lock");
+assert(CUBETAS_HINT.en === "Drag or tap the phrase into Subjunctive or Indicative.", "Cubetas EN George how-to lock");
 assert(cubetasHint("en") === CUBETAS_HINT.en && cubetasHint("es") === CUBETAS_HINT.es, "Cubetas hint follows uiLang");
 assert(appSrc.includes("data-testid=\"cubetas-hint\""), "Cubetas open hint is testable");
 assert(appSrc.includes("cubetasHint(uiLang)"), "Cubetas hint follows uiLang");
+assert(appSrc.includes("showCubetasHint(run)"), "Cubetas how-to is first-paint only");
+assert(appSrc.includes("dismissCubetasHint"), "first drag/tap dismisses the how-to");
+assert(!/Arrastra la ficha o toca una cubeta/.test(CUBETAS_HINT.es), "parked draft ES how-to is gone");
+assert(!/Drag the chip or tap a bucket/.test(CUBETAS_HINT.en), "parked draft EN how-to is gone");
 assert(!/¡Ganaste!|You won!/.test(`${UI.es.hoyWin}${UI.en.hoyWin}`), "first-Hoy win is not ¡Ganaste!/You won!");
 assert(appSrc.includes("L.hoyWin"), "first-Hoy done heading uses L.hoyWin");
 assert(appSrc.includes("hoy-win"), "first-Hoy win heading is testable");

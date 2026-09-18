@@ -63,6 +63,8 @@ import {
   cubetasTitle,
   cubetasWhy,
   currentChip,
+  dismissCubetasHint,
+  showCubetasHint,
   finishCubetasClear,
   nextCubetasChip,
   scoredChip,
@@ -1653,7 +1655,7 @@ const cubetasBucketAt = (refs, x, y) => {
 };
 
 /** One-screen Cubetas playfield. Same Cenzontle PNG as the mark. Win motion ON. */
-const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain, onLang }) => {
+const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, onClose, onAgain, onLang }) => {
   const [drag, setDrag] = useState(null);
   const bucketsRef = useRef({ subjunctive: null, indicative: null });
   const chip = currentChip(run);
@@ -1667,6 +1669,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
   const onChipPointerDown = (e) => {
     if ((!idle && run.status !== "wrong") || !chip) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
+    onHintDismiss?.();
     setDrag({ x: e.clientX, y: e.clientY, hover: null });
   };
   const onChipPointerMove = (e) => {
@@ -1688,7 +1691,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
         <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
       </div>
 
-      {(idle || run.status === "wrong") && (
+      {showCubetasHint(run) && (
         <p data-testid="cubetas-hint" style={{ margin: "0 0 14px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>{cubetasHint(uiLang)}</p>
       )}
 
@@ -8929,6 +8932,7 @@ export default function App() {
           D={D}
           L={L}
           onDrop={onCubetasDrop}
+          onHintDismiss={() => setCubetasGame((g) => dismissCubetasHint(g))}
           onNext={onCubetasNext}
           onClose={() => { setScreen("home"); setTab("practica"); }}
           onAgain={startCubetas}

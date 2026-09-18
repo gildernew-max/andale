@@ -1547,7 +1547,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
     expect(screen.getByTestId("cubetas-title").textContent).toBe("Cubetas");
     expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que");
-    expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra la ficha o toca una cubeta.");
+    expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra o toca la frase en Subjuntivo o Indicativo.");
     expect(document.body.textContent).not.toMatch(/AHORCADO \/ HANGMAN/);
     expect(screen.queryByText(/Guess the word|Adivina la palabra/)).toBeNull();
   });
@@ -1763,11 +1763,11 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
     expect(screen.getByTestId("cubetas-title").textContent).toBe("Cubetas");
     expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que");
-    expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra la ficha o toca una cubeta.");
+    expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra o toca la frase en Subjuntivo o Indicativo.");
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("cubetas-hint").textContent).toBe("Drag the chip or tap a bucket."));
+    await waitFor(() => expect(screen.getByTestId("cubetas-hint").textContent).toBe("Drag or tap the phrase into Subjunctive or Indicative."));
     await user.click(screen.getByTestId("lang-es"));
-    await waitFor(() => expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra la ficha o toca una cubeta."));
+    await waitFor(() => expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra o toca la frase en Subjuntivo o Indicativo."));
     expect(screen.getByTestId("cubetas-bucket-subjunctive").textContent).toBe("Subjuntivo");
     expect(screen.getByTestId("cubetas-bucket-indicative").textContent).toBe("Indicativo");
     expect(screen.queryByTestId("cubetas-bucket-trigger")).toBeNull();
@@ -1784,6 +1784,7 @@ describe("simulated learner flows", () => {
 
     await user.click(screen.getByTestId("cubetas-bucket-indicative"));
     await waitFor(() => expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que"));
+    expect(screen.queryByTestId("cubetas-hint")).toBeNull();
     expect(screen.getByTestId("cubetas-cenzontle").getAttribute("data-state")).toBe("offstage");
     expect(screen.queryByTestId("cubetas-literal")).toBeNull();
     expect(screen.queryByTestId("cubetas-why")).toBeNull();
