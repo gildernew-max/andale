@@ -1540,16 +1540,79 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
-  it("Learn hub Games tile opens Cubetas, not Hangman", async () => {
+  it("Learn hub Games tile opens Games hub with Cubetas and Hangman", async () => {
+    const user = await boot();
+    await awaitHome();
+    expect(screen.queryByTestId("hub-hangman")).toBeNull();
+    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(6);
+    await user.click(screen.getByTestId("hub-games"));
+    await waitFor(() => expect(screen.getByTestId("games-hub")).toBeTruthy());
+    expect(screen.getByTestId("games-hub-title").textContent).toBe("Juegos");
+    expect(screen.getByTestId("cubetas-start").textContent).toContain("Cubetas");
+    expect(screen.getByTestId("hangman-start").textContent).toContain("Ahorcado");
+    expect(screen.getByTestId("hangman-start").textContent).toContain("Palabras de México");
+    expect(screen.getByTestId("hangman-start").textContent).not.toContain("Hangman");
+    expect(screen.queryByTestId("cubetas-board")).toBeNull();
+    expect(screen.queryByTestId("hangman-board")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/AHORCADO \/ HANGMAN/);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("hangman-start").textContent).toContain("Hangman"));
+    expect(screen.getByTestId("hangman-start").textContent).toContain("Mexican words");
+    expect(screen.getByTestId("hangman-start").textContent).not.toContain("Ahorcado");
+    expect(screen.getByTestId("cubetas-start").textContent).toContain("Bucket fly");
+    await user.click(screen.getByTestId("cubetas-start"));
+    await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
+    expect(screen.getByTestId("cubetas-title").textContent).toBe("Bucket fly");
+    expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que");
+    expect(screen.getByTestId("cubetas-hint").textContent).toBe("Drag or tap the phrase into Subjunctive or Indicative.");
+  });
+
+  it("Hangman round: guess letters then Literal then Why", async () => {
     const user = await boot();
     await awaitHome();
     await user.click(screen.getByTestId("hub-games"));
-    await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
-    expect(screen.getByTestId("cubetas-title").textContent).toBe("Cubetas");
-    expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que");
-    expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra o toca la frase en Subjuntivo o Indicativo.");
-    expect(document.body.textContent).not.toMatch(/AHORCADO \/ HANGMAN/);
-    expect(screen.queryByText(/Guess the word|Adivina la palabra/)).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("hangman-start")).toBeTruthy());
+    await user.click(screen.getByTestId("hangman-start"));
+    await waitFor(() => expect(screen.getByTestId("hangman-board")).toBeTruthy());
+    expect(screen.getByTestId("hangman-title").textContent).toBe("Ahorcado");
+    expect(screen.getByTestId("hangman-quiet").textContent).toBe("Palabras de México");
+    expect(screen.getByTestId("hangman-howto").textContent).toBe("Adivina la palabra. Una letra a la vez.");
+    expect(screen.getByTestId("hangman-board").getAttribute("data-timer")).toBe("off");
+    expect(screen.getByTestId("hangman-mark")).toBeTruthy();
+    expect(screen.getByTestId("accent-row")).toBeTruthy();
+    expect(screen.getAllByTestId("accent-chip").map((el) => el.textContent).join("")).toBe("ÁÉÍÓÚÜ");
+    expect(document.body.textContent).not.toMatch(/AHORCADO \/ HANGMAN|Hanged!|Got it!|💀/);
+    expect(screen.queryByTestId("cubetas-cenzontle")).toBeNull();
+    const missChip = [...screen.getAllByTestId("letter-chip")].find((el) => el.getAttribute("data-letter") === "W");
+    if (missChip && screen.getByTestId("hangman-board").getAttribute("data-word").toLocaleUpperCase("es").indexOf("W") < 0) {
+      await user.click(missChip);
+      await waitFor(() => expect(screen.getByTestId("hangman-wrong").textContent).toBe("Esa no."));
+    }
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("hangman-howto").textContent).toBe("Guess the word. One letter at a time."));
+    expect(screen.getByTestId("hangman-title").textContent).toBe("Hangman");
+    expect(screen.getByTestId("hangman-quiet").textContent).toBe("Mexican words");
+    const word = screen.getByTestId("hangman-board").getAttribute("data-word");
+    const keys = [...new Set([...word.normalize("NFC")].map((ch) => ch.toLocaleUpperCase("es")))];
+    const chips = [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")];
+    for (const key of keys) {
+      const chip = chips.find((el) => el.getAttribute("data-letter") === key);
+      expect(chip).toBeTruthy();
+      if (!chip.disabled) await user.click(chip);
+    }
+    await waitFor(() => expect(screen.getByTestId("hangman-literal")).toBeTruthy());
+    expect(screen.getByTestId("hangman-win").textContent).toBe("That's it.");
+    expect(screen.getByTestId("hangman-word").textContent).toBe(word);
+    const literal = screen.getByTestId("hangman-literal");
+    const why = screen.getByTestId("hangman-why");
+    expect(literal.textContent).toMatch(/^Literal/);
+    expect(why.textContent).toMatch(/^Why/);
+    expect(literal.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByTestId("hangman-howto")).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("hangman-win").textContent).toBe("¡Eso!"));
+    expect(screen.getByTestId("hangman-literal").textContent).toMatch(/^Literal/);
+    expect(screen.getByTestId("hangman-why").textContent).toMatch(/^Por qué/);
   });
 
   it("section test-out starts from Camino and fails closed after 3 misses (failKind === test)", async () => {
@@ -1735,8 +1798,8 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("nav-practica"));
     const fold = screen.getByTestId("practica-fold");
     const ids = [...fold.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
-    expect(ids.filter((id) => ["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start"].includes(id)))
-      .toEqual(["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start"]);
+    expect(ids.filter((id) => ["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start", "hangman-start"].includes(id)))
+      .toEqual(["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start", "hangman-start"]);
     const html = document.body.innerHTML;
     const foldAt = html.indexOf('data-testid="practica-fold"');
     const smartAt = html.search(/PRÁCTICA INTELIGENTE|SMART PRACTICE/);
@@ -1751,9 +1814,15 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("match-play").textContent).toMatch(/Match & play|Empareja y juega/);
     expect(screen.getByTestId("cubetas-start").textContent).toContain("Cubetas");
     expect(screen.getByTestId("cubetas-start").textContent).not.toContain("Bucket fly");
+    expect(screen.getByTestId("hangman-start").textContent).toContain("Ahorcado");
+    expect(screen.getByTestId("hangman-start").textContent).toContain("Palabras de México");
+    expect(screen.getByTestId("hangman-start").textContent).not.toContain("Hangman");
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("cubetas-start").textContent).toContain("Bucket fly"));
     expect(screen.getByTestId("cubetas-start").textContent).not.toContain("Cubetas");
+    expect(screen.getByTestId("hangman-start").textContent).toContain("Hangman");
+    expect(screen.getByTestId("hangman-start").textContent).toContain("Mexican words");
+    expect(screen.getByTestId("hangman-start").textContent).not.toContain("Ahorcado");
   });
 
   it("Cubetas: one chip, two mood buckets, wrong returns, correct flies then Literal/Why", async () => {
@@ -4757,6 +4826,8 @@ describe("simulated learner flows", () => {
     const qwertyChips = screen.getAllByTestId("letter-chip");
     expect(qwertyChips.map((el) => el.textContent).join("")).toBe(lettersForLayout("qwerty").join(""));
     expect(qwertyChips.map((el) => el.textContent).join("")).toContain("LÑ");
+    expect(screen.getByTestId("accent-row")).toBeTruthy();
+    expect(screen.getAllByTestId("accent-chip").map((el) => el.textContent).join("")).toBe("ÁÉÍÓÚÜ");
     expect(screen.getByTestId("letter-layout-qwerty").getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByTestId("letter-layout-abc").getAttribute("aria-pressed")).toBe("false");
     expect(document.body.textContent).not.toMatch(/switch to ABC|keyboard layout|elige el teclado|press QWERTY/i);

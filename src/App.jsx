@@ -70,6 +70,29 @@ import {
   scoredChip,
   startCubetasRun,
 } from "./cubetas.js";
+import {
+  HANGMAN_ACCENTS,
+  HANGMAN_GEM,
+  HANGMAN_MAX,
+  HANGMAN_XP,
+  finishHangmanRun,
+  guessHangmanLetter,
+  hangmanHowTo,
+  hangmanLiteral,
+  hangmanLiteralLabel,
+  hangmanMisses,
+  hangmanQuiet,
+  hangmanSlot,
+  hangmanTitle,
+  hangmanWhy,
+  hangmanWhyLabel,
+  hangmanWinLine,
+  hangmanWrongLine,
+  hydrateHangman,
+  isHangmanOver,
+  isHangmanSolved,
+  startHangmanRun,
+} from "./hangman.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -1908,6 +1931,16 @@ const HubTileArt = ({ face }) => (
     aria-hidden="true"
     style={{ display: "block", width: "100%", height: 96, objectFit: "contain" }}
   />
+);
+
+/** Flat geometric gallows — cream / terracotta / sage. No body, no second mascot. */
+const HangmanMark = ({ size = 44 }) => (
+  <svg data-testid="hangman-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
+    <rect x="6" y="38" width="32" height="3" rx="1" fill="#C46B3A" />
+    <rect x="12" y="6" width="3" height="33" fill="#5C7356" />
+    <rect x="12" y="6" width="18" height="3" fill="#5C7356" />
+    <rect x="28" y="9" width="2" height="8" fill="#C46B3A" />
+  </svg>
 );
 
 /** Dave-cleared illustrated Mexico. Pins / glow / fog sit on top. */
@@ -3812,36 +3845,59 @@ const diegoReaction = (won, delta, lang) => {
 
 
 
-const LetterBoard = ({ D, layout, onLayoutChange, picked = [], inWord, disabled, onPick }) => {
+const LetterBoard = ({ D, layout, onLayoutChange, picked = [], inWord, disabled, onPick, extraRow }) => {
   const mode = normalizeLetterLayout(layout);
   const rows = rowsForLayout(mode);
+  const chipStyle = (letter) => {
+    const wasPicked = picked.includes(letter);
+    const hit = wasPicked && inWord?.(letter);
+    return {
+      wasPicked,
+      hit,
+      style: {
+        flex: "1 1 0", maxWidth: 38, minWidth: 0, height: 38, borderRadius: 10,
+        border: `2px solid ${wasPicked ? (hit ? D.green : D.red) : D.line}`,
+        borderBottom: `4px solid ${wasPicked ? (hit ? D.greenDark : D.redDark) : D.line}`,
+        background: wasPicked ? (hit ? D.okBg : D.badBg) : "#fff",
+        color: wasPicked ? (hit ? D.okText : D.badText) : D.green,
+        fontWeight: 800, fontSize: 14, fontFamily: "inherit",
+        cursor: wasPicked || disabled ? "default" : "pointer",
+      },
+    };
+  };
   return (
     <div data-testid="letter-board" data-layout={mode}>
       <div style={{ display: "grid", gap: 6 }}>
         {rows.map((row, ri) => (
           <div key={ri} data-testid="letter-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
             {row.map((letter) => {
-              const wasPicked = picked.includes(letter);
-              const hit = wasPicked && inWord?.(letter);
+              const { wasPicked, style } = chipStyle(letter);
               return (
                 <button key={letter} type="button" data-testid="letter-chip" data-letter={letter}
                   disabled={disabled || wasPicked} onClick={() => onPick(letter)}
                   aria-label={letter}
-                  style={{
-                    flex: "1 1 0", maxWidth: 38, minWidth: 0, height: 38, borderRadius: 10,
-                    border: `2px solid ${wasPicked ? (hit ? D.green : D.red) : D.line}`,
-                    borderBottom: `4px solid ${wasPicked ? (hit ? D.greenDark : D.redDark) : D.line}`,
-                    background: wasPicked ? (hit ? D.okBg : D.badBg) : "#fff",
-                    color: wasPicked ? (hit ? D.okText : D.badText) : D.green,
-                    fontWeight: 800, fontSize: 14, fontFamily: "inherit",
-                    cursor: wasPicked || disabled ? "default" : "pointer",
-                  }}>
+                  style={style}>
                   {letter}
                 </button>
               );
             })}
           </div>
         ))}
+        {extraRow?.length ? (
+          <div data-testid="accent-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+            {extraRow.map((letter) => {
+              const { wasPicked, style } = chipStyle(letter);
+              return (
+                <button key={letter} type="button" data-testid="accent-chip" data-letter={letter}
+                  disabled={disabled || wasPicked} onClick={() => onPick(letter)}
+                  aria-label={letter}
+                  style={style}>
+                  {letter}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
       <div data-testid="letter-layout-toggle" role="group" aria-label="ABC QWERTY"
         style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 10 }}>
@@ -4018,6 +4074,7 @@ export default function App() {
   const [ahorcado, setAhorcado] = useState(null);
   const [cubetasGame, setCubetasGame] = useState(null);
   const cubetasTimerRef = useRef(null);
+  const gamesReturnRef = useRef("practica");
   const [burst, setBurst] = useState(0); // mini confetti trigger
   const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
@@ -4574,7 +4631,22 @@ export default function App() {
     setScreen("matchPairs");
   };
 
-  const startCubetas = () => {
+  const closeGamesSurface = () => {
+    if (gamesReturnRef.current === "games") {
+      setScreen("games");
+      return;
+    }
+    setScreen("home");
+    setTab(gamesReturnRef.current === "camino" ? "camino" : "practica");
+  };
+
+  const openGamesHub = () => {
+    gamesReturnRef.current = "games";
+    setScreen("games");
+  };
+
+  const startCubetas = (from = "practica") => {
+    gamesReturnRef.current = from === "games" ? "games" : "practica";
     awardLockRef.current.delete("cubetas");
     if (cubetasTimerRef.current) clearTimeout(cubetasTimerRef.current);
     setCubetasGame(startCubetasRun());
@@ -4640,52 +4712,47 @@ export default function App() {
     });
   };
 
-  const AHORCADO_MAX = 6;
-  const ahorcadoPool = SECTIONS[0].unitIds.flatMap((uid) => {
-    const u = UNITS.find((x) => x.id === uid);
-    return (u?.pairs || []).map((pr) => ({ es: Array.isArray(pr) ? pr[0] : pr?.es, en: Array.isArray(pr) ? pr[1] : pr?.en }));
-  }).filter((p) => p.es && !/\s/.test(p.es.trim()) && p.es.trim().length >= 4);
-
-  const startAhorcado = () => {
+  const startAhorcado = (from = "camino") => {
+    gamesReturnRef.current = from === "games" ? "games" : from === "practica" ? "practica" : "camino";
     awardLockRef.current.delete("ahorcado");
-    const pool = ahorcadoPool.length ? ahorcadoPool : [{ es: "dudar", en: "to doubt" }];
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-    const wordNorm = pick.es.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-ZÑ]/g, "");
-    setAhorcado({ word: pick.es, wordNorm, hint: pick.en, guessed: [], done: false, won: false, awarded: false, xp: 0, gems: 0 });
+    setAhorcado(startHangmanRun());
     setScreen("ahorcado");
   };
 
   const guessAhorcadoLetter = (letter) => {
     setAhorcado((cur) => {
-      if (!cur || cur.done) return cur;
-      const L = letter.toUpperCase();
-      if (cur.guessed.includes(L)) return cur;
-      const guessed = [...cur.guessed, L];
-      const inWord = cur.wordNorm.includes(L);
-      if (inWord) beep("ok"); else beep("bad");
-      const wrong = guessed.filter((g) => !cur.wordNorm.includes(g));
-      const allRevealed = [...cur.wordNorm].every((c) => guessed.includes(c));
-      const dead = wrong.length >= AHORCADO_MAX;
-      const done = allRevealed || dead;
-      const won = allRevealed && !dead;
-      if (done) queueMicrotask(() => finishAhorcado(won));
-      return { ...cur, guessed, done, won };
+      const next = guessHangmanLetter(cur, letter);
+      if (!next || next === cur) return cur;
+      if (next.lastHit) beep("ok");
+      else beep("bad");
+      if (isHangmanOver(next) && !isHangmanOver(cur)) {
+        queueMicrotask(() => finishAhorcado(isHangmanSolved(next)));
+      }
+      return next;
     });
   };
 
   const finishAhorcado = (won) => {
     if (!lockAward("ahorcado")) return;
-    const xp = won ? 10 : 4;
-    const gems = won ? 6 : 2;
+    const xp = won ? HANGMAN_XP : 0;
+    const gems = won ? HANGMAN_GEM : 0;
     const t = todayStr();
     const y = yesterdayStr();
-    save((prev) => {
-      const streak = prev.lastDay === t ? prev.streak || 0 : prev.lastDay === y ? (prev.streak || 0) + 1 : 1;
-      return { ...prev, xp: (prev.xp || 0) + xp, xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + xp, streak, lastDay: t };
-    });
-    setAhorcado((g) => (g ? { ...g, done: true, awarded: true, xp, gems } : g));
-    setBurst(Date.now());
-    if (won) beep("win");
+    if (won) {
+      save((prev) => {
+        const streak = prev.lastDay === t ? prev.streak || 0 : prev.lastDay === y ? (prev.streak || 0) + 1 : 1;
+        return {
+          ...prev,
+          xp: (prev.xp || 0) + xp,
+          xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + xp,
+          gems: (prev.gems || 0) + gems,
+          streak,
+          lastDay: t,
+        };
+      });
+      beep("win");
+    }
+    setAhorcado((g) => (g ? finishHangmanRun(g, won) : g));
   };
 
   const onMatchPracticeTap = (side, id) => {
@@ -5680,8 +5747,9 @@ export default function App() {
       if (live.matchGame.awarded || live.matchGame.done) awardLockRef.current.add("match");
     }
     if (live.ahorcado) {
-      setAhorcado(live.ahorcado);
-      if (live.ahorcado.awarded || live.ahorcado.done) awardLockRef.current.add("ahorcado");
+      const restored = hydrateHangman(live.ahorcado);
+      setAhorcado(restored);
+      if (restored?.awarded || isHangmanOver(restored)) awardLockRef.current.add("ahorcado");
     }
     if (live.cubetasGame) {
       setCubetasGame(live.cubetasGame);
@@ -6567,7 +6635,7 @@ export default function App() {
             const hubTiles = [
               { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
-              { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => startCubetas() },
+              { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => openGamesHub() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
               { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, quiet: L.hubEightyQuiet, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
               { id: "sendero", testid: "hub-sendero", title: L.hubSendero, quiet: L.hubSenderoQuiet, art: <HubTileArt face="sendero" />, act: openPath },
@@ -6785,7 +6853,7 @@ export default function App() {
                     {/* ── per-section game CTA ── */}
                     {(() => {
                       const gameDefs = [
-                        { testid: "ahorcado-section-start", act: startAhorcado, color: D.green, dark: D.greenDark, icon: "🔤", labelEs: "Ahorcado / Hangman", labelEn: "Ahorcado / Hangman", subEs: "Adivina la palabra letra por letra.", subEn: "Guess the word letter by letter." },
+                        { testid: "ahorcado-section-start", act: () => startAhorcado("camino"), color: D.green, dark: D.greenDark, icon: <HangmanMark size={28} />, labelEs: hangmanTitle("es"), labelEn: hangmanTitle("en"), subEs: hangmanQuiet("es"), subEn: hangmanQuiet("en") },
                         { testid: "jeopardy-section-start", act: startJeopardy, color: D.purple, dark: D.purpleDark, icon: "🎯", labelEs: "JEOPARDY SOLO", labelEn: "JEOPARDY SOLO", subEs: "Elige categoría, elige valor, responde.", subEn: "Pick a category, pick a value, answer." },
                         { testid: "emparejar-section-start", act: startMatchPairs, color: D.blue, dark: D.blueDark, icon: "🔗", labelEs: "Emparejar / Match", labelEn: "Emparejar / Match", subEs: "Una ronda de parejas español–inglés.", subEn: "One round of Spanish–English pair tiles." },
                       ][si];
@@ -7202,13 +7270,24 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={startCubetas} data-testid="cubetas-start"
+          <button onClick={() => startCubetas("practica")} data-testid="cubetas-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 44, height: 44, borderRadius: 14, background: D.green, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.greenDark}` }}>🪣</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{cubetasTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Sort the phrase. Subjunctive or indicative." : "Clasifica la frase. Subjuntivo o indicativo."}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={() => startAhorcado("practica")} data-testid="hangman-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{hangmanTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{hangmanQuiet(uiLang)}</div>
               </div>
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
@@ -8934,10 +9013,42 @@ export default function App() {
           onDrop={onCubetasDrop}
           onHintDismiss={() => setCubetasGame((g) => dismissCubetasHint(g))}
           onNext={onCubetasNext}
-          onClose={() => { setScreen("home"); setTab("practica"); }}
-          onAgain={startCubetas}
+          onClose={closeGamesSurface}
+          onAgain={() => startCubetas(gamesReturnRef.current)}
           onLang={(code) => save({ uiLang: code })}
         />
+      )}
+
+      {screen === "games" && (
+        <div data-testid="games-hub" style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+            <button type="button" onClick={() => { setScreen("home"); setTab("camino"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+            <div data-testid="games-hub-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{L.hubGames}</div>
+            <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+          </div>
+          <button onClick={() => startCubetas("games")} data-testid="cubetas-start"
+            style={{ display: "block", width: "100%", margin: "0 0 10px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.green, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.greenDark}` }}>🪣</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{cubetasTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Sort the phrase. Subjunctive or indicative." : "Clasifica la frase. Subjuntivo o indicativo."}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={() => startAhorcado("games")} data-testid="hangman-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{hangmanTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{hangmanQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+        </div>
       )}
 
       {/* ---------- MATCH PAIRS (Práctica) ---------- */}
@@ -8997,84 +9108,65 @@ export default function App() {
         );
       })()}
 
-      {/* ---------- JEOPARDY SOLO ---------- */}
+      {/* ---------- Hangman playfield ---------- */}
       {screen === "ahorcado" && ahorcado && (() => {
-        const { word, wordNorm, hint, guessed, done, won } = ahorcado;
-        const wrong = guessed.filter((g) => !wordNorm.includes(g));
+        const over = isHangmanOver(ahorcado);
+        const won = isHangmanSolved(ahorcado);
+        const misses = hangmanMisses(ahorcado);
         const letterLayout = normalizeLetterLayout(prog.letterLayout);
-        const gallowParts = [
-          <circle key="h" cx="60" cy="30" r="10" stroke="currentColor" strokeWidth="3" fill="none" />,
-          <line key="b" x1="60" y1="40" x2="60" y2="70" stroke="currentColor" strokeWidth="3" />,
-          <line key="la" x1="60" y1="50" x2="45" y2="62" stroke="currentColor" strokeWidth="3" />,
-          <line key="ra" x1="60" y1="50" x2="75" y2="62" stroke="currentColor" strokeWidth="3" />,
-          <line key="ll" x1="60" y1="70" x2="45" y2="85" stroke="currentColor" strokeWidth="3" />,
-          <line key="rl" x1="60" y1="70" x2="75" y2="85" stroke="currentColor" strokeWidth="3" />,
-        ];
-        const goHome = () => { setScreen("home"); setTab("camino"); };
+        const letters = ahorcado.letters || [];
         return (
-          <div style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 130px" }}>
-            {burst > 0 && done && <Confetti key={burst} count={36} />}
+          <div data-testid="hangman-board" data-word={ahorcado.word} data-timer={ahorcado.timerOn ? "on" : "off"} style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <button onClick={goHome} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".08em" }}>AHORCADO / HANGMAN</div>
-                <div style={{ fontWeight: 900, fontSize: 18 }}>{uiLang === "en" ? "Guess the word" : "Adivina la palabra"}</div>
+              <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div data-testid="hangman-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{hangmanTitle(uiLang)}</div>
+                <div data-testid="hangman-quiet" style={{ fontSize: 12, fontWeight: 700, color: D.sub }}>{hangmanQuiet(uiLang)}</div>
               </div>
-              <div style={{ border: `2px solid ${D.red}`, borderBottom: `4px solid ${D.redDark}`, borderRadius: 12, padding: "5px 10px", background: D.redBg, fontWeight: 900, fontSize: 13, color: D.redDark }}>
-                {wrong.length}/{AHORCADO_MAX}
-              </div>
+              <div data-testid="hangman-misses" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{misses.length}/{HANGMAN_MAX}</div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
-            {done ? (
-              <div className="pop" style={{ textAlign: "center", border: `2px solid ${won ? D.gold : D.red}`, borderBottom: `5px solid ${won ? D.goldDark : D.redDark}`, borderRadius: 16, padding: 18, background: won ? D.goldBg : D.redBg }}>
-                <div style={{ fontSize: 48 }}>{won ? "🎉" : "💀"}</div>
-                <h2 style={{ fontWeight: 900, margin: "8px 0 4px" }}>{won ? (uiLang === "en" ? "Got it!" : "¡Lo adivinaste!") : (uiLang === "en" ? "Hanged!" : "¡Ahorcado!")}</h2>
-                <div style={{ fontWeight: 900, fontSize: 22, margin: "8px 0", letterSpacing: ".15em", color: D.ink }}>{word.toUpperCase()}</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: D.sub, marginBottom: 12 }}>{hint}</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, margin: "0 0 16px" }}>
-                  {[["XP", `+${ahorcado.xp || 0}`], [uiLang === "en" ? "Gems" : "Gemas", `+${ahorcado.gems || 0}`]].map(([l, v]) => (
-                    <div key={l} style={{ background: D.card, border: `1.5px solid ${won ? D.gold : D.red}`, borderRadius: 12, padding: "7px 6px" }}>
-                      <div style={{ fontSize: 10, fontWeight: 900, color: D.sub }}>{l}</div>
-                      <div style={{ fontSize: 16, fontWeight: 900, color: won ? D.goldDark : D.redDark }}>{v}</div>
-                    </div>
-                  ))}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+              <HangmanMark size={56} />
+            </div>
+            {over ? (
+              <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
+                {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
+                <div data-testid="hangman-word" style={{ fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px" }}>{ahorcado.word}</div>
+                <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanLiteralLabel(uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanLiteral(ahorcado, uiLang)}</div>
                 </div>
-                <Btn color={D.green} dark={D.greenDark} onClick={startAhorcado}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
-                <Btn outline onClick={goHome} style={{ marginLeft: 10 }}>{uiLang === "en" ? "Close" : "Cerrar"}</Btn>
+                <div data-testid="hangman-why" style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                </div>
+                <Btn color={D.green} dark={D.greenDark} data-testid="hangman-again" onClick={() => startAhorcado(gamesReturnRef.current)} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
+                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
               </div>
             ) : (
               <>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-                  <svg width="120" height="100" viewBox="0 0 120 100" style={{ color: D.ink }} aria-hidden="true">
-                    <line x1="10" y1="98" x2="110" y2="98" stroke="currentColor" strokeWidth="3" />
-                    <line x1="30" y1="98" x2="30" y2="5" stroke="currentColor" strokeWidth="3" />
-                    <line x1="30" y1="5" x2="60" y2="5" stroke="currentColor" strokeWidth="3" />
-                    <line x1="60" y1="5" x2="60" y2="20" stroke="currentColor" strokeWidth="3" />
-                    {gallowParts.slice(0, wrong.length)}
-                  </svg>
-                </div>
-                <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, textAlign: "center", marginBottom: 10 }}>
-                  {uiLang === "en" ? `Hint: ${hint}` : `Pista: ${hint}`}
-                </div>
-                <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-                  {[...wordNorm].map((letter, i) => (
-                    <div key={i} style={{ width: 28, height: 38, borderBottom: `3px solid ${D.ink}`, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 3, fontWeight: 900, fontSize: 18, color: D.ink }}>
-                      {guessed.includes(letter) ? letter : ""}
+                <p data-testid="hangman-howto" style={{ margin: "0 0 14px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{hangmanHowTo(uiLang)}</p>
+                <div data-testid="hangman-slots" style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                  {letters.map((letter, i) => (
+                    <div key={`${letter}-${i}`} data-testid="hangman-slot" style={{ width: 28, height: 38, borderBottom: `3px solid ${D.ink}`, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 3, fontWeight: 900, fontSize: 18, color: D.ink }}>
+                      {hangmanSlot(ahorcado, i)}
                     </div>
                   ))}
                 </div>
-                {wrong.length > 0 && (
-                  <div style={{ textAlign: "center", marginBottom: 14, fontSize: 13, fontWeight: 800, color: D.red }}>
-                    {uiLang === "en" ? "Missed: " : "Fallidas: "}{wrong.join(", ")}
+                {ahorcado.lastHit === false && (
+                  <div data-testid="hangman-wrong" style={{ textAlign: "center", marginBottom: 14, fontSize: 13, fontWeight: 800, color: D.red }}>
+                    {hangmanWrongLine(uiLang)}
                   </div>
                 )}
                 <LetterBoard
                   D={D}
                   layout={letterLayout}
+                  extraRow={HANGMAN_ACCENTS}
                   onLayoutChange={(next) => save({ letterLayout: normalizeLetterLayout(next) })}
-                  picked={guessed}
-                  inWord={(letter) => wordNorm.includes(letter)}
-                  disabled={done}
+                  picked={ahorcado.guessed || []}
+                  inWord={(letter) => (ahorcado.letters || []).includes(letter)}
+                  disabled={over}
                   onPick={guessAhorcadoLetter}
                 />
               </>
