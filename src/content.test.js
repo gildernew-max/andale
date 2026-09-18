@@ -1482,6 +1482,22 @@ assert(appSrc.includes("window.__andaleStorage"), "wrap-prep storage flag");
 assert(andaleViteBase({}) === "/andale/", "default / Pages vite base is /andale/");
 assert(andaleViteBase({ ANDALE_WRAP: "1" }) === "/", "wrap vite base is /");
 
+for (const page of ["privacy", "support", "disclaimer"]) {
+  const htmlPath = join(repoRoot, "public", `${page}.html`);
+  const mdPath = join(repoRoot, `${page}.md`);
+  assert(existsSync(htmlPath), `public/${page}.html is the Pages static file`);
+  assert(existsSync(mdPath), `${page}.md markdown mirror stays with George copy`);
+  const html = readFileSync(htmlPath, "utf8");
+  const md = readFileSync(mdPath, "utf8");
+  assert(html.includes("gildernew@gmail.com"), `${page}.html contact is gildernew@gmail.com`);
+  assert(md.includes("gildernew@gmail.com"), `${page}.md contact is gildernew@gmail.com`);
+  assert(!html.includes("We are not publishing an inbox yet"), `${page}.html is not the August inbox-later copy`);
+  assert(html.includes("September 18, 2026"), `${page}.html date is George 2026-09-18`);
+}
+assert(pagesYml.includes("privacy.html"), "Pages smoke GETs privacy.html");
+assert(pagesYml.includes("support.html"), "Pages smoke GETs support.html");
+assert(pagesYml.includes("disclaimer.html"), "Pages smoke GETs disclaimer.html");
+
 const privacyPath = join(repoRoot, "PrivacyInfo.xcprivacy");
 assert(existsSync(privacyPath), "PrivacyInfo.xcprivacy for Tue wrap");
 const privacySrc = readFileSync(privacyPath, "utf8");

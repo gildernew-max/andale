@@ -52,6 +52,9 @@ jobs:
       - name: HTTP GET live site after deploy
         env:
           LIVE_HOME: https://gildernew-max.github.io/andale/
+          LIVE_PRIVACY: https://gildernew-max.github.io/andale/privacy.html
+          LIVE_SUPPORT: https://gildernew-max.github.io/andale/support.html
+          LIVE_DISCLAIMER: https://gildernew-max.github.io/andale/disclaimer.html
           LIVE_LUNA: https://gildernew-max.github.io/andale/coaches/luna-happy.png
           LIVE_MASCOT: https://gildernew-max.github.io/andale/mascot/cenzontle.png
           LIVE_STILL: https://gildernew-max.github.io/andale/stills/sma-lanterns.png
@@ -116,10 +119,13 @@ jobs:
           for i in $(seq 1 "$attempts"); do
             echo "Live smoke attempt $i/$attempts"
             if check_url "$LIVE_HOME" html \
+              && check_url "$LIVE_PRIVACY" html \
+              && check_url "$LIVE_SUPPORT" html \
+              && check_url "$LIVE_DISCLAIMER" html \
               && check_url "$LIVE_LUNA" png \
               && check_url "$LIVE_MASCOT" png \
               && check_url "$LIVE_STILL" png; then
-              echo "Live URL smoke passed: $LIVE_HOME plus coach + mascot + Hoy still PNGs"
+              echo "Live URL smoke passed: $LIVE_HOME plus ASC legal HTML + coach + mascot + Hoy still PNGs"
               exit 0
             fi
             if [ "$i" -lt "$attempts" ]; then

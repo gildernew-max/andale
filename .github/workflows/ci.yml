@@ -18,6 +18,14 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - name: Pages dist publishes ASC legal pages
+        run: |
+          test -f dist/privacy.html
+          test -f dist/support.html
+          test -f dist/disclaimer.html
+          grep -q 'gildernew@gmail.com' dist/privacy.html
+          grep -q 'gildernew@gmail.com' dist/support.html
+          grep -q 'gildernew@gmail.com' dist/disclaimer.html
       - name: Pages build keeps /andale/ assets
         run: grep -q 'src="/andale/assets/' dist/index.html
       - name: Wrap build uses base /

@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-18 (ASC legal pages)
+
+**What changed**
+- George’s `public/privacy.html`, `public/support.html`, and new `public/disclaimer.html` wired as-is (September 18, 2026; contact `gildernew@gmail.com` on all three). Markdown mirrors at repo root.
+- Vite copies `public/` → `dist/` at site root, so Pages serves `/andale/privacy.html`, `/andale/support.html`, `/andale/disclaimer.html`. CI asserts the three files land in `dist/` with that inbox.
+- Soft chrome parked: no Perfil / Perfect lesson / Mexicanismos / enroll / paywall / StoreKit change. Existing Perfil Privacidad / Soporte still use `BASE_URL`.
+
+**Why**
+- Steve / Hand: ASC paste URLs. Soft chrome parked.
+
 ## 2026-09-16 (Day-one paywall purchase event)
 
 **What changed**
