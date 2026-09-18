@@ -12,6 +12,7 @@ import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
+import { FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
 import { gatedLiftStoryQuiz, passageForStoryQuestion, pickCompletedStory, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
@@ -5274,6 +5275,7 @@ export default function App() {
   };
 
   const openStory = (story) => {
+    if (story?.id) emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaStart, storyId: story.id });
     setStoryView(story); setWordSel(null); setWordReveal(true); setAnsSel({}); setParaIdx(0); setScreen("story");
   };
 
@@ -5879,8 +5881,13 @@ export default function App() {
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
   const showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
   useEffect(() => {
-    if (showSoftPaywall) setSoftPaywall(true);
-    else {
+    emitFunnelEvent({ event: FUNNEL_EVENTS.open });
+  }, []);
+  useEffect(() => {
+    if (showSoftPaywall) {
+      setSoftPaywall(true);
+      emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen });
+    } else {
       setSoftPaywall(false);
       setPaywallArmed(false);
     }
@@ -6078,9 +6085,19 @@ export default function App() {
     }, NORTE_UNLOCK_FLASH_MS);
     return () => clearTimeout(hide);
   }, [norteUnlockFlash]);
+  const completeCenzontleBeat = () => {
+    emitFunnelEvent({
+      event: FUNNEL_EVENTS.cenzontleComplete,
+      beat: cenzontleBeatFromSession(session),
+    });
+    setWinBounce(false);
+  };
   const dismissSoftPaywall = (plan, { fromBackdrop } = {}) => {
     if (fromBackdrop && !paywallArmed) return;
     if (plan) return;
+    if (!fromBackdrop) {
+      emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.continueFree });
+    }
     setSoftPaywall(false);
     setPaywallArmed(false);
     setPostDismissHandoff(true);
@@ -6097,6 +6114,7 @@ export default function App() {
     if (paywallBusyRef.current) return;
     paywallBusyRef.current = true;
     try {
+      emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: plan });
       const result = await requestPurchase(plan);
       if (result.status !== "success" || !result.charged) return;
       save((prev) => progressAfterPurchaseSuccess(prev, {
@@ -6461,7 +6479,7 @@ export default function App() {
         .tile-slot .tile { flex:1; }
       `}</style>
 
-      {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={() => setWinBounce(false)} />}
+      {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={completeCenzontleBeat} />}
 
       {/* ---------- TOP STAT BAR ---------- */}
       <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 50, background: D.card, borderBottom: `2px solid ${D.line}` }}>
@@ -9473,7 +9491,7 @@ export default function App() {
           {quietWin && (
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
               {winBounce && (shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session))
-                ? <Story0Beat onComplete={() => setWinBounce(false)} />
+                ? <Story0Beat onComplete={completeCenzontleBeat} />
                 : !winBounce ? <WinPerch /> : null}
             </div>
           )}
