@@ -46,6 +46,12 @@ export const CUBETAS_DEAD_LABELS = ["Trigger", "Use", "Disparador", "Uso"];
 
 export const CUBETAS_NEXT = { es: "Siguiente", en: "Next chip" };
 
+/** Open-board how-to. George CLEAR. First paint only. Soft chrome parked. */
+export const CUBETAS_HINT = {
+  es: "Arrastra o toca la frase en Subjuntivo o Indicativo.",
+  en: "Drag or tap the phrase into Subjunctive or Indicative.",
+};
+
 /** Ojalá que pack. Trigger phrases to sort — one chip on the field. Feeds 80/20. */
 export const OJALA_QUE_PACK = [
   {
@@ -110,6 +116,20 @@ export function cubetasNextLabel(uiLang) {
   return uiLang === "en" ? CUBETAS_NEXT.en : CUBETAS_NEXT.es;
 }
 
+export function cubetasHint(uiLang) {
+  return uiLang === "en" ? CUBETAS_HINT.en : CUBETAS_HINT.es;
+}
+
+/** First paint of a run only. Missing/false hint never comes back mid-round. */
+export function showCubetasHint(run) {
+  return run?.hint === true && (run.status === "idle" || run.status === "wrong");
+}
+
+export function dismissCubetasHint(run) {
+  if (!run || run.hint !== true) return run;
+  return { ...run, hint: false };
+}
+
 export function currentChip(run) {
   return run?.queue?.[0] || null;
 }
@@ -142,6 +162,7 @@ export function startCubetasRun(pack = OJALA_QUE_PACK, rng = Math.random) {
     gems: 0,
     xp: 0,
     awarded: false,
+    hint: true,
   };
 }
 
@@ -151,11 +172,12 @@ export function applyCubetasDrop(run, bucket) {
   if (!CUBETAS_BUCKETS.includes(bucket)) return run;
   const chip = currentChip(run);
   if (!chip) return run;
+  const base = dismissCubetasHint(run);
   if (bucket !== chip.bucket) {
-    return { ...run, status: "wrong", lastBucket: bucket };
+    return { ...base, status: "wrong", lastBucket: bucket };
   }
   return {
-    ...run,
+    ...base,
     status: "squash",
     lastBucket: bucket,
     scored: [...(run.scored || []), chip],

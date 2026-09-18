@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
 import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
 import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./schema.js";
-import { prepQuestion as normalizeQuestion } from "./prepQuestion.js";
+import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showComeBackTomorrow, showDoorMetaChrome, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
@@ -57,11 +57,14 @@ import {
   applyCubetasDrop,
   bucketLabel,
   clearCubetasWrong,
+  cubetasHint,
   cubetasLiteral,
   cubetasNextLabel,
   cubetasTitle,
   cubetasWhy,
   currentChip,
+  dismissCubetasHint,
+  showCubetasHint,
   finishCubetasClear,
   nextCubetasChip,
   scoredChip,
@@ -782,9 +785,12 @@ const ensureResumeLoop = () => {
 
 function speak(text, rate = 0.92, opts = {}) {
   try {
+    const spoken = String(text || "").trim();
+    if (!spoken) return;
     const ss = window.speechSynthesis;
-    if (!ss) return;
-    const chunks = opts.chunk ? splitSentences(text) : [text];
+    const Utter = window.SpeechSynthesisUtterance;
+    if (!ss || typeof Utter !== "function") return;
+    const chunks = opts.chunk ? splitSentences(spoken) : [spoken];
     // Uniform step list: shadow mode = each sentence twice (normal pace, then slower echo).
     const steps = [];
     chunks.forEach((c) => {
@@ -801,7 +807,7 @@ function speak(text, rate = 0.92, opts = {}) {
     const playNext = () => {
       if (token !== __speakToken || i >= steps.length) return;
       const step = steps[i++];
-      const u = new SpeechSynthesisUtterance(step.text.replace(/_+/g, "..."));
+      const u = new Utter(step.text.replace(/_+/g, "..."));
       const voice = bestSpanishVoice(window.__andaleVoiceName); // re-resolve: voices can load late
       // Never mute for a missing Paulina / es-MX exact match. Any es-* is fine.
       // Empty voices at tap: still speak with lang es-MX and let the engine pick.
@@ -837,7 +843,7 @@ function speak(text, rate = 0.92, opts = {}) {
           if (!window.__andaleRetried) {
             window.__andaleRetried = true;
             try {
-              const bare = new SpeechSynthesisUtterance(step.text);
+              const bare = new Utter(step.text);
               const retryVoice = voice || bestSpanishVoice(window.__andaleVoiceName);
               bare.lang = "es-MX";
               if (retryVoice) bare.voice = retryVoice;
@@ -855,6 +861,7 @@ function speak(text, rate = 0.92, opts = {}) {
         }, 2200);
       }
       ss.speak(u);
+      try { ss.resume(); } catch (e) {}
       ensureResumeLoop();
     };
     playNext(); // same tick as the tap — do not defer
@@ -1648,7 +1655,7 @@ const cubetasBucketAt = (refs, x, y) => {
 };
 
 /** One-screen Cubetas playfield. Same Cenzontle PNG as the mark. Win motion ON. */
-const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain, onLang }) => {
+const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, onClose, onAgain, onLang }) => {
   const [drag, setDrag] = useState(null);
   const bucketsRef = useRef({ subjunctive: null, indicative: null });
   const chip = currentChip(run);
@@ -1662,6 +1669,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
   const onChipPointerDown = (e) => {
     if ((!idle && run.status !== "wrong") || !chip) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
+    onHintDismiss?.();
     setDrag({ x: e.clientX, y: e.clientY, hover: null });
   };
   const onChipPointerMove = (e) => {
@@ -1682,6 +1690,10 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onNext, onClose, onAgain,
         <div data-testid="cubetas-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{cubetasTitle(uiLang)}</div>
         <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
       </div>
+
+      {showCubetasHint(run) && (
+        <p data-testid="cubetas-hint" style={{ margin: "0 0 14px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35 }}>{cubetasHint(uiLang)}</p>
+      )}
 
       {run.status === "done" ? (
         <div data-testid="cubetas-done" className="pop" style={{ textAlign: "center", border: `2px solid ${D.gold}`, borderBottom: `5px solid ${D.goldDark}`, borderRadius: 16, padding: 18, background: D.goldBg }}>
@@ -4472,6 +4484,8 @@ export default function App() {
     const sceneBeat = {
       type: "mc",
       prompt: uiLang === "en" ? scene.questionEn : scene.question,
+      text: scene.line,
+      line: scene.line,
       choices: scene.choices,
       answer: scene.answer,
       explain: scene.explain,
@@ -5580,7 +5594,7 @@ export default function App() {
 
   useEffect(() => {
     if (screen === "lesson" && (q?.type === "type" || q?.type === "listen" || q?.type === "transform") && !q?.answerAid && status === "idle") inputRef.current?.focus();
-    if (screen === "lesson" && q?.type === "listen" && status === "idle") setTimeout(() => speak(q.text), 350);
+    if (screen === "lesson" && q?.type === "listen" && status === "idle") setTimeout(() => speak(lessonListenText(q)), 350);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qi, screen]);
 
@@ -6469,8 +6483,10 @@ export default function App() {
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
         .node-btn:active:not(:disabled) { transform: translateY(3px); }
-        .choice-card { border:2px solid ${D.line}; border-bottom-width:4px; border-radius:14px; background:${D.card}; transition: background .1s; color:${D.ink}; }
+        .choice-card { border:2px solid ${D.line}; border-bottom-width:4px; border-radius:14px; background:${D.card}; transition: background .1s, box-shadow .1s, border-color .1s; color:${D.ink}; }
         .choice-card:hover:not(:disabled) { background:${D.subtle}; }
+        .choice-card[data-selected="true"],
+        .choice-card[data-selected="true"]:hover:not(:disabled) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
@@ -8318,8 +8334,8 @@ export default function App() {
               <div style={{ textAlign: "center", marginBottom: 18 }}>
 	                <h2 style={{ fontWeight: 900, fontSize: 22, margin: "0 0 16px" }}>{L.writeHeard}</h2>
                 <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                  <button onClick={() => speak(q.text)} className="duo-btn" style={{ background: D.blue, borderBottom: `4px solid ${D.blueDark}`, border: "none", color: "#fff", borderRadius: 18, width: 70, height: 70, fontSize: 28, cursor: "pointer" }} aria-label={uiLang === "en" ? "Listen" : "Escuchar"}><IcSpeaker size={32} /></button>
-                  <button onClick={() => speak(q.text, 0.6)} className="duo-btn" style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 18, width: 70, height: 70, fontSize: 24, cursor: "pointer" }} aria-label={uiLang === "en" ? "Slower" : "Más lento"}><IcTurtle size={34} /></button>
+                  <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} className="duo-btn" style={{ background: D.blue, borderBottom: `4px solid ${D.blueDark}`, border: "none", color: "#fff", borderRadius: 18, width: 70, height: 70, fontSize: 28, cursor: "pointer" }} aria-label={uiLang === "en" ? "Listen" : "Escuchar"}><IcSpeaker size={32} /></button>
+                  <button type="button" data-testid="lesson-listen-slow" onClick={() => speak(lessonListenText(q), 0.6)} className="duo-btn" style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 18, width: 70, height: 70, fontSize: 24, cursor: "pointer" }} aria-label={uiLang === "en" ? "Slower" : "Más lento"}><IcTurtle size={34} /></button>
                 </div>
               </div>
             ) : q.type === "transform" ? (
@@ -8329,7 +8345,7 @@ export default function App() {
 	                  <h2 style={{ fontWeight: 900, fontSize: 22, margin: 0 }}>{L.transformIt}</h2>
                 </div>
                 <div style={{ border: `2px solid ${D.line}`, borderRadius: 14, padding: "13px 16px", background: D.subtle, display: "flex", gap: 10, alignItems: "center" }}>
-                  <button onClick={() => speak(q.base)} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "5px 9px", flexShrink: 0, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
+                  <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "5px 9px", flexShrink: 0, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                   <span style={{ fontSize: 18, fontWeight: 800 }}>{q.base}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0 0" }}>
@@ -8357,7 +8373,7 @@ export default function App() {
                   <div style={{ position: "relative", border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", background: D.card, flex: 1, marginBottom: 14 }}>
                     <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                      <button onClick={() => speak(q.type === "order" ? q.answer : q.prompt)} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
+                      <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                       <div>
                         <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{q.prompt}</div>
                         {q.note ? <div style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
@@ -8380,8 +8396,8 @@ export default function App() {
                   else if (showState && isSel && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
                   else if (isSel) { bg = "#DDF4FF"; bd = D.blue; col = D.blueDark; }
                   return (
-                    <button key={idx} className="choice-card" disabled={showState} onClick={() => setSelected(idx)}
-                      style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd }}>
+                    <button key={idx} type="button" className="choice-card" data-testid="choice-card" data-selected={isSel ? "true" : undefined} aria-pressed={isSel} disabled={showState} onClick={() => setSelected(idx)}
+                      style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd, boxShadow: isSel && !showState ? `0 0 0 3px ${D.blue}` : undefined }}>
                       <span style={{ fontSize: 12, fontWeight: 900, border: `2px solid ${bd}`, borderRadius: 8, padding: "1px 7px", color: bd === D.line ? D.sub : col }}>{idx + 1}</span>
                       {c}
                     </button>
@@ -8916,6 +8932,7 @@ export default function App() {
           D={D}
           L={L}
           onDrop={onCubetasDrop}
+          onHintDismiss={() => setCubetasGame((g) => dismissCubetasHint(g))}
           onNext={onCubetasNext}
           onClose={() => { setScreen("home"); setTab("practica"); }}
           onAgain={startCubetas}
@@ -9564,17 +9581,13 @@ export default function App() {
         </div>
       ); })()}
 
-      {/* ---------- FIRST-SESSION DOCTORA CLOSE (come-back card only) ---------- */}
+      {/* ---------- FIRST-SESSION DOCTORA CLOSE (next beat → hub / Hoy. No calendar lock.) ---------- */}
       {screen === "sessionClose" && (
         <div data-testid="session-close" style={{ maxWidth: 480, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
           <div style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 20, padding: "28px 22px 22px" }}>
             <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 900, fontSize: 18 }} title={L.streakDays}><IcFlame size={22} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}</span>
-            <p data-testid="come-back-tomorrow" style={{ margin: "16px 0 22px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
-              {comeBackTomorrowLine({
-                lang: uiLang,
-                nextTitle: hoyTitleForLang(tomorrowScene, uiLang),
-                fallback: L.comeBackTomorrow,
-              })}
+            <p data-testid="session-close-next" style={{ margin: "16px 0 22px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
+              {L.playScene}
             </p>
             <Btn data-testid="session-close-dismiss" onClick={dismissSessionClose} style={{ textTransform: "none", letterSpacing: "normal" }}>{L.sessionClose}</Btn>
           </div>

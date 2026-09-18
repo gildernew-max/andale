@@ -1,6 +1,16 @@
 /** Normalize authored question field aliases. Same rules as App.jsx session build.
  *  tokens→words, source→base, answer→answers, {es,en} pairs.
  *  Shuffle / answerAid stay in App — they are not schema. */
+
+/** Spanish the Listen control should play. Hoy scene MC carries `text`/`line` (the line), not the Why prompt. */
+export function lessonListenText(q) {
+  if (!q || typeof q !== "object") return "";
+  if (q.type === "listen") return String(q.text || "").trim();
+  if (q.type === "transform") return String(q.base || q.text || "").trim();
+  if (q.type === "order") return String(q.answer || q.text || "").trim();
+  return String(q.text || q.line || q.prompt || "").trim();
+}
+
 export function prepQuestion(q) {
   const p = { ...q };
   if (p.answer && !p.answers && (p.type === "type" || p.type === "listen" || p.type === "transform")) p.answers = [p.answer];

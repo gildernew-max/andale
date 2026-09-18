@@ -13,6 +13,7 @@ import {
   CUBETAS_GLOW_CREAM,
   CUBETAS_GLOW_TERRACOTTA,
   CUBETAS_GRAB_MS,
+  CUBETAS_HINT,
   CUBETAS_HUB,
   CUBETAS_LABELS,
   CUBETAS_LIFT_MS,
@@ -31,12 +32,15 @@ import {
   bucketLabel,
   clearCubetasWrong,
   cubetasHasDeadLabel,
+  cubetasHint,
+  dismissCubetasHint,
   cubetasLiteral,
   cubetasNextLabel,
   cubetasTitle,
   cubetasWhy,
   currentChip,
   finishCubetasClear,
+  showCubetasHint,
   nextCubetasChip,
   scoredChip,
   startCubetasRun,
@@ -84,6 +88,13 @@ assert(CUBETAS_XP === 4, "clear XP matches a practice item");
 assert(CUBETAS_NEXT.en === "Next chip", "teach beat CTA is Next chip");
 assert(cubetasNextLabel("en") === "Next chip", "EN next");
 assert(cubetasNextLabel("es") === "Siguiente", "ES next is quiet Siguiente");
+assert(CUBETAS_HINT.es === "Arrastra o toca la frase en Subjuntivo o Indicativo.", "George ES how-to lock");
+assert(CUBETAS_HINT.en === "Drag or tap the phrase into Subjunctive or Indicative.", "George EN how-to lock");
+assert(cubetasHint("es") === CUBETAS_HINT.es, "ES hint helper");
+assert(cubetasHint("en") === CUBETAS_HINT.en, "EN hint helper");
+assert(!/\n/.test(CUBETAS_HINT.es + CUBETAS_HINT.en), "hint is one line");
+assert(!/Perfect|perfecta|Mexicanismo/i.test(CUBETAS_HINT.es + CUBETAS_HINT.en), "hint is not soft chrome");
+assert(!cubetasHasDeadLabel(CUBETAS_HINT.es + " " + CUBETAS_HINT.en), "hint has no dead labels");
 
 assert(OJALA_QUE_PACK[0].phrase === "Ojalá que", "pack opens on Ojalá que");
 assert(OJALA_QUE_PACK[0].bucket === "subjunctive", "Ojalá que is subjunctive");
@@ -98,17 +109,27 @@ OJALA_QUE_PACK.forEach((c) => {
 
 const run = startCubetasRun(OJALA_QUE_PACK, () => 0);
 assert(run.status === "idle", "fresh run is idle");
+assert(run.hint === true, "first paint shows the how-to");
+assert(showCubetasHint(run), "fresh idle run paints the hint");
+assert(!showCubetasHint({ ...run, hint: false }), "dismissed hint does not paint");
+assert(!showCubetasHint({ status: "idle" }), "LIVE without hint does not mid-round repeat");
 assert(currentChip(run).phrase === "Ojalá que", "idle shows one Ojalá que chip");
 assert(run.queue.length === OJALA_QUE_PACK.length, "full pack queued");
 assert(run.hub === "match-play" && run.feeds === "eighty-twenty", "run stamps hub + 80/20");
 
+const dragged = dismissCubetasHint(run);
+assert(dragged.hint === false && showCubetasHint(dragged) === false, "first drag dismisses the how-to");
+assert(dismissCubetasHint(dragged) === dragged, "second dismiss is a no-op");
+
 const miss = applyCubetasDrop(run, "indicative");
 assert(miss.status === "wrong", "wrong drop shakes");
+assert(miss.hint === false && !showCubetasHint(miss), "first tap dismisses the how-to");
 assert(currentChip(miss).phrase === "Ojalá que", "wrong returns the chip");
 assert(miss.scored.length === 0, "wrong does not score");
 assert(miss.gems === 0, "wrong has no gem tick");
 const idleAgain = clearCubetasWrong(miss);
 assert(idleAgain.status === "idle" && currentChip(idleAgain).phrase === "Ojalá que", "wrong clears back to idle");
+assert(idleAgain.hint === false && !showCubetasHint(idleAgain), "wrong clear does not repeat the how-to");
 const retry = applyCubetasDrop(miss, "subjunctive");
 assert(retry.status === "squash", "wrong status still accepts a retry drop");
 
@@ -132,6 +153,7 @@ walk = advanceCubetasReveal(walk);
 walk = nextCubetasChip(walk);
 assert(walk.status === "idle", "Next chip deals the next phrase");
 assert(currentChip(walk).phrase !== "Ojalá que", "next chip is not the scored one");
+assert(walk.hint === false && !showCubetasHint(walk), "next chip does not repeat the how-to");
 
 let clearWalk = startCubetasRun(OJALA_QUE_PACK, () => 0);
 while (currentChip(clearWalk)) {
