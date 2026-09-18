@@ -34,15 +34,32 @@ const seedProgress = (extra = {}) => {
 
 const mockBrowser = () => {
   const voices = [];
+  window.SpeechSynthesisUtterance = class {
+    constructor(text) {
+      this.text = text;
+      this.lang = "";
+      this.rate = 1;
+      this.pitch = 1;
+      this.voice = null;
+      this.onstart = null;
+      this.onend = null;
+      this.onerror = null;
+    }
+  };
+  const speak = vi.fn((u) => { try { u?.onstart?.(); } catch (e) {} });
   Object.defineProperty(window, "speechSynthesis", {
     configurable: true,
     value: {
       getVoices: () => voices,
-      speak: () => {},
+      speak,
       cancel: () => {},
+      resume: () => {},
       addEventListener: () => {},
       removeEventListener: () => {},
       onvoiceschanged: null,
+      speaking: false,
+      pending: false,
+      paused: false,
     },
   });
   const toneNode = () => ({
@@ -1530,6 +1547,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
     expect(screen.getByTestId("cubetas-title").textContent).toBe("Cubetas");
     expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que");
+    expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra la ficha o toca una cubeta.");
     expect(document.body.textContent).not.toMatch(/AHORCADO \/ HANGMAN/);
     expect(screen.queryByText(/Guess the word|Adivina la palabra/)).toBeNull();
   });
@@ -1745,6 +1763,11 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
     expect(screen.getByTestId("cubetas-title").textContent).toBe("Cubetas");
     expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que");
+    expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra la ficha o toca una cubeta.");
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("cubetas-hint").textContent).toBe("Drag the chip or tap a bucket."));
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("cubetas-hint").textContent).toBe("Arrastra la ficha o toca una cubeta."));
     expect(screen.getByTestId("cubetas-bucket-subjunctive").textContent).toBe("Subjuntivo");
     expect(screen.getByTestId("cubetas-bucket-indicative").textContent).toBe("Indicativo");
     expect(screen.queryByTestId("cubetas-bucket-trigger")).toBeNull();
@@ -2323,6 +2346,56 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("come-back-tomorrow").textContent).not.toBe("Come back tomorrow for the next scene.");
     expect(screen.queryByRole("button", { name: /Vuelve mañana|Come back tomorrow/ })).toBeNull();
     expect(screen.getByTestId("come-back-tomorrow").closest("[data-testid='first-door-hero']")).toBeNull();
+  });
+
+  it("Hoy connector selected-state is marked and Listen plays the scene line", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null });
+    const line = "¿Con todo, joven, o se lo preparo sin cebolla?";
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        firstHoy: true,
+        host: "luna",
+        questions: [{
+          type: "mc",
+          prompt: "Si el taquero pregunta «¿con todo?», normalmente habla de:",
+          text: line,
+          line,
+          choices: ["cilantro, cebolla, salsa y guarnición", "la cuenta con propina"],
+          answer: "cilantro, cebolla, salsa y guarnición",
+          shuffledChoices: ["cilantro, cebolla, salsa y guarnición", "la cuenta con propina"],
+          _u: "_today",
+          _i: -1,
+        }],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-listen")).toBeTruthy());
+    const cards = screen.getAllByTestId("choice-card");
+    expect(cards.length).toBe(2);
+    expect(cards[0].getAttribute("aria-pressed")).toBe("false");
+    expect(cards[0].getAttribute("data-selected")).toBeNull();
+    await user.click(cards[0]);
+    expect(cards[0].getAttribute("aria-pressed")).toBe("true");
+    expect(cards[0].getAttribute("data-selected")).toBe("true");
+    expect(cards[1].getAttribute("aria-pressed")).toBe("false");
+    expect(cards[1].getAttribute("data-selected")).toBeNull();
+    expect(cards[0].style.boxShadow).toMatch(/3px/);
+    window.speechSynthesis.speak.mockClear();
+    await user.click(screen.getByTestId("lesson-listen"));
+    expect(window.speechSynthesis.speak).toHaveBeenCalled();
+    const uttered = window.speechSynthesis.speak.mock.calls[0][0];
+    expect(uttered.text).toBe(line);
+    expect(uttered.text).not.toMatch(/normalmente habla/);
   });
 
   it("first win shows streak 1 and the vuelve mañana home line", async () => {
@@ -3909,7 +3982,8 @@ describe("simulated learner flows", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(1);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lastDay).toBe(today);
     expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
+    expect(screen.getByTestId("session-close-next").textContent).toBe("Jugar la escena");
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.getByTestId("session-close-dismiss").textContent).toBe("Listo");
     expect(screen.queryByTestId("camino-more")).toBeNull();
     expect(screen.queryByTestId("coach-strip")).toBeNull();
@@ -3938,7 +4012,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
   });
 
-  it("first-session Doctora win lands on come-back card only — streak + teaser + Listo/Done", async () => {
+  it("first-session Doctora win lands on next-beat card — streak + playScene + Listo/Done", async () => {
     cleanup();
     seedProgress({ streak: 0, lastDay: null });
     const user = userEvent.setup();
@@ -3959,9 +4033,9 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("doctora-win-continue"));
     await waitFor(() => expect(screen.getByTestId("session-close")).toBeTruthy());
     expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
-    expect(screen.getByTestId("come-back-tomorrow").tagName).toBe("P");
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Vuelve mañana por «.+»\.$/);
+    expect(screen.getByTestId("session-close-next").tagName).toBe("P");
+    expect(screen.getByTestId("session-close-next").textContent).toBe("Jugar la escena");
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.getByTestId("session-close-dismiss").textContent).toBe("Listo");
     expect(screen.getByTestId("session-close-dismiss").textContent).not.toMatch(/Cerrar|Continuar|Ya está|Vale|Close|Continue|All set|Ready/);
     expect(screen.queryByRole("button", { name: /Cerrar|Continuar|Ya está|Close|Continue|All set/ })).toBeNull();
@@ -3976,8 +4050,8 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("session-close-dismiss").textContent).toBe("Done"));
     expect(screen.getByTestId("session-close-dismiss").textContent).not.toMatch(/Close|Continue|All set|Ready|Cerrar|Listo/);
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("en"));
-    expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Come back tomorrow for “.+”\.$/);
+    expect(screen.getByTestId("session-close-next").textContent).toBe("Play the scene");
+    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByTestId("camino-more")).toBeNull();
     expect(screen.queryByTestId("coach-strip")).toBeNull();
   });

@@ -13,6 +13,7 @@ import {
   CUBETAS_GLOW_CREAM,
   CUBETAS_GLOW_TERRACOTTA,
   CUBETAS_GRAB_MS,
+  CUBETAS_HINT,
   CUBETAS_HUB,
   CUBETAS_LABELS,
   CUBETAS_LIFT_MS,
@@ -31,6 +32,7 @@ import {
   bucketLabel,
   clearCubetasWrong,
   cubetasHasDeadLabel,
+  cubetasHint,
   cubetasLiteral,
   cubetasNextLabel,
   cubetasTitle,
@@ -84,6 +86,12 @@ assert(CUBETAS_XP === 4, "clear XP matches a practice item");
 assert(CUBETAS_NEXT.en === "Next chip", "teach beat CTA is Next chip");
 assert(cubetasNextLabel("en") === "Next chip", "EN next");
 assert(cubetasNextLabel("es") === "Siguiente", "ES next is quiet Siguiente");
+assert(CUBETAS_HINT.es === "Arrastra la ficha o toca una cubeta.", "ES open hint is drag/tap");
+assert(CUBETAS_HINT.en === "Drag the chip or tap a bucket.", "EN open hint is drag/tap");
+assert(cubetasHint("es") === CUBETAS_HINT.es, "ES hint helper");
+assert(cubetasHint("en") === CUBETAS_HINT.en, "EN hint helper");
+assert(!/\n/.test(CUBETAS_HINT.es + CUBETAS_HINT.en), "hint is one line");
+assert(!/Perfect|perfecta|Mexicanismo/i.test(CUBETAS_HINT.es + CUBETAS_HINT.en), "hint is not soft chrome");
 
 assert(OJALA_QUE_PACK[0].phrase === "Ojalá que", "pack opens on Ojalá que");
 assert(OJALA_QUE_PACK[0].bucket === "subjunctive", "Ojalá que is subjunctive");

@@ -46,6 +46,12 @@ export const CUBETAS_DEAD_LABELS = ["Trigger", "Use", "Disparador", "Uso"];
 
 export const CUBETAS_NEXT = { es: "Siguiente", en: "Next chip" };
 
+/** Open-board instruction. George pattern (short EN/ES). Soft chrome parked. */
+export const CUBETAS_HINT = {
+  es: "Arrastra la ficha o toca una cubeta.",
+  en: "Drag the chip or tap a bucket.",
+};
+
 /** Ojalá que pack. Trigger phrases to sort — one chip on the field. Feeds 80/20. */
 export const OJALA_QUE_PACK = [
   {
@@ -108,6 +114,10 @@ export function bucketLabel(id, uiLang) {
 
 export function cubetasNextLabel(uiLang) {
   return uiLang === "en" ? CUBETAS_NEXT.en : CUBETAS_NEXT.es;
+}
+
+export function cubetasHint(uiLang) {
+  return uiLang === "en" ? CUBETAS_HINT.en : CUBETAS_HINT.es;
 }
 
 export function currentChip(run) {
