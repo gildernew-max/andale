@@ -16,6 +16,7 @@ import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL } from 
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, safeRiskyCorrectKeys } from "./safeRisky.js";
 import { CUBETAS_BIRD_PX, CUBETAS_BUCKET_SRC, CUBETAS_DEAD_LABELS, CUBETAS_EASE_ENTER, CUBETAS_EASE_EXIT, CUBETAS_EASE_LIFT, CUBETAS_TITLE, CUBETAS_WIN_MS, OJALA_QUE_PACK } from "./cubetas.js";
 import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
+import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -466,6 +467,33 @@ assert(!/\$39\.99|\$6\.99/.test(JSON.stringify(IAP_PRODUCTS)), "product stubs do
 assert(PURCHASE_EVENT === "andale-purchase", "purchase event name is stable");
 assert(WEB_NO_IAP_REASON === "web_no_iap", "web no-charge reason is stable");
 assert(appSrc.includes("from \"./purchase.js\""), "App imports the purchase module");
+assert(FUNNEL_EVENT === "andale-funnel", "funnel CustomEvent name is stable");
+assert(FUNNEL_LOG === "__andaleFunnelLog", "Pages reads window.__andaleFunnelLog");
+assert(FUNNEL_EVENTS.open === "open", "funnel open name");
+assert(FUNNEL_EVENTS.cenzontleComplete === "cenzontle_complete", "funnel bird-complete name");
+assert(FUNNEL_EVENTS.lecturaStart === "lectura_start", "funnel lectura name");
+assert(FUNNEL_EVENTS.paywallSeen === "paywall_seen", "funnel paywall-seen name");
+assert(FUNNEL_EVENTS.paywallTap === "paywall_tap", "funnel paywall-tap name");
+assert(PAYWALL_TAP.continueFree === "continue_free", "continue-free tap is continue_free");
+assert(appSrc.includes("from \"./funnel.js\""), "App imports the funnel module");
+assert(appSrc.includes("emitFunnelEvent({ event: FUNNEL_EVENTS.open })"), "open fires on App mount");
+assert(appSrc.includes("completeCenzontleBeat"), "bird beat finish is a named handler");
+assert(appSrc.includes("onComplete={completeCenzontleBeat}"), "Story0Beat / WinBounce finish emit cenzontle_complete");
+assert(appSrc.includes("FUNNEL_EVENTS.cenzontleComplete"), "cenzontle_complete is wired");
+assert(appSrc.includes("FUNNEL_EVENTS.lecturaStart"), "lectura_start is wired");
+assert(appSrc.includes("openStory") && appSrc.includes("FUNNEL_EVENTS.lecturaStart"), "lectura_start fires from openStory");
+assert(appSrc.includes("FUNNEL_EVENTS.paywallSeen"), "paywall_seen is wired");
+assert(/if \(showSoftPaywall\) \{\s*setSoftPaywall\(true\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallSeen \}\);/.test(appSrc), "paywall_seen fires when the wall becomes visible");
+assert(appSrc.includes("FUNNEL_EVENTS.paywallTap"), "paywall_tap is wired");
+assert(appSrc.includes("emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: plan })"), "annual/monthly taps emit paywall_tap");
+assert(appSrc.includes("PAYWALL_TAP.continueFree"), "continue-free tap is labeled continue_free");
+assert(/if \(!fromBackdrop\) \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallTap, choice: PAYWALL_TAP\.continueFree \}\);/.test(appSrc), "continue-free tap emits only from the quiet CTA, not the backdrop");
+const funnelSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "funnel.js"), "utf8");
+assert(funnelSrc.includes(FUNNEL_LOG), "funnel module names the Pages log");
+assert(!/\bgtag\b|\bmixpanel\b|\bamplitude\b|\bplausible\b|\bposthog\b|analytics\.js|googletagmanager|cdn\.segment\.com/i.test(appSrc + funnelSrc), "no third-party analytics SDK");
+assert(!/nameDraft|prog\.name|deviceId|device_id|user_id/.test(funnelSrc), "funnel module never reads PII fields");
+assert(!/\$39\.99|\$6\.99|\$99/.test(funnelSrc), "funnel module does not invent prices");
+assert(!/Enroll|enroll/.test(funnelSrc), "funnel module does not touch Enroll");
 const iapSwift = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "ios", "App", "App", "AndaleIapPlugin.swift"), "utf8");
 assert(iapSwift.includes("Product.products"), "native plugin uses StoreKit 2 Product");
 assert(iapSwift.includes("product.purchase()"), "native plugin purchases via StoreKit 2");
