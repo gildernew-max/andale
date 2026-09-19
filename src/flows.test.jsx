@@ -15,6 +15,9 @@ import { lettersForLayout } from "./letterBoard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaName, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
+import { OJALA_QUE_PACK } from "./cubetas.js";
+import { hangmanLetters } from "./hangman.js";
+import { MEMORY_BANK } from "./memory.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -110,6 +113,19 @@ const awaitHome = async () => {
 
 const CREAM_FILL = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
 const PAGE_WHITE = /^(#fff|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\))$/i;
+
+const ELLIPSIS_RE = /…|\.\.\.$/;
+
+const assertFullWordChip = (el, text) => {
+  expect(el.textContent).toBe(text);
+  expect(el.textContent).not.toMatch(ELLIPSIS_RE);
+  expect(el.className).toMatch(/word-chip/);
+  expect(el.style.overflow).not.toBe("hidden");
+  expect(el.style.textOverflow).not.toBe("ellipsis");
+  expect(el.style.width).toBe("max-content");
+  expect(el.style.minWidth).not.toBe("0");
+  expect(["min-content", "max-content", "28px", "72px"]).toContain(el.style.minWidth);
+};
 
 const assertCreamShell = () => {
   const shell = screen.getByTestId("app-shell");
@@ -1633,7 +1649,8 @@ describe("simulated learner flows", () => {
       expect(el.getAttribute("data-key")).toBe(CHOICE_CHIP_KEYS[i]);
       expect(el.style.overflow).not.toBe("hidden");
       expect(el.style.textOverflow).not.toBe("ellipsis");
-      expect(el.style.whiteSpace).toBe("nowrap");
+      expect(el.style.minWidth === "min-content" || el.style.minWidth === "28px").toBe(true);
+      expect(el.style.width).toBe("max-content");
     });
     expect(screen.getAllByTestId("hangman-slot-key").map((el) => el.textContent).join("")).toBe(
       CHOICE_CHIP_KEYS.slice(0, slots.length).join(""),
@@ -1699,9 +1716,12 @@ describe("simulated learner flows", () => {
     ["subj", "past", "porpara", "mex", "pron", "reg"].forEach((id) => {
       const el = screen.getByTestId(`jeopardy-cat-${id}`);
       expect(el.textContent.length).toBeGreaterThan(0);
+      expect(el.textContent).not.toMatch(/…|\.\.\.$/);
+      expect(el.className).toMatch(/word-chip/);
       expect(el.style.overflow).not.toBe("hidden");
       expect(el.style.textOverflow).not.toBe("ellipsis");
       expect(el.style.wordBreak).toBe("keep-all");
+      expect(el.style.width).toBe("max-content");
     });
     expect(screen.getByTestId("jeopardy-grid").style.overflow).not.toBe("hidden");
     expect(document.body.textContent).not.toMatch(/JEOPARDY SOLO|Reto Ándale \/ Jeopardy|Register and tone|Registe|and ton/);
@@ -1760,8 +1780,9 @@ describe("simulated learner flows", () => {
       expect(el.className).toMatch(/word-chip/);
       expect(el.style.overflow).not.toBe("hidden");
       expect(el.style.textOverflow).not.toBe("ellipsis");
-      expect(el.style.whiteSpace).toBe("nowrap");
-      expect(el.style.maxWidth).toBe("none");
+      expect(el.style.width).toBe("max-content");
+      expect(el.style.minWidth).not.toBe("0");
+      expect(["none", "100%"]).toContain(el.style.maxWidth);
     });
     const tapCard = cards[0];
     const tapPair = tapCard.getAttribute("data-pair");
@@ -2054,8 +2075,9 @@ describe("simulated learner flows", () => {
     expect(cubetasChip.className).toMatch(/word-chip/);
     expect(cubetasChip.style.overflow).toBe("visible");
     expect(cubetasChip.style.textOverflow).not.toBe("ellipsis");
-    expect(cubetasChip.style.whiteSpace).toBe("nowrap");
-    expect(cubetasChip.style.maxWidth).toBe("none");
+    expect(cubetasChip.style.width).toBe("max-content");
+    expect(cubetasChip.style.minWidth).toBe("min-content");
+    expect(cubetasChip.style.maxWidth).toBe("100%");
     await user.click(screen.getByTestId("cubetas-bucket-indicative"));
     await waitFor(() => expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que"));
     expect(screen.queryByTestId("cubetas-hint")).toBeNull();
@@ -2098,6 +2120,134 @@ describe("simulated learner flows", () => {
     expect(enIndicative.style.overflow).toBe("visible");
     expect(enIndicative.style.textOverflow).not.toBe("ellipsis");
     expect(enIndicative.style.whiteSpace).toBe("normal");
+  });
+
+  it("long Mexicanismos / long chips are not truncated", async () => {
+    const longChip = OJALA_QUE_PACK.find((c) => c.id === "despues-de-que-past");
+    expect(longChip.phrase).toBe("Después de que (past done)");
+    seedProgress({ uiLang: "en" });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "cubetas",
+      tab: "practica",
+      cubetasGame: {
+        packId: "ojala-que",
+        hub: "match-play",
+        feeds: "eighty-twenty",
+        queue: [longChip],
+        scored: [],
+        status: "idle",
+        lastBucket: null,
+        gems: 0,
+        xp: 0,
+        awarded: false,
+        hint: true,
+      },
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("cubetas-chip")).toBeTruthy());
+    assertFullWordChip(screen.getByTestId("cubetas-chip"), "Después de que (past done)");
+    expect(screen.getByTestId("cubetas-chip").className).toMatch(/word-chip--phrase/);
+
+    cleanup();
+    seedProgress({ uiLang: "en" });
+    const apa = MEMORY_BANK.find((r) => r.word === "apapacho");
+    const tian = MEMORY_BANK.find((r) => r.word === "tianguis");
+    const morra = MEMORY_BANK.find((r) => r.word === "morra");
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "memory",
+      tab: "practica",
+      memoryGame: {
+        packId: "mexicanismos-v1",
+        hub: "games",
+        pairs: [apa, tian, morra],
+        cards: [
+          { id: "apapacho-word", pairId: "apapacho", kind: "word" },
+          { id: "apapacho-meaning", pairId: "apapacho", kind: "meaning" },
+          { id: "tianguis-word", pairId: "tianguis", kind: "word" },
+          { id: "tianguis-meaning", pairId: "tianguis", kind: "meaning" },
+          { id: "morra-word", pairId: "morra", kind: "word" },
+          { id: "morra-meaning", pairId: "morra", kind: "meaning" },
+        ],
+        faceUp: ["apapacho-word", "apapacho-meaning", "tianguis-word", "morra-meaning"],
+        matched: [],
+        lastMatch: null,
+        miss: false,
+        lastWrong: [],
+        status: "play",
+      },
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("memory-board")).toBeTruthy());
+    const cards = screen.getAllByTestId("memory-card");
+    const byId = (id) => cards.find((el) => el.getAttribute("data-card") === id);
+    expect(byId("apapacho-word").getAttribute("data-face")).toBe("up");
+    assertFullWordChip(byId("apapacho-word"), "apapacho");
+    assertFullWordChip(byId("apapacho-meaning"), "warm hug / comfort");
+    assertFullWordChip(byId("tianguis-word"), "tianguis");
+    assertFullWordChip(byId("morra-meaning"), "young woman (casual)");
+    expect(byId("apapacho-meaning").className).toMatch(/word-chip--phrase/);
+
+    cleanup();
+    seedProgress({ uiLang: "en" });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "ahorcado",
+      tab: "practica",
+      ahorcado: {
+        word: "tianguis",
+        letters: hangmanLetters("tianguis"),
+        guessed: [],
+        status: "play",
+        focus: 0,
+      },
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hangman-board")).toBeTruthy());
+    expect(screen.getByTestId("hangman-board").getAttribute("data-word")).toBe("tianguis");
+    const slots = screen.getAllByTestId("hangman-slot");
+    expect(slots).toHaveLength(8);
+    slots.forEach((el) => {
+      expect(el.className).toMatch(/word-chip/);
+      expect(el.style.overflow).not.toBe("hidden");
+      expect(el.style.textOverflow).not.toBe("ellipsis");
+      expect(el.style.width).toBe("max-content");
+    });
+
+    cleanup();
+    seedProgress({ uiLang: "en" });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "ahorcado",
+      tab: "practica",
+      ahorcado: {
+        word: "apapacho",
+        letters: hangmanLetters("apapacho"),
+        guessed: hangmanLetters("apapacho"),
+        status: "win",
+      },
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hangman-word")).toBeTruthy());
+    assertFullWordChip(screen.getByTestId("hangman-word"), "apapacho");
+
+    cleanup();
+    localStorage.removeItem(LIVE_KEY);
+    seedProgress();
+    const user = await boot();
+    await user.click(screen.getByTestId("sobremesa-cta"));
+    await waitFor(() => expect(screen.getAllByTestId("sobremesa-line-title").length).toBe(5));
+    const titles = screen.getAllByTestId("sobremesa-line-title");
+    expect(titles.map((el) => el.textContent)).toEqual(expect.arrayContaining([
+      "Pretérito vs imperfecto",
+      "Por vs para",
+      "Ser vs estar",
+      "Gatillos del subjuntivo",
+      "Deja de empacar el inglés",
+    ]));
+    titles.forEach((el) => {
+      expect(el.textContent).not.toMatch(ELLIPSIS_RE);
+      expect(el.style.overflow).not.toBe("hidden");
+      expect(el.style.textOverflow).not.toBe("ellipsis");
+      expect(el.className).toMatch(/word-chip/);
+    });
   });
 
   it("Safe/Risky hub reward is extra por racha / streak extra, not bonus", async () => {

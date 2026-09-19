@@ -1727,6 +1727,32 @@ const LogoMark = ({ size = 30, ...rest }) => (
   />
 );
 
+/** In-game word/phrase bubbles grow with the full word. Never mid-word ellipsis. Soft chrome parked. */
+const WORD_CHIP_STYLE = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  width: "max-content",
+  minWidth: "min-content",
+  maxWidth: "none",
+  flexShrink: 0,
+  whiteSpace: "nowrap",
+  overflow: "visible",
+  textOverflow: "unset",
+  wordBreak: "keep-all",
+  overflowWrap: "normal",
+  hyphens: "manual",
+};
+
+/** Phrases wrap at spaces only when the full chip cannot fit the parent. */
+const WORD_CHIP_PHRASE_STYLE = {
+  ...WORD_CHIP_STYLE,
+  maxWidth: "100%",
+  whiteSpace: "normal",
+  overflowWrap: "anywhere",
+};
+
 const cubetasBucketAt = (refs, x, y) => {
   for (const id of CUBETAS_BUCKETS) {
     const el = refs[id];
@@ -1935,7 +1961,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
           </div>
 
           {showChip && (
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 22 }}>
+            <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", overflow: "visible", marginTop: 22 }}>
               <button
                 type="button"
                 data-testid="cubetas-chip"
@@ -1944,17 +1970,9 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
                 onPointerMove={onChipPointerMove}
                 onPointerUp={onChipPointerUp}
                 onPointerCancel={() => setDrag(null)}
-                className={`word-chip${run.status === "wrong" ? " wiggle" : ""}`}
+                className={`word-chip word-chip--phrase${run.status === "wrong" ? " wiggle" : ""}`}
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  width: "max-content",
-                  maxWidth: "none",
-                  minWidth: 0,
-                  flexShrink: 0,
-                  whiteSpace: "nowrap",
-                  overflow: "visible",
-                  textOverflow: "clip",
+                  ...WORD_CHIP_PHRASE_STYLE,
                   position: drag ? "fixed" : "relative",
                   left: drag ? drag.x - (drag.dx || 0) : undefined,
                   top: drag ? drag.y - (drag.dy || 0) : undefined,
@@ -2099,7 +2117,7 @@ const MemoryTeach = ({ entry, uiLang, D }) => {
       <div data-testid="memory-why" style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{memoryWhy(entry, uiLang)}</div>
       {chip && (
         <div data-testid="memory-region" data-weird={memorySoundsWeirdOutside(entry) ? "yes" : "no"} style={{ marginTop: 8 }}>
-          <span data-testid="memory-region-chip" className="word-chip" style={{ display: "inline-flex", width: "max-content", maxWidth: "none", whiteSpace: "nowrap", overflow: "visible", textOverflow: "clip", fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{chip}</span>
+          <span data-testid="memory-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{chip}</span>
         </div>
       )}
     </div>
@@ -2198,19 +2216,11 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                   onPointerMove={onCardPointerMove}
                   onPointerUp={(e) => onCardPointerUp(e, card.id)}
                   onPointerCancel={() => { dragRef.current = null; setDrag(null); }}
-                  className={`word-chip${wrong ? " wiggle" : ""}`}
+                  className={`word-chip${card.kind === "meaning" ? " word-chip--phrase" : ""}${wrong ? " wiggle" : ""}`}
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "max-content",
-                    maxWidth: "none",
-                    minWidth: showFace ? 0 : 72,
+                    ...(card.kind === "meaning" ? WORD_CHIP_PHRASE_STYLE : WORD_CHIP_STYLE),
+                    minWidth: showFace ? "min-content" : 72,
                     minHeight: 44,
-                    flexShrink: 0,
-                    whiteSpace: "nowrap",
-                    overflow: "visible",
-                    textOverflow: "clip",
                     position: dragging ? "fixed" : "relative",
                     left: dragging ? drag.x - (drag.dx || 0) : undefined,
                     top: dragging ? drag.y - (drag.dy || 0) : undefined,
@@ -6950,7 +6960,8 @@ export default function App() {
         .choice-card:hover:not(:disabled) { background:${D.subtle}; }
         .choice-card[data-selected="true"],
         .choice-card[data-selected="true"]:hover:not(:disabled) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
-        .word-chip { display:inline-flex; align-items:center; width:max-content; max-width:none; min-width:0; flex-shrink:0; white-space:nowrap; overflow:visible; text-overflow:clip; }
+        .word-chip { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; width:max-content; min-width:min-content; max-width:none; flex:0 0 auto; white-space:nowrap; overflow:visible; text-overflow:unset; word-break:keep-all; overflow-wrap:normal; hyphens:manual; }
+        .word-chip--phrase { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
@@ -8661,8 +8672,8 @@ export default function App() {
                 {sobremesaFive(uiLang).map((line) => {
                   const card = sobremesaFiveCard(line);
                   return (
-                    <div key={line} data-testid="sobremesa-line" style={{ background: theme === "dark" ? D.subtle : HUB_CREAM, border: `1px solid ${D.line}`, borderRadius: 14, padding: "12px 14px", fontSize: 13.5, fontWeight: 700, lineHeight: 1.45, color: D.ink }}>
-                      <div style={{ fontWeight: 800, fontSize: 15, lineHeight: 1.25, letterSpacing: "-0.015em", marginBottom: 6 }}>{card.title}</div>
+                    <div key={line} data-testid="sobremesa-line" style={{ background: theme === "dark" ? D.subtle : HUB_CREAM, border: `1px solid ${D.line}`, borderRadius: 14, padding: "12px 14px", fontSize: 13.5, fontWeight: 700, lineHeight: 1.45, color: D.ink, overflow: "visible" }}>
+                      <div data-testid="sobremesa-line-title" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, display: "block", fontWeight: 800, fontSize: 15, lineHeight: 1.25, letterSpacing: "-0.015em", marginBottom: 6 }}>{card.title}</div>
                       {` — ${card.body}`}
                     </div>
                   );
@@ -9616,7 +9627,7 @@ export default function App() {
             {over ? (
               <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
                 {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
-                <div data-testid="hangman-word" className="word-chip" style={{ fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px", width: "max-content", maxWidth: "none", whiteSpace: "nowrap", overflow: "visible", textOverflow: "clip" }}>{ahorcado.word}</div>
+                <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
                   <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanLiteralLabel(uiLang)}</div>
                   <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanLiteral(ahorcado, uiLang)}</div>
@@ -9627,7 +9638,7 @@ export default function App() {
                 </div>
                 {hangmanRegionChip(ahorcado) && (
                   <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
-                    <span data-testid="hangman-region-chip" className="word-chip" style={{ display: "inline-flex", width: "max-content", maxWidth: "none", whiteSpace: "nowrap", overflow: "visible", textOverflow: "clip", fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
+                    <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                     {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
                       <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
                     )}
@@ -9656,15 +9667,11 @@ export default function App() {
                         onClick={() => setAhorcado((cur) => focusHangmanSlot(cur, i))}
                         className="word-chip"
                         style={{
-                          display: "inline-flex",
+                          ...WORD_CHIP_STYLE,
                           flexDirection: "column",
-                          alignItems: "center",
                           justifyContent: "flex-end",
                           gap: 3,
-                          width: "max-content",
                           minWidth: 28,
-                          maxWidth: "none",
-                          flexShrink: 0,
                           height: "auto",
                           padding: "4px 8px 2px",
                           border: "none",
@@ -9677,9 +9684,6 @@ export default function App() {
                           fontSize: 18,
                           lineHeight: 1,
                           cursor: "pointer",
-                          whiteSpace: "nowrap",
-                          overflow: "visible",
-                          textOverflow: "clip",
                         }}
                       >
                         <span data-testid="hangman-slot-letter" style={{ minHeight: 22, overflow: "visible" }}>{filled}</span>
@@ -9705,7 +9709,7 @@ export default function App() {
                     </div>
                     {hangmanRegionChip(ahorcado) && (
                       <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
-                        <span data-testid="hangman-region-chip" className="word-chip" style={{ display: "inline-flex", width: "max-content", maxWidth: "none", whiteSpace: "nowrap", overflow: "visible", textOverflow: "clip", fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
+                        <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                         {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
                           <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
                         )}
@@ -9754,8 +9758,8 @@ export default function App() {
                 </div>
               )}
               <div style={{ marginBottom: 12 }}>
-                <div data-testid="jeopardy-cat" style={{ fontSize: 11, fontWeight: 900, color: D.sub, letterSpacing: ".08em" }}>{jeopardy.active.focus.title[uiLang]} · {jeopardy.active.double ? `${jeopardy.active.value} → ${jeopardy.active.stake}` : jeopardy.active.value}</div>
-                <div data-testid="jeopardy-question" style={{ fontSize: 18, fontWeight: 900, lineHeight: 1.25, color: D.ink }}>{jeopardy.active.prompt}</div>
+                <div data-testid="jeopardy-cat" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 900, color: D.sub, letterSpacing: ".08em" }}>{jeopardy.active.focus.title[uiLang]} · {jeopardy.active.double ? `${jeopardy.active.value} → ${jeopardy.active.stake}` : jeopardy.active.value}</div>
+                <div data-testid="jeopardy-question" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 18, fontWeight: 900, lineHeight: 1.25, color: D.ink }}>{jeopardy.active.prompt}</div>
               </div>
               <div style={{ display: "grid", gap: 9 }}>
                 {jeopardy.active.choices.map((choice, i) => {
@@ -9792,10 +9796,10 @@ export default function App() {
                   <div style={{ marginTop: 6, color: D.sub, fontSize: 13 }}>{jeopardy.score >= 0 ? "+" : ""}{jeopardy.score}</div>
                 </div>
               )}
-              <div data-testid="jeopardy-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(0, 1fr))`, gap: 5, overflow: "visible", paddingBottom: 4 }}>
+              <div data-testid="jeopardy-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(min-content, 1fr))`, gap: 5, overflow: "visible", paddingBottom: 4 }}>
                 {jeopardyCategories.map((cat) => (
-                  <div key={cat.id} style={{ display: "grid", gap: 5, minWidth: 0 }}>
-                    <div data-testid={`jeopardy-cat-${cat.id}`} style={{ minHeight: 44, border: `2px solid #C46B3A`, borderRadius: 10, background: HUB_CREAM, color: MARK_INK, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "5px 2px", lineHeight: 1.15, overflow: "visible", whiteSpace: "normal", overflowWrap: "normal", wordBreak: "keep-all", hyphens: "manual", textOverflow: "clip" }}>
+                  <div key={cat.id} style={{ display: "grid", gap: 5, minWidth: "min-content", justifyItems: "center" }}>
+                    <div data-testid={`jeopardy-cat-${cat.id}`} className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, minHeight: 44, width: "max-content", maxWidth: "100%", border: `2px solid #C46B3A`, borderRadius: 10, background: HUB_CREAM, color: MARK_INK, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center", padding: "5px 6px", lineHeight: 1.15 }}>
                       {jeopardyCatLabel(cat.id, uiLang)}
                     </div>
                     {JEOPARDY_VALUES.map((value) => {
