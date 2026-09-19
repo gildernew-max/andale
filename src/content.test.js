@@ -1296,8 +1296,9 @@ assert(JEOPARDY_QUIET.en === "Pick a category, pick a value, answer.", "EN quiet
 assert(JEOPARDY_HOWTO.es === JEOPARDY_QUIET.es && JEOPARDY_HOWTO.en === JEOPARDY_QUIET.en, "how-to reuses quiet");
 assert(JEOPARDY_CATEGORY_IDS.length === 6 && JEOPARDY_VALUES.length === 3, "restored 6×3 board");
 assert(appSrc.includes("jeopardyCatLabel(cat.id, uiLang)"), "Jeopardy board headers use the short face");
-assert(appSrc.includes('minmax(0, 1fr)'), "Jeopardy columns shrink to fit six headers on-screen");
+assert(appSrc.includes('minmax(min-content, 1fr)'), "Jeopardy columns grow to the full header word");
 assert(!/jeopardy-grid[\s\S]{0,180}minmax\(78px/.test(appSrc), "Jeopardy grid no longer forces a 78px overflow clip");
+assert(!/jeopardy-grid[\s\S]{0,80}minmax\(0, 1fr\)/.test(appSrc), "Jeopardy columns are not minmax(0) shrink-to-clip");
 assert(jeopardySlice.includes('overflow: "visible"'), "Jeopardy headers are not overflow-clipped");
 assert(!/jeopardy-cat-\$\{cat\.id\}[\s\S]{0,400}textOverflow:\s*"ellipsis"/.test(appSrc), "Jeopardy headers have no ellipsis");
 assert(JEOPARDY_CAT_LABEL.reg.en === "Register" && JEOPARDY_CAT_LABEL.reg.es === "Registro", "6th header is Register / Registro");
@@ -1307,8 +1308,14 @@ assert(!Object.values(JEOPARDY_CAT_LABEL).some((row) => /Register and tone|Regis
 assert(!/cenzontle|penguin|CoachPortrait/.test(memorySlice), "Memory adds no second mascot");
 assert(!/Confetti|soft chrome|cenzontle\.png/.test(memorySlice), "Memory playfield parks soft chrome");
 assert(memorySlice.includes("word-chip"), "Memory word chips size to the full word");
-assert(memorySlice.includes('overflow: "visible"'), "Memory cards are not overflow-clipped");
+assert(memorySlice.includes("WORD_CHIP_STYLE") || memorySlice.includes("WORD_CHIP_PHRASE_STYLE"), "Memory cards use the shared full-word bubble");
 assert(!memorySlice.includes('textOverflow: "ellipsis"'), "Memory cards have no ellipsis");
+assert(!memorySlice.includes("minWidth: showFace ? 0"), "Memory face-up cards do not shrink below the word");
+assert(/\.word-chip \{[^}]*min-width:\s*min-content/.test(appSrc), "word-chip min-width is the word, not 0");
+assert(!/\.word-chip \{[^}]*min-width:\s*0;/.test(appSrc), "word-chip CSS does not shrink below content");
+assert(/\.word-chip \{[^}]*text-overflow:\s*unset/.test(appSrc), "word-chip CSS has no ellipsis");
+assert(appSrc.includes("WORD_CHIP_STYLE"), "shared full-word chip style is stamped");
+assert(appSrc.includes("WORD_CHIP_PHRASE_STYLE"), "phrase chips wrap only when the parent cannot hold the word");
 assert(MEMORY_TITLE.es === "Memoria" && MEMORY_TITLE.en === "Memory", "Memory title is ES Memoria / EN Memory");
 assert(memoryTitle("es") === "Memoria" && memoryTitle("en") === "Memory", "Memory title helper follows uiLang");
 assert(MEMORY_QUIET.es === "Pares mexicanos" && MEMORY_QUIET.en === "Mexican pairs", "Memory quiet is stamped");
