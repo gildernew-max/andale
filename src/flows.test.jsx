@@ -13,7 +13,7 @@ import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isO
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
-import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
+import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaName, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
 
 const STORAGE_KEY = "andale-v3";
@@ -5304,22 +5304,33 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
   });
 
-  it("Sobremesa is the Intermedio entry — five first, tips not first, hub tile stays dead", async () => {
+  it("Intermedio lane is the ROI5 entry — five first, tips behind, no seventh Learn tile", async () => {
     const user = await boot();
     expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
-    expect(screen.getByTestId("learn-hub-tiles").textContent).not.toMatch(/Sobremesa/);
+    expect(screen.getByTestId("learn-hub-tiles").textContent).not.toMatch(/Sobremesa|Intermedio|Intermediate/);
+    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(6);
     expect(screen.getByTestId("eighty-twenty-cta").textContent).toMatch(/80\/20/);
     expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Reglas del subjuntivo");
-    expect(screen.getByTestId("eighty-twenty-cta").textContent).not.toMatch(/Sobremesa/);
+    expect(screen.getByTestId("eighty-twenty-cta").textContent).not.toMatch(/Sobremesa|Intermedio/);
+    const lane = screen.getByTestId("intermedio-lane");
     const cta = screen.getByTestId("sobremesa-cta");
-    expect(screen.getByTestId("sobremesa-cta-label").textContent).toBe(SOBREMESA_NAME);
+    expect(lane.contains(cta)).toBe(true);
+    expect(screen.getByTestId("sobremesa-cta-label").textContent).toBe(sobremesaName("es"));
+    expect(screen.getByTestId("hub-section-title").textContent).toBe(SOBREMESA_NAME.es);
     expect(screen.getByTestId("sobremesa-cta-quiet").textContent).toBe(SOBREMESA_QUIET.es);
-    expect(cta.textContent).not.toMatch(/Club|80%|Intermedio/);
+    expect(screen.getByTestId("hub-section-quiet").textContent).toBe("Charla real");
+    expect(screen.getByTestId("sobremesa-cta-sell").textContent).toBe(SOBREMESA_SELL.es);
+    expect(screen.getByTestId("hub-section-sell").textContent).toBe(SOBREMESA_SELL.es);
+    expect(cta.textContent).not.toMatch(/Club|80%|Sobremesa/);
+    expect(lane.style.background).toMatch(CREAM_FILL);
+    expect(lane.style.border).not.toMatch(/58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
+    expect(screen.getByTestId("hub-hoy").style.border).toMatch(/58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     expect(screen.queryByTestId("sobremesa-sheet")).toBeNull();
 
     await user.click(cta);
     await waitFor(() => expect(screen.getByTestId("sobremesa-sheet")).toBeTruthy());
-    expect(screen.getByTestId("sobremesa-name").textContent).toBe(SOBREMESA_NAME);
+    expect(screen.getByTestId("sobremesa-name").textContent).toBe(sobremesaName("es"));
     expect(screen.getByTestId("sobremesa-quiet").textContent).toBe(SOBREMESA_QUIET.es);
     expect(screen.getByTestId("sobremesa-sell").textContent).toBe(SOBREMESA_SELL.es);
     const five = screen.getByTestId("sobremesa-five");
@@ -5328,6 +5339,9 @@ describe("simulated learner flows", () => {
     expect(five.compareDocumentPosition(tips) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(tips.compareDocumentPosition(deepen) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getAllByTestId("sobremesa-line").map((el) => el.textContent)).toEqual(SOBREMESA_FIVE.es);
+    screen.getAllByTestId("sobremesa-line").forEach((card) => {
+      expect(card.style.background).toMatch(CREAM_FILL);
+    });
     expect(screen.getByTestId("sobremesa-tips-summary").getAttribute("aria-expanded")).toBe("false");
     expect(screen.getByTestId("sobremesa-deepen-summary").getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByTestId("sobremesa-tips-list")).toBeNull();
@@ -5336,7 +5350,9 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
     expect(screen.queryByTestId("eighty-twenty-sheet")).toBeNull();
     const sheet = screen.getByTestId("sobremesa-sheet");
-    expect(sheet.querySelector("img")).toBeNull();
+    expect(screen.getByTestId("sobremesa-perch").getAttribute("src")).toMatch(/cenzontle\.png/);
+    expect(sheet.querySelector(".cenzontle-bounce")).toBeNull();
+    expect(screen.queryByTestId("win-perch")).toBeNull();
     expect(sheet.textContent).not.toMatch(/Club|Practice this now|Practicar ahora|You've got this|Deck/);
 
     await user.click(screen.getByTestId("sobremesa-tips-summary"));
@@ -5359,9 +5375,14 @@ describe("simulated learner flows", () => {
 
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("sobremesa-cta-quiet").textContent).toBe(SOBREMESA_QUIET.en));
-    expect(screen.getByTestId("sobremesa-cta-label").textContent).toBe(SOBREMESA_NAME);
+    expect(screen.getByTestId("sobremesa-cta-label").textContent).toBe(sobremesaName("en"));
+    expect(screen.getByTestId("hub-section-title").textContent).toBe("Intermediate");
+    expect(screen.getByTestId("hub-section-quiet").textContent).toBe("Real talk");
+    expect(screen.getByTestId("sobremesa-cta-sell").textContent).toBe(SOBREMESA_SELL.en);
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Subjunctive rules");
     await user.click(screen.getByTestId("sobremesa-cta"));
     await waitFor(() => expect(screen.getByTestId("sobremesa-sheet")).toBeTruthy());
+    expect(screen.getByTestId("sobremesa-name").textContent).toBe(sobremesaName("en"));
     expect(screen.getByTestId("sobremesa-quiet").textContent).toBe(SOBREMESA_QUIET.en);
     expect(screen.getByTestId("sobremesa-sell").textContent).toBe(SOBREMESA_SELL.en);
     expect(screen.getAllByTestId("sobremesa-line").map((el) => el.textContent)).toEqual(SOBREMESA_FIVE.en);

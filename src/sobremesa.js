@@ -1,18 +1,23 @@
-/** George’s Intermedio / Sobremesa pack. Words-only Soft ETA.
- *  First face = name + quiet + sell + five. Tips expand only after the five.
- *  80/20 Subjuntivo en cinco stays its own Learn surface. Hub tile stays dead.
+/** George’s Intermedio (ROI5) pack. Brand look + Words CLEAR.
+ *  Face = Intermedio / Intermediate · Charla real / Real talk · sell.
+ *  First face = five rules only. Tips expand only after the five.
+ *  80/20 stays its own Learn tile. Sobremesa hub tile stays dead.
+ *  Soft chrome parked.
  */
 
-export const SOBREMESA_NAME = "Sobremesa";
+export const SOBREMESA_NAME = {
+  es: "Intermedio",
+  en: "Intermediate",
+};
 
 export const SOBREMESA_QUIET = {
-  es: "Plática de verdad",
+  es: "Charla real",
   en: "Real talk",
 };
 
 export const SOBREMESA_SELL = {
-  es: "Los atajos que se te pegan — para que la plática deje de sentirse tarea.",
-  en: "The shortcuts that stick — so real talk stops feeling like homework.",
+  es: "Las reglas que se te pegan — para que el subjuntivo deje de sentirse tarea.",
+  en: "The rules that stick — so the subjunctive stops feeling like homework.",
 };
 
 export const SOBREMESA_TIPS_LABEL = {
@@ -25,21 +30,21 @@ export const SOBREMESA_DEEPEN_LABEL = {
   en: "Deeper",
 };
 
-/** Five first-face rules. Exact product lock. */
+/** Five first-face rules. Exact George paste (EN) · one-language ES. */
 export const SOBREMESA_FIVE = {
   es: [
-    "Pretérito vs imperfecto — pasó → pretérito; estaba pasando → imperfecto. Llegué a las ocho; hacía frío.",
-    "Por vs para — meta / destinatario / plazo / dirección → para; causa / ruta / duración / intercambio → por. Salgo para México por trabajo.",
-    "Ser vs estar — identidad / definición → ser; estado / lugar ahora mismo → estar. Es tranquilo, pero hoy está cerrado.",
-    "Gatillos del subjuntivo — querer / dudar / reaccionar / negar + que + otra persona → subjuntivo; hecho → indicativo. Quiero que vengas. / Sé que viene. Prueba suave: tal vez / quiero / no estoy seguro → subjuntivo.",
-    "Deja de empacar el inglés — no armes el español palabra por palabra desde el inglés; ¿cómo lo diría un amigo mexicano? Trabajo aquí suele ganarle a Estoy trabajando aquí.",
+    "Pretérito vs imperfecto — ¿Qué pasó? → pretérito. ¿Qué estaba pasando? → imperfecto. Llegué a las ocho; hacía frío.",
+    "Por vs para — Meta / destinatario / plazo / dirección → para. Causa / ruta / duración / intercambio → por. Salgo para México por trabajo.",
+    "Ser vs estar — Identidad / definición → ser. Estado / lugar ahora mismo → estar. Es tranquilo, pero hoy está cerrado. Evita permanente/temporal.",
+    "Gatillos del subjuntivo — Querer / dudar / reaccionar / negar + que + otra persona → subjuntivo. Hecho → indicativo. Quiero que vengas. / Sé que viene. Prueba suave: tal vez / quiero / no estoy seguro → subjuntivo.",
+    "Deja de empacar el inglés — No armes el español palabra por palabra desde el inglés. ¿Cómo lo diría un amigo mexicano? Trabajo aquí suele ganarle a Estoy trabajando aquí.",
   ],
   en: [
-    "Preterite vs imperfect — happened → pretérito; was going on → imperfecto. Llegué a las ocho; hacía frío.",
-    "Por vs para — goal/recipient/deadline/direction → para; cause/route/duration/exchange → por. Salgo para México por trabajo.",
-    "Ser vs estar — identity/definition → ser; state/location right now → estar. Es tranquilo, pero hoy está cerrado. Avoid permanent/temporary framing.",
-    "Subjunctive triggers — wanting/doubting/reacting/denying + que + other person → subjuntivo; fact → indicativo. Quiero que vengas. / Sé que viene. Soft test: maybe / I want / I’m not sure → subjuntivo.",
-    "Stop packaging English — don’t build Spanish word-by-word from English; how would a Mexican friend say it? Trabajo aquí often beats Estoy trabajando aquí.",
+    "Pretérito vs imperfecto — What happened? → pretérito. What was going on? → imperfecto. Llegué a las ocho; hacía frío.",
+    "Por vs para — Goal / recipient / deadline / direction → para. Cause / route / duration / exchange → por. Salgo para México por trabajo.",
+    "Ser vs estar — Identity / definition → ser. State / location right now → estar. Es tranquilo, pero hoy está cerrado. Avoid permanent/temporary.",
+    "Subjunctive triggers — Wanting / doubting / reacting / denying + que + other person → subjuntivo. Fact → indicativo. Quiero que vengas. / Sé que viene. Soft test: maybe / I want / I’m not sure → subjuntivo.",
+    "Stop packaging English — Don’t build Spanish word-by-word from English. How would a Mexican friend say it? Trabajo aquí often beats Estoy trabajando aquí.",
   ],
 };
 
@@ -158,6 +163,11 @@ export const SOBREMESA_DEEPEN = {
 };
 
 const MX_MARK = "🇲🇽";
+const FIVE_SPLIT = " — ";
+
+export function sobremesaName(uiLang) {
+  return uiLang === "en" ? SOBREMESA_NAME.en : SOBREMESA_NAME.es;
+}
 
 export function sobremesaQuiet(uiLang) {
   return uiLang === "en" ? SOBREMESA_QUIET.en : SOBREMESA_QUIET.es;
@@ -169,6 +179,12 @@ export function sobremesaSell(uiLang) {
 
 export function sobremesaFive(uiLang) {
   return uiLang === "en" ? SOBREMESA_FIVE.en : SOBREMESA_FIVE.es;
+}
+
+export function sobremesaFiveCard(line) {
+  const i = line.indexOf(FIVE_SPLIT);
+  if (i < 0) return { title: line, body: "" };
+  return { title: line.slice(0, i), body: line.slice(i + FIVE_SPLIT.length) };
 }
 
 export function sobremesaTipsLabel(uiLang) {
