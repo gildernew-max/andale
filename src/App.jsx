@@ -103,6 +103,27 @@ import {
   isHangmanSolved,
   startHangmanRun,
 } from "./hangman.js";
+import {
+  JEOPARDY_VALUES,
+  chooseJeopardyChoice,
+  closeJeopardyPrompt as settleJeopardyPrompt,
+  finishJeopardyClear,
+  hydrateJeopardy,
+  jeopardyAnswerLabel,
+  jeopardyAnswered,
+  jeopardyCategoriesFrom,
+  jeopardyChoiceMatch,
+  jeopardyDoubleLabel,
+  jeopardyDoubleLine,
+  jeopardyHowTo,
+  jeopardyQuiet,
+  jeopardyResetLabel,
+  jeopardyTileCount,
+  jeopardyTitle,
+  jeopardyWinLine,
+  openJeopardyTile as applyJeopardyTile,
+  startJeopardyRun,
+} from "./jeopardy.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -2002,6 +2023,22 @@ const HangmanMark = ({ size = 44 }) => (
     <rect x="12" y="6" width="3" height="33" fill="#5C7356" />
     <rect x="12" y="6" width="18" height="3" fill="#5C7356" />
     <rect x="28" y="9" width="2" height="8" fill="#C46B3A" />
+  </svg>
+);
+
+/** Flat geometric board — cream / terracotta / sage. No second mascot. */
+const JeopardyMark = ({ size = 44 }) => (
+  <svg data-testid="jeopardy-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
+    <rect x="5" y="5" width="34" height="34" rx="6" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="2" />
+    <rect x="10" y="10" width="7" height="7" rx="1" fill="#5C7356" />
+    <rect x="19" y="10" width="7" height="7" rx="1" fill="#5C7356" />
+    <rect x="28" y="10" width="7" height="7" rx="1" fill="#5C7356" />
+    <rect x="10" y="19" width="7" height="7" rx="1" fill="#C46B3A" />
+    <rect x="19" y="19" width="7" height="7" rx="1" fill="#C46B3A" />
+    <rect x="28" y="19" width="7" height="7" rx="1" fill="#C46B3A" />
+    <rect x="10" y="28" width="7" height="7" rx="1" fill="#C46B3A" />
+    <rect x="19" y="28" width="7" height="7" rx="1" fill="#C46B3A" />
+    <rect x="28" y="28" width="7" height="7" rx="1" fill="#C46B3A" />
   </svg>
 );
 
@@ -5019,8 +5056,8 @@ export default function App() {
     });
   };
 
-  const jeopardyCategories = SMART_FOCI.filter((f) => ["subj", "past", "porpara", "mex", "pron", "reg"].includes(f.id)).slice(0, 6);
-  const jeopardyValues = [100, 200, 300];
+  const jeopardyCategories = jeopardyCategoriesFrom(SMART_FOCI);
+  const jeopardyBoardCount = jeopardyTileCount(jeopardyCategories, JEOPARDY_VALUES);
 
   const buildJeopardyQuestion = (focus, value) => {
     const pool = focus.units.flatMap((uid) => {
@@ -5052,57 +5089,53 @@ export default function App() {
     };
   };
 
-  const startJeopardy = () => {
+  const startJeopardy = (from = "practica") => {
+    gamesReturnRef.current = from === "games" ? "games" : from === "camino" ? "camino" : "practica";
     awardLockRef.current.delete("jeopardy");
-    const doubleCat = jeopardyCategories[(new Date().getDate() + (prog.xp || 0)) % jeopardyCategories.length];
-    const doubleValue = jeopardyValues[((prog.streak || 0) + new Date().getDay()) % jeopardyValues.length];
-    setJeopardy({ score: 0, correct: 0, wrong: 0, used: {}, active: null, selected: null, status: "idle", complete: false, awarded: false, doubleKey: `${doubleCat.id}-${doubleValue}` });
+    setJeopardy(startJeopardyRun({
+      categories: jeopardyCategories,
+      values: JEOPARDY_VALUES,
+      xp: prog.xp,
+      streak: prog.streak,
+    }));
     setScreen("jeopardy");
   };
 
   const openJeopardyTile = (focus, value) => {
-    if (!jeopardy || jeopardy.used?.[`${focus.id}-${value}`]) return;
-    const active = buildJeopardyQuestion(focus, value);
-    if (!active) return;
-    active.double = active.key === jeopardy.doubleKey;
-    active.stake = active.double ? value * 2 : value;
-    if (active.double) beep("combo");
-    setJeopardy({ ...jeopardy, active, selected: null, status: "idle", used: { ...(jeopardy.used || {}), [active.key]: true } });
+    const question = buildJeopardyQuestion(focus, value);
+    if (!question) return;
+    setJeopardy((cur) => {
+      const next = applyJeopardyTile(cur, question);
+      if (next !== cur && next.active?.double) beep("combo");
+      return next;
+    });
   };
 
   const chooseJeopardy = (choice) => {
-    if (!jeopardy?.active || jeopardy.status !== "idle") return;
-    const correct = strip(choice) === strip(jeopardy.active.answer);
-    if (correct) beep("ok"); else beep("bad");
-    const stake = jeopardy.active.stake || jeopardy.active.value;
-    setJeopardy({
-      ...jeopardy,
-      selected: choice,
-      status: correct ? "correct" : "wrong",
-      score: jeopardy.score + (correct ? stake : -Math.floor(stake / 2)),
-      correct: (jeopardy.correct || 0) + (correct ? 1 : 0),
-      wrong: (jeopardy.wrong || 0) + (correct ? 0 : 1),
+    setJeopardy((cur) => {
+      const next = chooseJeopardyChoice(cur, choice);
+      if (next === cur) return cur;
+      if (next.status === "correct") beep("ok");
+      else beep("bad");
+      return next;
     });
   };
 
   const closeJeopardyPrompt = () => {
     if (!jeopardy) return;
-    const complete = Object.keys(jeopardy.used || {}).length >= jeopardyCategories.length * jeopardyValues.length;
-    let next = { ...jeopardy, active: null, selected: null, status: "idle", complete };
-    if (complete && !jeopardy.awarded && lockAward("jeopardy")) {
-      const gems = Math.max(8, Math.round(Math.max(0, jeopardy.score) / 150) + (jeopardy.wrong === 0 ? 10 : 0));
-      const xp = Math.max(15, Math.round(Math.max(0, jeopardy.score) / 40) + (jeopardy.correct || 0) * 2);
+    let next = settleJeopardyPrompt(jeopardy, jeopardyBoardCount);
+    if (next.complete && !jeopardy.awarded && lockAward("jeopardy")) {
+      next = finishJeopardyClear(next);
       save((prev) => ({
         ...prev,
-        xp: (prev.xp || 0) + xp,
-        gems: (prev.gems || 0) + gems,
+        xp: (prev.xp || 0) + next.xp,
+        gems: (prev.gems || 0) + next.gems,
         missions: {
           ...(prev.missions || {}),
-          jeopardyBest: Math.max(prev.missions?.jeopardyBest || 0, jeopardy.score),
+          jeopardyBest: Math.max(prev.missions?.jeopardyBest || 0, next.score),
           gameTrophies: { ...(prev.missions?.gameTrophies || {}), jeopardyClear: true },
         },
       }));
-      next = { ...next, awarded: true, gems, xp };
       beep("win");
       setBurst(Date.now());
     }
@@ -5811,8 +5844,9 @@ export default function App() {
       if (live.safeGame.awarded || live.safeGame.done) awardLockRef.current.add("safe");
     }
     if (live.jeopardy) {
-      setJeopardy(live.jeopardy);
-      if (live.jeopardy.awarded) awardLockRef.current.add("jeopardy");
+      const restored = hydrateJeopardy(live.jeopardy);
+      setJeopardy(restored);
+      if (restored?.awarded) awardLockRef.current.add("jeopardy");
     }
     if (live.snakeGame) {
       setSnakeGame(live.snakeGame);
@@ -6963,7 +6997,7 @@ export default function App() {
                     {(() => {
                       const gameDefs = [
                         { testid: "ahorcado-section-start", act: () => startAhorcado("camino"), color: D.green, dark: D.greenDark, icon: <HangmanMark size={28} />, labelEs: hangmanTitle("es"), labelEn: hangmanTitle("en"), subEs: hangmanQuiet("es"), subEn: hangmanQuiet("en") },
-                        { testid: "jeopardy-section-start", act: startJeopardy, color: D.purple, dark: D.purpleDark, icon: "🎯", labelEs: "JEOPARDY SOLO", labelEn: "JEOPARDY SOLO", subEs: "Elige categoría, elige valor, responde.", subEn: "Pick a category, pick a value, answer." },
+                        { testid: "jeopardy-section-start", act: () => startJeopardy("camino"), color: D.green, dark: D.greenDark, icon: <JeopardyMark size={28} />, labelEs: jeopardyTitle("es"), labelEn: jeopardyTitle("en"), subEs: jeopardyQuiet("es"), subEn: jeopardyQuiet("en") },
                         { testid: "emparejar-section-start", act: startMatchPairs, color: D.blue, dark: D.blueDark, icon: "🔗", labelEs: "Emparejar / Match", labelEn: "Emparejar / Match", subEs: "Una ronda de parejas español–inglés.", subEn: "One round of Spanish–English pair tiles." },
                       ][si];
                       if (!gameDefs) return null;
@@ -7401,6 +7435,17 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
+          <button onClick={() => startJeopardy("practica")} data-testid="jeopardy-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{jeopardyTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{jeopardyQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
           </div>
           </div>
           <details style={{ margin: "0 0 14px", textAlign: "left" }}>
@@ -7414,10 +7459,10 @@ export default function App() {
                 <span style={{ flex: 1 }}>{uiLang === "en" ? "Snakes & Ladders" : "Serpientes y Escaleras"}</span>
                 <span style={{ fontSize: 14, color: D.sub }}>→</span>
               </button>
-              <button onClick={startJeopardy}
+              <button onClick={() => startJeopardy("practica")}
                 style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", background: D.card, border: `2px solid ${D.line}`, borderBottom: `3px solid ${D.line}`, color: D.ink, borderRadius: 12, padding: "9px 12px", fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
                 <span style={{ fontSize: 18 }}>🎯</span>
-                <span style={{ flex: 1 }}>{uiLang === "en" ? "Reto Ándale" : "Reto Ándale"}</span>
+                <span style={{ flex: 1 }}>{jeopardyTitle(uiLang)}</span>
                 <span style={{ fontSize: 14, color: D.sub }}>→</span>
               </button>
             </div>
@@ -7592,13 +7637,13 @@ export default function App() {
                 reward: uiLang === "en" ? "80/20 · one chip" : "80/20 · una ficha",
               },
               {
-                title: "Reto Ándale",
-                tag: uiLang === "en" ? "JEOPARDY SOLO" : "JEOPARDY SOLO",
-                desc: uiLang === "en" ? "Pick categories, answer for points, and avoid traps." : "Elige categorías, responde por puntos y esquiva trampas.",
-                color: D.blue,
-                dark: D.blueDark,
+                title: jeopardyTitle(uiLang),
+                tag: jeopardyQuiet(uiLang),
+                desc: jeopardyHowTo(uiLang),
+                color: D.green,
+                dark: D.greenDark,
                 icon: "?",
-                act: startJeopardy,
+                act: () => startJeopardy("practica"),
                 testid: "jeopardy-start",
                 stat: `${prog.missions?.jeopardyBest || 0} ${uiLang === "en" ? "best" : "mejor"}`,
                 reward: uiLang === "en" ? "18 tiles · points · XP payout" : "18 casillas · puntos · paga XP",
@@ -9171,6 +9216,17 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
+          <button onClick={() => startJeopardy("games")} data-testid="jeopardy-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{jeopardyTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{jeopardyQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
         </div>
       )}
 
@@ -9368,89 +9424,81 @@ export default function App() {
         );
       })()}
 
-      {/* ---------- JEOPARDY SOLO ---------- */}
+      {/* ---------- JEOPARDY ---------- */}
       {screen === "jeopardy" && jeopardy && (
-        <div style={{ maxWidth: 680, margin: "0 auto", padding: "22px 14px 130px" }}>
+        <div data-testid="jeopardy-board" style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
           {burst > 0 && jeopardy.complete && <Confetti key={burst} count={48} />}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <button onClick={() => { setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 900, color: D.blueDark, letterSpacing: ".08em" }}>{uiLang === "en" ? "JEOPARDY SOLO" : "JEOPARDY SOLO"}</div>
-              <div style={{ fontWeight: 900, fontSize: 22 }}>{uiLang === "en" ? "Reto Ándale" : "Reto Ándale"}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+            <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div data-testid="jeopardy-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{jeopardyTitle(uiLang)}</div>
+              <div data-testid="jeopardy-quiet" style={{ fontSize: 12, fontWeight: 700, color: D.sub }}>{jeopardyQuiet(uiLang)}</div>
             </div>
-            <div style={{ border: `2px solid ${D.blue}`, borderBottom: `4px solid ${D.blueDark}`, borderRadius: 12, padding: "7px 11px", background: D.blueBg, fontWeight: 900, color: D.blueDark }}>{jeopardy.score}</div>
+            <div data-testid="jeopardy-score" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{jeopardy.score}</div>
+            <div data-testid="jeopardy-answered" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{jeopardyAnswered(jeopardy)}/{jeopardyBoardCount}</div>
             <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 13 }}>
-            {[
-              [uiLang === "en" ? "Answered" : "Respondidas", `${Object.keys(jeopardy.used || {}).length}/${jeopardyCategories.length * jeopardyValues.length}`],
-              [uiLang === "en" ? "Correct" : "Correctas", jeopardy.correct || 0],
-              [uiLang === "en" ? "Best" : "Mejor", prog.missions?.jeopardyBest || 0],
-            ].map(([label, value]) => (
-              <div key={label} style={{ border: `2px solid ${D.line}`, borderRadius: 12, padding: "7px 6px", textAlign: "center", background: D.card }}>
-                <div style={{ fontSize: 10, fontWeight: 900, color: D.sub }}>{label}</div>
-                <div style={{ fontSize: 16, fontWeight: 900, color: D.blueDark }}>{value}</div>
-              </div>
-            ))}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+            <JeopardyMark size={56} />
           </div>
           {jeopardy.active ? (
-            <div className="pop" style={{ border: `2px solid ${D.blue}`, borderBottom: `5px solid ${D.blueDark}`, borderRadius: 18, padding: 16, background: D.card }}>
+            <div data-testid="jeopardy-prompt" className="pop" style={{ border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, borderRadius: 18, padding: 16, background: D.card }}>
               {jeopardy.active.double && (
-                <div className="pop" style={{ border: `2px solid ${D.gold}`, borderBottom: `5px solid ${D.goldDark}`, borderRadius: 14, background: D.goldBg, color: D.goldDark, padding: "9px 12px", marginBottom: 12, fontWeight: 900, textAlign: "center" }}>
-                  {uiLang === "en" ? "DOBLE O NADA" : "DOBLE O NADA"} · {uiLang === "en" ? "This tile is worth" : "Esta casilla vale"} {jeopardy.active.stake}
+                <div data-testid="jeopardy-double" className="pop" style={{ border: `2px solid #C46B3A`, borderBottom: `5px solid #C46B3A`, borderRadius: 14, background: HUB_CREAM, color: "#C46B3A", padding: "9px 12px", marginBottom: 12, fontWeight: 900, textAlign: "center" }}>
+                  {jeopardyDoubleLabel(uiLang)} · {jeopardyDoubleLine(uiLang)} {jeopardy.active.stake}
                 </div>
               )}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                <CoachPortrait id={jeopardy.active.host} mood={jeopardy.status === "wrong" ? "sad" : "happy"} size={66} />
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 900, color: D.blueDark, letterSpacing: ".08em" }}>{jeopardy.active.focus.title[uiLang]} · {jeopardy.active.double ? `${jeopardy.active.value} → ${jeopardy.active.stake}` : jeopardy.active.value}</div>
-                  <div style={{ fontSize: 18, fontWeight: 900, lineHeight: 1.25 }}>{jeopardy.active.prompt}</div>
-                </div>
+              <div style={{ marginBottom: 12 }}>
+                <div data-testid="jeopardy-cat" style={{ fontSize: 11, fontWeight: 900, color: D.sub, letterSpacing: ".08em" }}>{jeopardy.active.focus.title[uiLang]} · {jeopardy.active.double ? `${jeopardy.active.value} → ${jeopardy.active.stake}` : jeopardy.active.value}</div>
+                <div data-testid="jeopardy-question" style={{ fontSize: 18, fontWeight: 900, lineHeight: 1.25, color: D.ink }}>{jeopardy.active.prompt}</div>
               </div>
               <div style={{ display: "grid", gap: 9 }}>
                 {jeopardy.active.choices.map((choice, i) => {
                   const revealed = jeopardy.status !== "idle";
-                  const correct = strip(choice) === strip(jeopardy.active.answer);
-                  const chosen = strip(choice) === strip(jeopardy.selected || "");
+                  const correct = jeopardyChoiceMatch(choice, jeopardy.active.answer);
+                  const chosen = jeopardyChoiceMatch(choice, jeopardy.selected || "");
                   return (
                     <button key={`${choice}-${i}`} data-testid={`jeopardy-choice-${i}`} disabled={revealed} onClick={() => chooseJeopardy(choice)}
                       style={{ textAlign: "left", border: `2px solid ${revealed && correct ? D.green : revealed && chosen ? D.red : D.line}`, borderBottom: `4px solid ${revealed && correct ? D.greenDark : revealed && chosen ? D.redDark : D.line}`, background: revealed && correct ? D.greenBg : revealed && chosen ? D.redBg : D.card, color: revealed && correct ? D.greenDark : revealed && chosen ? D.redDark : D.ink, borderRadius: 13, padding: "12px 13px", fontFamily: "inherit", fontWeight: 850, fontSize: 15, cursor: revealed ? "default" : "pointer" }}>
-                      <span style={{ display: "inline-block", fontSize: 12, fontWeight: 900, border: `2px solid ${D.blue}`, color: D.blueDark, borderRadius: 8, padding: "1px 7px", marginRight: 9 }}>{i + 1}</span>
+                      <span style={{ display: "inline-block", fontSize: 12, fontWeight: 900, border: `2px solid #C46B3A`, color: "#C46B3A", borderRadius: 8, padding: "1px 7px", marginRight: 9 }}>{i + 1}</span>
                       {choice}
                     </button>
                   );
                 })}
               </div>
               {jeopardy.status !== "idle" && (
-                <div className="pop" style={{ marginTop: 13, border: `2px solid ${jeopardy.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: jeopardy.status === "correct" ? D.greenBg : D.redBg }}>
+                <div data-testid="jeopardy-result" className="pop" style={{ marginTop: 13, border: `2px solid ${jeopardy.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: jeopardy.status === "correct" ? D.greenBg : D.redBg }}>
                   <div style={{ fontWeight: 900, color: jeopardy.status === "correct" ? D.greenDark : D.redDark }}>
-                    {jeopardy.status === "correct" ? `+${jeopardy.active.stake || jeopardy.active.value}` : `${jeopardy.active.double ? `-${Math.floor((jeopardy.active.stake || jeopardy.active.value) / 2)} · ` : ""}${uiLang === "en" ? "Answer" : "Respuesta"}: ${jeopardy.active.answer}`}
+                    {jeopardy.status === "correct" ? `+${jeopardy.active.stake || jeopardy.active.value}` : `${jeopardy.active.double ? `-${Math.floor((jeopardy.active.stake || jeopardy.active.value) / 2)} · ` : ""}${jeopardyAnswerLabel(uiLang)}: ${jeopardy.active.answer}`}
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>{explainText(jeopardy.active, uiLang) || uiText(jeopardy.active.focusDesc, uiLang)}</div>
-                  <Btn color={D.blue} dark={D.blueDark} onClick={closeJeopardyPrompt} style={{ width: "100%", marginTop: 12 }}>{L.continue}</Btn>
+                  <div data-testid="jeopardy-why" style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>{explainText(jeopardy.active, uiLang) || uiText(jeopardy.active.focusDesc, uiLang)}</div>
+                  <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-continue" onClick={closeJeopardyPrompt} style={{ width: "100%", marginTop: 12 }}>{L.continue}</Btn>
                 </div>
               )}
             </div>
           ) : (
             <>
+              {!jeopardy.complete && (
+                <p data-testid="jeopardy-howto" style={{ margin: "0 0 14px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{jeopardyHowTo(uiLang)}</p>
+              )}
               {jeopardy.complete && (
-                <div className="pop" style={{ textAlign: "center", border: `2px solid ${D.gold}`, borderBottom: `5px solid ${D.goldDark}`, borderRadius: 16, padding: 14, background: D.goldBg, marginBottom: 12, fontWeight: 900 }}>
-                  <div style={{ fontSize: 20, color: D.goldDark }}>{uiLang === "en" ? "Board cleared!" : "¡Tablero completado!"} {jeopardy.score >= 0 ? "+" : ""}{jeopardy.score}</div>
-                  <div style={{ marginTop: 6, color: D.sub, fontSize: 13 }}>XP +{jeopardy.xp || 0} · <IcGem size={14} /> +{jeopardy.gems || 0}</div>
+                <div data-testid="jeopardy-clear" className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, marginBottom: 12, fontWeight: 900 }}>
+                  <div style={{ fontSize: 22, color: D.ink }}>{jeopardyWinLine(uiLang)}</div>
+                  <div style={{ marginTop: 6, color: D.sub, fontSize: 13 }}>{jeopardy.score >= 0 ? "+" : ""}{jeopardy.score}</div>
                 </div>
               )}
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(78px, 1fr))`, gap: 7, overflowX: "auto", paddingBottom: 4 }}>
+              <div data-testid="jeopardy-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(78px, 1fr))`, gap: 7, overflowX: "auto", paddingBottom: 4 }}>
                 {jeopardyCategories.map((cat) => (
                   <div key={cat.id} style={{ display: "grid", gap: 7, minWidth: 78 }}>
-                    <div style={{ minHeight: 54, border: `2px solid ${D.blue}`, borderRadius: 12, background: D.blueBg, color: D.blueDark, fontSize: 11, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 6, lineHeight: 1.1 }}>
+                    <div data-testid={`jeopardy-cat-${cat.id}`} style={{ minHeight: 54, border: `2px solid #C46B3A`, borderRadius: 12, background: HUB_CREAM, color: MARK_INK, fontSize: 11, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 6, lineHeight: 1.1 }}>
                       {cat.title[uiLang]}
                     </div>
-                    {jeopardyValues.map((value) => {
+                    {JEOPARDY_VALUES.map((value) => {
                       const key = `${cat.id}-${value}`;
                       const used = !!jeopardy.used?.[key];
                       return (
                         <button key={key} data-testid={`jeopardy-tile-${key}`} disabled={used} onClick={() => openJeopardyTile(cat, value)}
-                          style={{ height: 58, border: `2px solid ${used ? D.line : D.gold}`, borderBottom: `5px solid ${used ? D.line : D.goldDark}`, borderRadius: 12, background: used ? D.subtle : D.goldBg, color: used ? D.sub : D.goldDark, fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer" }}>
+                          style={{ height: 58, border: `2px solid ${used ? D.line : "#C46B3A"}`, borderBottom: `5px solid ${used ? D.line : "#C46B3A"}`, borderRadius: 12, background: used ? D.subtle : HUB_CREAM, color: used ? D.sub : "#C46B3A", fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer" }}>
                           {used ? "✓" : value}
                         </button>
                       );
@@ -9458,9 +9506,9 @@ export default function App() {
                   </div>
                 ))}
               </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "center" }}>
-                <Btn color={D.blue} dark={D.blueDark} onClick={startJeopardy}>{uiLang === "en" ? "Reset board" : "Reiniciar"}</Btn>
-                <Btn outline onClick={() => { setScreen("home"); setTab("practica"); }}>{L.games}</Btn>
+              <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
+                <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-again" onClick={() => startJeopardy(gamesReturnRef.current)} style={{ width: "100%" }}>{jeopardyResetLabel(uiLang)}</Btn>
+                <Btn outline data-testid="jeopardy-back" onClick={closeGamesSurface} style={{ width: "100%" }}>{L.games}</Btn>
               </div>
             </>
           )}
