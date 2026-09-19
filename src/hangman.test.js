@@ -1,5 +1,6 @@
 import {
   HANGMAN_ACCENTS,
+  HANGMAN_ALPHABET,
   HANGMAN_BANK,
   HANGMAN_DEAD_LABELS,
   HANGMAN_GEM,
@@ -17,16 +18,22 @@ import {
   HANGMAN_WRONG,
   HANGMAN_XP,
   finishHangmanRun,
+  focusHangmanSlot,
   guessHangmanLetter,
   hangmanHasDeadLabel,
   hangmanHowTo,
+  hangmanIsLetterKey,
   hangmanKey,
   hangmanLetters,
   hangmanLiteral,
   hangmanLiteralLabel,
   hangmanMisses,
+  hangmanNextEmptySlot,
   hangmanQuiet,
+  hangmanShowTeach,
   hangmanSlot,
+  hangmanSlotIndexForKey,
+  hangmanSlotKey,
   hangmanTimerLabel,
   hangmanTitle,
   hangmanWhy,
@@ -72,8 +79,15 @@ assert(HANGMAN_TIMER.en.on === "Timer on" && HANGMAN_TIMER.en.off === "No timer"
 assert(hangmanTimerLabel("es", false) === "Sin reloj", "ES timer off");
 assert(hangmanTimerLabel("en", false) === "No timer", "EN timer off");
 assert(HANGMAN_ACCENTS.join("") === "ÁÉÍÓÚÜ", "accent row is ÁÉÍÓÚÜ");
+assert(HANGMAN_ALPHABET.join("") === ABC_LETTERS.join(""), "on-screen alphabet is the 27-letter Spanish set");
 assert(ABC_LETTERS.includes("Ñ"), "Spanish alphabet includes ñ");
 assert(!ABC_LETTERS.includes("Ó"), "ó is bank spelling, not the 27-letter alphabet");
+assert(hangmanIsLetterKey("ñ") && hangmanIsLetterKey("Ñ"), "ñ is a letter key");
+assert(hangmanIsLetterKey("ó") && hangmanIsLetterKey("Ó"), "ó is a letter key");
+assert(hangmanIsLetterKey("a") && !hangmanIsLetterKey("1"), "digits are not letter keys");
+assert(hangmanSlotKey(0) === "1" && hangmanSlotKey(9) === "0", "blank numbers use the second-row map");
+assert(hangmanSlotIndexForKey("3") === 2, "number 3 jumps to blank 3");
+assert(hangmanSlotIndexForKey("a") == null, "letters do not jump blanks");
 
 assert(HANGMAN_BANK.length === 20, "v1 bank is 20 words");
 const words = HANGMAN_BANK.map((row) => row.word);
@@ -108,12 +122,20 @@ assert(run.hub === "games" && run.packId === HANGMAN_PACK_ID, "run stamps Games 
 assert(run.timerOn === false, "run timer is off");
 assert(run.letters.join("") === "CHAMBA", "slots are bank spelling");
 assert(run.guessed.length === 0, "no guesses yet");
+assert(run.focus === 0, "fresh run focuses blank 1");
+assert(hangmanNextEmptySlot(run) === 0, "first empty is blank 1");
 assert(pickHangmanEntry(HANGMAN_BANK, () => 0).word === "chamba", "pick helper uses rng");
+assert(hangmanSlotKey(0) === "1" && hangmanSlotKey(5) === "6", "chamba blanks are 1–6");
+assert(focusHangmanSlot(run, 3).focus === 3, "number key jumps focus");
+assert(focusHangmanSlot(run, 3) !== run, "focus change is a new run");
+assert(focusHangmanSlot(run, 99) === run, "out-of-range focus is a no-op");
 
 const miss = guessHangmanLetter(run, "Z");
 assert(miss.status === "play" && miss.lastHit === false, "wrong letter stays on the field");
 assert(hangmanMisses(miss).join("") === "Z", "miss is recorded");
 assert(!isHangmanOver(miss), "one miss is not over");
+assert(hangmanShowTeach(miss), "wrong letter auto-opens Literal/Why");
+assert(miss.focus === 0, "miss keeps the focused blank");
 
 const dup = guessHangmanLetter(miss, "z");
 assert(dup === miss, "duplicate guess is a no-op");
@@ -121,6 +143,8 @@ assert(dup === miss, "duplicate guess is a no-op");
 const hit = guessHangmanLetter(run, "c");
 assert(hit.lastHit === true && hangmanSlot(hit, 0) === "C", "C reveals");
 assert(hangmanSlot(hit, 1) === "", "H still hidden");
+assert(hit.focus === 1, "hit advances focus to the next empty blank");
+assert(!hangmanShowTeach(hit), "correct letter does not open Why");
 
 let walk = run;
 for (const ch of "CHMB") walk = guessHangmanLetter(walk, ch);
@@ -153,8 +177,9 @@ assert(hydrated.letters.join("") === "ÓRALE", "hydrate rebuilds accent slots");
 assert(hydrated.guessed.join("") === "OÓ", "hydrate keys old guesses");
 assert(hydrated.timerOn === false, "hydrate keeps timer off");
 assert(hydrated.literal.en === "Come on / alright / wow", "hydrate restamps Literal");
+assert(hydrated.focus === 1, "hydrate focuses the first empty blank");
 
 const frozen = guessHangmanLetter(solved, "X");
 assert(frozen.status === "win" && frozen.guessed.length === solved.guessed.length, "solved guess is a no-op");
 
-console.log("ok: hangman — 20-word MX bank, accent-sensitive slots, Literal then Why, timer off");
+console.log("ok: hangman — 20-word MX bank, numbered blanks, keyboard focus, auto-Why on miss");

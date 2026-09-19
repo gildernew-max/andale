@@ -1583,10 +1583,30 @@ describe("simulated learner flows", () => {
     expect(screen.getAllByTestId("accent-chip").map((el) => el.textContent).join("")).toBe("ÁÉÍÓÚÜ");
     expect(document.body.textContent).not.toMatch(/AHORCADO \/ HANGMAN|Hanged!|Got it!|💀/);
     expect(screen.queryByTestId("cubetas-cenzontle")).toBeNull();
+    const playWord = screen.getByTestId("hangman-board").getAttribute("data-word");
+    const slots = screen.getAllByTestId("hangman-slot");
+    expect(slots.length).toBe([...playWord.normalize("NFC")].length);
+    slots.forEach((el, i) => {
+      expect(el.getAttribute("data-slot")).toBe(String(i));
+      expect(el.getAttribute("data-key")).toBe(CHOICE_CHIP_KEYS[i]);
+      expect(el.style.overflow).not.toBe("hidden");
+      expect(el.style.textOverflow).not.toBe("ellipsis");
+      expect(el.style.whiteSpace).toBe("nowrap");
+    });
+    expect(screen.getAllByTestId("hangman-slot-key").map((el) => el.textContent).join("")).toBe(
+      CHOICE_CHIP_KEYS.slice(0, slots.length).join(""),
+    );
+    expect(slots[0].getAttribute("data-focus")).toBe("on");
+    await user.keyboard("3");
+    await waitFor(() => expect(screen.getAllByTestId("hangman-slot")[2].getAttribute("data-focus")).toBe("on"));
     const missChip = [...screen.getAllByTestId("letter-chip")].find((el) => el.getAttribute("data-letter") === "W");
     if (missChip && screen.getByTestId("hangman-board").getAttribute("data-word").toLocaleUpperCase("es").indexOf("W") < 0) {
       await user.click(missChip);
       await waitFor(() => expect(screen.getByTestId("hangman-wrong").textContent).toBe("Esa no."));
+      expect(screen.getByTestId("hangman-literal")).toBeTruthy();
+      expect(screen.getByTestId("hangman-why")).toBeTruthy();
+      expect(screen.getByTestId("hangman-why").textContent).toMatch(/^Por qué/);
+      expect(screen.queryByTestId("hangman-why-toggle")).toBeNull();
     }
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hangman-howto").textContent).toBe("Guess the word. One letter at a time."));
@@ -1853,12 +1873,21 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("cubetas-bucket-subjunctive").textContent).toBe("Subjuntivo");
     expect(screen.queryByTestId("cubetas-literal")).toBeNull();
 
+    const cubetasChip = screen.getByTestId("cubetas-chip");
+    expect(cubetasChip.className).toMatch(/word-chip/);
+    expect(cubetasChip.style.overflow).toBe("visible");
+    expect(cubetasChip.style.textOverflow).not.toBe("ellipsis");
+    expect(cubetasChip.style.whiteSpace).toBe("nowrap");
+    expect(cubetasChip.style.maxWidth).toBe("none");
     await user.click(screen.getByTestId("cubetas-bucket-indicative"));
     await waitFor(() => expect(screen.getByTestId("cubetas-chip").textContent).toBe("Ojalá que"));
     expect(screen.queryByTestId("cubetas-hint")).toBeNull();
     expect(screen.getByTestId("cubetas-cenzontle").getAttribute("data-state")).toBe("offstage");
-    expect(screen.queryByTestId("cubetas-literal")).toBeNull();
-    expect(screen.queryByTestId("cubetas-why")).toBeNull();
+    expect(screen.getByTestId("cubetas-wrong-teach")).toBeTruthy();
+    expect(screen.getByTestId("cubetas-literal").textContent).toContain("Ojalá que");
+    expect(screen.getByTestId("cubetas-why").textContent).toContain("«Ojalá» siempre va con subjuntivo.");
+    expect(screen.queryByTestId("cubetas-exception")).toBeNull();
+    expect(screen.queryByTestId("cubetas-why-toggle")).toBeNull();
     expect(screen.getByTestId("cubetas-board").textContent).not.toMatch(/Mejor respuesta|Better answer|shame/i);
 
     await user.click(screen.getByTestId("cubetas-bucket-subjunctive"));

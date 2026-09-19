@@ -32,7 +32,11 @@ import {
   bucketLabel,
   clearCubetasWrong,
   cubetasHasDeadLabel,
+  CUBETAS_EXCEPTION_LABEL,
+  cubetasException,
+  cubetasExceptionLabel,
   cubetasHint,
+  cubetasIsException,
   dismissCubetasHint,
   cubetasLiteral,
   cubetasNextLabel,
@@ -109,6 +113,17 @@ OJALA_QUE_PACK.forEach((c) => {
   assert(!/\n/.test(c.literal.es + c.literal.en + c.why.es + c.why.en), `${c.id} Literal/Why are one-liners`);
   assert(!cubetasHasDeadLabel(`${c.phrase} ${c.literal.es} ${c.literal.en} ${c.why.es} ${c.why.en}`), `${c.id} copy has no dead labels`);
 });
+assert(CUBETAS_EXCEPTION_LABEL.es === "Excepción" && CUBETAS_EXCEPTION_LABEL.en === "Exception", "Exception label is ES Excepción / EN Exception");
+assert(cubetasExceptionLabel("es") === "Excepción" && cubetasExceptionLabel("en") === "Exception", "Exception helper follows uiLang");
+const exceptionChips = OJALA_QUE_PACK.filter(cubetasIsException);
+assert(exceptionChips.length >= 3, "face ships 2–3 exception samples until George fills the bank");
+assert(!cubetasIsException(OJALA_QUE_PACK[0]), "Ojalá que is not marked exception");
+assert(cubetasIsException(OJALA_QUE_PACK.find((c) => c.id === "aunque-es")), "aunque-es is marked exception");
+assert(cubetasException(OJALA_QUE_PACK.find((c) => c.id === "si-llueve"), "en").includes("indicative"), "exception copy rides with Why");
+assert(cubetasWhy({ whyEn: "Bank Why EN", whyEs: "Bank Why ES" }, "en") === "Bank Why EN", "consumes George whyEn");
+assert(cubetasWhy({ whyEn: "Bank Why EN", whyEs: "Bank Why ES" }, "es") === "Bank Why ES", "consumes George whyEs");
+assert(cubetasException({ exceptionEs: "Ex ES", exceptionEn: "Ex EN" }, "es") === "Ex ES", "consumes George exceptionEs");
+assert(exceptionChips.every((c) => c.phrase && !/\n/.test(c.phrase)), "exception phrases are single-line full words");
 
 const run = startCubetasRun(OJALA_QUE_PACK, () => 0);
 assert(run.status === "idle", "fresh run is idle");
@@ -128,6 +143,7 @@ const miss = applyCubetasDrop(run, "indicative");
 assert(miss.status === "wrong", "wrong drop shakes");
 assert(miss.hint === false && !showCubetasHint(miss), "first tap dismisses the how-to");
 assert(currentChip(miss).phrase === "Ojalá que", "wrong returns the chip");
+assert(cubetasWhy(currentChip(miss), "es") === "«Ojalá» siempre va con subjuntivo.", "wrong exposes Why without a tap");
 assert(miss.scored.length === 0, "wrong does not score");
 assert(miss.gems === 0, "wrong has no gem tick");
 const idleAgain = clearCubetasWrong(miss);

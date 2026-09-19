@@ -2,7 +2,12 @@
  *  Brand CLEAR 2026-09-18 · Teaching CLEAR 2026-09-18
  *  One Cenzontle platform-wide — Hangman never adds a coach/mascot.
  *  Mexicanismos bank. After solve: Literal, then Why.
+ *  Keyboard polish: on-screen Spanish board + numbered blanks.
+ *  Number keys jump focus; letter keys type. Wrong auto-shows Literal/Why (no Why tap).
  */
+
+import { ABC_LETTERS } from "./letterBoard.js";
+import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 
 /** George + No Face CLEAR: language-split title, not a bilingual lockup. */
 export const HANGMAN_TITLE = { es: "Ahorcado", en: "Hangman" };
@@ -31,6 +36,9 @@ export const HANGMAN_GEM = 1;
 
 /** Accented vowels match bank spelling. Not Spanish-alphabet letters. */
 export const HANGMAN_ACCENTS = ["Á", "É", "Í", "Ó", "Ú", "Ü"];
+
+/** Spanish alphabet on the on-screen board. Ñ is a letter. Accents are extra keys. */
+export const HANGMAN_ALPHABET = ABC_LETTERS;
 
 /** Dead chrome — never titles, never UI. */
 export const HANGMAN_DEAD_LABELS = [
@@ -331,6 +339,45 @@ export function hangmanSlot(run, index) {
   return (run.guessed || []).includes(ch) ? ch : "";
 }
 
+/** Quiet digit under a blank — same second-row map as TAP AN ANSWER chips. */
+export function hangmanSlotKey(index) {
+  return choiceChipKeyForIndex(index);
+}
+
+export function hangmanSlotIndexForKey(key) {
+  return choiceChipIndexForKey(key);
+}
+
+export function hangmanIsLetterKey(key) {
+  const k = hangmanKey(key);
+  if (!k || [...k].length !== 1) return false;
+  return HANGMAN_ALPHABET.includes(k) || HANGMAN_ACCENTS.includes(k);
+}
+
+export function hangmanNextEmptySlot(run, from = 0) {
+  const letters = run?.letters || [];
+  const n = letters.length;
+  if (!n) return null;
+  const start = ((Number(from) || 0) % n + n) % n;
+  for (let step = 0; step < n; step++) {
+    const i = (start + step) % n;
+    if (!hangmanSlot(run, i)) return i;
+  }
+  return null;
+}
+
+export function hangmanShowTeach(run) {
+  return run?.lastHit === false || isHangmanOver(run);
+}
+
+export function focusHangmanSlot(run, index) {
+  if (!run || run.status !== "play") return run;
+  const n = (run.letters || []).length;
+  if (!Number.isInteger(index) || index < 0 || index >= n) return run;
+  if (run.focus === index) return run;
+  return { ...run, focus: index };
+}
+
 export function isHangmanSolved(run) {
   return run?.status === "win";
 }
@@ -361,6 +408,7 @@ export function startHangmanRun(bank = HANGMAN_BANK, rng = Math.random) {
     guessed: [],
     status: "play",
     lastHit: null,
+    focus: 0,
     timerOn: HANGMAN_TIMER_DEFAULT,
     gems: 0,
     xp: 0,
@@ -394,6 +442,7 @@ export function hydrateHangman(raw) {
     guessed,
     status,
     lastHit: raw.lastHit ?? null,
+    focus: Number.isInteger(raw.focus) ? raw.focus : hangmanNextEmptySlot({ letters, guessed, status: "play" }) ?? 0,
     timerOn: HANGMAN_TIMER_DEFAULT,
     gems: raw.gems || 0,
     xp: raw.xp || 0,
@@ -410,13 +459,18 @@ export function guessHangmanLetter(run, letter) {
   const allRevealed = (run.letters || []).every((ch) => guessed.includes(ch));
   const misses = guessed.filter((g) => !(run.letters || []).includes(g));
   const dead = misses.length >= HANGMAN_MAX;
+  const next = { ...run, guessed, lastHit: hit, status: "play" };
   if (allRevealed) {
-    return { ...run, guessed, lastHit: true, status: "win" };
+    return { ...next, lastHit: true, status: "win" };
   }
   if (dead) {
-    return { ...run, guessed, lastHit: false, status: "lose" };
+    return { ...next, lastHit: false, status: "lose" };
   }
-  return { ...run, guessed, lastHit: hit, status: "play" };
+  if (hit) {
+    const from = hangmanSlot(next, run.focus ?? 0) ? (run.focus ?? 0) + 1 : (run.focus ?? 0);
+    next.focus = hangmanNextEmptySlot(next, from) ?? run.focus ?? 0;
+  }
+  return next;
 }
 
 export function finishHangmanRun(run, won) {

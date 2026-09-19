@@ -1,6 +1,10 @@
 /** Bucket fly / Cubetas — Games · Match & play (hub v5) · feeds 80/20.
  *  Dave / Hand lock. Two mood buckets only. Soft chrome parked. Win motion ON.
  *  George stamps Literal / Why — hooks are one-liners until then.
+ *  Chip face: bubbles size to the full phrase (no clip). Wrong sort auto-shows
+ *  one-beat Why inline (no Why tap). Exception chips surface Excepción / Exception
+ *  with that Why. Prefer George `why` / `whyEn` / `whyEs` / `exception`.
+ *  Sample exception chips below are face fixtures — George fills the bank next.
  */
 
 /** George + No Face CLEAR: language-split title, not a bilingual lockup. */
@@ -45,6 +49,7 @@ export const CUBETAS_LABELS = {
 export const CUBETAS_DEAD_LABELS = ["Trigger", "Use", "Disparador", "Uso"];
 
 export const CUBETAS_NEXT = { es: "Siguiente", en: "Next chip" };
+export const CUBETAS_EXCEPTION_LABEL = { es: "Excepción", en: "Exception" };
 
 /** Open-board how-to. George CLEAR. First paint only. Soft chrome parked. */
 export const CUBETAS_HINT = {
@@ -88,6 +93,39 @@ export const OJALA_QUE_PACK = [
     bucket: "indicative",
     literal: { es: "Sé que", en: "I know that" },
     why: { es: "Hecho conocido → indicativo.", en: "Known fact → indicative." },
+  },
+  {
+    id: "aunque-es",
+    phrase: "Aunque es",
+    bucket: "indicative",
+    literal: { es: "Aunque es", en: "Although it is" },
+    why: { es: "Hecho concedido: aunque + indicativo.", en: "Admitted fact: aunque + indicative." },
+    exception: {
+      es: "Aunque no siempre pide subjuntivo — si es un hecho, va en indicativo.",
+      en: "Aunque does not always take subjunctive — a known fact stays indicative.",
+    },
+  },
+  {
+    id: "si-llueve",
+    phrase: "Si llueve",
+    bucket: "indicative",
+    literal: { es: "Si llueve", en: "If it rains" },
+    why: { es: "Condición real: si + indicativo.", en: "Real condition: si + indicative." },
+    exception: {
+      es: "Si no es irreal: no va al subjuntivo.",
+      en: "Si is not automatically subjunctive — real conditions stay indicative.",
+    },
+  },
+  {
+    id: "despues-de-que-salio",
+    phrase: "Después de que salió",
+    bucket: "indicative",
+    literal: { es: "Después de que salió", en: "After he/she left" },
+    why: { es: "Hecho pasado: después de que + indicativo.", en: "Completed past: después de que + indicative." },
+    exception: {
+      es: "Después de que + pasado no pide subjuntivo.",
+      en: "Después de que + past fact does not take the subjunctive.",
+    },
   },
 ];
 
@@ -140,13 +178,33 @@ export function scoredChip(run) {
 }
 
 export function cubetasLiteral(chip, uiLang) {
-  if (!chip?.literal) return "";
-  return uiLang === "en" ? chip.literal.en : chip.literal.es;
+  if (!chip) return "";
+  if (chip.literal) return uiLang === "en" ? chip.literal.en : chip.literal.es;
+  return uiLang === "en" ? (chip.literalEn || "") : (chip.literalEs || "");
 }
 
 export function cubetasWhy(chip, uiLang) {
-  if (!chip?.why) return "";
-  return uiLang === "en" ? chip.why.en : chip.why.es;
+  if (!chip) return "";
+  if (chip.why) return uiLang === "en" ? chip.why.en : chip.why.es;
+  return uiLang === "en" ? (chip.whyEn || "") : (chip.whyEs || "");
+}
+
+export function cubetasExceptionLabel(uiLang) {
+  return uiLang === "en" ? CUBETAS_EXCEPTION_LABEL.en : CUBETAS_EXCEPTION_LABEL.es;
+}
+
+export function cubetasIsException(chip) {
+  return !!(chip?.exception || chip?.exceptionEs || chip?.exceptionEn);
+}
+
+export function cubetasException(chip, uiLang) {
+  if (!chip) return "";
+  const ex = chip.exception;
+  if (ex && typeof ex === "object") {
+    return uiLang === "en" ? (ex.en || "") : (ex.es || "");
+  }
+  if (typeof ex === "string" && ex && ex !== "true") return ex;
+  return uiLang === "en" ? (chip.exceptionEn || "") : (chip.exceptionEs || "");
 }
 
 export function startCubetasRun(pack = OJALA_QUE_PACK, rng = Math.random) {

@@ -46,7 +46,6 @@ import {
   CUBETAS_GLOW_CREAM,
   CUBETAS_GLOW_TERRACOTTA,
   CUBETAS_GRAB_MS,
-  CUBETAS_SHAKE_MS,
   CUBETAS_SQUASH,
   CUBETAS_SQUASH_MS,
   CUBETAS_TILT_DEG,
@@ -56,8 +55,10 @@ import {
   advanceCubetasWin,
   applyCubetasDrop,
   bucketLabel,
-  clearCubetasWrong,
+  cubetasException,
+  cubetasExceptionLabel,
   cubetasHint,
+  cubetasIsException,
   cubetasLiteral,
   cubetasNextLabel,
   cubetasTitle,
@@ -76,13 +77,18 @@ import {
   HANGMAN_MAX,
   HANGMAN_XP,
   finishHangmanRun,
+  focusHangmanSlot,
   guessHangmanLetter,
   hangmanHowTo,
+  hangmanIsLetterKey,
   hangmanLiteral,
   hangmanLiteralLabel,
   hangmanMisses,
   hangmanQuiet,
+  hangmanShowTeach,
   hangmanSlot,
+  hangmanSlotIndexForKey,
+  hangmanSlotKey,
   hangmanTitle,
   hangmanWhy,
   hangmanWhyLabel,
@@ -1694,11 +1700,12 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
     if ((!idle && run.status !== "wrong") || !chip) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
     onHintDismiss?.();
-    setDrag({ x: e.clientX, y: e.clientY, hover: null });
+    const r = e.currentTarget.getBoundingClientRect();
+    setDrag({ x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, hover: null });
   };
   const onChipPointerMove = (e) => {
     if (!drag) return;
-    setDrag({ x: e.clientX, y: e.clientY, hover: cubetasBucketAt(bucketsRef.current, e.clientX, e.clientY) });
+    setDrag({ x: e.clientX, y: e.clientY, dx: drag.dx, dy: drag.dy, hover: cubetasBucketAt(bucketsRef.current, e.clientX, e.clientY) });
   };
   const onChipPointerUp = (e) => {
     if (!drag) return;
@@ -1884,12 +1891,20 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
                 onPointerMove={onChipPointerMove}
                 onPointerUp={onChipPointerUp}
                 onPointerCancel={() => setDrag(null)}
-                className={run.status === "wrong" ? "wiggle" : undefined}
+                className={`word-chip${run.status === "wrong" ? " wiggle" : ""}`}
                 style={{
                   display: "inline-flex",
+                  alignItems: "center",
+                  width: "max-content",
+                  maxWidth: "none",
+                  minWidth: 0,
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
+                  overflow: "visible",
+                  textOverflow: "clip",
                   position: drag ? "fixed" : "relative",
-                  left: drag ? drag.x - 70 : undefined,
-                  top: drag ? drag.y - 22 : undefined,
+                  left: drag ? drag.x - (drag.dx || 0) : undefined,
+                  top: drag ? drag.y - (drag.dy || 0) : undefined,
                   zIndex: drag ? 20 : 1,
                   margin: 0,
                   border: `2px solid ${D.green}`,
@@ -1907,6 +1922,25 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
               >
                 {chip.phrase}
               </button>
+            </div>
+          )}
+
+          {run.status === "wrong" && chip && (
+            <div className="pop" data-testid="cubetas-wrong-teach" style={{ marginTop: 18, border: `2px solid ${D.line}`, borderRadius: 14, padding: "11px 13px", background: D.card, textAlign: "left" }}>
+              <div data-testid="cubetas-literal" style={{ marginTop: 2 }}>
+                <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.literalLabel}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasLiteral(chip, uiLang)}</div>
+              </div>
+              {cubetasIsException(chip) && (
+                <div data-testid="cubetas-exception" style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{cubetasExceptionLabel(uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasException(chip, uiLang) || cubetasWhy(chip, uiLang)}</div>
+                </div>
+              )}
+              <div data-testid="cubetas-why" style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.whyLabel}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasWhy(chip, uiLang)}</div>
+              </div>
             </div>
           )}
 
@@ -4690,7 +4724,6 @@ export default function App() {
       const next = applyCubetasDrop(cur, bucket);
       if (next.status === "wrong") {
         beep("bad");
-        scheduleCubetas(CUBETAS_SHAKE_MS, () => setCubetasGame((g) => clearCubetasWrong(g)));
         return next;
       }
       if (next.status === "squash") {
@@ -5898,6 +5931,28 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, status, q, selected, typed, placed]);
 
+  useEffect(() => {
+    if (screen !== "ahorcado" || !ahorcado || isHangmanOver(ahorcado)) return;
+    const h = (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const slotIdx = hangmanSlotIndexForKey(e.key);
+      if (slotIdx != null && slotIdx < (ahorcado.letters || []).length) {
+        e.preventDefault();
+        setAhorcado((cur) => focusHangmanSlot(cur, slotIdx));
+        return;
+      }
+      if (hangmanIsLetterKey(e.key)) {
+        e.preventDefault();
+        guessAhorcadoLetter(e.key);
+      }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, ahorcado]);
+
   const pct = session ? Math.round((qi / session.questions.length) * 100) : 0;
   const srsEntries = Object.entries(prog.srs || {});
   const dueCount = srsEntries.filter(([, it]) => it.due <= Date.now()).length;
@@ -6582,6 +6637,7 @@ export default function App() {
         .choice-card:hover:not(:disabled) { background:${D.subtle}; }
         .choice-card[data-selected="true"],
         .choice-card[data-selected="true"]:hover:not(:disabled) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
+        .word-chip { display:inline-flex; align-items:center; width:max-content; max-width:none; min-width:0; flex-shrink:0; white-space:nowrap; overflow:visible; text-overflow:clip; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
@@ -9159,7 +9215,7 @@ export default function App() {
             {over ? (
               <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
                 {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
-                <div data-testid="hangman-word" style={{ fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px" }}>{ahorcado.word}</div>
+                <div data-testid="hangman-word" className="word-chip" style={{ fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px", width: "max-content", maxWidth: "none", whiteSpace: "nowrap", overflow: "visible", textOverflow: "clip" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
                   <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanLiteralLabel(uiLang)}</div>
                   <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanLiteral(ahorcado, uiLang)}</div>
@@ -9175,15 +9231,69 @@ export default function App() {
               <>
                 <p data-testid="hangman-howto" style={{ margin: "0 0 14px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{hangmanHowTo(uiLang)}</p>
                 <div data-testid="hangman-slots" style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-                  {letters.map((letter, i) => (
-                    <div key={`${letter}-${i}`} data-testid="hangman-slot" style={{ width: 28, height: 38, borderBottom: `3px solid ${D.ink}`, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 3, fontWeight: 900, fontSize: 18, color: D.ink }}>
-                      {hangmanSlot(ahorcado, i)}
-                    </div>
-                  ))}
+                  {letters.map((letter, i) => {
+                    const filled = hangmanSlot(ahorcado, i);
+                    const focused = (ahorcado.focus ?? 0) === i;
+                    return (
+                      <button
+                        key={`${letter}-${i}`}
+                        type="button"
+                        data-testid="hangman-slot"
+                        data-slot={i}
+                        data-key={hangmanSlotKey(i)}
+                        data-focus={focused ? "on" : "off"}
+                        aria-pressed={focused}
+                        aria-label={`${i + 1}`}
+                        onClick={() => setAhorcado((cur) => focusHangmanSlot(cur, i))}
+                        className="word-chip"
+                        style={{
+                          display: "inline-flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                          gap: 3,
+                          width: "max-content",
+                          minWidth: 28,
+                          maxWidth: "none",
+                          flexShrink: 0,
+                          height: "auto",
+                          padding: "4px 8px 2px",
+                          border: "none",
+                          borderBottom: `3px solid ${focused ? D.green : D.ink}`,
+                          borderRadius: 0,
+                          background: "transparent",
+                          color: D.ink,
+                          fontFamily: "inherit",
+                          fontWeight: 900,
+                          fontSize: 18,
+                          lineHeight: 1,
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                          overflow: "visible",
+                          textOverflow: "clip",
+                        }}
+                      >
+                        <span data-testid="hangman-slot-letter" style={{ minHeight: 22, overflow: "visible" }}>{filled}</span>
+                        <span data-testid="hangman-slot-key" aria-hidden="true" style={{ fontSize: 10, fontWeight: 800, color: D.sub, letterSpacing: ".02em", lineHeight: 1 }}>{hangmanSlotKey(i)}</span>
+                      </button>
+                    );
+                  })}
                 </div>
                 {ahorcado.lastHit === false && (
-                  <div data-testid="hangman-wrong" style={{ textAlign: "center", marginBottom: 14, fontSize: 13, fontWeight: 800, color: D.red }}>
+                  <div data-testid="hangman-wrong" style={{ textAlign: "center", marginBottom: 10, fontSize: 13, fontWeight: 800, color: D.red }}>
                     {hangmanWrongLine(uiLang)}
+                  </div>
+                )}
+                {hangmanShowTeach(ahorcado) && (
+                  <div data-testid="hangman-wrong-teach" className="pop" style={{ marginBottom: 14, border: `2px solid ${D.line}`, borderRadius: 14, padding: "11px 13px", background: D.card, textAlign: "left" }}>
+                    <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
+                      <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanLiteralLabel(uiLang)}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanLiteral(ahorcado, uiLang)}</div>
+                    </div>
+                    <div data-testid="hangman-why" style={{ marginTop: 8 }}>
+                      <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                    </div>
                   </div>
                 )}
                 <LetterBoard
