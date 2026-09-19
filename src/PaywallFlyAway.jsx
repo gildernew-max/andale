@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   PAYWALL_FLY_EASE,
   PAYWALL_FLY_MS,
   PAYWALL_FLY_SRC,
   PAYWALL_REDUCE_FADE_MS,
   PAYWALL_WING_MS,
+  flyAwaySurface,
 } from "./paywallFlyAway.js";
 
 function prefersReducedMotion() {
@@ -19,14 +20,40 @@ function markSrc() {
   return `${import.meta.env.BASE_URL}${PAYWALL_FLY_SRC}`;
 }
 
-/** One Cenzontle: wing beat + soft arc up-and-out, leaves the frame. No perch. Soft chrome parked. */
-export function PaywallFlyAway() {
+/**
+ * One Cenzontle: wing beat + soft arc up-and-out, leaves the frame. No perch.
+ * Same motion on paywall and free story-win / CONTINUAR. Soft chrome parked.
+ */
+export function CenzontleFlyAway({ surface = "paywall", onComplete } = {}) {
+  const doneRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
   const reduce = prefersReducedMotion();
   const src = markSrc();
+  const ids = flyAwaySurface(surface);
+  const size = ids.size;
+  const wingW = Math.round((size * 16) / 44);
+  const wingH = Math.round((size * 11) / 44);
+
+  useEffect(() => {
+    if (!onCompleteRef.current) return undefined;
+    const finish = () => {
+      if (doneRef.current) return;
+      doneRef.current = true;
+      onCompleteRef.current?.();
+    };
+    if (reduce) {
+      finish();
+      return undefined;
+    }
+    const t = setTimeout(finish, PAYWALL_FLY_MS);
+    return () => clearTimeout(t);
+  }, [reduce]);
 
   return (
     <div
-      data-testid="soft-paywall-cenzontle-stage"
+      data-testid={ids.stageTestId}
+      data-surface={surface}
       data-reduced-motion={reduce ? "1" : "0"}
       aria-hidden="true"
       className="paywall-fly-stage"
@@ -34,7 +61,7 @@ export function PaywallFlyAway() {
       <style>{`
         .paywall-fly-stage {
           position: relative;
-          height: 44px;
+          height: ${size}px;
           margin: 0 auto;
           pointer-events: none;
           overflow: visible;
@@ -43,24 +70,24 @@ export function PaywallFlyAway() {
           position: absolute;
           left: 50%;
           top: 0;
-          width: 44px;
-          height: 44px;
+          width: ${size}px;
+          height: ${size}px;
           transform: translate(-50%, 0) rotate(4deg);
           transform-origin: 50% 50%;
           animation: paywallFlyAway ${PAYWALL_FLY_MS}ms ${PAYWALL_FLY_EASE} both;
         }
         .paywall-fly-bird-img {
           display: block;
-          width: 44px;
-          height: 44px;
+          width: ${size}px;
+          height: ${size}px;
           object-fit: contain;
         }
         .paywall-fly-wing {
           position: absolute;
           left: 16%;
           top: 36%;
-          width: 16px;
-          height: 11px;
+          width: ${wingW}px;
+          height: ${wingH}px;
           transform-origin: 12% 35%;
           animation: paywallWingBeat ${PAYWALL_WING_MS}ms ${PAYWALL_FLY_EASE} infinite;
         }
@@ -94,18 +121,18 @@ export function PaywallFlyAway() {
       `}</style>
       <div
         className={reduce ? "paywall-fly-bird paywall-fly-bird--reduce" : "paywall-fly-bird"}
-        data-testid="soft-paywall-cenzontle-layer"
+        data-testid={ids.layerTestId}
       >
         <img
-          data-testid="soft-paywall-cenzontle"
+          data-testid={ids.birdTestId}
           src={src}
           alt=""
-          width={44}
-          height={44}
+          width={size}
+          height={size}
           className="paywall-fly-bird-img"
         />
         {!reduce && (
-          <svg data-testid="soft-paywall-cenzontle-wing" className="paywall-fly-wing" viewBox="0 0 52 34" aria-hidden="true">
+          <svg data-testid={ids.wingTestId} className="paywall-fly-wing" viewBox="0 0 52 34" aria-hidden="true">
             <polygon points="6,8 46,2 50,16 38,28 8,22" fill="#1B2A4A" />
             <polygon points="10,12 42,8 44,16 16,20" fill="#F4EDE0" />
             <polygon points="12,18 40,16 34,26 14,24" fill="#C45C48" />
@@ -114,4 +141,9 @@ export function PaywallFlyAway() {
       </div>
     </div>
   );
+}
+
+/** Soft-paywall mount of the shared fly-away. Soft chrome parked. */
+export function PaywallFlyAway() {
+  return <CenzontleFlyAway surface="paywall" />;
 }
