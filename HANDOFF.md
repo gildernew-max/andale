@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (Lectura story-9 Brand CLEAR stills + setenta)
+
+**What changed**
+- `public/lectura/story-9/p0.png`–`p5.png` are Brand CLEAR stills (1152×864 RGB PNG). Byte-identical to `/workspace/andale-art/lectura-regen/story-9/`. Cast lock don Adán (white hair/mustache, straw hat, white shirt, red sash). CAST.md + MANIFEST.md sit with the stills.
+- App.jsx `story-9` *Las cerezas de don Adán* ¶2 open is George setenta (`Don Adán tiene setenta años,`). Rest of ¶2–¶6 + quizzes unchanged. No cincuenta y nueve leftover. Soft chrome parked.
+- Content test locks `clearedStory9` bytes/md5/1152×864 and the setenta stamp. Path still `${BASE_URL}lectura/story-9/pN.png`.
+
+**Why**
+- Hand CLEAR: wire stills + George age rewrite together. Do not ship fifty-nine under elderly white-hair Adán stills.
+
 ## 2026-09-19 (Lectura story-7 Brand CLEAR stills + Tito→Pepe)
 
 **What changed**

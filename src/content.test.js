@@ -313,6 +313,25 @@ assert(story7.questions[0].prompt === "¿Cómo se juega el dominó cubano según
 assert(story7.questions[1].prompt === "¿Qué pasó cuando el dueño quiso poner pantallas de fútbol?" && story7.questions[1].answer === "Don Ernesto dejó de venir y solo volvió cuando se las quitaron", "story-7 quiz 2 unchanged");
 assert(story7.questions[2].prompt === "¿Cómo honraron a Don Manuel después de su muerte?" && story7.questions[2].answer === "Jugaron una partida sin pareja y dejaron su tequila intacto", "story-7 quiz 3 unchanged");
 
+const story9 = STORIES.find((s) => s.id === "story-9");
+assert(story9.title === "Las cerezas de don Adán", "story-9 ES title lock");
+assert(story9.subtitle === "Café de altura en Chiapas", "story-9 ES subtitle lock");
+assert(story9.paragraphs[0] === "Si usted alguna vez se ha tomado un café de Chiapas en una cafetería de Brooklyn —de esos que cuestan seis dólares y vienen con notas de cata escritas con letra cursiva—, es posible que las cerezas que dieron origen a ese café las haya recolectado don Adán Pérez Sántiz, en una ladera a 1,800 metros sobre el nivel del mar, en el municipio tzotzil de San Juan Cancuc.", "story-9 ¶1 ES unchanged");
+assert(story9.paragraphs[1] === "Don Adán tiene setenta años, mide un metro cincuenta y cinco y carga cinco kilos de cerezas de café en una canasta de mimbre colgada al pecho durante diez horas al día, seis días a la semana, dos meses al año. Cada cereza la recolecta a mano, una por una, eligiendo solo las que están perfectamente rojas. Las verdes maduran después. Las negras ya pasaron su punto. Una cereza demasiado madura o demasiado verde estropea todo el lote.", "story-9 ¶2 is George setenta");
+assert(story9.paragraphs[2] === "Conocí a don Adán en 2019. Mi reportaje era sobre el comercio justo, una etiqueta que aparece en muchas bolsas de café gourmet. Le pregunté qué pensaba del comercio justo. Sonrió con la cortesía que tienen los hombres mayores cuando un periodista urbano les hace una pregunta condescendiente. «Mire, joven. Por cada kilo de café que entrego a la cooperativa, recibo entre quince y veinte pesos. Su café en Brooklyn cuesta seis dólares la taza, ¿no? Eso es como ciento veinte pesos. Una taza usa veinte gramos. Las matemáticas no me favorecen.»", "story-9 ¶3 ES unchanged");
+assert(story9.paragraphs[3] === "Aun así, don Adán seguía cosechando, y lo hacía con un orgullo que no admitía lástima. Su café era reconocido. Había ganado dos veces el concurso regional de la taza de excelencia. Una empresa japonesa le había ofrecido comprar su cosecha completa a precio premium, pero él se había negado: «Si vendo todo a una sola empresa, dependo de una sola empresa. Mis abuelos no sobrevivieron quinientos años para que yo regalara mi independencia por un precio mejor.»", "story-9 ¶4 ES unchanged");
+assert(story9.paragraphs[4] === "Cuando regresé en 2024, le entregué un libro: el reportaje publicado, con su foto en la portada. Lo hojeó despacio. No sabía leer en español más que con dificultad —su primera lengua es el tzotzil—, pero entendió las imágenes. Se detuvo en una foto donde aparecía sosteniendo una cereza perfectamente roja entre el pulgar y el índice. Sonrió. «Esa», dijo. «Esa era una cereza buena. Las buenas no se olvidan.»", "story-9 ¶5 ES unchanged");
+assert(story9.paragraphs[5] === "El cambio climático le preocupa más que los mercados. Las heladas llegan en fechas que antes no llegaban. La roya del café —un hongo— sube cada año a altitudes donde antes no podía. Don Adán cree que en veinte años Chiapas ya no producirá café como lo conocemos. «Pero alguien lo producirá en otra montaña, más alta», dice. «El café siempre encuentra su lugar. Los hombres también.»", "story-9 ¶6 ES unchanged");
+const story9Hay = [...story9.paragraphs, JSON.stringify(story9.glossary), JSON.stringify(story9.questions)].join("\n");
+assert(/Don Adán tiene setenta años/.test(story9.paragraphs[1]), "story-9 ¶2 opens setenta");
+assert(/metro cincuenta y cinco/.test(story9.paragraphs[1]), "story-9 ¶2 keeps height cincuenta y cinco");
+assert(!/cincuenta y nueve/.test(story9Hay), "story-9 has no cincuenta y nueve leftover");
+assert(!/fifty-nine|fifty nine|59 years/.test(story9Hay), "story-9 has no fifty-nine leftover");
+assert(story9.glossary.setenta && story9.glossary.setenta[0] === "seventy", "story-9 glossary stamps setenta");
+assert(story9.questions[0].prompt === "¿Cuánto recibe don Adán por cada kilo de café que entrega a la cooperativa?" && story9.questions[0].answer === "Entre quince y veinte pesos", "story-9 quiz 1 unchanged");
+assert(story9.questions[1].prompt === "¿Por qué se negó a vender toda su cosecha a una sola empresa japonesa?" && story9.questions[1].answer === "Porque no quería depender de una sola empresa", "story-9 quiz 2 unchanged");
+assert(story9.questions[2].prompt === "¿Qué le preocupa más a don Adán que los precios del mercado?" && story9.questions[2].answer === "El cambio climático y la roya del café", "story-9 quiz 3 unchanged");
+
 assert(UNITS[0]?.id === "subj1" && UNITS[0]?.title === "Subjuntivo presente", "first path unit stays Subjuntivo presente");
 assert(SECTIONS[0]?.unitIds?.[0] === "subj1", "Camino first unit stays Subjuntivo");
 assert(SECTIONS[0]?.title === "Intermedio" && SECTIONS[0]?.titleEn === "Intermediate", "first section is Intermedio, not Sección 1 jargon");
@@ -335,6 +354,10 @@ assert(!appSrc.includes("src={`/lectura/"), "Lectura stills must not use root-ab
 const story7Src = appSrc.slice(appSrc.indexOf('id: "story-7"'), appSrc.indexOf('id: "story-8"'));
 assert(/Don Pepe, el más joven/.test(story7Src) && /Don Pepe ganó/.test(story7Src), "App.jsx story-7 live copy is Pepe");
 assert(!/\bTito\b/.test(story7Src), "App.jsx story-7 live copy has no Tito");
+const story9Src = appSrc.slice(appSrc.indexOf('id: "story-9"'), appSrc.indexOf("const STORY_EXTRAS"));
+assert(/Don Adán tiene setenta años/.test(story9Src), "App.jsx story-9 live copy is setenta");
+assert(!/cincuenta y nueve/.test(story9Src), "App.jsx story-9 live copy has no cincuenta y nueve");
+assert(!/fifty-nine|fifty nine|59 years/.test(story9Src), "App.jsx story-9 live copy has no fifty-nine");
 assert(hoyStillFor(hoy) === LANTERN_STILL, "San Miguel / Noche de faroles keeps the lantern still");
 const sceneIds = new Set();
 for (const sc of TODAY_SCENES) {
@@ -1668,12 +1691,6 @@ const waveBStills = [
   ["story-8", "p3", 1259195, "d0f67783fae380ed0b27da7a92d2bec3"],
   ["story-8", "p4", 1274529, "226e878e3743957d48a75a6a79e7933c"],
   ["story-8", "p5", 1480648, "85b8f8bc1661633c35225b25e70f0278"],
-  ["story-9", "p0", 1440524, "9673a0f135ae21160188caad3a733ea7"],
-  ["story-9", "p1", 1460999, "42387daecfde440cc741d3cbd1e60110"],
-  ["story-9", "p2", 1370898, "15525508182ff4c00e1658e7b1290850"],
-  ["story-9", "p3", 1363434, "a700d41617ee720d14dcbe39b35cc9db"],
-  ["story-9", "p4", 1352841, "0f580a645d8b0c379d3819cc1c30176f"],
-  ["story-9", "p5", 1763491, "16d11ddc2d45cc0dc543a3bc8d312c22"],
 ];
 for (const [storyId, slot, bytes, md5] of waveBStills) {
   const stillPng = join(repoRoot, "public", "lectura", storyId, `${slot}.png`);
@@ -1721,6 +1738,27 @@ assert(existsSync(join(repoRoot, "public", "lectura", "story-7", "CAST.md")), "s
 assert(existsSync(join(repoRoot, "public", "lectura", "story-7", "MANIFEST.md")), "story-7 MANIFEST.md is installed");
 const story7Cast = readFileSync(join(repoRoot, "public", "lectura", "story-7", "CAST.md"), "utf8");
 assert(/Don Pepe/.test(story7Cast) && /Don Ernesto/.test(story7Cast) && /Don Lalo/.test(story7Cast) && /Don Manuel/.test(story7Cast), "story-7 CAST names Ernesto/Pepe/Lalo/Manuel");
+const clearedStory9 = [
+  ["p0", 1801272, "d9ca8fdbe8a56b7a4a8b1720c93966ea"],
+  ["p1", 1703516, "ffbe9eecde45c8b7f7860d24e1cc8945"],
+  ["p2", 1708733, "af2c353a53dfb0761adeb45941ea8746"],
+  ["p3", 1617514, "44d3d16f2f88941309abee3ddab997bb"],
+  ["p4", 1480868, "462ed13a7102f41e66cb0c04335baa7a"],
+  ["p5", 1411118, "b84ae84a861f2d319ecf0dd45a3aa6dd"],
+];
+for (const [slot, bytes, md5] of clearedStory9) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-9", `${slot}.png`);
+  assert(existsSync(stillPng), `story-9 ${slot} lives at public/lectura/story-9/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-9/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-9/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-9 ${slot} stays the Brand CLEAR live PNG`);
+  assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-9 ${slot} is 1152×864`);
+}
+assert(existsSync(join(repoRoot, "public", "lectura", "story-9", "CAST.md")), "story-9 CAST.md locks don Adán");
+assert(existsSync(join(repoRoot, "public", "lectura", "story-9", "MANIFEST.md")), "story-9 MANIFEST.md is installed");
+const story9Cast = readFileSync(join(repoRoot, "public", "lectura", "story-9", "CAST.md"), "utf8");
+assert(/don Adán/.test(story9Cast) && /White hair/.test(story9Cast) && /Straw hat/.test(story9Cast) && /red sash/.test(story9Cast), "story-9 CAST locks white hair/mustache, straw hat, white shirt, red sash");
 for (const id of ["luna", "rafa", "valeria", "diego"]) {
   const coachPng = join(repoRoot, "public", "coaches", `${id}-happy.png`);
   assert(existsSync(coachPng), `${id} lives at public/coaches/${id}-happy.png`);

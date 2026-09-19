@@ -3174,7 +3174,7 @@ const STORIES = [
   subtitle: "Café de altura en Chiapas",
   paragraphs: [
     "Si usted alguna vez se ha tomado un café de Chiapas en una cafetería de Brooklyn —de esos que cuestan seis dólares y vienen con notas de cata escritas con letra cursiva—, es posible que las cerezas que dieron origen a ese café las haya recolectado don Adán Pérez Sántiz, en una ladera a 1,800 metros sobre el nivel del mar, en el municipio tzotzil de San Juan Cancuc.",
-    "Don Adán tiene cincuenta y nueve años, mide un metro cincuenta y cinco y carga cinco kilos de cerezas de café en una canasta de mimbre colgada al pecho durante diez horas al día, seis días a la semana, dos meses al año. Cada cereza la recolecta a mano, una por una, eligiendo solo las que están perfectamente rojas. Las verdes maduran después. Las negras ya pasaron su punto. Una cereza demasiado madura o demasiado verde estropea todo el lote.",
+    "Don Adán tiene setenta años, mide un metro cincuenta y cinco y carga cinco kilos de cerezas de café en una canasta de mimbre colgada al pecho durante diez horas al día, seis días a la semana, dos meses al año. Cada cereza la recolecta a mano, una por una, eligiendo solo las que están perfectamente rojas. Las verdes maduran después. Las negras ya pasaron su punto. Una cereza demasiado madura o demasiado verde estropea todo el lote.",
     "Conocí a don Adán en 2019. Mi reportaje era sobre el comercio justo, una etiqueta que aparece en muchas bolsas de café gourmet. Le pregunté qué pensaba del comercio justo. Sonrió con la cortesía que tienen los hombres mayores cuando un periodista urbano les hace una pregunta condescendiente. «Mire, joven. Por cada kilo de café que entrego a la cooperativa, recibo entre quince y veinte pesos. Su café en Brooklyn cuesta seis dólares la taza, ¿no? Eso es como ciento veinte pesos. Una taza usa veinte gramos. Las matemáticas no me favorecen.»",
     "Aun así, don Adán seguía cosechando, y lo hacía con un orgullo que no admitía lástima. Su café era reconocido. Había ganado dos veces el concurso regional de la taza de excelencia. Una empresa japonesa le había ofrecido comprar su cosecha completa a precio premium, pero él se había negado: «Si vendo todo a una sola empresa, dependo de una sola empresa. Mis abuelos no sobrevivieron quinientos años para que yo regalara mi independencia por un precio mejor.»",
     "Cuando regresé en 2024, le entregué un libro: el reportaje publicado, con su foto en la portada. Lo hojeó despacio. No sabía leer en español más que con dificultad —su primera lengua es el tzotzil—, pero entendió las imágenes. Se detuvo en una foto donde aparecía sosteniendo una cereza perfectamente roja entre el pulgar y el índice. Sonrió. «Esa», dijo. «Esa era una cereza buena. Las buenas no se olvidan.»",
@@ -3194,7 +3194,7 @@ const STORIES = [
     tzotzil: ["Tzotzil", "Maya indigenous people of highland Chiapas; ~400,000 speakers."],
     San: ["San"], Juan: ["Juan"],
     Cancuc: ["Cancuc", "Tzotzil municipality with a long history of resistance."],
-    cincuenta: ["fifty"], nueve: ["nine"], mide: ["measures (height)"], cinco: ["five"],
+    cincuenta: ["fifty"], setenta: ["seventy"], nueve: ["nine"], mide: ["measures (height)"], cinco: ["five"],
     carga: ["carries"], kilos: ["kilos"], canasta: ["basket"], mimbre: ["wicker"],
     colgada: ["hanging"], pecho: ["chest"], diez: ["ten"], horas: ["hours"], semana: ["week"],
     meses: ["months"], año: ["year"], recolecta: ["harvests"], mano: ["hand"],

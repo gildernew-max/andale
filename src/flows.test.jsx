@@ -1173,6 +1173,22 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/\bTito\b/);
   });
 
+  it("opens story-9 Las cerezas de don Adán with Brand stills and setenta, not cincuenta y nueve", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-9/p0.png`);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/Si usted alguna vez se ha tomado un café de Chiapas/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-1")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-1").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-9/p1.png`);
+    expect(document.body.textContent).toMatch(/Don Adán tiene setenta años/);
+    expect(document.body.textContent).toMatch(/metro cincuenta y cinco/);
+    expect(document.body.textContent).not.toMatch(/cincuenta y nueve/);
+  });
+
   it("Lectura + story Qs show a one-line gloss for stamped words only", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
