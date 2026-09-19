@@ -263,19 +263,15 @@ const expectedComeBack = (lang) => {
   return comeBackTomorrowLine({ lang, nextTitle: hoyTitleForLang(next, lang) });
 };
 
-/** Free story-win / CONTINUAR: same #161 fly-away. No perch. Soft chrome parked. */
+/** Free story-win / CONTINUAR: fly-away in flight or already off-screen. No perch. Soft chrome parked. */
 const assertFreeWinFlyAway = () => {
   const slot = screen.getByTestId("win-perch-slot");
   const stage = screen.getByTestId("win-fly-away");
-  const bird = screen.getByTestId("win-fly-away-bird");
+  const bird = screen.queryByTestId("win-fly-away-bird");
   const css = stage.querySelector("style")?.textContent || "";
-  expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-  expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)/);
-  expect(screen.getByTestId("win-fly-away-wing")).toBeTruthy();
   expect(stage.getAttribute("data-reduced-motion")).toBe("0");
   expect(stage.getAttribute("data-surface")).toBe("win");
   expect(css).toMatch(/@keyframes paywallFlyAway/);
-  expect(screen.getByTestId("win-fly-away-clip").className).toBe("paywall-fly-clip");
   expect(css).toMatch(/position: fixed;/);
   expect(css).toMatch(/overflow: hidden;/);
   expect(css).toMatch(/translate\(calc\(-50% \+ 100vw \+ 168px\)/);
@@ -283,7 +279,16 @@ const assertFreeWinFlyAway = () => {
   expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 0; \}/);
   expect(css).not.toMatch(/260px/);
   expect(css).not.toMatch(/780ms|cenzontle-courier|story0Courier/);
-  expect(slot.querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+  if (bird) {
+    expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)/);
+    expect(screen.getByTestId("win-fly-away-wing")).toBeTruthy();
+    expect(screen.getByTestId("win-fly-away-clip").className).toBe("paywall-fly-clip");
+    expect(slot.querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+  } else {
+    expect(screen.queryByTestId("win-fly-away-clip")).toBeNull();
+    expect(slot.querySelectorAll("img[src*='cenzontle']")).toHaveLength(0);
+  }
   expect(slot.querySelector("[data-testid='win-perch']")).toBeNull();
   expect(screen.queryByTestId("win-perch")).toBeNull();
   expect(screen.queryByTestId("story-0-beat")).toBeNull();
