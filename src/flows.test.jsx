@@ -1147,6 +1147,29 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-9/p0.png`);
   });
 
+  it("opens story-7 El último dominó with Brand stills and Pepe, not Tito", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /El último dominó/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-7/p0.png`);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/La cantina La Covadonga/);
+    expect(document.body.textContent).not.toMatch(/\bTito\b/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-2")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-2").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-7/p2.png`);
+    expect(document.body.textContent).toMatch(/Don Pepe, el más joven/);
+    expect(document.body.textContent).not.toMatch(/\bTito\b/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-4")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-4").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-7/p4.png`);
+    expect(document.body.textContent).toMatch(/Don Pepe ganó/);
+    expect(document.body.textContent).not.toMatch(/\bTito\b/);
+  });
+
   it("Lectura + story Qs show a one-line gloss for stamped words only", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));

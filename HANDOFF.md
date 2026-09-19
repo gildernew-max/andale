@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (Lectura story-7 Brand CLEAR stills + Tito→Pepe)
+
+**What changed**
+- `public/lectura/story-7/p0.png`–`p5.png` are Brand CLEAR stills (1152×864 RGB PNG). Byte-identical to the attached pack. Cast lock Ernesto / Pepe / Lalo / Manuel (empty chair p4–p5). CAST.md + MANIFEST.md sit with the stills.
+- App.jsx `story-7` *El último dominó* ¶3 / ¶5 + glossary are George Tito→Pepe. ¶1 · ¶2 · ¶4 · ¶6 unchanged. No Tito leftover. Soft chrome parked.
+- Content test locks `clearedStory7` bytes/md5/1152×864 and the Pepe stamps. Path still `${BASE_URL}lectura/story-7/pN.png`.
+
+**Why**
+- Hand CLEAR: wire stills + George rewrite together. Do not ship Don Tito under Pepe stills.
+
 ## 2026-09-19 (Camino subj1 flow-test hearts)
 
 **What changed**
