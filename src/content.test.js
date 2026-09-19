@@ -276,6 +276,23 @@ assert(story2Extra.checkpoints[5].q === "What do Sofía and Mateo learn?", "chec
 assert(story2Extra.checkpoints[0].choices[0] !== story2Extra.checkpoints[0].a, "story-2 checkpoint choices are shuffled on the wire");
 assert(!story2Extra.checkpoints.some((cp) => /narrator/i.test(cp.q)), "no narrator checkpoint on story-2");
 
+const story4 = STORIES.find((s) => s.id === "story-4");
+assert(story4.title === "Doña Lupe y el mole", "story-4 ES title lock");
+assert(story4.subtitle === "Un mercado de Oaxaca", "story-4 ES subtitle lock");
+assert(story4.paragraphs[0] === "Doña Lupe llega al mercado todos los días a las cinco de la mañana. Vende mole en el pasillo principal del Mercado 20 de Noviembre, en el centro de Oaxaca, en el mismo puesto donde su madre vendía antes que ella y su abuela antes que su madre. Tiene setenta y un años, dos rodillas operadas y una memoria que da miedo: recuerda el nombre de cada cliente que ha probado su mole desde 1978.", "story-4 ¶1 ES unchanged");
+assert(story4.paragraphs[1] === "El mole de Doña Lupe es negro, espeso, brillante. Lleva treinta y dos ingredientes, aunque ella jura que son treinta y tres y se niega a decir cuál es el secreto. Lo prepara los domingos: tuesta chiles de cuatro tipos en un comal de barro, asa almendras, cacahuates y ajonjolí, machaca clavo y canela en un molcajete que era de su bisabuela. Hierve todo durante seis horas. El chocolate va al final, no antes. «El chocolate manda», me explicó. «Si entra temprano, se quema. Si entra tarde, se nota. Hay que respetar al chocolate.»", "story-4 ¶2 ES unchanged");
+assert(story4.paragraphs[2] === "La mañana que la entrevisté, servía mole sobre pollo con la mano derecha mientras cobraba con la izquierda. Cien pesos el plato. Cobra menos a los estudiantes y a los viejitos. A los gringos, dice riéndose, cien y un peso de bendición. Nadie regatea con ella. Aquí no se regatea. Es una regla no escrita del mercado.", "story-4 ¶3 is George rewrite CLEAR (right=plate, left=cash)");
+assert(story4.paragraphs[3] === "Le pregunté si pensaba retirarse algún día. Me miró como si hubiera dicho una grosería y abrió las manos sobre el puesto. «¿Retirarme? ¿A hacer qué? Mi nieta está aprendiendo. Cuando me tiemble el pulso, ella tomará la cuchara y yo seré la abuela que vigila desde la silla. Pero todavía no me tiembla nada.»", "story-4 ¶4 is George rewrite CLEAR (nieta in words only)");
+assert(story4.paragraphs[4] === "Probé el mole. No tengo palabras. Imagina un sabor que es dulce, pero no es dulce; picante, pero no es picante; antiguo, como si lo hubieran cocinado los abuelos de los abuelos. Probé un bocado y entendí algo que ningún libro me había explicado: el mole no es una receta, es una memoria. Cada cucharada contiene seis horas de cocción y trescientos años de mujeres.", "story-4 ¶5 ES unchanged");
+assert(story4.paragraphs[5] === "Al final me pasó un sobre sencillo. «Eres mexicano», dijo. «Precio de la casa.» Adentro iban ochenta pesos de cuenta. Le di cien. «El peso extra es por la bendición», le dije, y se rio tanto que casi se le cae la cuchara.", "story-4 ¶6 is George rewrite CLEAR (calm envelope)");
+const story4Hay = story4.paragraphs.join("\n");
+assert(!/mano izquierda mientras cobraba con la derecha/.test(story4Hay), "story-4 ¶3 does not keep the old swapped hands");
+assert(!/señalando a una niña/.test(story4Hay), "story-4 ¶4 does not put the nieta on the still");
+assert(!/Doña Lupe me cobró ochenta pesos|Cobro precio de la casa/.test(story4Hay), "story-4 ¶6 is envelope, not peso-count theater");
+assert(story4.questions[0].prompt === "¿Qué hace especial al mole de Doña Lupe?" && story4.questions[0].answer === "Lleva más de treinta ingredientes y representa generaciones de tradición", "story-4 quiz 1 unchanged");
+assert(story4.questions[1].prompt === "¿Por qué Doña Lupe no quiere retirarse?" && story4.questions[1].answer === "Porque todavía no le tiembla el pulso", "story-4 quiz 2 unchanged");
+assert(story4.questions[2].prompt === "¿Qué descubrió el entrevistador al probar el mole?" && story4.questions[2].answer === "Que el mole no es una receta, es una memoria", "story-4 quiz 3 unchanged");
+
 assert(UNITS[0]?.id === "subj1" && UNITS[0]?.title === "Subjuntivo presente", "first path unit stays Subjuntivo presente");
 assert(SECTIONS[0]?.unitIds?.[0] === "subj1", "Camino first unit stays Subjuntivo");
 assert(SECTIONS[0]?.title === "Intermedio" && SECTIONS[0]?.titleEn === "Intermediate", "first section is Intermedio, not Sección 1 jargon");
@@ -1585,10 +1602,10 @@ for (const [storyId, slot, bytes, md5] of waveBStills) {
 const clearedStory4 = [
   ["p0", 1513007, "ed2db208d1845b596de6d75a6669ed84"],
   ["p1", 1887010, "5e9783f608e764641f1608d8a1cc5c46"],
-  ["p2", 1833358, "cc1af3e36380a9195e7987ad05d11ccd"],
+  ["p2", 1648558, "e6a9faadb2712b93e1debb89921db6af"],
   ["p3", 1656532, "463fce6b27f4709dc791d89fe7968f4d"],
   ["p4", 1615033, "67e32279ea0606b444d50344eb98d82c"],
-  ["p5", 1821193, "c98dfe951852311fb8aa5ccc2dba8f42"],
+  ["p5", 1763618, "d339439887227da164ada8147e4bbc4d"],
 ];
 for (const [slot, bytes, md5] of clearedStory4) {
   const stillPng = join(repoRoot, "public", "lectura", "story-4", `${slot}.png`);
@@ -1597,6 +1614,7 @@ for (const [slot, bytes, md5] of clearedStory4) {
   assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-4/${slot}.png is a real PNG, not JPEG-named-.png`);
   assert(buf.length === bytes, `lectura/story-4/${slot}.png is ${bytes} bytes`);
   assert(createHash("md5").update(buf).digest("hex") === md5, `story-4 ${slot} stays the Brand CLEAR live PNG`);
+  assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-4 ${slot} is 1152×864`);
 }
 for (const id of ["luna", "rafa", "valeria", "diego"]) {
   const coachPng = join(repoRoot, "public", "coaches", `${id}-happy.png`);
