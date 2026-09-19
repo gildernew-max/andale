@@ -294,6 +294,25 @@ assert(story4.questions[0].prompt === "¿Qué hace especial al mole de Doña Lup
 assert(story4.questions[1].prompt === "¿Por qué Doña Lupe no quiere retirarse?" && story4.questions[1].answer === "Porque todavía no le tiembla el pulso", "story-4 quiz 2 unchanged");
 assert(story4.questions[2].prompt === "¿Qué descubrió el entrevistador al probar el mole?" && story4.questions[2].answer === "Que el mole no es una receta, es una memoria", "story-4 quiz 3 unchanged");
 
+const story7 = STORIES.find((s) => s.id === "story-7");
+assert(story7.title === "El último dominó", "story-7 ES title lock");
+assert(story7.subtitle === "Una cantina en la Colonia Roma", "story-7 ES subtitle lock");
+assert(story7.paragraphs[0] === "La cantina La Covadonga lleva abierta desde 1947. Está en la avenida Puebla, en la Colonia Roma, y conserva todo lo que tenía cuando la fundaron unos asturianos que escapaban del franquismo: las mesas de madera maciza, los pisos de mosaico, el reloj de pared que adelanta tres minutos y, sobre todo, los dominós. Mil quinientos dominós, según el dueño actual. Suficientes para sustituir las fichas que los clientes, sin querer, se llevan en el bolsillo cuando salen.", "story-7 ¶1 ES unchanged");
+assert(story7.paragraphs[1] === "Don Ernesto tiene ochenta y cuatro años, llega todos los días a las cuatro de la tarde, se sienta en la misma mesa, pide el mismo tequila reposado y juega dominó con los mismos tres amigos desde 1973. «Aunque nos hubiéramos peleado a muerte», me explicó una vez, «aquí venimos. Esta mesa es más vieja que nuestros matrimonios.» En efecto, dos de los cuatro se han divorciado, uno se ha casado tres veces, y ninguno se ha perdido una partida.", "story-7 ¶2 ES unchanged");
+assert(story7.paragraphs[2] === "El dominó cubano se juega en parejas. Cada jugador recibe diez fichas. El silencio es parte del juego: solo se permite hablar entre rondas, y aun así, hay temas prohibidos por costumbre. No se habla de política con la primera copa, no se habla de los hijos casi nunca, no se habla del pasado a menos que el más viejo lo invoque. «Si habláramos de todo lo que sabemos los cuatro», me dijo Don Pepe, el más joven —setenta y nueve años—, «se nos acabaría la amistad en una tarde.»", "story-7 ¶3 is George Tito→Pepe");
+assert(story7.paragraphs[3] === "Si yo no hubiera nacido en esta colonia, no entendería La Covadonga. Aquí los meseros tutean a los abogados, las botanas son gratis si pides bebida, y nadie se inmuta cuando entra un mariachi de paso a tocar dos canciones. La cantina nunca se moderniza porque sus clientes no lo permitirían. Hace cinco años, el dueño quiso poner pantallas para el fútbol. Don Ernesto dejó de venir tres semanas. Volvió cuando las pantallas se fueron.", "story-7 ¶4 ES unchanged");
+assert(story7.paragraphs[4] === "El año pasado murió Don Manuel, el cuarto miembro del grupo. Tenía ochenta y siete años y un cáncer que llevaba escondiendo dos. En su honor, los otros tres jugaron una partida sin pareja, repartiendo igualmente las diez fichas faltantes sobre el lugar vacío. Don Pepe ganó. No celebraron. Don Ernesto sirvió cuatro tequilas, brindaron en silencio, y dejaron el cuarto sin tocar hasta que se evaporó solo.", "story-7 ¶5 is George Tito→Pepe");
+assert(story7.paragraphs[5] === "Si alguien me preguntara qué es lo más mexicano de México —no las pirámides, no el mariachi, no el mole—, yo diría: tres hombres viejos jugando dominó en silencio en una cantina centenaria, con un tequila intacto sobre la mesa, esperando a un amigo que no va a llegar.", "story-7 ¶6 ES unchanged");
+const story7Hay = [...story7.paragraphs, JSON.stringify(story7.glossary), JSON.stringify(story7.questions)].join("\n");
+assert(/Don Pepe, el más joven/.test(story7.paragraphs[2]), "story-7 ¶3 names Don Pepe");
+assert(/Don Pepe ganó/.test(story7.paragraphs[4]), "story-7 ¶5 names Don Pepe");
+assert(story7.glossary.Pepe && story7.glossary.Pepe[0] === "Pepe", "story-7 glossary is Pepe");
+assert(!story7.glossary.Tito, "story-7 glossary drops Tito");
+assert(!/\bTito\b/.test(story7Hay), "story-7 has no Tito leftover");
+assert(story7.questions[0].prompt === "¿Cómo se juega el dominó cubano según el cuento?" && story7.questions[0].answer === "En parejas, con diez fichas por jugador y mucho silencio", "story-7 quiz 1 unchanged");
+assert(story7.questions[1].prompt === "¿Qué pasó cuando el dueño quiso poner pantallas de fútbol?" && story7.questions[1].answer === "Don Ernesto dejó de venir y solo volvió cuando se las quitaron", "story-7 quiz 2 unchanged");
+assert(story7.questions[2].prompt === "¿Cómo honraron a Don Manuel después de su muerte?" && story7.questions[2].answer === "Jugaron una partida sin pareja y dejaron su tequila intacto", "story-7 quiz 3 unchanged");
+
 assert(UNITS[0]?.id === "subj1" && UNITS[0]?.title === "Subjuntivo presente", "first path unit stays Subjuntivo presente");
 assert(SECTIONS[0]?.unitIds?.[0] === "subj1", "Camino first unit stays Subjuntivo");
 assert(SECTIONS[0]?.title === "Intermedio" && SECTIONS[0]?.titleEn === "Intermediate", "first section is Intermedio, not Sección 1 jargon");
@@ -313,6 +332,9 @@ assert(appSrc.includes("stills/sma-lanterns.png"), "Hoy card still stays sma-lan
 assert(appSrc.includes("hoyStillFor"), "Hoy still is gated so a mismatched city cannot keep lanterns");
 assert(appSrc.includes("${import.meta.env.BASE_URL}lectura/"), "Lectura stills use BASE_URL so Pages /andale/ loads them");
 assert(!appSrc.includes("src={`/lectura/"), "Lectura stills must not use root-absolute /lectura/ (breaks Pages)");
+const story7Src = appSrc.slice(appSrc.indexOf('id: "story-7"'), appSrc.indexOf('id: "story-8"'));
+assert(/Don Pepe, el más joven/.test(story7Src) && /Don Pepe ganó/.test(story7Src), "App.jsx story-7 live copy is Pepe");
+assert(!/\bTito\b/.test(story7Src), "App.jsx story-7 live copy has no Tito");
 assert(hoyStillFor(hoy) === LANTERN_STILL, "San Miguel / Noche de faroles keeps the lantern still");
 const sceneIds = new Set();
 for (const sc of TODAY_SCENES) {
@@ -1637,12 +1659,6 @@ const waveBStills = [
   ["story-6", "p3", 1284986, "a58f58ba4015eae799ac5449188b5394"],
   ["story-6", "p4", 1360888, "eae2b6c3fa70554ff1d3a38597fda1d8"],
   ["story-6", "p5", 948517, "c55876724bf5f0bc778f7b745a695ea5"],
-  ["story-7", "p0", 1266491, "f2c5759f4b1eb46ca3cafa3fd9e8b337"],
-  ["story-7", "p1", 1325155, "b88de913d68e568bc132013e5f786349"],
-  ["story-7", "p2", 1034105, "e5f11ac07287173bedebab61b4d0c067"],
-  ["story-7", "p3", 1156116, "04352bca6b87d844c08af6df70f51b13"],
-  ["story-7", "p4", 988712, "2a187da3c9642edf466acba5e2d6db4b"],
-  ["story-7", "p5", 1221594, "b149aef4ef231c93e5c7cec26be6fa78"],
   ["story-8", "p0", 1163608, "1799148c42588249f12a6ad280985775"],
   ["story-8", "p1", 1397780, "ca315af20cba72c7fa1850995abb0a1d"],
   ["story-8", "p2", 1203018, "91148d75835b8e31b4995af4a4f8ac16"],
@@ -1681,6 +1697,27 @@ for (const [slot, bytes, md5] of clearedStory4) {
   assert(createHash("md5").update(buf).digest("hex") === md5, `story-4 ${slot} stays the Brand CLEAR live PNG`);
   assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-4 ${slot} is 1152×864`);
 }
+const clearedStory7 = [
+  ["p0", 1635601, "5cd1642ec08262f446b264689aec130d"],
+  ["p1", 1577512, "6473d86931d297de468e1876db0404a8"],
+  ["p2", 1648419, "ab2ebe400c151314aec1dd3acd2df728"],
+  ["p3", 1518429, "7678d621bf2295ceffb82300d62e1d1a"],
+  ["p4", 1533198, "eeb27ce8fb6bbf417a779692c9d1feac"],
+  ["p5", 1568306, "d63df7e9b82667d5da6c241f6dd8a272"],
+];
+for (const [slot, bytes, md5] of clearedStory7) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-7", `${slot}.png`);
+  assert(existsSync(stillPng), `story-7 ${slot} lives at public/lectura/story-7/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-7/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-7/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-7 ${slot} stays the Brand CLEAR live PNG`);
+  assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-7 ${slot} is 1152×864`);
+}
+assert(existsSync(join(repoRoot, "public", "lectura", "story-7", "CAST.md")), "story-7 CAST.md locks Ernesto/Pepe/Lalo/Manuel");
+assert(existsSync(join(repoRoot, "public", "lectura", "story-7", "MANIFEST.md")), "story-7 MANIFEST.md is installed");
+const story7Cast = readFileSync(join(repoRoot, "public", "lectura", "story-7", "CAST.md"), "utf8");
+assert(/Don Pepe/.test(story7Cast) && /Don Ernesto/.test(story7Cast) && /Don Lalo/.test(story7Cast) && /Don Manuel/.test(story7Cast), "story-7 CAST names Ernesto/Pepe/Lalo/Manuel");
 for (const id of ["luna", "rafa", "valeria", "diego"]) {
   const coachPng = join(repoRoot, "public", "coaches", `${id}-happy.png`);
   assert(existsSync(coachPng), `${id} lives at public/coaches/${id}-happy.png`);
