@@ -27,6 +27,16 @@ export const JEOPARDY_PACK_ID = "foci-v1";
 export const JEOPARDY_CATEGORY_IDS = ["subj", "past", "porpara", "mex", "pron", "reg"];
 export const JEOPARDY_VALUES = [100, 200, 300];
 
+/** Board-face headers — short so all six columns fit. Prompt keeps the long SMART_FOCI title. */
+export const JEOPARDY_CAT_LABEL = {
+  subj: { es: "Subjuntivo", en: "Subjunctive" },
+  past: { es: "Pasado", en: "Past" },
+  porpara: { es: "Por/para", en: "Por/para" },
+  mex: { es: "México", en: "Mexico" },
+  pron: { es: "Pronombres", en: "Pronouns" },
+  reg: { es: "Registro", en: "Register" },
+};
+
 /** Dead chrome — never titles, never UI. */
 export const JEOPARDY_DEAD_LABELS = [
   "JEOPARDY SOLO",
@@ -65,6 +75,12 @@ export function jeopardyResetLabel(uiLang) {
 
 export function jeopardyAnswerLabel(uiLang) {
   return uiLang === "en" ? JEOPARDY_ANSWER.en : JEOPARDY_ANSWER.es;
+}
+
+export function jeopardyCatLabel(id, uiLang) {
+  const row = JEOPARDY_CAT_LABEL[id];
+  if (!row) return "";
+  return uiLang === "en" ? row.en : row.es;
 }
 
 export function jeopardyHasDeadLabel(text) {
