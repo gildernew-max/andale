@@ -613,33 +613,36 @@ describe("simulated learner flows", () => {
   it("boots Camino, starts subj1, answers one MC, persists andale-v3 without wipe", async () => {
     const user = await boot();
     await user.click(screen.getByRole("button", { name: "Subjuntivo presente" }));
-    await user.click(screen.getByRole("button", { name: /Empezar/ }));
+    await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /Empezar · \+XP|Start · \+XP/ }));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
-    await waitFor(() => expect(
+    const hasPrompt = () => !!(
       document.querySelector(".choice-card")
       || document.querySelector("input[placeholder]")
-      || screen.queryAllByTestId("bank-tile").length,
-    ).toBeTruthy());
+      || screen.queryAllByTestId("bank-tile").length
+      || document.querySelector(".tile")
+    );
+    await waitFor(() => expect(hasPrompt()).toBe(true));
 
     // Skip non-MC items (shuffle) until a multiple-choice prompt is up.
     for (let i = 0; i < 12 && !document.querySelector(".choice-card"); i++) {
       const input = document.querySelector("input[placeholder]");
       const tiles = screen.queryAllByTestId("bank-tile");
+      const orderTiles = document.querySelectorAll(".tile");
       if (input) {
         await user.type(input, "x");
         await user.click(screen.getByTestId("lesson-check"));
       } else if (tiles.length) {
         await user.click(tiles[0]);
         await user.click(screen.getByTestId("lesson-check"));
+      } else if (orderTiles.length) {
+        await user.click(orderTiles[0]);
+        await user.click(screen.getByTestId("lesson-check"));
       } else {
         break;
       }
       await user.click(continueBtn());
-      await waitFor(() => expect(
-        document.querySelector(".choice-card")
-        || document.querySelector("input[placeholder]")
-        || screen.queryAllByTestId("bank-tile").length,
-      ).toBeTruthy());
+      await waitFor(() => expect(hasPrompt()).toBe(true));
     }
     const choices = document.querySelectorAll(".choice-card");
     expect(choices.length).toBeGreaterThan(0);
