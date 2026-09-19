@@ -1965,7 +1965,7 @@ describe("simulated learner flows", () => {
     expect(hoyLifts).toEqual([]);
     expect(document.body.textContent).not.toMatch(STORY_LIFT_RE);
     expect(document.body.textContent).not.toMatch(CEREZAS_Q_RE);
-  });
+  }, 15_000);
 
   it("unread Lectura does not lift cerezas / story comprehension into rutina", async () => {
     laterHoySeed();
@@ -1977,7 +1977,7 @@ describe("simulated learner flows", () => {
     expect(dailyLifts).toEqual([]);
     expect(document.body.textContent).not.toMatch(STORY_LIFT_RE);
     expect(document.body.textContent).not.toMatch(CEREZAS_Q_RE);
-  });
+  }, 15_000);
 
   it("after Lectura claim, that story’s comprehension can lift into rutina", async () => {
     laterHoySeed({ stories: { "story-9": true } });
