@@ -1198,6 +1198,31 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/\bTito\b/);
   });
 
+  it("opens story-5 La frontera más larga del mundo with Brand stills and current Tijuana words", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /La frontera más larga del mundo/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-5/p0.png`);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/Llevo doce años cubriendo la frontera/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-1")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-1").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-5/p1.png`);
+    expect(document.body.textContent).toMatch(/Tijuana no es lo que dicen las películas/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-3")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-3").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-5/p3.png`);
+    expect(document.body.textContent).toMatch(/Anabel, una madre hondureña/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-5")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-5").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-5/p5.png`);
+    expect(document.body.textContent).toMatch(/Tijuana se vuelve hogar/);
+    expect(document.body.textContent).toMatch(/Roma en el año 50/);
+  });
+
   it("opens story-6 La sirena del Pacífico with Brand stills and Mamá, not Papá", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
