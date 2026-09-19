@@ -1,4 +1,4 @@
-/** Cenzontle fly-away. Brand CLEAR 2026-09-19: wing beat + leave frame. Soft chrome parked. Shared by paywall + free story-win / CONTINUAR. */
+/** Cenzontle fly-away. Brand CLEAR 2026-09-19 (exit-frame): fully off-screen before fade. Soft chrome enroll parked. Shared by paywall + free story-win / CONTINUAR. */
 
 export const PAYWALL_FLY_MS = 900;
 export const PAYWALL_WING_MS = 200;
@@ -16,6 +16,7 @@ export function flyAwaySurface(surface) {
   if (surface === "win") {
     return {
       stageTestId: "win-fly-away",
+      clipTestId: "win-fly-away-clip",
       layerTestId: "win-fly-away-layer",
       birdTestId: "win-fly-away-bird",
       wingTestId: "win-fly-away-wing",
@@ -24,6 +25,7 @@ export function flyAwaySurface(surface) {
   }
   return {
     stageTestId: "soft-paywall-cenzontle-stage",
+    clipTestId: "soft-paywall-cenzontle-clip",
     layerTestId: "soft-paywall-cenzontle-layer",
     birdTestId: "soft-paywall-cenzontle",
     wingTestId: "soft-paywall-cenzontle-wing",

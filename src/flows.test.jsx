@@ -275,6 +275,9 @@ const assertFreeWinFlyAway = () => {
   expect(stage.getAttribute("data-reduced-motion")).toBe("0");
   expect(stage.getAttribute("data-surface")).toBe("win");
   expect(css).toMatch(/@keyframes paywallFlyAway/);
+  expect(screen.getByTestId("win-fly-away-clip").className).toBe("paywall-fly-clip");
+  expect(css).toMatch(/position: fixed;/);
+  expect(css).toMatch(/overflow: hidden;/);
   expect(css).toMatch(/translate\(calc\(-50% \+ 100vw \+ 168px\)/);
   expect(css).toMatch(/78% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 1; \}/);
   expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 0; \}/);

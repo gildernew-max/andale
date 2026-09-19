@@ -29,7 +29,7 @@ const helperSrc = readFileSync(join(here, "paywallFlyAway.js"), "utf8");
 const appSrc = readFileSync(join(here, "App.jsx"), "utf8");
 const paywallLayout = appSrc.slice(appSrc.indexOf('data-testid="soft-paywall"'), appSrc.indexOf("A2HS:"));
 
-assert(PAYWALL_FLY_MS >= 600 && PAYWALL_FLY_MS <= 900, "fly-away total is 600–900ms entrance→exit");
+assert(PAYWALL_FLY_MS >= 700 && PAYWALL_FLY_MS <= 1100, "fly-away total is 700–1100ms to clear the frame");
 assert(PAYWALL_WING_MS >= 180 && PAYWALL_WING_MS <= 220, "wing beat is 180–220ms per cycle");
 assert(PAYWALL_REDUCE_FADE_MS > 0 && PAYWALL_REDUCE_FADE_MS < 400, "reduced-motion fade is a short static beat");
 assert(PAYWALL_FLY_SRC === "mascot/cenzontle.png", "same one Cenzontle family asset");
@@ -40,10 +40,13 @@ assert(WIN_FLY_SIZE === 168, "free win bird stays the 168px CONTINUAR mark");
 assert(flyAwaySurface("paywall").birdTestId === "soft-paywall-cenzontle", "paywall keeps the gate test id");
 assert(flyAwaySurface("win").birdTestId === "win-fly-away-bird", "free win has its own bird test id");
 assert(flyAwaySurface("win").stageTestId === "win-fly-away", "free win stage is testable");
-assert(helperSrc.includes("Soft chrome parked"), "helper documents soft chrome parked");
+assert(helperSrc.includes("Soft chrome enroll parked"), "helper documents soft chrome enroll parked");
+assert(helperSrc.includes("fully off-screen before fade"), "helper locks Brand CLEAR exit-frame");
 assert(helperSrc.includes("free story-win"), "helper documents the free CONTINUAR surface");
+assert(flyAwaySurface("win").clipTestId === "win-fly-away-clip", "free win clip is testable");
+assert(flyAwaySurface("paywall").clipTestId === "soft-paywall-cenzontle-clip", "paywall clip is testable");
 
-assert(flySrc.includes("PAYWALL_FLY_MS"), "overlay reads the 600–900ms lock");
+assert(flySrc.includes("PAYWALL_FLY_MS"), "overlay reads the 700–1100ms lock");
 assert(flySrc.includes("PAYWALL_WING_MS"), "overlay reads the wing-beat lock");
 assert(flySrc.includes("PAYWALL_FLY_SRC"), "overlay reads the live mark path");
 assert(flySrc.includes("data-testid={ids.birdTestId}"), "bird img reads the surface test id");
@@ -53,6 +56,11 @@ assert(helperSrc.includes("soft-paywall-cenzontle"), "paywall bird test id stays
 assert(helperSrc.includes("win-fly-away-bird"), "free win bird test id stays on the helper");
 assert(flySrc.includes("@keyframes paywallFlyAway"), "motion path is an authored fly-away");
 assert(flySrc.includes("flyAwayMotionCss(size)"), "keyframes come from the shared exit-after-clear helper");
+assert(flySrc.includes("paywall-fly-clip"), "flight sits in a viewport clip so 100vw cannot open page scroll");
+assert(flySrc.includes("position: fixed"), "clip is viewport-sized");
+assert(flySrc.includes("overflow: hidden"), "clip hides the transformed box past the edge");
+assert(flySrc.includes("setGone(true)"), "bird unmounts once off-screen — no leftover fill-mode box");
+assert(!/overflow:\s*visible/.test(flySrc), "flight no longer uses overflow visible on the exit path");
 assert(FLY_AWAY_EXIT_VW === 100, "exit travel is 100vw, not a 260px on-screen die");
 assert(FLY_AWAY_CLEAR_AT >= 70 && FLY_AWAY_CLEAR_AT < 100, "clear keyframe is before the fade tail");
 assert(flyAwayExitTranslate(WIN_FLY_SIZE) === `calc(-50% + ${FLY_AWAY_EXIT_VW}vw + ${WIN_FLY_SIZE}px)`, "win exit includes bird width past 100vw");
