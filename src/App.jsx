@@ -124,6 +124,29 @@ import {
   openJeopardyTile as applyJeopardyTile,
   startJeopardyRun,
 } from "./jeopardy.js";
+import {
+  MEMORY_GEM,
+  MEMORY_MISS_MS,
+  MEMORY_XP,
+  applyMemoryPair,
+  applyMemoryTap,
+  clearMemoryMiss,
+  finishMemoryRun,
+  hydrateMemory,
+  isMemoryDone,
+  memoryCardText,
+  memoryHowTo,
+  memoryIsOpen,
+  memoryLiteralWhyLabel,
+  memoryQuiet,
+  memoryRegionChip,
+  memoryShowTeach,
+  memorySoundsWeirdOutside,
+  memoryTitle,
+  memoryWhy,
+  memoryWinLine,
+  startMemoryRun,
+} from "./memory.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -218,6 +241,7 @@ const snapshotLive = (s) => {
     matchGame: s.matchGame,
     ahorcado: s.ahorcado,
     cubetasGame: s.cubetasGame,
+    memoryGame: s.memoryGame,
   };
 };
 
@@ -2041,6 +2065,182 @@ const JeopardyMark = ({ size = 44 }) => (
     <rect x="28" y="28" width="7" height="7" rx="1" fill="#C46B3A" />
   </svg>
 );
+
+/** Flat geometric two-tile / flip-card mark — cream / terracotta / sage. No second mascot. */
+const MemoryMark = ({ size = 44, labeled = false }) => (
+  <svg data-testid={labeled ? "memory-mark" : undefined} width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
+    <rect x="5" y="9" width="16" height="26" rx="4" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="2" />
+    <rect x="23" y="9" width="16" height="26" rx="4" fill="#5C7356" />
+  </svg>
+);
+
+const memoryCardAt = (refs, x, y, skipId) => {
+  for (const [id, el] of Object.entries(refs || {})) {
+    if (!el || id === skipId) continue;
+    const r = el.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return id;
+  }
+  return null;
+};
+
+const memoryEntryForRun = (run) => {
+  if (!run?.lastMatch) return null;
+  return (run.pairs || []).find((row) => row.word === run.lastMatch) || null;
+};
+
+const MemoryTeach = ({ entry, uiLang, D }) => {
+  const chip = memoryRegionChip(entry);
+  return (
+    <div data-testid="memory-teach" style={{ textAlign: "left", border: `2px solid ${D.line}`, borderRadius: 14, padding: "11px 13px", background: D.card }}>
+      <div data-testid="memory-literal-why" style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{memoryLiteralWhyLabel(uiLang)}</div>
+      <div data-testid="memory-why" style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{memoryWhy(entry, uiLang)}</div>
+      {chip && (
+        <div data-testid="memory-region" data-weird={memorySoundsWeirdOutside(entry) ? "yes" : "no"} style={{ marginTop: 8 }}>
+          <span data-testid="memory-region-chip" className="word-chip" style={{ display: "inline-flex", width: "max-content", maxWidth: "none", whiteSpace: "nowrap", overflow: "visible", textOverflow: "clip", fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{chip}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** One-screen Memory playfield. Tap two cards or drag a pair. Soft chrome parked. */
+const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, onLang }) => {
+  const [drag, setDrag] = useState(null);
+  const dragRef = useRef(null);
+  const cardsRef = useRef({});
+  const done = isMemoryDone(run);
+  const teach = memoryShowTeach(run) ? memoryEntryForRun(run) : null;
+
+  const onCardPointerDown = (e, id) => {
+    if (run.status !== "play" || run.miss) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const next = { fromId: id, x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, hover: null, moved: false };
+    dragRef.current = next;
+    setDrag(next);
+  };
+  const onCardPointerMove = (e) => {
+    const cur = dragRef.current;
+    if (!cur) return;
+    const moved = cur.moved || Math.hypot(e.clientX - cur.x, e.clientY - cur.y) > 8;
+    const hover = memoryCardAt(cardsRef.current, e.clientX, e.clientY, cur.fromId);
+    const next = { ...cur, x: e.clientX, y: e.clientY, hover, moved };
+    dragRef.current = next;
+    setDrag(next);
+  };
+  const finishPointer = (id, clientX, clientY) => {
+    const cur = dragRef.current;
+    dragRef.current = null;
+    setDrag(null);
+    if (!cur) return;
+    const over = cur.hover || memoryCardAt(cardsRef.current, clientX, clientY, cur.fromId) || (id && id !== cur.fromId ? id : null);
+    if (cur.moved && over && over !== cur.fromId) {
+      onPair(cur.fromId, over);
+      return;
+    }
+    if (!cur.moved && (!id || id === cur.fromId)) onTap(cur.fromId);
+    else if (!cur.moved && id && id !== cur.fromId) onPair(cur.fromId, id);
+  };
+  const onCardPointerUp = (e, id) => {
+    finishPointer(id, e.clientX, e.clientY);
+  };
+
+  return (
+    <div data-testid="memory-board" style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{memoryTitle(uiLang)}</div>
+          <div data-testid="memory-quiet" style={{ fontSize: 12, fontWeight: 700, color: D.sub }}>{memoryQuiet(uiLang)}</div>
+        </div>
+        <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
+        <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+        <MemoryMark size={56} labeled />
+      </div>
+      {done ? (
+        <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
+          <div data-testid="memory-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{memoryWinLine(uiLang)}</div>
+          {teach && (
+            <MemoryTeach entry={teach} uiLang={uiLang} D={D} />
+          )}
+          <Btn color={D.green} dark={D.greenDark} data-testid="memory-again" onClick={onAgain} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New pairs" : "Otros pares"}</Btn>
+          <Btn outline data-testid="memory-back" onClick={onClose} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
+        </div>
+      ) : (
+        <>
+          <p data-testid="memory-howto" style={{ margin: "0 0 14px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
+          <div data-testid="memory-grid" style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", alignItems: "center" }}>
+            {(run.cards || []).map((card) => {
+              const open = memoryIsOpen(run, card);
+              const dragging = drag?.fromId === card.id;
+              const hovered = drag?.hover === card.id;
+              const wrong = run.miss && (run.lastWrong || []).includes(card.id);
+              const showFace = open || dragging;
+              const text = memoryCardText(card, uiLang, run);
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  ref={(el) => { cardsRef.current[card.id] = el; }}
+                  data-testid="memory-card"
+                  data-card={card.id}
+                  data-pair={card.pairId}
+                  data-kind={card.kind}
+                  data-face={showFace ? "up" : "down"}
+                  data-open={open ? "yes" : "no"}
+                  data-miss={wrong ? "yes" : "no"}
+                  disabled={run.miss || (open && (run.matched || []).includes(card.pairId))}
+                  onPointerDown={(e) => onCardPointerDown(e, card.id)}
+                  onPointerMove={onCardPointerMove}
+                  onPointerUp={(e) => onCardPointerUp(e, card.id)}
+                  onPointerCancel={() => { dragRef.current = null; setDrag(null); }}
+                  className={`word-chip${wrong ? " wiggle" : ""}`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "max-content",
+                    maxWidth: "none",
+                    minWidth: showFace ? 0 : 72,
+                    minHeight: 44,
+                    flexShrink: 0,
+                    whiteSpace: "nowrap",
+                    overflow: "visible",
+                    textOverflow: "clip",
+                    position: dragging ? "fixed" : "relative",
+                    left: dragging ? drag.x - (drag.dx || 0) : undefined,
+                    top: dragging ? drag.y - (drag.dy || 0) : undefined,
+                    zIndex: dragging ? 20 : 1,
+                    margin: 0,
+                    border: `2px solid ${wrong ? D.red : hovered ? "#C46B3A" : open ? D.green : "#C46B3A"}`,
+                    borderBottom: `4px solid ${wrong ? D.redDark : hovered ? "#C46B3A" : open ? D.greenDark : "#C46B3A"}`,
+                    background: showFace ? (wrong ? D.redBg : open && (run.matched || []).includes(card.pairId) ? D.greenBg : "#fff") : HUB_CREAM,
+                    color: wrong ? D.redDark : open && (run.matched || []).includes(card.pairId) ? D.greenDark : D.ink,
+                    borderRadius: 14,
+                    padding: "10px 14px",
+                    fontFamily: "inherit",
+                    fontWeight: 800,
+                    fontSize: 15,
+                    cursor: (run.matched || []).includes(card.pairId) ? "default" : "grab",
+                    touchAction: "none",
+                  }}
+                >
+                  {showFace ? text : <MemoryMark size={22} />}
+                </button>
+              );
+            })}
+          </div>
+          {teach && (
+            <div style={{ marginTop: 16 }}>
+              <MemoryTeach entry={teach} uiLang={uiLang} D={D} />
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
 
 /** Dave-cleared illustrated Mexico. Pins / glow / fog sit on top. */
 const RecuerdosMexicoMap = ({ testId, theme }) => (
@@ -4177,7 +4377,9 @@ export default function App() {
   const [matchGame, setMatchGame] = useState(null);
   const [ahorcado, setAhorcado] = useState(null);
   const [cubetasGame, setCubetasGame] = useState(null);
+  const [memoryGame, setMemoryGame] = useState(null);
   const cubetasTimerRef = useRef(null);
+  const memoryTimerRef = useRef(null);
   const gamesReturnRef = useRef("practica");
   const [burst, setBurst] = useState(0); // mini confetti trigger
   const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
@@ -5142,6 +5344,57 @@ export default function App() {
     setJeopardy(next);
   };
 
+  const startMemory = (from = "practica") => {
+    gamesReturnRef.current = from === "games" ? "games" : from === "practica" ? "practica" : "camino";
+    awardLockRef.current.delete("memory");
+    if (memoryTimerRef.current) clearTimeout(memoryTimerRef.current);
+    setMemoryGame(startMemoryRun());
+    setScreen("memory");
+  };
+
+  const scheduleMemory = (ms, fn) => {
+    if (memoryTimerRef.current) clearTimeout(memoryTimerRef.current);
+    memoryTimerRef.current = setTimeout(fn, ms);
+  };
+
+  const finishMemory = () => {
+    if (!lockAward("memory")) return;
+    const t = todayStr();
+    const y = yesterdayStr();
+    save((prev) => {
+      const streak = prev.lastDay === t ? prev.streak || 0 : prev.lastDay === y ? (prev.streak || 0) + 1 : 1;
+      return {
+        ...prev,
+        xp: (prev.xp || 0) + MEMORY_XP,
+        xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + MEMORY_XP,
+        gems: (prev.gems || 0) + MEMORY_GEM,
+        streak,
+        lastDay: t,
+      };
+    });
+    setMemoryGame((g) => (g ? finishMemoryRun(g) : g));
+    beep("win");
+  };
+
+  const applyMemoryMove = (apply, ...args) => {
+    setMemoryGame((cur) => {
+      if (!cur) return cur;
+      const next = apply(cur, ...args);
+      if (!next || next === cur) return cur;
+      if (next.miss) {
+        beep("bad");
+        scheduleMemory(MEMORY_MISS_MS, () => setMemoryGame((g) => clearMemoryMiss(g)));
+        return next;
+      }
+      if ((next.matched?.length || 0) > (cur.matched?.length || 0)) beep("ok");
+      if (isMemoryDone(next) && !isMemoryDone(cur)) queueMicrotask(() => finishMemory());
+      return next;
+    });
+  };
+
+  const onMemoryTap = (cardId) => applyMemoryMove(applyMemoryTap, cardId);
+  const onMemoryPair = (fromId, toId) => applyMemoryMove(applyMemoryPair, fromId, toId);
+
   const beginSession = (s) => {
     awardLockRef.current.delete("lesson");
     itemXpLockRef.current = new Set();
@@ -5864,6 +6117,11 @@ export default function App() {
     if (live.cubetasGame) {
       setCubetasGame(live.cubetasGame);
       if (live.cubetasGame.awarded || live.cubetasGame.status === "done") awardLockRef.current.add("cubetas");
+    }
+    if (live.memoryGame) {
+      const restored = hydrateMemory(live.memoryGame);
+      setMemoryGame(restored);
+      if (restored?.awarded || isMemoryDone(restored)) awardLockRef.current.add("memory");
     }
     setScreen(live.screen);
   };
@@ -7442,6 +7700,17 @@ export default function App() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{jeopardyTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{jeopardyQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={() => startMemory("practica")} data-testid="memory-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{memoryTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{memoryQuiet(uiLang)}</div>
               </div>
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
@@ -9227,6 +9496,17 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
+          <button onClick={() => startMemory("games")} data-testid="memory-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{memoryTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{memoryQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
         </div>
       )}
 
@@ -9513,6 +9793,21 @@ export default function App() {
             </>
           )}
         </div>
+      )}
+
+      {/* ---------- MEMORY ---------- */}
+      {screen === "memory" && memoryGame && (
+        <MemoryPlayfield
+          run={memoryGame}
+          uiLang={uiLang}
+          D={D}
+          L={L}
+          onTap={onMemoryTap}
+          onPair={onMemoryPair}
+          onClose={closeGamesSurface}
+          onAgain={() => startMemory(gamesReturnRef.current)}
+          onLang={(code) => save({ uiLang: code })}
+        />
       )}
 
       {/* ---------- STORY READER (tap-to-define) ---------- */}
