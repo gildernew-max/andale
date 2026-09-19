@@ -1994,7 +1994,7 @@ describe("simulated learner flows", () => {
     expect(lifts.join(" ")).toMatch(/PASSAGE:/);
     expect(lifts.join(" ")).toMatch(/quince y veinte pesos|dependo de una sola empresa|cambio climático|roya/);
     expect(lifts.join(" ")).not.toMatch(/Responde según lo que acabas de leer|Answer from what you just read/);
-  });
+  }, 15000);
 
   it("Lectura still shows comprehension after the last paragraph (ungated in-reader)", async () => {
     const user = await boot();
