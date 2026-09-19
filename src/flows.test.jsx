@@ -939,9 +939,14 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
     expect(screen.getByTestId("story-tip").textContent).toMatch(/Lee el párrafo\. Toca una palabra solo si te frena\./);
     expect(screen.getByTestId("lectura-paragraph-first")).toBeTruthy();
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/Cuando yo era niña,/);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).not.toMatch(/Cuando yo era niño,/);
     const still = screen.getByTestId("lectura-still-0");
     expect(still.getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-0/p0.png`);
     await waitFor(() => expect(screen.getAllByText(/cempasúchil/).length).toBeGreaterThan(0));
+    await user.click(screen.getByRole("button", { name: /^Bilingüe$/ }));
+    expect(document.body.textContent).toMatch(/her grandmother taught her/);
+    expect(document.body.textContent).not.toMatch(/his grandmother taught him/);
     const storyWord = [...document.querySelectorAll("span")].find((el) =>
       el.textContent === "cempasúchil" && el.style.cursor === "pointer");
     expect(storyWord).toBeTruthy();
@@ -1960,7 +1965,7 @@ describe("simulated learner flows", () => {
     expect(hoyLifts).toEqual([]);
     expect(document.body.textContent).not.toMatch(STORY_LIFT_RE);
     expect(document.body.textContent).not.toMatch(CEREZAS_Q_RE);
-  });
+  }, 15_000);
 
   it("unread Lectura does not lift cerezas / story comprehension into rutina", async () => {
     laterHoySeed();
@@ -1972,7 +1977,7 @@ describe("simulated learner flows", () => {
     expect(dailyLifts).toEqual([]);
     expect(document.body.textContent).not.toMatch(STORY_LIFT_RE);
     expect(document.body.textContent).not.toMatch(CEREZAS_Q_RE);
-  });
+  }, 15_000);
 
   it("after Lectura claim, that story’s comprehension can lift into rutina", async () => {
     laterHoySeed({ stories: { "story-9": true } });

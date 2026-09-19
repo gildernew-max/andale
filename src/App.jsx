@@ -2316,7 +2316,7 @@ const STORIES = [
     title: "La noche en que vuelven",
     subtitle: "Día de Muertos en Pátzcuaro",
     paragraphs: [
-      "Cuando yo era niño, creía que la muerte era algo triste y oscuro. Mi abuela Refugio, que nació a la orilla del lago de Pátzcuaro, pensaba exactamente lo contrario. «La muerte no viene por nosotros», me decía mientras cortaba flores de cempasúchil en el patio. «Viene a visitarnos, una vez al año, y hay que recibirla como se recibe a la familia: con comida, con música y con la casa limpia.»",
+      "Cuando yo era niña, creía que la muerte era algo triste y oscuro. Mi abuela Refugio, que nació a la orilla del lago de Pátzcuaro, pensaba exactamente lo contrario. «La muerte no viene por nosotros», me decía mientras cortaba flores de cempasúchil en el patio. «Viene a visitarnos, una vez al año, y hay que recibirla como se recibe a la familia: con comida, con música y con la casa limpia.»",
       "A finales de octubre, todo el pueblo cambiaba. Los mercados se llenaban de calaveras de azúcar con nombres escritos en la frente, de pan de muerto espolvoreado con azúcar, y de montañas anaranjadas de cempasúchil. El aire olía a copal, esa resina que se quema desde tiempos prehispánicos. Mi abuela compraba todo con una lista que sabía de memoria, porque la ofrenda era un trabajo serio.",
       "El primero de noviembre armábamos el altar sobre una mesa con mantel morado. Poníamos las fotos de los difuntos: el bisabuelo Ramón con su sombrero de charro, la tía Consuelo, que murió demasiado joven. Para cada uno había algo especial. Para Ramón, un caballito de tequila y sus cigarros. Para Consuelo, dulce de calabaza, porque le encantaba. Las velas marcaban el camino, y un sendero de pétalos llegaba hasta la puerta. «Es para que no se pierdan», explicaba mi abuela. «La luz los guía, pero el olor los trae a casa.»",
       "La noche del dos de noviembre no dormíamos. Cruzábamos el lago en lancha hacia la isla de Janitzio, donde el panteón se convertía en un mar de velas. Las familias se sentaban junto a las tumbas a platicar, a comer tamales, a contar historias de los que ya no estaban. Nadie lloraba. Bueno, casi nadie. Se reía, se recordaba, se cantaba bajito.",
@@ -2995,12 +2995,12 @@ const STORY_EXTRAS = {
     collectible: { es: "Vela de ofrenda", en: "Ofrenda candle" },
     keyWords: ["muerte", "muerto", "cempasúchil", "ofrenda", "panteón", "platicar", "olvido", "ojalá"],
     en: [
-      "When the narrator was a child, his grandmother taught him that death visits like family and should be welcomed with food, music, and a clean house.",
+      "When the narrator was a child, her grandmother taught her that death visits like family and should be welcomed with food, music, and a clean house.",
       "By late October the town changed: markets filled with sugar skulls, pan de muerto, marigolds, copal, and everything needed for a serious ofrenda.",
       "On November 1 they built the altar with photos, candles, paths of petals, and offerings for each dead relative.",
       "On November 2 they crossed to Janitzio, where families sat by graves telling stories, eating, laughing, and remembering.",
       "The grandmother says the dead return while their names are spoken; forgetting is the only true death.",
-      "Now the narrator builds the ofrenda for his own grandmother and hopes someone will say his name one day too.",
+      "Now the narrator builds the ofrenda for her own grandmother and hopes someone will say her name one day too.",
     ],
     checkpoints: [
       { q: "What does the grandmother believe about death?", a: "It visits once a year", choices: ["It visits once a year", "It never returns", "It only brings sadness"] },

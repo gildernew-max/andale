@@ -206,6 +206,28 @@ for (const s of STORIES) {
   });
 }
 
+const story0 = STORIES.find((s) => s.id === "story-0");
+assert(story0.paragraphs[0] === "Cuando yo era niña, creía que la muerte era algo triste y oscuro. Mi abuela Refugio, que nació a la orilla del lago de Pátzcuaro, pensaba exactamente lo contrario. «La muerte no viene por nosotros», me decía mientras cortaba flores de cempasúchil en el patio. «Viene a visitarnos, una vez al año, y hay que recibirla como se recibe a la familia: con comida, con música y con la casa limpia.»", "story-0 ES ¶1 is George niña stamp");
+assert(story0.paragraphs[1] === "A finales de octubre, todo el pueblo cambiaba. Los mercados se llenaban de calaveras de azúcar con nombres escritos en la frente, de pan de muerto espolvoreado con azúcar, y de montañas anaranjadas de cempasúchil. El aire olía a copal, esa resina que se quema desde tiempos prehispánicos. Mi abuela compraba todo con una lista que sabía de memoria, porque la ofrenda era un trabajo serio.", "story-0 ¶2 ES unchanged");
+assert(story0.paragraphs[2] === "El primero de noviembre armábamos el altar sobre una mesa con mantel morado. Poníamos las fotos de los difuntos: el bisabuelo Ramón con su sombrero de charro, la tía Consuelo, que murió demasiado joven. Para cada uno había algo especial. Para Ramón, un caballito de tequila y sus cigarros. Para Consuelo, dulce de calabaza, porque le encantaba. Las velas marcaban el camino, y un sendero de pétalos llegaba hasta la puerta. «Es para que no se pierdan», explicaba mi abuela. «La luz los guía, pero el olor los trae a casa.»", "story-0 ¶3 ES unchanged");
+assert(story0.paragraphs[3] === "La noche del dos de noviembre no dormíamos. Cruzábamos el lago en lancha hacia la isla de Janitzio, donde el panteón se convertía en un mar de velas. Las familias se sentaban junto a las tumbas a platicar, a comer tamales, a contar historias de los que ya no estaban. Nadie lloraba. Bueno, casi nadie. Se reía, se recordaba, se cantaba bajito.", "story-0 ¶4 ES unchanged");
+assert(story0.paragraphs[4] === "Una vez le pregunté a mi abuela si de verdad creía que los muertos regresaban. Se quedó callada un momento. «Mira», me dijo por fin, «mientras digamos sus nombres, no se mueren del todo. El olvido es la única muerte verdadera.»", "story-0 ¶5 ES unchanged");
+assert(story0.paragraphs[5] === "Mi abuela murió hace seis años. Ahora soy yo quien arma la ofrenda, con mis hijos. Pongo su foto junto a la de Ramón y la de Consuelo, con una taza de café de olla, porque le encantaba. Y cada noviembre, cuando enciendo las velas, espero que el olor del cempasúchil la traiga a casa. Ojalá que, cuando me toque a mí, alguien diga mi nombre también.", "story-0 ¶6 ES unchanged");
+assert(!/Cuando yo era niño,/.test(story0.paragraphs.join("\n")), "story-0 ES is not niño under girl stills");
+assert(story0.questions[0].prompt === "Según la abuela, ¿qué trae a los muertos hasta la casa?" && story0.questions[0].answer === "El olor del cempasúchil", "story-0 quiz 1 unchanged");
+assert(story0.questions[1].prompt === "¿Dónde pasaba la familia la noche del 2 de noviembre?" && story0.questions[1].answer === "En el panteón de la isla de Janitzio", "story-0 quiz 2 unchanged");
+assert(story0.questions[2].prompt === "Para la abuela, ¿cuál es «la única muerte verdadera»?" && story0.questions[2].answer === "El olvido", "story-0 quiz 3 unchanged");
+const story0Src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "App.jsx"), "utf8");
+const STORY_EXTRAS = Function("D", `"use strict"; return (${extractConst(story0Src, "STORY_EXTRAS")});`)({
+  green: "#58CC02", greenDark: "#46A302", purple: "#CE82FF", purpleDark: "#A567CC",
+  blue: "#1CB0F6", blueDark: "#1899D6", gold: "#FFC800", goldDark: "#E6A800",
+});
+const story0Extra = STORY_EXTRAS["story-0"];
+assert(story0Extra.en[0] === "When the narrator was a child, her grandmother taught her that death visits like family and should be welcomed with food, music, and a clean house.", "story-0 EN extras ¶1 is her/her");
+assert(story0Extra.en[5] === "Now the narrator builds the ofrenda for her own grandmother and hopes someone will say her name one day too.", "story-0 EN extras ¶6 is her/her");
+assert(story0Extra.en[1] === "By late October the town changed: markets filled with sugar skulls, pan de muerto, marigolds, copal, and everything needed for a serious ofrenda.", "story-0 EN extras ¶2 unchanged");
+assert(!story0Extra.en.some((line) => /his grandmother taught him|for his own grandmother|say his name/.test(line)), "story-0 EN extras have no niño leftover");
+
 assert(Array.isArray(MISSIONS) && MISSIONS.length > 0, "MISSIONS missing");
 const missionIds = new Set();
 for (const m of MISSIONS) {
@@ -1361,19 +1383,22 @@ for (const [mood, rel, bytes, md5] of cubetasProps) {
   assert(createHash("md5").update(buf).digest("hex") === md5, `${mood} clay prop stays the wired PNG`);
 }
 assert(readFileSync(appleTouch).subarray(0, 8).equals(pngMagic), "apple-touch-icon.png is a real PNG");
-for (const slot of ["p0", "p1", "p2"]) {
+const clearedStory0 = [
+  ["p0", 1466181, "1abec4c724889e8df09e7ca122f3c345"],
+  ["p1", 1891656, "e77f0a7198f7d64d50d21a367b33c69b"],
+  ["p2", 1176493, "79110ac7359474f5891616e64583b325"],
+  ["p3", 1614527, "8dcea3dfe9ca6365199be4011ce58af9"],
+  ["p4", 1704760, "3698f167dd2c222c47fbbd15f185d0a5"],
+  ["p5", 1751708, "77747581da74c1eb398612ed132e3b67"],
+];
+for (const [slot, bytes, md5] of clearedStory0) {
   const stillPng = join(repoRoot, "public", "lectura", "story-0", `${slot}.png`);
   assert(existsSync(stillPng), `story-0 ${slot} lives at public/lectura/story-0/${slot}.png`);
-  assert(readFileSync(stillPng).subarray(0, 8).equals(pngMagic), `lectura/story-0/${slot}.png is a real PNG, not JPEG-named-.png`);
-}
-const clearedStory0 = {
-  p0: "1abec4c724889e8df09e7ca122f3c345",
-  p1: "b9e27f5d22f442a6c2b9861e50d85394",
-  p2: "79110ac7359474f5891616e64583b325",
-};
-for (const [slot, md5] of Object.entries(clearedStory0)) {
-  const stillPng = join(repoRoot, "public", "lectura", "story-0", `${slot}.png`);
-  assert(createHash("md5").update(readFileSync(stillPng)).digest("hex") === md5, `story-0 ${slot} stays the CLEARed live PNG`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-0/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-0/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-0 ${slot} stays the Brand CLEAR live PNG`);
+  assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-0 ${slot} is 1152×864`);
 }
 const clearedStory1 = [
   ["p0", 1930745, "957ba1b9b27b4a237bec149cd95bc211"],
@@ -1392,9 +1417,6 @@ for (const [slot, bytes, md5] of clearedStory1) {
   assert(createHash("md5").update(buf).digest("hex") === md5, `story-1 ${slot} stays the Brand CLEAR live PNG`);
 }
 const waveAStills = [
-  ["story-0", "p3", 1469216, "583d0310b82f67b6bcdcda40c05bed31"],
-  ["story-0", "p4", 1677951, "736e8d22ffc71c95f08c3d6a05a1d120"],
-  ["story-0", "p5", 1703462, "2c23e776f3a8d39e052888571d6489e7"],
   ["story-2", "p0", 975514, "0d674ba89e02893bd1f30747b213b27b"],
   ["story-2", "p1", 967398, "9c89f2d8db6407e446f72af114939a6d"],
   ["story-2", "p2", 1098685, "8a95b9e4141ea302f6cc4f391216c55b"],

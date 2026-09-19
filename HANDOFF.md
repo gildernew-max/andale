@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (Lectura story-0 niña + Brand CLEAR stills)
+
+**What changed**
+- App.jsx `story-0` ES ¶1 is George niña stamp (`Cuando yo era niña,`). EN extras ¶1 / ¶6 are her/her. ¶2–¶6 ES + glossary + quizzes untouched.
+- `public/lectura/story-0/p0.png`–`p5.png` are the Brand CLEAR stills (1152×864 RGB). p0/p2 kept; p1/p3–p5 regen girl + abuela. Byte-identical to the attached pack.
+- Soft chrome parked. Hangman / Jeopardy / Memory / declutter not touched.
+
+**Why**
+- Hand CLEAR: do not ship niño copy under girl stills. Wire stills + niña rewrite together.
+
 ## 2026-09-19 (Lectura story-1 Brand CLEAR stills)
 
 **What changed**
