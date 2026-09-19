@@ -1708,8 +1708,8 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("atajos")).toBeNull();
     expect(document.body.textContent).not.toMatch(/Atajos: 1–4/);
     expect(screen.queryByText("Principiante")).toBeNull();
-    expect(screen.queryByText("Intermedio")).toBeNull();
-    expect(screen.queryByText("Intermediate")).toBeNull();
+    expect(screen.queryByTestId("level-theater")).toBeNull();
+    expect(screen.getByTestId("hub-section-title").textContent).toMatch(/Intermedio|Intermediate/);
 
     await user.click(screen.getByTestId("nav-perfil"));
     expect(screen.queryByTestId("level-theater")).toBeNull();
