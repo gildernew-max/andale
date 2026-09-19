@@ -1187,6 +1187,24 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/\bTito\b/);
   });
 
+  it("opens story-6 La sirena del Pacífico with Brand stills and Mamá, not Papá", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /La sirena del Pacífico/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-6/p0.png`);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/En San Blas, Nayarit/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-4")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-4").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-6/p4.png`);
+    expect(document.body.textContent).toMatch(/«Mamá, las sirenas/);
+    expect(document.body.textContent).not.toMatch(/«Papá, las sirenas/);
+  });
+
   it("opens story-9 Las cerezas de don Adán with Brand stills and setenta, not cincuenta y nueve", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));

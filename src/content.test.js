@@ -313,6 +313,26 @@ assert(story7.questions[0].prompt === "¿Cómo se juega el dominó cubano según
 assert(story7.questions[1].prompt === "¿Qué pasó cuando el dueño quiso poner pantallas de fútbol?" && story7.questions[1].answer === "Don Ernesto dejó de venir y solo volvió cuando se las quitaron", "story-7 quiz 2 unchanged");
 assert(story7.questions[2].prompt === "¿Cómo honraron a Don Manuel después de su muerte?" && story7.questions[2].answer === "Jugaron una partida sin pareja y dejaron su tequila intacto", "story-7 quiz 3 unchanged");
 
+const story6 = STORIES.find((s) => s.id === "story-6");
+assert(story6.title === "La sirena del Pacífico", "story-6 ES title lock");
+assert(story6.subtitle === "Un pueblo de pescadores en Nayarit", "story-6 ES subtitle lock");
+assert(story6.paragraphs[0] === "En San Blas, Nayarit, los pescadores zarpan antes del amanecer. Mi abuelo Heriberto fue uno de ellos durante cincuenta años, y juraba —juraba con la mano sobre el pecho, frente a la imagen de la Virgen de Guadalupe— que una madrugada de marzo de 1971 había visto una sirena.", "story-6 ¶1 ES unchanged");
+assert(story6.paragraphs[1] === "«No era una historia para niños», me decía cuando yo tenía nueve años y volvía a preguntárselo. «Era de carne, como tú y yo. Cabello negro hasta la cintura, ojos verdes como agua de cenote. Estaba sentada sobre una roca cerca de la Piedra Blanca del Tigre. Cantaba.» Yo le preguntaba qué cantaba. «No lo sé», respondía. «No era español. No era nada. Era el sonido del mar si supiera hablar.»", "story-6 ¶2 ES unchanged");
+assert(story6.paragraphs[2] === "Mi padre, que es ingeniero y no cree en sirenas, siempre cambiaba de tema cuando mi abuelo empezaba con esa historia. Pero mi abuela, que sí le creía, agregaba un detalle cada vez que la oía contar. La primera vez fue cabello negro. La segunda, una cola de plata. La tercera, una voz que olía a sal y a tristeza. «No te burles», me advertía cuando yo me reía. «Tu abuelo nunca mentía sobre el mar. Sobre las cartas, sí. Sobre el mar, no.»", "story-6 ¶3 ES unchanged");
+assert(story6.paragraphs[3] === "Mi abuelo murió en 2009, a los ochenta y dos años. Heredé sus dos lanchas, su red de pescar camarón y una libreta con una sola entrada, fechada el 17 de marzo de 1971: «Hoy vi algo que no debí ver. No lo escribo aquí porque las letras no son suficientes. Que Dios me perdone si miento, y que Dios me proteja si digo la verdad.»", "story-6 ¶4 ES unchanged");
+assert(story6.paragraphs[4] === "El año pasado regresé a San Blas con mi hija de seis años. Salimos en lancha al amanecer, con un pescador amigo de la familia. Mi hija miraba el agua con la calma de los niños que todavía creen en todo. Le conté la historia del bisabuelo y la sirena. Cuando terminé, se quedó pensando un rato y dijo: «Mamá, las sirenas no se ven dos veces. Por eso hay una historia y no diez.»", "story-6 ¶5 is George Mamá");
+assert(story6.paragraphs[5] === "No supe qué contestar. Algunos misterios mejoran cuando uno deja de explicarlos. Volvimos al muelle en silencio, escuchando solo el motor y el agua. Tal vez mi abuelo vio una foca. Tal vez vio a una mujer nadando antes del alba. Tal vez vio lo que dijo que vio. Lo único cierto es que, durante cincuenta y un años, mi abuelo cuidó esa historia como otros cuidan un anillo de bodas.", "story-6 ¶6 ES unchanged");
+const story6Hay = [...story6.paragraphs, JSON.stringify(story6.glossary), JSON.stringify(story6.questions)].join("\n");
+assert(/«Mamá, las sirenas/.test(story6.paragraphs[4]), "story-6 ¶5 hija line is Mamá");
+assert(!/«Papá, las sirenas/.test(story6.paragraphs[4]), "story-6 ¶5 hija line is not Papá");
+assert(story6.glossary.mamá && story6.glossary.mamá[0] === "mom", "story-6 glossary is mamá");
+assert(!story6.glossary.papá, "story-6 glossary drops papá");
+assert(!/[Pp]apá/.test(story6Hay), "story-6 has no Papá leftover");
+assert(!/\b[Dd]ad\b|\bfather narrator\b/.test(story6Hay), "story-6 quiz/EN has no dad narrator");
+assert(story6.questions[0].prompt === "¿Qué afirmaba haber visto el abuelo en marzo de 1971?" && story6.questions[0].answer === "Una sirena sentada sobre una roca", "story-6 quiz 1 unchanged");
+assert(story6.questions[1].prompt === "¿Qué encontró el nieto en la libreta del abuelo?" && story6.questions[1].answer === "Una sola entrada fechada el 17 de marzo de 1971", "story-6 quiz 2 unchanged");
+assert(story6.questions[2].prompt === "¿Qué dijo la hija del narrador sobre la historia?" && story6.questions[2].answer === "Las sirenas no se ven dos veces — por eso hay una historia y no diez", "story-6 quiz 3 unchanged");
+
 const story9 = STORIES.find((s) => s.id === "story-9");
 assert(story9.title === "Las cerezas de don Adán", "story-9 ES title lock");
 assert(story9.subtitle === "Café de altura en Chiapas", "story-9 ES subtitle lock");
@@ -354,6 +374,10 @@ assert(!appSrc.includes("src={`/lectura/"), "Lectura stills must not use root-ab
 const story7Src = appSrc.slice(appSrc.indexOf('id: "story-7"'), appSrc.indexOf('id: "story-8"'));
 assert(/Don Pepe, el más joven/.test(story7Src) && /Don Pepe ganó/.test(story7Src), "App.jsx story-7 live copy is Pepe");
 assert(!/\bTito\b/.test(story7Src), "App.jsx story-7 live copy has no Tito");
+const story6Src = appSrc.slice(appSrc.indexOf('id: "story-6"'), appSrc.indexOf('id: "story-7"'));
+assert(/«Mamá, las sirenas/.test(story6Src), "App.jsx story-6 live copy is Mamá");
+assert(!/«Papá, las sirenas/.test(story6Src), "App.jsx story-6 live copy has no Papá on the hija line");
+assert(!/\bpapá:/.test(story6Src), "App.jsx story-6 glossary is not papá");
 const story9Src = appSrc.slice(appSrc.indexOf('id: "story-9"'), appSrc.indexOf("const STORY_EXTRAS"));
 assert(/Don Adán tiene setenta años/.test(story9Src), "App.jsx story-9 live copy is setenta");
 assert(!/cincuenta y nueve/.test(story9Src), "App.jsx story-9 live copy has no cincuenta y nueve");
@@ -1682,12 +1706,6 @@ const waveBStills = [
   ["story-5", "p3", 1159507, "5c14d38342467bf64c60311fc94bbadd"],
   ["story-5", "p4", 1095494, "6c22398a7eda9cb9903adc2f9c912e16"],
   ["story-5", "p5", 1139848, "86e884f19c5dfd69acc77b6f29c7332b"],
-  ["story-6", "p0", 1211154, "97c84796a45d891b8fd0e75371180414"],
-  ["story-6", "p1", 1074002, "2e7c1404412eafe303dccea848d5bfc6"],
-  ["story-6", "p2", 1301262, "b801dd9f03d09188934bab76031db19b"],
-  ["story-6", "p3", 1284986, "a58f58ba4015eae799ac5449188b5394"],
-  ["story-6", "p4", 1360888, "eae2b6c3fa70554ff1d3a38597fda1d8"],
-  ["story-6", "p5", 948517, "c55876724bf5f0bc778f7b745a695ea5"],
   ["story-8", "p0", 1163608, "1799148c42588249f12a6ad280985775"],
   ["story-8", "p1", 1397780, "ca315af20cba72c7fa1850995abb0a1d"],
   ["story-8", "p2", 1203018, "91148d75835b8e31b4995af4a4f8ac16"],
@@ -1720,6 +1738,28 @@ for (const [slot, bytes, md5] of clearedStory4) {
   assert(createHash("md5").update(buf).digest("hex") === md5, `story-4 ${slot} stays the Brand CLEAR live PNG`);
   assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-4 ${slot} is 1152×864`);
 }
+const clearedStory6 = [
+  ["p0", 1414618, "9a040957584b318cfd50bcdb9e02cb21"],
+  ["p1", 1556200, "271766e8fb31c698cc4e7ee830b86f29"],
+  ["p2", 1644237, "e132216d49a798e88b3fd8ed6c675b04"],
+  ["p3", 1815917, "9932d084f732b8c6be21e66028292032"],
+  ["p4", 1651860, "e4adc49c91e3165662e1828f44ad44a9"],
+  ["p5", 1582584, "ba7e1b9e4f843ed45ef2ad84fc9ca597"],
+];
+for (const [slot, bytes, md5] of clearedStory6) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-6", `${slot}.png`);
+  assert(existsSync(stillPng), `story-6 ${slot} lives at public/lectura/story-6/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-6/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-6/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-6 ${slot} stays the Brand CLEAR live PNG`);
+  assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-6 ${slot} is 1152×864`);
+}
+assert(existsSync(join(repoRoot, "public", "lectura", "story-6", "CAST.md")), "story-6 CAST.md locks mother + daughter");
+assert(existsSync(join(repoRoot, "public", "lectura", "story-6", "MANIFEST.md")), "story-6 MANIFEST.md is installed");
+const story6Cast = readFileSync(join(repoRoot, "public", "lectura", "story-6", "CAST.md"), "utf8");
+assert(/low bun/.test(story6Cast) && /Cream top/.test(story6Cast) && /terracotta/.test(story6Cast), "story-6 CAST locks mother low bun + cream/terracotta");
+assert(/Olive overalls/.test(story6Cast) && /Always a girl/.test(story6Cast) && /never boy swap/.test(story6Cast), "story-6 CAST locks daughter girl on p4+p5");
 const clearedStory7 = [
   ["p0", 1635601, "5cd1642ec08262f446b264689aec130d"],
   ["p1", 1577512, "6473d86931d297de468e1876db0404a8"],

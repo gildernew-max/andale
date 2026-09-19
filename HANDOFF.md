@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (Lectura story-6 Brand CLEAR stills + Mamá)
+
+**What changed**
+- `public/lectura/story-6/p0.png`–`p5.png` are Brand CLEAR stills (1152×864 RGB PNG). Byte-identical to `/workspace/andale-art/lectura-regen/story-6/`. Cast lock mother (low bun, cream/terracotta) + daughter girl olive overalls on p4/p5 (no boy swap). CAST.md + MANIFEST.md sit with the stills.
+- App.jsx `story-6` *La sirena del Pacífico* ¶5 hija line is George Mamá (`«Mamá, las sirenas…`). Glossary `mamá: ["mom"]`. ¶1–¶4 · ¶6 + quizzes unchanged. No Papá leftover on the hija line. Soft chrome parked.
+- Content test locks `clearedStory6` bytes/md5/1152×864 and the Mamá stamp. Path still `${BASE_URL}lectura/story-6/pN.png`.
+
+**Why**
+- Hand CLEAR: wire stills + George gender flip together. Do not ship Papá under mother + daughter stills.
+
 ## 2026-09-19 (Cenzontle fly-away on free story-win / CONTINUAR)
 
 **What changed**
