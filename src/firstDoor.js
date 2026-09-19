@@ -12,6 +12,19 @@ export function firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff }
   return FIRST_DOOR_PHRASE_DOCTOR;
 }
 
+/**
+ * Hub 6-grid chrome: Hoy stays the only loud primary after first win / Continue free.
+ * Not gated on first-door hero (Doctora handoff) — other five stay equal peers.
+ */
+export function hoyHubLoud({ todayScene } = {}) {
+  return !!todayScene;
+}
+
+/** Done Hoy still reads as today’s home — check-done, not a flattened peer. */
+export function hoyHubDone({ todaySceneDone } = {}) {
+  return !!todaySceneDone;
+}
+
 /** Streak ≥ 1 and last activity was a previous calendar day — come-back, not same-day after win. */
 export function isDay2Return({ streak, lastDay, today } = {}) {
   if ((Number(streak) || 0) < 1) return false;

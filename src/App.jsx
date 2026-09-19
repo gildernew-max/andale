@@ -5,7 +5,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats, doctoraWinReward } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
@@ -20,7 +20,7 @@ import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.j
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
-import { SUBJ_FIVE_LABEL, subjFiveLines, subjFiveSub } from "./subjFive.js";
+import { subjFiveLines } from "./subjFive.js";
 import {
   sobremesaDeepen,
   sobremesaDeepenLabel,
@@ -636,10 +636,11 @@ const UNITS = [
 ];
 
 const SECTIONS = [
-  { title: "Sección 1 · Intermedio", color: D.green, dark: D.greenDark, unitIds: ["subj1", "pret", "porpara", "sereflex", "compsup"] },
-  { title: "Sección 2 · Avanzado", color: D.purple, dark: D.purpleDark, unitIds: ["mex", "siclauses", "pronombres", "subj2", "futcond", "pluscamp", "pronombres2"] },
-  { title: "Sección 3 · Maestría", color: D.blue, dark: D.blueDark, unitIds: ["conectores", "registro", "relativos", "reported", "slang2", "formal"] },
+  { title: "Intermedio", titleEn: "Intermediate", color: D.green, dark: D.greenDark, unitIds: ["subj1", "pret", "porpara", "sereflex", "compsup"] },
+  { title: "Avanzado", titleEn: "Advanced", color: D.purple, dark: D.purpleDark, unitIds: ["mex", "siclauses", "pronombres", "subj2", "futcond", "pluscamp", "pronombres2"] },
+  { title: "Maestría", titleEn: "Mastery", color: D.blue, dark: D.blueDark, unitIds: ["conectores", "registro", "relativos", "reported", "slang2", "formal"] },
 ];
+const sectionTitleForLang = (sec, lang) => (lang === "en" ? (sec.titleEn || sec.title) : sec.title);
 
 const FLAT = SECTIONS.flatMap((s) => s.unitIds.map((id) => ({ unit: UNITS.find((u) => u.id === id), section: s })));
 
@@ -3688,11 +3689,13 @@ const UI = {
     hubGames: "Juegos",
     hubDoctor: "Doctora de frases",
     hubEighty: "80/20",
-    hubEightyQuiet: "Subjuntivo en cinco",
+    hubEightyQuiet: "Reglas del subjuntivo",
     hubPins: "Pin chase",
     hubFlash: "Flashcards",
     hubSendero: "Sendero",
-    hubSenderoQuiet: "Camino largo",
+    hubSenderoQuiet: "Tu camino",
+    hubSection: "Intermedio",
+    hubSectionQuiet: "Charla real",
     // WRAP PARK — Sobremesa name/quiet/sell. Intermedio words tab, not a hub tile. Do not delete.
     hubSobremesa: "Sobremesa",
     hubSobremesaQuiet: "Plática de verdad",
@@ -3772,11 +3775,13 @@ const UI = {
     hubGames: "Games",
     hubDoctor: "Phrase Doctor",
     hubEighty: "80/20",
-    hubEightyQuiet: "Subjunctive in five",
+    hubEightyQuiet: "Subjunctive rules",
     hubPins: "Pin chase",
     hubFlash: "Flashcards",
     hubSendero: "Sendero",
-    hubSenderoQuiet: "Longer path",
+    hubSenderoQuiet: "Your path",
+    hubSection: "Intermediate",
+    hubSectionQuiet: "Real talk",
     // WRAP PARK — Sobremesa name/quiet/sell. Intermedio words tab, not a hub tile. Do not delete.
     hubSobremesa: "Sobremesa",
     hubSobremesaQuiet: "Real talk",
@@ -4414,7 +4419,7 @@ export default function App() {
       const u = UNITS.find((x) => x.id === uid);
       return u.questions.map((qq, i) => ({ ...qq, _u: uid, _i: i }));
     }).filter((qq) => qq.type !== "match");
-    beginSession({ title: `${L.test}: ${sec.title}`, color: sec.color, dark: sec.dark, unitId: "_test", review: false, testOut: si, host: "valeria", questions: shuffle(pool).slice(0, 10).map(prepQuestion) });
+    beginSession({ title: `${L.test}: ${sectionTitleForLang(sec, uiLang)}`, color: sec.color, dark: sec.dark, unitId: "_test", review: false, testOut: si, host: "valeria", questions: shuffle(pool).slice(0, 10).map(prepQuestion) });
   };
 
   const smartPracticeFocus = () => {
@@ -6691,7 +6696,6 @@ export default function App() {
       {!inLesson && tab === "camino" && (
         <div data-testid="learn-hub" style={{ maxWidth: 480, margin: "0 auto", padding: "10px 16px 40px", background: theme === "dark" ? "transparent" : HUB_CREAM }}>
           {(() => {
-            const doorKind = firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff });
             const showHandoff = showPostDismissHandoff({ armed: postDismissHandoff });
             const day2Return = isDay2Return({
               streak: prog.streak,
@@ -6717,7 +6721,8 @@ export default function App() {
             };
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
-            const hoyLoud = doorKind === FIRST_DOOR_HOY && !todaySceneDone;
+            const hoyLoud = hoyHubLoud({ todayScene });
+            const hoyDone = hoyHubDone({ todaySceneDone });
             const hubTiles = [
               { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
@@ -6732,6 +6737,7 @@ export default function App() {
                   {hubTiles.map((tile) => (
                     <button key={tile.id} data-testid={tile.testid} type="button" onClick={tile.act}
                       data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : undefined}
+                      data-hub-hoy-done={tile.id === "hoy" && hoyDone ? "1" : undefined}
                       style={{
                         display: "flex",
                         flexDirection: "column",
@@ -6740,8 +6746,10 @@ export default function App() {
                         width: "100%",
                         height: 168,
                         boxSizing: "border-box",
+                        position: "relative",
                         background: theme === "dark" ? D.card : HUB_CREAM,
                         border: `1.5px solid ${tile.id === "hoy" && hoyLoud ? D.green : D.line}`,
+                        boxShadow: tile.id === "hoy" && hoyLoud ? `0 0 0 2px ${D.green}33` : "none",
                         borderRadius: 18,
                         padding: "8px 8px 10px",
                         fontFamily: "inherit",
@@ -6749,6 +6757,12 @@ export default function App() {
                         textAlign: "center",
                         color: D.ink,
                       }}>
+                      {tile.id === "hoy" && hoyDone && (
+                        <span data-testid="hub-hoy-done" aria-hidden="true" style={{
+                          position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: 99,
+                          background: D.greenBg, color: D.okText, fontSize: 12, fontWeight: 900, lineHeight: "20px",
+                        }}>✓</span>
+                      )}
                       <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
                       <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
                       <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
@@ -6773,14 +6787,15 @@ export default function App() {
                   </div>
                 )}
                 <button data-testid="sobremesa-cta" type="button" onClick={() => setSobremesaOpen(true)}
-                  style={{ display: "block", width: "100%", margin: "0 0 10px", background: theme === "dark" ? D.card : HUB_CREAM, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, color: D.ink, borderRadius: 14, padding: "10px 12px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-                  <div data-testid="sobremesa-cta-label" style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15 }}>{L.hubSobremesa}</div>
-                  <div data-testid="sobremesa-cta-quiet" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{L.hubSobremesaQuiet}</div>
+                  style={{ display: "block", width: "100%", margin: "0 0 10px", background: "transparent", border: `1px solid ${D.line}`, color: D.sub, borderRadius: 12, padding: "8px 10px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+                  <div data-testid="sobremesa-cta-label" style={{ fontWeight: 800, fontSize: 12, lineHeight: 1.15, color: D.ink }}>{L.hubSobremesa}</div>
+                  <div data-testid="sobremesa-cta-quiet" style={{ fontWeight: 700, fontSize: 10.5, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{L.hubSobremesaQuiet}</div>
                 </button>
                 <button data-testid="camino-more" type="button" aria-expanded={caminoMore}
                   onClick={() => setCaminoMore((open) => !open)}
-                  style={{ display: "block", margin: "10px auto 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", padding: "4px 8px", letterSpacing: ".01em" }}>
-                  {L.more}
+                  style={{ display: "block", width: "100%", margin: "8px 0 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", cursor: "pointer", padding: "6px 2px", textAlign: "left" }}>
+                  <div data-testid="hub-section-title" style={{ fontWeight: 800, fontSize: 13, lineHeight: 1.2, color: D.ink }}>{L.hubSection}</div>
+                  <div data-testid="hub-section-quiet" style={{ fontWeight: 700, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{L.hubSectionQuiet}</div>
                 </button>
                 {caminoMore && (
                   <div data-testid="camino-more-panel" style={{ marginTop: 8 }}>
@@ -6848,15 +6863,15 @@ export default function App() {
               const chestClaimed = !!prog.chests?.[chestId];
               return (
                 <div key={si}>
-                  <div style={{ background: sec.color, color: "#fff", borderRadius: 16, padding: "14px 18px", margin: "26px 0 0", borderBottom: `4px solid ${sec.dark}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                  <div data-testid="hub-section-banner" data-section={si} style={{ background: theme === "dark" ? D.card : HUB_CREAM, color: D.sub, borderRadius: 12, padding: "8px 12px", margin: "22px 0 0", border: `1px solid ${D.line}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                     <div>
-                      <div style={{ fontWeight: 900, fontSize: 16 }}>{sec.title}</div>
-	                      <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.85 }}>{sec.unitIds.length} {L.sectionSkills}</div>
+                      <div style={{ fontWeight: 800, fontSize: 13, color: D.ink }}>{sectionTitleForLang(sec, uiLang)}</div>
+	                      <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.7 }}>{sec.unitIds.length} {L.sectionSkills}</div>
                     </div>
                     {!sectionDone && (
-                      <button onClick={() => startTestOut(sec, si)} className="duo-btn"
+                      <button onClick={() => startTestOut(sec, si)}
 	                        title={uiLang === "en" ? "Section test: 10 questions, max 2 mistakes. Pass to unlock the whole section." : "Examen de la sección: 10 preguntas, máximo 2 errores. Apruébalo y desbloqueas toda la sección."}
-                        style={{ background: "rgba(255,255,255,.18)", border: "2px solid rgba(255,255,255,.6)", borderBottom: "4px solid rgba(255,255,255,.6)", color: "#fff", borderRadius: 12, padding: "8px 14px", fontWeight: 900, fontSize: 12, letterSpacing: ".06em", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
+                        style={{ background: "transparent", border: `1px solid ${D.line}`, color: D.sub, borderRadius: 10, padding: "6px 10px", fontWeight: 800, fontSize: 11, letterSpacing: ".04em", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
 	                        {L.skip} ⤓
                       </button>
                     )}
@@ -6877,7 +6892,7 @@ export default function App() {
                       return (
                         <div key={uid} style={{ position: "relative", margin: "14px 0", transform: `translateX(${off}px)`, zIndex: 1 }}>
                           {isCurrent && (
-                            <div className="bounce" style={{ position: "absolute", top: -38, left: "50%", transform: "translateX(-50%)", background: D.card, border: `2px solid ${D.line}`, borderRadius: 10, padding: "4px 12px", fontWeight: 900, fontSize: 12, color: sec.color, whiteSpace: "nowrap", zIndex: 2, boxShadow: "0 2px 6px rgba(0,0,0,.08)" }}>
+                            <div className="bounce" style={{ position: "absolute", top: -38, left: "50%", transform: "translateX(-50%)", background: D.card, border: `1px solid ${D.line}`, borderRadius: 10, padding: "3px 10px", fontWeight: 800, fontSize: 11, color: D.sub, whiteSpace: "nowrap", zIndex: 2 }}>
 	                              {L.start}
                               <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%) rotate(45deg)", width: 10, height: 10, background: D.card, borderRight: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}` }} />
                             </div>
@@ -8440,9 +8455,8 @@ export default function App() {
           </div>
 
           {session.scenario && status === "idle" && (
-            <div className="pop" style={{ margin: "-14px 0 18px", background: D.goldBg, border: `2px solid ${D.gold}`, borderRadius: 14, padding: "9px 12px", display: "flex", gap: 9, alignItems: "center", color: D.ink }}>
-              <IcBolt size={17} />
-              <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.35 }}>{session.scenario}</div>
+            <div data-testid="lesson-scene-chip" style={{ margin: "0 0 10px", background: "transparent", border: 0, padding: "0 2px", color: D.sub }}>
+              <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.35 }}>{session.scenario}</div>
             </div>
           )}
 

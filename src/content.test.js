@@ -276,6 +276,8 @@ assert(!story2Extra.checkpoints.some((cp) => /narrator/i.test(cp.q)), "no narrat
 
 assert(UNITS[0]?.id === "subj1" && UNITS[0]?.title === "Subjuntivo presente", "first path unit stays Subjuntivo presente");
 assert(SECTIONS[0]?.unitIds?.[0] === "subj1", "Camino first unit stays Subjuntivo");
+assert(SECTIONS[0]?.title === "Intermedio" && SECTIONS[0]?.titleEn === "Intermediate", "first section is Intermedio, not Sección 1 jargon");
+assert(!SECTIONS.some((s) => /Sección/.test(`${s.title}${s.titleEn || ""}`)), "section titles drop Sección N ·");
 
 assert(Array.isArray(TODAY_SCENES) && TODAY_SCENES.length > 0, "TODAY_SCENES missing");
 const hoy = TODAY_SCENES[0];
@@ -406,7 +408,7 @@ assert(!/come-back-tomorrow[^>]*cursor:\s*["']?pointer/.test(appSrc), "teaser ha
 assert(/come-back-tomorrow[^>]*pointerEvents:\s*["']none/.test(appSrc), "teaser is not a tap target");
 assert(!/come-back-tomorrow[^>]*borderBottom:\s*`4px/.test(appSrc), "teaser has no pressable 4px chrome");
 assert(!/come-back-tomorrow[^>]*border:\s*`2px solid/.test(appSrc), "teaser has no card border");
-assert(/learn-hub-tiles[\s\S]{0,2800}\{showLine && \(\s*<p data-testid="come-back-tomorrow"/.test(appSrc), "titled teaser sits outside the equal hub grid — not a CTA");
+assert(/learn-hub-tiles[\s\S]{0,4200}\{showLine && \(\s*<p data-testid="come-back-tomorrow"/.test(appSrc), "titled teaser sits outside the equal hub grid — not a CTA");
 assert(appSrc.includes("hoySceneForDay"), "Hoy day pick is shared");
 assert(appSrc.includes("nextDayKey(todayKey)"), "tomorrow Hoy uses the same day hash");
 assert(UI.es.paywallHeadline === "Sigue con tu racha", "UI.es.paywallHeadline George lock");
@@ -915,8 +917,8 @@ assert(!/stroke=\{danger \? D\.red : D\.gold\}/.test(appSrc), "clock ring stays 
 assert(appSrc.includes("session?.runTimerOff"), "countdown honors per-run timer-off");
 assert(appSrc.includes("runTimerOff: !prev.runTimerOff"), "timer-off is learner choice on that run");
 assert(appSrc.includes("data-testid=\"coach-strip\""), "four-coach strip is testable");
-assert(appSrc.includes("data-testid=\"camino-more\""), "Más/More bury control is testable");
-assert(appSrc.includes("{L.more}"), "Más/More uses L.more");
+assert(appSrc.includes("data-testid=\"camino-more\""), "Intermedio bury control is testable");
+assert(UI.es.more === "Más" && UI.en.more === "More", "L.more stays parked — not a hub header");
 assert(appSrc.includes("{L.namePrompt}"), "name field uses L.namePrompt");
 assert(!/What should we call you\?|¿Cómo te llamamos\?/.test(appSrc), "form-feel name prompt is gone");
 assert(!Object.hasOwn(UI.es, "splashSkip"), "ES splash has no skip key");
@@ -1017,10 +1019,21 @@ assert(appSrc.includes("{L.narrationLabel}"), "Lectura narration chrome uses L.n
 assert(appSrc.includes('from "./storyGloss.js"'), "Lectura gloss map is imported");
 assert(appSrc.includes("<GlossedText"), "story Qs use GlossedText");
 assert(appSrc.includes("<GlossWord"), "Lectura paragraphs use GlossWord for stamped lemmas");
-assert(appSrc.includes("firstDoorHero"), "Hoy selected stroke still uses first-door Hoy vs Phrase Doctor");
-assert(appSrc.includes("const hoyLoud = doorKind === FIRST_DOOR_HOY && !todaySceneDone"), "Hoy is the only loud first-tap tile");
+assert(appSrc.includes("hoyHubLoud"), "Hoy hub chrome stays loud after first win — not first-door hero");
+assert(appSrc.includes("const hoyLoud = hoyHubLoud({ todayScene })"), "Hoy is the only loud hub tile");
+assert(appSrc.includes("const hoyDone = hoyHubDone({ todaySceneDone })"), "done Hoy keeps today’s-home check");
 assert(appSrc.includes('data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : undefined}'), "loud stroke attribute is Hoy-only");
 assert(appSrc.includes("tile.id === \"hoy\" && hoyLoud ? D.green : D.line"), "green border is Hoy-only; Sendero uses the quiet line stroke");
+assert(appSrc.includes('data-testid="hub-hoy-done"'), "done Hoy check is testable");
+assert(appSrc.includes('data-testid="lesson-scene-chip"'), "mid-lesson scene line is a quiet chip");
+assert(!/lesson-scene-chip[\s\S]{0,280}D\.gold/.test(appSrc), "scene chip has no yellow hero border");
+assert(!/lesson-scene-chip[\s\S]{0,200}IcBolt/.test(appSrc), "scene chip is not a bolt callout");
+assert(appSrc.includes('data-testid="hub-section-banner"'), "below-fold section chrome is testable");
+assert(/hub-section-banner[\s\S]{0,220}HUB_CREAM/.test(appSrc), "section banner is cream, not a green hero bar");
+assert(!/data-testid="hub-section-banner"[\s\S]{0,180}background: sec\.color/.test(appSrc), "section banner does not fill with section green");
+assert(appSrc.includes("{L.hubSection}"), "More/Más hub header is Intermedio");
+assert(appSrc.includes("{L.hubSectionQuiet}"), "Intermedio quiet follows uiLang");
+assert(!/data-testid="camino-more"[\s\S]{0,400}\{L\.more\}/.test(appSrc), "camino-more is not a bare More/Más header");
 assert(!/id: "sendero"[\s\S]{0,220}selected/.test(appSrc), "Sendero has no selected/loud tile flag");
 assert(appSrc.includes('testid: "hub-hoy"'), "Hoy is an equal hub tile");
 assert(appSrc.includes('testid: "hub-stories"'), "Stories is an equal hub tile");
@@ -1042,8 +1055,8 @@ assert(!hubTilesSrc.includes("startCubetas"), "Learn hub Games tile does not sta
 assert(!hubTilesSrc.includes("startAhorcado"), "Learn hub Games tile does not open Hangman");
 assert(!hubTilesSrc.includes("hub-hangman"), "Hangman is not a seventh Learn hub card");
 assert(appSrc.includes("title: L.hubDoctor"), "Phrase Doctor tile label follows uiLang");
-assert(appSrc.includes("{L.hubPins}"), "Pin chase label follows uiLang under Más");
-assert(appSrc.includes("{L.hubFlash}"), "Flashcards label follows uiLang under Más");
+assert(appSrc.includes("{L.hubPins}"), "Pin chase label follows uiLang under Intermedio");
+assert(appSrc.includes("{L.hubFlash}"), "Flashcards label follows uiLang under Intermedio");
 assert(appSrc.includes("title: L.hubSendero"), "Sendero tile label follows uiLang");
 assert(!appSrc.includes("title: L.hubSobremesa"), "Sobremesa wrap stamp is not a hub tile title");
 assert(UI.es.hubHoy === "Hoy" && UI.en.hubHoy === "Hoy", "Hoy label is Hoy");
@@ -1057,12 +1070,14 @@ assert(UI.es.hubGames === "Juegos" && UI.en.hubGames === "Games", "Games title f
 assert(UI.es.hubDoctor === "Doctora de frases" && UI.en.hubDoctor === "Phrase Doctor", "Phrase Doctor title follows uiLang");
 assert(UI.es.hubDoctor === UI.es.phraseDoctor && UI.en.hubDoctor === UI.en.phraseDoctor, "hub Phrase Doctor matches the door title");
 assert(UI.es.hubEighty === "80/20" && UI.en.hubEighty === "80/20", "80/20 is the loan");
-assert(UI.es.hubEightyQuiet === "Subjuntivo en cinco" && UI.en.hubEightyQuiet === "Subjunctive in five", "80/20 quiet follows uiLang");
-assert(UI.es.hubEightyQuiet === SUBJ_FIVE_SUB.es && UI.en.hubEightyQuiet === SUBJ_FIVE_SUB.en, "80/20 quiet matches George five");
+assert(UI.es.hubEightyQuiet === "Reglas del subjuntivo" && UI.en.hubEightyQuiet === "Subjunctive rules", "80/20 quiet is rules, not a finance meme");
+assert(UI.es.hubEightyQuiet !== SUBJ_FIVE_SUB.es && UI.en.hubEightyQuiet !== SUBJ_FIVE_SUB.en, "hub quiet is the required line; five-sheet keeps the alt");
+assert(UI.es.hubSection === "Intermedio" && UI.en.hubSection === "Intermediate", "below-fold header is Intermedio");
+assert(UI.es.hubSectionQuiet === "Charla real" && UI.en.hubSectionQuiet === "Real talk", "Intermedio quiet is George stamp");
 assert(UI.es.hubPins === "Pin chase" && UI.en.hubPins === "Pin chase", "Pin chase is the loan");
 assert(UI.es.hubFlash === "Flashcards" && UI.en.hubFlash === "Flashcards", "Flashcards is the loan");
 assert(UI.es.hubSendero === "Sendero" && UI.en.hubSendero === "Sendero", "Sendero is the loan in both langs");
-assert(UI.es.hubSenderoQuiet === "Camino largo" && UI.en.hubSenderoQuiet === "Longer path", "Sendero quiet follows uiLang");
+assert(UI.es.hubSenderoQuiet === "Tu camino" && UI.en.hubSenderoQuiet === "Your path", "Sendero quiet is the path");
 assert(UI.es.hubSobremesa === "Sobremesa" && UI.en.hubSobremesa === "Sobremesa", "Sobremesa name stays parked in wrap");
 assert(UI.es.hubSobremesa === SOBREMESA_NAME && UI.en.hubSobremesa === SOBREMESA_NAME, "wrap name matches the Intermedio pack");
 assert(UI.es.hubSobremesaQuiet === "Plática de verdad" && UI.en.hubSobremesaQuiet === "Real talk", "Sobremesa quiet is George stamp");
@@ -1110,7 +1125,7 @@ assert(/id: "camino"[\s\S]*id: "misiones"[\s\S]*id: "lectura"[\s\S]*id: "practic
 assert(!/id: "home"|id: "library"/.test(navTabs), "bottom nav has no Home/Library tab ids");
 assert(!/data-testid="first-door-hero"/.test(appSrc), "v01c hub has no hero card");
 assert(/gridTemplateColumns:\s*"1fr 1fr"/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 400)), "hub is a 2-column equal grid");
-assert(/height:\s*168/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 700)), "hub tiles share one equal height");
+assert(/height:\s*168/.test(appSrc.slice(appSrc.indexOf("learn-hub-tiles"), appSrc.indexOf("learn-hub-tiles") + 1200)), "hub tiles share one equal height");
 assert(appSrc.includes("gatedLiftStoryQuiz"), "Hoy / misión / rutina story Qs are Lectura-gated");
 assert(appSrc.includes("pickCompletedStory"), "rutina picks only claimed Lectura stories");
 assert(appSrc.includes("storyQuizCue"), "practice prompt has a slot for a George story cue");
@@ -1142,7 +1157,7 @@ for (const s of STORIES) {
 }
 assert(appSrc.includes("come-back-tomorrow"), "home line after win is wired");
 assert(appSrc.includes("path-entry"), "Subjuntivo path stays under Empieza");
-assert(/camino-more[\s\S]{0,900}path-entry/.test(appSrc), "EMPIEZA is buried under Más/More");
+assert(/camino-more[\s\S]{0,900}path-entry/.test(appSrc), "EMPIEZA is buried under Intermedio");
 assert(appSrc.includes("practica-fold"), "Práctica fold hosts Phrase Doctor / Safe-Risky / Match & play");
 assert(appSrc.includes("data-testid=\"match-play\""), "Match & play hub group is testable");
 assert(appSrc.includes("data-testid=\"games-hub\""), "Games hub is testable");
