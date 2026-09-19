@@ -275,7 +275,10 @@ const assertFreeWinFlyAway = () => {
   expect(stage.getAttribute("data-reduced-motion")).toBe("0");
   expect(stage.getAttribute("data-surface")).toBe("win");
   expect(css).toMatch(/@keyframes paywallFlyAway/);
-  expect(css).toMatch(/translate\(calc\(-50% \+ 260px\), -40px\)/);
+  expect(css).toMatch(/translate\(calc\(-50% \+ 100vw \+ 168px\)/);
+  expect(css).toMatch(/78% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 1; \}/);
+  expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 0; \}/);
+  expect(css).not.toMatch(/260px/);
   expect(css).not.toMatch(/780ms|cenzontle-courier|story0Courier/);
   expect(slot.querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
   expect(slot.querySelector("[data-testid='win-perch']")).toBeNull();

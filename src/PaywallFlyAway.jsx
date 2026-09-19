@@ -5,6 +5,7 @@ import {
   PAYWALL_FLY_SRC,
   PAYWALL_REDUCE_FADE_MS,
   PAYWALL_WING_MS,
+  flyAwayMotionCss,
   flyAwaySurface,
 } from "./paywallFlyAway.js";
 
@@ -95,10 +96,7 @@ export function CenzontleFlyAway({ surface = "paywall", onComplete } = {}) {
           animation: paywallFlyFade ${PAYWALL_REDUCE_FADE_MS}ms ease-out both;
         }
         @keyframes paywallFlyAway {
-          0% { transform: translate(-50%, 0) rotate(4deg); opacity: 1; }
-          30% { transform: translate(calc(-50% + 40px), -36px) rotate(-8deg); opacity: 1; }
-          62% { transform: translate(calc(-50% + 140px), -88px) rotate(-14deg); opacity: 1; }
-          100% { transform: translate(calc(-50% + 260px), -40px) rotate(-10deg); opacity: 0; }
+          ${flyAwayMotionCss(size)}
         }
         @keyframes paywallWingBeat {
           0% { transform: rotate(-12deg); }

@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (Cenzontle fly-away exits viewport fully)
+
+**What changed**
+- Shared `CenzontleFlyAway` exit is `100vw + bird size`, not `+260px`. Opacity stays 1 through the off-screen keyframe; fade only after the bird is past the right edge. 900ms, wing beat + soft arc kept.
+- Tests lock geometry (desktop / tablet / mobile, 168px win + 44px paywall) and no mid-frame fade while on-screen. prefers-reduced-motion still static fade. Soft chrome enroll parked.
+
+**Why**
+- Varys FAIL on live `index-CiTLwOw0.js`: flaps + arc, then opacity→0 ~290px inside the right edge. Hand CLEAR: off-screen before fade.
+
 ## 2026-09-19 (Lectura story-6 Brand CLEAR stills + Mamá)
 
 **What changed**

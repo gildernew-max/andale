@@ -1,7 +1,49 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { CenzontleFlyAway, PaywallFlyAway } from "./PaywallFlyAway.jsx";
-import { PAYWALL_FLY_MS, PAYWALL_REDUCE_FADE_MS, PAYWALL_WING_MS, WIN_FLY_SIZE } from "./paywallFlyAway.js";
+import {
+  FLY_AWAY_CLEAR_AT,
+  PAYWALL_FLY_MS,
+  PAYWALL_FLY_SIZE,
+  PAYWALL_REDUCE_FADE_MS,
+  PAYWALL_WING_MS,
+  WIN_FLY_SIZE,
+  flyAwayExitTranslate,
+  flyAwayFadesOnlyAfterExit,
+  flyAwayHoldsOpaqueThroughExit,
+  flyAwayMotionCss,
+} from "./paywallFlyAway.js";
+
+const parseFlyKeyframes = (css) => {
+  const start = css.indexOf("@keyframes paywallFlyAway");
+  const end = css.indexOf("@keyframes paywallWingBeat");
+  const body = start >= 0 ? css.slice(start, end >= 0 ? end : undefined) : css;
+  return [...body.matchAll(/(\d+)%\s*\{\s*transform:\s*([^;]+);\s*opacity:\s*([\d.]+);/g)].map((m) => ({
+    at: Number(m[1]),
+    transform: m[2].trim(),
+    opacity: Number(m[3]),
+  }));
+};
+
+const assertExitBeforeFade = (css, size) => {
+  const frames = parseFlyKeyframes(css);
+  const exit = flyAwayExitTranslate(size);
+  expect(frames.length).toBeGreaterThanOrEqual(4);
+  expect(css).toContain(flyAwayMotionCss(size).trim());
+  expect(css).toContain(exit);
+  expect(css).not.toMatch(/260px/);
+  expect(flyAwayHoldsOpaqueThroughExit(frames, size)).toBe(true);
+  expect(flyAwayFadesOnlyAfterExit(frames, size)).toBe(true);
+  const clear = frames.find((f) => f.at === FLY_AWAY_CLEAR_AT);
+  expect(clear?.opacity).toBe(1);
+  expect(clear?.transform).toContain(exit);
+  const end = frames.find((f) => f.at === 100);
+  expect(end?.opacity).toBe(0);
+  expect(end?.transform).toContain(exit);
+  for (const frame of frames) {
+    if (frame.opacity < 1) expect(frame.transform).toContain(exit);
+  }
+};
 
 afterEach(() => {
   cleanup();
@@ -24,8 +66,7 @@ describe("PaywallFlyAway", () => {
     expect(css).toMatch(/@keyframes paywallFlyAway/);
     expect(css).toMatch(new RegExp(`paywallFlyAway ${PAYWALL_FLY_MS}ms ease-in-out both`));
     expect(css).toMatch(new RegExp(`paywallWingBeat ${PAYWALL_WING_MS}ms ease-in-out infinite`));
-    expect(css).toMatch(/translate\(calc\(-50% \+ 260px\), -40px\)/);
-    expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 260px\), -40px\) rotate\(-10deg\); opacity: 0; \}/);
+    assertExitBeforeFade(css, PAYWALL_FLY_SIZE);
     expect(css).not.toMatch(/780ms|cenzontle-courier|story0Courier/);
     expect(document.querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
     expect(screen.queryByTestId("win-perch")).toBeNull();
@@ -70,7 +111,7 @@ describe("CenzontleFlyAway on free story-win / CONTINUAR", () => {
     expect(css).toMatch(/@keyframes paywallFlyAway/);
     expect(css).toMatch(new RegExp(`paywallFlyAway ${PAYWALL_FLY_MS}ms ease-in-out both`));
     expect(css).toMatch(new RegExp(`paywallWingBeat ${PAYWALL_WING_MS}ms ease-in-out infinite`));
-    expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 260px\), -40px\) rotate\(-10deg\); opacity: 0; \}/);
+    assertExitBeforeFade(css, WIN_FLY_SIZE);
     expect(css).not.toMatch(/780ms|cenzontle-courier|story0Courier|WinPerch/);
     expect(screen.queryByTestId("win-perch")).toBeNull();
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
@@ -84,6 +125,11 @@ describe("CenzontleFlyAway on free story-win / CONTINUAR", () => {
     expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     expect(screen.queryByTestId("win-perch")).toBeNull();
     vi.useRealTimers();
+  });
+
+  it("holds opacity at 1 until the final transform is already past the viewport", () => {
+    render(<CenzontleFlyAway surface="win" />);
+    assertExitBeforeFade(screen.getByTestId("win-fly-away").querySelector("style")?.textContent || "", WIN_FLY_SIZE);
   });
 
   it("skips flight under prefers-reduced-motion and never settles to a perch", () => {

@@ -2,6 +2,8 @@ import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import {
+  FLY_AWAY_CLEAR_AT,
+  FLY_AWAY_EXIT_VW,
   PAYWALL_FLY_EASE,
   PAYWALL_FLY_MS,
   PAYWALL_FLY_SIZE,
@@ -9,6 +11,13 @@ import {
   PAYWALL_REDUCE_FADE_MS,
   PAYWALL_WING_MS,
   WIN_FLY_SIZE,
+  flyAwayClearsViewport,
+  flyAwayExitLeft,
+  flyAwayExitTranslate,
+  flyAwayFadesOnlyAfterExit,
+  flyAwayHoldsOpaqueThroughExit,
+  flyAwayMotionCss,
+  flyAwayMotionFrames,
   flyAwaySurface,
 } from "./paywallFlyAway.js";
 
@@ -43,8 +52,40 @@ assert(flySrc.includes("data-testid={ids.stageTestId}"), "stage is testable");
 assert(helperSrc.includes("soft-paywall-cenzontle"), "paywall bird test id stays on the helper");
 assert(helperSrc.includes("win-fly-away-bird"), "free win bird test id stays on the helper");
 assert(flySrc.includes("@keyframes paywallFlyAway"), "motion path is an authored fly-away");
-assert(flySrc.includes("translate(calc(-50% + 260px), -40px)"), "100% leaves the frame to the right");
-assert(flySrc.includes("opacity: 0"), "exit is gone — not a perched mark");
+assert(flySrc.includes("flyAwayMotionCss(size)"), "keyframes come from the shared exit-after-clear helper");
+assert(FLY_AWAY_EXIT_VW === 100, "exit travel is 100vw, not a 260px on-screen die");
+assert(FLY_AWAY_CLEAR_AT >= 70 && FLY_AWAY_CLEAR_AT < 100, "clear keyframe is before the fade tail");
+assert(flyAwayExitTranslate(WIN_FLY_SIZE) === `calc(-50% + ${FLY_AWAY_EXIT_VW}vw + ${WIN_FLY_SIZE}px)`, "win exit includes bird width past 100vw");
+assert(flyAwayExitTranslate(PAYWALL_FLY_SIZE) === `calc(-50% + ${FLY_AWAY_EXIT_VW}vw + ${PAYWALL_FLY_SIZE}px)`, "paywall exit includes bird width past 100vw");
+assert(flySrc.includes("opacity: 0"), "reduced-motion fade still exists — flight path fades only after exit");
+
+// Varys FAIL: 260px from a 640 center leaves a 168px bird at right=984 on 1280 (~296px inside).
+const varysLeft = 640 - WIN_FLY_SIZE / 2 + 260;
+assert(varysLeft + WIN_FLY_SIZE < 1280, "document the live 260px miss: bird still on-screen");
+assert(1280 - (varysLeft + WIN_FLY_SIZE) >= 280, "document ~290px inside the right edge");
+
+const viewports = [
+  { parentCenterX: 195, viewportWidth: 390, size: WIN_FLY_SIZE },
+  { parentCenterX: 384, viewportWidth: 768, size: WIN_FLY_SIZE },
+  { parentCenterX: 640, viewportWidth: 1280, size: WIN_FLY_SIZE },
+  { parentCenterX: 640, viewportWidth: 1280, size: PAYWALL_FLY_SIZE },
+  { parentCenterX: 960, viewportWidth: 1920, size: WIN_FLY_SIZE },
+];
+for (const box of viewports) {
+  assert(flyAwayClearsViewport(box), `exit left ${flyAwayExitLeft(box)} must clear ${box.viewportWidth} (size ${box.size})`);
+}
+
+const winFrames = flyAwayMotionFrames(WIN_FLY_SIZE);
+const payFrames = flyAwayMotionFrames(PAYWALL_FLY_SIZE);
+assert(flyAwayHoldsOpaqueThroughExit(winFrames, WIN_FLY_SIZE), "win path stays opaque through the off-screen frame");
+assert(flyAwayFadesOnlyAfterExit(winFrames, WIN_FLY_SIZE), "win path does not fade while on-screen");
+assert(flyAwayHoldsOpaqueThroughExit(payFrames, PAYWALL_FLY_SIZE), "paywall path stays opaque through the off-screen frame");
+assert(flyAwayFadesOnlyAfterExit(payFrames, PAYWALL_FLY_SIZE), "paywall path does not fade while on-screen");
+assert(winFrames.some((f) => f.at === FLY_AWAY_CLEAR_AT && f.opacity === 1), "clear keyframe is still opaque");
+assert(winFrames.find((f) => f.at === 100).opacity === 0, "100% may fade only after the bird is already off");
+assert(winFrames.find((f) => f.at === 100).transform.includes(flyAwayExitTranslate(WIN_FLY_SIZE)), "100% transform is already the exit");
+assert(!flyAwayMotionCss(WIN_FLY_SIZE).includes("260px"), "shared motion dropped the 260px on-screen die");
+assert(!flySrc.includes("260px"), "overlay dropped the 260px on-screen die");
 assert(flySrc.includes("paywallWingBeat ${PAYWALL_WING_MS}ms ${PAYWALL_FLY_EASE} infinite"), "wing beat loops while in flight");
 assert(flySrc.includes("rotate(-12deg)"), "wing amplitude starts small");
 assert(flySrc.includes("rotate(10deg)"), "wing amplitude stays geometric, not thrash");
@@ -80,4 +121,4 @@ assert(flySrc.includes("<CenzontleFlyAway surface=\"paywall\" />") || flySrc.inc
 assert(/<Btn data-testid="soft-paywall-annual"/.test(paywallLayout), "loud annual stays the filled Btn");
 assert(/<button type="button" data-testid="soft-paywall-dismiss"/.test(paywallLayout), "quiet Continue free stays text");
 
-console.log("ok: Cenzontle paywall fly-away — wing beat + leave frame; soft chrome parked.");
+console.log("ok: Cenzontle fly-away — viewport-clear exit before fade; soft chrome parked.");
