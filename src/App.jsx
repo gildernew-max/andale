@@ -15,7 +15,7 @@ import { detectNativeIap, progressAfterPurchaseSuccess, requestPurchase, restore
 import { FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
-import { gatedLiftStoryQuiz, passageForStoryQuestion, pickCompletedStory, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
+import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
@@ -176,6 +176,7 @@ const snapshotLive = (s) => {
     paraIdx: s.paraIdx,
     storyMode: s.storyMode,
     ansSel: s.ansSel,
+    storyShuffle: s.storyShuffle,
     wordReveal: s.wordReveal,
     dialogue: s.dialogue,
     rivalOutcome: s.rivalOutcome,
@@ -4019,7 +4020,8 @@ export default function App() {
   const [storyView, setStoryView] = useState(null); // active story object
   const [wordSel, setWordSel] = useState(null); // {display, def, note, pi, ti}
   const [wordReveal, setWordReveal] = useState(true);
-  const [ansSel, setAnsSel] = useState({}); // story question selections
+  const [ansSel, setAnsSel] = useState({}); // story question selections (choice value, or legacy display index)
+  const [storyShuffle, setStoryShuffle] = useState(null); // per-open Lectura choice order
   const [storyMode, setStoryMode] = useState("story"); // story | bilingual | challenge
   const [audioMode, setAudioMode] = useState("normal"); // normal | slow | shadow
   const [voices, setVoices] = useState([]);
@@ -5379,6 +5381,8 @@ export default function App() {
 
   const openStory = (story) => {
     if (story?.id) emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaStart, storyId: story.id });
+    const extra = STORY_EXTRAS[story?.id] || {};
+    setStoryShuffle(shuffleStoryChoiceOrder(story, extra.checkpoints || []));
     setStoryView(story); setWordSel(null); setWordReveal(true); setAnsSel({}); setParaIdx(0); setScreen("story");
   };
 
@@ -5700,7 +5704,7 @@ export default function App() {
   liveRef.current = {
     screen, tab, session, qi, status, selected, typed, typedTileIds, placed,
     matchSel, matched, sessionXP, itemXpLock: [...itemXpLockRef.current], combo, lessonStats, showWhy, failKind, quip,
-    screenQuip, storyView, paraIdx, storyMode, ansSel, wordReveal, dialogue,
+    screenQuip, storyView, paraIdx, storyMode, ansSel, storyShuffle, wordReveal, dialogue,
     rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame,
   };
 
@@ -5742,6 +5746,7 @@ export default function App() {
     if (live.paraIdx != null) setParaIdx(live.paraIdx);
     if (live.storyMode) setStoryMode(live.storyMode);
     if (live.ansSel) setAnsSel(live.ansSel);
+    if (live.storyShuffle) setStoryShuffle(live.storyShuffle);
     if (live.wordReveal != null) setWordReveal(live.wordReveal);
     if (live.dialogue) {
       setDialogue(live.dialogue);
@@ -5817,7 +5822,7 @@ export default function App() {
   useEffect(() => {
     if (!liveReady.current) return;
     writeLive(snapshotLive(liveRef.current));
-  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame]);
+  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, storyShuffle, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame]);
 
   useEffect(() => {
     const flush = () => {
@@ -9308,7 +9313,9 @@ export default function App() {
         const checkDone = Object.keys(checkState).length;
         const claimed = !!prog.stories?.[story.id];
         const answered = Object.keys(ansSel).length;
-        const correct = story.questions.reduce((n, qq, i) => n + (qq.choices[ansSel[i]] === qq.answer ? 1 : 0), 0);
+        const qOrder = storyShuffle?.storyId === story.id ? storyShuffle.questions : null;
+        const cpOrder = storyShuffle?.storyId === story.id ? storyShuffle.checkpoints : null;
+        const correct = story.questions.reduce((n, qq, i) => n + (isStoryChoiceCorrect(qq, ansSel[i], qOrder?.[i]) ? 1 : 0), 0);
         return (
           <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 150px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
@@ -9456,7 +9463,7 @@ export default function App() {
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {checkpoints[pi].choices.map((choice) => (
+                      {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => (
                         <button key={choice} disabled={!!checkState[pi]} onClick={() => answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a)}
                           style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : D.line}`, background: checkState[pi] === choice ? "#fff" : "#F7F7F7", borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : D.ink }}>
                           {choice}
@@ -9491,8 +9498,9 @@ export default function App() {
 	                {L.easyQuestions} <IcBolt size={13} /> 35 XP · {checkDone}/{checkpoints.length} {uiLang === "en" ? "checkpoints" : "pausas"} {claimed && <span style={{ color: D.okText }}>— {uiLang === "en" ? "collectible unlocked" : "coleccionable desbloqueado"}</span>}
               </p>
               {story.questions.map((qq, i) => {
-                const sel = ansSel[i];
-                const done = sel != null;
+                const shown = storyQuestionChoices(qq, qOrder?.[i]);
+                const sel = selectedStoryChoice(qq, ansSel[i], shown);
+                const done = ansSel[i] != null;
                 const passage = passageForStoryQuestion(story, qq);
                 return (
                   <div key={i} style={{ marginBottom: 18 }}>
@@ -9504,14 +9512,14 @@ export default function App() {
                     ) : null}
                     <div data-testid="story-q-prompt" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: 8 }}>{i + 1}. <GlossedText text={qq.prompt} uiLang={uiLang} D={D} accent={sec.color} /></div>
                     <div style={{ display: "grid", gap: 8 }}>
-                      {qq.choices.map((c, ci) => {
+                      {shown.map((c) => {
                         const isAns = c === qq.answer;
                         let bg = "#fff", bd = D.line, col = D.ink;
                         if (done && isAns) { bg = D.okBg; bd = D.green; col = D.okText; }
-                        else if (done && sel === ci && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
+                        else if (done && sel === c && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
                         return (
-                          <button key={ci} className="choice-card" disabled={done}
-                            onClick={() => { setAnsSel({ ...ansSel, [i]: ci }); beep(isAns ? "ok" : "bad"); }}
+                          <button key={c} className="choice-card" disabled={done}
+                            onClick={() => { setAnsSel({ ...ansSel, [i]: c }); beep(isAns ? "ok" : "bad"); }}
                             style={{ textAlign: "left", padding: "11px 14px", fontSize: 14.5, fontWeight: 700, fontFamily: "inherit", cursor: done ? "default" : "pointer", background: bg, borderColor: bd, borderBottomColor: bd, color: col }}>
                             <GlossedText text={c} uiLang={uiLang} D={D} accent={sec.color} />
                           </button>
