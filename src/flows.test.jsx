@@ -1545,10 +1545,11 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
-  it("Learn hub Games tile opens Games hub with Cubetas and Hangman", async () => {
+  it("Learn hub Games tile opens Games hub with Cubetas, Hangman, and Jeopardy", async () => {
     const user = await boot();
     await awaitHome();
     expect(screen.queryByTestId("hub-hangman")).toBeNull();
+    expect(screen.queryByTestId("hub-jeopardy")).toBeNull();
     expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(6);
     await user.click(screen.getByTestId("hub-games"));
     await waitFor(() => expect(screen.getByTestId("games-hub")).toBeTruthy());
@@ -1557,14 +1558,19 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hangman-start").textContent).toContain("Ahorcado");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Palabras de México");
     expect(screen.getByTestId("hangman-start").textContent).not.toContain("Hangman");
+    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Jeopardy");
+    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Elige categoría, elige valor, responde.");
     expect(screen.queryByTestId("cubetas-board")).toBeNull();
     expect(screen.queryByTestId("hangman-board")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/AHORCADO \/ HANGMAN/);
+    expect(screen.queryByTestId("jeopardy-board")).toBeNull();
+    expect(screen.queryByTestId("memory-start")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/AHORCADO \/ HANGMAN|JEOPARDY SOLO/);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hangman-start").textContent).toContain("Hangman"));
     expect(screen.getByTestId("hangman-start").textContent).toContain("Mexican words");
     expect(screen.getByTestId("hangman-start").textContent).not.toContain("Ahorcado");
     expect(screen.getByTestId("cubetas-start").textContent).toContain("Bucket fly");
+    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Pick a category, pick a value, answer.");
     await user.click(screen.getByTestId("cubetas-start"));
     await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
     expect(screen.getByTestId("cubetas-title").textContent).toBe("Bucket fly");
@@ -1640,6 +1646,46 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("hangman-win").textContent).toBe("¡Eso!"));
     expect(screen.getByTestId("hangman-literal").textContent).toMatch(/^Literal/);
     expect(screen.getByTestId("hangman-why").textContent).toMatch(/^Por qué/);
+  });
+
+  it("Jeopardy round: pick a tile, answer, return to the board", async () => {
+    const user = await boot();
+    await awaitHome();
+    await user.click(screen.getByTestId("hub-games"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-start")).toBeTruthy());
+    await user.click(screen.getByTestId("jeopardy-start"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-board")).toBeTruthy());
+    expect(screen.getByTestId("jeopardy-title").textContent).toBe("Jeopardy");
+    expect(screen.getByTestId("jeopardy-quiet").textContent).toBe("Elige categoría, elige valor, responde.");
+    expect(screen.getByTestId("jeopardy-howto").textContent).toBe("Elige categoría, elige valor, responde.");
+    expect(screen.getByTestId("jeopardy-mark")).toBeTruthy();
+    expect(screen.getByTestId("jeopardy-answered").textContent).toBe("0/18");
+    expect(screen.getByTestId("jeopardy-grid")).toBeTruthy();
+    expect(screen.getByTestId("jeopardy-tile-subj-100")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/JEOPARDY SOLO|Reto Ándale \/ Jeopardy/);
+    expect(screen.queryByTestId("cubetas-cenzontle")).toBeNull();
+    expect(screen.queryByTestId("memory-start")).toBeNull();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-howto").textContent).toBe("Pick a category, pick a value, answer."));
+    expect(screen.getByTestId("jeopardy-quiet").textContent).toBe("Pick a category, pick a value, answer.");
+    await user.click(screen.getByTestId("jeopardy-tile-mex-100"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-prompt")).toBeTruthy());
+    expect(screen.getByTestId("jeopardy-question").textContent.length).toBeGreaterThan(0);
+    expect(screen.getByTestId("jeopardy-choice-0")).toBeTruthy();
+    expect(screen.queryByTestId("jeopardy-howto")).toBeNull();
+    await user.click(screen.getByTestId("jeopardy-choice-0"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-result")).toBeTruthy());
+    expect(screen.getByTestId("jeopardy-continue")).toBeTruthy();
+    expect(screen.getByTestId("jeopardy-why")).toBeTruthy();
+    await user.click(screen.getByTestId("jeopardy-continue"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-grid")).toBeTruthy());
+    expect(screen.getByTestId("jeopardy-answered").textContent).toBe("1/18");
+    expect(screen.getByTestId("jeopardy-tile-mex-100").disabled).toBe(true);
+    await user.click(screen.getByTestId("jeopardy-back"));
+    await waitFor(() => expect(screen.getByTestId("games-hub")).toBeTruthy());
+    expect(screen.getByTestId("jeopardy-start")).toBeTruthy();
+    expect(screen.getByTestId("cubetas-start")).toBeTruthy();
+    expect(screen.getByTestId("hangman-start")).toBeTruthy();
   });
 
   it("section test-out starts from Camino and fails closed after 3 misses (failKind === test)", async () => {
@@ -1825,8 +1871,8 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("nav-practica"));
     const fold = screen.getByTestId("practica-fold");
     const ids = [...fold.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
-    expect(ids.filter((id) => ["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start", "hangman-start"].includes(id)))
-      .toEqual(["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start", "hangman-start"]);
+    expect(ids.filter((id) => ["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start", "hangman-start", "jeopardy-start"].includes(id)))
+      .toEqual(["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start", "hangman-start", "jeopardy-start"]);
     const html = document.body.innerHTML;
     const foldAt = html.indexOf('data-testid="practica-fold"');
     const smartAt = html.search(/PRÁCTICA INTELIGENTE|SMART PRACTICE/);
@@ -1844,12 +1890,15 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hangman-start").textContent).toContain("Ahorcado");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Palabras de México");
     expect(screen.getByTestId("hangman-start").textContent).not.toContain("Hangman");
+    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Jeopardy");
+    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Elige categoría, elige valor, responde.");
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("cubetas-start").textContent).toContain("Bucket fly"));
     expect(screen.getByTestId("cubetas-start").textContent).not.toContain("Cubetas");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Hangman");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Mexican words");
     expect(screen.getByTestId("hangman-start").textContent).not.toContain("Ahorcado");
+    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Pick a category, pick a value, answer.");
   });
 
   it("Cubetas: one chip, two mood buckets, wrong returns, correct flies then Literal/Why", async () => {
