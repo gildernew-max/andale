@@ -32,7 +32,13 @@ import {
   bucketLabel,
   clearCubetasWrong,
   cubetasHasDeadLabel,
+  CUBETAS_EXCEPTION_LABEL,
+  cubetasException,
+  cubetasExceptionLabel,
   cubetasHint,
+  cubetasIsException,
+  cubetasWhyBeat,
+  cubetasWhyPrefix,
   dismissCubetasHint,
   cubetasLiteral,
   cubetasNextLabel,
@@ -103,12 +109,32 @@ assert(OJALA_QUE_PACK[0].phrase === "Ojalá que", "pack opens on Ojalá que");
 assert(OJALA_QUE_PACK[0].bucket === "subjunctive", "Ojalá que is subjunctive");
 assert(OJALA_QUE_PACK.every((c) => CUBETAS_BUCKETS.includes(c.bucket)), "every chip maps to a mood bucket");
 assert(OJALA_QUE_PACK.some((c) => c.bucket === "indicative"), "pack has indicative contrasts");
+assert(OJALA_QUE_PACK.length === 22, "George Why bank v1 is 22 chips");
 OJALA_QUE_PACK.forEach((c) => {
   assert(c.literal?.es && c.literal?.en, `${c.id} has George literal hooks`);
   assert(c.why?.es && c.why?.en, `${c.id} has George Why hooks`);
   assert(!/\n/.test(c.literal.es + c.literal.en + c.why.es + c.why.en), `${c.id} Literal/Why are one-liners`);
+  const beatWords = cubetasWhyBeat(c, "en").split(/\s+/).filter(Boolean);
+  assert(beatWords.length >= 1 && beatWords.length <= 3, `${c.id} Why is one beat`);
   assert(!cubetasHasDeadLabel(`${c.phrase} ${c.literal.es} ${c.literal.en} ${c.why.es} ${c.why.en}`), `${c.id} copy has no dead labels`);
 });
+assert(CUBETAS_EXCEPTION_LABEL.es === "Excepción" && CUBETAS_EXCEPTION_LABEL.en === "Exception", "Exception label is ES Excepción / EN Exception");
+assert(cubetasExceptionLabel("es") === "Excepción" && cubetasExceptionLabel("en") === "Exception", "Exception helper follows uiLang");
+assert(cubetasWhyPrefix("en") === "Exception · " && cubetasWhyPrefix("es") === "Excepción · ", "exception Why prefix is stamped");
+const exceptionChips = OJALA_QUE_PACK.filter(cubetasIsException);
+assert(exceptionChips.length === 3, "bank has three exception chips");
+assert(exceptionChips.map((c) => c.phrase).join(" | ") === "Aunque (fact) | Aunque (maybe) | Después de que (past done)", "exception phrases are George stamps");
+assert(!cubetasIsException(OJALA_QUE_PACK[0]), "Ojalá que is not marked exception");
+assert(cubetasWhy(OJALA_QUE_PACK.find((c) => c.id === "ojala-que"), "en") === "Wish", "Ojalá Why EN is Wish");
+assert(cubetasWhy(OJALA_QUE_PACK.find((c) => c.id === "ojala-que"), "es") === "Deseo", "Ojalá Why ES is Deseo");
+assert(cubetasWhy(OJALA_QUE_PACK.find((c) => c.id === "aunque-fact"), "en") === "Exception · fact despite", "aunque fact prefixes Exception");
+assert(cubetasWhy(OJALA_QUE_PACK.find((c) => c.id === "aunque-fact"), "es") === "Excepción · hecho pese a", "aunque fact prefixes Excepción");
+assert(cubetasWhy(OJALA_QUE_PACK.find((c) => c.id === "aunque-maybe"), "en") === "Exception · maybe not", "aunque maybe prefixes Exception");
+assert(cubetasWhy(OJALA_QUE_PACK.find((c) => c.id === "despues-de-que-past"), "es") === "Excepción · ya pasó", "después de que prefixes Excepción");
+assert(cubetasWhy({ whyEn: "Bank Why EN", whyEs: "Bank Why ES" }, "en") === "Bank Why EN", "consumes George whyEn");
+assert(cubetasWhy({ whyEn: "Bank Why EN", whyEs: "Bank Why ES" }, "es") === "Bank Why ES", "consumes George whyEs");
+assert(cubetasException({ exceptionEs: "Ex ES", exceptionEn: "Ex EN" }, "es") === "Ex ES", "consumes George exceptionEs");
+assert(exceptionChips.every((c) => c.exception === true && !/\n/.test(c.phrase)), "exception flag is boolean true");
 
 const run = startCubetasRun(OJALA_QUE_PACK, () => 0);
 assert(run.status === "idle", "fresh run is idle");
@@ -128,6 +154,7 @@ const miss = applyCubetasDrop(run, "indicative");
 assert(miss.status === "wrong", "wrong drop shakes");
 assert(miss.hint === false && !showCubetasHint(miss), "first tap dismisses the how-to");
 assert(currentChip(miss).phrase === "Ojalá que", "wrong returns the chip");
+assert(cubetasWhy(currentChip(miss), "es") === "Deseo", "wrong exposes Why without a tap");
 assert(miss.scored.length === 0, "wrong does not score");
 assert(miss.gems === 0, "wrong has no gem tick");
 const idleAgain = clearCubetasWrong(miss);
@@ -146,9 +173,9 @@ assert(advanceCubetasWin(hit).status === "win", "squash advances to win fly");
 const reveal = advanceCubetasReveal(advanceCubetasWin(hit));
 assert(reveal.status === "reveal", "win advances to teach beat");
 assert(cubetasLiteral(scoredChip(reveal), "es") === "Ojalá que", "Literal hook ES");
-assert(cubetasLiteral(scoredChip(reveal), "en") === "I hope that", "Literal hook EN");
-assert(cubetasWhy(scoredChip(reveal), "es") === "«Ojalá» siempre va con subjuntivo.", "Why hook ES");
-assert(cubetasWhy(scoredChip(reveal), "en") === "«Ojalá» always takes the subjunctive.", "Why hook EN");
+assert(cubetasLiteral(scoredChip(reveal), "en") === "Ojalá que", "Literal hook EN is the chip");
+assert(cubetasWhy(scoredChip(reveal), "es") === "Deseo", "Why hook ES is Deseo");
+assert(cubetasWhy(scoredChip(reveal), "en") === "Wish", "Why hook EN is Wish");
 
 let walk = hit;
 walk = advanceCubetasWin(walk);
@@ -172,4 +199,4 @@ assert(done.status === "done" && done.xp === CUBETAS_XP && done.awarded, "clear 
 const frozen = applyCubetasDrop(hit, "subjunctive");
 assert(frozen.status === "squash" && frozen.scored.length === 1, "non-idle drop is a no-op");
 
-console.log("ok: cubetas — Ojalá que pack, clay props, win 780ms grab-arc, Literal then Why");
+console.log("ok: cubetas — George one-beat Why bank, Exception prefix, win 780ms grab-arc");
