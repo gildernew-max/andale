@@ -13,6 +13,6 @@ export default defineConfig({
   base: andaleViteBase(),
   test: {
     environment: 'jsdom',
-    include: ['src/flows.test.jsx', 'src/GlossedText.test.jsx', 'src/WinBounce.test.jsx'],
+    include: ['src/flows.test.jsx', 'src/GlossedText.test.jsx', 'src/WinBounce.test.jsx', 'src/PaywallFlyAway.test.jsx'],
   },
 })

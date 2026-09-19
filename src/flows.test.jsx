@@ -263,10 +263,11 @@ const expectedComeBack = (lang) => {
   return comeBackTomorrowLine({ lang, nextTitle: hoyTitleForLang(next, lang) });
 };
 
-/** Loud annual / outline monthly / quietest continue free. George words. One static Cenzontle. */
+/** Loud annual / outline monthly / quietest continue free. George words. One Cenzontle fly-away. */
 const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const wall = screen.getByTestId("soft-paywall");
   const bird = screen.getByTestId("soft-paywall-cenzontle");
+  const stage = screen.getByTestId("soft-paywall-cenzontle-stage");
   const annual = screen.getByTestId("soft-paywall-annual");
   const monthly = screen.getByTestId("soft-paywall-monthly");
   const honesty = screen.getByTestId("soft-paywall-honesty");
@@ -284,6 +285,8 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(monthly.textContent).not.toMatch(/\$39\.99|\$6\.99/);
   expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
   expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)/);
+  expect(stage.getAttribute("data-reduced-motion")).toBe("0");
+  expect(screen.getByTestId("soft-paywall-cenzontle-wing")).toBeTruthy();
   expect(wall.querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
   expect(wall.querySelector("[data-testid='win-bounce']")).toBeNull();
   expect(wall.querySelector("[data-testid='story-0-beat']")).toBeNull();
