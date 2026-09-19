@@ -2973,7 +2973,7 @@ const STORIES = [
     "«No era una historia para niños», me decía cuando yo tenía nueve años y volvía a preguntárselo. «Era de carne, como tú y yo. Cabello negro hasta la cintura, ojos verdes como agua de cenote. Estaba sentada sobre una roca cerca de la Piedra Blanca del Tigre. Cantaba.» Yo le preguntaba qué cantaba. «No lo sé», respondía. «No era español. No era nada. Era el sonido del mar si supiera hablar.»",
     "Mi padre, que es ingeniero y no cree en sirenas, siempre cambiaba de tema cuando mi abuelo empezaba con esa historia. Pero mi abuela, que sí le creía, agregaba un detalle cada vez que la oía contar. La primera vez fue cabello negro. La segunda, una cola de plata. La tercera, una voz que olía a sal y a tristeza. «No te burles», me advertía cuando yo me reía. «Tu abuelo nunca mentía sobre el mar. Sobre las cartas, sí. Sobre el mar, no.»",
     "Mi abuelo murió en 2009, a los ochenta y dos años. Heredé sus dos lanchas, su red de pescar camarón y una libreta con una sola entrada, fechada el 17 de marzo de 1971: «Hoy vi algo que no debí ver. No lo escribo aquí porque las letras no son suficientes. Que Dios me perdone si miento, y que Dios me proteja si digo la verdad.»",
-    "El año pasado regresé a San Blas con mi hija de seis años. Salimos en lancha al amanecer, con un pescador amigo de la familia. Mi hija miraba el agua con la calma de los niños que todavía creen en todo. Le conté la historia del bisabuelo y la sirena. Cuando terminé, se quedó pensando un rato y dijo: «Papá, las sirenas no se ven dos veces. Por eso hay una historia y no diez.»",
+    "El año pasado regresé a San Blas con mi hija de seis años. Salimos en lancha al amanecer, con un pescador amigo de la familia. Mi hija miraba el agua con la calma de los niños que todavía creen en todo. Le conté la historia del bisabuelo y la sirena. Cuando terminé, se quedó pensando un rato y dijo: «Mamá, las sirenas no se ven dos veces. Por eso hay una historia y no diez.»",
     "No supe qué contestar. Algunos misterios mejoran cuando uno deja de explicarlos. Volvimos al muelle en silencio, escuchando solo el motor y el agua. Tal vez mi abuelo vio una foca. Tal vez vio a una mujer nadando antes del alba. Tal vez vio lo que dijo que vio. Lo único cierto es que, durante cincuenta y un años, mi abuelo cuidó esa historia como otros cuidan un anillo de bodas.",
   ],
   glossary: {
@@ -3010,7 +3010,7 @@ const STORIES = [
     salimos: ["we went out (preterite)"], pescador: ["fisherman"], amigo: ["friend"],
     familia: ["family"], miraba: ["was looking at"], calma: ["calm"], creen: ["they believe"],
     bisabuelo: ["great-grandfather"], terminé: ["I finished"], pensando: ["thinking"],
-    rato: ["a while"], papá: ["dad"], ven: ["are seen (verse)"], dos: ["two"], veces: ["times"],
+    rato: ["a while"], mamá: ["mom"], ven: ["are seen (verse)"], dos: ["two"], veces: ["times"],
     contestar: ["to answer"], misterios: ["mysteries"], mejoran: ["improve (mejorar)"],
     deja: ["leaves / stops (dejar)"], explicarlos: ["to explain them"], muelle: ["dock / pier"],
     silencio: ["silence"], escuchando: ["listening to"], motor: ["motor / engine"],
