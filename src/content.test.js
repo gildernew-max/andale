@@ -1355,16 +1355,26 @@ for (const [slot, md5] of Object.entries(clearedStory0)) {
   const stillPng = join(repoRoot, "public", "lectura", "story-0", `${slot}.png`);
   assert(createHash("md5").update(readFileSync(stillPng)).digest("hex") === md5, `story-0 ${slot} stays the CLEARed live PNG`);
 }
+const clearedStory1 = [
+  ["p0", 1930745, "957ba1b9b27b4a237bec149cd95bc211"],
+  ["p1", 1585762, "ee69c689b8142795662795baceb8b6e4"],
+  ["p2", 1806821, "2e2b7bb4e8d8e52b399c94f44dcebfb1"],
+  ["p3", 1797879, "c60baed4ecd2b245445671dfc7413287"],
+  ["p4", 1990177, "191eaa958d0d401d7f4f915352507d54"],
+  ["p5", 1791466, "3ad8d110dc213be2248ba1c42e581981"],
+];
+for (const [slot, bytes, md5] of clearedStory1) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-1", `${slot}.png`);
+  assert(existsSync(stillPng), `story-1 ${slot} lives at public/lectura/story-1/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-1/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-1/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-1 ${slot} stays the Brand CLEAR live PNG`);
+}
 const waveAStills = [
   ["story-0", "p3", 1469216, "583d0310b82f67b6bcdcda40c05bed31"],
   ["story-0", "p4", 1677951, "736e8d22ffc71c95f08c3d6a05a1d120"],
   ["story-0", "p5", 1703462, "2c23e776f3a8d39e052888571d6489e7"],
-  ["story-1", "p0", 1611096, "73cd8f2428361234e203d7482534a598"],
-  ["story-1", "p1", 1409665, "c6d636599922c13044b459ce8ec39c93"],
-  ["story-1", "p2", 1552172, "171c14fbca33810e4b07c94a4a5e1c2a"],
-  ["story-1", "p3", 1052791, "c5d853ff30d0a8c9443903cf9b77e51d"],
-  ["story-1", "p4", 1440349, "c4275a0b775c2a5dab8a57d4e30fafe1"],
-  ["story-1", "p5", 930809, "918dc0a8b3f488652abf4b1077513123"],
   ["story-2", "p0", 975514, "0d674ba89e02893bd1f30747b213b27b"],
   ["story-2", "p1", 967398, "9c89f2d8db6407e446f72af114939a6d"],
   ["story-2", "p2", 1098685, "8a95b9e4141ea302f6cc4f391216c55b"],

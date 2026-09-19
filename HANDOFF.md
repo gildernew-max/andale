@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (Lectura story-1 Brand CLEAR stills)
+
+**What changed**
+- `public/lectura/story-1/p0.png`–`p5.png` are the Brand CLEAR stills (1152×864 RGB PNG). Byte-identical to the attached pack. Frida braids on people pages; Diego p3; p1/p5 scene-only.
+- Live copy stays George PASS: App.jsx `story-1` *La casa azul* paragraphs untouched. Soft chrome parked.
+- Content test locks the new md5s / byte sizes. Path still `${BASE_URL}lectura/story-1/pN.png`.
+
+**Why**
+- Hand CLEAR + George words-vs-stills PASS. Land stills against current copy. No rewrite. Story-2 / story-4 out of scope.
+
 ## 2026-09-18 (ASC legal pages)
 
 **What changed**
