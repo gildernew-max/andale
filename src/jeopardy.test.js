@@ -75,18 +75,18 @@ assert(cats.map((c) => c.id).join(",") === "subj,past,porpara,mex,pron,reg", "fi
 assert(jeopardyTileCount(cats, JEOPARDY_VALUES) === 18, "filtered foci still make 18 tiles");
 
 const date = new Date("2026-09-19T12:00:00Z");
-assert(pickJeopardyDouble(cats, JEOPARDY_VALUES, { date, xp: 0, streak: 0, weekday: 6 }) === "subj-100", "double key is deterministic");
+assert(pickJeopardyDouble(cats, JEOPARDY_VALUES, { date, xp: 0, streak: 0, weekday: 6 }) === "past-100", "double key is deterministic");
 
 const run = startJeopardyRun({ categories: cats, values: JEOPARDY_VALUES, date, xp: 0, streak: 0, weekday: 6 });
 assert(run.hub === "games" && run.packId === JEOPARDY_PACK_ID, "run stamps Games hub");
 assert(run.score === 0 && run.status === "idle" && !run.complete, "fresh board");
-assert(run.doubleKey === "subj-100", "double tile is stamped");
+assert(run.doubleKey === "past-100", "double tile is stamped");
 assert(jeopardyAnswered(run) === 0, "nothing used yet");
 
-const q100 = { key: "subj-100", value: 100, answer: "quiera", choices: ["quiere", "quiera", "quería"] };
+const q100 = { key: "past-100", value: 100, answer: "quiera", choices: ["quiere", "quiera", "quería"] };
 const opened = openJeopardyTile(run, q100);
 assert(opened.active.double === true && opened.active.stake === 200, "double doubles the stake");
-assert(opened.used["subj-100"] === true, "opening consumes the tile");
+assert(opened.used["past-100"] === true, "opening consumes the tile");
 assert(openJeopardyTile(opened, q100) === opened, "used tile is a no-op");
 
 const hit = chooseJeopardyChoice(opened, "Quiera");
