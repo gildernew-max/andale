@@ -7,6 +7,7 @@ import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { FIRST_DOOR_HOY, comeBackTomorrowLine, dayKeyFromDate, firstDoorHero, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
+import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats, doctoraWinReward } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { gradeListedPhrase } from "./wordOrder.js";
@@ -5279,6 +5280,13 @@ export default function App() {
     setWordOrderMiss("");
   };
 
+  /** Meeting-safe: leave a gated Listen beat without hearing. No heart, no requeue. */
+  const skipAudioGate = () => {
+    if (!q || status !== "idle" || !isAudioGatedStep(q)) return;
+    stopSpeak();
+    next();
+  };
+
   const finishLesson = () => {
     if (session?.awarded || !lockAward("lesson")) return;
     beep("win");
@@ -8502,6 +8510,21 @@ export default function App() {
                   <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} className="duo-btn" style={{ background: D.blue, borderBottom: `4px solid ${D.blueDark}`, border: "none", color: "#fff", borderRadius: 18, width: 70, height: 70, fontSize: 28, cursor: "pointer" }} aria-label={uiLang === "en" ? "Listen" : "Escuchar"}><IcSpeaker size={32} /></button>
                   <button type="button" data-testid="lesson-listen-slow" onClick={() => speak(lessonListenText(q), 0.6)} className="duo-btn" style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 18, width: 70, height: 70, fontSize: 24, cursor: "pointer" }} aria-label={uiLang === "en" ? "Slower" : "Más lento"}><IcTurtle size={34} /></button>
                 </div>
+                {status === "idle" && (
+                  <div style={{ margin: "10px auto 0" }}>
+                    <button type="button" data-testid="lesson-listen-skip" onClick={skipAudioGate}
+                      style={{
+                        border: "none", background: HUB_CREAM, color: D.sub, borderRadius: 99,
+                        padding: "3px 10px", fontWeight: 700, fontSize: 11, lineHeight: 1.3, cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}>
+                      {listenSkipLabel(uiLang)}
+                    </button>
+                    <div data-testid="lesson-listen-skip-hint" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.3, color: D.sub, marginTop: 6 }}>
+                      {listenSkipHint(uiLang)}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : q.type === "transform" ? (
               <div style={{ marginBottom: 18 }}>
