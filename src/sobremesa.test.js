@@ -10,6 +10,8 @@ import {
   sobremesaDeepen,
   sobremesaDeepenLabel,
   sobremesaFive,
+  sobremesaFiveCard,
+  sobremesaName,
   sobremesaQuiet,
   sobremesaSell,
   sobremesaTipText,
@@ -19,12 +21,16 @@ import {
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
-assert(SOBREMESA_NAME === "Sobremesa", "tab name is the Sobremesa loan in both langs");
-assert(SOBREMESA_NAME !== "Club" && SOBREMESA_NAME !== "Intermedio" && SOBREMESA_NAME !== "80%", "not Club / Intermedio / 80%");
-assert(SOBREMESA_QUIET.es === "Plática de verdad", "ES quiet");
+assert(SOBREMESA_NAME.es === "Intermedio", "ES title is Intermedio");
+assert(SOBREMESA_NAME.en === "Intermediate", "EN title is Intermediate");
+assert(SOBREMESA_NAME.es !== "Sobremesa" && SOBREMESA_NAME.en !== "Sobremesa", "face is not Sobremesa");
+assert(SOBREMESA_NAME.es !== "Club" && SOBREMESA_NAME.es !== "80%", "not Club / 80%");
+assert(sobremesaName("es") === "Intermedio" && sobremesaName("en") === "Intermediate", "name follows uiLang");
+assert(sobremesaName("fr") === "Intermedio", "unknown uiLang stays ES");
+assert(SOBREMESA_QUIET.es === "Charla real", "ES quiet");
 assert(SOBREMESA_QUIET.en === "Real talk", "EN quiet");
-assert(SOBREMESA_SELL.es === "Los atajos que se te pegan — para que la plática deje de sentirse tarea.", "ES sell");
-assert(SOBREMESA_SELL.en === "The shortcuts that stick — so real talk stops feeling like homework.", "EN sell");
+assert(SOBREMESA_SELL.es === "Las reglas que se te pegan — para que el subjuntivo deje de sentirse tarea.", "ES sell");
+assert(SOBREMESA_SELL.en === "The rules that stick — so the subjunctive stops feeling like homework.", "EN sell");
 assert(sobremesaQuiet("es") === SOBREMESA_QUIET.es && sobremesaQuiet("en") === SOBREMESA_QUIET.en, "quiet follows uiLang");
 assert(sobremesaQuiet("fr") === SOBREMESA_QUIET.es, "unknown uiLang stays ES");
 assert(sobremesaSell("en") === SOBREMESA_SELL.en, "sell follows EN");
@@ -33,18 +39,18 @@ assert(SOBREMESA_DEEPEN_LABEL.es === "A fondo" && SOBREMESA_DEEPEN_LABEL.en === 
 assert(sobremesaTipsLabel("en") === "Tips" && sobremesaDeepenLabel("es") === "A fondo", "labels follow uiLang");
 
 const ES_FIVE = [
-  "Pretérito vs imperfecto — pasó → pretérito; estaba pasando → imperfecto. Llegué a las ocho; hacía frío.",
-  "Por vs para — meta / destinatario / plazo / dirección → para; causa / ruta / duración / intercambio → por. Salgo para México por trabajo.",
-  "Ser vs estar — identidad / definición → ser; estado / lugar ahora mismo → estar. Es tranquilo, pero hoy está cerrado.",
-  "Gatillos del subjuntivo — querer / dudar / reaccionar / negar + que + otra persona → subjuntivo; hecho → indicativo. Quiero que vengas. / Sé que viene. Prueba suave: tal vez / quiero / no estoy seguro → subjuntivo.",
-  "Deja de empacar el inglés — no armes el español palabra por palabra desde el inglés; ¿cómo lo diría un amigo mexicano? Trabajo aquí suele ganarle a Estoy trabajando aquí.",
+  "Pretérito vs imperfecto — ¿Qué pasó? → pretérito. ¿Qué estaba pasando? → imperfecto. Llegué a las ocho; hacía frío.",
+  "Por vs para — Meta / destinatario / plazo / dirección → para. Causa / ruta / duración / intercambio → por. Salgo para México por trabajo.",
+  "Ser vs estar — Identidad / definición → ser. Estado / lugar ahora mismo → estar. Es tranquilo, pero hoy está cerrado. Evita permanente/temporal.",
+  "Gatillos del subjuntivo — Querer / dudar / reaccionar / negar + que + otra persona → subjuntivo. Hecho → indicativo. Quiero que vengas. / Sé que viene. Prueba suave: tal vez / quiero / no estoy seguro → subjuntivo.",
+  "Deja de empacar el inglés — No armes el español palabra por palabra desde el inglés. ¿Cómo lo diría un amigo mexicano? Trabajo aquí suele ganarle a Estoy trabajando aquí.",
 ];
 const EN_FIVE = [
-  "Preterite vs imperfect — happened → pretérito; was going on → imperfecto. Llegué a las ocho; hacía frío.",
-  "Por vs para — goal/recipient/deadline/direction → para; cause/route/duration/exchange → por. Salgo para México por trabajo.",
-  "Ser vs estar — identity/definition → ser; state/location right now → estar. Es tranquilo, pero hoy está cerrado. Avoid permanent/temporary framing.",
-  "Subjunctive triggers — wanting/doubting/reacting/denying + que + other person → subjuntivo; fact → indicativo. Quiero que vengas. / Sé que viene. Soft test: maybe / I want / I’m not sure → subjuntivo.",
-  "Stop packaging English — don’t build Spanish word-by-word from English; how would a Mexican friend say it? Trabajo aquí often beats Estoy trabajando aquí.",
+  "Pretérito vs imperfecto — What happened? → pretérito. What was going on? → imperfecto. Llegué a las ocho; hacía frío.",
+  "Por vs para — Goal / recipient / deadline / direction → para. Cause / route / duration / exchange → por. Salgo para México por trabajo.",
+  "Ser vs estar — Identity / definition → ser. State / location right now → estar. Es tranquilo, pero hoy está cerrado. Avoid permanent/temporary.",
+  "Subjunctive triggers — Wanting / doubting / reacting / denying + que + other person → subjuntivo. Fact → indicativo. Quiero que vengas. / Sé que viene. Soft test: maybe / I want / I’m not sure → subjuntivo.",
+  "Stop packaging English — Don’t build Spanish word-by-word from English. How would a Mexican friend say it? Trabajo aquí often beats Estoy trabajando aquí.",
 ];
 
 assert(SOBREMESA_FIVE.es.length === 5 && SOBREMESA_FIVE.en.length === 5, "exactly five first-face rules");
@@ -52,8 +58,16 @@ ES_FIVE.forEach((line, i) => assert(SOBREMESA_FIVE.es[i] === line, `ES five ${i 
 EN_FIVE.forEach((line, i) => assert(SOBREMESA_FIVE.en[i] === line, `EN five ${i + 1} exact`));
 assert(sobremesaFive("es").join("\n") === ES_FIVE.join("\n"), "sobremesaFive ES");
 assert(sobremesaFive("en").join("\n") === EN_FIVE.join("\n"), "sobremesaFive EN");
-assert(!SOBREMESA_FIVE.es.join(" ").includes("permanent") && !SOBREMESA_FIVE.es.join(" ").includes("temporary"), "ES ser/estar avoids permanent/temporary");
-assert(SOBREMESA_FIVE.en[2].includes("Avoid permanent/temporary framing."), "EN ser/estar names the trap to avoid");
+assert(!SOBREMESA_FIVE.es.join(" ").includes("Avoid permanent/temporary"), "ES ser/estar avoids English permanent/temporary");
+assert(SOBREMESA_FIVE.en[2].includes("Avoid permanent/temporary."), "EN ser/estar names the trap to avoid");
+assert(SOBREMESA_FIVE.en[0].startsWith("Pretérito vs imperfecto"), "EN rule 1 keeps Spanish title");
+assert(SOBREMESA_FIVE.en[4].startsWith("Stop packaging English"), "EN rule 5 exact title");
+assert(!SOBREMESA_FIVE.es.join(" ").includes("What happened"), "ES five is not EN salad");
+assert(!SOBREMESA_FIVE.en.join(" ").includes("¿Qué pasó"), "EN five is not ES salad");
+
+const pret = sobremesaFiveCard(EN_FIVE[0]);
+assert(pret.title === "Pretérito vs imperfecto", "five card title splits on em dash");
+assert(pret.body.startsWith("What happened?"), "five card body is the teach line");
 
 const MX_EN = [
   "Se accidental — Unintended mishap: Se me cayó el teléfono.",
@@ -87,4 +101,4 @@ assert(deepEn.porpara[3] === "Soft lock: Salgo para México por trabajo.", "EN p
 assert(SOBREMESA_DEEPEN.es.porpara[3] === "Candado suave: Salgo para México por trabajo.", "ES por/para soft lock");
 assert(!JSON.stringify(SOBREMESA_DEEPEN).includes("Club"), "deepen is not Club");
 
-console.log("ok: Sobremesa Intermedio pack — George face / five / tips / deepen");
+console.log("ok: Intermedio ROI5 pack — George face / five / tips behind");
