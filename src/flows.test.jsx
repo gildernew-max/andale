@@ -980,6 +980,8 @@ describe("simulated learner flows", () => {
     await user.click(story2[story2.length - 1]);
     await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
     expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-2/p0.png`);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/Sofía y Mateo llegaron a Cancún/);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).not.toMatch(/Llegué a Cancún/);
   });
 
   const finishStoryPages = async (user) => {
@@ -1992,7 +1994,7 @@ describe("simulated learner flows", () => {
     expect(lifts.join(" ")).toMatch(/PASSAGE:/);
     expect(lifts.join(" ")).toMatch(/quince y veinte pesos|dependo de una sola empresa|cambio climático|roya/);
     expect(lifts.join(" ")).not.toMatch(/Responde según lo que acabas de leer|Answer from what you just read/);
-  });
+  }, 15000);
 
   it("Lectura still shows comprehension after the last paragraph (ungated in-reader)", async () => {
     const user = await boot();

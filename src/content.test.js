@@ -241,6 +241,39 @@ for (const m of MISSIONS) {
   assert(m.storyId && storyIds.has(m.storyId), `${m.id}: storyId ${m.storyId}`);
 }
 
+const story2 = STORIES.find((s) => s.id === "story-2");
+assert(story2.title === "Más allá de la playa", "story-2 ES title lock");
+assert(story2.subtitle === "De Cancún a los cenotes", "story-2 ES subtitle lock");
+assert(story2.titleEn === "Beyond the beach", "story-2 EN title lock");
+assert(story2.subtitleEn === "From Cancún to the cenotes", "story-2 EN subtitle lock");
+assert(story2.paragraphs[0] === "Sofía y Mateo llegaron a Cancún como llega mucha gente: con bloqueador, sombrero y la firme intención de no moverse de la playa durante una semana. El plan era sencillo. Sin embargo, México tiene la costumbre de arruinar los planes sencillos de la mejor manera posible.", "story-2 p0 is George couple POV");
+assert(story2.paragraphs[1] === "El responsable fue un taxista llamado don Arturo. Mientras manejaba por la zona hotelera, les preguntó qué pensaban conocer. «La playa», contestó Mateo, orgulloso del plan. Sofía asintió. Don Arturo los miró por el retrovisor con una mezcla de lástima y paciencia. «La playa está padre», admitió. «Pero ustedes están en tierra maya. Debajo de esta carretera hay ríos secretos. ¿De veras se van a regresar sin verlos?»", "story-2 p1 is couple + don Arturo");
+assert(story2.paragraphs[2] === "Así fue como, dos días después, Sofía y Mateo se encontraron bajando por una escalera de madera hacia un cenote cerca de Valladolid. Un cenote es un pozo natural de agua dulce, formado cuando el techo de una cueva de piedra caliza se derrumba. La península de Yucatán no tiene ríos en la superficie; toda su agua corre por debajo. Para los mayas eran sagrados: puertas al inframundo, fuentes de vida. Por lo tanto, no se entraba a un cenote a la ligera.", "story-2 p2 is couple at the cenote stairs");
+assert(story2.paragraphs[3] === "Nadar ahí es difícil de describir. El agua es tan transparente que los peces parecen flotar en el aire. Un rayo de sol entra por la abertura del techo y cae como un reflector sobre el azul. Arriba cuelgan raíces que bajan buscando el agua. Sofía miró a Mateo y los dos entendieron por qué los mayas pensaban que era un lugar entre dos mundos.", "story-2 p3 is couple swim");
+assert(story2.paragraphs[4] === "Al día siguiente visitaron Chichén Itzá. Debido a la multitud, llegaron temprano. La pirámide de Kukulcán es, además de hermosa, un calendario de piedra: tiene 365 escalones, uno por cada día del año. En los equinoccios, la luz del sol crea sobre la escalera la sombra de una serpiente que baja lentamente. Miles de personas viajan cada año solo para ver ese truco de luz.", "story-2 p4 is couple at Kukulcán");
+assert(story2.paragraphs[5] === "Volvieron a Cancún para el último día y, no obstante, la playa ya les parecía distinta. Seguía siendo hermosa, claro. Pero ahora sabían que era apenas la superficie. Debajo del paraíso turístico hay otro país: más antiguo, más callado y mucho más profundo. Si algún día va usted a Cancún, disfrute su playa. Se la ha ganado. Pero hágale caso a don Arturo: no se regrese sin ver lo que hay debajo.", "story-2 p5 is couple last beach day");
+const story2Hay = story2.paragraphs.join("\n");
+assert(/Sofía y Mateo/.test(story2Hay), "story-2 copy names Sofía y Mateo");
+assert(!/Llegué a Cancún|no moverme|contesté, orgulloso|orgulloso de mi plan|Me miró por el retrovisor|usted está en tierra maya, joven|me encontré bajando|Entendí de inmediato|visité Chichén|Volví a Cancún para mi último/.test(story2Hay), "story-2 has no solo-yo narrator");
+assert((story2.paragraphs[1].match(/don Arturo/gi) || []).length >= 1, "don Arturo is on p1");
+assert(!/don Arturo/.test(story2.paragraphs.slice(2, 5).join("\n")), "don Arturo is not a p2–p4 character");
+assert(story2.glossary.llegaron && !story2.glossary.llegué, "story-2 glossary is couple pretérito, not yo");
+assert(story2.glossary.encontraron && !story2.glossary.encontré, "story-2 glossary drops me encontré");
+assert(story2.glossary.entendieron && !story2.glossary.entendí, "story-2 glossary drops entendí");
+assert(story2.glossary.visitaron && !story2.glossary.visité, "story-2 glossary drops visité");
+assert(story2.glossary.volvieron && !story2.glossary.volví, "story-2 glossary drops volví");
+assert(story2.glossary.sabían && !story2.glossary.sabía, "story-2 glossary drops sabía");
+const story2Extra = STORY_EXTRAS["story-2"];
+assert(story2Extra.en[0] === "Sofía and Mateo land in Cancún planning a beach week — Mexico ruins simple plans kindly.", "story-2 EN p0 is couple");
+assert(story2Extra.en[1] === "Taxi driver don Arturo pushes them past the hotel zone toward secret rivers under Maya land.", "story-2 EN p1 is Arturo + couple");
+assert(story2Extra.en[5] === "Back on the beach, the surface looks different because they know what runs underneath.", "story-2 EN p5 is couple");
+assert(!story2Extra.en.some((line) => /narrator|\bhe learns\b|\bhe now understands\b/.test(line)), "story-2 EN beats are not solo-narrator");
+assert(story2Extra.checkpoints[1].q === "Who changes Sofía and Mateo's plan?", "checkpoint 2 is couple, not narrator");
+assert(story2Extra.checkpoints[1].a === "Don Arturo", "checkpoint 2 answer stays Don Arturo");
+assert(story2Extra.checkpoints[5].q === "What do Sofía and Mateo learn?", "checkpoint 6 is couple");
+assert(story2Extra.checkpoints[0].choices[0] !== story2Extra.checkpoints[0].a, "story-2 checkpoint choices are shuffled on the wire");
+assert(!story2Extra.checkpoints.some((cp) => /narrator/i.test(cp.q)), "no narrator checkpoint on story-2");
+
 assert(UNITS[0]?.id === "subj1" && UNITS[0]?.title === "Subjuntivo presente", "first path unit stays Subjuntivo presente");
 assert(SECTIONS[0]?.unitIds?.[0] === "subj1", "Camino first unit stays Subjuntivo");
 
@@ -1417,12 +1450,6 @@ for (const [slot, bytes, md5] of clearedStory1) {
   assert(createHash("md5").update(buf).digest("hex") === md5, `story-1 ${slot} stays the Brand CLEAR live PNG`);
 }
 const waveAStills = [
-  ["story-2", "p0", 975514, "0d674ba89e02893bd1f30747b213b27b"],
-  ["story-2", "p1", 967398, "9c89f2d8db6407e446f72af114939a6d"],
-  ["story-2", "p2", 1098685, "8a95b9e4141ea302f6cc4f391216c55b"],
-  ["story-2", "p3", 1016972, "df989c338ff921edefd8c42cbfe07815"],
-  ["story-2", "p4", 1020229, "5c232e96c76f73a9cef40e0a539859d5"],
-  ["story-2", "p5", 980599, "95fd5525742d58fc199100f9326a1ff4"],
 ];
 for (const [storyId, slot, bytes, md5] of waveAStills) {
   const stillPng = join(repoRoot, "public", "lectura", storyId, `${slot}.png`);
@@ -1431,6 +1458,23 @@ for (const [storyId, slot, bytes, md5] of waveAStills) {
   assert(buf.subarray(0, 8).equals(pngMagic), `lectura/${storyId}/${slot}.png is a real PNG, not JPEG-named-.png`);
   assert(buf.length === bytes, `lectura/${storyId}/${slot}.png is ${bytes} bytes`);
   assert(createHash("md5").update(buf).digest("hex") === md5, `${storyId} ${slot} is the exact Wave A still`);
+}
+const clearedStory2 = [
+  ["p0", 1434535, "5f7512464bc268c65660081bf7157590"],
+  ["p1", 1362269, "742dc6aab427ae61dba6c50f0e5ec178"],
+  ["p2", 1747777, "d50a1017f8ac7c04b4f59fee3d5c97a7"],
+  ["p3", 1799535, "1f73f409f9716e88d372f9bf708a6c21"],
+  ["p4", 1609729, "c319a20da1396867775349b61109fc1f"],
+  ["p5", 1610017, "258788dd314fdd9313f8322fdf1f5d35"],
+];
+for (const [slot, bytes, md5] of clearedStory2) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-2", `${slot}.png`);
+  assert(existsSync(stillPng), `story-2 ${slot} lives at public/lectura/story-2/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-2/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-2/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-2 ${slot} stays the CLEARed live PNG`);
+  assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-2 ${slot} is 1152×864`);
 }
 const waveBStills = [
   ["story-3", "p0", 1392583, "f768b2f3a1eb0d076bbaf80a862de608"],
