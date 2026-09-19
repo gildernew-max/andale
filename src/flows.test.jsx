@@ -12,7 +12,7 @@ import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
 import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED } from "./recuerdos.js";
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
-import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
+import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
 
@@ -127,9 +127,9 @@ const HUB_FACE = {
     games: "Juegos",
     doctor: "Doctora de frases",
     eighty: "80/20",
-    eightyQuiet: "Subjuntivo en cinco",
+    eightyQuiet: "Reglas del subjuntivo",
     sendero: "Sendero",
-    senderoQuiet: "Camino largo",
+    senderoQuiet: "Tu camino",
   },
   en: {
     hoy: "Hoy",
@@ -138,9 +138,9 @@ const HUB_FACE = {
     games: "Games",
     doctor: "Phrase Doctor",
     eighty: "80/20",
-    eightyQuiet: "Subjunctive in five",
+    eightyQuiet: "Subjunctive rules",
     sendero: "Sendero",
-    senderoQuiet: "Longer path",
+    senderoQuiet: "Your path",
   },
 };
 
@@ -163,8 +163,8 @@ const assertHubFace = (lang = hubUiLang()) => {
   expect(screen.getByTestId("hub-sendero-label").textContent).toBe(face.sendero);
   expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe(face.senderoQuiet);
   const salad = lang === "es"
-    ? /Stories|Games|Phrase Doctor|10-minute plan|Subjunctive in five|Longer path/
-    : /Cuentos|Juegos|Doctora de frases|Plan de 10 minutos|Subjuntivo en cinco|Camino largo/;
+    ? /Stories|Games|Phrase Doctor|10-minute plan|Subjunctive rules|Your path/
+    : /Cuentos|Juegos|Doctora de frases|Plan de 10 minutos|Reglas del subjuntivo|Tu camino/;
   expect(tiles.textContent).not.toMatch(salad);
 };
 
@@ -196,6 +196,16 @@ const assertEqualHub = () => {
   expect(screen.getByTestId("hub-sendero").getAttribute("data-hub-loud")).toBeNull();
   expect(screen.getByTestId("hub-stories").getAttribute("data-hub-loud")).toBeNull();
   expect(screen.getByTestId("hub-games").getAttribute("data-hub-loud")).toBeNull();
+  expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
+  expect(screen.getByTestId("hub-section-title").textContent).toMatch(/Intermedio|Intermediate/);
+  expect(screen.getByTestId("camino-more").textContent).not.toMatch(/Más|More/);
+  const sectionBanners = screen.getAllByTestId("hub-section-banner");
+  expect(sectionBanners.length).toBeGreaterThanOrEqual(1);
+  sectionBanners.forEach((banner) => {
+    expect(banner.style.background).toMatch(CREAM_FILL);
+    expect(banner.style.background).not.toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(banner.textContent).not.toMatch(/Sección \d/);
+  });
 };
 
 const startHoyFromHub = async (user) => {
@@ -2127,7 +2137,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("camino-more")).toBeTruthy();
   });
 
-  it("Hoy + Doctora door buries EMPIEZA / Repasar / Rutina diaria under quiet Más / More", async () => {
+  it("Hoy + Doctora door buries EMPIEZA / Repasar / Rutina diaria under Intermedio", async () => {
     cleanup();
     seedProgress({
       srs: { "subj1|0": { ef: 2.5, reps: 1, interval: 1, due: Date.now() - 1000 } },
@@ -2138,7 +2148,9 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("nav-camino").textContent).toBe("Camino");
-    expect(screen.getByTestId("camino-more").textContent).toBe("Más");
+    expect(screen.getByTestId("hub-section-title").textContent).toBe("Intermedio");
+    expect(screen.getByTestId("hub-section-quiet").textContent).toBe("Charla real");
+    expect(screen.getByTestId("camino-more").textContent).not.toMatch(/Más|More/);
     expect(screen.getByTestId("camino-more").getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByTestId("camino-more-panel")).toBeNull();
     expect(screen.queryByTestId("path-entry")).toBeNull();
@@ -2158,10 +2170,12 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Rutina diaria/);
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     expect(screen.getByTestId("nav-camino").textContent).toBe("Camino");
-    expect(screen.getByTestId("camino-more").textContent).toBe("Más");
+    expect(screen.getByTestId("hub-section-title").textContent).toBe("Intermedio");
 
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("camino-more").textContent).toBe("More"));
+    await waitFor(() => expect(screen.getByTestId("hub-section-title").textContent).toBe("Intermediate"));
+    expect(screen.getByTestId("hub-section-quiet").textContent).toBe("Real talk");
+    expect(screen.getByTestId("camino-more").textContent).not.toMatch(/Más|More/);
     expect(screen.getByTestId("path-entry").textContent).toBe("START");
     expect(screen.getByTestId("camino-review").textContent).toMatch(/Review/);
     expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Daily routine/);
@@ -2169,7 +2183,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("camino-more").textContent).not.toMatch(/Más opciones|See more|More options/);
   });
 
-  it("Doctora hero still buries path CTAs under Más; life door stays first", async () => {
+  it("Doctora hero still buries path CTAs under Intermedio; life door stays first", async () => {
     const today = localToday();
     cleanup();
     seedProgress({
@@ -2184,7 +2198,8 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("hub-hoy")).toBeTruthy();
-    expect(screen.getByTestId("camino-more").textContent).toBe("Más");
+    expect(screen.getByTestId("hub-section-title").textContent).toBe("Intermedio");
+    expect(screen.getByTestId("camino-more").textContent).not.toMatch(/Más|More/);
     expect(screen.queryByTestId("path-entry")).toBeNull();
     expect(screen.queryByTestId("camino-daily-workout")).toBeNull();
     await user.click(screen.getByTestId("camino-more"));
@@ -2263,6 +2278,10 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-hoy-done")).toBe("1");
+    expect(screen.getByTestId("hub-hoy-done")).toBeTruthy();
+    expect(screen.getByTestId("hub-phrase-doctor").getAttribute("data-hub-loud")).toBeNull();
     expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Phrase Doctor|Jugar la escena/);
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
     expect(screen.queryByTestId("path-entry")).toBeNull();
@@ -2611,12 +2630,21 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Vuelve mañana por «.+»\.$/);
     expect(screen.getByTestId("come-back-tomorrow").textContent).not.toBe("Vuelve mañana por la siguiente escena.");
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-hoy-done")).toBe("1");
+    expect(screen.getByTestId("hub-hoy-done")).toBeTruthy();
+    expect(screen.getByTestId("hub-stories").getAttribute("data-hub-loud")).toBeNull();
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
     expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-hoy-done")).toBe("1");
+    expect(screen.getByTestId("hub-hoy-done")).toBeTruthy();
+    expect(screen.getByTestId("hub-phrase-doctor").getAttribute("data-hub-loud")).toBeNull();
+    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(6);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*\d+\/40/);
     expect(screen.getByTestId("rayo-toggle")).toBeTruthy();
@@ -4440,7 +4468,7 @@ describe("simulated learner flows", () => {
     };
     expect(hubSnap.hoy).toMatch(/Hoy/);
     expect(hubSnap.hoy).toMatch(/Plan de 10 minutos/);
-    expect(hubSnap.sendero).toMatch(/Camino largo/);
+    expect(hubSnap.sendero).toMatch(/Tu camino/);
     expect(hubSnap.hoy + hubSnap.stories + hubSnap.games).not.toMatch(/Un año|Seguir gratis|Mexicanismos|Lección perfecta/);
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
@@ -4936,8 +4964,8 @@ describe("simulated learner flows", () => {
     assertEqualHub();
     assertHubFace("es");
     expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe("Plan de 10 minutos");
-    expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("Camino largo");
-    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Subjuntivo en cinco");
+    expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("Tu camino");
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Reglas del subjuntivo");
     expect(screen.getByTestId("eighty-twenty-cta")).toBeTruthy();
     expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
@@ -4966,8 +4994,8 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe("10-minute plan"));
     assertHubFace("en");
-    expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("Longer path");
-    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Subjunctive in five");
+    expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("Your path");
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Subjunctive rules");
 
     await user.click(screen.getByTestId("hub-hoy"));
     await waitFor(() => expect(screen.getByTestId("hoy-plan-eyebrow").textContent).toBe("TODAY · 10 MIN"));
@@ -4977,6 +5005,13 @@ describe("simulated learner flows", () => {
 
     await user.click(screen.getByTestId("hoy-plan-start"));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const sceneChip = screen.getByTestId("lesson-scene-chip");
+    expect(sceneChip.textContent.trim().length).toBeGreaterThan(8);
+    expect(sceneChip.style.background).toMatch(/transparent|^$/);
+    expect(`${sceneChip.style.border} ${sceneChip.style.borderColor} ${sceneChip.style.background}`).not.toMatch(/#FFC800|#FFC800|rgb\(\s*255,\s*200,\s*0\s*\)/i);
+    expect(Number.parseInt(sceneChip.querySelector("div").style.fontSize, 10)).toBeLessThanOrEqual(12);
+    expect(screen.getAllByTestId("choice-card").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByTestId("lesson-check")).toBeTruthy();
   });
 
   it("Learn first CTA is 80/20 Subjuntivo in five — George exact, no deck, no pep", async () => {
@@ -4984,7 +5019,7 @@ describe("simulated learner flows", () => {
     const cta = screen.getByTestId("eighty-twenty-cta");
     expect(cta).toBeTruthy();
     expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(SUBJ_FIVE_LABEL);
-    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe(SUBJ_FIVE_SUB.es);
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Reglas del subjuntivo");
     expect(screen.queryByTestId("eighty-twenty-sub")).toBeNull();
     expect(cta.closest("[data-testid='first-door-hero']")).toBeNull();
     const pathNode = screen.getByRole("button", { name: "Subjuntivo presente" });
@@ -5005,7 +5040,7 @@ describe("simulated learner flows", () => {
 
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(SUBJ_FIVE_LABEL));
-    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe(SUBJ_FIVE_SUB.en);
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Subjunctive rules");
     expect(screen.queryByTestId("eighty-twenty-sub")).toBeNull();
 
     await user.click(screen.getByTestId("eighty-twenty-cta"));
@@ -5019,7 +5054,7 @@ describe("simulated learner flows", () => {
     expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
     expect(screen.getByTestId("learn-hub-tiles").textContent).not.toMatch(/Sobremesa/);
     expect(screen.getByTestId("eighty-twenty-cta").textContent).toMatch(/80\/20/);
-    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe(SUBJ_FIVE_SUB.es);
+    expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Reglas del subjuntivo");
     expect(screen.getByTestId("eighty-twenty-cta").textContent).not.toMatch(/Sobremesa/);
     const cta = screen.getByTestId("sobremesa-cta");
     expect(screen.getByTestId("sobremesa-cta-label").textContent).toBe(SOBREMESA_NAME);
