@@ -980,6 +980,8 @@ describe("simulated learner flows", () => {
     await user.click(story2[story2.length - 1]);
     await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
     expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-2/p0.png`);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/Sofía y Mateo llegaron a Cancún/);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).not.toMatch(/Llegué a Cancún/);
   });
 
   const finishStoryPages = async (user) => {

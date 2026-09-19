@@ -2440,37 +2440,39 @@ const STORIES = [
     section: 2,
     title: "Más allá de la playa",
     subtitle: "De Cancún a los cenotes",
+    titleEn: "Beyond the beach",
+    subtitleEn: "From Cancún to the cenotes",
     paragraphs: [
-      "Llegué a Cancún como llega todo el mundo: con bloqueador, sombrero y la firme intención de no moverme de la playa durante una semana. El plan era sencillo. Sin embargo, México tiene la costumbre de arruinar los planes sencillos de la mejor manera posible.",
-      "El responsable fue un taxista llamado don Arturo. Mientras manejaba por la zona hotelera, me preguntó qué pensaba conocer. «La playa», contesté, orgulloso de mi plan. Me miró por el retrovisor con una mezcla de lástima y paciencia. «La playa está padre», admitió. «Pero usted está en tierra maya, joven. Debajo de esta carretera hay ríos secretos. ¿De veras se va a regresar sin verlos?»",
-      "Así fue como, dos días después, me encontré bajando por una escalera de madera hacia un cenote cerca de Valladolid. Un cenote es un pozo natural de agua dulce, formado cuando el techo de una cueva de piedra caliza se derrumba. La península de Yucatán no tiene ríos en la superficie; toda su agua corre por debajo, en un sistema de cuevas inundadas que conecta miles de estos pozos. Para los mayas eran sagrados: puertas al inframundo, fuentes de vida. Por lo tanto, no se entraba a un cenote a la ligera.",
-      "Nadar ahí es difícil de describir. El agua es tan transparente que los peces parecen flotar en el aire. Un rayo de sol entra por la abertura del techo y cae como un reflector sobre el azul. Arriba cuelgan raíces de árboles que bajan veinte metros buscando el agua. Entendí de inmediato por qué los mayas pensaban que era un lugar entre dos mundos.",
-      "Al día siguiente visité Chichén Itzá. Debido a la multitud, llegué temprano. La pirámide de Kukulcán es, además de hermosa, un calendario de piedra: tiene 365 escalones, uno por cada día del año. En los equinoccios, la luz del sol crea sobre la escalera la sombra de una serpiente que baja lentamente. Miles de personas viajan cada año solo para ver ese truco de luz que unos astrónomos diseñaron hace más de mil años, sin telescopios y sin computadoras.",
-      "Volví a Cancún para mi último día y, no obstante, la playa ya me parecía distinta. Seguía siendo hermosa, claro. Pero ahora sabía que era apenas la superficie, en el sentido más literal de la palabra. Debajo del paraíso turístico hay otro país: más antiguo, más callado y mucho más profundo. Si algún día va usted a Cancún, disfrute su playa. Se la ha ganado. Pero hágale caso a don Arturo: no se regrese sin ver lo que hay debajo.",
+      "Sofía y Mateo llegaron a Cancún como llega mucha gente: con bloqueador, sombrero y la firme intención de no moverse de la playa durante una semana. El plan era sencillo. Sin embargo, México tiene la costumbre de arruinar los planes sencillos de la mejor manera posible.",
+      "El responsable fue un taxista llamado don Arturo. Mientras manejaba por la zona hotelera, les preguntó qué pensaban conocer. «La playa», contestó Mateo, orgulloso del plan. Sofía asintió. Don Arturo los miró por el retrovisor con una mezcla de lástima y paciencia. «La playa está padre», admitió. «Pero ustedes están en tierra maya. Debajo de esta carretera hay ríos secretos. ¿De veras se van a regresar sin verlos?»",
+      "Así fue como, dos días después, Sofía y Mateo se encontraron bajando por una escalera de madera hacia un cenote cerca de Valladolid. Un cenote es un pozo natural de agua dulce, formado cuando el techo de una cueva de piedra caliza se derrumba. La península de Yucatán no tiene ríos en la superficie; toda su agua corre por debajo. Para los mayas eran sagrados: puertas al inframundo, fuentes de vida. Por lo tanto, no se entraba a un cenote a la ligera.",
+      "Nadar ahí es difícil de describir. El agua es tan transparente que los peces parecen flotar en el aire. Un rayo de sol entra por la abertura del techo y cae como un reflector sobre el azul. Arriba cuelgan raíces que bajan buscando el agua. Sofía miró a Mateo y los dos entendieron por qué los mayas pensaban que era un lugar entre dos mundos.",
+      "Al día siguiente visitaron Chichén Itzá. Debido a la multitud, llegaron temprano. La pirámide de Kukulcán es, además de hermosa, un calendario de piedra: tiene 365 escalones, uno por cada día del año. En los equinoccios, la luz del sol crea sobre la escalera la sombra de una serpiente que baja lentamente. Miles de personas viajan cada año solo para ver ese truco de luz.",
+      "Volvieron a Cancún para el último día y, no obstante, la playa ya les parecía distinta. Seguía siendo hermosa, claro. Pero ahora sabían que era apenas la superficie. Debajo del paraíso turístico hay otro país: más antiguo, más callado y mucho más profundo. Si algún día va usted a Cancún, disfrute su playa. Se la ha ganado. Pero hágale caso a don Arturo: no se regrese sin ver lo que hay debajo.",
     ],
     glossary: {
-      llegué: ["I arrived (preterite)"], bloqueador: ["sunscreen", "The Mexican word — in Spain it's «protector solar»."],
-      firme: ["firm"], intención: ["intention"], moverme: ["to move (myself)"], playa: ["beach"],
+      llegaron: ["they arrived (preterite)"], gente: ["people"], bloqueador: ["sunscreen", "The Mexican word — in Spain it's «protector solar»."],
+      firme: ["firm"], intención: ["intention"], moverse: ["to move (oneself)"], playa: ["beach"],
       semana: ["week"], plan: ["plan"], sencillo: ["simple"],
       embargo: ["however", "«Sin embargo» = however. (Alone, embargo = seizure — your day job.)"],
       costumbre: ["habit / custom"], arruinar: ["to ruin"], planes: ["plans"], manera: ["way / manner"],
       posible: ["possible"], responsable: ["the one responsible"], taxista: ["taxi driver"], llamado: ["named / called"],
       manejaba: ["was driving", "Manejar = to drive in Latin America; Spain says «conducir»."],
       zona: ["zone / district"], hotelera: ["hotel (adj.)", "La zona hotelera: Cancún's beachfront strip."],
-      pensaba: ["was planning / thinking"], conocer: ["to get to know / visit"], contesté: ["I answered"],
-      orgulloso: ["proud"], miró: ["looked at (mirar)"], retrovisor: ["rearview mirror"], mezcla: ["mix / blend"],
+      pensaban: ["were planning / thinking"], conocer: ["to get to know / visit"], contestó: ["answered (preterite)"],
+      orgulloso: ["proud"], asintió: ["nodded (asentir)"], miró: ["looked at (mirar)"], retrovisor: ["rearview mirror"], mezcla: ["mix / blend"],
       lástima: ["pity"], paciencia: ["patience"],
       padre: ["cool / great (Mex.)", "«Está padre» = it's great. Nothing to do with fathers."],
-      admitió: ["admitted"], tierra: ["land / earth"], maya: ["Maya / Mayan"], debajo: ["underneath / below"],
+      admitió: ["admitted"], ustedes: ["you (plural)"], tierra: ["land / earth"], maya: ["Maya / Mayan"], debajo: ["underneath / below"],
       carretera: ["highway"], ríos: ["rivers"], secretos: ["secret (adj. pl)"],
       veras: ["really", "«¿De veras?» = really? / seriously?"],
-      regresar: ["to return / go back"], verlos: ["to see them"], encontré: ["I found (myself)"],
+      regresar: ["to return / go back"], verlos: ["to see them"], encontraron: ["they found (themselves)"],
       bajando: ["going down"], escalera: ["staircase / ladder"], madera: ["wood"],
       cenote: ["cenote", "Natural sinkhole; from Mayan «ts'onot». Yucatán has thousands."],
       pozo: ["well / pit"], natural: ["natural"], agua: ["water"], formado: ["formed"],
       cueva: ["cave"], piedra: ["stone / rock"], caliza: ["limestone"], derrumba: ["collapses (derrumbarse)"],
-      península: ["peninsula"], superficie: ["surface"], corre: ["runs / flows (correr)"], sistema: ["system"],
-      inundadas: ["flooded"], conecta: ["connects"], miles: ["thousands"], pozos: ["wells / pits"],
+      península: ["peninsula"], superficie: ["surface"], corre: ["runs / flows (correr)"],
+      miles: ["thousands"],
       mayas: ["the Maya"], sagrados: ["sacred"], puertas: ["doors / gates"],
       inframundo: ["the underworld", "Xibalbá in Maya cosmology — entered through water."],
       fuentes: ["sources / springs"],
@@ -2479,22 +2481,20 @@ const STORIES = [
       nadar: ["to swim"], difícil: ["difficult"], describir: ["to describe"], transparente: ["transparent / clear"],
       peces: ["fish (pl)"], parecen: ["seem (parecer)"], flotar: ["to float"], rayo: ["ray / beam"],
       sol: ["sun"], abertura: ["opening"], cae: ["falls (caer)"], reflector: ["spotlight"],
-      arriba: ["above / up"], cuelgan: ["hang (colgar)"], raíces: ["roots"], árboles: ["trees"],
-      bajan: ["descend"], metros: ["meters"], buscando: ["searching for"], entendí: ["I understood"],
-      inmediato: ["immediately", "«De inmediato» = right away."], lugar: ["place"], mundos: ["worlds"],
-      siguiente: ["next / following"], visité: ["I visited"],
+      arriba: ["above / up"], cuelgan: ["hang (colgar)"], raíces: ["roots"],
+      bajan: ["descend"], buscando: ["searching for"], entendieron: ["they understood"],
+      lugar: ["place"], mundos: ["worlds"],
+      siguiente: ["next / following"], visitaron: ["they visited"],
       debido: ["due to", "«Debido a» = formal because of — another connector."],
       multitud: ["crowd"], temprano: ["early"], pirámide: ["pyramid"], hermosa: ["beautiful"],
       calendario: ["calendar"], escalones: ["steps / stairs"], equinoccios: ["equinoxes"],
       crea: ["creates (crear)"], sombra: ["shadow"], serpiente: ["serpent / snake", "Kukulcán: the feathered-serpent god."],
       lentamente: ["slowly"], personas: ["people"], viajan: ["travel"], truco: ["trick"],
-      astrónomos: ["astronomers"], diseñaron: ["designed (preterite)"], mil: ["a thousand"],
-      telescopios: ["telescopes"], computadoras: ["computers", "LatAm word; Spain says «ordenadores»."],
-      volví: ["I returned (volver)"], último: ["last / final"],
+      volvieron: ["they returned (volver)"], último: ["last / final"],
       obstante: ["nevertheless", "«No obstante» = formal sin embargo. Contract Spanish."],
       parecía: ["seemed (imperfect)"], distinta: ["different"], seguía: ["kept being (seguir)"],
-      sabía: ["I knew (imperfect)"], apenas: ["barely / just"], sentido: ["sense / meaning"],
-      literal: ["literal"], palabra: ["word"], paraíso: ["paradise"], turístico: ["tourist (adj.)"],
+      sabían: ["they knew (imperfect)"], apenas: ["barely / just"],
+      paraíso: ["paradise"], turístico: ["tourist (adj.)"],
       país: ["country"], antiguo: ["ancient / old"], callado: ["quiet / silent"], profundo: ["deep"],
       disfrute: ["enjoy (usted command)", "Formal imperative — registro unit in action."],
       ganado: ["earned", "«Se la ha ganado» = you've earned it."],
@@ -3035,20 +3035,20 @@ const STORY_EXTRAS = {
     collectible: { es: "Mapa de cenote", en: "Cenote map" },
     keyWords: ["bloqueador", "padre", "cenote", "inframundo", "transparente", "debido", "obstante", "hágale"],
     en: [
-      "The narrator arrives in Cancún planning to stay on the beach, but Mexico ruins simple plans in the best way.",
-      "A taxi driver challenges him to see the hidden rivers beneath Maya land instead of only the beach.",
-      "At a cenote near Valladolid, he learns these sinkholes connect underground waters and were sacred to the Maya.",
-      "Swimming there feels otherworldly: clear water, fish, sunbeams, and roots descending from above.",
-      "At Chichén Itzá, Kukulcán's pyramid becomes a stone calendar and light trick designed by ancient astronomers.",
-      "Back in Cancún, the beach feels different because he now understands the deeper country beneath it.",
+      "Sofía and Mateo land in Cancún planning a beach week — Mexico ruins simple plans kindly.",
+      "Taxi driver don Arturo pushes them past the hotel zone toward secret rivers under Maya land.",
+      "Near Valladolid they descend into a cenote and learn these sinkholes were sacred doorways.",
+      "Swimming there: clear water, fish, a sun shaft, roots from above — two worlds at once.",
+      "Early at Chichén Itzá, Kukulcán reads as a stone calendar and light trick.",
+      "Back on the beach, the surface looks different because they know what runs underneath.",
     ],
     checkpoints: [
-      { q: "What was the original plan?", a: "Stay on the beach", choices: ["Stay on the beach", "Visit ruins", "Take Spanish classes"] },
-      { q: "Who changes the narrator's plan?", a: "Don Arturo", choices: ["Don Arturo", "A hotel manager", "A lifeguard"] },
-      { q: "What is a cenote?", a: "A natural freshwater sinkhole", choices: ["A natural freshwater sinkhole", "A pyramid", "A beach club"] },
-      { q: "Why does the cenote feel magical?", a: "Clear water and sunbeams", choices: ["Clear water and sunbeams", "Loud music", "Colored lights"] },
-      { q: "Why is Kukulcán's pyramid a calendar?", a: "It has 365 steps", choices: ["It has 365 steps", "It has twelve rooms", "It shows the moon"] },
-      { q: "What does the narrator learn?", a: "There is a deeper Mexico beneath the beach", choices: ["There is a deeper Mexico beneath the beach", "The beach is boring", "Cancún has no history"] },
+      { q: "What was the original plan?", a: "Stay on the beach", choices: ["Visit ruins", "Stay on the beach", "Take Spanish classes"] },
+      { q: "Who changes Sofía and Mateo's plan?", a: "Don Arturo", choices: ["A hotel manager", "A lifeguard", "Don Arturo"] },
+      { q: "What is a cenote?", a: "A natural freshwater sinkhole", choices: ["A pyramid", "A natural freshwater sinkhole", "A beach club"] },
+      { q: "Why does the cenote feel magical?", a: "Clear water and sunbeams", choices: ["Loud music", "Colored lights", "Clear water and sunbeams"] },
+      { q: "Why is Kukulcán a calendar?", a: "It has 365 steps", choices: ["It has twelve rooms", "It has 365 steps", "It shows the moon"] },
+      { q: "What do Sofía and Mateo learn?", a: "There is a deeper Mexico beneath the beach", choices: ["The beach is boring", "There is a deeper Mexico beneath the beach", "Cancún has no history"] },
     ],
   },
 };
@@ -7159,8 +7159,8 @@ export default function App() {
                       <IcBook size={28} />
                     </div>
                     <div style={{ flex: 1 }}>
-	                      <div style={{ fontWeight: 900, fontSize: 18 }}>{story.title}</div>
-	                      <div style={{ fontSize: 13, color: D.sub, fontWeight: 800 }}>{meta.place ? `${meta.place} · ` : ""}{story.subtitle}</div>
+	                      <div style={{ fontWeight: 900, fontSize: 18 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
+	                      <div style={{ fontSize: 13, color: D.sub, fontWeight: 800 }}>{meta.place ? `${meta.place} · ` : ""}{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
 		                      <div style={{ fontSize: 12, color: sec.color, fontWeight: 900, marginTop: 4 }}>{story.paragraphs.length} {L.paragraphs} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
 		                      {souvenir && <div style={{ fontSize: 11.5, color: claimed ? D.greenDark : D.sub, fontWeight: 900, marginTop: 4 }}>{claimed ? "✓ " : ""}{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
 	                    </div>
@@ -9450,8 +9450,8 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
 	              <button type="button" onClick={() => { setWordSel(null); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{story.title}</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: sec.color }}>{story.subtitle}</div>
+                <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: sec.color }}>{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
               </div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
