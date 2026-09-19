@@ -263,11 +263,6 @@ assert(story2.glossary.entendieron && !story2.glossary.entendí, "story-2 glossa
 assert(story2.glossary.visitaron && !story2.glossary.visité, "story-2 glossary drops visité");
 assert(story2.glossary.volvieron && !story2.glossary.volví, "story-2 glossary drops volví");
 assert(story2.glossary.sabían && !story2.glossary.sabía, "story-2 glossary drops sabía");
-const story2Src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "App.jsx"), "utf8");
-const STORY_EXTRAS = Function("D", `"use strict"; return (${extractConst(story2Src, "STORY_EXTRAS")});`)({
-  green: "#58CC02", greenDark: "#46A302", purple: "#CE82FF", purpleDark: "#A567CC",
-  blue: "#1CB0F6", blueDark: "#1899D6", gold: "#FFC800", goldDark: "#E6A800",
-});
 const story2Extra = STORY_EXTRAS["story-2"];
 assert(story2Extra.en[0] === "Sofía and Mateo land in Cancún planning a beach week — Mexico ruins simple plans kindly.", "story-2 EN p0 is couple");
 assert(story2Extra.en[1] === "Taxi driver don Arturo pushes them past the hotel zone toward secret rivers under Maya land.", "story-2 EN p1 is Arturo + couple");
