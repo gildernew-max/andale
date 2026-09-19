@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (Lectura story-4 Brand p2/p5 regen + George ¶3/¶4/¶6)
+
+**What changed**
+- `public/lectura/story-4/p0.png`–`p5.png` are Brand CLEAR stills (1152×864 RGB PNG). p2 + p5 REGEN (same Lupe braid + sage ribbon; p2 right=plate / left=cash; p5 calm tan envelope). Byte-identical to the attached pack.
+- App.jsx `story-4` ¶3 / ¶4 / ¶6 are George rewrite CLEAR (hands match still; nieta in words only; pesos inside the sobre). ¶1 · ¶2 · ¶5 unchanged.
+- Content test locks md5s / byte sizes (`clearedStory4`) and the George strings. Path still `${BASE_URL}lectura/story-4/pN.png`.
+- Soft chrome parked. Memory / Jeopardy / Listen Skip / hub declutter not touched.
+
+**Why**
+- Hand CLEAR: rewire stills + George rewrite together. Do not ship old hands / on-screen nieta / peso-count copy under regen stills.
+
 ## 2026-09-19 (meeting-safe Listen Skip)
 
 **What changed**
