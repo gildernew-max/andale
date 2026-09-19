@@ -15,7 +15,7 @@ import { SUBJ_FIVE, SUBJ_FIVE_LABEL, SUBJ_FIVE_SUB } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL } from "./sobremesa.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, safeRiskyCorrectKeys } from "./safeRisky.js";
 import { CUBETAS_BIRD_PX, CUBETAS_BUCKET_SRC, CUBETAS_DEAD_LABELS, CUBETAS_EASE_ENTER, CUBETAS_EASE_EXIT, CUBETAS_EASE_LIFT, CUBETAS_HINT, CUBETAS_TITLE, CUBETAS_WIN_MS, OJALA_QUE_PACK, cubetasHint } from "./cubetas.js";
-import { HANGMAN_ACCENTS, HANGMAN_BANK, HANGMAN_HOWTO, HANGMAN_QUIET, HANGMAN_TIMER_DEFAULT, HANGMAN_TITLE, hangmanShowTeach, hangmanSlotKey, hangmanTitle } from "./hangman.js";
+import { HANGMAN_ACCENTS, HANGMAN_BANK, HANGMAN_HOWTO, HANGMAN_QUIET, HANGMAN_TIMER_DEFAULT, HANGMAN_TITLE, hangmanRegionChip, hangmanShowTeach, hangmanSlotKey, hangmanTitle } from "./hangman.js";
 import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
 
@@ -1096,6 +1096,8 @@ assert(appSrc.includes("data-testid=\"hangman-board\""), "Hangman playfield is t
 assert(appSrc.includes("data-testid=\"hangman-howto\""), "Hangman open how-to is testable");
 assert(appSrc.includes("data-testid=\"hangman-literal\""), "Hangman Literal hook is testable");
 assert(appSrc.includes("data-testid=\"hangman-why\""), "Hangman Why hook is testable");
+assert(appSrc.includes("data-testid=\"hangman-region\""), "Hangman region chip is testable");
+assert(appSrc.includes("hangmanRegionChip"), "Hangman wires MX/ES/AR/CO chips");
 assert(appSrc.includes("data-testid=\"hangman-slot-key\""), "Hangman blanks show stable numbers");
 assert(appSrc.includes("hangmanSlotIndexForKey"), "Hangman number keys jump focus");
 assert(appSrc.includes("hangmanIsLetterKey"), "Hangman accepts hardware letter keys");
@@ -1118,6 +1120,8 @@ assert(HANGMAN_HOWTO.es === "Adivina la palabra. Una letra a la vez.", "ES how-t
 assert(HANGMAN_HOWTO.en === "Guess the word. One letter at a time.", "EN how-to stamp");
 assert(HANGMAN_BANK.length === 20, "Hangman bank is the 20-word stamp");
 assert(HANGMAN_BANK.some((row) => row.word === "órale"), "bank includes órale");
+assert(hangmanRegionChip(HANGMAN_BANK.find((r) => r.word === "órale")) === "MX · raro en ES/AR/CO", "órale region chip flags ES/AR/CO");
+assert(HANGMAN_BANK.every((row) => row.home?.length && row.weird?.en), "every Hangman word has country notes");
 assert(HANGMAN_ACCENTS.join("") === "ÁÉÍÓÚÜ", "accent keys are ÁÉÍÓÚÜ");
 assert(HANGMAN_TIMER_DEFAULT === false, "Hangman timer is off by default");
 assert(hangmanSlotKey(0) === "1" && hangmanSlotKey(1) === "2", "Hangman blank numbers are stable");

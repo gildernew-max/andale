@@ -1606,6 +1606,8 @@ describe("simulated learner flows", () => {
       expect(screen.getByTestId("hangman-literal")).toBeTruthy();
       expect(screen.getByTestId("hangman-why")).toBeTruthy();
       expect(screen.getByTestId("hangman-why").textContent).toMatch(/^Por qué/);
+      expect(screen.getByTestId("hangman-region-chip")).toBeTruthy();
+      expect(screen.getByTestId("hangman-region-chip").textContent).toMatch(/^MX/);
       expect(screen.queryByTestId("hangman-why-toggle")).toBeNull();
     }
     await user.click(screen.getByTestId("lang-en"));

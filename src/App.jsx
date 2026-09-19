@@ -84,6 +84,9 @@ import {
   hangmanLiteral,
   hangmanLiteralLabel,
   hangmanMisses,
+  hangmanRegionChip,
+  hangmanRegionNote,
+  hangmanSoundsWeirdOutside,
   hangmanQuiet,
   hangmanShowTeach,
   hangmanSlot,
@@ -9224,6 +9227,14 @@ export default function App() {
                   <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
                   <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
                 </div>
+                {hangmanRegionChip(ahorcado) && (
+                  <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
+                    <span data-testid="hangman-region-chip" className="word-chip" style={{ display: "inline-flex", width: "max-content", maxWidth: "none", whiteSpace: "nowrap", overflow: "visible", textOverflow: "clip", fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
+                    {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
+                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                    )}
+                  </div>
+                )}
                 <Btn color={D.green} dark={D.greenDark} data-testid="hangman-again" onClick={() => startAhorcado(gamesReturnRef.current)} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
                 <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
               </div>
@@ -9294,6 +9305,14 @@ export default function App() {
                       <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
                       <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
                     </div>
+                    {hangmanRegionChip(ahorcado) && (
+                      <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
+                        <span data-testid="hangman-region-chip" className="word-chip" style={{ display: "inline-flex", width: "max-content", maxWidth: "none", whiteSpace: "nowrap", overflow: "visible", textOverflow: "clip", fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
+                        {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
+                          <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
                 <LetterBoard

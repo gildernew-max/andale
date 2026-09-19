@@ -30,8 +30,11 @@ import {
   hangmanMisses,
   hangmanNextEmptySlot,
   hangmanQuiet,
+  hangmanRegionChip,
+  hangmanRegionNote,
   hangmanShowTeach,
   hangmanSlot,
+  hangmanSoundsWeirdOutside,
   hangmanSlotIndexForKey,
   hangmanSlotKey,
   hangmanTimerLabel,
@@ -97,15 +100,27 @@ HANGMAN_BANK.forEach((row) => {
   assert(row.word && !/\s/.test(row.word), `${row.word} is hangman-safe (no spaces)`);
   assert(row.literal?.es && row.literal?.en, `${row.word} has Literal EN+ES`);
   assert(row.why?.es && row.why?.en, `${row.word} has Why EN+ES`);
-  assert(!/\n/.test(`${row.literal.es}${row.literal.en}${row.why.es}${row.why.en}`), `${row.word} Literal/Why are one-liners`);
+  assert(row.region && row.home?.length, `${row.word} has a region face`);
+  assert(row.weird?.es && row.weird?.en, `${row.word} has MX/ES/AR/CO notes`);
+  assert(!/\n/.test(`${row.literal.es}${row.literal.en}${row.why.es}${row.why.en}${row.weird.es}${row.weird.en}`), `${row.word} faces are one-liners`);
   assert(!hangmanHasDeadLabel(`${row.word} ${row.literal.es} ${row.literal.en} ${row.why.es} ${row.why.en}`), `${row.word} has no dead chrome`);
+  assert(hangmanRegionChip(row), `${row.word} has a quiet region chip`);
 });
-assert(hangmanLiteral(HANGMAN_BANK[0], "en") === "Work / a job (everyday)", "chamba Literal EN");
-assert(hangmanLiteral(HANGMAN_BANK[0], "es") === "Trabajo / chamba de todos los días", "chamba Literal ES");
-assert(hangmanWhy(HANGMAN_BANK[0], "en") === "In Mexico, *chamba* is the normal word for work — *trabajo* is fine; *chamba* is how people actually say it.", "chamba Why EN");
-assert(hangmanWhy(HANGMAN_BANK[0], "es") === "En México *chamba* es la forma viva de decir trabajo.", "chamba Why ES");
+assert(hangmanLiteral(HANGMAN_BANK[0], "en") === "Work / a job", "chamba Literal EN");
+assert(hangmanLiteral(HANGMAN_BANK[0], "es") === "Trabajo / chamba", "chamba Literal ES");
+assert(hangmanWhy(HANGMAN_BANK[0], "en") === "Everyday MX for work", "chamba Why EN");
+assert(hangmanWhy(HANGMAN_BANK[0], "es") === "Forma viva MX de trabajo", "chamba Why ES");
 assert(hangmanLiteral(HANGMAN_BANK[2], "en") === "Come on / alright / wow", "órale Literal EN");
-assert(hangmanWhy(HANGMAN_BANK[2], "es") === "Sirve para animar, aceptar o sorprenderse, según el tono.", "órale Why ES");
+assert(hangmanWhy(HANGMAN_BANK[2], "es") === "Anima, acepta o sorprende", "órale Why ES");
+assert(hangmanRegionChip(HANGMAN_BANK[0]) === "MX · raro en ES/AR", "chamba chip flags ES/AR");
+assert(hangmanSoundsWeirdOutside(HANGMAN_BANK[0]), "chamba sounds weird outside MX");
+assert(hangmanRegionNote(HANGMAN_BANK[0], "en") === "ES/AR prefer *trabajo*; CO may know it", "chamba country note EN");
+assert(hangmanRegionChip(HANGMAN_BANK[2]) === "MX · raro en ES/AR/CO", "órale is rare outside MX");
+assert(hangmanRegionChip(HANGMAN_BANK.find((r) => r.word === "gacho")) === "MX", "local MX chip is just MX");
+assert(hangmanRegionChip(HANGMAN_BANK.find((r) => r.word === "bronca")) === "MX · CO · AR", "bronca is wide LATAM");
+assert(hangmanRegionChip(HANGMAN_BANK.find((r) => r.word === "chela")) === "MX · CO · raro en ES/AR", "chela is MX/CO, odd in ES/AR");
+assert(hangmanRegionChip(HANGMAN_BANK.find((r) => r.word === "chisme")) === "MX · ES · AR · CO", "chisme is fine across");
+assert(!hangmanSoundsWeirdOutside(HANGMAN_BANK.find((r) => r.word === "chisme")), "chisme does not sound weird outside MX");
 assert(HANGMAN_DEAD_LABELS.join(" ").includes("AHORCADO / HANGMAN"), "bilingual lockup is dead");
 assert(hangmanHasDeadLabel("AHORCADO / HANGMAN"), "dead-label helper catches lockup");
 
@@ -152,8 +167,9 @@ assert(!isHangmanSolved(walk), "A still blank");
 const solved = guessHangmanLetter(walk, "A");
 assert(isHangmanSolved(solved) && solved.status === "win", "full word solves");
 assert(solved.letters.every((ch, i) => hangmanSlot(solved, i) === ch), "all slots open");
-assert(hangmanLiteral(solved, "en") === "Work / a job (everyday)", "solve exposes Literal");
-assert(hangmanWhy(solved, "es") === "En México *chamba* es la forma viva de decir trabajo.", "solve exposes Why");
+assert(hangmanLiteral(solved, "en") === "Work / a job", "solve exposes Literal");
+assert(hangmanWhy(solved, "es") === "Forma viva MX de trabajo", "solve exposes Why");
+assert(hangmanRegionChip(solved) === "MX · raro en ES/AR", "solve exposes region chip");
 const awarded = finishHangmanRun(solved, true);
 assert(awarded.awarded && awarded.xp === HANGMAN_XP && awarded.gems === HANGMAN_GEM, "win awards practice XP");
 assert(finishHangmanRun(awarded, true) === awarded, "second finish is a no-op");
@@ -177,6 +193,7 @@ assert(hydrated.letters.join("") === "ÓRALE", "hydrate rebuilds accent slots");
 assert(hydrated.guessed.join("") === "OÓ", "hydrate keys old guesses");
 assert(hydrated.timerOn === false, "hydrate keeps timer off");
 assert(hydrated.literal.en === "Come on / alright / wow", "hydrate restamps Literal");
+assert(hangmanRegionChip(hydrated) === "MX · raro en ES/AR/CO", "hydrate restamps region");
 assert(hydrated.focus === 1, "hydrate focuses the first empty blank");
 
 const frozen = guessHangmanLetter(solved, "X");

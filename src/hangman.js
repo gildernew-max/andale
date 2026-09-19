@@ -1,9 +1,9 @@
 /** Hangman / Ahorcado — Games, next to Cubetas. Soft chrome parked.
- *  Brand CLEAR 2026-09-18 · Teaching CLEAR 2026-09-18
+ *  Brand CLEAR 2026-09-18 · Teaching CLEAR 2026-09-19 (MX/ES/AR/CO faces)
  *  One Cenzontle platform-wide — Hangman never adds a coach/mascot.
- *  Mexicanismos bank. After solve: Literal, then Why.
+ *  Mexicanismos bank. After solve: Literal, Why, quiet Region chip.
  *  Keyboard polish: on-screen Spanish board + numbered blanks.
- *  Number keys jump focus; letter keys type. Wrong auto-shows Literal/Why (no Why tap).
+ *  Number keys jump focus; letter keys type. Wrong auto-shows Literal/Why/Region (no Why tap).
  */
 
 import { ABC_LETTERS } from "./letterBoard.js";
@@ -51,231 +51,44 @@ export const HANGMAN_DEAD_LABELS = [
 ];
 
 /**
- * Word bank v1 — wire exact Teaching CLEAR strings.
+ * Word bank v1 — George Teaching CLEAR 2026-09-19 (MX/ES/AR/CO).
  * Hangman-safe: no spaces. Accents count as the letter shown.
+ * Same lemmas as Memory pairs. home/odd drive the quiet region chip.
  */
-export const HANGMAN_BANK = [
-  {
-    word: "chamba",
-    literal: {
-      es: "Trabajo / chamba de todos los días",
-      en: "Work / a job (everyday)",
-    },
-    why: {
-      es: "En México *chamba* es la forma viva de decir trabajo.",
-      en: "In Mexico, *chamba* is the normal word for work — *trabajo* is fine; *chamba* is how people actually say it.",
-    },
-  },
-  {
-    word: "neta",
-    literal: {
-      es: "La verdad / de verdad",
-      en: "The truth / for real",
-    },
-    why: {
-      es: "*¿Neta?* pregunta si va en serio.",
-      en: "*Neta* = “seriously / for real.” *¿Neta?* checks if someone’s kidding.",
-    },
-  },
-  {
-    word: "órale",
-    literal: {
-      es: "Ándale / de acuerdo / wow",
-      en: "Come on / alright / wow",
-    },
-    why: {
-      es: "Sirve para animar, aceptar o sorprenderse, según el tono.",
-      en: "Catch-all yes: agree, urge, or surprise — tone does the work.",
-    },
-  },
-  {
-    word: "carnal",
-    literal: {
-      es: "Cuate / hermano (amigo)",
-      en: "Buddy / brother (friend)",
-    },
-    why: {
-      es: "Amigo cercano; no siempre es familia.",
-      en: "Close friend, not always blood. Warm street register.",
-    },
-  },
-  {
-    word: "morra",
-    literal: {
-      es: "Chava / joven (coloquial)",
-      en: "Girl / young woman (casual)",
-    },
-    why: {
-      es: "Así se dice en la calle; *morro* para él.",
-      en: "Everyday for a young woman; pair *morro* for a guy.",
-    },
-  },
-  {
-    word: "chido",
-    literal: {
-      es: "Padre / bueno (coloquial)",
-      en: "Cool / nice",
-    },
-    why: {
-      es: "El “cool” mexicano de todos los días.",
-      en: "Default “cool” in much of Mexico — beats *genial* in casual talk.",
-    },
-  },
-  {
-    word: "gacho",
-    literal: {
-      es: "Feo / malo / pesado",
-      en: "Lame / mean / rough",
-    },
-    why: {
-      es: "Algo injusto, desagradable o de mal plan.",
-      en: "Bad vibe: unfair, ugly, or unkind depending on context.",
-    },
-  },
-  {
-    word: "chafa",
-    literal: {
-      es: "De mala calidad",
-      en: "Cheap / low-quality",
-    },
-    why: {
-      es: "Barato que se nota: se rompe o se ve falso.",
-      en: "Stuff that looks fine until it breaks — knockoff energy.",
-    },
-  },
-  {
-    word: "bronca",
-    literal: {
-      es: "Problema / pelea / lío",
-      en: "Trouble / a fight / a hassle",
-    },
-    why: {
-      es: "Cuando el problema ya es serio o hay pelea.",
-      en: "*Hay bronca* = there’s a problem. Bigger than a small *problema*.",
-    },
-  },
-  {
-    word: "onda",
-    literal: {
-      es: "Rollo / vibra / “qué tal”",
-      en: "Vibe / deal / “what’s up”",
-    },
-    why: {
-      es: "*¿Qué onda?* saluda; *buena onda* describe a alguien agradable.",
-      en: "*¿Qué onda?* = what’s up. *Buena onda* = good people.",
-    },
-  },
-  {
-    word: "chela",
-    literal: {
-      es: "Cerveza (coloquial)",
-      en: "Beer",
-    },
-    why: {
-      es: "Así pides una cerveza entre cuates.",
-      en: "The casual beer word — not *cerveza* at the table with friends.",
-    },
-  },
-  {
-    word: "antro",
-    literal: {
-      es: "Club / centro nocturno",
-      en: "Club / nightlife spot",
-    },
-    why: {
-      es: "El lugar de la noche; muy de ciudad.",
-      en: "Where you go out dancing/drinking — Mexico City register especially.",
-    },
-  },
-  {
-    word: "elote",
-    literal: {
-      es: "Maíz en mazorca (calle)",
-      en: "Corn on the cob (street)",
-    },
-    why: {
-      es: "El de puesto: mayonesa, chile, queso.",
-      en: "Street-food corn, not just farm corn — butter, mayo, chile, cheese.",
-    },
-  },
-  {
-    word: "esquites",
-    literal: {
-      es: "Maíz en vaso (calle)",
-      en: "Corn in a cup (street)",
-    },
-    why: {
-      es: "Como elote, pero en vaso — típico de feria o puesto.",
-      en: "Same flavors as elote, served in a cup with a spoon.",
-    },
-  },
-  {
-    word: "tianguis",
-    literal: {
-      es: "Mercado al aire libre",
-      en: "Open-air market",
-    },
-    why: {
-      es: "El mercado del barrio; no es un súper.",
-      en: "Neighborhood market day — bargaining, produce, clothes, noise.",
-    },
-  },
-  {
-    word: "combi",
-    literal: {
-      es: "Camioneta de ruta",
-      en: "Shared van / minibus",
-    },
-    why: {
-      es: "Transporte urbano de ruta fija.",
-      en: "City transport: a van on a fixed route. Everyday mobility word.",
-    },
-  },
-  {
-    word: "cruda",
-    literal: {
-      es: "Resaca",
-      en: "Hangover",
-    },
-    why: {
-      es: "Lo que sigue a la peda.",
-      en: "The morning after. *Ando crudo/a.*",
-    },
-  },
-  {
-    word: "chisme",
-    literal: {
-      es: "Cotilleo / rumor",
-      en: "Gossip",
-    },
-    why: {
-      es: "Plática de lo que pasó con fulano.",
-      en: "The social sport — *¿Traes chisme?*",
-    },
-  },
-  {
-    word: "apapacho",
-    literal: {
-      es: "Abrazo / mimo / cuidado",
-      en: "A warm hug / comfort",
-    },
-    why: {
-      es: "Cariño que consuela — abrazo o gesto tierno.",
-      en: "Soft care: hug, spoiling, emotional warmth. Very Mexican affection word.",
-    },
-  },
-  {
-    word: "fresa",
-    literal: {
-      es: "Presumido / de dinero (tipo)",
-      en: "Preppy / posh (person)",
-    },
-    why: {
-      es: "Estilo limpio y de zona nice; a veces se usa de burla.",
-      en: "Social type: polished, mall, careful Spanish — can tease or sting.",
-    },
-  },
+const HANGMAN_FACE_BANK = [
+  ["chamba", "Trabajo / chamba", "Work / a job", "Forma viva MX de trabajo", "Everyday MX for work", "MX strong", ["MX"], ["ES", "AR"], "ES/AR prefieren *trabajo*; CO a veces lo conoce", "ES/AR prefer *trabajo*; CO may know it"],
+  ["neta", "De verdad / la neta", "For real / the truth", "¿Neta? = ¿en serio?", "¿Neta? = seriously?", "MX strong", ["MX"], ["ES", "AR"], "Raro en ES/AR; CO a veces", "Odd in ES/AR; CO sometimes"],
+  ["órale", "Ándale / órale", "Come on / alright / wow", "Anima, acepta o sorprende", "Agree, urge, or surprise", "MX strong", ["MX"], ["ES", "AR", "CO"], "Clásico MX; raro en ES/AR/CO", "Classic MX; rare in ES/AR/CO"],
+  ["carnal", "Cuate / carnal", "Buddy / brother (friend)", "Amigo cercano", "Close friend", "MX strong", ["MX"], ["ES", "AR"], "ES *colega*; AR *boludo/amigo*", "ES *colega*; AR *boludo/amigo*"],
+  ["morra", "Chava / morra", "Young woman (casual)", "Él: *morro*", "Pair *morro* for guys", "MX strong", ["MX"], ["ES", "AR", "CO"], "Raro en ES/AR/CO", "Odd in ES/AR/CO"],
+  ["chido", "Padre / chido", "Cool / nice", "El cool mexicano", "Default MX “cool”", "MX strong", ["MX"], ["ES", "AR"], "ES *guay*; AR *copado/piola*", "ES *guay*; AR *copado/piola*"],
+  ["gacho", "Feo / gacho", "Lame / mean / rough", "Mal plan o injusto", "Bad vibe", "MX strong", ["MX"], [], "Local MX", "Local MX"],
+  ["chafa", "De mala calidad", "Low-quality / cheap", "Barato que se nota", "Cheap that shows", "MX strong", ["MX"], [], "Local MX", "Local MX"],
+  ["bronca", "Lío / bronca", "Trouble / a fight", "Problema serio o pelea", "Hay bronca = problem", "Wide LATAM", ["MX", "CO", "AR"], [], "Bien en MX/CO/AR; ES también *bronca*", "OK in MX/CO/AR; ES *bronca* exists"],
+  ["onda", "Rollo / onda", "Vibe / what’s up", "¿Qué onda? saluda", "¿Qué onda?", "MX strong", ["MX"], ["ES"], "ES *qué tal*; AR *qué onda* a veces", "ES *qué tal*; AR *qué onda* sometimes"],
+  ["chela", "Cerveza (coloquial)", "Beer", "Cerveza entre cuates", "Casual beer", "MX / CO", ["MX", "CO"], ["ES", "AR"], "ES *caña/cerveza*; AR *birra*", "ES *caña/cerveza*; AR *birra*"],
+  ["antro", "Antro / club", "Club / nightlife", "Lugar de la noche", "Nightlife spot", "MX strong", ["MX"], ["ES", "AR"], "ES/AR *boliche/discoteca*", "ES/AR *boliche/discoteca*"],
+  ["elote", "Elote", "Street corn (cob)", "Maíz de puesto", "Street-food corn", "MX / Wide", ["MX"], ["ES", "AR"], "ES *mazorca*; AR *choclo*", "ES *mazorca*; AR *choclo*"],
+  ["esquites", "Esquites", "Corn in a cup", "Elote en vaso", "Cup + spoon", "MX strong", ["MX"], ["ES", "AR", "CO"], "Muy de calle MX", "Very MX street food"],
+  ["tianguis", "Tianguis / mercado", "Open-air market", "Mercado del barrio", "Barrio market day", "MX strong", ["MX"], ["ES"], "Náhuatl MX; ES *mercadillo*", "Nahuatl MX; ES *mercadillo*"],
+  ["combi", "Combi / camioneta", "Shared van", "Ruta fija urbana", "Fixed-route van", "MX strong", ["MX"], ["ES", "AR", "CO"], "Otros países: *buseta/colectivo*", "Other countries: *buseta/colectivo*"],
+  ["cruda", "Resaca / cruda", "Hangover", "Después de la peda", "Morning after", "MX strong", ["MX"], ["ES", "AR", "CO"], "ES/AR/CO *resaca*", "ES/AR/CO *resaca*"],
+  ["chisme", "Chisme", "Gossip", "Cotilleo vivo", "Social sport", "Wide LATAM", ["MX", "ES", "AR", "CO"], [], "Vale en todos; ES también *chisme*", "Fine across; ES also *chisme*"],
+  ["apapacho", "Apapacho / mimo", "Warm hug / comfort", "Cariño que consuela", "Soft care", "MX strong", ["MX"], ["ES", "AR", "CO"], "Querido MX; raro en otros", "Beloved MX; rare elsewhere"],
+  ["fresa", "Fresa", "Preppy / posh person", "Tipo zona nice", "Posh type (can tease)", "MX strong", ["MX"], ["ES"], "Tipo social MX; no el *fresa* de ES (fruta)", "MX social type; not ES *fresa* fruit sense"],
 ];
+
+export const HANGMAN_REGIONS = ["MX home", "MX strong", "Wide LATAM", "MX / CO", "MX / Wide"];
+
+export const HANGMAN_BANK = HANGMAN_FACE_BANK.map(([word, literalEs, literalEn, whyEs, whyEn, region, home, odd, weirdEs, weirdEn]) => ({
+  word,
+  literal: { es: literalEs, en: literalEn },
+  why: { es: whyEs, en: whyEn },
+  region,
+  home,
+  odd,
+  weird: { es: weirdEs, en: weirdEn },
+}));
 
 export function hangmanTitle(uiLang) {
   return uiLang === "en" ? HANGMAN_TITLE.en : HANGMAN_TITLE.es;
@@ -326,6 +139,25 @@ export function hangmanLiteral(entry, uiLang) {
 export function hangmanWhy(entry, uiLang) {
   if (!entry?.why) return "";
   return uiLang === "en" ? entry.why.en : entry.why.es;
+}
+
+/** Quiet region chip — same codes in ES and EN. `MX` / `MX · raro en ES/AR`. */
+export function hangmanRegionChip(entry) {
+  const home = (entry?.home || []).filter(Boolean);
+  const odd = (entry?.odd || []).filter(Boolean);
+  if (!home.length) return "";
+  const base = home.join(" · ");
+  if (!odd.length) return base;
+  return `${base} · raro en ${odd.join("/")}`;
+}
+
+export function hangmanRegionNote(entry, uiLang) {
+  if (!entry?.weird) return "";
+  return uiLang === "en" ? (entry.weird.en || "") : (entry.weird.es || "");
+}
+
+export function hangmanSoundsWeirdOutside(entry) {
+  return (entry?.odd || []).length > 0;
 }
 
 export function hangmanMisses(run) {
@@ -405,6 +237,10 @@ export function startHangmanRun(bank = HANGMAN_BANK, rng = Math.random) {
     letters: hangmanLetters(entry.word),
     literal: entry.literal,
     why: entry.why,
+    region: entry.region,
+    home: entry.home || [],
+    odd: entry.odd || [],
+    weird: entry.weird,
     guessed: [],
     status: "play",
     lastHit: null,
@@ -439,6 +275,10 @@ export function hydrateHangman(raw) {
     letters,
     literal: entry.literal,
     why: entry.why,
+    region: entry.region || raw.region,
+    home: entry.home || raw.home || [],
+    odd: entry.odd || raw.odd || [],
+    weird: entry.weird || raw.weird,
     guessed,
     status,
     lastHit: raw.lastHit ?? null,
