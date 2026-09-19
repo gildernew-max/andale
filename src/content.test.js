@@ -1417,12 +1417,6 @@ for (const [slot, bytes, md5] of clearedStory1) {
   assert(createHash("md5").update(buf).digest("hex") === md5, `story-1 ${slot} stays the Brand CLEAR live PNG`);
 }
 const waveAStills = [
-  ["story-2", "p0", 975514, "0d674ba89e02893bd1f30747b213b27b"],
-  ["story-2", "p1", 967398, "9c89f2d8db6407e446f72af114939a6d"],
-  ["story-2", "p2", 1098685, "8a95b9e4141ea302f6cc4f391216c55b"],
-  ["story-2", "p3", 1016972, "df989c338ff921edefd8c42cbfe07815"],
-  ["story-2", "p4", 1020229, "5c232e96c76f73a9cef40e0a539859d5"],
-  ["story-2", "p5", 980599, "95fd5525742d58fc199100f9326a1ff4"],
 ];
 for (const [storyId, slot, bytes, md5] of waveAStills) {
   const stillPng = join(repoRoot, "public", "lectura", storyId, `${slot}.png`);
@@ -1431,6 +1425,23 @@ for (const [storyId, slot, bytes, md5] of waveAStills) {
   assert(buf.subarray(0, 8).equals(pngMagic), `lectura/${storyId}/${slot}.png is a real PNG, not JPEG-named-.png`);
   assert(buf.length === bytes, `lectura/${storyId}/${slot}.png is ${bytes} bytes`);
   assert(createHash("md5").update(buf).digest("hex") === md5, `${storyId} ${slot} is the exact Wave A still`);
+}
+const clearedStory2 = [
+  ["p0", 1434535, "5f7512464bc268c65660081bf7157590"],
+  ["p1", 1362269, "742dc6aab427ae61dba6c50f0e5ec178"],
+  ["p2", 1747777, "d50a1017f8ac7c04b4f59fee3d5c97a7"],
+  ["p3", 1799535, "1f73f409f9716e88d372f9bf708a6c21"],
+  ["p4", 1609729, "c319a20da1396867775349b61109fc1f"],
+  ["p5", 1610017, "258788dd314fdd9313f8322fdf1f5d35"],
+];
+for (const [slot, bytes, md5] of clearedStory2) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-2", `${slot}.png`);
+  assert(existsSync(stillPng), `story-2 ${slot} lives at public/lectura/story-2/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-2/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-2/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-2 ${slot} stays the CLEARed live PNG`);
+  assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-2 ${slot} is 1152×864`);
 }
 const waveBStills = [
   ["story-3", "p0", 1392583, "f768b2f3a1eb0d076bbaf80a862de608"],
