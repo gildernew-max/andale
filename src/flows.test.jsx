@@ -1885,7 +1885,7 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("cubetas-cenzontle").getAttribute("data-state")).toBe("offstage");
     expect(screen.getByTestId("cubetas-wrong-teach")).toBeTruthy();
     expect(screen.getByTestId("cubetas-literal").textContent).toContain("Ojalá que");
-    expect(screen.getByTestId("cubetas-why").textContent).toContain("«Ojalá» siempre va con subjuntivo.");
+    expect(screen.getByTestId("cubetas-why").textContent).toContain("Deseo");
     expect(screen.queryByTestId("cubetas-exception")).toBeNull();
     expect(screen.queryByTestId("cubetas-why-toggle")).toBeNull();
     expect(screen.getByTestId("cubetas-board").textContent).not.toMatch(/Mejor respuesta|Better answer|shame/i);
@@ -1904,14 +1904,14 @@ describe("simulated learner flows", () => {
     expect(literal.textContent).toContain("Traducción");
     expect(literal.textContent).toContain("Ojalá que");
     expect(why.textContent).toContain("Por qué");
-    expect(why.textContent).toContain("«Ojalá» siempre va con subjuntivo.");
+    expect(why.textContent).toContain("Deseo");
     expect(literal.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(why.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(next.textContent).toMatch(/Siguiente/i);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("cubetas-literal").textContent).toContain("Literal"));
     expect(screen.getByTestId("cubetas-why").textContent).toContain("Why");
-    expect(screen.getByTestId("cubetas-why").textContent).toContain("«Ojalá» always takes the subjunctive.");
+    expect(screen.getByTestId("cubetas-why").textContent).toContain("Wish");
     expect(screen.getByTestId("cubetas-next").textContent).toMatch(/Next chip/i);
     expect(screen.getByTestId("cubetas-title").textContent).toBe("Bucket fly");
     expect(screen.getByTestId("cubetas-bucket-label-subjunctive").textContent).toBe("Subjunctive");

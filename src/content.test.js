@@ -1170,6 +1170,10 @@ assert(CUBETAS_TITLE.es === "Cubetas" && CUBETAS_TITLE.en === "Bucket fly", "tit
 assert(appSrc.includes("cubetasTitle(uiLang)"), "Cubetas title follows uiLang");
 assert(!appSrc.includes("Bucket fly · Cubetas"), "no bilingual lockup title in App");
 assert(OJALA_QUE_PACK[0].phrase === "Ojalá que", "Ojalá que pack leads");
+assert(OJALA_QUE_PACK.length === 22, "Cubetas Why bank v1 is 22 chips");
+assert(OJALA_QUE_PACK.filter((c) => c.exception === true).length === 3, "three exception chips");
+assert(OJALA_QUE_PACK.find((c) => c.id === "ojala-que").why.en === "Wish", "Ojalá Why EN is Wish");
+assert(OJALA_QUE_PACK.find((c) => c.id === "aunque-fact").exception === true, "aunque fact is exception:true");
 assert(appSrc.includes("mascot/cenzontle.png"), "Cubetas reuses the logo Cenzontle");
 assert(CUBETAS_BUCKET_SRC.subjunctive === "cubetas/bucket-subjunctive.png", "subjunctive prop path");
 assert(CUBETAS_BUCKET_SRC.indicative === "cubetas/bucket-indicative.png", "indicative prop path");

@@ -1,10 +1,8 @@
 /** Bucket fly / Cubetas — Games · Match & play (hub v5) · feeds 80/20.
  *  Dave / Hand lock. Two mood buckets only. Soft chrome parked. Win motion ON.
- *  George stamps Literal / Why — hooks are one-liners until then.
- *  Chip face: bubbles size to the full phrase (no clip). Wrong sort auto-shows
- *  one-beat Why inline (no Why tap). Exception chips surface Excepción / Exception
- *  with that Why. Prefer George `why` / `whyEn` / `whyEs` / `exception`.
- *  Sample exception chips below are face fixtures — George fills the bank next.
+ *  George Why CLEAR 2026-09-19 — exact one-beat chip bank. Wrong sort auto-shows
+ *  Why inline (no Why tap). `exception: true` prefixes Exception · / Excepción ·.
+ *  Chips size to the full phrase. Soft chrome parked.
  */
 
 /** George + No Face CLEAR: language-split title, not a bilingual lockup. */
@@ -57,77 +55,40 @@ export const CUBETAS_HINT = {
   en: "Drag or tap the phrase into Subjunctive or Indicative.",
 };
 
-/** Ojalá que pack. Trigger phrases to sort — one chip on the field. Feeds 80/20. */
-export const OJALA_QUE_PACK = [
-  {
-    id: "ojala-que",
-    phrase: "Ojalá que",
-    bucket: "subjunctive",
-    literal: { es: "Ojalá que", en: "I hope that" },
-    why: { es: "«Ojalá» siempre va con subjuntivo.", en: "«Ojalá» always takes the subjunctive." },
-  },
-  {
-    id: "quiero-que",
-    phrase: "Quiero que",
-    bucket: "subjunctive",
-    literal: { es: "Quiero que", en: "I want that" },
-    why: { es: "Deseo + que → subjuntivo.", en: "Wish + que → subjunctive." },
-  },
-  {
-    id: "creo-que",
-    phrase: "Creo que",
-    bucket: "indicative",
-    literal: { es: "Creo que", en: "I think that" },
-    why: { es: "Lo que crees que es verdad va en indicativo.", en: "What you believe is true takes the indicative." },
-  },
-  {
-    id: "no-creo-que",
-    phrase: "No creo que",
-    bucket: "subjunctive",
-    literal: { es: "No creo que", en: "I don’t think that" },
-    why: { es: "Lo que dudas o niegas va en subjuntivo.", en: "What you doubt or deny takes the subjunctive." },
-  },
-  {
-    id: "se-que",
-    phrase: "Sé que",
-    bucket: "indicative",
-    literal: { es: "Sé que", en: "I know that" },
-    why: { es: "Hecho conocido → indicativo.", en: "Known fact → indicative." },
-  },
-  {
-    id: "aunque-es",
-    phrase: "Aunque es",
-    bucket: "indicative",
-    literal: { es: "Aunque es", en: "Although it is" },
-    why: { es: "Hecho concedido: aunque + indicativo.", en: "Admitted fact: aunque + indicative." },
-    exception: {
-      es: "Aunque no siempre pide subjuntivo — si es un hecho, va en indicativo.",
-      en: "Aunque does not always take subjunctive — a known fact stays indicative.",
-    },
-  },
-  {
-    id: "si-llueve",
-    phrase: "Si llueve",
-    bucket: "indicative",
-    literal: { es: "Si llueve", en: "If it rains" },
-    why: { es: "Condición real: si + indicativo.", en: "Real condition: si + indicative." },
-    exception: {
-      es: "Si no es irreal: no va al subjuntivo.",
-      en: "Si is not automatically subjunctive — real conditions stay indicative.",
-    },
-  },
-  {
-    id: "despues-de-que-salio",
-    phrase: "Después de que salió",
-    bucket: "indicative",
-    literal: { es: "Después de que salió", en: "After he/she left" },
-    why: { es: "Hecho pasado: después de que + indicativo.", en: "Completed past: después de que + indicative." },
-    exception: {
-      es: "Después de que + pasado no pide subjuntivo.",
-      en: "Después de que + past fact does not take the subjunctive.",
-    },
-  },
+/** George Why CLEAR 2026-09-19 — exact chip bank. Why is the one beat; exception:true prefixes. */
+const CUBETAS_WHY_BANK = [
+  ["ojala-que", "Ojalá que", "subjunctive", "Deseo", "Wish", false],
+  ["quiero-que", "Quiero que", "subjunctive", "Deseo", "Wish", false],
+  ["espero-que", "Espero que", "subjunctive", "Deseo", "Wish", false],
+  ["me-alegra-que", "Me alegra que", "subjunctive", "Emoción", "Emotion", false],
+  ["temo-que", "Temo que", "subjunctive", "Emoción", "Emotion", false],
+  ["dudo-que", "Dudo que", "subjunctive", "Duda", "Doubt", false],
+  ["no-creo-que", "No creo que", "subjunctive", "Duda", "Doubt", false],
+  ["es-importante-que", "Es importante que", "subjunctive", "Influencia", "Influence", false],
+  ["te-pido-que", "Te pido que", "subjunctive", "Influencia", "Influence", false],
+  ["para-que", "Para que", "subjunctive", "Propósito", "Purpose", false],
+  ["antes-de-que", "Antes de que", "subjunctive", "Aún no", "Not yet", false],
+  ["hasta-que-not-yet", "Hasta que (not yet)", "subjunctive", "Aún no", "Not yet", false],
+  ["cuando-future", "Cuando (future)", "subjunctive", "Aún no", "Not yet", false],
+  ["se-que", "Sé que", "indicative", "Hecho", "Fact", false],
+  ["es-verdad-que", "Es verdad que", "indicative", "Hecho", "Fact", false],
+  ["creo-que", "Creo que", "indicative", "Creencia", "Belief", false],
+  ["pienso-que", "Pienso que", "indicative", "Creencia", "Belief", false],
+  ["me-parece-que", "Me parece que", "indicative", "Creencia", "Belief", false],
+  ["cuando-habit", "Cuando (habit)", "indicative", "Hábito", "Habit", false],
+  ["aunque-fact", "Aunque (fact)", "indicative", "hecho pese a", "fact despite", true],
+  ["aunque-maybe", "Aunque (maybe)", "subjunctive", "tal vez no", "maybe not", true],
+  ["despues-de-que-past", "Después de que (past done)", "indicative", "ya pasó", "already done", true],
 ];
+
+export const OJALA_QUE_PACK = CUBETAS_WHY_BANK.map(([id, phrase, bucket, whyEs, whyEn, exception]) => ({
+  id,
+  phrase,
+  bucket,
+  literal: { es: phrase, en: phrase },
+  why: { es: whyEs, en: whyEn },
+  exception,
+}));
 
 const shuffleRest = (arr, rng = Math.random) => {
   if (arr.length <= 1) return [...arr];
@@ -183,9 +144,9 @@ export function cubetasLiteral(chip, uiLang) {
   return uiLang === "en" ? (chip.literalEn || "") : (chip.literalEs || "");
 }
 
-export function cubetasWhy(chip, uiLang) {
+export function cubetasWhyBeat(chip, uiLang) {
   if (!chip) return "";
-  if (chip.why) return uiLang === "en" ? chip.why.en : chip.why.es;
+  if (chip.why) return uiLang === "en" ? (chip.why.en || "") : (chip.why.es || "");
   return uiLang === "en" ? (chip.whyEn || "") : (chip.whyEs || "");
 }
 
@@ -194,7 +155,24 @@ export function cubetasExceptionLabel(uiLang) {
 }
 
 export function cubetasIsException(chip) {
-  return !!(chip?.exception || chip?.exceptionEs || chip?.exceptionEn);
+  if (!chip) return false;
+  if (chip.exception === true) return true;
+  if (chip.exception === false || chip.exception == null) return !!(chip.exceptionEs || chip.exceptionEn);
+  if (typeof chip.exception === "object") return !!(chip.exception.es || chip.exception.en);
+  return chip.exception === "true" || !!(chip.exceptionEs || chip.exceptionEn);
+}
+
+export function cubetasWhyPrefix(uiLang) {
+  return `${cubetasExceptionLabel(uiLang)} · `;
+}
+
+export function cubetasWhy(chip, uiLang) {
+  const beat = cubetasWhyBeat(chip, uiLang);
+  if (!beat) return "";
+  if (!cubetasIsException(chip)) return beat;
+  const prefix = cubetasWhyPrefix(uiLang);
+  if (beat.startsWith(prefix) || beat.startsWith("Exception · ") || beat.startsWith("Excepción · ")) return beat;
+  return `${prefix}${beat}`;
 }
 
 export function cubetasException(chip, uiLang) {

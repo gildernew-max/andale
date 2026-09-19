@@ -1932,12 +1932,9 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
                 <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasLiteral(chip, uiLang)}</div>
               </div>
               {cubetasIsException(chip) && (
-                <div data-testid="cubetas-exception" style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{cubetasExceptionLabel(uiLang)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasException(chip, uiLang) || cubetasWhy(chip, uiLang)}</div>
-                </div>
+                <div data-testid="cubetas-exception" style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginTop: 8, marginBottom: 2 }}>{cubetasExceptionLabel(uiLang)}</div>
               )}
-              <div data-testid="cubetas-why" style={{ marginTop: 8 }}>
+              <div data-testid="cubetas-why" style={{ marginTop: cubetasIsException(chip) ? 0 : 8 }}>
                 <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.whyLabel}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasWhy(chip, uiLang)}</div>
               </div>
@@ -1950,7 +1947,10 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
                 <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.literalLabel}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasLiteral(taught, uiLang)}</div>
               </div>
-              <div data-testid="cubetas-why" style={{ marginTop: 8 }}>
+              {cubetasIsException(taught) && (
+                <div data-testid="cubetas-exception" style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginTop: 8, marginBottom: 2 }}>{cubetasExceptionLabel(uiLang)}</div>
+              )}
+              <div data-testid="cubetas-why" style={{ marginTop: cubetasIsException(taught) ? 0 : 8 }}>
                 <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.whyLabel}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasWhy(taught, uiLang)}</div>
               </div>
