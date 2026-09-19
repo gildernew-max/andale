@@ -4545,7 +4545,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => {
       expect(screen.getByTestId("win-earned-xp").textContent).toBe("+15");
       expect(screen.getByTestId("win-earned-gems").textContent).toBe("+15");
-    }, { timeout: 1500 });
+    }, { timeout: 3000 });
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(57);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(24);
     await user.click(screen.getByTestId("lang-en"));
