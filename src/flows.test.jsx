@@ -611,6 +611,9 @@ afterEach(() => {
 
 describe("simulated learner flows", () => {
   it("boots Camino, starts subj1, answers one MC, persists andale-v3 without wipe", async () => {
+    // Shuffle can put five non-MC beats first. Dummy wrongs burn the default 5
+    // hearts and land on the fail screen — hasPrompt then stays false. Extra
+    // hearts keep the skip loop on the lesson. Listen Skip does not cost a heart.
     seedProgress({ hearts: 20 });
     const user = await boot();
     await user.click(screen.getByRole("button", { name: "Subjuntivo presente" }));
@@ -627,22 +630,27 @@ describe("simulated learner flows", () => {
 
     // Skip non-MC items (shuffle) until a multiple-choice prompt is up.
     for (let i = 0; i < 12 && !document.querySelector(".choice-card"); i++) {
+      const listenSkip = screen.queryByTestId("lesson-listen-skip");
       const input = document.querySelector("input[placeholder]");
       const tiles = screen.queryAllByTestId("bank-tile");
       const orderTiles = document.querySelectorAll(".tile");
-      if (input) {
+      if (listenSkip) {
+        await user.click(listenSkip);
+      } else if (input) {
         await user.type(input, "x");
         await user.click(screen.getByTestId("lesson-check"));
+        await user.click(continueBtn());
       } else if (tiles.length) {
         await user.click(tiles[0]);
         await user.click(screen.getByTestId("lesson-check"));
+        await user.click(continueBtn());
       } else if (orderTiles.length) {
         await user.click(orderTiles[0]);
         await user.click(screen.getByTestId("lesson-check"));
+        await user.click(continueBtn());
       } else {
         break;
       }
-      await user.click(continueBtn());
       await waitFor(() => expect(hasPrompt()).toBe(true));
     }
     const choices = document.querySelectorAll(".choice-card");

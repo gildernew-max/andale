@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (Camino subj1 flow-test hearts)
+
+**What changed**
+- `flows.test.jsx` Camino boot smoke seeds 20 hearts and uses Listen Skip when the shuffle lands on dictation.
+- Dummy wrongs on type / order / transform no longer burn the default 5 hearts before an MC appears.
+- No product change. No new scene.
+
+**Why**
+- `main` CI `test` failed on `84004cd`: `hasPrompt()` was false after Continuar because five non-MC beats first emptied hearts onto the fail screen. Story-4 stills did not cause it.
+
 ## 2026-09-19 (Lectura story-4 Brand p2/p5 regen + George ¶3/¶4/¶6)
 
 **What changed**
