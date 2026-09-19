@@ -18,6 +18,7 @@ import { CUBETAS_BIRD_PX, CUBETAS_BUCKET_SRC, CUBETAS_DEAD_LABELS, CUBETAS_EASE_
 import { HANGMAN_ACCENTS, HANGMAN_BANK, HANGMAN_HOWTO, HANGMAN_QUIET, HANGMAN_TIMER_DEFAULT, HANGMAN_TITLE, hangmanRegionChip, hangmanShowTeach, hangmanSlotKey, hangmanTitle } from "./hangman.js";
 import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
+import { isAudioGatedStep, LISTEN_SKIP, LISTEN_SKIP_HINT, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -580,6 +581,29 @@ assert(lessonListenText({ type: "mc", text: "¿Con todo, joven, o se lo preparo 
 assert(lessonListenText({ type: "mc", prompt: "Why?" }) === "Why?", "MC without a line still has a Listen source");
 assert(lessonListenText({ type: "listen", text: "Se me hace tarde." }) === "Se me hace tarde.", "listen-type plays q.text");
 assert(lessonListenText({}) === "", "empty question is not a silent undefined speak");
+assert(LISTEN_SKIP.es === "Saltar" && LISTEN_SKIP.en === "Skip", "Listen Skip is quiet Saltar / Skip");
+assert(listenSkipLabel("es") === "Saltar" && listenSkipLabel("en") === "Skip", "Listen Skip follows uiLang");
+assert(LISTEN_SKIP_HINT.es === "Si no puedes oír" && LISTEN_SKIP_HINT.en === "If you can’t hear", "Listen Skip hint is George stamp");
+assert(listenSkipHint("es") === LISTEN_SKIP_HINT.es && listenSkipHint("en") === LISTEN_SKIP_HINT.en, "Listen Skip hint follows uiLang");
+assert(isAudioGatedStep({ type: "listen" }), "Hoy / unit dictation is the gated audio beat");
+assert(!isAudioGatedStep({ type: "mc", text: "¿Con todo?" }), "Hoy connector MC is not gated on hearing");
+assert(appSrc.includes("from \"./listenSkip.js\""), "Listen Skip helper is wired");
+assert(appSrc.includes("listenSkipLabel(uiLang)"), "Listen Skip label follows uiLang");
+assert(appSrc.includes("listenSkipHint(uiLang)"), "Listen Skip hint follows uiLang");
+assert(appSrc.includes("data-testid=\"lesson-listen-skip\""), "Listen Skip is testable");
+assert(appSrc.includes("data-testid=\"lesson-listen-skip-hint\""), "Listen Skip hint is testable");
+assert(appSrc.includes("skipAudioGate"), "Listen Skip calls skipAudioGate");
+assert(appSrc.includes("isAudioGatedStep(q)"), "Skip only fires on a gated audio beat");
+const listenSkipSrc = appSrc.slice(appSrc.indexOf("data-testid=\"lesson-listen-skip\""), appSrc.indexOf("data-testid=\"lesson-listen-skip\"") + 520);
+assert(/background:\s*HUB_CREAM/.test(listenSkipSrc), "Listen Skip sits on HUB_CREAM like timer-off");
+assert(listenSkipSrc.includes("border: \"none\""), "Listen Skip has no new border chrome");
+assert(listenSkipSrc.includes("fontSize: 11"), "Listen Skip matches timer-off / soft secondary weight");
+assert(!/duo-btn/.test(listenSkipSrc), "Listen Skip is not a primary duo-btn");
+assert(!listenSkipSrc.includes("D.blue"), "Listen Skip is not louder than the blue Listen primary");
+assert(!listenSkipSrc.includes("D.green"), "Listen Skip is not louder than CHECK");
+assert((appSrc.match(/data-testid="lesson-listen-skip"/g) || []).length === 1, "one Listen Skip — dictation only");
+assert(!appSrc.includes('data-testid="splash-skip"'), "splash still has no Skip");
+assert(!/soft-paywall[\s\S]{0,200}lesson-listen-skip/.test(appSrc), "paywall bird / Continue free stay parked");
 assert(CUBETAS_HINT.es === "Arrastra o toca la frase en Subjuntivo o Indicativo.", "Cubetas ES George how-to lock");
 assert(CUBETAS_HINT.en === "Drag or tap the phrase into Subjunctive or Indicative.", "Cubetas EN George how-to lock");
 assert(cubetasHint("en") === CUBETAS_HINT.en && cubetasHint("es") === CUBETAS_HINT.es, "Cubetas hint follows uiLang");
