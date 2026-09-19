@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (meeting-safe Listen Skip)
+
+**What changed**
+- Gated Listen / dictation (`type: "listen"`) — Hoy listenBeat plus unit / misión / rutina dictation — gets a quiet Skip so mute / meeting / no speakers is not a dead end.
+- George face: ES `Saltar` · EN `Skip`. Quiet hint ES `Si no puedes oír` · EN `If you can’t hear`. Not Camino `SALTAR` / `SKIP`. Cream chip under Play / Slow — timer-off weight, not louder than CHECK / Listen. No new chrome bank.
+- Skip stops speech and advances. No heart, no requeue, no XP. Hoy connector MC / transform / Lectura stills / paywall / Hangman / Jeopardy / Memory unchanged.
+
+**Why**
+- Hand CLEAR: meeting-safe audio Skip. Soft chrome parked.
+
 ## 2026-09-19 (Lectura story-4 Brand CLEAR stills)
 
 **What changed**

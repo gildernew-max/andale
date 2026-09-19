@@ -2516,6 +2516,96 @@ describe("simulated learner flows", () => {
     const uttered = window.speechSynthesis.speak.mock.calls[0][0];
     expect(uttered.text).toBe(line);
     expect(uttered.text).not.toMatch(/normalmente habla/);
+    expect(screen.queryByTestId("lesson-listen-skip")).toBeNull();
+  });
+
+  it("Hoy Listen Skip continues when you cannot hear", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, hearts: 5 });
+    const line = "¿Con todo, joven, o se lo preparo sin cebolla?";
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        firstHoy: true,
+        host: "luna",
+        questions: [
+          {
+            type: "listen",
+            text: line,
+            answers: [line],
+            _u: "_today",
+            _i: -1,
+          },
+          {
+            type: "mc",
+            prompt: "after-skip connector",
+            text: line,
+            line,
+            choices: ["cilantro, cebolla, salsa y guarnición", "la cuenta con propina"],
+            answer: "cilantro, cebolla, salsa y guarnición",
+            shuffledChoices: ["cilantro, cebolla, salsa y guarnición", "la cuenta con propina"],
+            _u: "_today",
+            _i: -1,
+          },
+        ],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-listen-skip")).toBeTruthy());
+    expect(screen.getByTestId("lesson-listen")).toBeTruthy();
+    expect(screen.getByTestId("lesson-listen").className).toMatch(/duo-btn/);
+    const skip = screen.getByTestId("lesson-listen-skip");
+    expect(skip.textContent).toBe("Saltar");
+    expect(screen.getByTestId("lesson-listen-skip-hint").textContent).toBe("Si no puedes oír");
+    expect(skip.className).not.toMatch(/duo-btn/);
+    expect(skip.style.background).toMatch(CREAM_FILL);
+    expect(skip.style.fontSize).toBe("11px");
+    expect(screen.queryByRole("button", { name: /^SALTAR$|^SKIP$/ })).toBeNull();
+
+    await user.click(skip);
+    await waitFor(() => expect(screen.getByText("after-skip connector")).toBeTruthy());
+    expect(screen.queryByTestId("lesson-listen-skip")).toBeNull();
+    expect(screen.queryByTestId("lesson-listen-skip-hint")).toBeNull();
+    expect(screen.queryByTestId("hoy-win")).toBeNull();
+    expect(document.body.textContent).toMatch(/Escribe lo que escuchas|after-skip connector/);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").hearts ?? 5).toBe(5);
+  });
+
+  it("Listen Skip on a last dictation beat finishes the lesson", async () => {
+    cleanup();
+    seedProgress({ hearts: 5 });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Listen skip last",
+        unitId: "subj1",
+        host: "luna",
+        questions: [{
+          type: "listen",
+          text: "Es importante que llegues temprano a la reunión.",
+          answers: ["Es importante que llegues temprano a la reunión"],
+        }],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-listen-skip")).toBeTruthy());
+    await user.click(screen.getByTestId("lesson-listen-skip"));
+    await waitFor(() => expect(screen.getByRole("heading", { name: /completada|complete/i })).toBeTruthy());
+    expect(screen.queryByTestId("lesson-listen-skip")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").hearts ?? 5).toBe(5);
   });
 
   it("first win shows streak 1 and the vuelve mañana home line", async () => {
@@ -4652,12 +4742,19 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
     expect(screen.getByRole("button", { name: "Escuchar" }).getAttribute("aria-label")).toBe("Escuchar");
     expect(screen.getByRole("button", { name: "Más lento" }).getAttribute("aria-label")).toBe("Más lento");
+    expect(screen.getByTestId("lesson-listen-skip").textContent).toBe("Saltar");
+    expect(screen.getByTestId("lesson-listen-skip-hint").textContent).toBe("Si no puedes oír");
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByRole("button", { name: "Listen" })).toBeTruthy());
     expect(screen.getByRole("button", { name: "Listen" }).getAttribute("aria-label")).toBe("Listen");
     expect(screen.getByRole("button", { name: "Slower" }).getAttribute("aria-label")).toBe("Slower");
     expect(screen.queryByRole("button", { name: "Escuchar" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Más lento" })).toBeNull();
+    expect(screen.getByTestId("lesson-listen-skip").textContent).toBe("Skip");
+    expect(screen.getByTestId("lesson-listen-skip-hint").textContent).toBe("If you can’t hear");
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("lesson-listen-skip").textContent).toBe("Saltar"));
+    expect(screen.getByTestId("lesson-listen-skip-hint").textContent).toBe("Si no puedes oír");
   });
 
   it("story listen and nav aria follow uiLang", async () => {
