@@ -611,6 +611,7 @@ afterEach(() => {
 
 describe("simulated learner flows", () => {
   it("boots Camino, starts subj1, answers one MC, persists andale-v3 without wipe", async () => {
+    seedProgress({ hearts: 20 });
     const user = await boot();
     await user.click(screen.getByRole("button", { name: "Subjuntivo presente" }));
     await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
