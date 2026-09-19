@@ -6,6 +6,8 @@ import {
   comeBackTomorrowLine,
   dayKeyFromDate,
   firstDoorHero,
+  hoyHubDone,
+  hoyHubLoud,
   hoySceneForDay,
   hoyStoryForScene,
   hoyTitleForLang,
@@ -35,6 +37,12 @@ assert(firstDoorHero({}) === FIRST_DOOR_PHRASE_DOCTOR, "empty args → Phrase Do
 assert(firstDoorHero({ todayScene: { id: "taqueria" }, todaySceneDone: false }) !== "subj1", "hero is never Subjuntivo");
 assert(firstDoorHero({ todayScene: { id: "taqueria" }, todaySceneDone: false }) === FIRST_DOOR_HOY, "return door streak≥1: open Hoy stays hero");
 assert(firstDoorHero({ todayScene: { id: "taqueria" }, todaySceneDone: true }) === FIRST_DOOR_PHRASE_DOCTOR, "return door streak≥1: done Hoy → Doctora");
+assert(hoyHubLoud({ todayScene: { id: "taqueria" } }), "open Hoy is the loud hub primary");
+assert(hoyHubLoud({ todayScene: { id: "taqueria" } }) && hoyHubDone({ todaySceneDone: true }), "after first win Hoy stays loud and check-done");
+assert(hoyHubLoud({ todayScene: { id: "taqueria" } }), "Continue-free handoff does not flatten Hoy");
+assert(!hoyHubLoud({ todayScene: null }), "no scene → no Hoy chrome");
+assert(!hoyHubDone({ todaySceneDone: false }), "open Hoy is not check-done");
+assert(!hoyHubDone({}), "empty args are not check-done");
 assert(isDay2Return({ streak: 1, lastDay: "2026-09-04", today: "2026-09-05" }), "streak≥1 + prior lastDay is day-2 return");
 assert(isDay2Return({ streak: 4, lastDay: "2026-09-03", today: "2026-09-05" }), "streak≥1 after a gap is still a return");
 assert(!isDay2Return({ streak: 1, lastDay: "2026-09-05", today: "2026-09-05" }), "same-day after win is not day-2 return");
