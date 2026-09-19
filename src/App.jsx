@@ -111,6 +111,7 @@ import {
   hydrateJeopardy,
   jeopardyAnswerLabel,
   jeopardyAnswered,
+  jeopardyCatLabel,
   jeopardyCategoriesFrom,
   jeopardyChoiceMatch,
   jeopardyDoubleLabel,
@@ -9767,11 +9768,11 @@ export default function App() {
                   <div style={{ marginTop: 6, color: D.sub, fontSize: 13 }}>{jeopardy.score >= 0 ? "+" : ""}{jeopardy.score}</div>
                 </div>
               )}
-              <div data-testid="jeopardy-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(78px, 1fr))`, gap: 7, overflowX: "auto", paddingBottom: 4 }}>
+              <div data-testid="jeopardy-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(0, 1fr))`, gap: 5, overflow: "visible", paddingBottom: 4 }}>
                 {jeopardyCategories.map((cat) => (
-                  <div key={cat.id} style={{ display: "grid", gap: 7, minWidth: 78 }}>
-                    <div data-testid={`jeopardy-cat-${cat.id}`} style={{ minHeight: 54, border: `2px solid #C46B3A`, borderRadius: 12, background: HUB_CREAM, color: MARK_INK, fontSize: 11, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 6, lineHeight: 1.1 }}>
-                      {cat.title[uiLang]}
+                  <div key={cat.id} style={{ display: "grid", gap: 5, minWidth: 0 }}>
+                    <div data-testid={`jeopardy-cat-${cat.id}`} style={{ minHeight: 44, border: `2px solid #C46B3A`, borderRadius: 10, background: HUB_CREAM, color: MARK_INK, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "5px 2px", lineHeight: 1.15, overflow: "visible", whiteSpace: "normal", overflowWrap: "normal", wordBreak: "keep-all", hyphens: "manual", textOverflow: "clip" }}>
+                      {jeopardyCatLabel(cat.id, uiLang)}
                     </div>
                     {JEOPARDY_VALUES.map((value) => {
                       const key = `${cat.id}-${value}`;

@@ -16,7 +16,7 @@ import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL } from 
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, safeRiskyCorrectKeys } from "./safeRisky.js";
 import { CUBETAS_BIRD_PX, CUBETAS_BUCKET_SRC, CUBETAS_DEAD_LABELS, CUBETAS_EASE_ENTER, CUBETAS_EASE_EXIT, CUBETAS_EASE_LIFT, CUBETAS_HINT, CUBETAS_TITLE, CUBETAS_WIN_MS, OJALA_QUE_PACK, cubetasHint } from "./cubetas.js";
 import { HANGMAN_ACCENTS, HANGMAN_BANK, HANGMAN_HOWTO, HANGMAN_QUIET, HANGMAN_TIMER_DEFAULT, HANGMAN_TITLE, hangmanRegionChip, hangmanShowTeach, hangmanSlotKey, hangmanTitle } from "./hangman.js";
-import { JEOPARDY_CATEGORY_IDS, JEOPARDY_HOWTO, JEOPARDY_QUIET, JEOPARDY_TITLE, JEOPARDY_VALUES, jeopardyTitle } from "./jeopardy.js";
+import { JEOPARDY_CAT_LABEL, JEOPARDY_CATEGORY_IDS, JEOPARDY_HOWTO, JEOPARDY_QUIET, JEOPARDY_TITLE, JEOPARDY_VALUES, jeopardyCatLabel, jeopardyTitle } from "./jeopardy.js";
 import { MEMORY_BANK, MEMORY_HOWTO, MEMORY_QUIET, MEMORY_TITLE, memoryRegionChip, memoryTitle } from "./memory.js";
 import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
@@ -1278,6 +1278,15 @@ assert(JEOPARDY_QUIET.es === "Elige categoría, elige valor, responde.", "ES qui
 assert(JEOPARDY_QUIET.en === "Pick a category, pick a value, answer.", "EN quiet is the restored line");
 assert(JEOPARDY_HOWTO.es === JEOPARDY_QUIET.es && JEOPARDY_HOWTO.en === JEOPARDY_QUIET.en, "how-to reuses quiet");
 assert(JEOPARDY_CATEGORY_IDS.length === 6 && JEOPARDY_VALUES.length === 3, "restored 6×3 board");
+assert(appSrc.includes("jeopardyCatLabel(cat.id, uiLang)"), "Jeopardy board headers use the short face");
+assert(appSrc.includes('minmax(0, 1fr)'), "Jeopardy columns shrink to fit six headers on-screen");
+assert(!/jeopardy-grid[\s\S]{0,180}minmax\(78px/.test(appSrc), "Jeopardy grid no longer forces a 78px overflow clip");
+assert(jeopardySlice.includes('overflow: "visible"'), "Jeopardy headers are not overflow-clipped");
+assert(!/jeopardy-cat-\$\{cat\.id\}[\s\S]{0,400}textOverflow:\s*"ellipsis"/.test(appSrc), "Jeopardy headers have no ellipsis");
+assert(JEOPARDY_CAT_LABEL.reg.en === "Register" && JEOPARDY_CAT_LABEL.reg.es === "Registro", "6th header is Register / Registro");
+assert(jeopardyCatLabel("reg", "en") === "Register", "EN 6th header is the full word Register");
+assert(jeopardyCatLabel("reg", "es") === "Registro", "ES 6th header is the full word Registro");
+assert(!Object.values(JEOPARDY_CAT_LABEL).some((row) => /Register and tone|Registro y tono/.test(`${row.es} ${row.en}`)), "board face is not the wrap-cut Register and tone lockup");
 assert(!/cenzontle|penguin|CoachPortrait/.test(memorySlice), "Memory adds no second mascot");
 assert(!/Confetti|soft chrome|cenzontle\.png/.test(memorySlice), "Memory playfield parks soft chrome");
 assert(memorySlice.includes("word-chip"), "Memory word chips size to the full word");

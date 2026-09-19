@@ -1,5 +1,6 @@
 import {
   JEOPARDY_ANSWER,
+  JEOPARDY_CAT_LABEL,
   JEOPARDY_CATEGORY_IDS,
   JEOPARDY_DEAD_LABELS,
   JEOPARDY_DOUBLE,
@@ -18,6 +19,7 @@ import {
   isJeopardyComplete,
   jeopardyAnswerLabel,
   jeopardyAnswered,
+  jeopardyCatLabel,
   jeopardyAward,
   jeopardyCategoriesFrom,
   jeopardyChoiceMatch,
@@ -57,6 +59,16 @@ assert(JEOPARDY_HUB === "games", "lives under Games");
 assert(JEOPARDY_PACK_ID === "foci-v1", "restored SMART_FOCI pack");
 assert(JEOPARDY_CATEGORY_IDS.join(",") === "subj,past,porpara,mex,pron,reg", "six restored category ids");
 assert(JEOPARDY_VALUES.join(",") === "100,200,300", "three restored values");
+assert(JEOPARDY_CAT_LABEL.reg.es === "Registro" && JEOPARDY_CAT_LABEL.reg.en === "Register", "6th column is Registro / Register — not Register and tone");
+assert(jeopardyCatLabel("reg", "es") === "Registro" && jeopardyCatLabel("reg", "en") === "Register", "reg helper is the short face");
+assert(jeopardyCatLabel("subj", "es") === "Subjuntivo" && jeopardyCatLabel("mex", "en") === "Mexico", "board labels follow uiLang");
+JEOPARDY_CATEGORY_IDS.forEach((id) => {
+  const es = jeopardyCatLabel(id, "es");
+  const en = jeopardyCatLabel(id, "en");
+  assert(es && en, `${id} has EN+ES board labels`);
+  assert(!/ and | vs\. | y | en /.test(es) && !/ and | vs\. | y | en /.test(en), `${id} board label is one beat, not a wrap-cut phrase`);
+  assert(!/\n/.test(es + en), `${id} board label is one line`);
+});
 assert(jeopardyTileCount() === 18, "6 × 3 board");
 assert(!JEOPARDY_DEAD_LABELS.includes("Memoria") && !JEOPARDY_DEAD_LABELS.includes("Memory"), "Memory stays out of this pack");
 
