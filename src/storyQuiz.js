@@ -122,3 +122,43 @@ export function pickCompletedStory(stories, claimedStories, rand = Math.random) 
   if (!done.length) return null;
   return done[Math.floor(rand() * done.length)];
 }
+
+/** Fisher–Yates — same algorithm as lesson MC / match tiles. Does not mutate the authored list. */
+export function shuffleChoices(choices, rng = Math.random) {
+  const a = Array.isArray(choices) ? [...choices] : [];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** Session order for one Lectura story: comprehension Qs + in-paragraph checkpoints. */
+export function shuffleStoryChoiceOrder(story, checkpoints = [], rng = Math.random) {
+  return {
+    storyId: story?.id || null,
+    questions: (story?.questions || []).map((qq) => shuffleChoices(qq?.choices, rng)),
+    checkpoints: (checkpoints || []).map((cp) => shuffleChoices(cp?.choices, rng)),
+  };
+}
+
+/** Display list: session shuffle wins, then an attached shuffledChoices, then authored. */
+export function storyQuestionChoices(qq, shuffledList) {
+  if (Array.isArray(shuffledList) && shuffledList.length) return shuffledList;
+  if (Array.isArray(qq?.shuffledChoices) && qq.shuffledChoices.length) return qq.shuffledChoices;
+  return Array.isArray(qq?.choices) ? qq.choices : [];
+}
+
+/** Resolve a stored pick to the choice value. Index is into the displayed list, never authored [0]. */
+export function selectedStoryChoice(qq, selected, shuffledList) {
+  if (selected == null) return undefined;
+  const shown = storyQuestionChoices(qq, shuffledList);
+  if (typeof selected === "number") return shown[selected];
+  return selected;
+}
+
+/** Correctness by value — the authored answer string — not by authored index. */
+export function isStoryChoiceCorrect(qq, selected, shuffledList) {
+  if (!qq) return false;
+  return selectedStoryChoice(qq, selected, shuffledList) === qq.answer;
+}

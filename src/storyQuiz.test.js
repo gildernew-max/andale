@@ -2,10 +2,15 @@ import {
   STORY_QUIZ_CUE,
   STORY_QUIZ_CUE_LINE,
   gatedLiftStoryQuiz,
+  isStoryChoiceCorrect,
   isStoryLecturaDone,
   liftStoryQuizItem,
   passageForStoryQuestion,
   pickCompletedStory,
+  selectedStoryChoice,
+  shuffleChoices,
+  shuffleStoryChoiceOrder,
+  storyQuestionChoices,
   storyQuizCue,
   storyQuizCueLine,
   storyQuizEyebrow,
@@ -125,4 +130,31 @@ assert(pickCompletedStory([cerezas, ofrenda], { "story-0": true, "story-9": true
 const none = gatedLiftStoryQuiz({ "story-9": true }, { id: "story-9", questions: [] }, null, "x", fallback);
 assert(none == null, "claimed story with no questions does not lift");
 
-console.log("ok: story quiz Lectura gate + on-screen passage");
+const authored = ["right", "wrong-a", "wrong-b", "wrong-c"];
+assert(JSON.stringify(shuffleChoices(authored, () => 0)) !== JSON.stringify(authored), "rng 0 is not identity on 4 choices");
+assert(shuffleChoices(authored, () => 0)[0] !== "right", "rng 0 does not leave the authored answer first");
+const shuffled = shuffleChoices(authored, () => 0);
+assert(shuffled.slice().sort().join("|") === authored.slice().sort().join("|"), "shuffle keeps every option");
+assert(authored[0] === "right" && authored !== shuffled, "authored list is not mutated");
+assert(shuffleChoices(["only"], () => 0.99).join() === "only", "single choice stays put");
+assert(shuffleChoices([], () => 0.5).length === 0, "empty choices stay empty");
+
+const q = { choices: authored, answer: "right" };
+assert(storyQuestionChoices(q)[0] === "right", "without a session shuffle, authored order is the fallback");
+assert(storyQuestionChoices(q, shuffled)[0] !== "right", "session shuffle is what the reader shows");
+assert(storyQuestionChoices({ shuffledChoices: shuffled, choices: authored })[0] !== "right", "attached shuffledChoices wins over authored");
+assert(isStoryChoiceCorrect(q, "right", shuffled), "value pick is correct regardless of display index");
+assert(!isStoryChoiceCorrect(q, "wrong-a", shuffled), "wrong value is wrong regardless of display index");
+assert(isStoryChoiceCorrect(q, shuffled.indexOf("right"), shuffled), "legacy display-index pick is scored against the shown list");
+assert(!isStoryChoiceCorrect(q, 0, shuffled), "index 0 is not automatically correct after shuffle");
+assert(selectedStoryChoice(q, "wrong-b", shuffled) === "wrong-b", "value selection is passed through");
+assert(selectedStoryChoice(q, shuffled.indexOf("wrong-c"), shuffled) === "wrong-c", "legacy index resolves against the shown list");
+
+const order = shuffleStoryChoiceOrder(cerezas, [{ choices: ["It visits once a year", "It never returns"] }], () => 0);
+assert(order.storyId === "story-9", "session order keeps the story id");
+assert(order.questions.length === 3 && order.checkpoints.length === 1, "session order covers Qs and checkpoints");
+assert(order.questions.every((list, i) => list[0] !== cerezas.questions[i].answer), "no comprehension Q keeps the authored answer first under rng 0");
+assert(order.questions.every((list, i) => list.includes(cerezas.questions[i].answer)), "every shuffled Q still has the answer");
+assert(order.checkpoints[0][0] !== "It visits once a year", "checkpoint choices shuffle too");
+
+console.log("ok: story quiz Lectura gate + on-screen passage + choice shuffle");

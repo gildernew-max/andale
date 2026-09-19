@@ -202,6 +202,7 @@ for (const s of STORIES) {
     assert(qq.prompt && String(qq.prompt).trim(), `${s.id} Q${i}: prompt`);
     assert(Array.isArray(qq.choices) && qq.choices.length > 0, `${s.id} Q${i}: choices`);
     assert(qq.answer != null && String(qq.answer).trim(), `${s.id} Q${i}: answer`);
+    assert(qq.choices.includes(qq.answer), `${s.id} Q${i}: answer must be one of the choices (by value, not index)`);
   });
 }
 
@@ -1060,6 +1061,10 @@ assert(appSrc.includes("pickCompletedStory"), "rutina picks only claimed Lectura
 assert(appSrc.includes("storyQuizCue"), "practice prompt has a slot for a George story cue");
 assert(appSrc.includes("storyQuizCueLine"), "optional second cue line is hooked, off by default");
 assert(appSrc.includes("storyQuizPassage"), "practice shows the matching Lectura passage");
+assert(appSrc.includes("shuffleStoryChoiceOrder"), "Lectura shuffles choice order when a story opens");
+assert(appSrc.includes("storyQuestionChoices"), "Lectura renders the session shuffle, not authored order");
+assert(appSrc.includes("isStoryChoiceCorrect"), "Lectura scores comprehension by choice value");
+assert(!appSrc.includes("qq.choices[ansSel[i]] === qq.answer"), "Lectura must not score by authored index 0");
 assert(appSrc.includes("passageForStoryQuestion"), "Lectura Qs resolve a same-screen passage");
 assert(appSrc.includes("data-testid=\"story-quiz-cue\""), "story cue eyebrow is testable");
 assert(appSrc.includes("data-testid=\"story-quiz-cue-line\""), "optional cue line slot is testable");
