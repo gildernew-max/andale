@@ -1483,12 +1483,6 @@ const waveBStills = [
   ["story-3", "p3", 1282416, "9d55ca9728c0219263343ecf3fe66a18"],
   ["story-3", "p4", 1286468, "42b9044abff9783608382469fa65a299"],
   ["story-3", "p5", 1221775, "8fdb1e686d1f432631c87c43244a7274"],
-  ["story-4", "p0", 1301162, "b02bd4a7e436f855b10258f8919e6ecf"],
-  ["story-4", "p1", 1689964, "e4ce97da4fe7b3c510eed977947224a0"],
-  ["story-4", "p2", 1407011, "0d7304e46d18c3d99f86ad529ed29af6"],
-  ["story-4", "p3", 1582508, "0d9c715edd52d86d112e77841ffab26e"],
-  ["story-4", "p4", 1612197, "c2a2e8be0e7cc82fea8245cbacfad0d6"],
-  ["story-4", "p5", 1416282, "5e89715edb1aca1bc97e37305918a3a7"],
   ["story-5", "p0", 1173942, "dd567086b1de6e9d75461bca43232fce"],
   ["story-5", "p1", 1229795, "2ba3cacdb1b0e14eb93860e4e2638a30"],
   ["story-5", "p2", 1078901, "322a388dca04222bec63a71b62c98878"],
@@ -1527,6 +1521,22 @@ for (const [storyId, slot, bytes, md5] of waveBStills) {
   assert(buf.subarray(0, 8).equals(pngMagic), `lectura/${storyId}/${slot}.png is a real PNG, not JPEG-named-.png`);
   assert(buf.length === bytes, `lectura/${storyId}/${slot}.png is ${bytes} bytes`);
   assert(createHash("md5").update(buf).digest("hex") === md5, `${storyId} ${slot} is the exact Wave B still`);
+}
+const clearedStory4 = [
+  ["p0", 1513007, "ed2db208d1845b596de6d75a6669ed84"],
+  ["p1", 1887010, "5e9783f608e764641f1608d8a1cc5c46"],
+  ["p2", 1833358, "cc1af3e36380a9195e7987ad05d11ccd"],
+  ["p3", 1656532, "463fce6b27f4709dc791d89fe7968f4d"],
+  ["p4", 1615033, "67e32279ea0606b444d50344eb98d82c"],
+  ["p5", 1821193, "c98dfe951852311fb8aa5ccc2dba8f42"],
+];
+for (const [slot, bytes, md5] of clearedStory4) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-4", `${slot}.png`);
+  assert(existsSync(stillPng), `story-4 ${slot} lives at public/lectura/story-4/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-4/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-4/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-4 ${slot} stays the Brand CLEAR live PNG`);
 }
 for (const id of ["luna", "rafa", "valeria", "diego"]) {
   const coachPng = join(repoRoot, "public", "coaches", `${id}-happy.png`);

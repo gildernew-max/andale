@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (Lectura story-4 Brand CLEAR stills)
+
+**What changed**
+- `public/lectura/story-4/p0.png`–`p5.png` are the Brand CLEAR stills (1152×864 RGB PNG). Byte-identical to the attached pack. Single hero Doña Lupe, braid + sage ribbon, on people pages; p4 tasting-plate close.
+- Live copy stays George PASS: App.jsx `story-4` *Doña Lupe y el mole* paragraphs untouched. Soft chrome parked.
+- Content test locks the new md5s / byte sizes (`clearedStory4`). Path still `${BASE_URL}lectura/story-4/pN.png`.
+
+**Why**
+- Hand CLEAR + George words-vs-stills PASS. Land stills against current copy. No rewrite. Story-0 / story-1 / story-2 out of scope.
+
 ## 2026-09-19 (Lectura story-0 niña + Brand CLEAR stills)
 
 **What changed**
