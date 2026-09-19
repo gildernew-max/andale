@@ -1,4 +1,4 @@
-/** First-win Cenzontle: firstHoy + firstDoctora + story-0 Cubetas v2 780ms beat, later Lectura WinPerch. Soft chrome parked. */
+/** First-win Cenzontle gates. story-0 / firstHoy / firstDoctora now share the #161 fly-away (not Cubetas perch). Later Lectura stays WinPerch. Soft chrome parked. */
 
 import {
   CUBETAS_EASE_ENTER,

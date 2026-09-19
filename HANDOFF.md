@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-19 (Cenzontle fly-away on free story-win / CONTINUAR)
+
+**What changed**
+- Free story-win bird (story-0, plus the shared firstHoy / firstDoctora helper) plays the #161 fly-away: wing beat + soft arc up-and-out, leaves the frame. Flap-then-perch + WinPerch settle killed on that path.
+- Same `CenzontleFlyAway` motion as the paywall (`PAYWALL_FLY_MS` 800 / wing 200). Later Lectura still static `WinPerch`. Cubetas 780ms grab/arc stays Cubetas-only.
+- Soft chrome enroll parked — done screen does not open the paywall overlay / Enroll / second $99. prefers-reduced-motion fades the static frame, no perch.
+
+**Why**
+- Varys FAIL on live `index-hK_7mI_n.js`: story-0 win still flap-then-perch because soft-paywall never opened so paywallFlyAway never played. Brand CLEAR: wire fly-away on the free CONTINUAR bird too.
+
 ## 2026-09-19 (Lectura story-9 Brand CLEAR stills + setenta)
 
 **What changed**

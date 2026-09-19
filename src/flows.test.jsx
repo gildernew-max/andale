@@ -263,6 +263,27 @@ const expectedComeBack = (lang) => {
   return comeBackTomorrowLine({ lang, nextTitle: hoyTitleForLang(next, lang) });
 };
 
+/** Free story-win / CONTINUAR: same #161 fly-away. No perch. Soft chrome parked. */
+const assertFreeWinFlyAway = () => {
+  const slot = screen.getByTestId("win-perch-slot");
+  const stage = screen.getByTestId("win-fly-away");
+  const bird = screen.getByTestId("win-fly-away-bird");
+  const css = stage.querySelector("style")?.textContent || "";
+  expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+  expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)/);
+  expect(screen.getByTestId("win-fly-away-wing")).toBeTruthy();
+  expect(stage.getAttribute("data-reduced-motion")).toBe("0");
+  expect(stage.getAttribute("data-surface")).toBe("win");
+  expect(css).toMatch(/@keyframes paywallFlyAway/);
+  expect(css).toMatch(/translate\(calc\(-50% \+ 260px\), -40px\)/);
+  expect(css).not.toMatch(/780ms|cenzontle-courier|story0Courier/);
+  expect(slot.querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+  expect(slot.querySelector("[data-testid='win-perch']")).toBeNull();
+  expect(screen.queryByTestId("win-perch")).toBeNull();
+  expect(screen.queryByTestId("story-0-beat")).toBeNull();
+  expect(screen.queryByTestId("soft-paywall")).toBeNull();
+};
+
 /** Loud annual / outline monthly / quietest continue free. George words. One Cenzontle fly-away. */
 const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const wall = screen.getByTestId("soft-paywall");
@@ -1035,7 +1056,7 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
   };
 
-  it("first story-0 Lectura (all pages) plays the 780ms Cenzontle beat, then WinPerch + ¡Eso!", async () => {
+  it("first story-0 Lectura (all pages) plays Cenzontle fly-away + ¡Eso! — no perch, no paywall", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
     const user = await boot();
@@ -1050,29 +1071,22 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
     await waitFor(() => {
       expect(screen.getByTestId("story-0-win")).toBeTruthy();
-      expect(screen.getByTestId("story-0-beat")).toBeTruthy();
+      expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     });
     expect(screen.getByTestId("story-0-win").textContent).toBe("¡Eso!");
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
-    expect(screen.getByTestId("story-0-beat-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-    expect(screen.getByTestId("story-0-beat-chip")).toBeTruthy();
-    expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
+    assertFreeWinFlyAway();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
     expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
-    await waitFor(() => {
-      expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-      expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
-    }, { timeout: 1500 });
-    expect(screen.queryByTestId("story-0-beat")).toBeNull();
-    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
     assertCreamShell();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("story-0-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
-    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
+    assertFreeWinFlyAway();
     await user.click(screen.getByTestId("story-0-win-continue"));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await awaitHome();
     await user.click(screen.getByTestId("nav-lectura"));
     const again = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
@@ -2699,10 +2713,10 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => {
       expect(screen.getByTestId("hoy-win")).toBeTruthy();
-      expect(screen.getByTestId("story-0-beat")).toBeTruthy();
+      expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("story-0-beat-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    assertFreeWinFlyAway();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
@@ -3027,13 +3041,10 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => {
       expect(screen.getByTestId("hoy-win")).toBeTruthy();
-      expect(screen.getByTestId("story-0-beat")).toBeTruthy();
+      expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("story-0-beat-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-    expect(screen.getByTestId("story-0-beat-chip")).toBeTruthy();
-    expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
-    expect(screen.getByTestId("story-0-beat").textContent).not.toMatch(/¡Eso!|That's it\./);
+    assertFreeWinFlyAway();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
@@ -3042,18 +3053,12 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
     expect(document.body.textContent).not.toMatch(/¡IMPECABLE!|FLAWLESS!/);
     expect(document.body.textContent).not.toMatch(/beat 2 must not run|beat 5 must not run/);
-    await waitFor(() => {
-      expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-      expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
-    }, { timeout: 1500 });
-    expect(screen.queryByTestId("story-0-beat")).toBeNull();
-    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
     assertCreamShell();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /You won!|¡Ganaste!|Lesson complete/ })).toBeNull();
-    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
+    assertFreeWinFlyAway();
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
     await waitFor(() => {
@@ -3144,21 +3149,15 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => {
       expect(screen.getByTestId("hoy-win")).toBeTruthy();
-      expect(screen.getByTestId("story-0-beat")).toBeTruthy();
+      expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("story-0-beat-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-    expect(screen.getByTestId("story-0-beat-chip")).toBeTruthy();
-    expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
+    assertFreeWinFlyAway();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
-    await waitFor(() => {
-      expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-      expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
-    }, { timeout: 1500 });
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
-    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
+    expect(screen.queryByTestId("win-perch")).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
   });
@@ -4531,13 +4530,10 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("phrase-doctor-fix"));
     await waitFor(() => {
       expect(screen.getByTestId("doctora-win")).toBeTruthy();
-      expect(screen.getByTestId("story-0-beat")).toBeTruthy();
+      expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     });
     expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("story-0-beat-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-    expect(screen.getByTestId("story-0-beat-chip")).toBeTruthy();
-    expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
-    expect(screen.getByTestId("story-0-beat").textContent).not.toMatch(/¡Eso!|That's it\./);
+    assertFreeWinFlyAway();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
@@ -4547,22 +4543,16 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/¡IMPECABLE!|FLAWLESS!/);
     expect(document.body.textContent).not.toMatch(/Necesito hacer una decisión|Voy a aplicar para el trabajo|beat 5/);
     await waitFor(() => {
-      expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-      expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
-    }, { timeout: 1500 });
-    expect(screen.queryByTestId("story-0-beat")).toBeNull();
-    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
-    await waitFor(() => {
       expect(screen.getByTestId("win-earned-xp").textContent).toBe("+15");
       expect(screen.getByTestId("win-earned-gems").textContent).toBe("+15");
-    }, { timeout: 1500 });
+    }, { timeout: 3000 });
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(57);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(24);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /You won!|¡Ganaste!|Lesson complete/ })).toBeNull();
-    expect(screen.getByTestId("win-perch").textContent).not.toMatch(/¡Eso!|That's it\./);
+    assertFreeWinFlyAway();
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!"));
     await user.click(screen.getByTestId("doctora-win-continue"));
@@ -5753,9 +5743,10 @@ describe("Pages funnel log", () => {
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
-    await waitFor(() => expect(screen.getByTestId("story-0-beat")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("win-fly-away")).toBeTruthy());
     expect(funnelOf("cenzontle_complete")).toHaveLength(0);
-    await waitFor(() => expect(screen.getByTestId("win-perch")).toBeTruthy(), { timeout: 1500 });
+    expect(screen.queryByTestId("win-perch")).toBeNull();
+    await waitFor(() => expect(funnelOf("cenzontle_complete").length).toBeGreaterThan(0), { timeout: 1500 });
     const bird = funnelOf("cenzontle_complete");
     expect(bird.length).toBeGreaterThan(0);
     expect(bird.at(-1).beat).toBe("hoy");

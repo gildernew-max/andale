@@ -35,8 +35,8 @@ import {
   sobremesaTipsLabel,
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
-import { Story0Beat, WinBounce, WinPerch } from "./WinBounce.jsx";
-import { PaywallFlyAway } from "./PaywallFlyAway.jsx";
+import { WinBounce, WinPerch } from "./WinBounce.jsx";
+import { CenzontleFlyAway, PaywallFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
 import {
   CUBETAS_BIRD_PX,
@@ -10168,9 +10168,9 @@ export default function App() {
           )}
           {quietWin && (
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
-              {winBounce && (shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session))
-                ? <Story0Beat onComplete={completeCenzontleBeat} />
-                : !winBounce ? <WinPerch /> : null}
+              {shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session)
+                ? <CenzontleFlyAway surface="win" onComplete={completeCenzontleBeat} />
+                : <WinPerch />}
             </div>
           )}
           {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
