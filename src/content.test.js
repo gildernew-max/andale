@@ -277,6 +277,19 @@ assert(story2Extra.checkpoints[5].q === "What do Sofía and Mateo learn?", "chec
 assert(story2Extra.checkpoints[0].choices[0] !== story2Extra.checkpoints[0].a, "story-2 checkpoint choices are shuffled on the wire");
 assert(!story2Extra.checkpoints.some((cp) => /narrator/i.test(cp.q)), "no narrator checkpoint on story-2");
 
+const story5 = STORIES.find((s) => s.id === "story-5");
+assert(story5.title === "La frontera más larga del mundo", "story-5 ES title lock");
+assert(story5.subtitle === "Una reportera en Tijuana", "story-5 ES subtitle lock");
+assert(story5.paragraphs[0] === "Llevo doce años cubriendo la frontera. Vivo en Tijuana, escribo para un periódico de Los Ángeles y cruzo el muro tres o cuatro veces por semana. Mi pasaporte está más sellado que el de cualquier diplomático. Mi español tiene acento de las dos costas. Me gano la vida explicando un país a otro y, francamente, los dos me parecen igual de extraños.", "story-5 ¶1 ES unchanged");
+assert(story5.paragraphs[1] === "Tijuana no es lo que dicen las películas. Sí, hay zonas peligrosas, pero también hay restaurantes con dos estrellas Michelin, un festival de ópera, librerías independientes en la avenida Revolución y una de las mejores escenas de arte urbano del continente. La gente de aquí se ríe cuando un turista pregunta si es seguro caminar. «Más seguro que San Diego en domingo», dicen.", "story-5 ¶2 ES unchanged");
+assert(story5.paragraphs[2] === "Lo que sí es cierto es que el muro está siempre presente. No solo el muro físico de metal oxidado que parte la playa en dos, sino el otro, el invisible: el que separa quién puede cruzar y quién no, quién pasa en dos minutos por la línea SENTRI y quién espera cuatro horas en la fila peatonal sin desayunar. La frontera es una máquina de filtrar personas según el papel que llevan en el bolsillo.", "story-5 ¶3 ES unchanged");
+assert(story5.paragraphs[3] === "El caso que más me ha marcado fue el de Anabel, una madre hondureña que llegó embarazada en 2022. Su bebé nació en San Ysidro, en una ambulancia detenida en el carril de inspección. La niña es ciudadana americana. Anabel fue deportada cuatro días después del parto. La bebé se quedó con una tía en Los Ángeles. Cuando entrevisté a Anabel, en una iglesia que da comida en Tijuana, llevaba dos años sin ver a su hija. Lo único que tenía era una fotografía gastada de la niña sosteniendo un osito de peluche.", "story-5 ¶4 ES unchanged");
+assert(story5.paragraphs[4] === "Me preguntan a menudo si la frontera me ha endurecido. Honestamente, no. Lo que me ha endurecido es ver cómo los políticos a ambos lados usan estas historias como utilería. Los activistas tampoco son inocentes; muchos viven de la indignación. La frontera real es más complicada que cualquier discurso: aquí hay trabajadores que cruzan a diario, familias mixtas, médicos binacionales, abuelitas que llevan medicinas en la bolsa.", "story-5 ¶5 ES unchanged");
+assert(story5.paragraphs[5] === "Aún así, vuelvo todos los días. Hace doce años pensaba que iba a quedarme dos. Tijuana se vuelve hogar sin que uno se dé cuenta. Una vez le pregunté a un colega veterano por qué se quedaba. Me dijo: «Porque aquí pasa todo. Si te gusta el periodismo, esto es Roma en el año 50.» Tenía razón.", "story-5 ¶6 ES unchanged");
+assert(story5.questions[0].prompt === "Según la reportera, ¿qué hace la frontera con las personas?" && story5.questions[0].answer === "Las filtra según el papel que llevan en el bolsillo", "story-5 quiz 1 unchanged");
+assert(story5.questions[1].prompt === "¿Por qué Anabel fue separada de su hija?" && story5.questions[1].answer === "Fue deportada cuatro días después del parto", "story-5 quiz 2 unchanged");
+assert(story5.questions[2].prompt === "¿Qué la mantiene viviendo en Tijuana después de doce años?" && story5.questions[2].answer === "Que aquí pasa todo, como Roma en el año 50", "story-5 quiz 3 unchanged");
+
 const story4 = STORIES.find((s) => s.id === "story-4");
 assert(story4.title === "Doña Lupe y el mole", "story-4 ES title lock");
 assert(story4.subtitle === "Un mercado de Oaxaca", "story-4 ES subtitle lock");
@@ -371,6 +384,10 @@ assert(appSrc.includes("stills/sma-lanterns.png"), "Hoy card still stays sma-lan
 assert(appSrc.includes("hoyStillFor"), "Hoy still is gated so a mismatched city cannot keep lanterns");
 assert(appSrc.includes("${import.meta.env.BASE_URL}lectura/"), "Lectura stills use BASE_URL so Pages /andale/ loads them");
 assert(!appSrc.includes("src={`/lectura/"), "Lectura stills must not use root-absolute /lectura/ (breaks Pages)");
+const story5Src = appSrc.slice(appSrc.indexOf('id: "story-5"'), appSrc.indexOf('id: "story-6"'));
+assert(/Llevo doce años cubriendo la frontera/.test(story5Src), "App.jsx story-5 live copy is current Tijuana");
+assert(/Anabel, una madre hondureña/.test(story5Src), "App.jsx story-5 live copy keeps Anabel");
+assert(/Roma en el año 50/.test(story5Src), "App.jsx story-5 live copy keeps Roma");
 const story7Src = appSrc.slice(appSrc.indexOf('id: "story-7"'), appSrc.indexOf('id: "story-8"'));
 assert(/Don Pepe, el más joven/.test(story7Src) && /Don Pepe ganó/.test(story7Src), "App.jsx story-7 live copy is Pepe");
 assert(!/\bTito\b/.test(story7Src), "App.jsx story-7 live copy has no Tito");
@@ -1700,12 +1717,6 @@ const waveBStills = [
   ["story-3", "p3", 1282416, "9d55ca9728c0219263343ecf3fe66a18"],
   ["story-3", "p4", 1286468, "42b9044abff9783608382469fa65a299"],
   ["story-3", "p5", 1221775, "8fdb1e686d1f432631c87c43244a7274"],
-  ["story-5", "p0", 1173942, "dd567086b1de6e9d75461bca43232fce"],
-  ["story-5", "p1", 1229795, "2ba3cacdb1b0e14eb93860e4e2638a30"],
-  ["story-5", "p2", 1078901, "322a388dca04222bec63a71b62c98878"],
-  ["story-5", "p3", 1159507, "5c14d38342467bf64c60311fc94bbadd"],
-  ["story-5", "p4", 1095494, "6c22398a7eda9cb9903adc2f9c912e16"],
-  ["story-5", "p5", 1139848, "86e884f19c5dfd69acc77b6f29c7332b"],
   ["story-8", "p0", 1163608, "1799148c42588249f12a6ad280985775"],
   ["story-8", "p1", 1397780, "ca315af20cba72c7fa1850995abb0a1d"],
   ["story-8", "p2", 1203018, "91148d75835b8e31b4995af4a4f8ac16"],
@@ -1738,6 +1749,28 @@ for (const [slot, bytes, md5] of clearedStory4) {
   assert(createHash("md5").update(buf).digest("hex") === md5, `story-4 ${slot} stays the Brand CLEAR live PNG`);
   assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-4 ${slot} is 1152×864`);
 }
+const clearedStory5 = [
+  ["p0", 1562251, "d95c8a4d9a03623130ef214808e4c8e9"],
+  ["p1", 1791119, "6ed36b5a13c015108f01ba0355287e5e"],
+  ["p2", 1441174, "cd1beeea07467b539eb56d34e0d86b94"],
+  ["p3", 1585155, "6942312fa7ad54ca41c9949ff4acbf68"],
+  ["p4", 1242305, "d86a8345f3640673eedaeb89e4d77b38"],
+  ["p5", 1633556, "e51b6602cf76a8ff2fdf32a134e64840"],
+];
+for (const [slot, bytes, md5] of clearedStory5) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-5", `${slot}.png`);
+  assert(existsSync(stillPng), `story-5 ${slot} lives at public/lectura/story-5/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-5/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-5/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-5 ${slot} stays the Brand CLEAR live PNG`);
+  assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-5 ${slot} is 1152×864`);
+}
+assert(existsSync(join(repoRoot, "public", "lectura", "story-5", "CAST.md")), "story-5 CAST.md locks reporter + Anabel");
+assert(existsSync(join(repoRoot, "public", "lectura", "story-5", "MANIFEST.md")), "story-5 MANIFEST.md is installed");
+const story5Cast = readFileSync(join(repoRoot, "public", "lectura", "story-5", "CAST.md"), "utf8");
+assert(/low bun/.test(story5Cast) && /White shirt/.test(story5Cast) && /sage pants/.test(story5Cast), "story-5 CAST locks reporter low bun + white shirt/sage pants");
+assert(/Anabel/.test(story5Cast) && /not the reporter/.test(story5Cast), "story-5 CAST locks Anabel separate on p3");
 const clearedStory6 = [
   ["p0", 1414618, "9a040957584b318cfd50bcdb9e02cb21"],
   ["p1", 1556200, "271766e8fb31c698cc4e7ee830b86f29"],
