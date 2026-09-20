@@ -127,6 +127,22 @@ const assertFullWordChip = (el, text) => {
   expect(["min-content", "max-content", "28px", "72px"]).toContain(el.style.minWidth);
 };
 
+const assertMemoryBoardCard = (el, text) => {
+  if (text != null) {
+    expect(el.textContent).toBe(text);
+    expect(el.textContent).not.toMatch(ELLIPSIS_RE);
+  }
+  expect(el.className).toMatch(/word-chip/);
+  expect(el.className).toMatch(/memory-card/);
+  expect(el.style.overflow).not.toBe("hidden");
+  expect(el.style.textOverflow).not.toBe("ellipsis");
+  expect(el.style.width).toBe("100%");
+  expect(el.style.minHeight).toBe("96px");
+  expect(Number.parseFloat(el.style.fontSize)).toBeGreaterThanOrEqual(20);
+  expect(el.style.fontWeight).toBe("900");
+  expect(el.getAttribute("data-card-min")).toBe("96");
+};
+
 const assertCreamShell = () => {
   const shell = screen.getByTestId("app-shell");
   expect(shell.style.background).toMatch(CREAM_FILL);
@@ -1886,12 +1902,10 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/MEMORIA \/ MEMORY|Memory \/ Memoria/);
     const cards = screen.getAllByTestId("memory-card");
     expect(cards.length).toBe(12);
+    expect(screen.getByTestId("memory-grid").getAttribute("data-cols")).toBe("3");
+    expect(screen.getByTestId("memory-grid").style.gridTemplateColumns).toContain("repeat(3");
     cards.forEach((el) => {
-      expect(el.className).toMatch(/word-chip/);
-      expect(el.style.overflow).not.toBe("hidden");
-      expect(el.style.textOverflow).not.toBe("ellipsis");
-      expect(el.style.width).toBe("max-content");
-      expect(el.style.minWidth).not.toBe("0");
+      assertMemoryBoardCard(el);
       expect(["none", "100%"]).toContain(el.style.maxWidth);
     });
     const tapCard = cards[0];
@@ -2291,11 +2305,12 @@ describe("simulated learner flows", () => {
     const cards = screen.getAllByTestId("memory-card");
     const byId = (id) => cards.find((el) => el.getAttribute("data-card") === id);
     expect(byId("apapacho-word").getAttribute("data-face")).toBe("up");
-    assertFullWordChip(byId("apapacho-word"), "apapacho");
-    assertFullWordChip(byId("apapacho-meaning"), "warm hug / comfort");
-    assertFullWordChip(byId("tianguis-word"), "tianguis");
-    assertFullWordChip(byId("morra-meaning"), "young woman (casual)");
+    assertMemoryBoardCard(byId("apapacho-word"), "apapacho");
+    assertMemoryBoardCard(byId("apapacho-meaning"), "warm hug / comfort");
+    assertMemoryBoardCard(byId("tianguis-word"), "tianguis");
+    assertMemoryBoardCard(byId("morra-meaning"), "young woman (casual)");
     expect(byId("apapacho-meaning").className).toMatch(/word-chip--phrase/);
+    expect(byId("apapacho-word").style.fontSize).toBe(byId("apapacho-meaning").style.fontSize);
 
     cleanup();
     seedProgress({ uiLang: "en" });

@@ -2,6 +2,7 @@
  *  Brand CLEAR 2026-09-19 · Teaching CLEAR 2026-09-19 (Mexicanismos bank)
  *  One Cenzontle platform-wide — Memory never adds a coach/mascot.
  *  Soft chrome parked. Tap two cards or drag a pair. Full-word bubbles.
+ *  Brand CLEAR 2026-09-20 — 3×4 board, bigger cards + larger type.
  */
 
 /** George + No Face CLEAR: language-split title, not a bilingual lockup. */
