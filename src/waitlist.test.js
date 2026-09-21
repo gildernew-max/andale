@@ -9,6 +9,7 @@ import {
   WAITLIST_SUCCESS,
   isWaitlistEmail,
   saveWaitlistNotice,
+  shouldShowFreePathWaitlist,
   waitlistCta,
   waitlistError,
   waitlistPlaceholder,
@@ -42,6 +43,23 @@ assert(waitlistError("es") === WAITLIST_ERROR.es && waitlistError("en") === WAIT
 assert(waitlistPrivacy("es") === WAITLIST_PRIVACY.es && waitlistPrivacy("en") === WAITLIST_PRIVACY.en, "privacy follows uiLang");
 assert(waitlistPrompt("fr") === WAITLIST_PROMPT.es, "unknown uiLang stays ES");
 assert(waitlistCta() === WAITLIST_CTA.es, "missing uiLang stays ES");
+
+assert(shouldShowFreePathWaitlist({
+  onFreePath: true, paywallOpen: false, paywallDismissed: true, unlockedPrem: false,
+}) === true, "strip stays on the free path after Continue free");
+assert(shouldShowFreePathWaitlist({
+  onFreePath: true, paywallOpen: true, paywallDismissed: false, unlockedPrem: false,
+}) === false, "open wall keeps a single in-modal preview");
+assert(shouldShowFreePathWaitlist({
+  onFreePath: true, paywallOpen: false, paywallDismissed: false, unlockedPrem: false,
+}) === false, "strip waits until the wall is dismissed");
+assert(shouldShowFreePathWaitlist({
+  onFreePath: false, paywallOpen: false, paywallDismissed: true, unlockedPrem: false,
+}) === false, "strip stays off lessons and other tabs");
+assert(shouldShowFreePathWaitlist({
+  onFreePath: true, paywallOpen: false, paywallDismissed: true, unlockedPrem: true,
+}) === false, "a real unlock parks the store-open notice");
+assert(shouldShowFreePathWaitlist() === false, "missing gate stays off");
 
 const faces = [
   WAITLIST_PROMPT, WAITLIST_PLACEHOLDER, WAITLIST_CTA, WAITLIST_SUCCESS, WAITLIST_ERROR, WAITLIST_PRIVACY,

@@ -1,6 +1,7 @@
 /** Quiet email notice under the soft paywall. George Words CLEAR 2026-09-21.
  *  Brand CLEAR 2026-09-21 — No face. One uiLang face. Soft chrome parked.
- *  Local store only. Never put the address on the funnel bus.
+ *  Placement lock: the strip may preview inside the wall, and must stay on the
+ *  free path after Continue free. Local store only. Never put the address on the funnel bus.
  */
 
 export const WAITLIST_STORE_KEY = "andale-waitlist";
@@ -67,6 +68,21 @@ export function isWaitlistEmail(value) {
   const s = typeof value === "string" ? value.trim() : "";
   if (!s || s.length > 254) return false;
   return EMAIL_RE.test(s);
+}
+
+/**
+ * Free-path strip after Continue free / Seguir gratis.
+ * While the wall is open the modal owns the preview, so this stays false and
+ * there is only one strip in the tree. A real unlock parks the notice.
+ */
+export function shouldShowFreePathWaitlist({
+  onFreePath = false,
+  paywallOpen = false,
+  paywallDismissed = false,
+  unlockedPrem = false,
+} = {}) {
+  if (!onFreePath || paywallOpen || unlockedPrem) return false;
+  return !!paywallDismissed;
 }
 
 function defaultStore() {
