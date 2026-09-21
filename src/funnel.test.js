@@ -16,6 +16,12 @@ assert(FUNNEL_EVENTS.cenzontleComplete === "cenzontle_complete", "cenzontle_comp
 assert(FUNNEL_EVENTS.lecturaStart === "lectura_start", "lectura_start is the story start");
 assert(FUNNEL_EVENTS.paywallSeen === "paywall_seen", "paywall_seen is the wall visible");
 assert(FUNNEL_EVENTS.paywallTap === "paywall_tap", "paywall_tap is the wall CTA");
+assert(FUNNEL_EVENTS.waitlistSubmit === "waitlist_submit", "waitlist_submit is the notice submit");
+assert(
+  Object.values(FUNNEL_EVENTS).slice().sort().join(",")
+    === ["cenzontle_complete", "lectura_start", "open", "paywall_seen", "paywall_tap", "waitlist_submit"].join(","),
+  "existing funnel events stay; waitlist_submit is the only addition",
+);
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
 assert(PAYWALL_TAP.monthly === "monthly", "monthly tap label");
 assert(PAYWALL_TAP.continueFree === "continue_free", "continue-free tap label");
@@ -99,6 +105,20 @@ const monthly = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: "mont
 assert(monthly.choice === "monthly", "monthly tap is labeled");
 const junkTap = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: "lifetime" }, bus);
 assert(junkTap.choice == null, "unknown tap choice is dropped");
+
+const notice = emitFunnelEvent({
+  event: FUNNEL_EVENTS.waitlistSubmit,
+  email: "dave@example.com",
+  choice: "annual",
+  storyId: "story-0",
+  beat: "hoy",
+}, bus);
+assert(notice.event === "waitlist_submit", "waitlist_submit names the event");
+assert(typeof notice.at === "string" && notice.at.includes("T"), "waitlist_submit carries an ISO timestamp");
+assert(notice.email == null && notice.choice == null && notice.storyId == null && notice.beat == null, "waitlist_submit drops email and other extras");
+assert(JSON.stringify(notice) === JSON.stringify({ event: "waitlist_submit", at: notice.at }), "waitlist_submit payload is event + at only");
+assert(bus.events.at(-1).detail.email == null, "CustomEvent detail has no email");
+assert(!/example\.com|@/.test(JSON.stringify(notice)), "waitlist_submit JSON has no address");
 
 assert(!/\$/.test(JSON.stringify(bus.log)), "funnel log never carries a dollar sign");
 assert(!/Dave|example\.com|abc-123/.test(JSON.stringify(bus.log)), "funnel log never carries the injected PII");
