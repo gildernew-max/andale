@@ -137,10 +137,11 @@ const assertMemoryBoardCard = (el, text) => {
   expect(el.style.overflow).not.toBe("hidden");
   expect(el.style.textOverflow).not.toBe("ellipsis");
   expect(el.style.width).toBe("100%");
-  expect(el.style.minHeight).toBe("96px");
-  expect(Number.parseFloat(el.style.fontSize)).toBeGreaterThanOrEqual(20);
+  expect(el.style.minHeight).toBe("140px");
+  expect(Number.parseFloat(el.style.fontSize)).toBeGreaterThanOrEqual(26);
   expect(el.style.fontWeight).toBe("900");
-  expect(el.getAttribute("data-card-min")).toBe("96");
+  expect(el.getAttribute("data-card-min")).toBe("140");
+  expect(el.getAttribute("data-card-type")).toBe("26");
 };
 
 const assertCreamShell = () => {
