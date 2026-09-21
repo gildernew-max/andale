@@ -22,7 +22,7 @@ export const WAITLIST_CTA = {
 };
 export const WAITLIST_SUCCESS = {
   es: "Listo. Te escribo cuando esté listo.",
-  en: "Got it. I\u2019ll write when it\u2019s ready.",
+  en: "Got it. I’ll write when it’s ready.",
 };
 export const WAITLIST_ERROR = {
   es: "Revisa el correo",

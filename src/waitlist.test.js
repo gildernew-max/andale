@@ -26,7 +26,7 @@ assert(WAITLIST_PLACEHOLDER.en === "Your email", "EN placeholder George lock");
 assert(WAITLIST_CTA.es === "Avisarme", "ES CTA George lock");
 assert(WAITLIST_CTA.en === "Notify me", "EN CTA George lock");
 assert(WAITLIST_SUCCESS.es === "Listo. Te escribo cuando esté listo.", "ES success George lock");
-assert(WAITLIST_SUCCESS.en === "Got it. I\u2019ll write when it\u2019s ready.", "EN success George lock");
+assert(WAITLIST_SUCCESS.en === "Got it. I’ll write when it’s ready.", "EN success George lock");
 assert(!WAITLIST_SUCCESS.en.includes("'"), "EN success uses the curly apostrophe");
 assert(WAITLIST_ERROR.es === "Revisa el correo", "ES error George lock");
 assert(WAITLIST_ERROR.en === "Check the email", "EN error George lock");

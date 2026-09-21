@@ -681,7 +681,7 @@ assert(/if \(!fromBackdrop\) \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.payw
 assert(WAITLIST_PROMPT.es === "Avísame cuando abramos la tienda" && WAITLIST_PROMPT.en === "Tell me when the store opens", "waitlist prompt George lock");
 assert(WAITLIST_PLACEHOLDER.es === "Tu correo" && WAITLIST_PLACEHOLDER.en === "Your email", "waitlist placeholder George lock");
 assert(WAITLIST_CTA.es === "Avisarme" && WAITLIST_CTA.en === "Notify me", "waitlist CTA George lock");
-assert(WAITLIST_SUCCESS.es === "Listo. Te escribo cuando esté listo." && WAITLIST_SUCCESS.en === "Got it. I\u2019ll write when it\u2019s ready.", "waitlist success George lock");
+assert(WAITLIST_SUCCESS.es === "Listo. Te escribo cuando esté listo." && WAITLIST_SUCCESS.en === "Got it. I’ll write when it’s ready.", "waitlist success George lock");
 assert(WAITLIST_ERROR.es === "Revisa el correo" && WAITLIST_ERROR.en === "Check the email", "waitlist error George lock");
 assert(WAITLIST_PRIVACY.es === "Solo para el aviso de apertura. Sin spam." && WAITLIST_PRIVACY.en === "Launch notice only. No spam.", "waitlist privacy George lock");
 assert(waitlistPrompt("en") === WAITLIST_PROMPT.en && waitlistPrompt("es") === WAITLIST_PROMPT.es, "waitlist prompt follows uiLang");
