@@ -340,6 +340,26 @@ assert(story7.questions[0].prompt === "¿Cómo se juega el dominó cubano según
 assert(story7.questions[1].prompt === "¿Qué pasó cuando el dueño quiso poner pantallas de fútbol?" && story7.questions[1].answer === "Don Ernesto dejó de venir y solo volvió cuando se las quitaron", "story-7 quiz 2 unchanged");
 assert(story7.questions[2].prompt === "¿Cómo honraron a Don Manuel después de su muerte?" && story7.questions[2].answer === "Jugaron una partida sin pareja y dejaron su tequila intacto", "story-7 quiz 3 unchanged");
 
+const story8 = STORIES.find((s) => s.id === "story-8");
+assert(story8.title === "El grito de mi padre", "story-8 ES title lock");
+assert(story8.subtitle === "Independencia en una colonia obrera", "story-8 ES subtitle lock");
+assert(story8.paragraphs[0] === "Cada 15 de septiembre, mi padre se transformaba. Era cajero de banco, hombre tranquilo, de los que doblan el periódico en cuartos antes de leerlo. Pero esa noche, alrededor de las once, se ponía la guayabera blanca, mojaba el peine en agua y se peinaba hacia atrás como si fuera 1962, y bajaba al patio de la unidad habitacional con una sola misión: dar el grito de Independencia más fuerte de toda la colonia Nezahualcóyotl.", "story-8 ¶1 ES unchanged");
+assert(story8.paragraphs[1] === "El grito —para los que no lo conozcan— es un ritual nocturno. A las once en punto, el presidente sale al balcón de Palacio Nacional y grita los nombres de los héroes de la Independencia: «¡Viva Hidalgo! ¡Viva Morelos! ¡Viva México!» Y la multitud responde a cada uno con un «¡Viva!» que es más rugido que respuesta. La transmisión llega por televisión a cada casa. Y en cada casa, alguien repite el grito en la sala. Pero en la colonia obrera donde yo crecí, el grito era comunitario. Bajábamos al patio, prendíamos los radios, descorchábamos botellas de tequila y esperábamos.", "story-8 ¶2 ES unchanged");
+assert(story8.paragraphs[2] === "Mi padre se había practicado el grito todo septiembre. En la regadera, en el coche, antes de dormir. Mi madre se burlaba: «Como si fueras a postularte para presidente.» Pero él tomaba el ritual en serio. «Si la patria se hubiera independizado sola», decía, «no tendríamos que gritar. Como nos costó sangre, gritamos.»", "story-8 ¶3 ES unchanged");
+assert(story8.paragraphs[3] === "Recuerdo el grito de 1987. Yo tenía diez años. Mi padre me llevó al balcón con un cajón de botellas a un lado. Tenía la camisa blanca planchada, el bigote recortado y el brazo en alto. Cuando llegó el momento de gritar «¡Viva México!», soltó un alarido que rompió la quietud de la colonia. Los perros aullaron en respuesta. Las señoras se persignaron. El señor Ramírez, del 4-B, dijo: «Don Beto, ese grito se oyó hasta Texcoco.» Mi padre se rio. Era el cumplido más grande de su vida.", "story-8 ¶4 is George balcony + crate beside");
+assert(story8.paragraphs[4] === "Lo que entendí después, mucho después —cuando mi padre ya había muerto y yo daba el grito en mi propia casa, frente a mis hijos—, es que el grito no era nacionalismo. Para mi padre, que ganaba lo justo, que pagaba la renta con esfuerzo, que veía cómo el país se hundía y volvía a flotar, gritar el 15 de septiembre era decir: «Yo todavía estoy aquí. Todavía creo en algo. La vida me costó, pero no me rindo.»", "story-8 ¶5 ES unchanged");
+assert(story8.paragraphs[5] === "Mis hijos se ríen cuando yo doy el grito. Dicen que exagero, que parezco loco, que los vecinos van a llamar a la policía. Yo les digo, igual que mi padre me decía: «Algún día lo entenderán. Por ahora, levanten la copa y respondan: ¡Viva México!»", "story-8 ¶6 ES unchanged");
+const story8Hay = story8.paragraphs.join("\n");
+assert(/cajón de botellas a un lado/.test(story8.paragraphs[3]), "story-8 ¶4 crate sits beside");
+assert(/camisa blanca planchada/.test(story8.paragraphs[3]) && /brazo en alto/.test(story8.paragraphs[3]), "story-8 ¶4 white shirt and arm up");
+assert(!/se subió a un cajón/.test(story8Hay), "story-8 ¶4 does not climb onto the crate");
+assert(!/cajón de cerveza vacío/.test(story8Hay), "story-8 ¶4 is not an empty beer crate");
+assert(!/guayabera planchada/.test(story8Hay), "story-8 ¶4 is camisa blanca, not guayabera planchada");
+assert(!/tequila en la mano/.test(story8Hay), "story-8 ¶4 has no tequila in hand");
+assert(story8.questions[0].prompt === "¿Qué transformación sufría el padre cada 15 de septiembre?" && story8.questions[0].answer === "De cajero tranquilo pasaba a dar el grito más fuerte de la colonia", "story-8 quiz 1 unchanged");
+assert(story8.questions[1].prompt === "Según el padre, ¿por qué hay que gritar el 15 de septiembre?" && story8.questions[1].answer === "Porque la independencia costó sangre y no se ganó sola", "story-8 quiz 2 unchanged");
+assert(story8.questions[2].prompt === "¿Qué entendió el narrador años después sobre el grito de su padre?" && story8.questions[2].answer === "Era una forma de decir «todavía estoy aquí, todavía creo en algo»", "story-8 quiz 3 unchanged");
+
 const story6 = STORIES.find((s) => s.id === "story-6");
 assert(story6.title === "La sirena del Pacífico", "story-6 ES title lock");
 assert(story6.subtitle === "Un pueblo de pescadores en Nayarit", "story-6 ES subtitle lock");
@@ -411,6 +431,11 @@ assert(/Tigre Joven/.test(story3Src) && /plateada con detalles azules/.test(stor
 const story7Src = appSrc.slice(appSrc.indexOf('id: "story-7"'), appSrc.indexOf('id: "story-8"'));
 assert(/Don Pepe, el más joven/.test(story7Src) && /Don Pepe ganó/.test(story7Src), "App.jsx story-7 live copy is Pepe");
 assert(!/\bTito\b/.test(story7Src), "App.jsx story-7 live copy has no Tito");
+const story8Src = appSrc.slice(appSrc.indexOf('id: "story-8"'), appSrc.indexOf('id: "story-9"'));
+assert(/cajón de botellas a un lado/.test(story8Src), "App.jsx story-8 ¶4 is balcony + crate beside");
+assert(/camisa blanca planchada/.test(story8Src) && /brazo en alto/.test(story8Src), "App.jsx story-8 ¶4 is white shirt and arm up");
+assert(!/se subió a un cajón/.test(story8Src), "App.jsx story-8 live copy does not climb onto the crate");
+assert(!/cajón de cerveza vacío/.test(story8Src), "App.jsx story-8 live copy drops the empty beer crate");
 const story6Src = appSrc.slice(appSrc.indexOf('id: "story-6"'), appSrc.indexOf('id: "story-7"'));
 assert(/«Mamá, las sirenas/.test(story6Src), "App.jsx story-6 live copy is Mamá");
 assert(!/«Papá, las sirenas/.test(story6Src), "App.jsx story-6 live copy has no Papá on the hija line");
@@ -1797,12 +1822,6 @@ for (const [slot, bytes, md5] of clearedStory2) {
   assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-2 ${slot} is 1152×864`);
 }
 const waveBStills = [
-  ["story-8", "p0", 1163608, "1799148c42588249f12a6ad280985775"],
-  ["story-8", "p1", 1397780, "ca315af20cba72c7fa1850995abb0a1d"],
-  ["story-8", "p2", 1203018, "91148d75835b8e31b4995af4a4f8ac16"],
-  ["story-8", "p3", 1259195, "d0f67783fae380ed0b27da7a92d2bec3"],
-  ["story-8", "p4", 1274529, "226e878e3743957d48a75a6a79e7933c"],
-  ["story-8", "p5", 1480648, "85b8f8bc1661633c35225b25e70f0278"],
 ];
 for (const [storyId, slot, bytes, md5] of waveBStills) {
   const stillPng = join(repoRoot, "public", "lectura", storyId, `${slot}.png`);
@@ -1812,6 +1831,28 @@ for (const [storyId, slot, bytes, md5] of waveBStills) {
   assert(buf.length === bytes, `lectura/${storyId}/${slot}.png is ${bytes} bytes`);
   assert(createHash("md5").update(buf).digest("hex") === md5, `${storyId} ${slot} is the exact Wave B still`);
 }
+const clearedStory8 = [
+  ["p0", 1507670, "b0427461a632c3cd8189a9e18c9c5e10"],
+  ["p1", 1397780, "ca315af20cba72c7fa1850995abb0a1d"],
+  ["p2", 1203018, "91148d75835b8e31b4995af4a4f8ac16"],
+  ["p3", 1259195, "d0f67783fae380ed0b27da7a92d2bec3"],
+  ["p4", 1274529, "226e878e3743957d48a75a6a79e7933c"],
+  ["p5", 1480648, "85b8f8bc1661633c35225b25e70f0278"],
+];
+for (const [slot, bytes, md5] of clearedStory8) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-8", `${slot}.png`);
+  assert(existsSync(stillPng), `story-8 ${slot} lives at public/lectura/story-8/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-8/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-8/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-8 ${slot} stays the Brand CLEAR live PNG`);
+  assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-8 ${slot} is 1152×864`);
+}
+assert(existsSync(join(repoRoot, "public", "lectura", "story-8", "CAST.md")), "story-8 CAST.md locks father mustache");
+assert(existsSync(join(repoRoot, "public", "lectura", "story-8", "MANIFEST.md")), "story-8 MANIFEST.md is installed");
+const story8Cast = readFileSync(join(repoRoot, "public", "lectura", "story-8", "CAST.md"), "utf8");
+assert(/mustache locked/.test(story8Cast) && /never clean-shaven/.test(story8Cast), "story-8 CAST locks father mustache p0–p3");
+assert(/white guayabera/.test(story8Cast) && /balcony/.test(story8Cast), "story-8 CAST locks guayabera prep and balcony");
 const clearedStory3 = [
   ["p0", 1392583, "f768b2f3a1eb0d076bbaf80a862de608"],
   ["p1", 1506923, "aed3849d4f96bfcd6fe22b8e9632c509"],

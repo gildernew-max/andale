@@ -1291,6 +1291,40 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/«Papá, las sirenas/);
   });
 
+  it("opens story-8 El grito de mi padre with stills and balcony crate beside", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /El grito de mi padre/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-8/p0.png`);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/se ponía la guayabera blanca/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-1")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-1").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-8/p1.png`);
+    expect(document.body.textContent).toMatch(/descorchábamos botellas de tequila/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-2")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-2").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-8/p2.png`);
+    expect(document.body.textContent).toMatch(/En la regadera, en el coche/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-3")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-3").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-8/p3.png`);
+    expect(document.body.textContent).toMatch(/me llevó al balcón con un cajón de botellas a un lado/);
+    expect(document.body.textContent).toMatch(/camisa blanca planchada/);
+    expect(document.body.textContent).toMatch(/el brazo en alto/);
+    expect(document.body.textContent).not.toMatch(/se subió a un cajón/);
+    expect(document.body.textContent).not.toMatch(/cajón de cerveza vacío/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-4")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-4").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-8/p4.png`);
+    expect(document.body.textContent).toMatch(/frente a mis hijos/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-5")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-5").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-8/p5.png`);
+    expect(document.body.textContent).toMatch(/¡Viva México!/);
+  });
+
   it("opens story-9 Las cerezas de don Adán with Brand stills and setenta, not cincuenta y nueve", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
