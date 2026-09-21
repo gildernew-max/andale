@@ -5896,4 +5896,76 @@ describe("Pages funnel log", () => {
     expect(funnelOf("paywall_tap").some((e) => e.choice === "continue_free")).toBe(true);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/\$39\.99|\$6\.99|Dave@/);
   });
+
+  it("waitlist_submit fires under continue free with no email in the log", async () => {
+    cleanup();
+    seedProgress({ streak: 1, lastDay: localToday() });
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    assertSoftPaywallAnnualPrimary("es");
+    const annual = screen.getByTestId("soft-paywall-annual");
+    const dismiss = screen.getByTestId("soft-paywall-dismiss");
+    const strip = screen.getByTestId("soft-paywall-waitlist");
+    expect(annual.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(dismiss.compareDocumentPosition(strip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(strip.textContent).toContain("Avísame cuando abramos la tienda");
+    expect(strip.textContent).toContain("Avisarme");
+    expect(strip.textContent).toContain("Solo para el aviso de apertura. Sin spam.");
+    expect(strip.textContent).not.toMatch(/Notify me|Tell me when|Your email|Launch notice|Check the email|Got it/);
+    const field = screen.getByTestId("soft-paywall-waitlist-email");
+    expect(field.getAttribute("placeholder")).toBe("Tu correo");
+    expect(field.style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(field.style.border).toMatch(/#C46B3A|rgb\(\s*196,\s*107,\s*58\s*\)/i);
+    expect(field.style.minHeight).toBe("44px");
+    const cta = screen.getByTestId("soft-paywall-waitlist-submit");
+    expect(cta.textContent).toBe("Avisarme");
+    expect(cta.className).not.toMatch(/duo-btn/);
+    expect(cta.style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(cta.style.background).not.toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(cta.style.borderBottom).not.toMatch(/4px/);
+    expect(strip.querySelector("a")).toBeNull();
+    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+
+    await user.type(field, "not-an-email");
+    await user.click(cta);
+    expect(screen.getByTestId("soft-paywall-waitlist-note").textContent).toBe("Revisa el correo");
+    expect(funnelOf("waitlist_submit")).toHaveLength(0);
+    expect(localStorage.getItem("andale-waitlist")).toBeNull();
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+
+    await user.clear(field);
+    await user.type(field, "dave@example.com");
+    await user.click(cta);
+    expect(screen.getByTestId("soft-paywall-waitlist-note").textContent).toBe("Listo. Te escribo cuando esté listo.");
+    const submits = funnelOf("waitlist_submit");
+    expect(submits).toHaveLength(1);
+    expect(submits[0].event).toBe("waitlist_submit");
+    expect(typeof submits[0].at).toBe("string");
+    expect(Object.keys(submits[0]).sort()).toEqual(["at", "event"]);
+    expect(submits[0].email).toBeUndefined();
+    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/dave@example\.com|@example/i);
+    expect(JSON.parse(localStorage.getItem("andale-waitlist")).email).toBe("dave@example.com");
+    expect(annual.textContent).toBe("Un año");
+    expect(annual.style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    const filled = [...screen.getByTestId("soft-paywall").querySelectorAll("button.duo-btn")]
+      .filter((el) => /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i.test(el.style.background));
+    expect(filled).toHaveLength(1);
+    expect(filled[0]).toBe(annual);
+  });
+
+  it("waitlist face follows EN uiLang with no ES salad", async () => {
+    cleanup();
+    seedProgress({ streak: 1, lastDay: localToday(), uiLang: "en" });
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    assertSoftPaywallAnnualPrimary("en");
+    const strip = screen.getByTestId("soft-paywall-waitlist");
+    expect(strip.textContent).toContain("Tell me when the store opens");
+    expect(strip.textContent).toContain("Notify me");
+    expect(strip.textContent).toContain("Launch notice only. No spam.");
+    expect(strip.textContent).not.toMatch(/Avísame|Avisarme|Tu correo|Revisa el correo|Listo\.|Sin spam/);
+    expect(screen.getByTestId("soft-paywall-waitlist-email").getAttribute("placeholder")).toBe("Your email");
+    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("One year");
+  });
 });

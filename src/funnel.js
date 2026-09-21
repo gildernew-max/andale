@@ -9,6 +9,7 @@ export const FUNNEL_EVENTS = Object.freeze({
   lecturaStart: "lectura_start",
   paywallSeen: "paywall_seen",
   paywallTap: "paywall_tap",
+  waitlistSubmit: "waitlist_submit",
 });
 
 export const PAYWALL_TAP = Object.freeze({
@@ -33,6 +34,7 @@ function safeStoryId(id) {
 /**
  * Tiny allowlisted payload. Never copies caller extras.
  * storyId / beat / choice are content labels only.
+ * waitlist_submit is event + timestamp only — never the email.
  */
 export function emitFunnelEvent({ event, storyId, beat, choice } = {}, bus = eventBus()) {
   if (!EVENTS.has(event)) return null;

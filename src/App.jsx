@@ -14,6 +14,7 @@ import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
+import { saveWaitlistNotice, waitlistCta, waitlistError, waitlistPlaceholder, waitlistPrivacy, waitlistPrompt, waitlistSuccess } from "./waitlist.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
 import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
@@ -4378,6 +4379,8 @@ export default function App() {
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
   const [paywallArmed, setPaywallArmed] = useState(false);
+  const [waitlistDraft, setWaitlistDraft] = useState("");
+  const [waitlistNote, setWaitlistNote] = useState(null);
   const paywallBusyRef = useRef(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
   const [a2hsSheet, setA2hsSheet] = useState(false);
@@ -6639,6 +6642,15 @@ export default function App() {
     if (showA2hs) setA2hsSheet(true);
     save({ paywallSeen: true, ...(showA2hs ? { a2hsSeen: true } : {}) });
   };
+  const submitSoftPaywallWaitlist = (formEvent) => {
+    formEvent.preventDefault();
+    if (!saveWaitlistNotice(waitlistDraft).ok) {
+      setWaitlistNote("error");
+      return;
+    }
+    emitFunnelEvent({ event: FUNNEL_EVENTS.waitlistSubmit });
+    setWaitlistNote("ok");
+  };
   const buySoftPaywall = async (plan) => {
     if (paywallBusyRef.current) return;
     paywallBusyRef.current = true;
@@ -8583,10 +8595,10 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one Cenzontle fly-away, George words, loud annual / outline monthly / quiet free. Surface cream lock = Learn home HUB_CREAM. Soft chrome parked. Membership attach stays out of this surface. */}
+      {/* Look lock: one Cenzontle fly-away, George words, loud annual / outline monthly / quiet free. Quiet waitlist under continue free. Surface cream lock = Learn home HUB_CREAM. Soft chrome parked. Membership attach stays out of this surface. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
+          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
             <PaywallFlyAway />
             <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: D.ink }}>{L.paywallHeadline}</div>
             <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
@@ -8602,6 +8614,52 @@ export default function App() {
                 style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
                 {L.paywallDismiss}
               </button>
+              <form data-testid="soft-paywall-waitlist" noValidate onSubmit={submitSoftPaywallWaitlist} style={{ margin: 0 }}>
+                <div data-testid="soft-paywall-waitlist-prompt" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.3, color: D.sub, margin: "2px 0 8px" }}>
+                  {waitlistPrompt(uiLang)}
+                </div>
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  data-testid="soft-paywall-waitlist-email"
+                  aria-label={waitlistPlaceholder(uiLang)}
+                  placeholder={waitlistPlaceholder(uiLang)}
+                  value={waitlistDraft}
+                  onChange={(e) => {
+                    setWaitlistDraft(e.target.value);
+                    if (waitlistNote === "error") setWaitlistNote(null);
+                  }}
+                  style={{
+                    display: "block", width: "100%", boxSizing: "border-box",
+                    background: HUB_CREAM, color: D.ink,
+                    border: "1px solid #C46B3A", borderRadius: 12,
+                    padding: "12px 12px", minHeight: 44,
+                    fontFamily: "inherit", fontWeight: 700, fontSize: 13,
+                  }}
+                />
+                <div data-testid="soft-paywall-waitlist-privacy" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.3, color: D.sub, marginTop: 6 }}>
+                  {waitlistPrivacy(uiLang)}
+                </div>
+                <button type="submit" data-testid="soft-paywall-waitlist-submit"
+                  style={{
+                    display: "block", width: "100%", marginTop: 8,
+                    background: HUB_CREAM, color: MARK_INK,
+                    border: `1px solid ${MARK_INK}`, borderRadius: 12,
+                    padding: "11px 12px", minHeight: 44,
+                    fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer",
+                  }}>
+                  {waitlistCta(uiLang)}
+                </button>
+                {waitlistNote && (
+                  <div data-testid="soft-paywall-waitlist-note" role="status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.3, color: D.sub, marginTop: 8 }}>
+                    {waitlistNote === "ok" ? waitlistSuccess(uiLang) : waitlistError(uiLang)}
+                  </div>
+                )}
+              </form>
             </div>
           </div>
         </div>
