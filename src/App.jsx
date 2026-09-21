@@ -2144,8 +2144,8 @@ const MEMORY_CARD_FACE = {
   whiteSpace: "normal",
   overflow: "visible",
   textOverflow: "unset",
-  wordBreak: "break-word",
-  overflowWrap: "anywhere",
+  wordBreak: "normal",
+  overflowWrap: "break-word",
   hyphens: "manual",
 };
 
@@ -2272,7 +2272,8 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       letterSpacing: "-0.03em",
                       textAlign: "center",
                       whiteSpace: "normal",
-                      overflowWrap: "anywhere",
+                      overflowWrap: "break-word",
+                      wordBreak: "normal",
                       cursor: (run.matched || []).includes(card.pairId) ? "default" : "grab",
                       touchAction: "none",
                     }}
@@ -7003,8 +7004,8 @@ export default function App() {
         .word-chip--phrase { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
         .memory-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:minmax(${MEMORY_CARD_MIN}px, auto); gap:8px; width:100%; align-items:stretch; }
         .memory-cell { min-width:0; width:100%; display:flex; height:100%; }
-        .memory-card { width:100%; min-width:0; max-width:100%; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:anywhere; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
-        .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:100%; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:anywhere; word-break:break-word; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
+        .memory-card { width:100%; min-width:0; max-width:100%; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:break-word; word-break:normal; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
+        .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:100%; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:break-word; word-break:normal; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
