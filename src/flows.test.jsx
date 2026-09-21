@@ -1191,6 +1191,39 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-9/p0.png`);
   });
 
+  it("opens story-3 El hijo del Rey Tigre with Brand stills and current lucha words", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /El hijo del Rey Tigre/ });
+    await user.click(openers[openers.length - 1]);
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-3/p0.png`);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/se ponía la máscara antes de salir/);
+    expect(document.body.textContent).toMatch(/Joaquín Méndez de Tlalnepantla/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-1")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-1").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-3/p1.png`);
+    expect(document.body.textContent).toMatch(/Mi madre las cosía a mano/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-2")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-2").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-3/p2.png`);
+    expect(document.body.textContent).toMatch(/fue rudo durante veintidós años/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-3")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-3").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-3/p3.png`);
+    expect(document.body.textContent).toMatch(/perdió la máscara/);
+    expect(document.body.textContent).toMatch(/Vimos su cara por primera vez/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-4")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-4").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-3/p4.png`);
+    expect(document.body.textContent).toMatch(/se retiró esa misma noche/);
+    await user.click(screen.getByRole("button", { name: /Siguiente|Next/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-5")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-5").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-3/p5.png`);
+    expect(document.body.textContent).toMatch(/Tigre Joven/);
+    expect(document.body.textContent).toMatch(/plateada con detalles azules/);
+  });
+
   it("opens story-7 El último dominó with Brand stills and Pepe, not Tito", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));

@@ -290,6 +290,19 @@ assert(story5.questions[0].prompt === "Según la reportera, ¿qué hace la front
 assert(story5.questions[1].prompt === "¿Por qué Anabel fue separada de su hija?" && story5.questions[1].answer === "Fue deportada cuatro días después del parto", "story-5 quiz 2 unchanged");
 assert(story5.questions[2].prompt === "¿Qué la mantiene viviendo en Tijuana después de doce años?" && story5.questions[2].answer === "Que aquí pasa todo, como Roma en el año 50", "story-5 quiz 3 unchanged");
 
+const story3 = STORIES.find((s) => s.id === "story-3");
+assert(story3.title === "El hijo del Rey Tigre", "story-3 ES title lock");
+assert(story3.subtitle === "Una familia de lucha libre", "story-3 ES subtitle lock");
+assert(story3.paragraphs[0] === "Mi padre se ponía la máscara antes de salir de casa. No era una superstición, era una regla. «Cuando uno es luchador», me decía, «el hombre y el personaje no deben encontrarse en la misma calle. La gente paga para ver al Rey Tigre, no a Joaquín Méndez de Tlalnepantla.»", "story-3 ¶1 ES unchanged");
+assert(story3.paragraphs[1] === "Yo crecí entre máscaras. Las había de cuero, de licra, de terciopelo bordado con hilo de oro. Mi madre las cosía a mano en la mesa de la cocina, después de cenar, mientras la televisión transmitía las peleas de los viernes. Aprendí a leer los nombres antes que las palabras: Santo, Blue Demon, Mil Máscaras, Huracán Ramírez. Para otros niños eran personajes. Para mí eran tíos, padrinos, vecinos del barrio.", "story-3 ¶2 ES unchanged");
+assert(story3.paragraphs[2] === "Mi padre fue rudo durante veintidós años. En lucha libre, los rudos son los malos, los que hacen trampa, los que el público abuchea. Los técnicos son los buenos. «Sin rudos no hay función», explicaba siempre. «El bien necesita al mal para que la gente sepa por quién gritar.» Le encantaba ser odiado. Cuando el estadio entero le silbaba, sonreía debajo de la máscara como un niño con regalo nuevo.", "story-3 ¶3 ES unchanged");
+assert(story3.paragraphs[3] === "Una noche, en la Arena México, mi padre perdió la máscara. Fue una lucha de apuestas, máscara contra cabellera, y cuando el réferi contó tres, mi padre se la quitó. Tenía cuarenta y siete años. La multitud quedó en silencio. Vimos su cara por primera vez en televisión: cicatrices, ojos cansados, sudor. Después aplaudieron de pie durante cinco minutos. Mi madre lloraba. Yo también, aunque tenía once años y no quería que se notara.", "story-3 ¶4 ES unchanged");
+assert(story3.paragraphs[4] === "Mi padre se retiró esa misma noche. «El Rey Tigre murió hoy», anunció. «Joaquín Méndez puede por fin caminar a la tienda sin máscara.» Pero todavía guarda todas. Las tiene en una vitrina en la sala, ordenadas por año, cada una etiquetada con la pelea que la estrenó.", "story-3 ¶5 ES unchanged");
+assert(story3.paragraphs[5] === "Yo debuté el año pasado, a los veintidós. Mi nombre en el ring es Tigre Joven. Mi máscara es nueva, plateada con detalles azules, cosida por mi madre. Soy técnico, no rudo, porque mi padre dice que cada generación elige su propio camino. Cuando salgo a la arena y el público grita mi nombre, pienso en él, sentado en primera fila sin máscara, aplaudiendo al niño que aprendió a leer entre antifaces.", "story-3 ¶6 ES unchanged");
+assert(story3.questions[0].prompt === "¿Por qué su padre nunca salía de casa sin la máscara?" && story3.questions[0].answer === "Para no mezclar al hombre con el personaje", "story-3 quiz 1 unchanged");
+assert(story3.questions[1].prompt === "¿Qué papel desempeñaba su padre en el ring?" && story3.questions[1].answer === "Era rudo (villano)", "story-3 quiz 2 unchanged");
+assert(story3.questions[2].prompt === "¿Cómo perdió su padre la máscara?" && story3.questions[2].answer === "En una lucha de apuestas máscara contra cabellera", "story-3 quiz 3 unchanged");
+
 const story4 = STORIES.find((s) => s.id === "story-4");
 assert(story4.title === "Doña Lupe y el mole", "story-4 ES title lock");
 assert(story4.subtitle === "Un mercado de Oaxaca", "story-4 ES subtitle lock");
@@ -388,6 +401,12 @@ const story5Src = appSrc.slice(appSrc.indexOf('id: "story-5"'), appSrc.indexOf('
 assert(/Llevo doce años cubriendo la frontera/.test(story5Src), "App.jsx story-5 live copy is current Tijuana");
 assert(/Anabel, una madre hondureña/.test(story5Src), "App.jsx story-5 live copy keeps Anabel");
 assert(/Roma en el año 50/.test(story5Src), "App.jsx story-5 live copy keeps Roma");
+const story3Src = appSrc.slice(appSrc.indexOf('id: "story-3"'), appSrc.indexOf('id: "story-4"'));
+assert(/El hijo del Rey Tigre/.test(story3Src), "App.jsx story-3 live title is El hijo del Rey Tigre");
+assert(/Joaquín Méndez de Tlalnepantla/.test(story3Src), "App.jsx story-3 live copy keeps Joaquín Méndez");
+assert(/Mi madre las cosía a mano/.test(story3Src), "App.jsx story-3 live copy keeps mother sewing");
+assert(/perdió la máscara/.test(story3Src) && /Vimos su cara por primera vez/.test(story3Src), "App.jsx story-3 live copy keeps mask-loss");
+assert(/Tigre Joven/.test(story3Src) && /plateada con detalles azules/.test(story3Src), "App.jsx story-3 live copy keeps Tigre Joven debut");
 const story7Src = appSrc.slice(appSrc.indexOf('id: "story-7"'), appSrc.indexOf('id: "story-8"'));
 assert(/Don Pepe, el más joven/.test(story7Src) && /Don Pepe ganó/.test(story7Src), "App.jsx story-7 live copy is Pepe");
 assert(!/\bTito\b/.test(story7Src), "App.jsx story-7 live copy has no Tito");
@@ -1722,12 +1741,6 @@ for (const [slot, bytes, md5] of clearedStory2) {
   assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-2 ${slot} is 1152×864`);
 }
 const waveBStills = [
-  ["story-3", "p0", 1392583, "f768b2f3a1eb0d076bbaf80a862de608"],
-  ["story-3", "p1", 1506923, "aed3849d4f96bfcd6fe22b8e9632c509"],
-  ["story-3", "p2", 1465245, "862919bc69b0689194df9effee182103"],
-  ["story-3", "p3", 1282416, "9d55ca9728c0219263343ecf3fe66a18"],
-  ["story-3", "p4", 1286468, "42b9044abff9783608382469fa65a299"],
-  ["story-3", "p5", 1221775, "8fdb1e686d1f432631c87c43244a7274"],
   ["story-8", "p0", 1163608, "1799148c42588249f12a6ad280985775"],
   ["story-8", "p1", 1397780, "ca315af20cba72c7fa1850995abb0a1d"],
   ["story-8", "p2", 1203018, "91148d75835b8e31b4995af4a4f8ac16"],
@@ -1743,6 +1756,29 @@ for (const [storyId, slot, bytes, md5] of waveBStills) {
   assert(buf.length === bytes, `lectura/${storyId}/${slot}.png is ${bytes} bytes`);
   assert(createHash("md5").update(buf).digest("hex") === md5, `${storyId} ${slot} is the exact Wave B still`);
 }
+const clearedStory3 = [
+  ["p0", 1392583, "f768b2f3a1eb0d076bbaf80a862de608"],
+  ["p1", 1506923, "aed3849d4f96bfcd6fe22b8e9632c509"],
+  ["p2", 1465245, "862919bc69b0689194df9effee182103"],
+  ["p3", 1266356, "7d8bb5baff522f830b9c1fbaedf316c0"],
+  ["p4", 1286468, "42b9044abff9783608382469fa65a299"],
+  ["p5", 1221775, "8fdb1e686d1f432631c87c43244a7274"],
+];
+for (const [slot, bytes, md5] of clearedStory3) {
+  const stillPng = join(repoRoot, "public", "lectura", "story-3", `${slot}.png`);
+  assert(existsSync(stillPng), `story-3 ${slot} lives at public/lectura/story-3/${slot}.png`);
+  const buf = readFileSync(stillPng);
+  assert(buf.subarray(0, 8).equals(pngMagic), `lectura/story-3/${slot}.png is a real PNG, not JPEG-named-.png`);
+  assert(buf.length === bytes, `lectura/story-3/${slot}.png is ${bytes} bytes`);
+  assert(createHash("md5").update(buf).digest("hex") === md5, `story-3 ${slot} stays the Brand CLEAR live PNG`);
+  assert(buf.readUInt32BE(16) === 1152 && buf.readUInt32BE(20) === 864, `story-3 ${slot} is 1152×864`);
+}
+assert(existsSync(join(repoRoot, "public", "lectura", "story-3", "CAST.md")), "story-3 CAST.md locks short-hair Rey Tigre");
+assert(existsSync(join(repoRoot, "public", "lectura", "story-3", "MANIFEST.md")), "story-3 MANIFEST.md is installed");
+const story3Cast = readFileSync(join(repoRoot, "public", "lectura", "story-3", "CAST.md"), "utf8");
+assert(/Short dark hair/.test(story3Cast) && /Orange tiger mask/.test(story3Cast), "story-3 CAST locks short-hair Rey Tigre + orange mask");
+assert(/Tigre Joven/.test(story3Cast) && /blue\/white/.test(story3Cast), "story-3 CAST locks Tigre Joven blue/white debut");
+assert(/never long wavy/.test(story3Cast), "story-3 CAST forbids long-wavy unmasked rewrite");
 const clearedStory4 = [
   ["p0", 1513007, "ed2db208d1845b596de6d75a6669ed84"],
   ["p1", 1887010, "5e9783f608e764641f1608d8a1cc5c46"],

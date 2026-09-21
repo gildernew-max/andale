@@ -2,6 +2,17 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-21 (Lectura story-3 Brand CLEAR stills)
+
+**What changed**
+- `public/lectura/story-3/p0.png`–`p5.png` are Brand CLEAR stills (1152×864 RGB PNG). Byte-identical to the attached pack. p3 REGEN: unmasked Rey Tigre is short dark hair (was long wavy). p0/p1/p2/p4/p5 kept. CAST.md + MANIFEST.md sit with the stills.
+- App.jsx `story-3` *El hijo del Rey Tigre* · lucha libre live copy unchanged. George words-vs-stills PASS. Soft chrome parked.
+- Content test locks `clearedStory3` bytes/md5/1152×864 and the current words. Path still `${BASE_URL}lectura/story-3/pN.png`.
+- Story-1 Brand stills already match the locked md5s on main. No re-lock.
+
+**Why**
+- Hand CLEAR: wire Brand stills against current words. No rewrite. Soft chrome parked.
+
 ## 2026-09-19 (Lectura story-5 Brand CLEAR stills)
 
 **What changed**
