@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-21 (Lectura story-8 stills + George ¶4)
+
+**What changed**
+- `public/lectura/story-8/p0.png`–`p5.png` are the 1152×864 RGB PNGs at `${BASE_URL}lectura/story-8/pN.png`. p1–p5 are the wave-b KEEP bytes from the Brand MANIFEST. p0 on disk is still that wave-b file (md5 `1799148c…`): the regen pack was not at `/workspace/andale-art/lectura-regen/story-8/` when this wired. CAST.md + MANIFEST.md sit with the stills. Father mustache is the CAST rule.
+- App.jsx `story-8` *El grito de mi padre* ¶4 is George rewrite CLEAR: balcony + crate of bottles beside, white shirt, arm up. ¶1 · ¶2 · ¶3 · ¶5 · ¶6 · glossary · quizzes unchanged. No climb-onto-crate leftover. Soft chrome parked.
+- Content test locks `clearedStory8` bytes/md5/1152×864 and the ¶4 stamp.
+
+**Why**
+- Hand CLEAR: wire stills + George ¶4 together. Do not ship the father climbing onto the beer crate under the balcony still.
+
 ## 2026-09-21 (Lectura story-3 Brand CLEAR stills)
 
 **What changed**
