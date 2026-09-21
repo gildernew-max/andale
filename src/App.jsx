@@ -2125,10 +2125,29 @@ const MemoryTeach = ({ entry, uiLang, D }) => {
   );
 };
 
-/** Brand CLEAR 2026-09-20 — 3×4 phone board, same footprint face-down. Soft chrome parked. */
-const MEMORY_CARD_MIN = 96;
-const MEMORY_CARD_TYPE = 20;
-const MEMORY_CARD_MARK = 36;
+/** Brand CLEAR 2026-09-20 size lock — 167's 96/20 still read as a strip. Soft chrome parked. */
+const MEMORY_CARD_MIN = 140;
+const MEMORY_CARD_TYPE = 26;
+const MEMORY_CARD_MARK = 54;
+
+/** Beat word-chip max-content so every card fills its 3×4 cell. Same footprint face-down. */
+const MEMORY_CARD_FACE = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  width: "100%",
+  minWidth: 0,
+  maxWidth: "100%",
+  flex: "1 1 auto",
+  alignSelf: "stretch",
+  whiteSpace: "normal",
+  overflow: "visible",
+  textOverflow: "unset",
+  wordBreak: "normal",
+  overflowWrap: "break-word",
+  hyphens: "manual",
+};
 
 /** One-screen Memory playfield. Tap two cards or drag a pair. Soft chrome parked. */
 const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, onLang }) => {
@@ -2172,8 +2191,8 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
   };
 
   return (
-    <div data-testid="memory-board" style={{ maxWidth: 480, margin: "0 auto", padding: "16px 12px 32px", width: "100%", boxSizing: "border-box" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+    <div data-testid="memory-board" style={{ maxWidth: 480, margin: "0 auto", padding: "12px 8px 28px", width: "100%", boxSizing: "border-box" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
         <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{memoryTitle(uiLang)}</div>
@@ -2182,8 +2201,8 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
         <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
         <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
       </div>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-        <MemoryMark size={56} labeled />
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+        <MemoryMark size={40} labeled />
       </div>
       {done ? (
         <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
@@ -2196,8 +2215,8 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
         </div>
       ) : (
         <>
-          <p data-testid="memory-howto" style={{ margin: "0 0 12px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
-          <div data-testid="memory-grid" data-cols="3" className="memory-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, width: "100%", alignItems: "stretch" }}>
+          <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
+          <div data-testid="memory-grid" data-cols="3" className="memory-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gridAutoRows: `minmax(${MEMORY_CARD_MIN}px, auto)`, gap: 8, width: "100%", alignItems: "stretch" }}>
             {(run.cards || []).map((card) => {
               const open = memoryIsOpen(run, card);
               const dragging = drag?.fromId === card.id;
@@ -2206,7 +2225,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
               const showFace = open || dragging;
               const text = memoryCardText(card, uiLang, run);
               return (
-                <div key={card.id} className="memory-cell" style={{ minHeight: MEMORY_CARD_MIN, width: "100%", display: "flex" }}>
+                <div key={card.id} className="memory-cell" style={{ minHeight: MEMORY_CARD_MIN, width: "100%", minWidth: 0, display: "flex", height: "100%" }}>
                   <button
                     type="button"
                     ref={(el) => { cardsRef.current[card.id] = el; }}
@@ -2218,6 +2237,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                     data-open={open ? "yes" : "no"}
                     data-miss={wrong ? "yes" : "no"}
                     data-card-min={MEMORY_CARD_MIN}
+                    data-card-type={MEMORY_CARD_TYPE}
                     disabled={run.miss || (open && (run.matched || []).includes(card.pairId))}
                     onPointerDown={(e) => onCardPointerDown(e, card.id)}
                     onPointerMove={onCardPointerMove}
@@ -2226,8 +2246,9 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                     className={`word-chip${card.kind === "meaning" ? " word-chip--phrase" : ""} memory-card${wrong ? " wiggle" : ""}`}
                     style={{
                       ...WORD_CHIP_PHRASE_STYLE,
+                      ...MEMORY_CARD_FACE,
                       width: dragging && drag.w ? drag.w : "100%",
-                      height: dragging && drag.h ? drag.h : "auto",
+                      height: dragging && drag.h ? drag.h : "100%",
                       minWidth: 0,
                       maxWidth: dragging ? drag.w : "100%",
                       flex: dragging ? "0 0 auto" : "1 1 auto",
@@ -2242,16 +2263,17 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       borderBottom: `4px solid ${wrong ? D.redDark : hovered ? "#C46B3A" : open ? D.greenDark : "#C46B3A"}`,
                       background: showFace ? (wrong ? D.redBg : open && (run.matched || []).includes(card.pairId) ? D.greenBg : "#fff") : HUB_CREAM,
                       color: wrong ? D.redDark : open && (run.matched || []).includes(card.pairId) ? D.greenDark : D.ink,
-                      borderRadius: 16,
-                      padding: "12px 10px",
+                      borderRadius: 18,
+                      padding: "16px 8px",
                       fontFamily: "inherit",
                       fontWeight: 900,
                       fontSize: MEMORY_CARD_TYPE,
-                      lineHeight: 1.15,
-                      letterSpacing: "-0.02em",
+                      lineHeight: 1.1,
+                      letterSpacing: "-0.03em",
                       textAlign: "center",
                       whiteSpace: "normal",
-                      overflowWrap: "anywhere",
+                      overflowWrap: "break-word",
+                      wordBreak: "normal",
                       cursor: (run.matched || []).includes(card.pairId) ? "default" : "grab",
                       touchAction: "none",
                     }}
@@ -6980,8 +7002,10 @@ export default function App() {
         .choice-card[data-selected="true"]:hover:not(:disabled) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
         .word-chip { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; width:max-content; min-width:min-content; max-width:none; flex:0 0 auto; white-space:nowrap; overflow:visible; text-overflow:unset; word-break:keep-all; overflow-wrap:normal; hyphens:manual; }
         .word-chip--phrase { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
-        .memory-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; width:100%; align-items:stretch; }
-        .memory-card { width:100%; min-width:0; max-width:100%; min-height:96px; flex:1 1 auto; white-space:normal; overflow-wrap:anywhere; font-size:20px; font-weight:900; line-height:1.15; letter-spacing:-0.02em; text-align:center; padding:12px 10px; }
+        .memory-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:minmax(${MEMORY_CARD_MIN}px, auto); gap:8px; width:100%; align-items:stretch; }
+        .memory-cell { min-width:0; width:100%; display:flex; height:100%; }
+        .memory-card { width:100%; min-width:0; max-width:100%; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:break-word; word-break:normal; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
+        .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:100%; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:break-word; word-break:normal; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
