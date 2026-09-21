@@ -1934,10 +1934,18 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("memory-grid")).toBeTruthy();
     expect(screen.queryByTestId("cubetas-cenzontle")).toBeNull();
     expect(document.body.textContent).not.toMatch(/MEMORIA \/ MEMORY|Memory \/ Memoria/);
+    const board = screen.getByTestId("memory-board");
+    expect(board.className).toMatch(/memory-board/);
+    expect(board.style.maxWidth).toBe("none");
+    expect(board.style.width).toBe("100%");
+    expect(board.style.margin).toBe("0px");
+    expect(board.getAttribute("data-board-pad")).toBe("4");
     const cards = screen.getAllByTestId("memory-card");
     expect(cards.length).toBe(12);
     expect(screen.getByTestId("memory-grid").getAttribute("data-cols")).toBe("3");
     expect(screen.getByTestId("memory-grid").style.gridTemplateColumns).toContain("repeat(3");
+    expect(screen.getByTestId("memory-grid").style.width).toBe("100%");
+    expect(screen.getByTestId("memory-grid").style.maxWidth).toBe("none");
     cards.forEach((el) => {
       assertMemoryBoardCard(el);
       expect(["none", "100%"]).toContain(el.style.maxWidth);

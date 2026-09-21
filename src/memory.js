@@ -4,6 +4,7 @@
  *  Soft chrome parked. Tap two cards or drag a pair. Full-word bubbles.
  *  Brand CLEAR 2026-09-20 — 3×4 board, bigger cards + larger type.
  *  Size lock: 140px / 26px hero (167's 96/20 still failed live).
+ *  Width lock: near-full content width (169's 480 column still failed live).
  */
 
 /** George + No Face CLEAR: language-split title, not a bilingual lockup. */
