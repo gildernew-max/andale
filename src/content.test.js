@@ -1363,7 +1363,9 @@ assert(appSrc.includes("MEMORY_CARD_MIN = 140"), "Memory card min-height is the 
 assert(appSrc.includes("MEMORY_CARD_TYPE = 26"), "Memory face type is the 26px hero lock");
 assert(appSrc.includes("MEMORY_CARD_MARK"), "Memory face-down mark scales with the card");
 assert(appSrc.includes("MEMORY_CARD_FACE"), "Memory cards beat word-chip max-content");
+assert(appSrc.includes("MEMORY_BOARD_PAD = 4"), "Memory board side pad is the 4px width lock");
 assert(appSrc.includes(".word-chip.memory-card"), "Memory CSS specificity beats word-chip shrink");
+assert(appSrc.includes("className=\"memory-board\""), "Memory board wrapper is width-locked");
 assert(!appSrc.includes("MEMORY_CARD_MIN = 96"), "167's 96px min is gone");
 assert(!appSrc.includes("MEMORY_CARD_TYPE = 20"), "167's 20px type is gone");
 assert(!appSrc.includes("MemoryMark size={22}"), "Memory face-down is not a micro icon");
@@ -1435,6 +1437,9 @@ assert(!memorySlice.includes("minWidth: showFace ? 0"), "Memory face-up cards do
 assert(memorySlice.includes("MEMORY_CARD_MIN"), "Memory cards use the Brand CLEAR min-height");
 assert(memorySlice.includes("MEMORY_CARD_TYPE"), "Memory face type is locked large");
 assert(memorySlice.includes("MEMORY_CARD_FACE"), "Memory face style fills the 3×4 cell");
+assert(memorySlice.includes("MEMORY_BOARD_PAD"), "Memory board drops the 480 centered column");
+assert(memorySlice.includes('maxWidth: "none"'), "Memory board is not a max-width column");
+assert(!/memory-board[\s\S]{0,180}maxWidth:\s*480/.test(memorySlice), "Memory board is not the 480 center strip");
 assert(memorySlice.includes('gridTemplateColumns: "repeat(3, minmax(0, 1fr))"'), "Memory playfield is a 3-wide grid");
 assert(!/data-testid="memory-card"[\s\S]{0,900}minHeight: 44/.test(memorySlice), "Memory cards are not 44px strips");
 assert(!/data-testid="memory-card"[\s\S]{0,1200}minHeight: 96/.test(memorySlice), "Memory cards are not the 96px nudge");
