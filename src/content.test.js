@@ -1827,7 +1827,7 @@ for (const [storyId, slot, bytes, md5] of waveBStills) {
   assert(createHash("md5").update(buf).digest("hex") === md5, `${storyId} ${slot} is the exact Wave B still`);
 }
 const clearedStory8 = [
-  ["p0", 1163608, "1799148c42588249f12a6ad280985775"],
+  ["p0", 1507670, "b0427461a632c3cd8189a9e18c9c5e10"],
   ["p1", 1397780, "ca315af20cba72c7fa1850995abb0a1d"],
   ["p2", 1203018, "91148d75835b8e31b4995af4a4f8ac16"],
   ["p3", 1259195, "d0f67783fae380ed0b27da7a92d2bec3"],

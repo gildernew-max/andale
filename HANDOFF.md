@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-21 (Lectura story-8 Brand CLEAR p0)
+
+**What changed**
+- `public/lectura/story-8/p0.png` is the Brand CLEAR regen, byte-identical to the attached pack: 1152×864 RGB, 1507670 bytes, md5 `b0427461a632c3cd8189a9e18c9c5e10`. Replaces wave-b p0 (`1799148c…`, 1163608 bytes). p1–p5 stay the wave-b KEEP bytes (same md5s). ¶4 unchanged. Soft chrome parked.
+- Content test `clearedStory8` p0 lock is that size + md5.
+
+**Why**
+- Last wire left the clean-shaven wave-b p0. Brand CLEAR p0 is the mustache lock.
+
 ## 2026-09-21 (Lectura story-8 stills + George ¶4)
 
 **What changed**
