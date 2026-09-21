@@ -2125,6 +2125,11 @@ const MemoryTeach = ({ entry, uiLang, D }) => {
   );
 };
 
+/** Brand CLEAR 2026-09-20 — 3×4 phone board, same footprint face-down. Soft chrome parked. */
+const MEMORY_CARD_MIN = 96;
+const MEMORY_CARD_TYPE = 20;
+const MEMORY_CARD_MARK = 36;
+
 /** One-screen Memory playfield. Tap two cards or drag a pair. Soft chrome parked. */
 const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, onLang }) => {
   const [drag, setDrag] = useState(null);
@@ -2136,7 +2141,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
   const onCardPointerDown = (e, id) => {
     if (run.status !== "play" || run.miss) return;
     const r = e.currentTarget.getBoundingClientRect();
-    const next = { fromId: id, x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, hover: null, moved: false };
+    const next = { fromId: id, x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, w: r.width, h: r.height, hover: null, moved: false };
     dragRef.current = next;
     setDrag(next);
   };
@@ -2167,7 +2172,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
   };
 
   return (
-    <div data-testid="memory-board" style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
+    <div data-testid="memory-board" style={{ maxWidth: 480, margin: "0 auto", padding: "16px 12px 32px", width: "100%", boxSizing: "border-box" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
         <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -2191,8 +2196,8 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
         </div>
       ) : (
         <>
-          <p data-testid="memory-howto" style={{ margin: "0 0 14px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
-          <div data-testid="memory-grid" style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", alignItems: "center" }}>
+          <p data-testid="memory-howto" style={{ margin: "0 0 12px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
+          <div data-testid="memory-grid" data-cols="3" className="memory-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, width: "100%", alignItems: "stretch" }}>
             {(run.cards || []).map((card) => {
               const open = memoryIsOpen(run, card);
               const dragging = drag?.fromId === card.id;
@@ -2201,47 +2206,59 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
               const showFace = open || dragging;
               const text = memoryCardText(card, uiLang, run);
               return (
-                <button
-                  key={card.id}
-                  type="button"
-                  ref={(el) => { cardsRef.current[card.id] = el; }}
-                  data-testid="memory-card"
-                  data-card={card.id}
-                  data-pair={card.pairId}
-                  data-kind={card.kind}
-                  data-face={showFace ? "up" : "down"}
-                  data-open={open ? "yes" : "no"}
-                  data-miss={wrong ? "yes" : "no"}
-                  disabled={run.miss || (open && (run.matched || []).includes(card.pairId))}
-                  onPointerDown={(e) => onCardPointerDown(e, card.id)}
-                  onPointerMove={onCardPointerMove}
-                  onPointerUp={(e) => onCardPointerUp(e, card.id)}
-                  onPointerCancel={() => { dragRef.current = null; setDrag(null); }}
-                  className={`word-chip${card.kind === "meaning" ? " word-chip--phrase" : ""}${wrong ? " wiggle" : ""}`}
-                  style={{
-                    ...(card.kind === "meaning" ? WORD_CHIP_PHRASE_STYLE : WORD_CHIP_STYLE),
-                    minWidth: showFace ? "min-content" : 72,
-                    minHeight: 44,
-                    position: dragging ? "fixed" : "relative",
-                    left: dragging ? drag.x - (drag.dx || 0) : undefined,
-                    top: dragging ? drag.y - (drag.dy || 0) : undefined,
-                    zIndex: dragging ? 20 : 1,
-                    margin: 0,
-                    border: `2px solid ${wrong ? D.red : hovered ? "#C46B3A" : open ? D.green : "#C46B3A"}`,
-                    borderBottom: `4px solid ${wrong ? D.redDark : hovered ? "#C46B3A" : open ? D.greenDark : "#C46B3A"}`,
-                    background: showFace ? (wrong ? D.redBg : open && (run.matched || []).includes(card.pairId) ? D.greenBg : "#fff") : HUB_CREAM,
-                    color: wrong ? D.redDark : open && (run.matched || []).includes(card.pairId) ? D.greenDark : D.ink,
-                    borderRadius: 14,
-                    padding: "10px 14px",
-                    fontFamily: "inherit",
-                    fontWeight: 800,
-                    fontSize: 15,
-                    cursor: (run.matched || []).includes(card.pairId) ? "default" : "grab",
-                    touchAction: "none",
-                  }}
-                >
-                  {showFace ? text : <MemoryMark size={22} />}
-                </button>
+                <div key={card.id} className="memory-cell" style={{ minHeight: MEMORY_CARD_MIN, width: "100%", display: "flex" }}>
+                  <button
+                    type="button"
+                    ref={(el) => { cardsRef.current[card.id] = el; }}
+                    data-testid="memory-card"
+                    data-card={card.id}
+                    data-pair={card.pairId}
+                    data-kind={card.kind}
+                    data-face={showFace ? "up" : "down"}
+                    data-open={open ? "yes" : "no"}
+                    data-miss={wrong ? "yes" : "no"}
+                    data-card-min={MEMORY_CARD_MIN}
+                    disabled={run.miss || (open && (run.matched || []).includes(card.pairId))}
+                    onPointerDown={(e) => onCardPointerDown(e, card.id)}
+                    onPointerMove={onCardPointerMove}
+                    onPointerUp={(e) => onCardPointerUp(e, card.id)}
+                    onPointerCancel={() => { dragRef.current = null; setDrag(null); }}
+                    className={`word-chip${card.kind === "meaning" ? " word-chip--phrase" : ""} memory-card${wrong ? " wiggle" : ""}`}
+                    style={{
+                      ...WORD_CHIP_PHRASE_STYLE,
+                      width: dragging && drag.w ? drag.w : "100%",
+                      height: dragging && drag.h ? drag.h : "auto",
+                      minWidth: 0,
+                      maxWidth: dragging ? drag.w : "100%",
+                      flex: dragging ? "0 0 auto" : "1 1 auto",
+                      alignSelf: "stretch",
+                      minHeight: MEMORY_CARD_MIN,
+                      position: dragging ? "fixed" : "relative",
+                      left: dragging ? drag.x - (drag.dx || 0) : undefined,
+                      top: dragging ? drag.y - (drag.dy || 0) : undefined,
+                      zIndex: dragging ? 20 : 1,
+                      margin: 0,
+                      border: `2px solid ${wrong ? D.red : hovered ? "#C46B3A" : open ? D.green : "#C46B3A"}`,
+                      borderBottom: `4px solid ${wrong ? D.redDark : hovered ? "#C46B3A" : open ? D.greenDark : "#C46B3A"}`,
+                      background: showFace ? (wrong ? D.redBg : open && (run.matched || []).includes(card.pairId) ? D.greenBg : "#fff") : HUB_CREAM,
+                      color: wrong ? D.redDark : open && (run.matched || []).includes(card.pairId) ? D.greenDark : D.ink,
+                      borderRadius: 16,
+                      padding: "12px 10px",
+                      fontFamily: "inherit",
+                      fontWeight: 900,
+                      fontSize: MEMORY_CARD_TYPE,
+                      lineHeight: 1.15,
+                      letterSpacing: "-0.02em",
+                      textAlign: "center",
+                      whiteSpace: "normal",
+                      overflowWrap: "anywhere",
+                      cursor: (run.matched || []).includes(card.pairId) ? "default" : "grab",
+                      touchAction: "none",
+                    }}
+                  >
+                    {showFace ? text : <MemoryMark size={MEMORY_CARD_MARK} />}
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -6963,6 +6980,8 @@ export default function App() {
         .choice-card[data-selected="true"]:hover:not(:disabled) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
         .word-chip { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; width:max-content; min-width:min-content; max-width:none; flex:0 0 auto; white-space:nowrap; overflow:visible; text-overflow:unset; word-break:keep-all; overflow-wrap:normal; hyphens:manual; }
         .word-chip--phrase { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+        .memory-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; width:100%; align-items:stretch; }
+        .memory-card { width:100%; min-width:0; max-width:100%; min-height:96px; flex:1 1 auto; white-space:normal; overflow-wrap:anywhere; font-size:20px; font-weight:900; line-height:1.15; letter-spacing:-0.02em; text-align:center; padding:12px 10px; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
