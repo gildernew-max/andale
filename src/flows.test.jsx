@@ -4971,6 +4971,7 @@ describe("simulated learner flows", () => {
     expect(stored.unlockedPrem).toBe(true);
     expect(stored.iapProductId).toBe("com.andale.app.premium.annual");
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-waitlist")).toBeNull();
     expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
     window.removeEventListener("andale-purchase", onPurchase);
     delete window.__andaleIapEnv;
@@ -5897,7 +5898,7 @@ describe("Pages funnel log", () => {
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/\$39\.99|\$6\.99|Dave@/);
   });
 
-  it("waitlist_submit fires under continue free with no email in the log", async () => {
+  it("waitlist survives Continue free on the hub and submits without email in the log", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday() });
     const user = userEvent.setup();
@@ -5906,13 +5907,27 @@ describe("Pages funnel log", () => {
     assertSoftPaywallAnnualPrimary("es");
     const annual = screen.getByTestId("soft-paywall-annual");
     const dismiss = screen.getByTestId("soft-paywall-dismiss");
-    const strip = screen.getByTestId("soft-paywall-waitlist");
+    const preview = screen.getByTestId("soft-paywall-waitlist");
     expect(annual.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(dismiss.compareDocumentPosition(strip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(dismiss.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId("soft-paywall").contains(preview)).toBe(true);
+    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+    expect(annual.textContent).toBe("Un año");
+    expect(annual.style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    const filled = [...screen.getByTestId("soft-paywall").querySelectorAll("button.duo-btn")]
+      .filter((el) => /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i.test(el.style.background));
+    expect(filled).toHaveLength(1);
+    expect(filled[0]).toBe(annual);
+
+    await user.click(dismiss);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    const strip = screen.getByTestId("soft-paywall-waitlist");
+    expect(screen.getByTestId("learn-hub").contains(strip)).toBe(true);
     expect(strip.textContent).toContain("Avísame cuando abramos la tienda");
     expect(strip.textContent).toContain("Avisarme");
     expect(strip.textContent).toContain("Solo para el aviso de apertura. Sin spam.");
     expect(strip.textContent).not.toMatch(/Notify me|Tell me when|Your email|Launch notice|Check the email|Got it/);
+    expect(strip.textContent).not.toMatch(/Un año|Seguir gratis|Sigue con tu racha/);
     const field = screen.getByTestId("soft-paywall-waitlist-email");
     expect(field.getAttribute("placeholder")).toBe("Tu correo");
     expect(field.style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
@@ -5925,14 +5940,15 @@ describe("Pages funnel log", () => {
     expect(cta.style.background).not.toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     expect(cta.style.borderBottom).not.toMatch(/4px/);
     expect(strip.querySelector("a")).toBeNull();
-    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+    expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
 
     await user.type(field, "not-an-email");
     await user.click(cta);
     expect(screen.getByTestId("soft-paywall-waitlist-note").textContent).toBe("Revisa el correo");
     expect(funnelOf("waitlist_submit")).toHaveLength(0);
     expect(localStorage.getItem("andale-waitlist")).toBeNull();
-    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.getByTestId("learn-hub").contains(screen.getByTestId("soft-paywall-waitlist"))).toBe(true);
 
     await user.clear(field);
     await user.type(field, "dave@example.com");
@@ -5946,26 +5962,39 @@ describe("Pages funnel log", () => {
     expect(submits[0].email).toBeUndefined();
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/dave@example\.com|@example/i);
     expect(JSON.parse(localStorage.getItem("andale-waitlist")).email).toBe("dave@example.com");
-    expect(annual.textContent).toBe("Un año");
-    expect(annual.style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
-    const filled = [...screen.getByTestId("soft-paywall").querySelectorAll("button.duo-btn")]
-      .filter((el) => /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i.test(el.style.background));
-    expect(filled).toHaveLength(1);
-    expect(filled[0]).toBe(annual);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
-  it("waitlist face follows EN uiLang with no ES salad", async () => {
+  it("waitlist face follows EN uiLang on the free path after Continue free", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday(), uiLang: "en" });
+    const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     assertSoftPaywallAnnualPrimary("en");
+    expect(screen.getByTestId("soft-paywall").contains(screen.getByTestId("soft-paywall-waitlist"))).toBe(true);
+    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("One year");
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     const strip = screen.getByTestId("soft-paywall-waitlist");
+    expect(screen.getByTestId("learn-hub").contains(strip)).toBe(true);
     expect(strip.textContent).toContain("Tell me when the store opens");
     expect(strip.textContent).toContain("Notify me");
     expect(strip.textContent).toContain("Launch notice only. No spam.");
     expect(strip.textContent).not.toMatch(/Avísame|Avisarme|Tu correo|Revisa el correo|Listo\.|Sin spam/);
-    expect(screen.getByTestId("soft-paywall-waitlist-email").getAttribute("placeholder")).toBe("Your email");
-    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("One year");
+    const field = screen.getByTestId("soft-paywall-waitlist-email");
+    expect(field.getAttribute("placeholder")).toBe("Your email");
+    await user.type(field, "not-an-email");
+    await user.click(screen.getByTestId("soft-paywall-waitlist-submit"));
+    expect(screen.getByTestId("soft-paywall-waitlist-note").textContent).toBe("Check the email");
+    expect(funnelOf("waitlist_submit")).toHaveLength(0);
+    await user.clear(field);
+    await user.type(field, "dave@example.com");
+    await user.click(screen.getByTestId("soft-paywall-waitlist-submit"));
+    expect(screen.getByTestId("soft-paywall-waitlist-note").textContent).toBe("Got it. I’ll write when it’s ready.");
+    const submits = funnelOf("waitlist_submit");
+    expect(submits).toHaveLength(1);
+    expect(Object.keys(submits[0]).sort()).toEqual(["at", "event"]);
+    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/dave@example\.com|@example/i);
   });
 });
