@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-23 (Cenzontle → Lectura handoff)
+
+**What changed**
+- First Cenzontle win (`firstHoy` / `firstDoctora` / `firstStory0` / `lecturaWin`) can show one quiet strip under the win: `El cuento es lo que sigue.` / `The story is what’s next.` and outline CTA `Leer el cuento` / `Read the story`. uiLang only. Cream surface, sage outline, not filled green. No second bird. Existing fly-away stays.
+- CTA opens story-0 if unread, otherwise the next unclaimed story (`openStory`).
+- Once-gate `lecturaHandoffSeen` on `andale-v3` stamps on that first win and stays down after. Hidden when Lectura already started this session and story-0 is claimed, or when nothing is unread. Soft chrome parked.
+
+**Why**
+- Words + Brand CLEAR. Retention handoff into Lectura. Hub EN/ES stays killed.
+
 ## 2026-09-21 (Lectura story-8 Brand CLEAR p0)
 
 **What changed**
