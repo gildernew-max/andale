@@ -13,14 +13,16 @@ assert(FUNNEL_EVENT === "andale-funnel", "CustomEvent name is andale-funnel");
 assert(FUNNEL_LOG === "__andaleFunnelLog", "Pages verification log is window.__andaleFunnelLog");
 assert(FUNNEL_EVENTS.open === "open", "open is the first funnel event");
 assert(FUNNEL_EVENTS.cenzontleComplete === "cenzontle_complete", "cenzontle_complete is the bird beat");
+assert(FUNNEL_EVENTS.lecturaHandoffSeen === "lectura_handoff_seen", "lectura_handoff_seen is the retention strip");
+assert(FUNNEL_EVENTS.lecturaHandoffTap === "lectura_handoff_tap", "lectura_handoff_tap is the retention CTA");
 assert(FUNNEL_EVENTS.lecturaStart === "lectura_start", "lectura_start is the story start");
 assert(FUNNEL_EVENTS.paywallSeen === "paywall_seen", "paywall_seen is the wall visible");
 assert(FUNNEL_EVENTS.paywallTap === "paywall_tap", "paywall_tap is the wall CTA");
 assert(FUNNEL_EVENTS.waitlistSubmit === "waitlist_submit", "waitlist_submit is the notice submit");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "lectura_start", "open", "paywall_seen", "paywall_tap", "waitlist_submit"].join(","),
-  "existing funnel events stay; waitlist_submit is the only addition",
+    === ["cenzontle_complete", "lectura_handoff_seen", "lectura_handoff_tap", "lectura_start", "open", "paywall_seen", "paywall_tap", "waitlist_submit"].join(","),
+  "handoff seen and tap join the local funnel; no third-party names",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
 assert(PAYWALL_TAP.monthly === "monthly", "monthly tap label");
@@ -72,6 +74,32 @@ const badBeat = emitFunnelEvent({
   beat: "Dave",
 }, bus);
 assert(badBeat.beat == null, "non-allowlisted beat is dropped");
+
+const handoffSeen = emitFunnelEvent({
+  event: FUNNEL_EVENTS.lecturaHandoffSeen,
+  storyId: "story-0",
+  name: "Dave",
+  email: "dave@example.com",
+}, bus);
+assert(handoffSeen.event === "lectura_handoff_seen", "handoff seen names the event");
+assert(typeof handoffSeen.at === "string" && handoffSeen.at.includes("T"), "handoff seen carries an ISO timestamp");
+assert(handoffSeen.storyId == null && handoffSeen.name == null && handoffSeen.email == null, "handoff seen drops story id and PII");
+assert(JSON.stringify(handoffSeen) === JSON.stringify({ event: "lectura_handoff_seen", at: handoffSeen.at }), "handoff seen payload is event + at only");
+
+const handoffTap = emitFunnelEvent({
+  event: FUNNEL_EVENTS.lecturaHandoffTap,
+  storyId: "story-0",
+  title: "La noche en que vuelven",
+  email: "dave@example.com",
+}, bus);
+assert(handoffTap.event === "lectura_handoff_tap" && handoffTap.storyId === "story-0", "handoff tap keeps the content id");
+assert(handoffTap.title == null && handoffTap.email == null, "handoff tap drops title and email");
+
+const badHandoff = emitFunnelEvent({
+  event: FUNNEL_EVENTS.lecturaHandoffTap,
+  storyId: "dave@example.com",
+}, bus);
+assert(badHandoff.storyId == null, "email-shaped handoff storyId is dropped");
 
 const story = emitFunnelEvent({
   event: FUNNEL_EVENTS.lecturaStart,

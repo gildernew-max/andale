@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-23 (Cenzontle → Lectura retention handoff)
+
+**What changed**
+- After the first Cenzontle win (first Hoy, first Doctora, or story-0 beat), one quiet strip sits under `¡Eso!` / `That's it.`: George line + outline CTA. CTA opens story-0 if unread, otherwise the next unread story.
+- Once-gate is `prog.lecturaHandoffSeen`. It is written on that first win, including when the strip stays hidden (Lectura already started this session and story-0 is complete, or nothing unread). Later wins do not repeat it.
+- Local funnel only: `lectura_handoff_seen` (event + time) and `lectura_handoff_tap` (plus story id). No PII, no new SDK. Soft chrome / enroll / paywall bird-split untouched.
+
+**Why**
+- Words CLEAR + Brand CLEAR. Retention handoff into Lectura, not a second home.
+
 ## 2026-09-21 (Lectura story-8 Brand CLEAR p0)
 
 **What changed**

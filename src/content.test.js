@@ -685,6 +685,8 @@ assert(FUNNEL_EVENT === "andale-funnel", "funnel CustomEvent name is stable");
 assert(FUNNEL_LOG === "__andaleFunnelLog", "Pages reads window.__andaleFunnelLog");
 assert(FUNNEL_EVENTS.open === "open", "funnel open name");
 assert(FUNNEL_EVENTS.cenzontleComplete === "cenzontle_complete", "funnel bird-complete name");
+assert(FUNNEL_EVENTS.lecturaHandoffSeen === "lectura_handoff_seen", "funnel handoff-seen name");
+assert(FUNNEL_EVENTS.lecturaHandoffTap === "lectura_handoff_tap", "funnel handoff-tap name");
 assert(FUNNEL_EVENTS.lecturaStart === "lectura_start", "funnel lectura name");
 assert(FUNNEL_EVENTS.paywallSeen === "paywall_seen", "funnel paywall-seen name");
 assert(FUNNEL_EVENTS.paywallTap === "paywall_tap", "funnel paywall-tap name");
@@ -695,6 +697,8 @@ assert(appSrc.includes("emitFunnelEvent({ event: FUNNEL_EVENTS.open })"), "open 
 assert(appSrc.includes("completeCenzontleBeat"), "bird beat finish is a named handler");
 assert(appSrc.includes("onComplete={completeCenzontleBeat}"), "fly-away / WinBounce finish emit cenzontle_complete");
 assert(appSrc.includes("FUNNEL_EVENTS.cenzontleComplete"), "cenzontle_complete is wired");
+assert(appSrc.includes("FUNNEL_EVENTS.lecturaHandoffSeen"), "lectura_handoff_seen is wired");
+assert(appSrc.includes("FUNNEL_EVENTS.lecturaHandoffTap"), "lectura_handoff_tap is wired");
 assert(appSrc.includes("FUNNEL_EVENTS.lecturaStart"), "lectura_start is wired");
 assert(appSrc.includes("openStory") && appSrc.includes("FUNNEL_EVENTS.lecturaStart"), "lectura_start fires from openStory");
 assert(appSrc.includes("FUNNEL_EVENTS.paywallSeen"), "paywall_seen is wired");

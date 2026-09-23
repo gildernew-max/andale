@@ -14,6 +14,15 @@ import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
+import {
+  LECTURA_HANDOFF_STORY0,
+  isFirstCenzontleWin,
+  lecturaHandoffCta,
+  lecturaHandoffQuiet,
+  lecturaHandoffSeenLogged,
+  lecturaHandoffStoryId,
+  shouldShowLecturaHandoff,
+} from "./lecturaHandoff.js";
 import { saveWaitlistNotice, shouldShowFreePathWaitlist } from "./waitlist.js";
 import { WaitlistStrip } from "./WaitlistStrip.jsx";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
@@ -4429,6 +4438,10 @@ export default function App() {
   const [winBounce, setWinBounce] = useState(false);
   const winBouncePlayed = useRef(false);
   const storyPagesSeenRef = useRef({});
+  const lecturaStartedRef = useRef(false);
+  const lecturaHandoffTapLock = useRef(false);
+  const [progressLoaded, setProgressLoaded] = useState(false);
+  const [lecturaHandoffPinned, setLecturaHandoffPinned] = useState(false);
   const [doctorHits, setDoctorHits] = useState(0);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [wordOrderMiss, setWordOrderMiss] = useState("");
@@ -4505,6 +4518,7 @@ export default function App() {
 	        setStreakRepair((loaded.freezes || 0) > 0 ? "freeze" : "repair");
 	      }
 	    }
+	    setProgressLoaded(true);
 	  })();
     const loadVoices = () => {
       try {
@@ -5776,11 +5790,50 @@ export default function App() {
   };
 
   const openStory = (story) => {
+    lecturaStartedRef.current = true;
     if (story?.id) emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaStart, storyId: story.id });
     const extra = STORY_EXTRAS[story?.id] || {};
     setStoryShuffle(shuffleStoryChoiceOrder(story, extra.checkpoints || []));
     setStoryView(story); setWordSel(null); setWordReveal(true); setAnsSel({}); setParaIdx(0); setScreen("story");
   };
+
+  const openLecturaFromHandoff = () => {
+    if (lecturaHandoffTapLock.current) return;
+    const storyId = lecturaHandoffStoryId(STORIES.map((s) => s.id), prog.stories);
+    const story = STORIES.find((s) => s.id === storyId);
+    if (!story) return;
+    lecturaHandoffTapLock.current = true;
+    emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaHandoffTap, storyId: story.id });
+    openStory(story);
+  };
+
+  useEffect(() => {
+    if (!progressLoaded) return;
+    if (screen !== "done") {
+      if (lecturaHandoffPinned) setLecturaHandoffPinned(false);
+      return;
+    }
+    if (!isFirstCenzontleWin(session)) {
+      if (lecturaHandoffPinned) setLecturaHandoffPinned(false);
+      return;
+    }
+    if (prog.lecturaHandoffSeen) return;
+    const storyId = lecturaHandoffStoryId(STORIES.map((s) => s.id), prog.stories);
+    const show = shouldShowLecturaHandoff({
+      session,
+      handoffSeen: false,
+      lecturaStartedThisSession: lecturaStartedRef.current,
+      story0Claimed: !!prog.stories?.[LECTURA_HANDOFF_STORY0],
+      storyId,
+    });
+    if (show) {
+      if (!lecturaHandoffSeenLogged()) {
+        emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaHandoffSeen });
+      }
+      setLecturaHandoffPinned(true);
+    }
+    save({ lecturaHandoffSeen: true });
+  }, [progressLoaded, screen, session, prog.lecturaHandoffSeen, prog.stories, lecturaHandoffPinned]);
 
   useEffect(() => {
     if (screen !== "story" || !storyView?.id) return;
@@ -10269,6 +10322,35 @@ export default function App() {
           <h2 data-testid={winTestId} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
+          {lecturaHandoffPinned && (
+            <div data-testid="lectura-handoff" style={{ margin: "8px auto 0", maxWidth: 280 }}>
+              <p data-testid="lectura-handoff-line" style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: D.sub }}>
+                {lecturaHandoffQuiet(uiLang)}
+              </p>
+              <button
+                type="button"
+                data-testid="lectura-handoff-cta"
+                onClick={openLecturaFromHandoff}
+                style={{
+                  background: HUB_CREAM,
+                  color: MARK_INK,
+                  border: `1px solid ${MARK_INK}`,
+                  borderRadius: 12,
+                  padding: "10px 16px",
+                  minHeight: 44,
+                  fontFamily: "inherit",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  lineHeight: 1.35,
+                  cursor: "pointer",
+                  textTransform: "none",
+                  letterSpacing: "normal",
+                }}
+              >
+                {lecturaHandoffCta(uiLang)}
+              </button>
+            </div>
+          )}
           {levelUp && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", margin: "4px 0 8px", fontWeight: 900, color: D.goldDark }}>
 	              <IcBolt size={18} /> {L.levelUp} <span style={{ textTransform: "uppercase", letterSpacing: ".03em" }}>{levelLabel(levelUp, uiLang)}</span>
