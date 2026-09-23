@@ -37,6 +37,7 @@ import {
   sobremesaTipsLabel,
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
+import { LECTURA_HANDOFF_SEEN, lecturaHandoffCta, lecturaHandoffQuiet, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway, PaywallFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -4429,6 +4430,8 @@ export default function App() {
   const [winBounce, setWinBounce] = useState(false);
   const winBouncePlayed = useRef(false);
   const storyPagesSeenRef = useRef({});
+  const lecturaStartedRef = useRef(false);
+  const lecturaHandoffHold = useRef(false);
   const [doctorHits, setDoctorHits] = useState(0);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [wordOrderMiss, setWordOrderMiss] = useState("");
@@ -5776,7 +5779,10 @@ export default function App() {
   };
 
   const openStory = (story) => {
-    if (story?.id) emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaStart, storyId: story.id });
+    if (story?.id) {
+      lecturaStartedRef.current = true;
+      emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaStart, storyId: story.id });
+    }
     const extra = STORY_EXTRAS[story?.id] || {};
     setStoryShuffle(shuffleStoryChoiceOrder(story, extra.checkpoints || []));
     setStoryView(story); setWordSel(null); setWordReveal(true); setAnsSel({}); setParaIdx(0); setScreen("story");
@@ -6105,6 +6111,9 @@ export default function App() {
   };
 
   const applyLive = (live) => {
+    if (live?.screen === "story" || live?.storyId || live?.session?.firstStory0 || live?.session?.lecturaWin) {
+      lecturaStartedRef.current = true;
+    }
     if (!live || live.screen === "home") {
       if (live?.tab) setTab(live.tab);
       return;
@@ -6397,6 +6406,18 @@ export default function App() {
 
   /* ---------------- RENDER ---------------- */
 
+  const lecturaHandoffStory = nextUnreadStory(STORIES, prog.stories);
+  const showLecturaHandoff = screen === "done"
+    && prog.contentVersion === CONTENT_VERSION
+    && !!lecturaHandoffStory
+    && (lecturaHandoffHold.current || shouldShowLecturaHandoff({
+      handoffSeen: !!prog[LECTURA_HANDOFF_SEEN],
+      session,
+      lecturaStarted: lecturaStartedRef.current,
+      story0Claimed: !!prog.stories?.["story-0"],
+      hasUnread: true,
+      ready: true,
+    }));
   const inLesson = screen !== "home";
   const splashOpen = isFirstVisit(prog);
   const paywallGate = shouldShowSoftPaywall({
@@ -6450,6 +6471,28 @@ export default function App() {
     winBouncePlayed.current = true;
     setWinBounce(true);
   }, [screen, session]);
+  useEffect(() => {
+    if (prog.contentVersion !== CONTENT_VERSION) return;
+    if (screen !== "done") {
+      lecturaHandoffHold.current = false;
+      return;
+    }
+    const gate = {
+      handoffSeen: !!prog[LECTURA_HANDOFF_SEEN],
+      session,
+      ready: true,
+    };
+    if (!shouldStampLecturaHandoff(gate)) return;
+    if (shouldShowLecturaHandoff({
+      ...gate,
+      lecturaStarted: lecturaStartedRef.current,
+      story0Claimed: !!prog.stories?.["story-0"],
+      hasUnread: !!nextUnreadStory(STORIES, prog.stories),
+    })) lecturaHandoffHold.current = true;
+    save({ [LECTURA_HANDOFF_SEEN]: true });
+    // Stamp once when the win is on screen. save is stable enough: the seen flag stops a rewrite.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, session, prog.contentVersion, prog.lecturaHandoffSeen, prog.stories]);
   useEffect(() => {
     if (isBajioUnlockFlashLive() || isBajioUnlockFlashDue()) {
       setBajioUnlockFlash(true);
@@ -6758,6 +6801,12 @@ export default function App() {
     }
     setDoctorOpen(true);
     setTab("practica");
+  };
+
+  const openLecturaFromHandoff = () => {
+    const story = nextUnreadStory(STORIES, prog.stories);
+    if (!story) return;
+    openStory(story);
   };
 
   const continueFromWin = () => {
@@ -9946,7 +9995,7 @@ export default function App() {
         const cpOrder = storyShuffle?.storyId === story.id ? storyShuffle.checkpoints : null;
         const correct = story.questions.reduce((n, qq, i) => n + (isStoryChoiceCorrect(qq, ansSel[i], qOrder?.[i]) ? 1 : 0), 0);
         return (
-          <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 150px" }}>
+          <div data-testid="story-reader" data-story-id={story.id} style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 150px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
 	              <button type="button" onClick={() => { setWordSel(null); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -10294,6 +10343,34 @@ export default function App() {
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
 	            <Btn data-testid={continueTestId} onClick={continueFromWin}>{L.continue}</Btn>
           </div>
+          {showLecturaHandoff && (
+            <div data-testid="lectura-handoff" style={{ marginTop: 18, background: HUB_CREAM, borderRadius: 14, padding: "10px 12px 12px" }}>
+              <p data-testid="lectura-handoff-quiet" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: D.sub }}>
+                {lecturaHandoffQuiet(uiLang)}
+              </p>
+              <button
+                type="button"
+                data-testid="lectura-handoff-cta"
+                data-story-id={lecturaHandoffStory.id}
+                onClick={openLecturaFromHandoff}
+                style={{
+                  background: HUB_CREAM,
+                  color: MARK_INK,
+                  border: `1px solid ${MARK_INK}`,
+                  borderRadius: 12,
+                  padding: "10px 16px",
+                  minHeight: 44,
+                  fontFamily: "inherit",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  lineHeight: 1.35,
+                  cursor: "pointer",
+                }}
+              >
+                {lecturaHandoffCta(uiLang)}
+              </button>
+            </div>
+          )}
 
           {/* one-time Quick Practice discoverability tip */}
           {!prog.quickTipSeen && !quietWin && (

@@ -18,6 +18,7 @@ import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride 
 import { OJALA_QUE_PACK } from "./cubetas.js";
 import { hangmanLetters } from "./hangman.js";
 import { MEMORY_BANK } from "./memory.js";
+import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -1103,6 +1104,8 @@ describe("simulated learner flows", () => {
     });
     expect(screen.getByTestId("story-0-win").textContent).toBe("¡Eso!");
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
+    expect(screen.queryByTestId("lectura-handoff")).toBeNull();
+    await waitFor(() => expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lecturaHandoffSeen).toBe(true));
     assertFreeWinFlyAway();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
@@ -3250,6 +3253,116 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
+  });
+
+  it("first Cenzontle win shows one quiet Lectura handoff and opens story-0", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["cilantro, cebolla, salsa y guarnición"],
+      answer: "cilantro, cebolla, salsa y guarnición",
+      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        firstHoy: true,
+        host: "luna",
+        questions: [hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:")],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelector(".choice-card"));
+    await user.click(screen.getByTestId("lesson-check"));
+    await user.click(await screen.findByRole("button", { name: /^Continuar$/i }));
+    const strip = await screen.findByTestId("lectura-handoff");
+    expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
+    expect(screen.getByTestId("win-fly-away")).toBeTruthy();
+    expect(strip.querySelector("img")).toBeNull();
+    expect(screen.getByTestId("lectura-handoff-quiet").textContent).toBe(LECTURA_HANDOFF_QUIET.es);
+    const cta = screen.getByTestId("lectura-handoff-cta");
+    expect(cta.textContent).toBe(LECTURA_HANDOFF_CTA.es);
+    expect(cta.getAttribute("data-story-id")).toBe("story-0");
+    expect(cta.className).not.toMatch(/duo-btn/);
+    expect(cta.style.backgroundColor).toBe("rgb(246, 239, 228)");
+    expect(cta.style.color).toBe("rgb(92, 115, 86)");
+    expect(cta.style.backgroundColor).not.toBe(screen.getByTestId("hoy-win-continue").style.backgroundColor);
+    expect(strip.textContent).not.toContain(LECTURA_HANDOFF_QUIET.en);
+    expect(strip.textContent).not.toContain(LECTURA_HANDOFF_CTA.en);
+    await waitFor(() => expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lecturaHandoffSeen).toBe(true));
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("lectura-handoff-quiet").textContent).toBe(LECTURA_HANDOFF_QUIET.en));
+    expect(screen.getByTestId("lectura-handoff-cta").textContent).toBe(LECTURA_HANDOFF_CTA.en);
+    expect(screen.getByTestId("lectura-handoff").textContent).not.toMatch(/El cuento es lo que sigue|Leer el cuento/);
+    expect(screen.getByTestId("hoy-win").textContent).toBe("That's it.");
+    await user.click(screen.getByTestId("lectura-handoff-cta"));
+    const reader = await screen.findByTestId("story-reader");
+    expect(reader.getAttribute("data-story-id")).toBe("story-0");
+    expect(reader.textContent).toMatch(/La noche en que vuelven/);
+    expect(screen.queryByTestId("lectura-handoff")).toBeNull();
+    expect(screen.queryByTestId("hoy-win")).toBeNull();
+  });
+
+  it("Lectura handoff once-gate stays down, and a claimed story-0 opens the next unread", async () => {
+    cleanup();
+    seedProgress({ uiLang: "es", lecturaHandoffSeen: true, streak: 1, lastDay: localToday() });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "done",
+      tab: "camino",
+      lessonStats: { right: 1, wrong: 0 },
+      session: {
+        firstHoy: true,
+        title: "Noche de faroles",
+        host: "luna",
+        questions: [{}],
+        awarded: true,
+        earnedXP: 12,
+        earnedGems: 1,
+      },
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    expect(screen.queryByTestId("lectura-handoff")).toBeNull();
+    expect(screen.getByTestId("win-fly-away")).toBeTruthy();
+
+    cleanup();
+    seedProgress({ uiLang: "es", stories: { "story-0": true }, streak: 1, lastDay: localToday() });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "done",
+      tab: "camino",
+      lessonStats: { right: 1, wrong: 0 },
+      session: {
+        firstHoy: true,
+        title: "Noche de faroles",
+        host: "luna",
+        questions: [{}],
+        awarded: true,
+        earnedXP: 12,
+        earnedGems: 1,
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    const cta = await screen.findByTestId("lectura-handoff-cta");
+    expect(cta.getAttribute("data-story-id")).toBe("story-1");
+    expect(screen.getByTestId("lectura-handoff-quiet").textContent).toBe(LECTURA_HANDOFF_QUIET.es);
+    await user.click(cta);
+    const reader = await screen.findByTestId("story-reader");
+    expect(reader.getAttribute("data-story-id")).toBe("story-1");
+    expect(reader.textContent).toMatch(/La casa azul/);
   });
 
   it("bank Hoy first-win That's it. plays the Cenzontle bounce, not avatars + confetti", async () => {
