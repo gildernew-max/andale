@@ -1101,6 +1101,8 @@ describe("simulated learner flows", () => {
       expect(screen.getByTestId("story-0-win")).toBeTruthy();
       expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     });
+    await waitFor(() => expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lecturaHandoffSeen).toBe(true));
+    expect(screen.queryByTestId("lectura-handoff")).toBeNull();
     expect(screen.getByTestId("story-0-win").textContent).toBe("¡Eso!");
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
     assertFreeWinFlyAway();
@@ -1145,6 +1147,8 @@ describe("simulated learner flows", () => {
       expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     });
     expect(screen.getByTestId("lectura-win").textContent).toBe("¡Eso!");
+    expect(screen.queryByTestId("lectura-handoff")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lecturaHandoffSeen).not.toBe(true);
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
     expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
     expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
@@ -6030,5 +6034,123 @@ describe("Pages funnel log", () => {
     expect(submits).toHaveLength(1);
     expect(Object.keys(submits[0]).sort()).toEqual(["at", "event"]);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/dave@example\.com|@example/i);
+  });
+
+  const seedFirstHoyLesson = () => {
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["claro y práctico"],
+      answer: "claro y práctico",
+      shuffledChoices: ["claro y práctico"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Cita en el banco",
+        unitId: "_today:tramites-cita",
+        todaySceneId: "tramites-cita",
+        firstHoy: true,
+        host: "luna",
+        questions: [
+          hoyMc("En WhatsApp con el banco, «Quiero agendar una cita para abrir una cuenta» suena:"),
+          hoyMc("beat 2 must not run — early checkpoint"),
+        ],
+      },
+    }));
+  };
+
+  const finishSeededHoy = async (user) => {
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const choices = document.querySelectorAll(".choice-card");
+    expect(choices.length).toBeGreaterThan(0);
+    await user.click(choices[0]);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("hoy-win")).toBeTruthy());
+  };
+
+  it("first Cenzontle win shows one Lectura handoff under ¡Eso!, then opens story-0", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, paywallSeen: true });
+    seedFirstHoyLesson();
+    const user = userEvent.setup();
+    render(<App />);
+    await finishSeededHoy(user);
+    await waitFor(() => expect(screen.getByTestId("lectura-handoff")).toBeTruthy());
+
+    const heading = screen.getByTestId("hoy-win");
+    const strip = screen.getByTestId("lectura-handoff");
+    expect(heading.compareDocumentPosition(strip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId("win-fly-away").compareDocumentPosition(strip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(strip.querySelector("img")).toBeNull();
+    expect(screen.getByTestId("lectura-handoff-line").textContent).toBe("El cuento es lo que sigue.");
+    expect(screen.getByTestId("lectura-handoff-cta").textContent).toBe("Leer el cuento");
+    expect(strip.textContent).not.toMatch(/The story is|Read the story/);
+    const cta = screen.getByTestId("lectura-handoff-cta");
+    expect(cta.style.background).toMatch(CREAM_FILL);
+    expect(cta.style.background).not.toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(cta.style.border).toMatch(/solid/i);
+    expect(cta.style.color).toMatch(/#5C7356|rgb\(\s*92,\s*115,\s*86\s*\)/i);
+    expect(screen.getByTestId("hoy-win-continue")).toBeTruthy();
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("lectura-handoff-line").textContent).toBe("The story is what\u2019s next."));
+    expect(screen.getByTestId("lectura-handoff-cta").textContent).toBe("Read the story");
+    expect(screen.getByTestId("lectura-handoff").textContent).not.toMatch(/El cuento|Leer el cuento/);
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("lectura-handoff-cta").textContent).toBe("Leer el cuento"));
+
+    await waitFor(() => expect(funnelOf("lectura_handoff_seen")).toHaveLength(1));
+    const seen = funnelOf("lectura_handoff_seen")[0];
+    expect(Object.keys(seen).sort()).toEqual(["at", "event"]);
+    expect(JSON.stringify(seen)).not.toMatch(/Dave|@|story-/);
+
+    await user.click(screen.getByTestId("lectura-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toMatch(/lectura\/story-0\/p0\.png/);
+    expect(document.body.textContent).toMatch(/La noche en que vuelven/);
+    const taps = funnelOf("lectura_handoff_tap");
+    expect(taps).toHaveLength(1);
+    expect(taps[0].storyId).toBe("story-0");
+    expect(taps[0].title).toBeUndefined();
+    expect(taps[0].email).toBeUndefined();
+    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
+    await waitFor(() => expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lecturaHandoffSeen).toBe(true));
+
+    cleanup();
+    seedFirstHoyLesson();
+    render(<App />);
+    await finishSeededHoy(user);
+    expect(screen.queryByTestId("lectura-handoff")).toBeNull();
+    expect(funnelOf("lectura_handoff_seen")).toHaveLength(1);
+  });
+
+  it("Lectura handoff opens the next unread story when story-0 is already claimed", async () => {
+    cleanup();
+    seedProgress({
+      streak: 0,
+      lastDay: null,
+      paywallSeen: true,
+      stories: { "story-0": true },
+    });
+    seedFirstHoyLesson();
+    const user = userEvent.setup();
+    render(<App />);
+    await finishSeededHoy(user);
+    await waitFor(() => expect(screen.getByTestId("lectura-handoff-cta").textContent).toBe("Leer el cuento"));
+    await user.click(screen.getByTestId("lectura-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toMatch(/lectura\/story-1\/p0\.png/);
+    expect(document.body.textContent).toMatch(/La casa azul/);
+    expect(funnelOf("lectura_handoff_tap").map((e) => e.storyId)).toEqual(["story-1"]);
+    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-1")).toBe(true);
   });
 });

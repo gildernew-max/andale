@@ -6,6 +6,8 @@ export const FUNNEL_LOG = "__andaleFunnelLog";
 export const FUNNEL_EVENTS = Object.freeze({
   open: "open",
   cenzontleComplete: "cenzontle_complete",
+  lecturaHandoffSeen: "lectura_handoff_seen",
+  lecturaHandoffTap: "lectura_handoff_tap",
   lecturaStart: "lectura_start",
   paywallSeen: "paywall_seen",
   paywallTap: "paywall_tap",
@@ -39,7 +41,7 @@ function safeStoryId(id) {
 export function emitFunnelEvent({ event, storyId, beat, choice } = {}, bus = eventBus()) {
   if (!EVENTS.has(event)) return null;
   const payload = { event, at: new Date().toISOString() };
-  if (event === FUNNEL_EVENTS.lecturaStart) {
+  if (event === FUNNEL_EVENTS.lecturaStart || event === FUNNEL_EVENTS.lecturaHandoffTap) {
     const id = safeStoryId(storyId);
     if (id) payload.storyId = id;
   }
