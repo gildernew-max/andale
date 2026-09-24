@@ -36,6 +36,9 @@ const seedProgress = (extra = {}) => {
   }));
 };
 
+/** Claimed stories stay open for a re-read. The first unread stays the frontier. */
+const claimStories = (...ids) => Object.fromEntries(ids.map((id) => [id, true]));
+
 const mockBrowser = () => {
   const voices = [];
   window.SpeechSynthesisUtterance = class {
@@ -1049,6 +1052,7 @@ describe("simulated learner flows", () => {
   });
 
   it("Lectura Wave A stills resolve via BASE_URL for story-0 p3, story-1, and story-2", async () => {
+    seedProgress({ stories: claimStories("story-1", "story-2") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const story0 = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
@@ -1132,7 +1136,7 @@ describe("simulated learner flows", () => {
 
   it("later Lectura stories show WinPerch static only — no 780ms beat", async () => {
     cleanup();
-    seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
+    seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true, stories: claimStories("story-0") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /La casa azul/ });
@@ -1181,6 +1185,7 @@ describe("simulated learner flows", () => {
   });
 
   it("Lectura Wave B stills resolve via BASE_URL for story-3 and story-9", async () => {
+    seedProgress({ stories: claimStories("story-3", "story-9") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const story3 = screen.getAllByRole("button", { name: /El hijo del Rey Tigre/ });
@@ -1196,6 +1201,7 @@ describe("simulated learner flows", () => {
   });
 
   it("opens story-3 El hijo del Rey Tigre with Brand stills and current lucha words", async () => {
+    seedProgress({ stories: claimStories("story-3") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /El hijo del Rey Tigre/ });
@@ -1229,6 +1235,7 @@ describe("simulated learner flows", () => {
   });
 
   it("opens story-7 El último dominó with Brand stills and Pepe, not Tito", async () => {
+    seedProgress({ stories: claimStories("story-7") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /El último dominó/ });
@@ -1252,6 +1259,7 @@ describe("simulated learner flows", () => {
   });
 
   it("opens story-5 La frontera más larga del mundo with Brand stills and current Tijuana words", async () => {
+    seedProgress({ stories: claimStories("story-5") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /La frontera más larga del mundo/ });
@@ -1277,6 +1285,7 @@ describe("simulated learner flows", () => {
   });
 
   it("opens story-6 La sirena del Pacífico with Brand stills and Mamá, not Papá", async () => {
+    seedProgress({ stories: claimStories("story-6") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /La sirena del Pacífico/ });
@@ -1295,6 +1304,7 @@ describe("simulated learner flows", () => {
   });
 
   it("opens story-8 El grito de mi padre with stills and balcony crate beside", async () => {
+    seedProgress({ stories: claimStories("story-8") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /El grito de mi padre/ });
@@ -1329,6 +1339,7 @@ describe("simulated learner flows", () => {
   });
 
   it("opens story-9 Las cerezas de don Adán with Brand stills and setenta, not cincuenta y nueve", async () => {
+    seedProgress({ stories: claimStories("story-9") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
@@ -1345,6 +1356,7 @@ describe("simulated learner flows", () => {
   });
 
   it("Lectura + story Qs show a one-line gloss for stamped words only", async () => {
+    seedProgress({ stories: claimStories("story-9") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
@@ -1356,9 +1368,15 @@ describe("simulated learner flows", () => {
     await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("el fruto del café (no la fruta de postre)"));
     await user.click(screen.getByRole("button", { name: "Preguntas" }));
     await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
-    const cosecha = screen.getAllByTestId("gloss-word").find((el) => el.getAttribute("data-gloss-key") === "cosecha");
+    const cosecha = [...document.querySelectorAll("[data-testid='story-q-prompt'] [data-testid='gloss-word']")]
+      .find((el) => el.getAttribute("data-gloss-key") === "cosecha");
     expect(cosecha).toBeTruthy();
     await user.click(cosecha);
+    await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("la recolección de ese año"));
+    const passageCosecha = [...document.querySelectorAll("[data-testid='story-quiz-passage'] [data-testid='gloss-word']")]
+      .find((el) => el.getAttribute("data-gloss-key") === "cosecha");
+    expect(passageCosecha).toBeTruthy();
+    await user.click(passageCosecha);
     await waitFor(() => expect(screen.getByTestId("gloss-tip").textContent).toBe("la recolección de ese año"));
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByText("Comprehension")).toBeTruthy());
@@ -1755,6 +1773,7 @@ describe("simulated learner flows", () => {
   });
 
   it("top-left brand from a Lectura story lands on Learn home, not Lectura", async () => {
+    seedProgress({ stories: claimStories("story-9") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
@@ -2519,6 +2538,7 @@ describe("simulated learner flows", () => {
   }, 15000);
 
   it("Lectura still shows comprehension after the last paragraph (ungated in-reader)", async () => {
+    seedProgress({ stories: claimStories("story-9") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
@@ -2545,6 +2565,7 @@ describe("simulated learner flows", () => {
   });
 
   it("cerezas reading quiz Why + Focus follow uiLang after the refused item", async () => {
+    seedProgress({ stories: claimStories("story-9") });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /Las cerezas de don Adán/ });
@@ -3253,6 +3274,30 @@ describe("simulated learner flows", () => {
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
+  });
+
+  it("locked Lectura stories stay closed on the path and the shelf", async () => {
+    const user = await boot();
+    const camino2 = screen.getByTestId("camino-story-story-2");
+    expect(camino2.getAttribute("data-locked")).toBe("true");
+    expect(camino2.disabled).toBe(true);
+    expect(screen.getByTestId("camino-story-story-0").getAttribute("data-locked")).toBe("false");
+    expect(screen.getByTestId("camino-story-story-1").getAttribute("data-locked")).toBe("true");
+    fireEvent.click(camino2);
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+    await user.click(screen.getByTestId("nav-lectura"));
+    const shelf2 = screen.getByTestId("story-shelf-story-2");
+    expect(shelf2.getAttribute("data-locked")).toBe("true");
+    expect(shelf2.disabled).toBe(true);
+    expect(screen.getByTestId("story-shelf-story-0").getAttribute("data-locked")).toBe("false");
+    expect(screen.getByTestId("story-shelf-story-9").getAttribute("data-locked")).toBe("true");
+    fireEvent.click(shelf2);
+    fireEvent.click(screen.getByTestId("story-shelf-story-9"));
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+    await user.click(screen.getByTestId("story-shelf-story-0"));
+    const reader = await screen.findByTestId("story-reader");
+    expect(reader.getAttribute("data-story-id")).toBe("story-0");
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-0/p0.png`);
   });
 
   it("first Cenzontle win shows one quiet Lectura handoff and opens story-0", async () => {

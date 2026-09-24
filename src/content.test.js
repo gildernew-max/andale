@@ -1979,6 +1979,15 @@ assert(existsSync(join(repoRoot, "public", "lectura", "story-9", "CAST.md")), "s
 assert(existsSync(join(repoRoot, "public", "lectura", "story-9", "MANIFEST.md")), "story-9 MANIFEST.md is installed");
 const story9Cast = readFileSync(join(repoRoot, "public", "lectura", "story-9", "CAST.md"), "utf8");
 assert(/don Adán/.test(story9Cast) && /White hair/.test(story9Cast) && /Straw hat/.test(story9Cast) && /red sash/.test(story9Cast), "story-9 CAST locks white hair/mustache, straw hat, white shirt, red sash");
+assert(appSrc.includes("lectura/${story.id}/p${pi}.png"), "Lectura still src is public/lectura/{storyId}/pN.png");
+for (const s of STORIES) {
+  s.paragraphs.forEach((_, i) => {
+    const stillPng = join(repoRoot, "public", "lectura", s.id, `p${i}.png`);
+    assert(existsSync(stillPng), `${s.id} ¶${i + 1} still is public/lectura/${s.id}/p${i}.png`);
+    const buf = readFileSync(stillPng);
+    assert(buf.subarray(0, 8).equals(pngMagic), `${s.id} p${i} is a real PNG`);
+  });
+}
 for (const id of ["luna", "rafa", "valeria", "diego"]) {
   const coachPng = join(repoRoot, "public", "coaches", `${id}-happy.png`);
   assert(existsSync(coachPng), `${id} lives at public/coaches/${id}-happy.png`);
