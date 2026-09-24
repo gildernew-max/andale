@@ -5105,6 +5105,7 @@ describe("simulated learner flows", () => {
     expect(events[0].reason).toBe("web_no_iap");
     expect(events[0].plan).toBe("annual");
     expect(events[0].productId).toBe("com.andale.app.premium.annual");
+    expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Practice · no charge yet");
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -5134,6 +5135,7 @@ describe("simulated learner flows", () => {
     expect(events.at(-1).plan).toBe("monthly");
     expect(events.at(-1).charged).toBe(false);
     expect(events.at(-1).productId).toBe("com.andale.app.premium.monthly");
+    expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -5157,6 +5159,11 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(events.some((e) => e.status === "success" && e.charged === true && e.plan === "annual")).toBe(true);
+    const bought = funnelOf("purchase");
+    expect(bought).toHaveLength(1);
+    expect(bought[0].plan).toBe("annual");
+    expect(bought[0].productId).toBe("com.andale.app.premium.annual");
+    expect(Object.keys(bought[0]).sort()).toEqual(["at", "event", "plan", "productId"]);
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(stored.paywallSeen).toBe(true);
     expect(stored.paywallPlan).toBe("annual");
@@ -6188,5 +6195,103 @@ describe("Pages funnel log", () => {
     expect(submits).toHaveLength(1);
     expect(Object.keys(submits[0]).sort()).toEqual(["at", "event"]);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/dave@example\.com|@example/i);
+  });
+
+  it("StoreKit cancel does not emit purchase", async () => {
+    cleanup();
+    seedProgress({ streak: 1, lastDay: localToday() });
+    window.__andaleIapEnv = { isNative: true, platform: "ios" };
+    window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
+    window.__andaleNativePurchase = async () => ({
+      status: "cancelled",
+      receipt: "receipt-body",
+      email: "dave@example.com",
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect(window.__andalePurchaseLog?.some((e) => e.reason === "user_cancelled")).toBe(true));
+    expect(funnelOf("purchase")).toHaveLength(0);
+    expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true);
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
+    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/receipt-body|dave@example/);
+  });
+
+  it("conversion chain is open, first-Hoy win, Lectura, paywall, then purchase on success", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    window.__andaleIapEnv = { isNative: true, platform: "ios" };
+    window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
+    window.__andaleNativePurchase = async ({ productId }) => ({
+      status: "success",
+      productId,
+      receipt: "receipt-body",
+      transactionId: "tx-9",
+      email: "dave@example.com",
+      deviceId: "device-1",
+    });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["cilantro, cebolla, salsa y guarnición"],
+      answer: "cilantro, cebolla, salsa y guarnición",
+      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        firstHoy: true,
+        host: "luna",
+        questions: [hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:")],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(funnelOf("open").length).toBeGreaterThan(0));
+    expect(funnelOf("purchase")).toHaveLength(0);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelector(".choice-card"));
+    await user.click(screen.getByTestId("lesson-check"));
+    await user.click(await screen.findByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("win-fly-away")).toBeTruthy());
+    await waitFor(() => expect(funnelOf("cenzontle_complete").some((e) => e.beat === "hoy")).toBe(true), { timeout: 1500 });
+    expect(funnelOf("lectura_start")).toHaveLength(0);
+    await user.click(screen.getByTestId("lectura-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));
+    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(funnelOf("purchase")).toHaveLength(0);
+
+    cleanup();
+    localStorage.removeItem(LIVE_KEY);
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    expect(funnelOf("purchase")).toHaveLength(0);
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect(funnelOf("purchase")).toHaveLength(1));
+    const bought = funnelOf("purchase")[0];
+    expect(bought.plan).toBe("annual");
+    expect(bought.productId).toBe("com.andale.app.premium.annual");
+    expect(Object.keys(bought).sort()).toEqual(["at", "event", "plan", "productId"]);
+    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/receipt-body|tx-9|dave@example|device-1|\$/);
+    const names = window.__andaleFunnelLog.map((e) => e.event);
+    const at = (name) => names.indexOf(name);
+    expect(at("open")).toBeGreaterThanOrEqual(0);
+    expect(at("cenzontle_complete")).toBeGreaterThan(at("open"));
+    expect(at("lectura_start")).toBeGreaterThan(at("cenzontle_complete"));
+    expect(at("paywall_seen")).toBeGreaterThan(at("lectura_start"));
+    expect(at("purchase")).toBeGreaterThan(at("paywall_seen"));
   });
 });
