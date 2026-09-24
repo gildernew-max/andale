@@ -6294,4 +6294,74 @@ describe("Pages funnel log", () => {
     expect(at("paywall_seen")).toBeGreaterThan(at("lectura_start"));
     expect(at("purchase")).toBeGreaterThan(at("paywall_seen"));
   });
+
+  it("return home after Hoy win and Lectura start shows the soft paywall and does not emit purchase on web", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    delete window.__andaleIapEnv;
+    delete window.__andaleNativePurchase;
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["cilantro, cebolla, salsa y guarnición"],
+      answer: "cilantro, cebolla, salsa y guarnición",
+      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        firstHoy: true,
+        host: "luna",
+        questions: [hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:")],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(funnelOf("open").length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelector(".choice-card"));
+    await user.click(screen.getByTestId("lesson-check"));
+    await user.click(await screen.findByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("lectura-handoff-cta")).toBeTruthy());
+    await waitFor(() => expect(funnelOf("cenzontle_complete").some((e) => e.beat === "hoy")).toBe(true), { timeout: 1500 });
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("lectura-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));
+    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(funnelOf("purchase")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("brand-home"));
+    await awaitBajioFlashThenPaywall();
+    expect(screen.getByTestId("learn-hub")).toBeTruthy();
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    expect(funnelOf("purchase")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
+    await user.click(screen.getByTestId("soft-paywall-monthly"));
+    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(true));
+    expect(funnelOf("purchase")).toHaveLength(0);
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
+    const names = window.__andaleFunnelLog.map((e) => e.event);
+    const at = (name) => names.indexOf(name);
+    expect(at("cenzontle_complete")).toBeGreaterThan(at("open"));
+    expect(at("lectura_start")).toBeGreaterThan(at("cenzontle_complete"));
+    expect(at("paywall_seen")).toBeGreaterThan(at("lectura_start"));
+    expect(at("purchase")).toBe(-1);
+    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
+  });
 });

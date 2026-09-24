@@ -835,6 +835,7 @@ assert(appSrc.includes("isFirstStreakEsoWin"), "CONTINUE uses the Eso win stamp,
 assert(/function isFirstStreakEsoWin[\s\S]{0,280}todaySceneId/.test(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "recuerdos.js"), "utf8")), "Hoy scene id (Landlord WhatsApp included) is an Eso win");
 assert(appSrc.includes("bajioUnlockSeen"), "Bajío unlock flash seen flag is persisted");
 assert(/showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue\(\)/.test(appSrc), "paywall waits for the Bajío glow beat");
+assert(/if \(screen !== "home" \|\| bajioUnlockFlash\) return;\s*if \(!bajioFlashPending && !isBajioUnlockFlashDue\(\)\) return;\s*setBajioFlashPending\(false\);\s*markBajioUnlockFlashDue\(true\);\s*setBajioUnlockFlash\(true\);/.test(appSrc), "home return starts a deferred Bajío glow so the soft paywall can follow");
 assert(!/showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue\(\) && !/.test(appSrc), "paywall gate does not wait on CDMX, Oaxaca, Yucatán, or Norte");
 assert(appSrc.includes("shouldShowCdmxUnlockFlash"), "CDMX unlock flash uses the once-only day-2 gate");
 assert(appSrc.includes("isCdmxUnlockFlashDue") && appSrc.includes("markCdmxUnlockFlashDue"), "CDMX due flag survives CONTINUE remount");

@@ -6512,6 +6512,16 @@ export default function App() {
     markBajioUnlockFlashDue(true);
     setBajioFlashPending(true);
   }, [screen, session, prog.bajioUnlockSeen, prog.streak, prog.paywallSeen]);
+  // Lectura handoff leaves ¡Eso! without CONTINUE, so the glow is armed
+  // (pending + session due) and never started. Those flags block the soft
+  // paywall. Home is where CONTINUE would have played the glow; play it now.
+  useEffect(() => {
+    if (screen !== "home" || bajioUnlockFlash) return;
+    if (!bajioFlashPending && !isBajioUnlockFlashDue()) return;
+    setBajioFlashPending(false);
+    markBajioUnlockFlashDue(true);
+    setBajioUnlockFlash(true);
+  }, [screen, bajioUnlockFlash, bajioFlashPending]);
   useEffect(() => {
     if (!bajioUnlockFlash) return undefined;
     const hide = setTimeout(() => {
