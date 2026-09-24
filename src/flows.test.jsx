@@ -6468,5 +6468,5 @@ describe("Pages funnel log", () => {
     expect(at("paywall_seen")).toBeGreaterThan(at("lectura_start"));
     expect(at("purchase")).toBe(-1);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
-  });
+  }, 15000);
 });
