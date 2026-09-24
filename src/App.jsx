@@ -6514,13 +6514,16 @@ export default function App() {
   }, [screen, session, prog.bajioUnlockSeen, prog.streak, prog.paywallSeen]);
   // Lectura handoff leaves ¡Eso! without CONTINUE, so the glow is armed
   // (pending + session due) and never started. Those flags block the soft
-  // paywall. Home is where CONTINUE would have played the glow; play it now.
+  // paywall. Home after lectura_start is where that glow plays. Before
+  // lectura_start, leave the flags set so Learn home cannot mount the wall.
   useEffect(() => {
     if (screen !== "home" || bajioUnlockFlash) return;
+    if (!lecturaStartedRef.current) return;
     if (!bajioFlashPending && !isBajioUnlockFlashDue()) return;
     setBajioFlashPending(false);
     markBajioUnlockFlashDue(true);
     setBajioUnlockFlash(true);
+    save((prev) => (prev.bajioUnlockSeen ? prev : { ...prev, bajioUnlockSeen: true }));
   }, [screen, bajioUnlockFlash, bajioFlashPending]);
   useEffect(() => {
     if (!bajioUnlockFlash) return undefined;
@@ -6884,14 +6887,17 @@ export default function App() {
         }),
       }) || (!prog.norteUnlockSeen && (norteFlashPending || isNorteUnlockFlashDue()))
     );
+    // Hoy CONTINUE lands on Learn home. The Bajío glow and the wall wait
+    // until lectura_start this session. Doctora still arms on session close.
+    const bajioHomeNow = willFlash && next === "home" && lecturaStartedRef.current;
     save((prev) => ({
       ...progressAfterWinContinue(prev, {
         today: t,
         todaySceneId: todaySceneIdFromSession(session),
       }),
-      ...(willFlash ? { bajioUnlockSeen: true } : {}),
+      ...(willFlash && (bajioHomeNow || next !== "home") ? { bajioUnlockSeen: true } : {}),
     }));
-    if (willFlash && next === "home") {
+    if (bajioHomeNow) {
       markBajioUnlockFlashDue(true);
       setBajioFlashPending(false);
       setBajioUnlockFlash(true);
