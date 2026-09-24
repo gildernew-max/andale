@@ -37,7 +37,7 @@ import {
   sobremesaTipsLabel,
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
-import { LECTURA_HANDOFF_SEEN, lecturaHandoffCta, lecturaHandoffQuiet, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway, PaywallFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -5779,6 +5779,7 @@ export default function App() {
   };
 
   const openStory = (story) => {
+    if (!isLecturaStoryOpen(STORIES, prog.stories, story?.id)) return;
     if (story?.id) {
       lecturaStartedRef.current = true;
       emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaStart, storyId: story.id });
@@ -6110,11 +6111,13 @@ export default function App() {
     rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame,
   };
 
-  const applyLive = (live) => {
-    if (live?.screen === "story" || live?.storyId || live?.session?.firstStory0 || live?.session?.lecturaWin) {
+  const applyLive = (live, claimedStories) => {
+    const storyResumeBlocked = live?.screen === "story"
+      && !isLecturaStoryOpen(STORIES, claimedStories, live.storyId);
+    if (!storyResumeBlocked && (live?.screen === "story" || live?.storyId || live?.session?.firstStory0 || live?.session?.lecturaWin)) {
       lecturaStartedRef.current = true;
     }
-    if (!live || live.screen === "home") {
+    if (!live || live.screen === "home" || storyResumeBlocked) {
       if (live?.tab) setTab(live.tab);
       return;
     }
@@ -6221,7 +6224,7 @@ export default function App() {
               live = { ...live, session: { ...live.session, day2Hoy: true } };
             }
           }
-          if (live) applyLive(live);
+          if (live) applyLive(live, progress?.stories);
         }
       } catch (e) {}
       if (!cancelled) liveReady.current = true;
@@ -6406,7 +6409,7 @@ export default function App() {
 
   /* ---------------- RENDER ---------------- */
 
-  const lecturaHandoffStory = nextUnreadStory(STORIES, prog.stories);
+  const lecturaHandoffStory = lecturaHandoffTarget(STORIES, prog.stories);
   const showLecturaHandoff = screen === "done"
     && prog.contentVersion === CONTENT_VERSION
     && !!lecturaHandoffStory
@@ -6487,7 +6490,7 @@ export default function App() {
       ...gate,
       lecturaStarted: lecturaStartedRef.current,
       story0Claimed: !!prog.stories?.["story-0"],
-      hasUnread: !!nextUnreadStory(STORIES, prog.stories),
+      hasUnread: !!lecturaHandoffTarget(STORIES, prog.stories),
     })) lecturaHandoffHold.current = true;
     save({ [LECTURA_HANDOFF_SEEN]: true });
     // Stamp once when the win is on screen. save is stable enough: the seen flag stops a rewrite.
@@ -6804,7 +6807,7 @@ export default function App() {
   };
 
   const openLecturaFromHandoff = () => {
-    const story = nextUnreadStory(STORIES, prog.stories);
+    const story = lecturaHandoffTarget(STORIES, prog.stories);
     if (!story) return;
     openStory(story);
   };
@@ -7390,13 +7393,15 @@ export default function App() {
                       const story = STORIES.find((st) => st.section === si);
                       if (!story) return null;
                       const readDone = !!prog.stories?.[story.id];
+                      const readable = isLecturaStoryOpen(STORIES, prog.stories, story.id);
+                      const lockedSuffix = readable ? "" : (uiLang === "en" ? " (blocked)" : " (bloqueado)");
                       return (
                         <div style={{ position: "relative", margin: "14px 0 4px", zIndex: 1, textAlign: "center" }}>
-                          <button className="node-btn" onClick={() => openStory(story)}
-	                            aria-label={`${L.storyPrefix}: ${story.title}`}
-	                            title={`${story.title} — ${L.storyTip}`}
-                            style={{ width: 72, height: 72, borderRadius: 20, border: "none", cursor: "pointer", background: sec.color, borderBottom: `7px solid ${sec.dark}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(0,0,0,.12)" }}>
-                            <IcBook size={34} />
+                          <button className="node-btn" data-testid={`camino-story-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable} onClick={() => openStory(story)}
+	                            aria-label={`${L.storyPrefix}: ${story.title}${lockedSuffix}`}
+	                            title={readable ? `${story.title} — ${L.storyTip}` : `${story.title}${lockedSuffix}`}
+                            style={{ width: 72, height: 72, borderRadius: 20, border: "none", cursor: readable ? "pointer" : "default", background: readable ? sec.color : D.lockGray, borderBottom: `7px solid ${readable ? sec.dark : "#CFCFCF"}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: readable ? "0 4px 10px rgba(0,0,0,.12)" : "none" }}>
+                            {readable ? <IcBook size={34} /> : <IcLock size={30} />}
                           </button>
                           {readDone && (
                             <div style={{ position: "absolute", top: -10, right: "50%", marginRight: -46, transform: "rotate(15deg)", lineHeight: 0, filter: "drop-shadow(0 2px 2px rgba(0,0,0,.25))" }}><IcCrown size={24} /></div>
@@ -7577,19 +7582,20 @@ export default function App() {
                 const state = recuerdosPinState(open, uiLang);
                 const storyId = storyIdForRecuerdosPin(pin, prog.stories);
                 const story = STORIES.find((s) => s.id === storyId);
+                const readable = !!(story && isLecturaStoryOpen(STORIES, prog.stories, story.id));
                 return (
                   <button
                     key={pin.id}
                     type="button"
                     data-testid={`recuerdos-pin-${pin.id}`}
                     data-open={open ? "true" : "false"}
-                    disabled={!open || !story}
-                    onClick={() => { if (open && story) openStory(story); }}
+                    disabled={!open || !readable}
+                    onClick={() => { if (open && readable) openStory(story); }}
                     aria-label={`${label} · ${state}`}
                     style={{
                       position: "absolute", left: `${pin.x}%`, top: `${pin.y}%`,
                       transform: "translate(-50%, -50%)",
-                      background: "none", border: "none", padding: 0, cursor: open ? "pointer" : "default",
+                      background: "none", border: "none", padding: 0, cursor: open && readable ? "pointer" : "default",
                       display: "flex", flexDirection: "column", alignItems: "center", minWidth: 52, zIndex: pin.firstGlow ? 2 : 1,
                     }}
                   >
@@ -7620,11 +7626,15 @@ export default function App() {
               const meta = STORY_META[story.id] || {};
               const souvenir = extra.collectible || meta.souvenir;
 	              const claimed = !!prog.stories?.[story.id];
+	              const readable = isLecturaStoryOpen(STORIES, prog.stories, story.id);
+	              const lockedSuffix = readable ? "" : (uiLang === "en" ? " (blocked)" : " (bloqueado)");
+	              const shelfTitle = uiLang === "en" ? (story.titleEn || story.title) : story.title;
 	              const found = (prog.storyFinds?.[story.id] || []).length;
 	              const total = extra.keyWords?.length || 0;
 	              return (
-	                <button key={story.id} onClick={() => openStory(story)} className="choice-card"
-	                  style={{ textAlign: "left", padding: 15, cursor: "pointer", fontFamily: "inherit", background: claimed ? "#F3FBEA" : "#fff", borderColor: claimed ? D.green : D.line, borderBottomColor: claimed ? D.green : D.line }}>
+	                <button key={story.id} data-testid={`story-shelf-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable} onClick={() => openStory(story)} className="choice-card"
+	                  aria-label={`${shelfTitle}${lockedSuffix}`}
+	                  style={{ textAlign: "left", padding: 15, cursor: readable ? "pointer" : "default", fontFamily: "inherit", background: claimed ? "#F3FBEA" : "#fff", borderColor: claimed ? D.green : D.line, borderBottomColor: claimed ? D.green : D.line }}>
                   <div style={{ display: "flex", gap: 13, alignItems: "center" }}>
                     <div style={{ width: 52, height: 52, borderRadius: 15, background: sec.color, borderBottom: `5px solid ${sec.dark}`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <IcBook size={28} />
@@ -10185,7 +10195,9 @@ export default function App() {
                     {passage ? (
                       <div data-testid="story-quiz-passage" style={{ border: `2px solid ${D.line}`, borderRadius: 14, padding: "12px 14px", background: D.subtle, margin: "0 0 10px" }}>
                         <div data-testid="story-quiz-cue" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".06em", color: D.sub, marginBottom: 6 }}>{storyQuizEyebrow(uiLang)}</div>
-                        <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.55 }}>{passage}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.55 }}>
+                          <GlossedText text={passage} uiLang={uiLang} D={D} accent={sec.color} />
+                        </div>
                       </div>
                     ) : null}
                     <div data-testid="story-q-prompt" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: 8 }}>{i + 1}. <GlossedText text={qq.prompt} uiLang={uiLang} D={D} accent={sec.color} /></div>

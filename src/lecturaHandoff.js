@@ -36,6 +36,24 @@ export function nextUnreadStory(stories, claimed) {
   return list.find((story) => story?.id && !done[story.id]) || null;
 }
 
+/**
+ * Claimed stories stay open for a re-read.
+ * Otherwise only the first unread story is open — later stories stay closed.
+ */
+export function isLecturaStoryOpen(stories, claimed, storyId) {
+  if (!storyId) return false;
+  const done = claimed && typeof claimed === "object" ? claimed : {};
+  if (done[storyId]) return true;
+  return nextUnreadStory(stories, done)?.id === storyId;
+}
+
+/** Handoff CTA: the open unread story. Never a locked id. */
+export function lecturaHandoffTarget(stories, claimed) {
+  const next = nextUnreadStory(stories, claimed);
+  if (!next || !isLecturaStoryOpen(stories, claimed, next.id)) return null;
+  return next;
+}
+
 /** Persist on the first Cenzontle win so the strip cannot return. */
 export function shouldStampLecturaHandoff({ handoffSeen, session, ready = true } = {}) {
   if (!ready || handoffSeen) return false;

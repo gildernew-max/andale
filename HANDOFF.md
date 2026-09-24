@@ -2,6 +2,19 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-24 (Lectura lock + line gloss on the open story)
+
+**What changed**
+- A Lectura story opens only when it is already claimed, or it is the first unread story. Path node, shelf, Recuerdos pin, live resume, and the handoff CTA all use that gate. Fresh learner: story-0 opens; story-1…story-9 stay closed. Claimed story-0 makes story-1 the handoff target. story-2 stays closed until story-1 is claimed.
+- Comprehension passages use the same one-line gloss as the paragraph (`GlossedText`). George cerezas stamps only. Soft chrome parked.
+
+**Why**
+- Locked stories were opening from the shelf and the section-2 path node. Handoff must not aim at a locked id.
+
+**Words / Brand left**
+- George: `STORY_GLOSSES` is the cerezas table only. story-0 (the handoff open) through story-8 have no line-gloss stamps. Tap there still uses the glossary card. `cosechando` is not aliased. Do not invent lemmas.
+- Brand: `public/lectura/story-0`…`story-9` p0–p5 are on the reader path and match the locked CLEAR bytes. No missing wire. story-0 / story-1 / story-2 / story-4 have no CAST.md in repo. Off-repo regen packs were not in this workspace.
+
 ## 2026-09-23 (Cenzontle → Lectura handoff)
 
 **What changed**

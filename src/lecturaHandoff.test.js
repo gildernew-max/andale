@@ -8,6 +8,8 @@ import {
   isCenzontleWin,
   lecturaHandoffCta,
   lecturaHandoffQuiet,
+  isLecturaStoryOpen,
+  lecturaHandoffTarget,
   nextUnreadStory,
   shouldShowLecturaHandoff,
   shouldStampLecturaHandoff,
@@ -38,6 +40,23 @@ assert(nextUnreadStory(stories, { "story-0": true, "story-1": true })?.id === "s
 assert(nextUnreadStory(stories, { "story-0": true, "story-1": true, "story-2": true }) == null, "no unread story");
 assert(nextUnreadStory(null, {}) == null, "missing list has no destination");
 assert(nextUnreadStory(stories, null)?.id === "story-0", "missing claimed map treats every story as unread");
+
+assert(isLecturaStoryOpen(stories, {}, "story-0"), "fresh frontier story-0 is open");
+assert(!isLecturaStoryOpen(stories, {}, "story-1"), "story-1 stays closed until story-0 is claimed");
+assert(!isLecturaStoryOpen(stories, {}, "story-2"), "story-2 stays closed on a fresh shelf");
+assert(isLecturaStoryOpen(stories, { "story-0": true }, "story-0"), "claimed story-0 stays open");
+assert(isLecturaStoryOpen(stories, { "story-0": true }, "story-1"), "claimed story-0 opens story-1");
+assert(!isLecturaStoryOpen(stories, { "story-0": true }, "story-2"), "story-2 stays closed while story-1 is unread");
+assert(isLecturaStoryOpen(stories, { "story-2": true }, "story-2"), "an already-claimed later story stays open");
+assert(!isLecturaStoryOpen(stories, { "story-2": true }, "story-1"), "claiming story-2 does not open story-1");
+assert(!isLecturaStoryOpen(stories, {}, ""), "missing id is closed");
+assert(!isLecturaStoryOpen(null, {}, "story-0"), "missing list has no open story");
+
+assert(lecturaHandoffTarget(stories, {})?.id === "story-0", "handoff target is open story-0");
+assert(lecturaHandoffTarget(stories, { "story-0": true })?.id === "story-1", "handoff target skips claimed story-0");
+assert(lecturaHandoffTarget(stories, { "story-0": true, "story-1": true })?.id === "story-2", "handoff target is story-2 only after 0 and 1");
+assert(lecturaHandoffTarget(stories, { "story-0": true, "story-1": true, "story-2": true }) == null, "no open unread story, no handoff target");
+assert(lecturaHandoffTarget(stories, { "story-2": true })?.id === "story-0", "a later claim does not steal the handoff from unread story-0");
 
 const hoy = { firstHoy: true };
 const doctora = { firstDoctora: true };
@@ -79,7 +98,8 @@ assert(appSrc.includes("from \"./lecturaHandoff.js\""), "App imports the handoff
 assert(appSrc.includes("LECTURA_HANDOFF_SEEN") || appSrc.includes("lecturaHandoffSeen"), "once-gate is written on progress");
 assert(appSrc.includes("shouldShowLecturaHandoff"), "done screen uses the show gate");
 assert(appSrc.includes("shouldStampLecturaHandoff"), "done screen stamps the once-gate");
-assert(appSrc.includes("nextUnreadStory(STORIES, prog.stories)"), "CTA destination is the next unread story");
+assert(appSrc.includes("lecturaHandoffTarget(STORIES, prog.stories)"), "CTA destination is the open unread story");
+assert(appSrc.includes("isLecturaStoryOpen"), "openStory refuses a locked story");
 assert(appSrc.includes("lecturaHandoffQuiet(uiLang)"), "quiet line follows uiLang");
 assert(appSrc.includes("lecturaHandoffCta(uiLang)"), "CTA follows uiLang");
 assert(appSrc.includes('data-testid="lectura-handoff"'), "strip is testable");
