@@ -6,6 +6,7 @@ import {
   cenzontleBeatFromSession,
   emitFunnelEvent,
 } from "./funnel.js";
+import { IAP_PRODUCTS } from "./purchase.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -17,10 +18,11 @@ assert(FUNNEL_EVENTS.lecturaStart === "lectura_start", "lectura_start is the sto
 assert(FUNNEL_EVENTS.paywallSeen === "paywall_seen", "paywall_seen is the wall visible");
 assert(FUNNEL_EVENTS.paywallTap === "paywall_tap", "paywall_tap is the wall CTA");
 assert(FUNNEL_EVENTS.waitlistSubmit === "waitlist_submit", "waitlist_submit is the notice submit");
+assert(FUNNEL_EVENTS.purchase === "purchase", "purchase is the StoreKit success step");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "lectura_start", "open", "paywall_seen", "paywall_tap", "waitlist_submit"].join(","),
-  "existing funnel events stay; waitlist_submit is the only addition",
+    === ["cenzontle_complete", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "waitlist_submit"].join(","),
+  "funnel allowlist is the conversion chain plus paywall_tap and waitlist_submit",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
 assert(PAYWALL_TAP.monthly === "monthly", "monthly tap label");
@@ -119,6 +121,45 @@ assert(notice.email == null && notice.choice == null && notice.storyId == null &
 assert(JSON.stringify(notice) === JSON.stringify({ event: "waitlist_submit", at: notice.at }), "waitlist_submit payload is event + at only");
 assert(bus.events.at(-1).detail.email == null, "CustomEvent detail has no email");
 assert(!/example\.com|@/.test(JSON.stringify(notice)), "waitlist_submit JSON has no address");
+
+const bought = emitFunnelEvent({
+  event: FUNNEL_EVENTS.purchase,
+  plan: "annual",
+  productId: IAP_PRODUCTS.annual,
+  receipt: "receipt-body",
+  email: "dave@example.com",
+  name: "Dave",
+  deviceId: "abc-123",
+  transactionId: "tx-9",
+  price: "$39.99",
+}, bus);
+assert(bought.event === "purchase", "purchase names the event");
+assert(bought.plan === "annual", "purchase keeps the annual plan label");
+assert(bought.productId === IAP_PRODUCTS.annual, "purchase keeps the annual stub id");
+assert(Object.keys(bought).sort().join(",") === "at,event,plan,productId", "purchase payload is event + at + plan + productId");
+assert(bought.receipt == null && bought.email == null && bought.name == null && bought.deviceId == null && bought.transactionId == null && bought.price == null, "purchase drops receipt and PII");
+
+const monthlyBuy = emitFunnelEvent({
+  event: FUNNEL_EVENTS.purchase,
+  plan: "monthly",
+  productId: IAP_PRODUCTS.monthly,
+}, bus);
+assert(monthlyBuy.plan === "monthly" && monthlyBuy.productId === IAP_PRODUCTS.monthly, "monthly purchase labels");
+
+const junkBuy = emitFunnelEvent({
+  event: FUNNEL_EVENTS.purchase,
+  plan: "lifetime",
+  productId: "com.other.sku",
+  receipt: "secret",
+}, bus);
+assert(junkBuy.event === "purchase" && junkBuy.plan == null && junkBuy.productId == null && junkBuy.receipt == null, "unknown plan and product id are dropped");
+
+const openPlan = emitFunnelEvent({
+  event: FUNNEL_EVENTS.open,
+  plan: "annual",
+  productId: IAP_PRODUCTS.annual,
+}, bus);
+assert(openPlan.plan == null && openPlan.productId == null, "plan labels stay on purchase only");
 
 assert(!/\$/.test(JSON.stringify(bus.log)), "funnel log never carries a dollar sign");
 assert(!/Dave|example\.com|abc-123/.test(JSON.stringify(bus.log)), "funnel log never carries the injected PII");

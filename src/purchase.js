@@ -1,5 +1,7 @@
 /** Day-one IAP. Coin owns App Store prices — stubs only, no dollar amounts here. */
 
+import { FUNNEL_EVENTS, emitFunnelEvent } from "./funnel.js";
+
 export const PURCHASE_EVENT = "andale-purchase";
 export const WEB_NO_IAP_REASON = "web_no_iap";
 
@@ -103,10 +105,17 @@ function nativeRestoreFn(deps = {}) {
 function normalizeNativeResult(result, { plan, productId }) {
   const status = result?.status;
   if (status === "success") {
+    const resolvedPlan = plan || planForProductId(result.productId);
+    const resolvedId = result.productId || productId;
+    emitFunnelEvent({
+      event: FUNNEL_EVENTS.purchase,
+      plan: resolvedPlan,
+      productId: resolvedId,
+    });
     return emitPurchaseEvent({
       status: "success",
-      plan: plan || planForProductId(result.productId),
-      productId: result.productId || productId,
+      plan: resolvedPlan,
+      productId: resolvedId,
     });
   }
   const reason = result?.reason
@@ -149,7 +158,9 @@ export async function requestPurchase(plan, deps = {}) {
   }
 }
 
-/** Quiet restore on native launch. Web is a no-op — does not fake a charge or emit. */
+/** Quiet restore on native launch. Web is a no-op — does not fake a charge or emit.
+ *  Restore stays on the purchase bus. The funnel purchase event is StoreKit purchase success only.
+ */
 export async function restorePurchases(deps = {}) {
   if (!detectNativeIap(deps.env)) {
     return { status: "failure", charged: false, reason: WEB_NO_IAP_REASON };

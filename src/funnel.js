@@ -10,6 +10,7 @@ export const FUNNEL_EVENTS = Object.freeze({
   paywallSeen: "paywall_seen",
   paywallTap: "paywall_tap",
   waitlistSubmit: "waitlist_submit",
+  purchase: "purchase",
 });
 
 export const PAYWALL_TAP = Object.freeze({
@@ -21,6 +22,12 @@ export const PAYWALL_TAP = Object.freeze({
 const EVENTS = new Set(Object.values(FUNNEL_EVENTS));
 const TAPS = new Set(Object.values(PAYWALL_TAP));
 const BEATS = new Set(["hoy", "doctora", "story0"]);
+const PLANS = new Set(["annual", "monthly"]);
+/** Same stub ids as purchase.js. Allowlist only — never a receipt or transaction id. */
+const PRODUCT_IDS = new Set([
+  "com.andale.app.premium.annual",
+  "com.andale.app.premium.monthly",
+]);
 const STORY_ID = /^story-[a-z0-9-]{1,32}$/i;
 
 function eventBus() {
@@ -33,10 +40,12 @@ function safeStoryId(id) {
 
 /**
  * Tiny allowlisted payload. Never copies caller extras.
+ * Local bus only: window.__andaleFunnelLog + CustomEvent. No network.
  * storyId / beat / choice are content labels only.
  * waitlist_submit is event + timestamp only — never the email.
+ * purchase is event + at + allowlisted plan / productId only.
  */
-export function emitFunnelEvent({ event, storyId, beat, choice } = {}, bus = eventBus()) {
+export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId } = {}, bus = eventBus()) {
   if (!EVENTS.has(event)) return null;
   const payload = { event, at: new Date().toISOString() };
   if (event === FUNNEL_EVENTS.lecturaStart) {
@@ -49,6 +58,10 @@ export function emitFunnelEvent({ event, storyId, beat, choice } = {}, bus = eve
   if (event === FUNNEL_EVENTS.paywallTap && TAPS.has(choice)) {
     payload.choice = choice;
   }
+  if (event === FUNNEL_EVENTS.purchase) {
+    if (PLANS.has(plan)) payload.plan = plan;
+    if (PRODUCT_IDS.has(productId)) payload.productId = productId;
+  }
   if (bus) {
     bus[FUNNEL_LOG] = Array.isArray(bus[FUNNEL_LOG]) ? bus[FUNNEL_LOG] : [];
     bus[FUNNEL_LOG].push(payload);
@@ -59,6 +72,11 @@ export function emitFunnelEvent({ event, storyId, beat, choice } = {}, bus = eve
   return payload;
 }
 
+/**
+ * First-win bird. `hoy` is the first Hoy win that unlocks the Lectura handoff.
+ * `doctora` and `story0` are the other first-win birds on the same fly-away.
+ * Later Lectura perch is not a beat.
+ */
 export function cenzontleBeatFromSession(session) {
   if (!session || typeof session !== "object") return null;
   if (session.firstHoy) return "hoy";

@@ -113,4 +113,64 @@ const restoreEmpty = await restorePurchases({
 });
 assert(restoreEmpty.status === "failure" && restoreEmpty.charged === false, "empty restore does not unlock");
 
+function installFunnelWindow() {
+  const bus = {
+    events: [],
+    dispatchEvent(ev) { this.events.push(ev); return true; },
+  };
+  globalThis.window = bus;
+  return bus;
+}
+
+const funnelWindow = installFunnelWindow();
+const funnelPurchase = () => (funnelWindow.__andaleFunnelLog || []).filter((e) => e.event === "purchase");
+
+const webAgain = await requestPurchase("annual");
+assert(webAgain.reason === WEB_NO_IAP_REASON && funnelPurchase().length === 0, "web failure does not emit funnel purchase");
+
+const cancelAgain = await requestPurchase("monthly", {
+  env: { isNative: true, platform: "ios" },
+  nativePurchase: async () => ({ status: "cancelled", receipt: "receipt-body", email: "dave@example.com" }),
+});
+assert(cancelAgain.reason === "user_cancelled" && funnelPurchase().length === 0, "cancel does not emit funnel purchase");
+
+const failAgain = await requestPurchase("annual", {
+  env: { isNative: true, platform: "ios" },
+  nativePurchase: async () => { throw new Error("sheet_failed"); },
+});
+assert(failAgain.reason === "sheet_failed" && funnelPurchase().length === 0, "native throw does not emit funnel purchase");
+
+const restoreAgain = await restorePurchases({
+  env: { isNative: true, platform: "ios" },
+  nativeRestore: async () => ({ status: "success", productId: IAP_PRODUCTS.monthly, receipt: "receipt-body" }),
+});
+assert(restoreAgain.status === "success" && restoreAgain.reason === "restore", "restore still succeeds on the purchase bus");
+assert(funnelPurchase().length === 0, "restore does not emit funnel purchase");
+
+const successAgain = await requestPurchase("annual", {
+  env: { isNative: true, platform: "ios" },
+  nativePurchase: async ({ productId }) => ({
+    status: "success",
+    productId,
+    receipt: "receipt-body",
+    email: "dave@example.com",
+    deviceId: "abc-123",
+    transactionId: "tx-9",
+  }),
+});
+assert(successAgain.status === "success" && successAgain.charged === true, "success still charges");
+assert(funnelPurchase().length === 1, "funnel purchase emits once on StoreKit success");
+const funnelHit = funnelPurchase()[0];
+assert(funnelHit.plan === "annual" && funnelHit.productId === IAP_PRODUCTS.annual, "success funnel labels are annual");
+assert(funnelHit.receipt == null && funnelHit.email == null && funnelHit.deviceId == null && funnelHit.transactionId == null, "success funnel drops receipt and PII");
+assert(!/receipt-body|example\.com|abc-123|tx-9/.test(JSON.stringify(funnelWindow.__andaleFunnelLog)), "funnel log has no receipt or PII");
+assert(funnelWindow.events.some((ev) => ev.type === "andale-funnel" && ev.detail?.event === "purchase"), "success dispatches andale-funnel");
+
+const monthlySuccess = await requestPurchase("monthly", {
+  env: { isNative: true, platform: "ios" },
+  nativePurchase: async ({ productId }) => ({ status: "success", productId }),
+});
+assert(monthlySuccess.plan === "monthly" && funnelPurchase().at(-1).plan === "monthly", "monthly success emits funnel purchase");
+assert(funnelPurchase().at(-1).productId === IAP_PRODUCTS.monthly, "monthly success keeps the stub id");
+
 console.log("purchase.test.js: ok");

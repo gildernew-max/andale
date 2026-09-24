@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-24 (Funnel purchase on StoreKit success)
+
+**What changed**
+- Local bus only (`andale-funnel` / `window.__andaleFunnelLog`). No network. `open` on mount. `cenzontle_complete` beat `hoy` is the first Hoy win (fly-away `completeCenzontleBeat`; doctora / story0 stay the other first-win beats). `lectura_start` from `openStory` (handoff, shelf, path). `paywall_seen` when the soft wall becomes visible.
+- `purchase` emits only from StoreKit purchase success in `purchase.js`. Payload is event + at + allowlisted `plan` / `productId` (annual / monthly and the two stub ids). `paywall_tap` and `waitlist_submit` stay. Restore and failed charges do not emit `purchase`.
+
+**Why**
+- Steve CLEAR: the chain ends at purchase, still on-device.
+
+**Words / Brand left**
+- No new copy, prices, or art.
+
 ## 2026-09-24 (Lectura lock + line gloss on the open story)
 
 **What changed**
