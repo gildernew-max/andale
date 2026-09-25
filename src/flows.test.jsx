@@ -705,7 +705,7 @@ afterEach(() => {
   mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
 });
 
-describe("simulated learner flows", () => {
+describe("simulated learner flows", { timeout: 15000 }, () => {
   it("boots Camino, starts subj1, answers one MC, persists andale-v3 without wipe", async () => {
     // Shuffle can put five non-MC beats first. Dummy wrongs burn the default 5
     // hearts and land on the fail screen — hasPrompt then stays false. Extra
@@ -4872,12 +4872,16 @@ describe("simulated learner flows", () => {
     expect(document.body.textContent).not.toMatch(/¡Ganaste!|You won!/);
     expect(document.body.textContent).not.toMatch(/¡IMPECABLE!|FLAWLESS!/);
     expect(document.body.textContent).not.toMatch(/Necesito hacer una decisión|Voy a aplicar para el trabajo|beat 5/);
-    await waitFor(() => {
-      expect(screen.getByTestId("win-earned-xp").textContent).toBe("+15");
-      expect(screen.getByTestId("win-earned-gems").textContent).toBe("+15");
-    }, { timeout: 3000 });
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(57);
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(24);
+    expect(screen.getByTestId("win-fly-away")).toBeTruthy();
+    expect(screen.queryByTestId("win-earned-xp")).toBeNull();
+    expect(screen.queryByTestId("win-earned-gems")).toBeNull();
+    expect(screen.getByTestId("win-earned-streak")).toBeTruthy();
+    const doctoraWinScreen = screen.getByTestId("doctora-win").parentElement;
+    expect(doctoraWinScreen.textContent).not.toMatch(/\+\d+/);
+    expect(doctoraWinScreen.textContent).not.toMatch(/\bXP\b/);
+    expect(doctoraWinScreen.textContent).not.toMatch(/gemas|\bgems\b/i);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(42);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(9);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
@@ -4939,10 +4943,13 @@ describe("simulated learner flows", () => {
     await user.click(screen.getByTestId("phrase-doctor-fix"));
     await waitFor(() => expect(screen.getByTestId("doctora-win")).toBeTruthy());
     expect(screen.getByTestId("doctora-win").textContent).toBe("¡Eso!");
-    await waitFor(() => {
-      expect(screen.getByTestId("win-earned-xp").textContent).not.toBe("+0");
-      expect(screen.getByTestId("win-earned-gems").textContent).not.toBe("+0");
-    }, { timeout: 1500 });
+    expect(screen.getByTestId("win-fly-away")).toBeTruthy();
+    expect(screen.queryByTestId("win-earned-xp")).toBeNull();
+    expect(screen.queryByTestId("win-earned-gems")).toBeNull();
+    expect(screen.getByTestId("win-earned-streak")).toBeTruthy();
+    expect(screen.getByTestId("doctora-win").parentElement.textContent).not.toMatch(/\+\d+|\bXP\b|gemas|\bgems\b/i);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(42);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(9);
     await user.click(screen.getByTestId("doctora-win-continue"));
     await waitFor(() => expect(screen.getByTestId("session-close")).toBeTruthy());
     expect(screen.getByTestId("streak").textContent.trim()).toMatch(/^1/);
@@ -6027,7 +6034,7 @@ describe("simulated learner flows", () => {
 
 const funnelOf = (name) => (window.__andaleFunnelLog || []).filter((e) => e.event === name);
 
-describe("Pages funnel log", () => {
+describe("Pages funnel log", { timeout: 15000 }, () => {
   it("open fires on app mount with no PII", async () => {
     localStorage.clear();
     mockBrowser();

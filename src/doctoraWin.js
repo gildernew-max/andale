@@ -1,7 +1,6 @@
 /** First-session Doctora: win before the wall. Later sessions keep full depth. */
 
 import { HOY_WIN_EN, HOY_WIN_ES } from "./hoyWin.js";
-import { LESSON_XP_ALMOST, LESSON_XP_TYPE, lessonFinishReward } from "./lessonAward.js";
 
 export const FIRST_DOCTORA_BEAT_CAP = 4;
 export const DOCTORA_FULL_BEAT_CAP = 6;
@@ -64,28 +63,4 @@ export function shouldDoctoraEarlyWin({ firstDoctora, hits } = {}) {
 
 export function doctoraWinCopy(lang) {
   return lang === "en" ? DOCTORA_WIN_EN : DOCTORA_WIN_ES;
-}
-
-/**
- * Phrase Doctor finish uses the Hoy / lesson award path.
- * Type-in 10 (almost 7) per cure, then finishLesson perfect / gem rules.
- * Honest zero when nothing was cured.
- */
-export function doctoraWinReward({
-  hits = 0,
-  almostHits = 0,
-  wrongs = 0,
-  firstDoctora = true,
-  streak,
-} = {}) {
-  const n = Math.max(0, Number(hits) || 0);
-  if (n <= 0) return { earnedXP: 0, earnedGems: 0, perfectBonus: 0 };
-  const almost = Math.min(n, Math.max(0, Number(almostHits) || 0));
-  const sessionXP = (n - almost) * LESSON_XP_TYPE + almost * LESSON_XP_ALMOST;
-  return lessonFinishReward({
-    sessionXP,
-    wrongs,
-    questionCount: doctoraBeatCap({ firstDoctora, streak }),
-    hits: n,
-  });
 }

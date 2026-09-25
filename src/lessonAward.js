@@ -1,4 +1,4 @@
-/** Shared Hoy / lesson XP + gem rates. Doctora finish must reuse these — no parallel economy. */
+/** Shared Hoy / lesson XP + gem rates. */
 
 export const LESSON_XP_TYPE = 10;
 export const LESSON_XP_ALMOST = 7;
