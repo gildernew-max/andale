@@ -5,8 +5,11 @@ import {
   PLAN_PRICE_LINE,
   PRIVACY_POLICY_URL,
   TERMS_OF_USE_URL,
+  RESTORE_STATUS,
   disclosureLines,
   planPriceLine,
+  restoreStatusKey,
+  restoreStatusLine,
 } from "./paywallDisclosure.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
@@ -48,5 +51,18 @@ assert(planPriceLine("monthly", "es", "€6.99") === "€6.99 al mes", "ES subli
 const esSwapped = disclosureLines("es", { annual: "€39.99" });
 assert(esSwapped[1] === "Un año: €39.99 al año. Un mes: $6.99 al mes.", "ES drops the equivalent and keeps the locked monthly amount");
 assert(disclosureLines("en").every((line) => !DISCLOSURE.es.some((es) => es === line)), "EN lines are not the ES lines");
+
+assert(RESTORE_STATUS.en.success === "Purchases restored.", "EN restore success");
+assert(RESTORE_STATUS.en.empty === "No purchases to restore on this Apple ID.", "EN restore empty");
+assert(RESTORE_STATUS.en.failure === "Couldn't reach the App Store. Try again.", "EN restore failure");
+assert(RESTORE_STATUS.es.success === "Compras restauradas.", "ES restore success");
+assert(RESTORE_STATUS.es.empty === "No hay compras que restaurar en este ID de Apple.", "ES restore empty");
+assert(RESTORE_STATUS.es.failure === "No se pudo conectar con la App Store. Inténtalo de nuevo.", "ES restore failure");
+assert(restoreStatusKey({ status: "success", charged: true }) === "success", "charged restore is success");
+assert(restoreStatusKey({ status: "failure", charged: false, reason: "nothing_to_restore" }) === "empty", "nothing_to_restore is the empty line");
+assert(restoreStatusKey({ status: "failure", charged: false, reason: "web_no_iap" }) === "failure", "web restore is the failure line");
+assert(restoreStatusKey({ status: "failure", charged: false, reason: "storekit_failure" }) === "failure", "store failure is the failure line");
+assert(restoreStatusLine("en", "success") === RESTORE_STATUS.en.success && restoreStatusLine("es", "empty") === RESTORE_STATUS.es.empty, "restore line follows uiLang");
+assert(restoreStatusLine("en", "failure") !== restoreStatusLine("es", "failure"), "restore failure is one language");
 
 console.log("paywallDisclosure.test.js: ok");

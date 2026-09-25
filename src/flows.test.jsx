@@ -6540,10 +6540,12 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
     expect(funnelOf("purchase")).toHaveLength(0);
 
+    expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
     const restoresBeforeClick = restoreCalls;
     allowRestore = true;
     await user.click(screen.getByTestId("soft-paywall-restore"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status").textContent).toBe("Purchases restored."));
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(restoreCalls).toBeGreaterThan(restoresBeforeClick);
     expect(purchaseCalls).toBe(0);
     expect(funnelOf("purchase")).toHaveLength(0);
@@ -6576,6 +6578,128 @@ describe("paywall 3.1.2 disclosure", () => {
     });
     expect(screen.getByTestId("soft-paywall-restore").tagName).toBe("A");
     expect(screen.getByTestId("soft-paywall-restore").textContent).toBe("Restaurar compras");
+    expect(funnelOf("purchase")).toHaveLength(0);
+  }, 15000);
+
+  const restoreFaces = {
+    en: {
+      success: "Purchases restored.",
+      empty: "No purchases to restore on this Apple ID.",
+      failure: "Couldn't reach the App Store. Try again.",
+    },
+    es: {
+      success: "Compras restauradas.",
+      empty: "No hay compras que restaurar en este ID de Apple.",
+      failure: "No se pudo conectar con la App Store. Inténtalo de nuevo.",
+    },
+  };
+
+  const assertRestoreLine = (lang, key) => {
+    const line = screen.getByTestId("soft-paywall-restore-status");
+    const legal = screen.getByTestId("soft-paywall-legal");
+    const other = lang === "en" ? "es" : "en";
+    expect(line.textContent).toBe(restoreFaces[lang][key]);
+    expect(line.textContent).not.toBe(restoreFaces[other][key]);
+    expect(line.style.fontSize).toBe(legal.style.fontSize);
+    expect(line.style.fontWeight).toBe(legal.style.fontWeight);
+    expect(line.style.color).toBe(legal.style.color);
+    expect(legal.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(line.compareDocumentPosition(screen.getByTestId("soft-paywall-dismiss")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(line.querySelector("svg, img, button")).toBeNull();
+    expect(legal.contains(line)).toBe(false);
+    expect(funnelOf("purchase")).toHaveLength(0);
+  };
+
+  it.each(["en", "es"])("restore success shows one status line in %s and does not emit purchase", async (lang) => {
+    cleanup();
+    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday() });
+    window.__andaleIapEnv = { isNative: true, platform: "ios" };
+    let allowRestore = false;
+    let restoreCalls = 0;
+    window.__andaleNativeRestore = async () => {
+      restoreCalls += 1;
+      if (!allowRestore) return { status: "failure", reason: "nothing_to_restore" };
+      return { status: "success", productId: "com.andale.app.premium.annual" };
+    };
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    await waitFor(() => expect(restoreCalls).toBeGreaterThanOrEqual(1));
+    expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
+    allowRestore = true;
+    await user.click(screen.getByTestId("soft-paywall-restore"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status")).toBeTruthy());
+    assertRestoreLine(lang, "success");
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(stored.unlockedPrem).toBe(true);
+    expect(stored.paywallPlan).toBe("annual");
+  }, 15000);
+
+  it.each(["en", "es"])("restore with nothing to restore shows one status line in %s and does not emit purchase", async (lang) => {
+    cleanup();
+    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday() });
+    window.__andaleIapEnv = { isNative: true, platform: "ios" };
+    window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
+    await user.click(screen.getByTestId("soft-paywall-restore"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status")).toBeTruthy());
+    assertRestoreLine(lang, "empty");
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
+  }, 15000);
+
+  it.each(["en", "es"])("a failed store restore shows one status line in %s and does not emit purchase", async (lang) => {
+    cleanup();
+    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday() });
+    window.__andaleIapEnv = { isNative: true, platform: "ios" };
+    window.__andaleNativeRestore = async () => {
+      throw new Error("store_down");
+    };
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
+    await user.click(screen.getByTestId("soft-paywall-restore"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status")).toBeTruthy());
+    assertRestoreLine(lang, "failure");
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
+  }, 15000);
+
+  it.each(["en", "es"])("web restore shows the failure line in %s and does not emit purchase", async (lang) => {
+    cleanup();
+    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday() });
+    delete window.__andaleIapEnv;
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
+    await user.click(screen.getByTestId("soft-paywall-restore"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status")).toBeTruthy());
+    assertRestoreLine(lang, "failure");
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
+    expect(funnelOf("paywall_tap")).toHaveLength(0);
+  }, 15000);
+
+  it("a partial StoreKit price list falls back to both locked prices", async () => {
+    cleanup();
+    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday() });
+    window.__andaleIapEnv = { isNative: true, platform: "ios" };
+    window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
+    window.__andaleNativeGetProducts = async () => ({
+      products: [{ id: "com.andale.app.premium.annual", displayPrice: "€39.99" }],
+    });
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("$39.99 / year");
+    expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("$6.99 / month");
+    expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).toBe(EN_DISCLOSURE[1]);
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/€/);
     expect(funnelOf("purchase")).toHaveLength(0);
   }, 15000);
 });

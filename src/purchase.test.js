@@ -201,7 +201,26 @@ const missingMonthly = await getProducts({
     products: [{ id: IAP_PRODUCTS.annual, displayPrice: "$39.99" }],
   }),
 });
-assert(missingMonthly.annual === "$39.99" && missingMonthly.monthly == null, "a missing product leaves that price null");
+assert(missingMonthly.annual == null && missingMonthly.monthly == null, "a partial StoreKit result falls back to both locked prices");
+
+const missingAnnual = await getProducts({
+  env: { isNative: true, platform: "ios" },
+  nativeGetProducts: async () => ({
+    products: [{ id: IAP_PRODUCTS.monthly, displayPrice: "€6.99" }],
+  }),
+});
+assert(missingAnnual.annual == null && missingAnnual.monthly == null, "monthly alone does not replace the locked pair");
+
+const blankAnnual = await getProducts({
+  env: { isNative: true, platform: "ios" },
+  nativeGetProducts: async () => ({
+    products: [
+      { id: IAP_PRODUCTS.annual, displayPrice: "  " },
+      { id: IAP_PRODUCTS.monthly, displayPrice: "€6.99" },
+    ],
+  }),
+});
+assert(blankAnnual.annual == null && blankAnnual.monthly == null, "a blank displayPrice falls back to both locked prices");
 
 const failedLookup = await getProducts({
   env: { isNative: true, platform: "ios" },

@@ -208,8 +208,9 @@ function displayPriceFor(list, productId) {
 
 /**
  * StoreKit 2 localized displayPrice for the two premium products.
- * Web, a plugin error, or a missing product returns null so the paywall
- * can keep the locked price strings. Does not emit purchase.
+ * Both prices are used together, or neither: a missing product, a plugin
+ * error, or web returns null for both so the paywall keeps the locked pair.
+ * Does not emit purchase.
  */
 export async function getProducts(deps = {}) {
   const empty = { annual: null, monthly: null };
@@ -220,10 +221,10 @@ export async function getProducts(deps = {}) {
     });
     if (!result || result.status === "failure") return empty;
     const list = Array.isArray(result.products) ? result.products : [];
-    return {
-      annual: displayPriceFor(list, IAP_PRODUCTS.annual),
-      monthly: displayPriceFor(list, IAP_PRODUCTS.monthly),
-    };
+    const annual = displayPriceFor(list, IAP_PRODUCTS.annual);
+    const monthly = displayPriceFor(list, IAP_PRODUCTS.monthly);
+    if (!annual || !monthly) return empty;
+    return { annual, monthly };
   } catch {
     return empty;
   }

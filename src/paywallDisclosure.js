@@ -46,6 +46,20 @@ export const DISCLOSURE_LINKS = Object.freeze({
   }),
 });
 
+/** One line under the footer after a Restore tap. Wording is locked. */
+export const RESTORE_STATUS = Object.freeze({
+  en: Object.freeze({
+    success: "Purchases restored.",
+    empty: "No purchases to restore on this Apple ID.",
+    failure: "Couldn't reach the App Store. Try again.",
+  }),
+  es: Object.freeze({
+    success: "Compras restauradas.",
+    empty: "No hay compras que restaurar en este ID de Apple.",
+    failure: "No se pudo conectar con la App Store. Inténtalo de nuevo.",
+  }),
+});
+
 const ANNUAL_EQUIV = Object.freeze({
   en: " (about $3.33 a month)",
   es: " (unos $3.33 al mes)",
@@ -53,6 +67,18 @@ const ANNUAL_EQUIV = Object.freeze({
 
 function uiCode(lang) {
   return lang === "en" ? "en" : "es";
+}
+
+/** success, nothing_to_restore, or any other failure (including web). */
+export function restoreStatusKey(result) {
+  if (result?.status === "success" && result?.charged) return "success";
+  if (result?.reason === "nothing_to_restore") return "empty";
+  return "failure";
+}
+
+export function restoreStatusLine(lang, key) {
+  const face = RESTORE_STATUS[uiCode(lang)];
+  return face[key] || face.failure;
 }
 
 function storePrice(value) {
