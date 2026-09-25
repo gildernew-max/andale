@@ -15,14 +15,15 @@ assert(FUNNEL_LOG === "__andaleFunnelLog", "Pages verification log is window.__a
 assert(FUNNEL_EVENTS.open === "open", "open is the first funnel event");
 assert(FUNNEL_EVENTS.cenzontleComplete === "cenzontle_complete", "cenzontle_complete is the bird beat");
 assert(FUNNEL_EVENTS.lecturaStart === "lectura_start", "lectura_start is the story start");
+assert(FUNNEL_EVENTS.lecturaChapterDone === "lectura_chapter_done", "lectura_chapter_done is the chapter complete");
 assert(FUNNEL_EVENTS.paywallSeen === "paywall_seen", "paywall_seen is the wall visible");
 assert(FUNNEL_EVENTS.paywallTap === "paywall_tap", "paywall_tap is the wall CTA");
 assert(FUNNEL_EVENTS.waitlistSubmit === "waitlist_submit", "waitlist_submit is the notice submit");
 assert(FUNNEL_EVENTS.purchase === "purchase", "purchase is the StoreKit success step");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "waitlist_submit"].join(","),
-  "funnel allowlist is the conversion chain plus paywall_tap and waitlist_submit",
+    === ["cenzontle_complete", "lectura_chapter_done", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "waitlist_submit"].join(","),
+  "funnel allowlist is the conversion chain plus lectura_chapter_done, paywall_tap, and waitlist_submit",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
 assert(PAYWALL_TAP.monthly === "monthly", "monthly tap label");
@@ -88,6 +89,22 @@ const badStory = emitFunnelEvent({
   storyId: "dave@example.com",
 }, bus);
 assert(badStory.storyId == null, "email-shaped storyId is dropped");
+
+const chapterDone = emitFunnelEvent({
+  event: FUNNEL_EVENTS.lecturaChapterDone,
+  storyId: "story-0",
+  title: "La noche en que vuelven",
+  email: "dave@example.com",
+}, bus);
+assert(chapterDone.event === "lectura_chapter_done" && chapterDone.storyId === "story-0", "lectura_chapter_done keeps the content id");
+assert(chapterDone.title == null && chapterDone.email == null, "lectura_chapter_done drops title and email");
+assert(Object.keys(chapterDone).sort().join(",") === "at,event,storyId", "lectura_chapter_done payload is event + at + storyId");
+
+const badChapter = emitFunnelEvent({
+  event: FUNNEL_EVENTS.lecturaChapterDone,
+  storyId: "dave@example.com",
+}, bus);
+assert(badChapter.storyId == null, "email-shaped chapter storyId is dropped");
 
 const seen = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, unlockedPrem: true }, bus);
 assert(seen.event === "paywall_seen", "paywall_seen names the event");

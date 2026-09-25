@@ -37,6 +37,7 @@ import {
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -4379,6 +4380,8 @@ export default function App() {
   }, []);
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
+  const [lecturaCliffhanger, setLecturaCliffhanger] = useState(null);
+  const [chapterBirdHandoff, setChapterBirdHandoff] = useState(false);
   const [paywallArmed, setPaywallArmed] = useState(false);
   const paywallBusyRef = useRef(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
@@ -4429,6 +4432,7 @@ export default function App() {
   const storyPagesSeenRef = useRef({});
   const lecturaStartedRef = useRef(false);
   const lecturaHandoffHold = useRef(false);
+  const chapterDoneRef = useRef(new Set());
   const [doctorHits, setDoctorHits] = useState(0);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [wordOrderMiss, setWordOrderMiss] = useState("");
@@ -5795,8 +5799,39 @@ export default function App() {
     storyPagesSeenRef.current = { ...storyPagesSeenRef.current, [storyView.id]: [...prev, idx] };
   }, [screen, storyView, paraIdx]);
 
+  const releaseLecturaWin = (beat) => {
+    if (!beat) return;
+    setLecturaCliffhanger(null);
+    setChapterBirdHandoff(false);
+    if (!(beat.playStory0 || beat.playLecturaWin)) return;
+    const story = STORIES.find((item) => item.id === beat.storyId);
+    if (!story) return;
+    const playStory0 = beat.playStory0;
+    const playLecturaWin = beat.playLecturaWin;
+    setSession({
+      firstStory0: playStory0,
+      lecturaWin: playLecturaWin,
+      storyId: story.id,
+      title: story.title,
+      host: "rafa",
+      questions: [{}],
+      awarded: true,
+      earnedXP: beat.earned,
+      earnedGems: 10,
+    });
+    setLessonStats({ right: beat.correct, wrong: story.questions.length - beat.correct });
+    setScreenQuip("");
+    if (playStory0) {
+        winBouncePlayed.current = true;
+        setWinBounce(true);
+    }
+    setScreen("done");
+  };
+
   const claimStory = (story, correct) => {
     if (prog.stories?.[story.id]) return;
+    if (chapterDoneRef.current.has(story.id)) return;
+    chapterDoneRef.current.add(story.id);
     const playStory0 = shouldArmStory0Beat({
       storyId: story.id,
       claimed: prog.stories?.[story.id],
@@ -5835,26 +5870,23 @@ export default function App() {
         storyCollectibles: { ...(prev.storyCollectibles || {}), [story.id]: true },
       };
     });
-    if (playStory0 || playLecturaWin) {
-      setSession({
-        firstStory0: playStory0,
-        lecturaWin: playLecturaWin,
-        storyId: story.id,
-        title: story.title,
-        host: "rafa",
-        questions: [{}],
-        awarded: true,
-        earnedXP: earned,
-        earnedGems: 10,
-      });
-      setLessonStats({ right: correct, wrong: story.questions.length - correct });
-      setScreenQuip("");
-      if (playStory0) {
-        winBouncePlayed.current = true;
-        setWinBounce(true);
-      }
-      setScreen("done");
+    emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaChapterDone, storyId: story.id });
+    setLecturaCliffhanger({
+      storyId: story.id,
+      correct,
+      earned,
+      playStory0,
+      playLecturaWin,
+    });
+  };
+
+  const handoffCliffhangerToBird = () => {
+    if (!lecturaCliffhanger) return;
+    if (prog.paywallSeen || prog.unlockedPrem) {
+      releaseLecturaWin(lecturaCliffhanger);
+      return;
     }
+    setChapterBirdHandoff(true);
   };
 
   const discoverStoryWord = (story, key) => {
@@ -6437,7 +6469,7 @@ export default function App() {
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
   // A successful Restore tap holds the wall so the status line stays readable.
-  const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
+  const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue() || chapterBirdHandoff;
   useEffect(() => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.open });
   }, []);
@@ -6699,6 +6731,8 @@ export default function App() {
     if (!fromBackdrop) {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.continueFree });
     }
+    const beat = lecturaCliffhanger;
+    setChapterBirdHandoff(false);
     setRestoreHold(false);
     setSoftPaywall(false);
     setPaywallArmed(false);
@@ -6711,6 +6745,7 @@ export default function App() {
     });
     if (showA2hs) setA2hsSheet(true);
     save({ paywallSeen: true, ...(showA2hs ? { a2hsSeen: true } : {}) });
+    if (beat) releaseLecturaWin(beat);
   };
   const buySoftPaywall = async (plan) => {
     if (paywallBusyRef.current) return;
@@ -6719,6 +6754,8 @@ export default function App() {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: plan });
       const result = await requestPurchase(plan);
       if (result.status !== "success" || !result.charged) return;
+      const beat = lecturaCliffhanger;
+      setChapterBirdHandoff(false);
       save((prev) => progressAfterPurchaseSuccess(prev, {
         plan: result.plan,
         productId: result.productId,
@@ -6726,6 +6763,7 @@ export default function App() {
       setRestoreHold(false);
       setSoftPaywall(false);
       setPaywallArmed(false);
+      if (beat) releaseLecturaWin(beat);
     } finally {
       paywallBusyRef.current = false;
     }
@@ -10250,6 +10288,36 @@ export default function App() {
               )}
             </div>
             </>)}
+
+            {lecturaCliffhanger?.storyId === story.id && (
+              <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, background: HUB_CREAM, borderRadius: 14, padding: "14px 14px 12px" }}>
+                <p data-testid="lectura-cliffhanger-line" style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700, lineHeight: 1.55, color: D.sub }}>
+                  {lecturaCliffhangerLine(story.id)}
+                </p>
+                <div data-testid="lectura-bird-handoff" style={{ background: HUB_CREAM }}>
+                  <button
+                    type="button"
+                    data-testid="lectura-bird-handoff-cta"
+                    onClick={handoffCliffhangerToBird}
+                    style={{
+                      background: HUB_CREAM,
+                      color: MARK_INK,
+                      border: `1px solid ${MARK_INK}`,
+                      borderRadius: 12,
+                      padding: "10px 16px",
+                      minHeight: 44,
+                      fontFamily: "inherit",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      lineHeight: 1.35,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {L.continue}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* sticky definition card */}
             {wordSel && (() => {
