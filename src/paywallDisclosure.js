@@ -52,11 +52,13 @@ export const RESTORE_STATUS = Object.freeze({
     success: "Purchases restored.",
     empty: "No purchases to restore on this Apple ID.",
     failure: "Couldn't reach the App Store. Try again.",
+    web: "Restore works in the iPhone app.",
   }),
   es: Object.freeze({
     success: "Compras restauradas.",
     empty: "No hay compras que restaurar en este ID de Apple.",
     failure: "No se pudo conectar con la App Store. Inténtalo de nuevo.",
+    web: "Restaurar compras funciona en la app para iPhone.",
   }),
 });
 
@@ -69,10 +71,11 @@ function uiCode(lang) {
   return lang === "en" ? "en" : "es";
 }
 
-/** success, nothing_to_restore, or any other failure (including web). */
+/** success, nothing_to_restore, web (no store), or a store failure. */
 export function restoreStatusKey(result) {
   if (result?.status === "success" && result?.charged) return "success";
   if (result?.reason === "nothing_to_restore") return "empty";
+  if (result?.reason === "web_no_iap") return "web";
   return "failure";
 }
 

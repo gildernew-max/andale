@@ -6586,11 +6586,13 @@ describe("paywall 3.1.2 disclosure", () => {
       success: "Purchases restored.",
       empty: "No purchases to restore on this Apple ID.",
       failure: "Couldn't reach the App Store. Try again.",
+      web: "Restore works in the iPhone app.",
     },
     es: {
       success: "Compras restauradas.",
       empty: "No hay compras que restaurar en este ID de Apple.",
       failure: "No se pudo conectar con la App Store. Inténtalo de nuevo.",
+      web: "Restaurar compras funciona en la app para iPhone.",
     },
   };
 
@@ -6670,7 +6672,7 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
   }, 15000);
 
-  it.each(["en", "es"])("web restore shows the failure line in %s and does not emit purchase", async (lang) => {
+  it.each(["en", "es"])("web restore shows the iPhone-app line in %s and does not emit purchase", async (lang) => {
     cleanup();
     seedProgress({ uiLang: lang, streak: 1, lastDay: localToday() });
     delete window.__andaleIapEnv;
@@ -6680,7 +6682,8 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
     await user.click(screen.getByTestId("soft-paywall-restore"));
     await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status")).toBeTruthy());
-    assertRestoreLine(lang, "failure");
+    assertRestoreLine(lang, "web");
+    expect(screen.getByTestId("soft-paywall-restore-status").textContent).not.toBe(restoreFaces[lang].failure);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
     expect(funnelOf("paywall_tap")).toHaveLength(0);

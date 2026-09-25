@@ -55,12 +55,15 @@ assert(disclosureLines("en").every((line) => !DISCLOSURE.es.some((es) => es === 
 assert(RESTORE_STATUS.en.success === "Purchases restored.", "EN restore success");
 assert(RESTORE_STATUS.en.empty === "No purchases to restore on this Apple ID.", "EN restore empty");
 assert(RESTORE_STATUS.en.failure === "Couldn't reach the App Store. Try again.", "EN restore failure");
+assert(RESTORE_STATUS.en.web === "Restore works in the iPhone app.", "EN web restore");
 assert(RESTORE_STATUS.es.success === "Compras restauradas.", "ES restore success");
 assert(RESTORE_STATUS.es.empty === "No hay compras que restaurar en este ID de Apple.", "ES restore empty");
 assert(RESTORE_STATUS.es.failure === "No se pudo conectar con la App Store. Inténtalo de nuevo.", "ES restore failure");
+assert(RESTORE_STATUS.es.web === "Restaurar compras funciona en la app para iPhone.", "ES web restore");
 assert(restoreStatusKey({ status: "success", charged: true }) === "success", "charged restore is success");
 assert(restoreStatusKey({ status: "failure", charged: false, reason: "nothing_to_restore" }) === "empty", "nothing_to_restore is the empty line");
-assert(restoreStatusKey({ status: "failure", charged: false, reason: "web_no_iap" }) === "failure", "web restore is the failure line");
+assert(restoreStatusKey({ status: "failure", charged: false, reason: "web_no_iap" }) === "web", "web restore is the iPhone-app line");
+assert(restoreStatusLine("en", "web") !== RESTORE_STATUS.en.failure && restoreStatusLine("es", "web") !== RESTORE_STATUS.es.failure, "web restore is not the App Store failure line");
 assert(restoreStatusKey({ status: "failure", charged: false, reason: "storekit_failure" }) === "failure", "store failure is the failure line");
 assert(restoreStatusLine("en", "success") === RESTORE_STATUS.en.success && restoreStatusLine("es", "empty") === RESTORE_STATUS.es.empty, "restore line follows uiLang");
 assert(restoreStatusLine("en", "failure") !== restoreStatusLine("es", "failure"), "restore failure is one language");
