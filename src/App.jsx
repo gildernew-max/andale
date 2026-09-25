@@ -12,7 +12,8 @@ import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats, doctora
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { detectNativeIap, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
+import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
+import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine } from "./paywallDisclosure.js";
 import { FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
 import { saveWaitlistNotice, shouldShowFreePathWaitlist } from "./waitlist.js";
 import { WaitlistStrip } from "./WaitlistStrip.jsx";
@@ -6434,6 +6435,7 @@ export default function App() {
     splash: splashOpen,
   });
   const canCharge = detectNativeIap();
+  const [storePrices, setStorePrices] = useState({ annual: null, monthly: null });
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
   const showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
@@ -6449,6 +6451,14 @@ export default function App() {
       setPaywallArmed(false);
     }
   }, [showSoftPaywall]);
+  useEffect(() => {
+    if (!canCharge) return undefined;
+    let cancelled = false;
+    getProducts().then((prices) => {
+      if (!cancelled) setStorePrices(prices);
+    });
+    return () => { cancelled = true; };
+  }, [canCharge]);
   useEffect(() => {
     if (!showSoftPaywall) {
       setPaywallArmed(false);
@@ -6728,6 +6738,22 @@ export default function App() {
       }));
       setSoftPaywall(false);
       setPaywallArmed(false);
+    } finally {
+      paywallBusyRef.current = false;
+    }
+  };
+  const applyRestoredPurchase = (result) => {
+    if (result?.status !== "success" || !result.charged) return;
+    save((prev) => (prev.unlockedPrem ? prev : progressAfterPurchaseSuccess(prev, {
+      plan: result.plan,
+      productId: result.productId,
+    })));
+  };
+  const restoreSoftPaywall = async () => {
+    if (paywallBusyRef.current) return;
+    paywallBusyRef.current = true;
+    try {
+      applyRestoredPurchase(await restorePurchases());
     } finally {
       paywallBusyRef.current = false;
     }
@@ -8692,7 +8718,7 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one Cenzontle fly-away, George words, loud annual / outline monthly / quiet free. Waitlist may preview under continue free; the same strip stays on the hub after dismiss. Surface cream lock = Learn home HUB_CREAM. Soft chrome parked. Membership attach stays out of this surface. */}
+      {/* Look lock: one Cenzontle fly-away, George words, loud annual / outline monthly / quiet free. Waitlist may preview under continue free on web; hidden when native can charge. Surface cream lock = Learn home HUB_CREAM. Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
           <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
@@ -8701,7 +8727,28 @@ export default function App() {
             <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
+              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
               <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: HUB_CREAM }}>{L.paywallMonthly}</Btn>
+              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
+              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: D.sub, lineHeight: 1.45 }}>
+                {disclosureLines(uiLang, storePrices).map((line, i) => (
+                  <p key={i} data-testid={`soft-paywall-disclosure-${i}`} style={{ margin: i === 0 ? "2px 0 0" : "6px 0 0", fontSize: 11, fontWeight: 700, lineHeight: 1.45 }}>
+                    {i === 0 && line.startsWith("Ándale Premium")
+                      ? <><strong>Ándale Premium</strong>{line.slice("Ándale Premium".length)}</>
+                      : line}
+                  </p>
+                ))}
+              </div>
+              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>
+                <a data-testid="soft-paywall-terms" href={TERMS_OF_USE_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].terms}</a>
+                {" · "}
+                <a data-testid="soft-paywall-privacy" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].privacy}</a>
+                {" · "}
+                <button type="button" data-testid="soft-paywall-restore" onClick={() => restoreSoftPaywall()}
+                  style={{ display: "inline", margin: 0, padding: 0, background: "none", border: "none", color: "inherit", fontFamily: "inherit", fontWeight: 700, fontSize: 11, lineHeight: 1.45, cursor: "pointer", textDecoration: "underline" }}>
+                  {DISCLOSURE_LINKS[uiLang].restore}
+                </button>
+              </div>
               {!canCharge && (
               <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
@@ -8711,6 +8758,7 @@ export default function App() {
                 style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
                 {L.paywallDismiss}
               </button>
+              {!canCharge && (
               <WaitlistStrip
                 uiLang={uiLang}
                 draft={waitlistDraft}
@@ -8720,6 +8768,7 @@ export default function App() {
                 onDraft={onWaitlistDraft}
                 onSubmit={submitSoftPaywallWaitlist}
               />
+              )}
             </div>
           </div>
         </div>

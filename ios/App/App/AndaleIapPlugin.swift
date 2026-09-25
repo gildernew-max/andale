@@ -9,7 +9,8 @@ public class AndaleIapPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "AndaleIap"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "restore", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "restore", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getProducts", returnType: CAPPluginReturnPromise)
     ]
 
     @objc func purchase(_ call: CAPPluginCall) {
@@ -88,6 +89,37 @@ public class AndaleIapPlugin: CAPPlugin, CAPBridgedPlugin {
                 }
             } catch {
                 call.resolve(["status": "failure", "reason": error.localizedDescription])
+            }
+        }
+    }
+
+    /// Localized StoreKit prices for the paywall. JS falls back when this fails.
+    @objc func getProducts(_ call: CAPPluginCall) {
+        let ids = (call.getArray("productIds", String.self) ?? []).filter { !$0.isEmpty }
+        if ids.isEmpty {
+            call.resolve([
+                "status": "failure",
+                "reason": "missing_product_ids",
+                "products": []
+            ])
+            return
+        }
+        Task {
+            do {
+                let products = try await Product.products(for: ids)
+                let rows: [[String: String]] = products.map { product in
+                    [
+                        "id": product.id,
+                        "displayPrice": product.displayPrice
+                    ]
+                }
+                call.resolve(["products": rows])
+            } catch {
+                call.resolve([
+                    "status": "failure",
+                    "reason": error.localizedDescription,
+                    "products": []
+                ])
             }
         }
     }
