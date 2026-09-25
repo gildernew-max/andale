@@ -316,11 +316,10 @@ const assertFreeWinFlyAway = () => {
   expect(screen.queryByTestId("soft-paywall")).toBeNull();
 };
 
-/** Loud annual / outline monthly / quietest continue free. George words. One Cenzontle fly-away. */
+/** Loud annual / outline monthly / quietest continue free. George words. One static Cenzontle. */
 const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const wall = screen.getByTestId("soft-paywall");
   const bird = screen.getByTestId("soft-paywall-cenzontle");
-  const stage = screen.getByTestId("soft-paywall-cenzontle-stage");
   const annual = screen.getByTestId("soft-paywall-annual");
   const monthly = screen.getByTestId("soft-paywall-monthly");
   const honesty = screen.getByTestId("soft-paywall-honesty");
@@ -336,11 +335,15 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(dismiss.textContent).toBe(copy.dismiss);
   expect(annual.textContent).not.toMatch(/\$39\.99|\$6\.99/);
   expect(monthly.textContent).not.toMatch(/\$39\.99|\$6\.99/);
+  expect(bird.tagName).toBe("IMG");
   expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-  expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)/);
-  expect(stage.getAttribute("data-reduced-motion")).toBe("0");
-  expect(screen.getByTestId("soft-paywall-cenzontle-wing")).toBeTruthy();
+  expect(bird.getAttribute("width")).toBe("44");
+  expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)|animation/);
+  expect(screen.queryByTestId("soft-paywall-cenzontle-stage")).toBeNull();
+  expect(screen.queryByTestId("soft-paywall-cenzontle-wing")).toBeNull();
+  expect(wall.querySelector("[data-testid='soft-paywall-cenzontle']").compareDocumentPosition(screen.getByTestId("soft-paywall-headline")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(wall.querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+  expect(wall.textContent).not.toMatch(/Tell me when the store opens|Avísame cuando abramos la tienda|I’ll write when it’s ready|Te escribo cuando esté listo/);
   expect(wall.querySelector("[data-testid='win-bounce']")).toBeNull();
   expect(wall.querySelector("[data-testid='story-0-beat']")).toBeNull();
   expect(wall.querySelector("[data-testid='win-perch']")).toBeNull();
@@ -6125,105 +6128,23 @@ describe("Pages funnel log", () => {
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/\$39\.99|\$6\.99|Dave@/);
   });
 
-  it("waitlist survives Continue free on the hub and submits without email in the log", async () => {
+  it("waitlist strip is gone on the paywall and the hub", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday() });
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     assertSoftPaywallAnnualPrimary("es");
-    const annual = screen.getByTestId("soft-paywall-annual");
-    const dismiss = screen.getByTestId("soft-paywall-dismiss");
-    const preview = screen.getByTestId("soft-paywall-waitlist");
-    expect(annual.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(dismiss.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall").contains(preview)).toBe(true);
-    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
-    expect(annual.textContent).toBe("Un año");
-    expect(annual.style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
-    const filled = [...screen.getByTestId("soft-paywall").querySelectorAll("button.duo-btn")]
-      .filter((el) => /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i.test(el.style.background));
-    expect(filled).toHaveLength(1);
-    expect(filled[0]).toBe(annual);
-
-    await user.click(dismiss);
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
-    const strip = screen.getByTestId("soft-paywall-waitlist");
-    expect(screen.getByTestId("learn-hub").contains(strip)).toBe(true);
-    expect(strip.textContent).toContain("Avísame cuando abramos la tienda");
-    expect(strip.textContent).toContain("Avisarme");
-    expect(strip.textContent).toContain("Solo para el aviso de apertura. Sin spam.");
-    expect(strip.textContent).not.toMatch(/Notify me|Tell me when|Your email|Launch notice|Check the email|Got it/);
-    expect(strip.textContent).not.toMatch(/Un año|Seguir gratis|Sigue con tu racha/);
-    const field = screen.getByTestId("soft-paywall-waitlist-email");
-    expect(field.getAttribute("placeholder")).toBe("Tu correo");
-    expect(field.style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
-    expect(field.style.border).toMatch(/#C46B3A|rgb\(\s*196,\s*107,\s*58\s*\)/i);
-    expect(field.style.minHeight).toBe("44px");
-    const cta = screen.getByTestId("soft-paywall-waitlist-submit");
-    expect(cta.textContent).toBe("Avisarme");
-    expect(cta.className).not.toMatch(/duo-btn/);
-    expect(cta.style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
-    expect(cta.style.background).not.toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
-    expect(cta.style.borderBottom).not.toMatch(/4px/);
-    expect(strip.querySelector("a")).toBeNull();
-    expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
-
-    await user.type(field, "not-an-email");
-    await user.click(cta);
-    expect(screen.getByTestId("soft-paywall-waitlist-note").textContent).toBe("Revisa el correo");
-    expect(funnelOf("waitlist_submit")).toHaveLength(0);
-    expect(localStorage.getItem("andale-waitlist")).toBeNull();
-    expect(screen.queryByTestId("soft-paywall")).toBeNull();
-    expect(screen.getByTestId("learn-hub").contains(screen.getByTestId("soft-paywall-waitlist"))).toBe(true);
-
-    await user.clear(field);
-    await user.type(field, "dave@example.com");
-    await user.click(cta);
-    expect(screen.getByTestId("soft-paywall-waitlist-note").textContent).toBe("Listo. Te escribo cuando esté listo.");
-    const submits = funnelOf("waitlist_submit");
-    expect(submits).toHaveLength(1);
-    expect(submits[0].event).toBe("waitlist_submit");
-    expect(typeof submits[0].at).toBe("string");
-    expect(Object.keys(submits[0]).sort()).toEqual(["at", "event"]);
-    expect(submits[0].email).toBeUndefined();
-    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/dave@example\.com|@example/i);
-    expect(JSON.parse(localStorage.getItem("andale-waitlist")).email).toBe("dave@example.com");
-    expect(screen.queryByTestId("soft-paywall")).toBeNull();
-  });
-
-  it("waitlist face follows EN uiLang on the free path after Continue free", async () => {
-    cleanup();
-    seedProgress({ streak: 1, lastDay: localToday(), uiLang: "en" });
-    const user = userEvent.setup();
-    render(<App />);
-    await awaitSoftPaywallAfterFirstWin();
-    assertSoftPaywallAnnualPrimary("en");
-    expect(screen.getByTestId("soft-paywall").contains(screen.getByTestId("soft-paywall-waitlist"))).toBe(true);
-    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("One year");
+    expect(screen.queryByTestId("soft-paywall-waitlist")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Tell me when the store opens|Avísame cuando abramos la tienda|I’ll write when it’s ready|Te escribo cuando esté listo/);
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
-    const strip = screen.getByTestId("soft-paywall-waitlist");
-    expect(screen.getByTestId("learn-hub").contains(strip)).toBe(true);
-    expect(strip.textContent).toContain("Tell me when the store opens");
-    expect(strip.textContent).toContain("Notify me");
-    expect(strip.textContent).toContain("Launch notice only. No spam.");
-    expect(strip.textContent).not.toMatch(/Avísame|Avisarme|Tu correo|Revisa el correo|Listo\.|Sin spam/);
-    const field = screen.getByTestId("soft-paywall-waitlist-email");
-    expect(field.getAttribute("placeholder")).toBe("Your email");
-    await user.type(field, "not-an-email");
-    await user.click(screen.getByTestId("soft-paywall-waitlist-submit"));
-    expect(screen.getByTestId("soft-paywall-waitlist-note").textContent).toBe("Check the email");
+    expect(screen.queryByTestId("soft-paywall-waitlist")).toBeNull();
+    expect(screen.getByTestId("learn-hub").textContent).not.toMatch(/Tell me when the store opens|Avísame cuando abramos la tienda|I’ll write when it’s ready|Te escribo cuando esté listo/);
     expect(funnelOf("waitlist_submit")).toHaveLength(0);
-    await user.clear(field);
-    await user.type(field, "dave@example.com");
-    await user.click(screen.getByTestId("soft-paywall-waitlist-submit"));
-    expect(screen.getByTestId("soft-paywall-waitlist-note").textContent).toBe("Got it. I’ll write when it’s ready.");
-    const submits = funnelOf("waitlist_submit");
-    expect(submits).toHaveLength(1);
-    expect(Object.keys(submits[0]).sort()).toEqual(["at", "event"]);
-    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/dave@example\.com|@example/i);
-  });
+    expect(funnelOf("paywall_tap").some((e) => e.choice === "continue_free")).toBe(true);
+    expect(funnelOf("purchase")).toHaveLength(0);
+  }, 15000);
 
   it("StoreKit cancel does not emit purchase", async () => {
     cleanup();
@@ -6520,9 +6441,11 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(privacy.getAttribute("href")).toBe("https://gildernew-max.github.io/andale/privacy.html");
     expect(privacy.textContent).toBe("Privacy Policy");
     const restore = screen.getByTestId("soft-paywall-restore");
-    expect(restore.tagName).toBe("BUTTON");
+    expect(restore.tagName).toBe("A");
     expect(restore.textContent).toBe("Restore Purchases");
-    expect(restore.className).not.toMatch(/duo-btn/);
+    expect(restore.closest("[data-testid='soft-paywall-legal']")).toBe(screen.getByTestId("soft-paywall-legal"));
+    expect(screen.getByTestId("soft-paywall-legal").querySelector("button")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-waitlist")).toBeNull();
     expect(monthlyPrice.compareDocumentPosition(fine) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(fine.compareDocumentPosition(screen.getByTestId("soft-paywall-dismiss")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
@@ -6565,13 +6488,16 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(screen.getByTestId("soft-paywall-terms").textContent).toBe("Términos de uso");
     expect(screen.getByTestId("soft-paywall-privacy").getAttribute("href")).toBe("https://gildernew-max.github.io/andale/privacy.html");
     expect(screen.getByTestId("soft-paywall-privacy").textContent).toBe("Política de privacidad");
-    expect(screen.getByTestId("soft-paywall-restore").textContent).toBe("Restaurar compras");
+    const restore = screen.getByTestId("soft-paywall-restore");
+    expect(restore.tagName).toBe("A");
+    expect(restore.textContent).toBe("Restaurar compras");
+    expect(restore.closest("[data-testid='soft-paywall-legal']")).toBe(screen.getByTestId("soft-paywall-legal"));
     expect(parseFloat(screen.getByTestId("soft-paywall-disclosure").style.fontSize)).toBeLessThan(parseFloat(screen.getByTestId("soft-paywall-annual").style.fontSize));
-    expect(screen.getByTestId("soft-paywall-waitlist")).toBeTruthy();
+    expect(screen.queryByTestId("soft-paywall-waitlist")).toBeNull();
     expect(funnelOf("purchase")).toHaveLength(0);
   }, 15000);
 
-  it("hides the waitlist when canCharge and prefers StoreKit displayPrice; restore adds no purchase", async () => {
+  it("prefers StoreKit displayPrice and the restore link adds no purchase", async () => {
     cleanup();
     seedProgress({ uiLang: "en", streak: 1, lastDay: localToday() });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
@@ -6598,7 +6524,8 @@ describe("paywall 3.1.2 disclosure", () => {
     await awaitSoftPaywallAfterFirstWin();
     await waitFor(() => expect(restoreCalls).toBeGreaterThanOrEqual(1));
     expect(screen.queryByTestId("soft-paywall-waitlist")).toBeNull();
-    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Tell me when the store opens|Avísame cuando abramos la tienda/);
+    expect(screen.getByTestId("soft-paywall-restore").tagName).toBe("A");
+    expect(document.body.textContent).not.toMatch(/Tell me when the store opens|Avísame cuando abramos la tienda/);
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Practice · no charge yet|Práctica · sin cobro todavía/);
     await waitFor(() => expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("€39.99 / year"));
@@ -6630,7 +6557,7 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(names.includes("purchase")).toBe(false);
   }, 15000);
 
-  it("falls back to locked prices when getProducts fails and still hides the native waitlist", async () => {
+  it("falls back to locked prices when getProducts fails", async () => {
     cleanup();
     seedProgress({ uiLang: "es", streak: 1, lastDay: localToday() });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
@@ -6647,6 +6574,7 @@ describe("paywall 3.1.2 disclosure", () => {
     ES_DISCLOSURE.forEach((line, i) => {
       expect(screen.getByTestId(`soft-paywall-disclosure-${i}`).textContent).toBe(line);
     });
+    expect(screen.getByTestId("soft-paywall-restore").tagName).toBe("A");
     expect(screen.getByTestId("soft-paywall-restore").textContent).toBe("Restaurar compras");
     expect(funnelOf("purchase")).toHaveLength(0);
   }, 15000);
