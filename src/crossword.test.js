@@ -5,11 +5,20 @@ import {
   CROSSWORD_ACROSS,
   CROSSWORD_DOWN,
   CROSSWORD_REVEAL,
+  CROSSWORD_BOARD_DARK,
+  CROSSWORD_CREAM,
+  CROSSWORD_INK_DARK,
+  CROSSWORD_LINE_DARK,
+  CROSSWORD_PAGE_DARK,
+  CROSSWORD_QUIET_DARK,
   CROSSWORD_SAGE,
+  CROSSWORD_SAGE_TEXT_DARK,
+  CROSSWORD_SAGE_TINT_DARK,
   CROSSWORD_TITLE,
   CROSSWORD_GRID,
   backspaceCrossword,
   buildCrossword,
+  crosswordColors,
   crosswordDirLabel,
   crosswordLetter,
   crosswordRevealLabel,
@@ -134,5 +143,66 @@ assert(!/cenzontle|Confetti|penguin/i.test(playSrc), "crossword keeps the bird o
 assert(playSrc.includes('data-testid="crossword-input"'), "phone keyboard uses a hidden input");
 assert(playSrc.includes('data-testid="crossword-reveal"'), "reveal control is testable");
 assert(!playSrc.includes("duo-btn"), "reveal is not a filled button");
+assert(playSrc.includes("crosswordColors(dark)"), "playfield takes the dark palette");
+assert(playSrc.includes("color: C.quiet"), "Reveal word uses the quiet ink");
+
+const light = crosswordColors(false);
+assert(light.board === "#F6EFE4" && light.page === "#F6EFE4", "light board stays cream");
+assert(light.square === "#FFFFFF" && light.letter === "#3C3C3C", "light squares stay white with ink letters");
+assert(light.line === "#D9CFC3" && light.lockedLetter === "#FFFFFF", "light lines and locked letters stay put");
+assert(light.quiet === "#8A8175" && light.number === "#8A8175", "light chrome stays the warm gray");
+assert(light.tint === `color-mix(in srgb, ${CROSSWORD_SAGE} 18%, #ffffff)`, "light active clue stays the white sage wash");
+
+const dark = crosswordColors(true);
+assert(dark.page === CROSSWORD_PAGE_DARK && dark.page === "#15171C", "dark page is #15171C");
+assert(dark.board === CROSSWORD_BOARD_DARK && dark.square === "#1E2128", "dark board and squares are #1E2128");
+assert(dark.line === CROSSWORD_LINE_DARK && dark.line === "#2A2E36", "dark lines are the app soft gray");
+assert(dark.letter === CROSSWORD_CREAM && dark.lockedLetter === CROSSWORD_CREAM, "dark letters are cream");
+assert(dark.locked === CROSSWORD_SAGE, "locked squares stay sage");
+assert(dark.tint === CROSSWORD_SAGE_TINT_DARK, "dark active clue is sage mixed into the board");
+assert(dark.quiet === CROSSWORD_QUIET_DARK && dark.activeLang === CROSSWORD_INK_DARK, "dark quiet and active language use the app inks");
+assert(dark.sageText === CROSSWORD_SAGE_TEXT_DARK, "dark sage text is the lifted sage");
+
+const hexRgb = (hex) => {
+  const n = hex.replace("#", "");
+  return [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16));
+};
+const channel = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const rel = (rgb) => 0.2126 * channel(rgb[0] / 255) + 0.7152 * channel(rgb[1] / 255) + 0.0722 * channel(rgb[2] / 255);
+const ratio = (a, b) => {
+  const hi = Math.max(rel(a), rel(b));
+  const lo = Math.min(rel(a), rel(b));
+  return (hi + 0.05) / (lo + 0.05);
+};
+const mix = (fg, bg, p) => fg.map((c, i) => Math.round(c * p + bg[i] * (1 - p)));
+const board = hexRgb(dark.board);
+const cream = hexRgb(CROSSWORD_CREAM);
+const sage = hexRgb(CROSSWORD_SAGE);
+const tint = mix(sage, board, 0.18);
+const quiet = hexRgb(dark.quiet);
+const active = hexRgb(dark.activeLang);
+const sageText = hexRgb(dark.sageText);
+assert(ratio(cream, board) >= 4.5, "cream letters clear 4.5 on the dark board");
+assert(ratio(cream, tint) >= 4.5, "cream letters clear 4.5 on the active-clue tint");
+assert(ratio(quiet, board) >= 4.5, "Reveal word and inactive language clear 4.5");
+assert(ratio(active, board) >= 4.5, "active language clears 4.5");
+assert(rel(active) > rel(quiet), "active language is brighter than the inactive one");
+assert(ratio(sageText, board) >= 4.5, "Across/Down and locked clues clear 4.5");
+assert(ratio(cream, sage) > 4, "cream on sage locked squares stays readable");
+
+const appSrc = readFileSync(new URL("./App.jsx", import.meta.url), "utf8");
+const gamesAt = appSrc.indexOf('screen === "games"');
+const games = appSrc.slice(gamesAt, appSrc.indexOf("MATCH PAIRS", gamesAt));
+for (const id of ["hangman-start", "jeopardy-start", "memory-start", "crossword-start"]) {
+  const at = games.indexOf(`data-testid="${id}"`);
+  const chunk = games.slice(at, at + 900);
+  assert(chunk.includes('theme === "dark" ? D.card : HUB_CREAM'), `${id} tile uses the dark card`);
+}
+assert(games.includes("<JeopardyMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} />"), "Jeopardy plate follows the tile");
+assert(games.includes("<MemoryMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} />"), "Memory plate follows the tile");
+assert(games.includes("<CrosswordMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} />"), "Crossword plate follows the tile");
+const practicaAt = appSrc.indexOf('startAhorcado("practica")');
+const practica = appSrc.slice(practicaAt, appSrc.indexOf('startCrossword("practica")', practicaAt));
+assert(!practica.includes('theme === "dark" ? D.card : HUB_CREAM'), "Práctica tiles stay on the light cream path");
 
 console.log("ok: crossword — 10-word grid, lock, reveal, sage");

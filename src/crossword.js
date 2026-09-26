@@ -15,6 +15,59 @@ export const CROSSWORD_INK = "#3C3C3C";
 export const CROSSWORD_CREAM = "#F6EFE4";
 export const CROSSWORD_LINE = "#D9CFC3";
 export const CROSSWORD_SQUARE = "#FFFFFF";
+/** Dark mode uses the app's page and card, not a cream island. */
+export const CROSSWORD_PAGE_DARK = "#15171C";
+export const CROSSWORD_BOARD_DARK = "#1E2128";
+/** App dark line. Soft gray, not the light warm-gray. */
+export const CROSSWORD_LINE_DARK = "#2A2E36";
+/** Quiet chrome on the dark board. App sub ink. Clears 4.5:1. */
+export const CROSSWORD_QUIET_DARK = "#A0A4AB";
+/** Active language on the dark board. App ink. Brighter than the quiet label. */
+export const CROSSWORD_INK_DARK = "#E8E8EA";
+/** Sage for dark-mode text (Across/Down, locked clues). The square fill stays CROSSWORD_SAGE. */
+export const CROSSWORD_SAGE_TEXT_DARK = "#878D70";
+/** Active-clue wash on the dark square. Same 18% sage, mixed into the board. */
+export const CROSSWORD_SAGE_TINT_DARK = `color-mix(in srgb, ${CROSSWORD_SAGE} 18%, ${CROSSWORD_BOARD_DARK})`;
+
+/** Light values are the original crossword. Dark values are the brand ruling. */
+export function crosswordColors(dark) {
+  if (!dark) {
+    return {
+      page: CROSSWORD_CREAM,
+      board: CROSSWORD_CREAM,
+      square: CROSSWORD_SQUARE,
+      line: CROSSWORD_LINE,
+      letter: CROSSWORD_INK,
+      lockedLetter: "#FFFFFF",
+      number: "#8A8175",
+      lockedNumber: CROSSWORD_CREAM,
+      quiet: "#8A8175",
+      clue: CROSSWORD_INK,
+      sageText: CROSSWORD_SAGE,
+      tint: CROSSWORD_SAGE_TINT,
+      locked: CROSSWORD_SAGE,
+      activeLang: CROSSWORD_INK,
+      inactiveLang: "#777777",
+    };
+  }
+  return {
+    page: CROSSWORD_PAGE_DARK,
+    board: CROSSWORD_BOARD_DARK,
+    square: CROSSWORD_BOARD_DARK,
+    line: CROSSWORD_LINE_DARK,
+    letter: CROSSWORD_CREAM,
+    lockedLetter: CROSSWORD_CREAM,
+    number: CROSSWORD_QUIET_DARK,
+    lockedNumber: CROSSWORD_CREAM,
+    quiet: CROSSWORD_QUIET_DARK,
+    clue: CROSSWORD_CREAM,
+    sageText: CROSSWORD_SAGE_TEXT_DARK,
+    tint: CROSSWORD_SAGE_TINT_DARK,
+    locked: CROSSWORD_SAGE,
+    activeLang: CROSSWORD_INK_DARK,
+    inactiveLang: CROSSWORD_QUIET_DARK,
+  };
+}
 
 export const CROSSWORD_TITLE = { es: "Crucigrama", en: "Crossword" };
 export const CROSSWORD_QUIET = { es: "Diez palabras cruzadas", en: "Ten words that cross" };

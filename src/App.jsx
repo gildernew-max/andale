@@ -2089,9 +2089,9 @@ const HangmanMark = ({ size = 44 }) => (
 );
 
 /** Flat geometric board — cream / terracotta / sage. No second mascot. */
-const JeopardyMark = ({ size = 44 }) => (
+const JeopardyMark = ({ size = 44, tile = "#F6EFE4" }) => (
   <svg data-testid="jeopardy-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="5" y="5" width="34" height="34" rx="6" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="2" />
+    <rect x="5" y="5" width="34" height="34" rx="6" fill={tile} stroke="#C46B3A" strokeWidth="2" />
     <rect x="10" y="10" width="7" height="7" rx="1" fill="#5C7356" />
     <rect x="19" y="10" width="7" height="7" rx="1" fill="#5C7356" />
     <rect x="28" y="10" width="7" height="7" rx="1" fill="#5C7356" />
@@ -2105,9 +2105,9 @@ const JeopardyMark = ({ size = 44 }) => (
 );
 
 /** Flat geometric two-tile / flip-card mark — cream / terracotta / sage. No second mascot. */
-const MemoryMark = ({ size = 44, labeled = false }) => (
+const MemoryMark = ({ size = 44, labeled = false, tile = "#F6EFE4" }) => (
   <svg data-testid={labeled ? "memory-mark" : undefined} width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="5" y="9" width="16" height="26" rx="4" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="2" />
+    <rect x="5" y="9" width="16" height="26" rx="4" fill={tile} stroke="#C46B3A" strokeWidth="2" />
     <rect x="23" y="9" width="16" height="26" rx="4" fill="#5C7356" />
   </svg>
 );
@@ -9710,7 +9710,7 @@ export default function App() {
           <button onClick={() => startAhorcado("games")} data-testid="hangman-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{hangmanTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{hangmanQuiet(uiLang)}</div>
@@ -9721,7 +9721,7 @@ export default function App() {
           <button onClick={() => startJeopardy("games")} data-testid="jeopardy-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{jeopardyTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{jeopardyQuiet(uiLang)}</div>
@@ -9732,7 +9732,7 @@ export default function App() {
           <button onClick={() => startMemory("games")} data-testid="memory-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{memoryTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{memoryQuiet(uiLang)}</div>
@@ -9743,7 +9743,7 @@ export default function App() {
           <button onClick={() => startCrossword("games")} data-testid="crossword-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>
@@ -10059,6 +10059,7 @@ export default function App() {
           onReveal={() => setCrosswordGame((cur) => revealCrosswordWord(CROSSWORD_GRID, cur))}
           onClose={closeGamesSurface}
           langControl={<LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />}
+          dark={theme === "dark"}
         />
       )}
 
