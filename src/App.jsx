@@ -9110,13 +9110,12 @@ export default function App() {
                   else if (showState && isSel && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
                   else if (isSel) { bg = "#DDF4FF"; bd = D.blue; col = D.blueDark; }
                   let badgeCol = bd === D.line ? D.sub : col;
-                  if (theme === "dark" && isHoyListenChoiceStep(session, q)) {
-                    const paint = hoyListenChoicePaint(hoyListenChoiceTone({ showState, isSel, isAns }), D, HUB_CREAM);
-                    bg = paint.fill; bd = paint.border; col = paint.text; badgeCol = paint.badge;
-                  }
+                  const hoyDark = theme === "dark" && isHoyListenChoiceStep(session, q);
+                  const paint = hoyDark ? hoyListenChoicePaint(hoyListenChoiceTone({ showState, isSel, isAns }), D, HUB_CREAM) : null;
+                  if (paint) { bg = paint.fill; bd = paint.border; col = paint.text; badgeCol = paint.badge; }
                   return (
                     <button key={idx} type="button" className="choice-card" data-testid="choice-card" data-selected={isSel ? "true" : undefined} aria-pressed={isSel} disabled={showState} onClick={() => setSelected(idx)}
-                      style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd, boxShadow: isSel && !showState ? `0 0 0 3px ${D.blue}` : undefined }}>
+                      style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd, borderWidth: paint?.edge, borderBottomWidth: paint?.edge, boxShadow: hoyDark ? "none" : (isSel && !showState ? `0 0 0 3px ${D.blue}` : undefined) }}>
                       <span style={{ fontSize: 12, fontWeight: 900, border: `2px solid ${bd}`, borderRadius: 8, padding: "1px 7px", color: badgeCol }}>{idx + 1}</span>
                       {c}
                     </button>

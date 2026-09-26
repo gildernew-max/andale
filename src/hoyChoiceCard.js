@@ -1,11 +1,5 @@
 /** Dark answer cards for the Hoy scene listening step (the register choices).
- *  Light mode never reads this. Sage #6F7757 is the existing map token;
- *  cream on that sage is under 4.5:1, so the fill steps to #677050. */
-
-import { MEXICO_MAP_COLORS } from "./recuerdos.js";
-
-export const HOY_LISTEN_SAGE = MEXICO_MAP_COLORS.sage;
-export const HOY_LISTEN_SAGE_FILL = "#677050";
+ *  Light mode never reads this. Brand hexes, dark only. */
 
 const norm = (hex) => String(hex || "").trim().toLowerCase();
 
@@ -47,16 +41,16 @@ export function hoyListenChoiceTone({ showState, isSel, isAns }) {
   return "default";
 }
 
-/** Dark paints. `D` is the live theme token object; `cream` is HUB_CREAM. */
-export function hoyListenChoicePaint(tone, D, cream) {
+/** Dark paints. `cream` is HUB_CREAM. `edge` is set only when brand overrides the existing width. */
+export function hoyListenChoicePaint(tone, _D, cream) {
   if (tone === "selected") {
-    return { fill: HOY_LISTEN_SAGE_FILL, border: HOY_LISTEN_SAGE, text: cream, badge: cream };
+    return { fill: "#2D3030", border: "#B8C0A0", edge: "2px", text: cream, badge: cream };
   }
   if (tone === "correct") {
-    return { fill: D.okBg, border: D.green, text: D.okText, badge: D.okText };
+    return { fill: "#677050", border: "#677050", text: cream, badge: cream };
   }
   if (tone === "wrong") {
-    return { fill: D.badBg, border: D.red, text: D.badText, badge: D.badText };
+    return { fill: "#2A2E36", border: "#2A2E36", text: "#A0A4AB", badge: "#A0A4AB" };
   }
-  return { fill: D.card, border: D.line, text: cream, badge: D.sub };
+  return { fill: "#1E2128", border: "#2A2E36", text: cream, badge: "#A0A4AB" };
 }
