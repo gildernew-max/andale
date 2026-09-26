@@ -116,10 +116,10 @@ describe("word-order tile layout", () => {
 
     const bank = screen.getByTestId("order-tile-bank");
     isFlow(getComputedStyle(bank));
-    expect(getComputedStyle(bank).justifyContent).toBe("center");
+    expect(getComputedStyle(bank).justifyContent).toBe("flex-start");
 
     const slots = [...bank.querySelectorAll("[data-tile-slot]")];
-    expect(slots.map((slot) => slot.textContent)).toEqual(AGRADEZCO_WORDS);
+    expect(slots.map((slot) => slot.textContent)).toEqual(["tu", "te", "agradezco", "su", "antemano", "de", "atención", "le"]);
     for (const slot of slots) {
       const css = getComputedStyle(slot);
       expect(css.position).not.toBe("absolute");
@@ -129,13 +129,21 @@ describe("word-order tile layout", () => {
     }
 
     const tiles = screen.getAllByTestId("bank-tile");
-    expect(tiles.map((el) => el.textContent)).toEqual(AGRADEZCO_WORDS);
+    expect(tiles.map((el) => el.textContent)).toEqual(["tu", "te", "agradezco", "su", "antemano", "de", "atención", "le"]);
+    expect(tiles.some((el) => el.textContent === "Le")).toBe(false);
     tiles.forEach(isIntrinsicTile);
+    tiles.forEach((tile) => {
+      const css = getComputedStyle(tile);
+      expect(css.paddingLeft).toBe(css.paddingRight);
+      expect(css.paddingLeft).toBe("14px");
+      expect(css.flexGrow).toBe("0");
+    });
 
     const row = screen.getByTestId("order-answer-row");
     isFlow(getComputedStyle(row));
+    expect(getComputedStyle(row).justifyContent).toBe("flex-start");
 
-    for (const word of ["Le", "agradezco", "de"]) {
+    for (const word of ["le", "agradezco", "de"]) {
       await user.click(screen.getByRole("button", { name: word }));
     }
 
@@ -149,7 +157,7 @@ describe("word-order tile layout", () => {
       "tu", "te", "su", "antemano", "atención",
     ]);
     const hidden = [...bank.querySelectorAll(".tile")].filter((el) => getComputedStyle(el).visibility === "hidden");
-    expect(hidden.map((el) => el.textContent)).toEqual(["agradezco", "de", "Le"]);
+    expect(hidden.map((el) => el.textContent)).toEqual(["agradezco", "de", "le"]);
 
     const cssText = [...document.querySelectorAll("style")].map((el) => el.textContent).join("\n");
     expect(cssText).not.toMatch(/repeat\(\s*auto-fill\s*,\s*minmax\(\s*4\.6rem/);
@@ -165,7 +173,8 @@ describe("word-order tile layout", () => {
       "Construye: “Therefore, we decided to cancel the contract.”",
     ));
     const tiles = screen.getAllByTestId("bank-tile");
-    expect(tiles.map((el) => el.textContent)).toEqual(LONGEST_WORDS);
+    expect(tiles.map((el) => el.textContent)).toEqual(["por", "lo", "tanto,", "decidimos", "cancelar", "el", "contrato", "embargo"]);
+    expect(getComputedStyle(screen.getByTestId("order-tile-bank")).justifyContent).toBe("flex-start");
     expect(tiles.map((el) => el.textContent).join(" ")).toContain("decidimos");
     expect(LONGEST_ORDER_SENTENCE.length).toBeGreaterThan("Le agradezco de antemano su atención".length);
     isFlow(getComputedStyle(screen.getByTestId("order-tile-bank")));

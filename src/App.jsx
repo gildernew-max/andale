@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
-import { gradeListedPhrase } from "./wordOrder.js";
+import { gradeListedPhrase, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
@@ -7099,7 +7099,7 @@ export default function App() {
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
         .tile-bank, .tile-row { display:flex; flex-wrap:wrap; align-content:flex-start; gap:8px; width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
-        .tile-bank { justify-content:center; align-items:flex-start; }
+        .tile-bank { justify-content:flex-start; align-items:flex-start; }
         .tile-row { justify-content:flex-start; align-items:center; }
         .tile-slot { display:flex; flex:0 0 auto; width:max-content; max-width:100%; min-width:min-content; min-height:2.55rem; }
         .tile-slot .tile, .tile-row > .tile { flex:0 0 auto; width:max-content; min-width:min-content; max-width:100%; white-space:nowrap; }
@@ -9222,15 +9222,16 @@ export default function App() {
               <div>
                 <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", marginBottom: 6 }}>
 	                  {placed.length === 0 && <span style={{ color: D.sub, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
-                  {placed.map((id) => {
+                  {placed.map((id, index) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
+                    const label = orderTileLabel(t.w, { answer: q.answer, placedIndex: index });
                     return (
                       <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" className="tile" disabled={status !== "idle"}
                         title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
-                        aria-label={`${t.w}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
+                        aria-label={`${label}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                         onClick={() => unplaceOrderTile(id)}
                         style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }}>
-                        {t.w}
+                        {label}
                         <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                       </button>
                     );
@@ -9249,6 +9250,7 @@ export default function App() {
                 <div className="tile-bank" data-testid="order-tile-bank">
                   {q.shuffledWords.map((t) => {
                     const used = placed.includes(t.id);
+                    const label = orderTileLabel(t.w, { answer: q.answer });
                     return (
                       <div key={t.id} className="tile-slot" data-tile-slot={t.id}
                         onClick={() => { if (used) unplaceOrderTile(t.id); }}>
@@ -9258,7 +9260,7 @@ export default function App() {
                           tabIndex={used ? -1 : 0}
                           onClick={(e) => { e.stopPropagation(); if (!used) placeOrderTile(t.id); }}
                           style={{ visibility: used ? "hidden" : "visible", pointerEvents: used ? "none" : "auto" }}>
-                          {t.w}
+                          {label}
                         </button>
                       </div>
                     );

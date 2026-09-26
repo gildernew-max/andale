@@ -2,8 +2,10 @@ import {
   WORD_ORDER_TIP_EN,
   WORD_ORDER_TIP_ES,
   gradeListedPhrase,
+  isIntrinsicOrderCapital,
   isWordOrderVariant,
   listedAnswers,
+  orderTileLabel,
   wordOrderTip,
 } from "./wordOrder.js";
 
@@ -82,4 +84,41 @@ assert(builtAlt.status === "equivalent" && builtAlt.tip === true, "order tiles a
 const loose = gradeListedPhrase("Aunque llueve, salímos", wordOrderItem);
 assert(loose.status === "correct" && loose.almost === true && loose.tip === false, "accent-only on primary is almost, not a fail");
 
-console.log("ok: word-order tip locked; listed equivalent accepts before hard fail");
+const agradezco = "Le agradezco de antemano su atención";
+assert(orderTileLabel("Le", { answer: agradezco }) === "le", "bank hides the sentence-opening capital");
+assert(orderTileLabel("agradezco", { answer: agradezco }) === "agradezco", "lowercase answer words stay lowercase in the bank");
+assert(orderTileLabel("te", { answer: agradezco }) === "te", "distractor te stays as authored");
+assert(orderTileLabel("tu", { answer: agradezco }) === "tu", "distractor tu stays as authored");
+assert(orderTileLabel("Le", { answer: agradezco, placedIndex: 0 }) === "Le", "the word in the first answer slot is capitalized");
+assert(orderTileLabel("le", { answer: agradezco, placedIndex: 0 }) === "Le", "a lowercase tile placed first still shows a capital");
+assert(orderTileLabel("agradezco", { answer: agradezco, placedIndex: 0 }) === "Agradezco", "whichever word is first in the row gets the capital");
+assert(orderTileLabel("Le", { answer: agradezco, placedIndex: 1 }) === "le", "the opening tile is lowercase once it is not first");
+assert(orderTileLabel("tu", { answer: agradezco, placedIndex: 1 }) === "tu", "a distractor placed later stays tu");
+assert(orderTileLabel("tu", { answer: agradezco, placedIndex: 0 }) === "Tu", "a distractor placed first is capitalized for display");
+
+const libro = "El libro cuyo autor murió el año pasado";
+assert(orderTileLabel("El", { answer: libro }) === "el", "sentence-initial El matches the later el in the bank");
+assert(orderTileLabel("el", { answer: libro }) === "el", "the mid-sentence el stays el");
+assert(!isIntrinsicOrderCapital("El", libro), "El is sentence case, not an always-capital form");
+assert(!isIntrinsicOrderCapital("Le", agradezco), "Le is sentence case");
+
+const mexico = "Fui a México ayer";
+assert(isIntrinsicOrderCapital("México", mexico), "a place capital off the first slot stays intrinsic");
+assert(orderTileLabel("México", { answer: mexico }) === "México", "México stays capitalized in the bank");
+assert(orderTileLabel("México", { answer: mexico, placedIndex: 0 }) === "México", "México stays capitalized when placed first");
+assert(orderTileLabel("México", { answer: mexico, placedIndex: 2 }) === "México", "México stays capitalized later in the row");
+assert(orderTileLabel("Fui", { answer: mexico }) === "fui", "the opening word still lowercases in the bank");
+assert(orderTileLabel("hoy", { answer: mexico }) === "hoy", "a lowercase distractor is unchanged");
+
+const usted = "Dijo Ud. que sí";
+assert(isIntrinsicOrderCapital("Ud.", usted), "Ud. is capitalized off the first slot");
+assert(orderTileLabel("Ud.", { answer: usted }) === "Ud.", "Ud. stays capitalized in the bank");
+assert(orderTileLabel("Ud.", { answer: usted, placedIndex: 2 }) === "Ud.", "Ud. stays capitalized in the row");
+assert(orderTileLabel("vengo,", { answer: "Ahorita vengo, voy por un café", placedIndex: 0 }) === "Vengo,", "punctuation stays on a capitalized first tile");
+
+const agradezcoQ = { type: "order", answer: agradezco };
+assert(gradeListedPhrase("le agradezco de antemano su atención", agradezcoQ).status === "correct", "first-word case does not fail a correct order");
+assert(gradeListedPhrase("Le agradezco de antemano su atención", agradezcoQ).status === "correct", "authored capital still passes");
+assert(gradeListedPhrase("te agradezco de antemano su atención", agradezcoQ).status === "wrong", "a different first word is still wrong");
+
+console.log("ok: word-order tip locked; listed equivalent accepts before hard fail; bank capital is display-only");
