@@ -1,8 +1,13 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
-/** Partner gloss is the hero face, at 70% size, in the muted secondary gray. */
+/** Gloss is 70% of this card's hero. A 26px hero keeps an 18.2px gloss. */
 export const MEMORY_CARD_GLOSS_SCALE = 0.7;
 export const MEMORY_CARD_GLOSS_COLOR = "#777777";
+
+/** Gloss size for a fitted hero. 26 → 18.2, 20 → 14. */
+export function memoryGlossPx(heroPx) {
+  return heroPx * MEMORY_CARD_GLOSS_SCALE;
+}
 
 /** Hero starts at the card type lock and steps down by 1px. Never below 18. */
 export const MEMORY_CARD_HERO_MAX = 26;
@@ -92,6 +97,7 @@ export function MemoryCardFace({ word, translation, color = MEMORY_CARD_GLOSS_CO
         maxWidth: "100%",
         textAlign: "center",
         gap: 1,
+        fontSize: `${heroPx}px`,
       }}
     >
       <span
@@ -123,7 +129,6 @@ export function MemoryCardFace({ word, translation, color = MEMORY_CARD_GLOSS_CO
           minWidth: 0,
           maxWidth: "100%",
           lineHeight: 1.1,
-          fontSize: heroPx < MEMORY_CARD_HERO_MAX ? `${heroPx}px` : undefined,
           ...MEMORY_FACE_WRAP,
         }}
       >{word}</span>

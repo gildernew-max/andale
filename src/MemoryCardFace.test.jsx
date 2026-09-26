@@ -8,6 +8,7 @@ import {
   MEMORY_CARD_HERO_MIN,
   MEMORY_FACE_WRAP,
   memoryFaceTokens,
+  memoryGlossPx,
   memoryHeroPx,
 } from "./MemoryCardFace.jsx";
 import {
@@ -49,7 +50,9 @@ describe("MemoryCardFace", () => {
     expect(gloss.style.fontWeight).toBe("inherit");
     expect(gloss.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
     expect(word.style.fontSize).toBe("");
+    expect(screen.getByTestId("memory-card-face").style.fontSize).toBe(`${MEMORY_CARD_HERO_MAX}px`);
     expect(word.getAttribute("data-hero-px")).toBe(String(MEMORY_CARD_HERO_MAX));
+    expect(memoryGlossPx(MEMORY_CARD_HERO_MAX)).toBeCloseTo(18.2);
     expect(word.style.fontFamily).toBe("");
     expect(word.style.color).toBe("");
     expect(word.style.overflowWrap).toBe("normal");
@@ -110,5 +113,43 @@ describe("MemoryCardFace", () => {
     expect(memoryHeroPx(() => 400, 40)).toBe(MEMORY_CARD_HERO_MIN);
     expect(MEMORY_CARD_HERO_MIN).toBe(18);
     expect(MEMORY_CARD_HERO_MAX).toBe(26);
+    expect(memoryGlossPx(26)).toBeCloseTo(18.2);
+    expect(memoryGlossPx(20)).toBeCloseTo(14);
+    expect(memoryGlossPx(21)).toBeCloseTo(14.7);
+    expect(memoryGlossPx(25)).toBeCloseTo(17.5);
+  });
+
+  it("steps the gloss to 70% of a hero that had to shrink", () => {
+    const widths = { 26: 200, 25: 180, 24: 150, 23: 120, 22: 100, 21: 90, 20: 80 };
+    const rect = HTMLElement.prototype.getBoundingClientRect;
+    const client = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+      configurable: true,
+      get() {
+        return this.getAttribute("data-testid") === "memory-card-face" ? 100 : 0;
+      },
+    });
+    HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRect() {
+      if (this.getAttribute("data-testid") !== "memory-card-probe") return rect.call(this);
+      const px = Number.parseFloat(this.style.fontSize) || 26;
+      const width = widths[px] ?? 70;
+      return { width, height: 0, top: 0, left: 0, right: width, bottom: 0, x: 0, y: 0, toJSON() { return {}; } };
+    };
+    try {
+      render(<FaceUpCard card={meaningCard} uiLang="es" />);
+      const word = screen.getByTestId("memory-card-word");
+      const gloss = screen.getByTestId("memory-card-gloss");
+      const face = screen.getByTestId("memory-card-face");
+      expect(word.getAttribute("data-hero-px")).toBe("22");
+      expect(face.style.fontSize).toBe("22px");
+      expect(word.style.fontSize).toBe("");
+      expect(gloss.style.fontSize).toBe("0.7em");
+      expect(memoryGlossPx(22)).toBeCloseTo(15.4);
+      expect(gloss.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
+    } finally {
+      HTMLElement.prototype.getBoundingClientRect = rect;
+      if (client) Object.defineProperty(HTMLElement.prototype, "clientWidth", client);
+      else delete HTMLElement.prototype.clientWidth;
+    }
   });
 });
