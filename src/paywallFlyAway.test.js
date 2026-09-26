@@ -3,22 +3,31 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import {
   FLY_AWAY_CLEAR_AT,
+  FLY_AWAY_CLEAR_VW,
   FLY_AWAY_EXIT_VW,
+  FLY_AWAY_RIGHT_AT,
   PAYWALL_FLY_EASE,
   PAYWALL_FLY_MS,
   PAYWALL_FLY_SIZE,
   PAYWALL_FLY_SRC,
   PAYWALL_REDUCE_FADE_MS,
   PAYWALL_WING_MS,
+  WIN_FLY_BEATS,
   WIN_FLY_SIZE,
+  WIN_HEADER_PX,
+  flyAwayBirdBox,
+  flyAwayClearsTopOrRight,
   flyAwayClearsViewport,
   flyAwayExitLeft,
   flyAwayExitTranslate,
+  flyAwayExitTranslateY,
   flyAwayFadesOnlyAfterExit,
   flyAwayHoldsOpaqueThroughExit,
+  flyAwayLeavesGradually,
   flyAwayMotionCss,
   flyAwayMotionFrames,
   flyAwaySurface,
+  winFlyStart,
 } from "./paywallFlyAway.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
@@ -55,7 +64,11 @@ assert(flySrc.includes("data-testid={ids.stageTestId}"), "stage is testable");
 assert(helperSrc.includes("soft-paywall-cenzontle"), "paywall bird test id stays on the helper");
 assert(helperSrc.includes("win-fly-away-bird"), "free win bird test id stays on the helper");
 assert(flySrc.includes("@keyframes paywallFlyAway"), "motion path is an authored fly-away");
-assert(flySrc.includes("flyAwayMotionCss(size)"), "keyframes come from the shared exit-after-clear helper");
+assert(flySrc.includes("flyAwayMotionCss(size, startTop)"), "keyframes come from the shared exit-after-clear helper");
+assert(flySrc.includes('addEventListener("animationend", onFlyEnd)'), "bird unmounts on animationend after the off-screen frame");
+assert(flySrc.includes('event.animationName !== "paywallFlyAway"'), "wing beat does not unmount the bird");
+assert(flySrc.includes("setTimeout(finish, PAYWALL_FLY_MS)"), "fallback unmount is the full duration, with the mounted bird");
+assert(!/setTimeout\(\(\) => finish\(true\), PAYWALL_FLY_MS\)/.test(flySrc), "the old pre-mount timer is gone");
 assert(flySrc.includes("paywall-fly-clip"), "flight sits in a viewport clip so 100vw cannot open page scroll");
 assert(flySrc.includes("position: fixed"), "clip is viewport-sized");
 assert(flySrc.includes("overflow: hidden"), "clip hides the transformed box past the edge");
@@ -83,7 +96,7 @@ for (const box of viewports) {
   assert(flyAwayClearsViewport(box), `exit left ${flyAwayExitLeft(box)} must clear ${box.viewportWidth} (size ${box.size})`);
 }
 
-const winFrames = flyAwayMotionFrames(WIN_FLY_SIZE);
+const winFrames = flyAwayMotionFrames(WIN_FLY_SIZE, winFlyStart({ viewportWidth: 1280, viewportHeight: 800, beat: "firstDoctora" }).y);
 const payFrames = flyAwayMotionFrames(PAYWALL_FLY_SIZE);
 assert(flyAwayHoldsOpaqueThroughExit(winFrames, WIN_FLY_SIZE), "win path stays opaque through the off-screen frame");
 assert(flyAwayFadesOnlyAfterExit(winFrames, WIN_FLY_SIZE), "win path does not fade while on-screen");
@@ -92,6 +105,54 @@ assert(flyAwayFadesOnlyAfterExit(payFrames, PAYWALL_FLY_SIZE), "paywall path doe
 assert(winFrames.some((f) => f.at === FLY_AWAY_CLEAR_AT && f.opacity === 1), "clear keyframe is still opaque");
 assert(winFrames.find((f) => f.at === 100).opacity === 0, "100% may fade only after the bird is already off");
 assert(winFrames.find((f) => f.at === 100).transform.includes(flyAwayExitTranslate(WIN_FLY_SIZE)), "100% transform is already the exit");
+assert(winFrames.find((f) => f.at === FLY_AWAY_RIGHT_AT).opacity === 1, "right-edge pose stays opaque and off-screen");
+assert(FLY_AWAY_RIGHT_AT > FLY_AWAY_CLEAR_AT && FLY_AWAY_RIGHT_AT < 100, "right-edge pose sits between the clear frame and the fade");
+
+// PR 165 cleared the right edge, then the arc exited the top: fixed -40px
+// left a 168px bird whose head was clipped and whose body was still on screen.
+const doctoraAt1280 = winFlyStart({ viewportWidth: 1280, viewportHeight: 800, beat: "firstDoctora" });
+const stuckY = -40;
+assert(doctoraAt1280.y + stuckY > 0, "the old -40px clear frame left the win bird below the top edge");
+assert(doctoraAt1280.y === WIN_HEADER_PX + 60 + (200 - WIN_FLY_SIZE) / 2, "win bird top is header + pad + slot centering");
+assert(flyAwayExitTranslateY(doctoraAt1280.y, WIN_FLY_SIZE) <= -(doctoraAt1280.y + WIN_FLY_SIZE), "exit Y is at least -(bird top + bird height)");
+
+const widths = [390, 768, 1280, 1920];
+const heights = [640, 720, 800, 900, 1080];
+for (const beat of WIN_FLY_BEATS) {
+  for (const viewportWidth of widths) {
+    for (const viewportHeight of heights) {
+      const start = winFlyStart({ viewportWidth, viewportHeight, beat });
+      const frames = flyAwayMotionFrames(start.size, start.y);
+      const clear = frames.find((frame) => frame.at === FLY_AWAY_CLEAR_AT);
+      const box = flyAwayBirdBox({
+        centerX: start.x,
+        startTop: start.y,
+        size: start.size,
+        frame: clear,
+        viewportWidth,
+      });
+      assert(clear.opacity === 1, `${beat} clear frame stays opaque`);
+      assert(clear.y <= -(start.y + start.size), `${beat} ${viewportWidth}x${viewportHeight} translateY clears top`);
+      assert(
+        flyAwayClearsTopOrRight(box, viewportWidth),
+        `${beat} ${viewportWidth}x${viewportHeight} last opaque box must clear top or right (bottom ${box.bottom}, left ${box.left})`,
+      );
+      assert(
+        flyAwayLeavesGradually({
+          centerX: start.x,
+          startTop: start.y,
+          size: start.size,
+          viewportWidth,
+          viewportHeight,
+        }),
+        `${beat} ${viewportWidth}x${viewportHeight} must leave through the edge, not pop while mostly visible`,
+      );
+    }
+  }
+}
+assert(FLY_AWAY_CLEAR_VW === 40, "clear frame keeps one soft step past the 32vw arc");
+const sameOrigin = WIN_FLY_BEATS.map((beat) => winFlyStart({ viewportWidth: 1280, viewportHeight: 800, beat }));
+assert(sameOrigin.every((start) => start.x === sameOrigin[0].x && start.y === sameOrigin[0].y), "firstDoctora, firstHoy, and story-0 share the perch");
 assert(!flyAwayMotionCss(WIN_FLY_SIZE).includes("260px"), "shared motion dropped the 260px on-screen die");
 assert(!flySrc.includes("260px"), "overlay dropped the 260px on-screen die");
 assert(flySrc.includes("paywallWingBeat ${PAYWALL_WING_MS}ms ${PAYWALL_FLY_EASE} infinite"), "wing beat loops while in flight");
