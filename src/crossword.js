@@ -17,7 +17,7 @@ export const CROSSWORD_LINE = "#D9CFC3";
 export const CROSSWORD_SQUARE = "#FFFFFF";
 
 export const CROSSWORD_TITLE = { es: "Crucigrama", en: "Crossword" };
-export const CROSSWORD_QUIET = { es: "Diez palabras cruzadas", en: "Ten crossing words" };
+export const CROSSWORD_QUIET = { es: "Diez palabras cruzadas", en: "Ten words that cross" };
 export const CROSSWORD_REVEAL = { es: "Revelar palabra", en: "Reveal word" };
 export const CROSSWORD_ACROSS = { es: "Horizontales", en: "Across" };
 export const CROSSWORD_DOWN = { es: "Verticales", en: "Down" };
