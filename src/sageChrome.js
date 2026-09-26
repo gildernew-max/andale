@@ -143,9 +143,14 @@ export function hangmanLightEndChrome() {
   };
 }
 
-/** Letter-slot underline. Active light slot is sage. Empty light slots are #828A69. Thickness stays with the caller. */
+/** Letter-slot underline. Light active slot is the gallows terracotta. Empty light slots are #828A69. */
 export function letterSlotUnderline(theme = "light", focused = false, ink = "#3C3C3C", empty = false) {
-  if (focused) return theme === "dark" ? SAGE.slotDark : SAGE.sage;
+  if (focused) return theme === "dark" ? SAGE.slotDark : SAGE.terracotta;
   if (empty && theme !== "dark") return SAGE.slotEmpty;
   return ink;
+}
+
+/** Light active slot is 4px. Every other slot underline stays 3px. */
+export function letterSlotUnderlineWidth(theme = "light", focused = false) {
+  return focused && theme !== "dark" ? 4 : 3;
 }

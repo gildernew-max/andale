@@ -22,7 +22,7 @@ import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.j
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
 import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle, spanishKeyboardKeyStyle } from "./spanishKeyboard.js";
-import { bucketBodyColor, bucketTileStyle, gamesHubCardChrome, gamesHubFocusColor, hangmanLightEndChrome, letterSlotUnderline, memoryCardPaint, wordleActionKeyChrome } from "./sageChrome.js";
+import { bucketBodyColor, bucketTileStyle, gamesHubCardChrome, gamesHubFocusColor, hangmanLightEndChrome, letterSlotUnderline, letterSlotUnderlineWidth, memoryCardPaint, wordleActionKeyChrome } from "./sageChrome.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { subjFiveLines } from "./subjFive.js";
@@ -10282,7 +10282,7 @@ export default function App() {
                           height: "auto",
                           padding: "4px 8px 2px",
                           border: "none",
-                          borderBottom: `3px solid ${letterSlotUnderline(theme, focused, D.ink, !filled)}`,
+                          borderBottom: `${letterSlotUnderlineWidth(theme, focused)}px solid ${letterSlotUnderline(theme, focused, D.ink, !filled)}`,
                           borderRadius: 0,
                           background: "transparent",
                           color: D.ink,

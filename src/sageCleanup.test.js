@@ -10,6 +10,7 @@ import {
   gamesHubFocusColor,
   hangmanLightEndChrome,
   letterSlotUnderline,
+  letterSlotUnderlineWidth,
   memoryCardPaint,
   wordleActionKeyChrome,
 } from "./sageChrome.js";
@@ -104,7 +105,12 @@ assert(contrastRatio(end.title, end.background) >= 4.5, "end heading under 4.5")
 assert(contrastRatio(end.quiet, end.background) >= 4.5, "end smaller lines under 4.5");
 assertNoLime(end, "hangman end");
 
-assert(letterSlotUnderline("light", true, "#3C3C3C", true) === "#6F7757", "light active slot underline is sage");
+const activeSlot = letterSlotUnderline("light", true, "#3C3C3C", true);
+assert(activeSlot === SAGE.terracotta && activeSlot === "#C46B3A", "light active slot underline is terracotta");
+assert(letterSlotUnderlineWidth("light", true) === 4, "light active slot underline is 4px");
+assert(letterSlotUnderlineWidth("light", false) === 3, "empty slot underline stays 3px");
+assert(letterSlotUnderlineWidth("dark", true) === 3, "dark active slot underline stays 3px");
+assert(contrastRatio(activeSlot, "#F6EFE4") >= 3, "active slot underline is at least 3:1 on the cream page");
 const emptySlot = letterSlotUnderline("light", false, "#3C3C3C", true);
 assert(emptySlot === "#828A69", "empty light slots are #828A69");
 assert(contrastRatio(emptySlot, "#F6EFE4") >= 3, "empty slot underline is at least 3:1 on the cream page");

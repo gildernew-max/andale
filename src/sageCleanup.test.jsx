@@ -298,13 +298,15 @@ describe("sage cleanup", () => {
     const empties = slots.filter((el) => el.getAttribute("data-focus") === "off" && !el.querySelector("[data-testid='hangman-slot-letter']").textContent);
     const filled = slots.find((el) => el.querySelector("[data-testid='hangman-slot-letter']").textContent);
     expect(empties.length).toBeGreaterThanOrEqual(4);
-    expect(focused.style.borderBottomWidth).toBe("3px");
-    expect(cssHex(focused.style.borderBottomColor)).toBe("#6f7757");
+    expect(focused.style.borderBottomWidth).toBe("4px");
+    expect(cssHex(focused.style.borderBottomColor)).toBe("#c46b3a");
+    expect(contrastRatio("#C46B3A", "#F6EFE4")).toBeGreaterThanOrEqual(3);
     empties.forEach((el) => {
       expect(el.style.borderBottomWidth).toBe("3px");
       expect(cssHex(el.style.borderBottomColor)).toBe("#828a69");
     });
     expect(contrastRatio("#828A69", "#F6EFE4")).toBeGreaterThanOrEqual(3);
+    expect(filled.style.borderBottomWidth).toBe("3px");
     expect(cssHex(filled.style.borderBottomColor)).toBe("#3c3c3c");
 
     cleanup();
