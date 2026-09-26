@@ -29,8 +29,8 @@ describe("MemoryCardFace", () => {
   it("shows the Spanish lemma with the English partner in parentheses", () => {
     render(<FaceUpCard card={wordCard} uiLang="en" />);
     expect(screen.getByTestId("memory-card-word").textContent).toBe("chamba");
-    expect(screen.getByTestId("memory-card-gloss").textContent).toBe("(a job / work)");
-    expect(screen.getByTestId("memory-card").getAttribute("aria-label")).toBe("chamba (a job / work)");
+    expect(screen.getByTestId("memory-card-gloss").textContent).toBe("(job, work)");
+    expect(screen.getByTestId("memory-card").getAttribute("aria-label")).toBe("chamba (job, work)");
     const gloss = screen.getByTestId("memory-card-gloss");
     const word = screen.getByTestId("memory-card-word");
     expect(MEMORY_CARD_GLOSS_COLOR).toBe("#777777");
@@ -46,23 +46,23 @@ describe("MemoryCardFace", () => {
 
   it("shows the English meaning with the Spanish lemma in parentheses", () => {
     render(<FaceUpCard card={meaningCard} uiLang="en" />);
-    expect(screen.getByTestId("memory-card-word").textContent).toBe("a job / work");
+    expect(screen.getByTestId("memory-card-word").textContent).toBe("job, work");
     expect(screen.getByTestId("memory-card-gloss").textContent).toBe("(chamba)");
     expect(screen.getByTestId("memory-card-gloss").style.fontSize).toBe("0.7em");
     expect(screen.getByTestId("memory-card-gloss").style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
-    expect(screen.getByTestId("memory-card").getAttribute("aria-label")).toBe("a job / work (chamba)");
+    expect(screen.getByTestId("memory-card").getAttribute("aria-label")).toBe("job, work (chamba)");
   });
 
   it("follows uiLang for the meaning side in both directions", () => {
     const { unmount } = render(<FaceUpCard card={wordCard} uiLang="es" />);
     expect(screen.getByTestId("memory-card-word").textContent).toBe("chamba");
-    expect(screen.getByTestId("memory-card-gloss").textContent).toBe("(trabajo / chamba)");
-    expect(screen.getByRole("button", { name: "chamba (trabajo / chamba)" })).toBeTruthy();
+    expect(screen.getByTestId("memory-card-gloss").textContent).toBe("(trabajo)");
+    expect(screen.getByRole("button", { name: "chamba (trabajo)" })).toBeTruthy();
     unmount();
 
     render(<FaceUpCard card={meaningCard} uiLang="es" />);
-    expect(screen.getByTestId("memory-card-word").textContent).toBe("trabajo / chamba");
+    expect(screen.getByTestId("memory-card-word").textContent).toBe("trabajo");
     expect(screen.getByTestId("memory-card-gloss").textContent).toBe("(chamba)");
-    expect(screen.getByRole("button", { name: "trabajo / chamba (chamba)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "trabajo (chamba)" })).toBeTruthy();
   });
 });

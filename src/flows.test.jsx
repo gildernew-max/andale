@@ -2454,12 +2454,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const byId = (id) => cards.find((el) => el.getAttribute("data-card") === id);
     expect(byId("apapacho-word").getAttribute("data-face")).toBe("up");
     assertMemoryBoardCard(byId("apapacho-word"), "apapacho");
-    expect(byId("apapacho-word").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(warm hug / comfort)");
-    assertMemoryBoardCard(byId("apapacho-meaning"), "warm hug / comfort");
+    expect(byId("apapacho-word").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(warm hug)");
+    assertMemoryBoardCard(byId("apapacho-meaning"), "warm hug");
     expect(byId("apapacho-meaning").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(apapacho)");
     assertMemoryBoardCard(byId("tianguis-word"), "tianguis");
-    expect(byId("tianguis-word").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(open-air market)");
-    assertMemoryBoardCard(byId("morra-meaning"), "young woman (casual)");
+    expect(byId("tianguis-word").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(street market)");
+    assertMemoryBoardCard(byId("morra-meaning"), "girl, young woman");
     expect(byId("morra-meaning").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(morra)");
     expect(byId("tianguis-meaning").getAttribute("data-face")).toBe("down");
     expect(byId("tianguis-meaning").querySelector("[data-testid='memory-card-gloss']")).toBeNull();
