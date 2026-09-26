@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import { MEXICO_MAP_COLORS } from "./recuerdos.js";
 import { WORDLE_ANSWERS } from "./wordle-answers.js";
 import { WORDLE_FIVE } from "./wordle-words.js";
 import {
@@ -23,6 +22,8 @@ import {
   WORDLE_PRESENT,
   wordleChars,
   wordleChrome,
+  WORDLE_DARK,
+  WORDLE_LIGHT,
   wordleCommit,
   wordleDayKey,
   wordleGuessSet,
@@ -110,16 +111,17 @@ assert(WORDLE_ANSWERS[36].word === "LIMON" && WORDLE_ANSWERS[36].display === "li
 assert(WORDLE_ANSWERS[44].word === "ESTES" && WORDLE_ANSWERS[44].display === "estés", "estés keeps its display accent");
 assert(!isWordleGuess("qqqqq"), "a gap is not filled by unioning the answer in");
 
-assert(WORDLE_CORRECT === MEXICO_MAP_COLORS.sage && WORDLE_CORRECT === "#6f7757", "correct tile is the crossword lock sage");
-const lightChrome = wordleChrome(false);
-assert(lightChrome.board === "#F6EFE4" && lightChrome.page === "#F6EFE4", "light board stays cream");
-assert(lightChrome.square === "#FFFFFF" && lightChrome.letter === "#3C3C3C", "light squares stay white with ink letters");
-assert(lightChrome.line === "#D9CFC3" && lightChrome.quiet === "#8A8175", "light lines and quiet chrome match the crossword");
-assert(lightChrome.gloss === "#777777", "light gloss stays the memory gray");
-const darkChrome = wordleChrome(true);
-assert(darkChrome.page === "#15171C" && darkChrome.board === "#1E2128" && darkChrome.square === "#1E2128", "dark page and squares are the crossword tokens");
-assert(darkChrome.line === "#2A2E36" && darkChrome.letter === "#F6EFE4" && darkChrome.clue === "#F6EFE4", "dark letters are cream on the crossword board");
-assert(darkChrome.quiet === "#A0A4AB" && darkChrome.gloss === "#A0A4AB", "dark quiet chrome is the crossword quiet ink");
+const markInk = readFileSync(new URL("./App.jsx", import.meta.url), "utf8").match(/const MARK_INK = "([^"]+)"/);
+assert(markInk && WORDLE_CORRECT === markInk[1] && WORDLE_CORRECT === "#5C7356", "light correct reuses MARK_INK");
+assert(wordleChrome(false) === WORDLE_LIGHT, "light chrome is the brief palette");
+assert(WORDLE_LIGHT.board === "#F6EFE4" && WORDLE_LIGHT.page === "#F6EFE4", "light board stays cream");
+assert(WORDLE_LIGHT.square === "#FFFFFF" && WORDLE_LIGHT.letter === "#3C3C3C", "light squares stay white with ink letters");
+assert(WORDLE_LIGHT.line === "#C9BBA8", "light empty tiles use a thin warm-gray border");
+assert(WORDLE_LIGHT.gloss === "#777777", "light gloss stays the memory gray");
+assert(wordleChrome(true) === WORDLE_DARK, "dark chrome is one isolated object");
+assert(WORDLE_DARK.page === "#15171C" && WORDLE_DARK.board === "#15171C", "dark page follows the app background");
+assert(WORDLE_DARK.square === "#1E2128" && WORDLE_DARK.line === "#2A2E36", "dark tiles follow the app card and line");
+assert(WORDLE_DARK.letter === "#E8E8EA" && WORDLE_DARK.board !== "#F6EFE4" && WORDLE_DARK.letter !== "#F6EFE4", "dark mode does not force cream");
 
 const channel = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const rel = (hex) => {
@@ -136,6 +138,9 @@ for (const [name, bg] of [["correct", WORDLE_CORRECT], ["present", WORDLE_PRESEN
   assert(ratio("#FFFFFF", bg) >= 4.5, `${name} white letters clear 4.5:1`);
 }
 assert(rel(WORDLE_PRESENT) > rel(WORDLE_CORRECT), "ochre stays lighter than the sage");
+for (const name of ["correct", "present", "absent"]) {
+  assert(ratio(WORDLE_DARK.tileInk, WORDLE_DARK[name]) >= 4.5, `provisional dark ${name} still clears 4.5:1`);
+}
 
 const late = new Date(2026, 8, 26, 23, 59, 30);
 const early = new Date(2026, 8, 27, 0, 0, 1);

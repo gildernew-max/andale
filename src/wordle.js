@@ -6,7 +6,6 @@
  *  Answers are not added to that set. A missing answer fails the test.
  */
 
-import { MEXICO_MAP_COLORS } from "./recuerdos.js";
 import { WORDLE_ANSWERS } from "./wordle-answers.js";
 import { WORDLE_FIVE } from "./wordle-words.js";
 
@@ -24,40 +23,48 @@ export const WORDLE_INVALID = { es: "No está en la lista", en: "Not in the word
 export const WORDLE_ENTER = { es: "Enviar", en: "Enter" };
 export const WORDLE_DELETE = { es: "Borrar", en: "Delete" };
 
-/** Same sage that locks Crucigrama squares (MEXICO_MAP_COLORS.sage). */
-export const WORDLE_CORRECT = MEXICO_MAP_COLORS.sage;
+/** Light correct tile. Same sage as MARK_INK in App.jsx. */
+export const WORDLE_CORRECT = "#5C7356";
 /** Muted mustard. White letters clear 4.5:1 and it stays lighter than the sage. */
 export const WORDLE_PRESENT = "#96702F";
 /** Warm mid-gray. White letters clear 4.5:1. */
 export const WORDLE_ABSENT = "#7E756E";
 
+/** Light surfaces from the Wordle brief. Cream page, white empty tiles, warm-gray border. */
+export const WORDLE_LIGHT = {
+  page: "#F6EFE4",
+  board: "#F6EFE4",
+  square: "#FFFFFF",
+  line: "#C9BBA8",
+  letter: "#3C3C3C",
+  quiet: "#6F6560",
+  clue: "#3C3C3C",
+  gloss: "#777777",
+};
+
 /**
- * Surfaces match crosswordColors() on cursor/crucigrama-crossword-d09b.
- * Dark mode is the app page, card, line, and cream letters. No second dark palette.
+ * Dark mode only. Brand has not decided whether games leave cream.
+ * Surfaces follow the app dark theme (page #15171C, cards #1E2128). No cream.
+ * Tile fills are provisional: they reuse the light tiles so the board stays
+ * readable. Change this object when Brand decides. Nothing else needs to move.
  */
+export const WORDLE_DARK = {
+  page: "#15171C",
+  board: "#15171C",
+  square: "#1E2128",
+  line: "#2A2E36",
+  letter: "#E8E8EA",
+  quiet: "#A0A4AB",
+  clue: "#E8E8EA",
+  gloss: "#A0A4AB",
+  correct: WORDLE_CORRECT,
+  present: WORDLE_PRESENT,
+  absent: WORDLE_ABSENT,
+  tileInk: "#FFFFFF",
+};
+
 export function wordleChrome(dark) {
-  if (!dark) {
-    return {
-      page: "#F6EFE4",
-      board: "#F6EFE4",
-      square: "#FFFFFF",
-      line: "#D9CFC3",
-      letter: "#3C3C3C",
-      quiet: "#8A8175",
-      clue: "#3C3C3C",
-      gloss: "#777777",
-    };
-  }
-  return {
-    page: "#15171C",
-    board: "#1E2128",
-    square: "#1E2128",
-    line: "#2A2E36",
-    letter: "#F6EFE4",
-    quiet: "#A0A4AB",
-    clue: "#F6EFE4",
-    gloss: "#A0A4AB",
-  };
+  return dark ? WORDLE_DARK : WORDLE_LIGHT;
 }
 
 const ACCENT = {

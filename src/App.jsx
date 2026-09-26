@@ -4356,6 +4356,14 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
         "--wordle-quiet": chrome.quiet,
         "--wordle-clue": chrome.clue,
         "--wordle-gloss": chrome.gloss,
+        ...(dark ? {
+          "--wordle-correct": chrome.correct,
+          "--wordle-present": chrome.present,
+          "--wordle-absent": chrome.absent,
+          "--wordle-correct-ink": chrome.tileInk,
+          "--wordle-present-ink": chrome.tileInk,
+          "--wordle-absent-ink": chrome.tileInk,
+        } : {}),
         background: chrome.board,
         color: chrome.letter,
       }}
@@ -7227,7 +7235,7 @@ export default function App() {
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 900; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-900.woff2') format('woff2'); }
         html, body, #root { margin: 0; padding: 0; width: 100%; max-width: 100%; }
         :root {
-          /* Correct is the sage that locks Crucigrama squares. Present and absent keep white letters in both modes. */
+          /* Light tiles only. Dark fills come from WORDLE_DARK on the board. */
           --wordle-correct: ${WORDLE_CORRECT};
           --wordle-correct-ink: #fff;
           --wordle-present: ${WORDLE_PRESENT};
