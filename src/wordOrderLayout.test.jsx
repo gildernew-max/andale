@@ -193,13 +193,11 @@ describe("word-order tile layout", () => {
     tiles.forEach(isIntrinsicTile);
   });
 
-  it("keeps the app dark theme in dark mode", async () => {
+  it("uses the app dark page and card with cream text", async () => {
     const page = /#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i;
     const card = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
-    const ink = /#E8E8EA|rgb\(\s*232,\s*232,\s*234\s*\)/i;
-    const line = /#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\)/i;
-    const placedBg = /#0F2A3A|rgb\(\s*15,\s*42,\s*58\s*\)/i;
-    const placedInk = /#1899D6|rgb\(\s*24,\s*153,\s*214\s*\)/i;
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const line = /#E5E5E5|rgb\(\s*229,\s*229,\s*229\s*\)/i;
     const user = userEvent.setup();
     await openOrder(orderQuestion(
       AGRADEZCO_WORDS,
@@ -208,24 +206,30 @@ describe("word-order tile layout", () => {
     ), { theme: "dark" });
 
     expect(screen.queryByTestId("order-cream-page")).toBeNull();
+    const darkPage = screen.getByTestId("order-dark-page");
+    expect(darkPage.style.background).toMatch(page);
+    expect(darkPage.style.color).toMatch(cream);
     expect(screen.getByTestId("app-shell").style.background).toMatch(page);
-    expect(screen.getByTestId("order-prompt").style.background).toMatch(card);
-    expect(screen.getByTestId("order-prompt").style.color).toMatch(ink);
-    expect(screen.getByTestId("order-prompt").style.borderTopColor).toMatch(line);
-    expect(screen.getByTestId("order-answer-row").style.background).toBe("");
+    const prompt = screen.getByTestId("order-prompt");
+    expect(prompt.style.background).toMatch(card);
+    expect(prompt.style.color).toMatch(cream);
+    expect(prompt.style.borderTopColor).toMatch(line);
+    const row = screen.getByTestId("order-answer-row");
+    expect(row.style.background).toMatch(card);
+    expect(row.style.borderTopColor).toMatch(line);
 
     const bank = screen.getAllByTestId("bank-tile");
     bank.forEach((tile) => {
-      expect(tile.style.background).toBe("");
-      expect(getComputedStyle(tile).backgroundColor).toMatch(card);
-      expect(getComputedStyle(tile).color).toMatch(ink);
-      expect(getComputedStyle(tile).borderTopColor).toMatch(line);
+      expect(tile.style.background).toMatch(card);
+      expect(tile.style.color).toMatch(cream);
+      expect(tile.style.borderTopColor).toMatch(line);
     });
 
     await user.click(screen.getByRole("button", { name: "le" }));
     const placed = screen.getByTestId("placed-tile");
-    expect(placed.style.background).toMatch(placedBg);
-    expect(placed.style.color).toMatch(placedInk);
+    expect(placed.style.background).toMatch(card);
+    expect(placed.style.color).toMatch(cream);
+    expect(placed.style.borderTopColor).toMatch(line);
     expect(document.body.style.background).toMatch(page);
   });
 });
