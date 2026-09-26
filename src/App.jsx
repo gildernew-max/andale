@@ -113,7 +113,11 @@ import {
 import {
   loadWordleRun,
   saveWordleRun,
+  WORDLE_ABSENT,
+  WORDLE_CORRECT,
+  WORDLE_PRESENT,
   wordleBackspace,
+  wordleChrome,
   wordleCommit,
   wordleDayKey,
   wordleEnterLabel,
@@ -2110,13 +2114,13 @@ const JeopardyMark = ({ size = 44 }) => (
 );
 
 /** Flat five-tile mark — cream / terracotta / sage. No second mascot. */
-const WordleMark = ({ size = 44 }) => (
+const WordleMark = ({ size = 44, tile = "#F6EFE4" }) => (
   <svg data-testid="wordle-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="3" y="16" width="6.4" height="6.4" rx="1.2" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="1.4" />
+    <rect x="3" y="16" width="6.4" height="6.4" rx="1.2" fill={tile} stroke="#C46B3A" strokeWidth="1.4" />
     <rect x="11.2" y="16" width="6.4" height="6.4" rx="1.2" fill="#5C7356" />
     <rect x="19.4" y="16" width="6.4" height="6.4" rx="1.2" fill="#C46B3A" />
     <rect x="27.6" y="16" width="6.4" height="6.4" rx="1.2" fill="#5C7356" />
-    <rect x="35.2" y="16" width="6.4" height="6.4" rx="1.2" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="1.4" />
+    <rect x="35.2" y="16" width="6.4" height="6.4" rx="1.2" fill={tile} stroke="#C46B3A" strokeWidth="1.4" />
   </svg>
 );
 
@@ -4332,21 +4336,38 @@ const LangToggle = ({ uiLang, D, onPick, style }) => (
   </div>
 );
 
-const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, onType, onBackspace, onCommit, onLayoutChange, onClose, onLang }) => {
+const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onType, onBackspace, onCommit, onLayoutChange, onClose, onLang }) => {
   const rows = wordleRows(run);
   const keyMarks = wordleKeyState(run.guesses, run.answer);
   const over = run.status !== "play";
-  const Dboard = D_LIGHT;
+  const chrome = wordleChrome(!!dark);
   return (
-    <div data-testid="wordle-board" data-status={run.status} data-day={run.day} className="wordle-screen">
+    <div
+      data-testid="wordle-board"
+      data-status={run.status}
+      data-day={run.day}
+      data-theme={dark ? "dark" : "light"}
+      className="wordle-screen"
+      style={{
+        "--wordle-square": chrome.square,
+        "--wordle-letter": chrome.letter,
+        "--wordle-line": chrome.line,
+        "--wordle-board": chrome.board,
+        "--wordle-quiet": chrome.quiet,
+        "--wordle-clue": chrome.clue,
+        "--wordle-gloss": chrome.gloss,
+        background: chrome.board,
+        color: chrome.letter,
+      }}
+    >
       <div className="wordle-head">
-        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: "#6F6560", padding: "8px 10px", margin: "-8px -10px", minWidth: 44, minHeight: 44 }}>✕</button>
-        <WordleMark size={28} />
+        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: chrome.quiet, padding: "8px 10px", margin: "-8px -10px", minWidth: 44, minHeight: 44 }}>✕</button>
+        <WordleMark size={28} tile={chrome.square} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div data-testid="wordle-title" style={{ fontWeight: 800, fontSize: 15, color: "#6F6560" }}>{wordleTitle(uiLang)}</div>
-          <div data-testid="wordle-howto" style={{ fontSize: 12, fontWeight: 700, color: "#6F6560" }}>{wordleHowTo(uiLang)}</div>
+          <div data-testid="wordle-title" style={{ fontWeight: 800, fontSize: 15, color: chrome.quiet }}>{wordleTitle(uiLang)}</div>
+          <div data-testid="wordle-howto" style={{ fontSize: 12, fontWeight: 700, color: chrome.quiet }}>{wordleHowTo(uiLang)}</div>
         </div>
-        <LangToggle uiLang={uiLang} D={Dboard} onPick={onLang} />
+        <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
       </div>
       <div className="wordle-board-slot">
         <div className="wordle-grid" data-testid="wordle-grid">
@@ -4368,11 +4389,11 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, onType, onBa
                     className={flipping ? "wordle-tile wordle-flip" : "wordle-tile"}
                     style={{
                       "--flip-i": ci,
-                      "--tile-bg": mark ? `var(--wordle-${mark})` : "#fff",
-                      "--tile-ink": mark ? `var(--wordle-${mark}-ink)` : "#3C3C3C",
-                      background: mark ? `var(--wordle-${mark})` : "#fff",
-                      color: mark ? `var(--wordle-${mark}-ink)` : "#3C3C3C",
-                      borderColor: mark ? "transparent" : "#C9BBA8",
+                      "--tile-bg": mark ? `var(--wordle-${mark})` : chrome.square,
+                      "--tile-ink": mark ? `var(--wordle-${mark}-ink)` : chrome.letter,
+                      background: mark ? `var(--wordle-${mark})` : chrome.square,
+                      color: mark ? `var(--wordle-${mark}-ink)` : chrome.letter,
+                      borderColor: mark ? "transparent" : chrome.line,
                     }}
                   >{letter}</div>
                 );
@@ -4390,7 +4411,8 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, onType, onBa
       )}
       <div className="wordle-keys">
         <LetterBoard
-          D={Dboard}
+          D={D}
+          chrome={chrome}
           layout={layout}
           marks={keyMarks}
           onLayoutChange={onLayoutChange}
@@ -7205,12 +7227,12 @@ export default function App() {
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 900; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-900.woff2') format('woff2'); }
         html, body, #root { margin: 0; padding: 0; width: 100%; max-width: 100%; }
         :root {
-          /* Correct reuses the Cubetas / lockup sage. Present is a muted mustard darkened so white letters clear 4.5:1 and stay lighter than the sage. */
-          --wordle-correct: ${MARK_INK};
+          /* Correct is the sage that locks Crucigrama squares. Present and absent keep white letters in both modes. */
+          --wordle-correct: ${WORDLE_CORRECT};
           --wordle-correct-ink: #fff;
-          --wordle-present: #96702F;
+          --wordle-present: ${WORDLE_PRESENT};
           --wordle-present-ink: #fff;
-          --wordle-absent: #7E756E;
+          --wordle-absent: ${WORDLE_ABSENT};
           --wordle-absent-ink: #fff;
         }
         .wordle-screen {
@@ -7226,8 +7248,8 @@ export default function App() {
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          background: #F6EFE4;
-          color: #3C3C3C;
+          background: var(--wordle-board, #F6EFE4);
+          color: var(--wordle-letter, #3C3C3C);
         }
         .wordle-head { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
         .wordle-board-slot { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -7247,7 +7269,7 @@ export default function App() {
           height: 100%;
           min-width: 0;
           min-height: 0;
-          border: 1px solid #C9BBA8;
+          border: 1px solid var(--wordle-line, #D9CFC3);
           border-radius: 8px;
           display: flex;
           align-items: center;
@@ -7256,13 +7278,13 @@ export default function App() {
           font-size: clamp(15px, 4.8vw, 26px);
           line-height: 1;
           text-transform: uppercase;
-          background: #fff;
-          color: #3C3C3C;
+          background: var(--wordle-square, #fff);
+          color: var(--wordle-letter, #3C3C3C);
           transform-style: preserve-3d;
         }
         @keyframes wordleFlip {
-          0% { transform: rotateX(0); background: #fff; color: #3C3C3C; border-color: #C9BBA8; }
-          45% { transform: rotateX(-90deg); background: #fff; color: #3C3C3C; border-color: #C9BBA8; }
+          0% { transform: rotateX(0); background: var(--wordle-square, #fff); color: var(--wordle-letter, #3C3C3C); border-color: var(--wordle-line, #D9CFC3); }
+          45% { transform: rotateX(-90deg); background: var(--wordle-square, #fff); color: var(--wordle-letter, #3C3C3C); border-color: var(--wordle-line, #D9CFC3); }
           55% { transform: rotateX(-90deg); background: var(--tile-bg); color: var(--tile-ink); border-color: transparent; }
           100% { transform: rotateX(0); background: var(--tile-bg); color: var(--tile-ink); border-color: transparent; }
         }
@@ -7270,10 +7292,10 @@ export default function App() {
           animation: wordleFlip 420ms ease both;
           animation-delay: calc(var(--flip-i) * 80ms);
         }
-        .wordle-note { flex: 0 0 auto; min-height: 18px; text-align: center; font-size: 13px; font-weight: 800; color: #6F6560; line-height: 1.2; }
+        .wordle-note { flex: 0 0 auto; min-height: 18px; text-align: center; font-size: 13px; font-weight: 800; color: var(--wordle-quiet, #8A8175); line-height: 1.2; }
         .wordle-reveal { flex: 0 0 auto; text-align: center; padding: 2px 8px 4px; font-size: 16px; }
-        .wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 800; line-height: 1.35; color: #3C3C3C; }
-        .wordle-reveal [data-testid="wordle-gloss"] { font-size: 0.7em; font-weight: 700; line-height: 1.35; color: #777777; margin-top: 2px; }
+        .wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 800; line-height: 1.35; color: var(--wordle-clue, #3C3C3C); }
+        .wordle-reveal [data-testid="wordle-gloss"] { font-size: 0.7em; font-weight: 700; line-height: 1.35; color: var(--wordle-gloss, #777777); margin-top: 2px; }
         .wordle-keys { flex: 0 0 auto; width: 100%; max-width: 100%; }
         @keyframes wordleShake {
           0%, 100% { transform: translateX(0); }
@@ -10297,6 +10319,8 @@ export default function App() {
           invalid={wordleInvalid}
           shake={wordleShake}
           flipRow={wordleFlip}
+          dark={theme === "dark"}
+          D={D}
           layout={normalizeLetterLayout(prog.letterLayout)}
           onType={typeWordleLetter}
           onBackspace={backspaceWordle}

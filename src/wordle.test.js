@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { MEXICO_MAP_COLORS } from "./recuerdos.js";
 import { WORDLE_ANSWERS } from "./wordle-answers.js";
 import { WORDLE_FIVE } from "./wordle-words.js";
 import {
@@ -17,7 +18,11 @@ import {
   scoreWordle,
   wordleAnswerForDate,
   wordleBackspace,
+  WORDLE_ABSENT,
+  WORDLE_CORRECT,
+  WORDLE_PRESENT,
   wordleChars,
+  wordleChrome,
   wordleCommit,
   wordleDayKey,
   wordleGuessSet,
@@ -104,6 +109,33 @@ assert(WORDLE_ANSWERS[27].word === "SUEÑO" && WORDLE_ANSWERS[27].display === "s
 assert(WORDLE_ANSWERS[36].word === "LIMON" && WORDLE_ANSWERS[36].display === "limón", "limón keeps its display accent");
 assert(WORDLE_ANSWERS[44].word === "ESTES" && WORDLE_ANSWERS[44].display === "estés", "estés keeps its display accent");
 assert(!isWordleGuess("qqqqq"), "a gap is not filled by unioning the answer in");
+
+assert(WORDLE_CORRECT === MEXICO_MAP_COLORS.sage && WORDLE_CORRECT === "#6f7757", "correct tile is the crossword lock sage");
+const lightChrome = wordleChrome(false);
+assert(lightChrome.board === "#F6EFE4" && lightChrome.page === "#F6EFE4", "light board stays cream");
+assert(lightChrome.square === "#FFFFFF" && lightChrome.letter === "#3C3C3C", "light squares stay white with ink letters");
+assert(lightChrome.line === "#D9CFC3" && lightChrome.quiet === "#8A8175", "light lines and quiet chrome match the crossword");
+assert(lightChrome.gloss === "#777777", "light gloss stays the memory gray");
+const darkChrome = wordleChrome(true);
+assert(darkChrome.page === "#15171C" && darkChrome.board === "#1E2128" && darkChrome.square === "#1E2128", "dark page and squares are the crossword tokens");
+assert(darkChrome.line === "#2A2E36" && darkChrome.letter === "#F6EFE4" && darkChrome.clue === "#F6EFE4", "dark letters are cream on the crossword board");
+assert(darkChrome.quiet === "#A0A4AB" && darkChrome.gloss === "#A0A4AB", "dark quiet chrome is the crossword quiet ink");
+
+const channel = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const rel = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  const rgb = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  return 0.2126 * channel(rgb[0] / 255) + 0.7152 * channel(rgb[1] / 255) + 0.0722 * channel(rgb[2] / 255);
+};
+const ratio = (fg, bg) => {
+  const hi = Math.max(rel(fg), rel(bg));
+  const lo = Math.min(rel(fg), rel(bg));
+  return (hi + 0.05) / (lo + 0.05);
+};
+for (const [name, bg] of [["correct", WORDLE_CORRECT], ["present", WORDLE_PRESENT], ["absent", WORDLE_ABSENT]]) {
+  assert(ratio("#FFFFFF", bg) >= 4.5, `${name} white letters clear 4.5:1`);
+}
+assert(rel(WORDLE_PRESENT) > rel(WORDLE_CORRECT), "ochre stays lighter than the sage");
 
 const late = new Date(2026, 8, 26, 23, 59, 30);
 const early = new Date(2026, 8, 27, 0, 0, 1);

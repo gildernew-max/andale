@@ -6,6 +6,7 @@
  *  Answers are not added to that set. A missing answer fails the test.
  */
 
+import { MEXICO_MAP_COLORS } from "./recuerdos.js";
 import { WORDLE_ANSWERS } from "./wordle-answers.js";
 import { WORDLE_FIVE } from "./wordle-words.js";
 
@@ -22,6 +23,42 @@ export const WORDLE_HOWTO = { es: "Cinco letras. Seis intentos.", en: "Five lett
 export const WORDLE_INVALID = { es: "No está en la lista", en: "Not in the word list" };
 export const WORDLE_ENTER = { es: "Enviar", en: "Enter" };
 export const WORDLE_DELETE = { es: "Borrar", en: "Delete" };
+
+/** Same sage that locks Crucigrama squares (MEXICO_MAP_COLORS.sage). */
+export const WORDLE_CORRECT = MEXICO_MAP_COLORS.sage;
+/** Muted mustard. White letters clear 4.5:1 and it stays lighter than the sage. */
+export const WORDLE_PRESENT = "#96702F";
+/** Warm mid-gray. White letters clear 4.5:1. */
+export const WORDLE_ABSENT = "#7E756E";
+
+/**
+ * Surfaces match crosswordColors() on cursor/crucigrama-crossword-d09b.
+ * Dark mode is the app page, card, line, and cream letters. No second dark palette.
+ */
+export function wordleChrome(dark) {
+  if (!dark) {
+    return {
+      page: "#F6EFE4",
+      board: "#F6EFE4",
+      square: "#FFFFFF",
+      line: "#D9CFC3",
+      letter: "#3C3C3C",
+      quiet: "#8A8175",
+      clue: "#3C3C3C",
+      gloss: "#777777",
+    };
+  }
+  return {
+    page: "#15171C",
+    board: "#1E2128",
+    square: "#1E2128",
+    line: "#2A2E36",
+    letter: "#F6EFE4",
+    quiet: "#A0A4AB",
+    clue: "#F6EFE4",
+    gloss: "#A0A4AB",
+  };
+}
 
 const ACCENT = {
   á: "a", é: "e", í: "i", ó: "o", ú: "u", ü: "u",
