@@ -109,3 +109,55 @@ export function gradeListedPhrase(given, item = {}) {
     listed,
   };
 }
+
+const EDGE_PUNCT = /^[\s¿?¡!.,;:«»"'“”()—–-]+|[\s¿?¡!.,;:«»"'“”()—–-]+$/g;
+
+function tileCore(word) {
+  return String(word ?? "").replace(EDGE_PUNCT, "");
+}
+
+function sameCore(a, b) {
+  return tileCore(a).toLowerCase() === tileCore(b).toLowerCase();
+}
+
+function hasCapital(word) {
+  return /\p{Lu}/u.test(tileCore(word));
+}
+
+/** Capital that is not just the answer's opening word. Names, places, and
+ *  forms the data capitalizes off the first slot stay capitalized. */
+export function isIntrinsicOrderCapital(word, answer) {
+  const core = tileCore(word);
+  if (!/\p{Lu}/u.test(core)) return false;
+  const parts = String(answer || "").trim().split(/\s+/).filter(Boolean);
+  const first = parts[0] || "";
+  const laterCapital = parts.slice(1).some((part) => sameCore(part, word) && hasCapital(part));
+  if (laterCapital) return true;
+  if (!sameCore(word, first)) return true;
+  return [...core].slice(1).some((ch) => /\p{Lu}/u.test(ch));
+}
+
+function lowercaseTile(word) {
+  return String(word ?? "").replace(/\p{L}/gu, (ch) => ch.toLowerCase());
+}
+
+function capitalizeTile(word) {
+  let done = false;
+  return String(word ?? "").replace(/\p{L}/gu, (ch) => {
+    if (done) return ch.toLowerCase();
+    done = true;
+    return ch.toUpperCase();
+  });
+}
+
+/**
+ * Bank tiles are lowercase so the opening capital is not a hint.
+ * The word currently in answer slot 0 is capitalized for display only.
+ * Distractors keep their authored letters when those letters are already lower.
+ * Proper nouns and other intrinsically capitalized forms stay as authored.
+ */
+export function orderTileLabel(word, { answer = "", placedIndex = null } = {}) {
+  if (isIntrinsicOrderCapital(word, answer)) return String(word ?? "");
+  if (placedIndex === 0) return capitalizeTile(word);
+  return lowercaseTile(word);
+}
