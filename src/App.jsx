@@ -9089,8 +9089,8 @@ export default function App() {
                     <div className="idle"><CoachPortrait id={session.host} mood="happy" size={86} /></div>
                     <span className="nametag">{coachName(session.host)}</span>
                   </div>
-                  <div data-testid={q.type === "order" ? "order-prompt" : undefined} style={{ position: "relative", border: `2px solid ${orderCream || orderDark ? D_LIGHT.line : D.line}`, borderRadius: 16, padding: "14px 16px", background: orderCream ? HUB_CREAM : D.card, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.ink, flex: 1, marginBottom: 14 }}>
-                    <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: orderCream ? HUB_CREAM : D.card, borderLeft: `2px solid ${orderCream || orderDark ? D_LIGHT.line : D.line}`, borderBottom: `2px solid ${orderCream || orderDark ? D_LIGHT.line : D.line}`, transform: "rotate(45deg)" }} />
+                  <div data-testid={q.type === "order" ? "order-prompt" : undefined} style={{ position: "relative", border: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderRadius: 16, padding: "14px 16px", background: orderCream ? HUB_CREAM : D.card, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.ink, flex: 1, marginBottom: 14 }}>
+                    <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: orderCream ? HUB_CREAM : D.card, borderLeft: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderBottom: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, transform: "rotate(45deg)" }} />
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                       <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                       <div>
@@ -9224,7 +9224,7 @@ export default function App() {
 
             {q.type === "order" && (
               <div style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : { color: HUB_CREAM }}>
-                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${D_LIGHT.line}`, borderTop: `2px solid ${D_LIGHT.line}`, padding: "10px 4px", marginBottom: 6, background: orderCream ? HUB_CREAM : D.card }}>
+                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderTop: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, padding: "10px 4px", marginBottom: 6, background: orderCream ? HUB_CREAM : D.card }}>
 	                  {placed.length === 0 && <span style={{ color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
                   {placed.map((id, index) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
@@ -9236,7 +9236,7 @@ export default function App() {
                         onClick={() => unplaceOrderTile(id)}
                         style={orderCream
                           ? { background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }
-                          : { background: D.card, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: HUB_CREAM }}>
+                          : { background: D.card, borderColor: D.line, borderBottomColor: D.line, color: HUB_CREAM }}>
                         {label}
                         <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                       </button>
@@ -9270,7 +9270,7 @@ export default function App() {
                             pointerEvents: used ? "none" : "auto",
                             ...(orderCream
                               ? { background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }
-                              : { background: D.card, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: HUB_CREAM }),
+                              : { background: D.card, borderColor: D.line, borderBottomColor: D.line, color: HUB_CREAM }),
                           }}>
                           {label}
                         </button>
@@ -9304,7 +9304,7 @@ export default function App() {
           </div>
 
           {/* ---------- ACTION BAR with mascot ---------- */}
-          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream || orderDark ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
             <div style={{ maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
               {status !== "idle" && (
                 <div className={status === "wrong" ? "" : "jump"} style={{ flexShrink: 0 }}>

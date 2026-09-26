@@ -197,7 +197,7 @@ describe("word-order tile layout", () => {
     const page = /#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i;
     const card = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
     const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
-    const line = /#E5E5E5|rgb\(\s*229,\s*229,\s*229\s*\)/i;
+    const line = /#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\)/i;
     const user = userEvent.setup();
     await openOrder(orderQuestion(
       AGRADEZCO_WORDS,
@@ -230,6 +230,9 @@ describe("word-order tile layout", () => {
     expect(placed.style.background).toMatch(card);
     expect(placed.style.color).toMatch(cream);
     expect(placed.style.borderTopColor).toMatch(line);
+    expect(screen.getByText("Toca una ficha colocada para moverla.").style.color).toMatch(cream);
+    expect(screen.getByRole("button", { name: "Borrar" }).style.color).toMatch(cream);
+    expect(screen.getByTestId("lang-en").style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
     expect(document.body.style.background).toMatch(page);
   });
 });
