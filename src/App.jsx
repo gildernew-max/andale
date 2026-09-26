@@ -7386,7 +7386,7 @@ export default function App() {
         }
         .wordle-note { flex: 0 0 auto; min-height: 18px; text-align: center; font-size: 13px; font-weight: 800; color: var(--wordle-quiet, #8A8175); line-height: 1.2; }
         .wordle-reveal { flex: 0 0 auto; text-align: center; padding: 2px 8px 4px; font-size: 16px; }
-        .wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 800; line-height: 1.35; color: var(--wordle-clue, #3C3C3C); }
+        .wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 600; line-height: 1.35; color: var(--wordle-clue, #3C3C3C); }
         .wordle-reveal [data-testid="wordle-answer"] { font-weight: 900; }
         .wordle-reveal [data-testid="wordle-gloss"] { font-size: 0.7em; font-weight: 700; line-height: 1.35; color: var(--wordle-gloss, #777777); margin-top: 2px; }
         .wordle-keys { flex: 0 0 auto; width: 100%; max-width: 100%; }

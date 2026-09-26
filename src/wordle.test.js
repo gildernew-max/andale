@@ -180,7 +180,8 @@ const letterSig = appSrc.slice(appSrc.indexOf("const LetterBoard"), appSrc.index
 assert(!letterSig.includes("marks") && !letterSig.includes("chrome"), "Ahorcado LetterBoard has no Wordle keyboard");
 assert(appSrc.includes("wordleSentenceParts(run.es, run.display)"), "finish sentence bolds the stored display");
 assert(appSrc.includes('data-testid="wordle-answer"'), "the accented answer is the bold span");
-assert(appSrc.includes('.wordle-reveal [data-testid="wordle-answer"] { font-weight: 900; }'), "the answer is heavier weight only");
+assert(appSrc.includes('.wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 600;'), "the rest of the sentence is weight 600");
+assert(appSrc.includes('.wordle-reveal [data-testid="wordle-answer"] { font-weight: 900; }'), "the answer stays weight 900");
 const glossAt = appSrc.indexOf('.wordle-reveal [data-testid="wordle-gloss"]');
 const glossRule = appSrc.slice(glossAt, glossAt + 160);
 assert(glossRule.includes("font-weight: 700") && !glossRule.includes("900"), "the English line stays plain");
