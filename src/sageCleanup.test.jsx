@@ -295,12 +295,16 @@ describe("sage cleanup", () => {
     assertNoBrightGreen(screen.getByTestId("hangman-slots"), "hangman slots");
     const slots = screen.getAllByTestId("hangman-slot");
     const focused = slots.find((el) => el.getAttribute("data-focus") === "on");
-    const empty = slots.find((el) => el.getAttribute("data-focus") === "off" && !el.querySelector("[data-testid='hangman-slot-letter']").textContent);
+    const empties = slots.filter((el) => el.getAttribute("data-focus") === "off" && !el.querySelector("[data-testid='hangman-slot-letter']").textContent);
     const filled = slots.find((el) => el.querySelector("[data-testid='hangman-slot-letter']").textContent);
+    expect(empties.length).toBeGreaterThanOrEqual(4);
     expect(focused.style.borderBottomWidth).toBe("3px");
     expect(cssHex(focused.style.borderBottomColor)).toBe("#6f7757");
-    expect(empty.style.borderBottomWidth).toBe("3px");
-    expect(cssHex(empty.style.borderBottomColor)).toBe("#b8c0a0");
+    empties.forEach((el) => {
+      expect(el.style.borderBottomWidth).toBe("3px");
+      expect(cssHex(el.style.borderBottomColor)).toBe("#828a69");
+    });
+    expect(contrastRatio("#828A69", "#F6EFE4")).toBeGreaterThanOrEqual(3);
     expect(cssHex(filled.style.borderBottomColor)).toBe("#3c3c3c");
 
     cleanup();

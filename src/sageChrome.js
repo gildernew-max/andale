@@ -16,6 +16,8 @@ export const SAGE = {
   sageLight: "#B8C0A0",
   /** Dark active letter-slot underline. Reads on the dark page. */
   slotDark: "#B8C0A0",
+  /** Light empty letter-slot underline. 3.2:1 on the cream page #F6EFE4. */
+  slotEmpty: "#828A69",
   tileLight: "#F6EFE4",
   tileDark: "#1E2128",
   terracotta: "#C46B3A",
@@ -141,9 +143,9 @@ export function hangmanLightEndChrome() {
   };
 }
 
-/** Letter-slot underline. Active light slot is sage. Empty light slots are the pale sage. Thickness stays with the caller. */
+/** Letter-slot underline. Active light slot is sage. Empty light slots are #828A69. Thickness stays with the caller. */
 export function letterSlotUnderline(theme = "light", focused = false, ink = "#3C3C3C", empty = false) {
   if (focused) return theme === "dark" ? SAGE.slotDark : SAGE.sage;
-  if (empty && theme !== "dark") return SAGE.sageLight;
+  if (empty && theme !== "dark") return SAGE.slotEmpty;
   return ink;
 }

@@ -105,7 +105,9 @@ assert(contrastRatio(end.quiet, end.background) >= 4.5, "end smaller lines under
 assertNoLime(end, "hangman end");
 
 assert(letterSlotUnderline("light", true, "#3C3C3C", true) === "#6F7757", "light active slot underline is sage");
-assert(letterSlotUnderline("light", false, "#3C3C3C", true) === "#B8C0A0", "empty light slots are #B8C0A0");
+const emptySlot = letterSlotUnderline("light", false, "#3C3C3C", true);
+assert(emptySlot === "#828A69", "empty light slots are #828A69");
+assert(contrastRatio(emptySlot, "#F6EFE4") >= 3, "empty slot underline is at least 3:1 on the cream page");
 assert(letterSlotUnderline("light", false, "#3C3C3C", false) === "#3C3C3C", "filled idle slot underline stays the ink");
 assert(letterSlotUnderline("dark", true, "#E8E8EA", true) === "#B8C0A0", "dark active slot underline stays");
 assert(letterSlotUnderline("dark", false, "#E8E8EA", true) === "#E8E8EA", "dark empty slots stay the ink");
