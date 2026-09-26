@@ -107,6 +107,30 @@ export function wordleChars(word) {
   return [...normalizeWordle(word)];
 }
 
+const isWordleLetter = (ch) => !!ch && /\p{L}/u.test(ch);
+
+/** Split a finish sentence so the stored accented spelling can be heavier.
+ *  Match the display word as its own word. Keep the sentence's own letters. */
+export function wordleSentenceParts(sentence, display) {
+  const es = String(sentence ?? "");
+  const word = String(display ?? "");
+  const chars = [...es];
+  const needle = word.toLocaleLowerCase("es");
+  const n = [...word].length;
+  if (!n) return { before: es, bold: "", after: "" };
+  for (let i = 0; i <= chars.length - n; i++) {
+    const slice = chars.slice(i, i + n).join("");
+    if (slice.toLocaleLowerCase("es") !== needle) continue;
+    if (isWordleLetter(chars[i - 1]) || isWordleLetter(chars[i + n])) continue;
+    return {
+      before: chars.slice(0, i).join(""),
+      bold: slice,
+      after: chars.slice(i + n).join(""),
+    };
+  }
+  return { before: es, bold: "", after: "" };
+}
+
 export function wordleLetterFromKey(key) {
   const n = normalizeWordle(key);
   if ([...n].length !== 1) return "";

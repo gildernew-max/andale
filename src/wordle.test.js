@@ -31,6 +31,7 @@ import {
   wordleKeyState,
   wordleLetterFromKey,
   wordleLocalDayIndex,
+  wordleSentenceParts,
   wordleTitle,
   wordleTypeLetter,
 } from "./wordle.js";
@@ -103,7 +104,15 @@ for (const row of WORDLE_ANSWERS) {
   assert(isWordleGuess(row.word), `${row.word} passes isWordleGuess`);
   assert(row.es && row.en, `${row.word} has Spanish and English`);
   assert(row.es.toLocaleLowerCase("es").includes(row.display.toLocaleLowerCase("es")), `${row.display} is in the Spanish sentence`);
+  const parts = wordleSentenceParts(row.es, row.display);
+  assert(parts.bold, `${row.display} is in the Spanish sentence`);
+  assert(parts.bold.toLocaleLowerCase("es") === row.display, `${row.word}: bold word equals the stored accented display spelling`);
+  assert(parts.before + parts.bold + parts.after === row.es, `${row.word}: sentence text is unchanged`);
+  const beforeTail = [...parts.before].at(-1) || "";
+  const afterHead = [...parts.after][0] || "";
+  assert(!/\p{L}/u.test(beforeTail) && !/\p{L}/u.test(afterHead), `${row.word}: bold span is the answer word`);
 }
+assert(wordleSentenceParts("Ya no hay jabon en el baño.", "jabón").bold === "", "an unaccented stand-in is not the stored spelling");
 assert(WORDLE_ANSWERS[18].word === "JABON" && WORDLE_ANSWERS[18].display === "jabón", "jabón keeps its display accent");
 assert(WORDLE_ANSWERS[25].word === "NIÑOS" && WORDLE_ANSWERS[25].display === "niños", "ñ stays in NIÑOS");
 assert(WORDLE_ANSWERS[27].word === "SUEÑO" && WORDLE_ANSWERS[27].display === "sueño", "sueño keeps ñ");
@@ -169,6 +178,12 @@ const gridBlock = appSrc.slice(gridAt, gridAt + 450);
 assert(gridBlock.includes("chrome.correct") && gridBlock.includes("chrome.absentInk"), "dark tile colors sit on the grid");
 const letterSig = appSrc.slice(appSrc.indexOf("const LetterBoard"), appSrc.indexOf("=> {", appSrc.indexOf("const LetterBoard")));
 assert(!letterSig.includes("marks") && !letterSig.includes("chrome"), "Ahorcado LetterBoard has no Wordle keyboard");
+assert(appSrc.includes("wordleSentenceParts(run.es, run.display)"), "finish sentence bolds the stored display");
+assert(appSrc.includes('data-testid="wordle-answer"'), "the accented answer is the bold span");
+assert(appSrc.includes('.wordle-reveal [data-testid="wordle-answer"] { font-weight: 900; }'), "the answer is heavier weight only");
+const glossAt = appSrc.indexOf('.wordle-reveal [data-testid="wordle-gloss"]');
+const glossRule = appSrc.slice(glossAt, glossAt + 160);
+assert(glossRule.includes("font-weight: 700") && !glossRule.includes("900"), "the English line stays plain");
 
 const late = new Date(2026, 8, 26, 23, 59, 30);
 const early = new Date(2026, 8, 27, 0, 0, 1);

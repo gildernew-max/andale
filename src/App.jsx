@@ -128,6 +128,7 @@ import {
   wordleLetterFromKey,
   wordleQuiet,
   wordleRows,
+  wordleSentenceParts,
   wordleTitle,
   wordleTypeLetter,
 } from "./wordle.js";
@@ -4419,6 +4420,7 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
   const rows = wordleRows(run);
   const keyMarks = wordleKeyState(run.guesses, run.answer);
   const over = run.status !== "play";
+  const reveal = wordleSentenceParts(run.es, run.display);
   const chrome = wordleChrome(!!dark);
   return (
     <div
@@ -4495,7 +4497,7 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
       <div data-testid="wordle-invalid" className="wordle-note">{invalid ? wordleInvalidLine(uiLang) : ""}</div>
       {over && (
         <div data-testid="wordle-reveal" className="wordle-reveal" data-display={run.display}>
-          <div data-testid="wordle-sentence">{run.es}</div>
+          <div data-testid="wordle-sentence">{reveal.before}{reveal.bold ? <span data-testid="wordle-answer">{reveal.bold}</span> : null}{reveal.after}</div>
           <div data-testid="wordle-gloss">{run.en}</div>
         </div>
       )}
@@ -7385,6 +7387,7 @@ export default function App() {
         .wordle-note { flex: 0 0 auto; min-height: 18px; text-align: center; font-size: 13px; font-weight: 800; color: var(--wordle-quiet, #8A8175); line-height: 1.2; }
         .wordle-reveal { flex: 0 0 auto; text-align: center; padding: 2px 8px 4px; font-size: 16px; }
         .wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 800; line-height: 1.35; color: var(--wordle-clue, #3C3C3C); }
+        .wordle-reveal [data-testid="wordle-answer"] { font-weight: 900; }
         .wordle-reveal [data-testid="wordle-gloss"] { font-size: 0.7em; font-weight: 700; line-height: 1.35; color: var(--wordle-gloss, #777777); margin-top: 2px; }
         .wordle-keys { flex: 0 0 auto; width: 100%; max-width: 100%; }
         @keyframes wordleShake {
