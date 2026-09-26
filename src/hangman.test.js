@@ -20,6 +20,7 @@ import {
   finishHangmanRun,
   focusHangmanSlot,
   guessHangmanLetter,
+  emphasisParts,
   hangmanHasDeadLabel,
   hangmanHowTo,
   hangmanIsLetterKey,
@@ -115,6 +116,21 @@ assert(hangmanWhy(HANGMAN_BANK[2], "es") === "Anima, acepta o sorprende", "óral
 assert(hangmanRegionChip(HANGMAN_BANK[0]) === "MX · raro en ES/AR", "chamba chip flags ES/AR");
 assert(hangmanSoundsWeirdOutside(HANGMAN_BANK[0]), "chamba sounds weird outside MX");
 assert(hangmanRegionNote(HANGMAN_BANK[0], "en") === "ES/AR prefer *trabajo*; CO may know it", "chamba country note EN");
+const morra = HANGMAN_BANK.find((row) => row.word === "morra");
+const cruda = HANGMAN_BANK.find((row) => row.word === "cruda");
+assert(hangmanWhy(morra, "es") === "Él: *morro*" && hangmanWhy(morra, "en") === "Pair *morro* for guys", "source Why keeps *morro*");
+assert(hangmanRegionNote(cruda, "es") === "ES/AR/CO *resaca*" && hangmanRegionNote(cruda, "en") === "ES/AR/CO *resaca*", "source region keeps *resaca*");
+const visible = (text) => emphasisParts(text).map((part) => part.text).join("");
+assert(emphasisParts(hangmanWhy(morra, "es")).some((part) => part.em && part.text === "morro"), "*morro* renders italic");
+assert(emphasisParts(hangmanRegionNote(cruda, "en")).some((part) => part.em && part.text === "resaca"), "*resaca* renders italic");
+assert(emphasisParts("ES *colega*; AR *boludo/amigo*").filter((part) => part.em).map((part) => part.text).join("|") === "colega|boludo/amigo", "two starred words both italicize");
+HANGMAN_BANK.forEach((row) => {
+  ["es", "en"].forEach((lang) => {
+    [hangmanLiteral(row, lang), hangmanWhy(row, lang), hangmanRegionNote(row, lang), hangmanRegionChip(row)].forEach((raw) => {
+      assert(!visible(raw).includes("*"), `${row.word} ${lang} still shows a raw asterisk: ${raw}`);
+    });
+  });
+});
 assert(hangmanRegionChip(HANGMAN_BANK[2]) === "MX · raro en ES/AR/CO", "órale is rare outside MX");
 assert(hangmanRegionChip(HANGMAN_BANK.find((r) => r.word === "gacho")) === "MX", "local MX chip is just MX");
 assert(hangmanRegionChip(HANGMAN_BANK.find((r) => r.word === "bronca")) === "MX · CO · AR", "bronca is wide LATAM");

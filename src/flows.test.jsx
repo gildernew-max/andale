@@ -1940,6 +1940,37 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("hangman-why").textContent).toMatch(/^Por qué/);
   });
 
+  it("Hangman Why and region lines italicize starred words and drop the asterisks", async () => {
+    const show = async (word, theme) => {
+      cleanup();
+      localStorage.clear();
+      seedProgress({ uiLang: "en", theme });
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "ahorcado",
+        tab: "practica",
+        ahorcado: {
+          word,
+          letters: hangmanLetters(word),
+          guessed: hangmanLetters(word),
+          status: "win",
+        },
+      }));
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("hangman-why")).toBeTruthy());
+    };
+    await show("morra", "light");
+    const why = screen.getByTestId("hangman-why");
+    expect(why.textContent).toContain("Pair morro for guys");
+    expect(why.textContent).not.toMatch(/\*/);
+    expect(why.querySelector("em")?.textContent).toBe("morro");
+    await show("cruda", "dark");
+    const note = screen.getByTestId("hangman-region-note");
+    expect(note.textContent).toBe("ES/AR/CO resaca");
+    expect(note.textContent).not.toMatch(/\*/);
+    expect(note.querySelector("em")?.textContent).toBe("resaca");
+    expect(screen.getByTestId("hangman-why").textContent).not.toMatch(/\*/);
+  });
+
   it("Jeopardy round: pick a tile, answer, return to the board", async () => {
     const user = await boot();
     await awaitHome();
