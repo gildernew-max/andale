@@ -153,6 +153,19 @@ import {
   memoryWinLine,
   startMemoryRun,
 } from "./memory.js";
+import { CrosswordMark, CrosswordPlayfield } from "./CrosswordPlayfield.jsx";
+import {
+  CROSSWORD_GRID,
+  backspaceCrossword,
+  crosswordQuiet,
+  crosswordTitle,
+  hydrateCrossword,
+  revealCrosswordWord,
+  selectCrosswordCell,
+  selectCrosswordClue,
+  startCrosswordRun,
+  typeCrosswordLetter,
+} from "./crossword.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -248,6 +261,7 @@ const snapshotLive = (s) => {
     ahorcado: s.ahorcado,
     cubetasGame: s.cubetasGame,
     memoryGame: s.memoryGame,
+    crosswordGame: s.crosswordGame,
   };
 };
 
@@ -4439,6 +4453,7 @@ export default function App() {
   const [ahorcado, setAhorcado] = useState(null);
   const [cubetasGame, setCubetasGame] = useState(null);
   const [memoryGame, setMemoryGame] = useState(null);
+  const [crosswordGame, setCrosswordGame] = useState(null);
   const cubetasTimerRef = useRef(null);
   const memoryTimerRef = useRef(null);
   const gamesReturnRef = useRef("practica");
@@ -5413,6 +5428,12 @@ export default function App() {
     setScreen("memory");
   };
 
+  const startCrossword = (from = "practica") => {
+    gamesReturnRef.current = from === "games" ? "games" : "practica";
+    setCrosswordGame(startCrosswordRun(CROSSWORD_GRID));
+    setScreen("crossword");
+  };
+
   const scheduleMemory = (ms, fn) => {
     if (memoryTimerRef.current) clearTimeout(memoryTimerRef.current);
     memoryTimerRef.current = setTimeout(fn, ms);
@@ -6106,6 +6127,7 @@ export default function App() {
     matchSel, matched, sessionXP, itemXpLock: [...itemXpLockRef.current], combo, lessonStats, showWhy, failKind, quip,
     screenQuip, storyView, paraIdx, storyMode, ansSel, storyShuffle, wordReveal, dialogue,
     rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame,
+    crosswordGame,
   };
 
   const applyLive = (live, claimedStories) => {
@@ -6193,6 +6215,9 @@ export default function App() {
       setMemoryGame(restored);
       if (restored?.awarded || isMemoryDone(restored)) awardLockRef.current.add("memory");
     }
+    if (live.crosswordGame) {
+      setCrosswordGame(hydrateCrossword(CROSSWORD_GRID, live.crosswordGame) || startCrosswordRun(CROSSWORD_GRID));
+    }
     setScreen(live.screen);
   };
 
@@ -6233,7 +6258,7 @@ export default function App() {
   useEffect(() => {
     if (!liveReady.current) return;
     writeLive(snapshotLive(liveRef.current));
-  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, storyShuffle, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame]);
+  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, storyShuffle, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame, crosswordGame]);
 
   useEffect(() => {
     const flush = () => {
@@ -7876,6 +7901,17 @@ export default function App() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{memoryTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{memoryQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={() => startCrossword("practica")} data-testid="crossword-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>
               </div>
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
@@ -9704,6 +9740,17 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
+          <button onClick={() => startCrossword("games")} data-testid="crossword-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
         </div>
       )}
 
@@ -9997,6 +10044,21 @@ export default function App() {
           onClose={closeGamesSurface}
           onAgain={() => startMemory(gamesReturnRef.current)}
           onLang={(code) => save({ uiLang: code })}
+        />
+      )}
+
+      {screen === "crossword" && crosswordGame && (
+        <CrosswordPlayfield
+          run={crosswordGame}
+          grid={CROSSWORD_GRID}
+          uiLang={uiLang}
+          onType={(letter) => setCrosswordGame((cur) => typeCrosswordLetter(CROSSWORD_GRID, cur, letter))}
+          onBackspace={() => setCrosswordGame((cur) => backspaceCrossword(CROSSWORD_GRID, cur))}
+          onSelectCell={(row, col) => setCrosswordGame((cur) => selectCrosswordCell(CROSSWORD_GRID, cur, row, col))}
+          onSelectClue={(wordId) => setCrosswordGame((cur) => selectCrosswordClue(CROSSWORD_GRID, cur, wordId))}
+          onReveal={() => setCrosswordGame((cur) => revealCrosswordWord(CROSSWORD_GRID, cur))}
+          onClose={closeGamesSurface}
+          langControl={<LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />}
         />
       )}
 
