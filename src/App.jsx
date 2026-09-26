@@ -8,7 +8,7 @@ import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./the
 import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
-import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats, doctoraWinReward } from "./doctoraWin.js";
+import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
@@ -5666,7 +5666,7 @@ export default function App() {
       };
       if (won) setBurst(Date.now());
     }
-    // Perfect +5 / gem cap live in lessonFinishReward — same path Doctora uses.
+    // Perfect +5 / gem cap live in lessonFinishReward.
     const hits = lessonStats.right;
     const { earnedXP: earned, earnedGems: gemsEarned, perfectBonus } = lessonFinishReward({
       sessionXP: xpNow,
@@ -6749,37 +6749,20 @@ export default function App() {
     setA2hsSheet(false);
     save({ a2hsSeen: true });
   };
-  const awardDoctoraStreak = ({ xp = 0, gems = 0 } = {}) => {
-    if (!lockAward("phrase-doctor")) return false;
+  const awardDoctoraStreak = () => {
+    if (!lockAward("phrase-doctor")) return;
     const t = todayStr();
     const y = yesterdayStr();
-    const earnedXP = Number(xp) || 0;
-    const earnedGems = Number(gems) || 0;
     save((prev) => ({
       ...prev,
       streak: streakAfterWin(prev, t, y),
       lastDay: t,
-      xp: (prev.xp || 0) + earnedXP,
-      xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + earnedXP,
-      gems: (prev.gems || 0) + earnedGems,
+      xpToday: prev.lastDay === t ? prev.xpToday || 0 : 0,
     }));
-    return true;
   };
 
   const finishDoctoraWin = () => {
-    const hits = Math.max(doctorHits, 1);
-    const wrongs = doctorFailed ? 1 : 0;
-    const { earnedXP, earnedGems, perfectBonus } = doctoraWinReward({
-      hits,
-      almostHits: doctorGrade === "equivalent" ? 1 : 0,
-      wrongs,
-      firstDoctora: true,
-      streak: prog.streak,
-    });
-    awardDoctoraStreak({ xp: earnedXP, gems: earnedGems });
-    const before = levelOf(prog.xp || 0).idx;
-    const after = levelOf((prog.xp || 0) + earnedXP).idx;
-    setLevelUp(after > before ? LEVELS[after][1] : null);
+    awardDoctoraStreak();
     setSession({
       firstDoctora: true,
       esoWin: true,
@@ -6787,11 +6770,10 @@ export default function App() {
       host: "valeria",
       questions: [{}],
       awarded: true,
-      earnedXP,
-      earnedGems,
-      perfectBonus,
+      earnedXP: 0,
+      earnedGems: 0,
     });
-    setLessonStats({ right: hits, wrong: wrongs });
+    setLessonStats({ right: Math.max(doctorHits, 1), wrong: 0 });
     setScreenQuip("");
     setDoctorOpen(false);
     winBouncePlayed.current = true;
@@ -10346,7 +10328,7 @@ export default function App() {
           <h2 data-testid={winTestId} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
-          {levelUp && (
+          {levelUp && !session.firstDoctora && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", margin: "4px 0 8px", fontWeight: 900, color: D.goldDark }}>
 	              <IcBolt size={18} /> {L.levelUp} <span style={{ textTransform: "uppercase", letterSpacing: ".03em" }}>{levelLabel(levelUp, uiLang)}</span>
             </div>
@@ -10360,7 +10342,7 @@ export default function App() {
               { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, testid: "win-earned-xp" },
 	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, testid: "win-earned-gems" },
 	              { v: <span><IcFlame size={20} className="flame" /> {prog.streak}</span>, l: L.streakDays, c: "#FF9600", testid: "win-earned-streak" },
-            ].map((s, i) => (
+            ].filter((s) => !session.firstDoctora || s.testid === "win-earned-streak").map((s, i) => (
               <div key={i} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
                 <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: 22, color: s.c }}>{s.v}</div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>

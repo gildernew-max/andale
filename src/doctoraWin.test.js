@@ -7,7 +7,6 @@ import {
   FIRST_DOCTORA_PARK_NATURALS,
   doctoraBeatCap,
   doctoraWinCopy,
-  doctoraWinReward,
   isFirstDoctoraSession,
   pickFirstDoctoraBeats,
   shouldDoctoraEarlyWin,
@@ -77,13 +76,5 @@ assert(!shouldDoctoraEarlyWin({ firstDoctora: true, hits: 0 }), "no hit yet — 
 assert(!shouldDoctoraEarlyWin({ firstDoctora: false, hits: 1 }), "later Doctora does not early-win");
 assert(!shouldDoctoraEarlyWin({ hits: 1 }), "missing firstDoctora flag does not early-win");
 assert(!shouldDoctoraEarlyWin({ firstDoctora: true }), "missing hits does not early-win");
-
-const firstCure = doctoraWinReward({ hits: 1, firstDoctora: true });
-assert(firstCure.earnedXP === 15 && firstCure.perfectBonus === 5, "first-Doctora clean cure is type-in 10 + perfect 5");
-assert(firstCure.earnedGems === 15, "first-Doctora queue is 4 — lesson gem cap, not +0");
-assert(doctoraWinReward({ hits: 0 }).earnedXP === 0 && doctoraWinReward({ hits: 0 }).earnedGems === 0, "no cure is honest zero");
-assert(doctoraWinReward({ hits: 1, almostHits: 1, firstDoctora: true }).earnedXP === 12, "equivalent cure is almost 7 + perfect 5");
-assert(doctoraWinReward({ hits: 1, wrongs: 1, firstDoctora: true }).earnedXP === 10, "a miss drops perfect +5");
-assert(doctoraWinReward({ hits: 1, firstDoctora: false }).earnedGems === 15, "later Doctora queue is 6 — still the 15 cap");
 
 console.log("ok: first Doctora ≤4 beats + early checkpoint + ¡Eso!/That's it.");
