@@ -4565,6 +4565,7 @@ export default function App() {
   const narrationRef = useRef(null);
   const liveReady = useRef(false);
   const liveRef = useRef(null);
+  const hydrated = useRef(false);
   const awardLockRef = useRef(new Set());
   const sessionXPRef = useRef(0);
   const itemXpLockRef = useRef(new Set());
@@ -4597,10 +4598,11 @@ export default function App() {
 	        merged.mistakes.forEach((m) => { srs[`${m.u}|${m.i}`] = { ef: 2.5, reps: 0, interval: 0, due: Date.now() }; });
 	        merged = { ...merged, srs, mistakes: [] };
 	      }
-	      if (merged.voiceName) window.__andaleVoiceName = merged.voiceName;
-	      loaded = regen(merged);
-	      return loaded;
-	    });
+      if (merged.voiceName) window.__andaleVoiceName = merged.voiceName;
+      loaded = regen(merged);
+      hydrated.current = true;
+      return loaded;
+    });
 	    try { window.speechSynthesis.getVoices(); } catch (e) {}
 	    // Streak gap check: if last activity was 2 days ago, the streak is "salvageable"
 	    const today = todayStr(); const y = yesterdayStr();
@@ -4664,9 +4666,10 @@ export default function App() {
   const save = (patch) =>
     setProg((prev) => (typeof patch === "function" ? patch(prev) : { ...prev, ...patch }));
 
-  const hydrated = useRef(false);
   useEffect(() => {
-    if (!hydrated.current) { hydrated.current = true; return; } // skip pre-hydration default state
+    // Skip the default state. Strict Mode replays this effect; flipping the
+    // flag inside the skip would write those defaults over a real save.
+    if (!hydrated.current) return;
     try { storage.set(STORAGE_KEY, JSON.stringify({ ...prog, contentVersion: CONTENT_VERSION })); } catch (e) {}
   }, [prog]);
 
@@ -7205,12 +7208,14 @@ export default function App() {
           --wordle-absent-ink: #F6EFE4;
         }
         .wordle-screen {
-          height: 100vh;
-          height: 100dvh;
+          /* Sticky brand bar is 56px. The board fills what's left so the keyboard stays on screen. */
+          height: calc(100vh - 56px);
+          height: calc(100dvh - 56px);
+          max-height: calc(100dvh - 56px);
           width: 100%;
           max-width: 480px;
           margin: 0 auto;
-          padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+          padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
