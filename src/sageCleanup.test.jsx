@@ -221,16 +221,24 @@ describe("sage cleanup", () => {
     await boot({ uiLang: "en" }, { screen: "wordle", tab: "practica" }, "letter-board", () => {
       localStorage.setItem(WORDLE_STORAGE_KEY, JSON.stringify({ day: fresh.day, guesses: [guess], draft: "sol", status: "play" }));
     });
-    assertNoBrightGreen(screen.getByTestId("letter-board"), "wordle keys");
-    const idle = screen.getAllByTestId("letter-chip").find((el) => el.getAttribute("data-state") === "unused" || el.getAttribute("data-state") === "idle");
-    expect(cssHex(idle.style.color)).toBe("#6f7757");
-    expect(cssHex(idle.style.background)).toBe("#ffffff");
-    pairContrast(idle, "wordle letter");
+    assertNoBrightGreen(screen.getByTestId("letter-board-actions"), "wordle enter");
+    screen.getAllByTestId("letter-chip").filter((el) => !["correct", "present", "wrong", "absent"].includes(el.getAttribute("data-state"))).forEach((el) => {
+      expect(el.getAttribute("style"), "unused wordle letter").not.toMatch(BRIGHT_GREEN);
+      expect(cssHex(el.style.color)).toBe("#4f5a36");
+      expect(cssHex(el.style.background)).toBe("#ffffff");
+      pairContrast(el, "wordle letter");
+    });
+    const marked = screen.getAllByTestId("letter-chip").find((el) => el.getAttribute("data-state") === "correct");
+    if (marked) expect(cssHex(marked.style.background)).toBe("#5c7356");
     const enter = screen.getByTestId("letter-board-enter");
     const back = screen.getByTestId("letter-board-backspace");
     expect(cssHex(enter.style.background)).toBe("#6f7757");
     expect(cssHex(enter.style.color)).toBe("#ffffff");
+    expect(enter.style.borderTopWidth).toBe("2px");
+    expect(enter.style.borderBottomWidth).toBe("4px");
+    expect(cssHex(enter.style.borderTopColor)).toBe("#e5e5e5");
     expect(cssHex(back.style.background)).toBe("#6f7757");
+    expect(cssHex(back.style.color)).toBe("#ffffff");
     pairContrast(enter, "wordle enter");
     pairContrast(back, "wordle backspace");
 
@@ -240,20 +248,27 @@ describe("sage cleanup", () => {
       tab: "practica",
       ahorcado: { word: "chamba", guessed: ["C", "W"], status: "play", focus: 1 },
     }, "letter-board");
-    assertNoBrightGreen(screen.getByTestId("letter-board"), "hangman keys");
-    assertNoBrightGreen(screen.getByTestId("hangman-slots"), "hangman slots");
+    screen.getAllByTestId("letter-chip").filter((el) => el.getAttribute("data-state") === "idle").forEach((el) => {
+      expect(el.getAttribute("style"), "unused hangman letter").not.toMatch(BRIGHT_GREEN);
+      expect(cssHex(el.style.color)).toBe("#4f5a36");
+      expect(cssHex(el.style.background)).toBe("#ffffff");
+    });
     const letter = screen.getAllByTestId("letter-chip").find((el) => el.getAttribute("data-letter") === "A");
-    expect(cssHex(letter.style.color)).toBe("#6f7757");
     pairContrast(letter, "hangman idle key");
     const hit = screen.getAllByTestId("letter-chip").find((el) => el.getAttribute("data-letter") === "C");
     expect(hit.getAttribute("data-state")).toBe("correct");
-    expect(cssHex(hit.style.background)).toBe("#6f7757");
-    expect(cssHex(hit.style.color)).toBe("#ffffff");
-    pairContrast(hit, "hangman correct key");
-    const focused = screen.getAllByTestId("hangman-slot").find((el) => el.getAttribute("data-focus") === "on");
+    expect(cssHex(hit.style.background)).toBe("#d7ffb8");
+    expect(cssHex(hit.style.color)).toBe("#58a700");
+    assertNoBrightGreen(screen.getByTestId("hangman-slots"), "hangman slots");
+    const slots = screen.getAllByTestId("hangman-slot");
+    const focused = slots.find((el) => el.getAttribute("data-focus") === "on");
+    const empty = slots.find((el) => el.getAttribute("data-focus") === "off" && !el.querySelector("[data-testid='hangman-slot-letter']").textContent);
+    const filled = slots.find((el) => el.querySelector("[data-testid='hangman-slot-letter']").textContent);
     expect(focused.style.borderBottomWidth).toBe("3px");
     expect(cssHex(focused.style.borderBottomColor)).toBe("#6f7757");
-    expect(focused.getAttribute("style")).not.toMatch(BRIGHT_GREEN);
+    expect(empty.style.borderBottomWidth).toBe("3px");
+    expect(cssHex(empty.style.borderBottomColor)).toBe("#b8c0a0");
+    expect(cssHex(filled.style.borderBottomColor)).toBe("#3c3c3c");
 
     cleanup();
     await boot({ uiLang: "en", theme: "dark" }, {
@@ -277,13 +292,19 @@ describe("sage cleanup", () => {
     }, "hangman-end");
     const end = screen.getByTestId("hangman-end");
     assertNoBrightGreen(end, "hangman end");
-    expect(cssHex(end.style.background)).toBe("#6f7757");
+    expect(cssHex(end.style.background)).toBe("#eef0e6");
     expect(end.style.borderTopWidth).toBe("2px");
+    expect(end.style.borderBottomWidth).toBe("4px");
     expect(cssHex(end.style.borderTopColor)).toBe("#6f7757");
+    expect(cssHex(end.style.borderBottomColor)).toBe("#6f7757");
     for (const id of ["hangman-win", "hangman-word"]) {
-      expect(cssHex(screen.getByTestId(id).style.color)).toBe("#ffffff");
+      expect(cssHex(screen.getByTestId(id).style.color)).toBe("#4f5a36");
       pairContrast(screen.getByTestId(id), id);
     }
+    const quiet = screen.getByTestId("hangman-literal").firstElementChild;
+    expect(cssHex(quiet.style.color)).toBe("#5e6650");
+    pairContrast(quiet, "hangman end quiet");
+    expect(cssHex(screen.getByTestId("hangman-why").lastElementChild.style.color)).toBe("#5e6650");
     expect(cssHex(screen.getByTestId("hangman-again").style.background)).toBe("#58cc02");
   });
 });

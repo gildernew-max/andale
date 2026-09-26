@@ -1,8 +1,8 @@
 /** Shared Spanish on-screen keyboard.
  *  Wordle and Ahorcado both paint keys through `spanishKeyboardKeyStyle`
  *  and render them with `SpanishKeyboardKey` (spanishKeyboard.jsx).
- *  Light mode, sage cleanup: white face, sage letters #6F7757 (4.72:1 on white).
- *  Ahorcado hits fill and border #6F7757 with white letters (4.72:1).
+ *  Light unused keys keep the white face and gray edge. Letters are #4F5A36.
+ *  Correct, present, and wrong key colors stay the existing chips.
  *  Wordle marked keys still pass their own tile colors and skip this chip.
  *  Dark mode, Brand 2026-09-26:
  *  unused #1E2128 / edge #2A2E36 / cream #F6EFE4 (14.11:1),
@@ -95,14 +95,13 @@ export function spanishKeyboardKeyStyle({
         cursor,
       };
     }
-    const { line, red, redDark, badBg, badText } = light;
-    const sage = SPANISH_KEYBOARD.sage;
+    const { line, green, greenDark, red, redDark, okBg, okText, badBg, badText } = light;
     return {
       ...KEY_BOX,
-      border: `2px solid ${wasPicked ? (hit ? sage : red) : line}`,
-      borderBottom: `4px solid ${wasPicked ? (hit ? sage : redDark) : line}`,
-      background: wasPicked ? (hit ? sage : badBg) : "#fff",
-      color: wasPicked ? (hit ? "#FFFFFF" : badText) : sage,
+      border: `2px solid ${wasPicked ? (hit ? green : red) : line}`,
+      borderBottom: `4px solid ${wasPicked ? (hit ? greenDark : redDark) : line}`,
+      background: wasPicked ? (hit ? okBg : badBg) : "#fff",
+      color: wasPicked ? (hit ? okText : badText) : "#4F5A36",
       fontWeight: 800,
       cursor,
     };

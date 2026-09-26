@@ -117,20 +117,30 @@ export function memoryCardPaint({
   };
 }
 
-/** Wordle Enter and backspace. Light fills and borders are sage. Dark keeps the unused key. */
+/** Wordle Enter and backspace. Light fill is sage, label and icon are white. Shape stays the unused key. */
 export function wordleActionKeyChrome(theme = "light", base = {}) {
   if (theme === "dark") return base;
   return {
     ...base,
     background: SAGE.sage,
     color: SAGE.onSage,
-    border: `2px solid ${SAGE.sage}`,
-    borderBottom: `4px solid ${SAGE.sage}`,
   };
 }
 
-/** Focused letter-slot underline. Light is sage. Dark is the light sage so the line stays visible. */
-export function letterSlotUnderline(theme = "light", focused = false, ink = "#3C3C3C") {
-  if (!focused) return ink;
-  return theme === "dark" ? SAGE.slotDark : SAGE.sage;
+/** Light Ahorcado end card. Dark keeps darkHangmanEndCardStyle. */
+export function hangmanLightEndChrome() {
+  return {
+    background: SAGE.matchFill,
+    border: `2px solid ${SAGE.sage}`,
+    borderBottom: `4px solid ${SAGE.sage}`,
+    title: SAGE.matchWord,
+    quiet: SAGE.matchGloss,
+  };
+}
+
+/** Letter-slot underline. Active light slot is sage. Empty light slots are the pale sage. Thickness stays with the caller. */
+export function letterSlotUnderline(theme = "light", focused = false, ink = "#3C3C3C", empty = false) {
+  if (focused) return theme === "dark" ? SAGE.slotDark : SAGE.sage;
+  if (empty && theme !== "dark") return SAGE.sageLight;
+  return ink;
 }

@@ -6,6 +6,7 @@ import {
   bucketTileStyle,
   gamesHubCardChrome,
   gamesHubFocusColor,
+  hangmanLightEndChrome,
   letterSlotUnderline,
   memoryCardPaint,
   wordleActionKeyChrome,
@@ -72,24 +73,36 @@ assertNoLime(darkMatch, "dark matched card");
 
 const idle = spanishKeyboardKeyStyle({ theme: "light", status: "idle", light: lightKey });
 const hit = spanishKeyboardKeyStyle({ theme: "light", status: "correct", light: lightKey });
+const present = spanishKeyboardKeyStyle({ theme: "light", status: "present", light: { ...lightKey, wordlePresent: "#96702F" } });
+const miss = spanishKeyboardKeyStyle({ theme: "light", status: "wrong", light: lightKey });
 const enter = wordleActionKeyChrome("light", { ...idle, maxWidth: 112 });
-assert(idle.color === SAGE.sage && idle.background === "#fff", "light key letters are sage on white");
-assert(hit.background === SAGE.sage && hit.color === SAGE.onSage && hit.border === "2px solid #6F7757", "Ahorcado hits fill and border sage");
-assert(enter.background === SAGE.sage && enter.color === SAGE.onSage && enter.borderBottom === "4px solid #6F7757", "Wordle Enter and backspace fill sage");
-assert(enter.maxWidth === 112, "Enter key width stays");
-assert(contrastRatio(idle.color, "#FFFFFF") >= 4.5, "sage letters on white under 4.5");
-assert(contrastRatio(hit.color, hit.background) >= 4.5, "white on sage key under 4.5");
+assert(idle.color === "#4F5A36" && idle.background === "#fff", "unused key letters are #4F5A36 on white");
+assert(idle.border === "2px solid #E5E5E5" && idle.borderBottom === "4px solid #E5E5E5", "unused key edge stays");
+assert(hit.background === "#D7FFB8" && hit.color === "#58A700" && hit.border === "2px solid #58CC02", "correct key colors stay");
+assert(present.background === "#96702F" && present.color === "#FFFFFF", "present key colors stay");
+assert(miss.background === "#FFDFE0" && miss.color === "#EA2B2B", "wrong key colors stay");
+assert(enter.background === SAGE.sage && enter.color === SAGE.onSage, "Wordle Enter and backspace fill sage with a white label");
+assert(enter.border === idle.border && enter.borderBottom === idle.borderBottom && enter.maxWidth === 112 && enter.height === idle.height, "Enter size and shape stay");
+assert(contrastRatio(idle.color, "#FFFFFF") >= 4.5, "idle letters on white under 4.5");
 assert(contrastRatio(enter.color, enter.background) >= 4.5, "Enter label under 4.5");
 assertNoLime(idle, "idle key");
-assertNoLime(hit, "correct key");
 assertNoLime(enter, "enter key");
 const darkEnter = wordleActionKeyChrome("dark", { background: "#1E2128", color: "#F6EFE4", border: "2px solid #2A2E36" });
 assert(darkEnter.background === "#1E2128" && darkEnter.color === "#F6EFE4", "dark Enter stays the unused key");
 
-assert(letterSlotUnderline("light", true, "#3C3C3C") === "#6F7757", "light active slot underline is sage");
-assert(letterSlotUnderline("dark", true, "#E8E8EA") === "#B8C0A0", "dark active slot underline is the light sage");
-assert(letterSlotUnderline("light", false, "#3C3C3C") === "#3C3C3C", "idle slot underline stays the ink");
-assert(!BRIGHT_GREEN.test(letterSlotUnderline("light", true)), "slot underline is not bright green");
-assert(!BRIGHT_GREEN.test(letterSlotUnderline("dark", true)), "dark slot underline is not bright green");
+const end = hangmanLightEndChrome();
+assert(end.background === "#EEF0E6" && end.border === "2px solid #6F7757" && end.borderBottom === "4px solid #6F7757", "light end card is the sage wash with a sage lip");
+assert(end.title === "#4F5A36" && end.quiet === "#5E6650", "end heading and smaller lines");
+assert(contrastRatio(end.title, end.background) >= 4.5, "end heading under 4.5");
+assert(contrastRatio(end.quiet, end.background) >= 4.5, "end smaller lines under 4.5");
+assertNoLime(end, "hangman end");
+
+assert(letterSlotUnderline("light", true, "#3C3C3C", true) === "#6F7757", "light active slot underline is sage");
+assert(letterSlotUnderline("light", false, "#3C3C3C", true) === "#B8C0A0", "empty light slots are #B8C0A0");
+assert(letterSlotUnderline("light", false, "#3C3C3C", false) === "#3C3C3C", "filled idle slot underline stays the ink");
+assert(letterSlotUnderline("dark", true, "#E8E8EA", true) === "#B8C0A0", "dark active slot underline stays");
+assert(letterSlotUnderline("dark", false, "#E8E8EA", true) === "#E8E8EA", "dark empty slots stay the ink");
+assert(!BRIGHT_GREEN.test(letterSlotUnderline("light", true, "#3C3C3C", true)), "active slot underline is not bright green");
+assert(!BRIGHT_GREEN.test(letterSlotUnderline("light", false, "#3C3C3C", true)), "empty slot underline is not bright green");
 
 console.log("ok: sage cleanup chrome");

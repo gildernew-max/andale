@@ -22,7 +22,7 @@ import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.j
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
 import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle, spanishKeyboardKeyStyle } from "./spanishKeyboard.js";
-import { bucketBodyColor, bucketTileStyle, gamesHubCardChrome, gamesHubFocusColor, letterSlotUnderline, memoryCardPaint, wordleActionKeyChrome } from "./sageChrome.js";
+import { bucketBodyColor, bucketTileStyle, gamesHubCardChrome, gamesHubFocusColor, hangmanLightEndChrome, letterSlotUnderline, memoryCardPaint, wordleActionKeyChrome } from "./sageChrome.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { subjFiveLines } from "./subjFive.js";
@@ -10211,8 +10211,10 @@ export default function App() {
         const misses = hangmanMisses(ahorcado);
         const letterLayout = normalizeLetterLayout(prog.letterLayout);
         const letters = ahorcado.letters || [];
-        const endInk = theme === "dark" ? D.ink : "#FFFFFF";
-        const endQuiet = theme === "dark" ? D.sub : "#FFFFFF";
+        const lightEnd = hangmanLightEndChrome();
+        const endTitle = theme === "dark" ? D.ink : lightEnd.title;
+        const endLabel = theme === "dark" ? D.sub : lightEnd.quiet;
+        const endBody = theme === "dark" ? D.ink : lightEnd.quiet;
         return (
           <div data-testid="hangman-board" data-word={ahorcado.word} data-timer={ahorcado.timerOn ? "on" : "off"} style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
@@ -10228,22 +10230,22 @@ export default function App() {
               <HangmanMark size={56} />
             </div>
             {over ? (
-              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", border: "2px solid #6F7757", borderRadius: 14, padding: "11px 13px", background: "#6F7757", ...(theme === "dark" ? darkHangmanEndCardStyle() : {}) }}>
-                {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: endInk, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
-                <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: endInk, margin: "0 0 12px" }}>{ahorcado.word}</div>
+              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", borderRadius: 14, padding: "11px 13px", ...(theme === "dark" ? darkHangmanEndCardStyle() : { background: lightEnd.background, border: lightEnd.border, borderBottom: lightEnd.borderBottom }) }}>
+                {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: endTitle, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
+                <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: endTitle, margin: "0 0 12px" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: endQuiet, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanLiteralLabel(uiLang)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: endInk }}>{hangmanLiteral(ahorcado, uiLang)}</div>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: endLabel, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanLiteralLabel(uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: endBody }}>{hangmanLiteral(ahorcado, uiLang)}</div>
                 </div>
                 <div data-testid="hangman-why" style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: endQuiet, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: endInk }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: endLabel, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: endBody }}>{hangmanWhy(ahorcado, uiLang)}</div>
                 </div>
                 {hangmanRegionChip(ahorcado) && (
                   <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
-                    <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: endQuiet, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
+                    <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: endLabel, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                     {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
-                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: endQuiet, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: endLabel, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
                     )}
                   </div>
                 )}
@@ -10278,7 +10280,7 @@ export default function App() {
                           height: "auto",
                           padding: "4px 8px 2px",
                           border: "none",
-                          borderBottom: `3px solid ${letterSlotUnderline(theme, focused, D.ink)}`,
+                          borderBottom: `3px solid ${letterSlotUnderline(theme, focused, D.ink, !filled)}`,
                           borderRadius: 0,
                           background: "transparent",
                           color: D.ink,
