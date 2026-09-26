@@ -1511,7 +1511,8 @@ assert(appSrc.includes('const MEMORY_DARK_CARD = "#1E2128"'), "Memory dark cards
 assert(appSrc.includes('const MEMORY_DARK_EDGE = "#252830"'), "Memory dark card edge is one step lighter");
 assert(appSrc.includes('const MEMORY_DARK_INK = "#F6EFE4"'), "Memory dark face ink is cream");
 assert(appSrc.includes('const MEMORY_DARK_GLOSS = "#A0A4AB"'), "Memory dark gloss is the muted gray");
-assert(appSrc.includes('const MEMORY_DARK_SAGE = "#6F7757"'), "Memory matched pairs are sage");
+assert(appSrc.includes('const MEMORY_DARK_SAGE = "#677050"'), "Memory matched fill is the darker sage");
+assert(!appSrc.includes('const MEMORY_DARK_SAGE = "#6F7757"'), "Memory matched fill is not the shared map sage");
 assert(appSrc.includes('const MEMORY_DARK_LABEL = "#A0A4AB"'), "Memory dark header labels are the passing gray");
 assert(memorySlice.includes("MEMORY_DARK_CARD"), "Memory playfield uses the dark card");
 assert(memorySlice.includes("HUB_CREAM"), "Memory light face-down stays cream");

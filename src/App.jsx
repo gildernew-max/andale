@@ -2101,7 +2101,8 @@ const MEMORY_DARK_EDGE = "#252830";
 const MEMORY_DARK_INK = "#F6EFE4";
 /** Muted gray. 6.44:1 on the card, including at 70% of the hero. */
 const MEMORY_DARK_GLOSS = "#A0A4AB";
-const MEMORY_DARK_SAGE = "#6F7757";
+/** Matched fill. Cream on this sage is 4.58:1, so the small gloss clears 4.5. */
+const MEMORY_DARK_SAGE = "#677050";
 /** Header labels on the page. 7.17:1 against the page. */
 const MEMORY_DARK_LABEL = "#A0A4AB";
 /** Card-back sage tile, lightened so it stays visible on the dark card. */

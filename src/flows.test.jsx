@@ -116,6 +116,29 @@ const awaitHome = async () => {
 };
 
 const CREAM_FILL = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+
+const channelLum = (v) => {
+  const c = v / 255;
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+};
+
+const parseCssColor = (value) => {
+  const hex = String(value).trim().match(/^#([0-9a-f]{6})$/i);
+  if (hex) {
+    const n = Number.parseInt(hex[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const rgb = String(value).match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (!rgb) throw new Error(`unparsed color ${value}`);
+  return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
+};
+
+const contrastRatio = (fg, bg) => {
+  const lum = (channels) => 0.2126 * channelLum(channels[0]) + 0.7152 * channelLum(channels[1]) + 0.0722 * channelLum(channels[2]);
+  const lighter = Math.max(lum(parseCssColor(fg)), lum(parseCssColor(bg)));
+  const darker = Math.min(lum(parseCssColor(fg)), lum(parseCssColor(bg)));
+  return (lighter + 0.05) / (darker + 0.05);
+};
 const PAGE_WHITE = /^(#fff|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\))$/i;
 
 const ELLIPSIS_RE = /…|\.\.\.$/;
@@ -2580,7 +2603,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const edge = /#252830|rgb\(\s*37,\s*40,\s*48\s*\)/i;
     const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
     const gloss = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
-    const sage = /#6F7757|rgb\(\s*111,\s*119,\s*87\s*\)/i;
+    const sage = /#677050|rgb\(\s*103,\s*112,\s*80\s*\)/i;
     const label = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
     expect(screen.getByTestId("app-shell").style.background).toMatch(page);
     expect(document.body.style.background).toMatch(page);
@@ -2611,8 +2634,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(matchedCard.style.background).toMatch(sage);
     expect(matchedCard.style.color).toMatch(cream);
     expect(matchedCard.querySelector("[data-testid='memory-card-word']").textContent).toBe("camioneta colectiva");
-    expect(matchedCard.querySelector("[data-testid='memory-card-gloss']").style.color).toMatch(cream);
-    expect(matchedCard.querySelector("[data-testid='memory-card-gloss']").style.fontSize).toBe("0.7em");
+    const matchedGloss = matchedCard.querySelector("[data-testid='memory-card-gloss']");
+    expect(matchedGloss.style.color).toMatch(cream);
+    expect(matchedGloss.style.fontSize).toBe("0.7em");
+    expect(contrastRatio(matchedGloss.style.color, matchedCard.style.background)).toBeGreaterThanOrEqual(4.5);
     expect(screen.getByTestId("memory-mark").querySelectorAll("rect")[1].getAttribute("fill")).toBe("#B8C0A0");
   });
 
