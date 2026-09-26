@@ -2093,11 +2093,34 @@ const JeopardyMark = ({ size = 44 }) => (
   </svg>
 );
 
+/** Dark-game Memory board. Light mode keeps the cream / white / terracotta chrome. */
+const MEMORY_DARK_PAGE = "#15171C";
+const MEMORY_DARK_CARD = "#1E2128";
+/** Soft gray, one step lighter than the card (same step as D_DARK.subtle). */
+const MEMORY_DARK_EDGE = "#252830";
+const MEMORY_DARK_INK = "#F6EFE4";
+/** Muted gray. 6.44:1 on the card, including at 70% of the hero. */
+const MEMORY_DARK_GLOSS = "#A0A4AB";
+const MEMORY_DARK_SAGE = "#6F7757";
+/** Header labels on the page. 7.17:1 against the page. */
+const MEMORY_DARK_LABEL = "#A0A4AB";
+/** Card-back sage tile, lightened so it stays visible on the dark card. */
+const MEMORY_DARK_MARK = "#B8C0A0";
+
 /** Flat geometric two-tile / flip-card mark — cream / terracotta / sage. No second mascot. */
-const MemoryMark = ({ size = 44, labeled = false }) => (
+const MemoryMark = ({ size = 44, labeled = false, onDark = false }) => (
   <svg data-testid={labeled ? "memory-mark" : undefined} width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
     <rect x="5" y="9" width="16" height="26" rx="4" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="2" />
-    <rect x="23" y="9" width="16" height="26" rx="4" fill="#5C7356" />
+    <rect
+      x="23"
+      y="9"
+      width="16"
+      height="26"
+      rx="4"
+      fill={onDark ? MEMORY_DARK_MARK : "#5C7356"}
+      stroke={onDark ? MEMORY_DARK_INK : undefined}
+      strokeWidth={onDark ? 2 : undefined}
+    />
   </svg>
 );
 
@@ -2163,6 +2186,8 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
   const cardsRef = useRef({});
   const done = isMemoryDone(run);
   const teach = memoryShowTeach(run) ? memoryEntryForRun(run) : null;
+  const darkBoard = D === D_DARK;
+  const labelColor = darkBoard ? MEMORY_DARK_LABEL : D.sub;
 
   const onCardPointerDown = (e, id) => {
     if (run.status !== "play" || run.miss) return;
@@ -2198,18 +2223,18 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
   };
 
   return (
-    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box" }}>
+    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: labelColor, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{memoryTitle(uiLang)}</div>
-          <div data-testid="memory-quiet" style={{ fontSize: 12, fontWeight: 700, color: D.sub }}>{memoryQuiet(uiLang)}</div>
+          <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: labelColor }}>{memoryTitle(uiLang)}</div>
+          <div data-testid="memory-quiet" style={{ fontSize: 12, fontWeight: 700, color: labelColor }}>{memoryQuiet(uiLang)}</div>
         </div>
-        <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
+        <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: labelColor }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
         <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
       </div>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-        <MemoryMark size={40} labeled />
+        <MemoryMark size={40} labeled onDark={darkBoard} />
       </div>
       {done ? (
         <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
@@ -2222,7 +2247,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
         </div>
       ) : (
         <>
-          <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
+          <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: labelColor, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
           <div data-testid="memory-grid" data-cols="3" className="memory-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gridAutoRows: `minmax(${MEMORY_CARD_MIN}px, auto)`, gap: 8, width: "100%", maxWidth: "none", justifyItems: "stretch", alignItems: "stretch" }}>
             {(run.cards || []).map((card) => {
               const open = memoryIsOpen(run, card);
@@ -2230,8 +2255,22 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
               const hovered = drag?.hover === card.id;
               const wrong = run.miss && (run.lastWrong || []).includes(card.id);
               const showFace = open || dragging;
+              const matched = open && (run.matched || []).includes(card.pairId);
               const text = memoryCardText(card, uiLang, run);
               const gloss = memoryCardTranslation(card, uiLang, run);
+              const borderSide = darkBoard
+                ? (wrong ? D.red : MEMORY_DARK_EDGE)
+                : (wrong ? D.red : hovered ? "#C46B3A" : open ? D.green : "#C46B3A");
+              const borderFoot = darkBoard
+                ? (wrong ? D.redDark : MEMORY_DARK_EDGE)
+                : (wrong ? D.redDark : hovered ? "#C46B3A" : open ? D.greenDark : "#C46B3A");
+              const background = darkBoard
+                ? (showFace ? (wrong ? D.redBg : matched ? MEMORY_DARK_SAGE : MEMORY_DARK_CARD) : MEMORY_DARK_CARD)
+                : (showFace ? (wrong ? D.redBg : matched ? D.greenBg : "#fff") : HUB_CREAM);
+              const ink = darkBoard
+                ? (wrong ? D.redDark : MEMORY_DARK_INK)
+                : (wrong ? D.redDark : matched ? D.greenDark : D.ink);
+              const glossColor = darkBoard ? (matched && !wrong ? MEMORY_DARK_INK : MEMORY_DARK_GLOSS) : D.sub;
               return (
                 <div key={card.id} className="memory-cell" style={{ minHeight: MEMORY_CARD_MIN, width: "100%", minWidth: 0, display: "flex", height: "100%" }}>
                   <button
@@ -2268,10 +2307,10 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       top: dragging ? drag.y - (drag.dy || 0) : undefined,
                       zIndex: dragging ? 20 : 1,
                       margin: 0,
-                      border: `2px solid ${wrong ? D.red : hovered ? "#C46B3A" : open ? D.green : "#C46B3A"}`,
-                      borderBottom: `4px solid ${wrong ? D.redDark : hovered ? "#C46B3A" : open ? D.greenDark : "#C46B3A"}`,
-                      background: showFace ? (wrong ? D.redBg : open && (run.matched || []).includes(card.pairId) ? D.greenBg : "#fff") : HUB_CREAM,
-                      color: wrong ? D.redDark : open && (run.matched || []).includes(card.pairId) ? D.greenDark : D.ink,
+                      border: `2px solid ${borderSide}`,
+                      borderBottom: `4px solid ${borderFoot}`,
+                      background,
+                      color: ink,
                       borderRadius: 18,
                       padding: showFace ? "14px 8px" : "16px 8px",
                       fontFamily: "inherit",
@@ -2288,7 +2327,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       touchAction: "none",
                     }}
                   >
-                    {showFace ? <MemoryCardFace word={text} translation={gloss} color={D.sub} /> : <MemoryMark size={MEMORY_CARD_MARK} />}
+                    {showFace ? <MemoryCardFace word={text} translation={gloss} color={glossColor} /> : <MemoryMark size={MEMORY_CARD_MARK} onDark={darkBoard} />}
                   </button>
                 </div>
               );

@@ -1506,6 +1506,17 @@ assert(!/data-testid="memory-card"[\s\S]{0,1200}minHeight: 96/.test(memorySlice)
 assert(!/data-testid="memory-card"[\s\S]{0,900}fontSize: 15/.test(memorySlice), "Memory face type is not the old 15px chip");
 assert(!/data-testid="memory-card"[\s\S]{0,1200}fontSize: 20[,}]/.test(memorySlice), "Memory face type is not the 20px nudge");
 assert(memorySlice.includes("memory-literal-why"), "Literal · Why stays under the grid");
+assert(appSrc.includes('const MEMORY_DARK_PAGE = "#15171C"'), "Memory dark page is #15171C");
+assert(appSrc.includes('const MEMORY_DARK_CARD = "#1E2128"'), "Memory dark cards are #1E2128");
+assert(appSrc.includes('const MEMORY_DARK_EDGE = "#252830"'), "Memory dark card edge is one step lighter");
+assert(appSrc.includes('const MEMORY_DARK_INK = "#F6EFE4"'), "Memory dark face ink is cream");
+assert(appSrc.includes('const MEMORY_DARK_GLOSS = "#A0A4AB"'), "Memory dark gloss is the muted gray");
+assert(appSrc.includes('const MEMORY_DARK_SAGE = "#6F7757"'), "Memory matched pairs are sage");
+assert(appSrc.includes('const MEMORY_DARK_LABEL = "#A0A4AB"'), "Memory dark header labels are the passing gray");
+assert(memorySlice.includes("MEMORY_DARK_CARD"), "Memory playfield uses the dark card");
+assert(memorySlice.includes("HUB_CREAM"), "Memory light face-down stays cream");
+assert(memorySlice.includes('"#fff"'), "Memory light face-up stays white");
+assert(memorySlice.includes('"#C46B3A"'), "Memory light border stays terracotta");
 assert(/\.word-chip \{[^}]*min-width:\s*min-content/.test(appSrc), "word-chip min-width is the word, not 0");
 assert(!/\.word-chip \{[^}]*min-width:\s*0;/.test(appSrc), "word-chip CSS does not shrink below content");
 assert(/\.word-chip \{[^}]*text-overflow:\s*unset/.test(appSrc), "word-chip CSS has no ellipsis");
