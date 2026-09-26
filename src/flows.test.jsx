@@ -142,7 +142,10 @@ const assertMemoryBoardCard = (el, text) => {
     expect(glossEl.textContent.startsWith("(")).toBe(true);
     expect(glossEl.textContent.endsWith(")")).toBe(true);
     expect(glossEl.textContent).not.toMatch(ELLIPSIS_RE);
-    expect(Number.parseFloat(glossEl.style.fontSize)).toBeLessThan(Number.parseFloat(el.style.fontSize));
+    expect(glossEl.style.fontSize).toBe("0.7em");
+    expect(glossEl.style.fontFamily).toBe("inherit");
+    expect(glossEl.style.fontWeight).toBe("inherit");
+    expect(glossEl.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
     expect(el.textContent).toContain(text);
     expect(el.textContent).toContain(glossEl.textContent);
     expect(el.getAttribute("aria-label")).toBe(`${text} ${glossEl.textContent}`);

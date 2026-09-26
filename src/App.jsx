@@ -2273,7 +2273,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       background: showFace ? (wrong ? D.redBg : open && (run.matched || []).includes(card.pairId) ? D.greenBg : "#fff") : HUB_CREAM,
                       color: wrong ? D.redDark : open && (run.matched || []).includes(card.pairId) ? D.greenDark : D.ink,
                       borderRadius: 18,
-                      padding: "16px 8px",
+                      padding: showFace ? "14px 8px" : "16px 8px",
                       fontFamily: "inherit",
                       fontWeight: 900,
                       fontSize: MEMORY_CARD_TYPE,
@@ -2287,7 +2287,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       touchAction: "none",
                     }}
                   >
-                    {showFace ? <MemoryCardFace word={text} translation={gloss} /> : <MemoryMark size={MEMORY_CARD_MARK} />}
+                    {showFace ? <MemoryCardFace word={text} translation={gloss} color={D.sub} /> : <MemoryMark size={MEMORY_CARD_MARK} />}
                   </button>
                 </div>
               );

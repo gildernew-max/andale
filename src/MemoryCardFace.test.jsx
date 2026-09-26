@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryCardFace, MEMORY_CARD_GLOSS_PX } from "./MemoryCardFace.jsx";
+import { MemoryCardFace, MEMORY_CARD_GLOSS_COLOR, MEMORY_CARD_GLOSS_SCALE } from "./MemoryCardFace.jsx";
 import {
   MEMORY_BANK,
   memoryCardLabel,
@@ -31,15 +31,25 @@ describe("MemoryCardFace", () => {
     expect(screen.getByTestId("memory-card-word").textContent).toBe("chamba");
     expect(screen.getByTestId("memory-card-gloss").textContent).toBe("(a job / work)");
     expect(screen.getByTestId("memory-card").getAttribute("aria-label")).toBe("chamba (a job / work)");
-    expect(Number.parseFloat(screen.getByTestId("memory-card-gloss").style.fontSize)).toBe(MEMORY_CARD_GLOSS_PX);
-    expect(MEMORY_CARD_GLOSS_PX).toBeLessThan(26);
-    expect(screen.getByTestId("memory-card-word").style.fontSize).toBe("");
+    const gloss = screen.getByTestId("memory-card-gloss");
+    const word = screen.getByTestId("memory-card-word");
+    expect(MEMORY_CARD_GLOSS_COLOR).toBe("#777777");
+    expect(MEMORY_CARD_GLOSS_SCALE).toBeCloseTo(0.7);
+    expect(gloss.style.fontSize).toBe(`${MEMORY_CARD_GLOSS_SCALE}em`);
+    expect(gloss.style.fontFamily).toBe("inherit");
+    expect(gloss.style.fontWeight).toBe("inherit");
+    expect(gloss.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
+    expect(word.style.fontSize).toBe("");
+    expect(word.style.fontFamily).toBe("");
+    expect(word.style.color).toBe("");
   });
 
   it("shows the English meaning with the Spanish lemma in parentheses", () => {
     render(<FaceUpCard card={meaningCard} uiLang="en" />);
     expect(screen.getByTestId("memory-card-word").textContent).toBe("a job / work");
     expect(screen.getByTestId("memory-card-gloss").textContent).toBe("(chamba)");
+    expect(screen.getByTestId("memory-card-gloss").style.fontSize).toBe("0.7em");
+    expect(screen.getByTestId("memory-card-gloss").style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
     expect(screen.getByTestId("memory-card").getAttribute("aria-label")).toBe("a job / work (chamba)");
   });
 

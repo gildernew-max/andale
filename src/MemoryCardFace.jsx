@@ -1,8 +1,9 @@
-/** Partner gloss under the hero word. Smaller than the 26px face lock so it stays inside the card. */
-export const MEMORY_CARD_GLOSS_PX = 12;
+/** Partner gloss is the hero face, at 70% size, in the muted secondary gray. */
+export const MEMORY_CARD_GLOSS_SCALE = 0.7;
+export const MEMORY_CARD_GLOSS_COLOR = "#777777";
 
 /** Face-up Memory card: hero word, then the partner in parentheses on the next line. */
-export function MemoryCardFace({ word, translation }) {
+export function MemoryCardFace({ word, translation, color = MEMORY_CARD_GLOSS_COLOR }) {
   if (!word) return null;
   return (
     <span
@@ -16,7 +17,7 @@ export function MemoryCardFace({ word, translation }) {
         minWidth: 0,
         maxWidth: "100%",
         textAlign: "center",
-        gap: 2,
+        gap: 1,
       }}
     >
       <span
@@ -40,8 +41,11 @@ export function MemoryCardFace({ word, translation }) {
             width: "100%",
             minWidth: 0,
             maxWidth: "100%",
-            fontSize: MEMORY_CARD_GLOSS_PX,
-            lineHeight: 1.15,
+            fontFamily: "inherit",
+            fontWeight: "inherit",
+            fontSize: `${MEMORY_CARD_GLOSS_SCALE}em`,
+            color,
+            lineHeight: 1.05,
             whiteSpace: "normal",
             overflowWrap: "anywhere",
             wordBreak: "break-word",
