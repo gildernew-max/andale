@@ -22,6 +22,7 @@ import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.j
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
+import { MemoryCardFace } from "./MemoryCardFace.jsx";
 import { subjFiveLines } from "./subjFive.js";
 import {
   sobremesaDeepen,
@@ -140,7 +141,9 @@ import {
   finishMemoryRun,
   hydrateMemory,
   isMemoryDone,
+  memoryCardLabel,
   memoryCardText,
+  memoryCardTranslation,
   memoryHowTo,
   memoryIsOpen,
   memoryLiteralWhyLabel,
@@ -2228,6 +2231,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
               const wrong = run.miss && (run.lastWrong || []).includes(card.id);
               const showFace = open || dragging;
               const text = memoryCardText(card, uiLang, run);
+              const gloss = memoryCardTranslation(card, uiLang, run);
               return (
                 <div key={card.id} className="memory-cell" style={{ minHeight: MEMORY_CARD_MIN, width: "100%", minWidth: 0, display: "flex", height: "100%" }}>
                   <button
@@ -2238,6 +2242,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                     data-pair={card.pairId}
                     data-kind={card.kind}
                     data-face={showFace ? "up" : "down"}
+                    aria-label={showFace ? memoryCardLabel(card, uiLang, run) : undefined}
                     data-open={open ? "yes" : "no"}
                     data-miss={wrong ? "yes" : "no"}
                     data-card-min={MEMORY_CARD_MIN}
@@ -2282,7 +2287,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       touchAction: "none",
                     }}
                   >
-                    {showFace ? text : <MemoryMark size={MEMORY_CARD_MARK} />}
+                    {showFace ? <MemoryCardFace word={text} translation={gloss} /> : <MemoryMark size={MEMORY_CARD_MARK} />}
                   </button>
                 </div>
               );

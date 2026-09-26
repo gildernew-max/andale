@@ -150,6 +150,23 @@ export function memoryCardText(card, uiLang, run) {
   return memoryMeaning(entry, uiLang);
 }
 
+/** Partner face. A lemma card reads the meaning; a meaning card reads the lemma. */
+export function memoryCardTranslation(card, uiLang, run) {
+  const entry = memoryEntry(run, card?.pairId);
+  if (!entry || !card) return "";
+  if (card.kind === "word") return memoryMeaning(entry, uiLang);
+  return entry.word;
+}
+
+/** Face-up accessible name: the card word plus its parenthesized partner. */
+export function memoryCardLabel(card, uiLang, run) {
+  const word = memoryCardText(card, uiLang, run);
+  const gloss = memoryCardTranslation(card, uiLang, run);
+  if (!word) return "";
+  if (!gloss) return word;
+  return `${word} (${gloss})`;
+}
+
 export function memoryIsOpen(run, card) {
   if (!run || !card) return false;
   return (run.matched || []).includes(card.pairId) || (run.faceUp || []).includes(card.id);

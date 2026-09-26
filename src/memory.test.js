@@ -19,7 +19,9 @@ import {
   finishMemoryRun,
   hydrateMemory,
   isMemoryDone,
+  memoryCardLabel,
   memoryCardText,
+  memoryCardTranslation,
   memoryHasDeadLabel,
   memoryHowTo,
   memoryIsOpen,
@@ -104,6 +106,14 @@ const broncaWord = run.cards.find((card) => card.pairId === "bronca" && card.kin
 assert(memoryCardText(chambaWord, "en", run) === "chamba", "word bubble is the lemma");
 assert(memoryCardText(chambaMeaning, "en", run) === "a job / work", "meaning bubble follows uiLang EN");
 assert(memoryCardText(chambaMeaning, "es", run) === "trabajo / chamba", "meaning bubble follows uiLang ES");
+assert(memoryCardTranslation(chambaWord, "en", run) === "a job / work", "Spanish card translation is the English partner");
+assert(memoryCardTranslation(chambaMeaning, "en", run) === "chamba", "English card translation is the Spanish partner");
+assert(memoryCardTranslation(chambaWord, "es", run) === "trabajo / chamba", "ES uiLang lemma card uses the ES partner gloss");
+assert(memoryCardTranslation(chambaMeaning, "es", run) === "chamba", "meaning card translation stays the lemma");
+assert(memoryCardLabel(chambaWord, "en", run) === "chamba (a job / work)", "EN lemma accessible name is word plus parenthesized partner");
+assert(memoryCardLabel(chambaMeaning, "en", run) === "a job / work (chamba)", "EN meaning accessible name is word plus parenthesized lemma");
+assert(memoryCardLabel(chambaWord, "es", run) === "chamba (trabajo / chamba)", "ES lemma accessible name uses the ES partner");
+assert(memoryCardLabel(chambaMeaning, "es", run) === "trabajo / chamba (chamba)", "ES meaning accessible name uses the lemma");
 
 run = applyMemoryTap(run, chambaWord.id);
 assert(run.faceUp.includes(chambaWord.id), "first tap flips the card");
