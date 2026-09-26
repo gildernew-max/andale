@@ -29,7 +29,7 @@ export const WORDLE_ANSWERS = [
   { word: "MUSEO", display: "museo", es: "El museo abre los domingos.", en: "The museum opens on Sundays." },
   { word: "SALGA", display: "salga", es: "Espero que el camión salga a tiempo.", en: "I hope the bus leaves on time." },
   { word: "PAPEL", display: "papel", es: "Se acabó el papel de baño.", en: "We're out of toilet paper." },
-  { word: "NIÑOS", display: "niños", es: "Los niños juegan en el jardín.", en: "The kids play in the garden." },
+  { word: "NIÑOS", display: "niños", es: "Los niños juegan en el parque.", en: "The kids play in the park." },
   { word: "PONGA", display: "ponga", es: "Dígale que ponga la mesa.", en: "Tell him to set the table." },
   { word: "SUEÑO", display: "sueño", es: "Tengo mucho sueño.", en: "I'm really sleepy." },
   { word: "PEDIR", display: "pedir", es: "Voy a pedir la cuenta.", en: "I'm going to ask for the check." },
