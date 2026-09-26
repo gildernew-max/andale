@@ -22,6 +22,7 @@ import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.j
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
 import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle, spanishKeyboardKeyStyle } from "./spanishKeyboard.js";
+import { bucketBodyColor, bucketTileStyle, gamesHubCardChrome, gamesHubFocusColor, letterSlotUnderline, memoryCardPaint, wordleActionKeyChrome } from "./sageChrome.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { subjFiveLines } from "./subjFive.js";
@@ -2088,6 +2089,14 @@ const HubTileArt = ({ face }) => (
   />
 );
 
+/** Flat line-art bucket. Sage body, terracotta handle. No water, no gradient. */
+const BucketMark = ({ size = 44, body = "#6F7757" }) => (
+  <svg data-testid="cubetas-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
+    <path d="M15 15.2v-1.8a7 7 0 0 1 14 0v1.8" fill="none" stroke="#C46B3A" strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M11 17.2h22l-2.15 16.4a2.6 2.6 0 0 1-2.6 2.3H15.75a2.6 2.6 0 0 1-2.6-2.3L11 17.2z" fill={body} />
+  </svg>
+);
+
 /** Flat geometric gallows — cream / terracotta / sage. No body, no second mascot. */
 const HangmanMark = ({ size = 44 }) => (
   <svg data-testid="hangman-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
@@ -2189,7 +2198,7 @@ const MEMORY_CARD_FACE = {
 };
 
 /** One-screen Memory playfield. Tap two cards or drag a pair. Soft chrome parked. */
-const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, onLang }) => {
+const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, onClose, onAgain, onLang }) => {
   const [drag, setDrag] = useState(null);
   const dragRef = useRef(null);
   const cardsRef = useRef({});
@@ -2259,10 +2268,22 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
             {(run.cards || []).map((card) => {
               const open = memoryIsOpen(run, card);
               const dragging = drag?.fromId === card.id;
-              const hovered = drag?.hover === card.id;
               const wrong = run.miss && (run.lastWrong || []).includes(card.id);
               const showFace = open || dragging;
+              const matched = open && (run.matched || []).includes(card.pairId);
               const text = memoryCardText(card, uiLang, run);
+              const paint = memoryCardPaint({
+                theme,
+                matched,
+                wrong,
+                faceUp: showFace,
+                kind: card.kind,
+                wrongBorder: D.red,
+                wrongLip: D.redDark,
+                wrongFill: D.redBg,
+                wrongInk: D.redDark,
+                ink: D.ink,
+              });
               return (
                 <div key={card.id} className="memory-cell" style={{ minHeight: MEMORY_CARD_MIN, width: "100%", minWidth: 0, display: "flex", height: "100%" }}>
                   <button
@@ -2298,10 +2319,10 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       top: dragging ? drag.y - (drag.dy || 0) : undefined,
                       zIndex: dragging ? 20 : 1,
                       margin: 0,
-                      border: `2px solid ${wrong ? D.red : hovered ? "#C46B3A" : open ? D.green : "#C46B3A"}`,
-                      borderBottom: `4px solid ${wrong ? D.redDark : hovered ? "#C46B3A" : open ? D.greenDark : "#C46B3A"}`,
-                      background: showFace ? (wrong ? D.redBg : open && (run.matched || []).includes(card.pairId) ? D.greenBg : "#fff") : HUB_CREAM,
-                      color: wrong ? D.redDark : open && (run.matched || []).includes(card.pairId) ? D.greenDark : D.ink,
+                      border: paint.border,
+                      borderBottom: paint.borderBottom,
+                      background: paint.background,
+                      color: paint.color,
                       borderRadius: 18,
                       padding: "16px 8px",
                       fontFamily: "inherit",
@@ -4364,10 +4385,10 @@ const WordleKeys = ({ D, dark, layout, marks, disabled, onPick, onEnter, onBacks
     wordlePresent: WORDLE_PRESENT,
     wordleWrong: WORDLE_ABSENT,
   };
-  const actionStyle = {
+  const actionStyle = wordleActionKeyChrome(theme, {
     ...spanishKeyboardKeyStyle({ theme, status: "unused", disabled, light }),
     maxWidth: 112,
-  };
+  });
   return (
     <div data-testid="letter-board" data-layout={mode}>
       <div style={{ display: "grid", gap: 6 }}>
@@ -7404,6 +7425,7 @@ export default function App() {
         .duo-btn { transition: transform .05s, filter .1s; }
         .duo-btn:hover:not(:disabled) { filter: brightness(1.05); }
         button:focus-visible, input:focus-visible { outline: 3px solid ${D.blue}; outline-offset: 2px; }
+        .games-hub-card:hover, .games-hub-card:focus-visible { outline: 2px solid ${gamesHubFocusColor(theme)}; outline-offset: 2px; }
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         .bounce { animation: bounce 1.1s ease-in-out infinite; }
         @keyframes pop { 0%{opacity:.35} 100%{opacity:1} }
@@ -10067,10 +10089,10 @@ export default function App() {
             <div data-testid="games-hub-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{L.hubGames}</div>
             <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
           </div>
-          <button onClick={() => startCubetas("games")} data-testid="cubetas-start"
-            style={{ display: "block", width: "100%", margin: "0 0 10px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => startCubetas("games")} data-testid="cubetas-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 10px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.green, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.greenDark}` }}>🪣</span>
+              <span data-testid="cubetas-tile" style={bucketTileStyle(theme)}><BucketMark size={28} body={bucketBodyColor(theme)} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{cubetasTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Sort the phrase. Subjunctive or indicative." : "Clasifica la frase. Subjuntivo o indicativo."}</div>
@@ -10078,8 +10100,8 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={() => startAhorcado("games")} data-testid="hangman-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => startAhorcado("games")} data-testid="hangman-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -10089,8 +10111,8 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={() => startJeopardy("games")} data-testid="jeopardy-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => startJeopardy("games")} data-testid="jeopardy-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -10100,8 +10122,8 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={() => startWordle("games")} data-testid="wordle-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => startWordle("games")} data-testid="wordle-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -10111,8 +10133,8 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={() => startMemory("games")} data-testid="memory-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => startMemory("games")} data-testid="memory-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -10189,6 +10211,8 @@ export default function App() {
         const misses = hangmanMisses(ahorcado);
         const letterLayout = normalizeLetterLayout(prog.letterLayout);
         const letters = ahorcado.letters || [];
+        const endInk = theme === "dark" ? D.ink : "#FFFFFF";
+        const endQuiet = theme === "dark" ? D.sub : "#FFFFFF";
         return (
           <div data-testid="hangman-board" data-word={ahorcado.word} data-timer={ahorcado.timerOn ? "on" : "off"} style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
@@ -10204,22 +10228,22 @@ export default function App() {
               <HangmanMark size={56} />
             </div>
             {over ? (
-              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, ...(theme === "dark" ? darkHangmanEndCardStyle() : {}) }}>
-                {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
-                <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px" }}>{ahorcado.word}</div>
+              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", border: "2px solid #6F7757", borderRadius: 14, padding: "11px 13px", background: "#6F7757", ...(theme === "dark" ? darkHangmanEndCardStyle() : {}) }}>
+                {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: endInk, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
+                <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: endInk, margin: "0 0 12px" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanLiteralLabel(uiLang)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanLiteral(ahorcado, uiLang)}</div>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: endQuiet, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanLiteralLabel(uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: endInk }}>{hangmanLiteral(ahorcado, uiLang)}</div>
                 </div>
                 <div data-testid="hangman-why" style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: endQuiet, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: endInk }}>{hangmanWhy(ahorcado, uiLang)}</div>
                 </div>
                 {hangmanRegionChip(ahorcado) && (
                   <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
-                    <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
+                    <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: endQuiet, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                     {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
-                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: endQuiet, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
                     )}
                   </div>
                 )}
@@ -10254,7 +10278,7 @@ export default function App() {
                           height: "auto",
                           padding: "4px 8px 2px",
                           border: "none",
-                          borderBottom: `3px solid ${focused ? D.green : D.ink}`,
+                          borderBottom: `3px solid ${letterSlotUnderline(theme, focused, D.ink)}`,
                           borderRadius: 0,
                           background: "transparent",
                           color: D.ink,
@@ -10431,6 +10455,7 @@ export default function App() {
           uiLang={uiLang}
           D={D}
           L={L}
+          theme={theme}
           onTap={onMemoryTap}
           onPair={onMemoryPair}
           onClose={closeGamesSurface}

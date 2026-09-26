@@ -1929,8 +1929,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hangman-literal")).toBeTruthy());
     expect(screen.getByTestId("hangman-win").textContent).toBe("That's it.");
     expect(screen.getByTestId("hangman-word").textContent).toBe(word);
-    expect(screen.getByTestId("hangman-end").style.background).toMatch(/#F3FBEA|rgb\(\s*243,\s*251,\s*234\s*\)/i);
-    expect(screen.getByTestId("hangman-end").style.border).toMatch(/2px solid (#58CC02|rgb\(\s*88,\s*204,\s*2\s*\))/i);
+    expect(screen.getByTestId("hangman-end").style.background).toMatch(/#6F7757|rgb\(\s*111,\s*119,\s*87\s*\)/i);
+    expect(screen.getByTestId("hangman-end").style.borderTopWidth).toBe("2px");
+    expect(screen.getByTestId("hangman-end").style.borderTopColor).toMatch(/#6F7757|rgb\(\s*111,\s*119,\s*87\s*\)/i);
+    expect(screen.getByTestId("hangman-again").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     const literal = screen.getByTestId("hangman-literal");
     const why = screen.getByTestId("hangman-why");
     expect(literal.textContent).toMatch(/^Literal/);
@@ -5819,9 +5821,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("letter-layout-qwerty").getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByTestId("letter-layout-abc").getAttribute("aria-pressed")).toBe("false");
     expect(document.body.textContent).not.toMatch(/switch to ABC|keyboard layout|elige el teclado|press QWERTY/i);
-    const lime = /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i;
+    const sageInk = /#6F7757|rgb\(\s*111,\s*119,\s*87\s*\)/i;
     qwertyChips.forEach((chip) => {
-      expect(chip.style.color).toMatch(lime);
+      expect(chip.style.color).toMatch(sageInk);
+      expect(chip.style.color).not.toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
       expect(chip.style.background).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
       expect(Number.parseInt(chip.style.fontWeight, 10)).toBeGreaterThanOrEqual(800);
     });

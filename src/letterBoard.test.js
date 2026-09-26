@@ -67,12 +67,14 @@ const LIGHT = {
 
 const lightIdle = spanishKeyboardKeyStyle({ theme: "light", status: "idle", light: LIGHT });
 assert(lightIdle.background === "#fff", "light idle key is white");
-assert(lightIdle.color === "#58CC02", "light idle key is CHECK lime");
+assert(lightIdle.color === "#6F7757", "light idle key is sage");
+assert(contrastRatio(lightIdle.color, lightIdle.background) >= 4.5, "light idle key text under 4.5");
 assert(lightIdle.fontWeight === 800 && lightIdle.fontSize === 14 && lightIdle.height === 38 && lightIdle.maxWidth === 38, "light key size unchanged");
 assert(lightIdle.border === "2px solid #E5E5E5" && lightIdle.borderBottom === "4px solid #E5E5E5", "light idle lip unchanged");
 const lightHit = spanishKeyboardKeyStyle({ theme: "light", status: "correct", light: LIGHT });
-assert(lightHit.background === "#D7FFB8" && lightHit.color === "#58A700" && lightHit.fontWeight === 800, "light correct key unchanged");
-assert(lightHit.border === "2px solid #58CC02" && lightHit.borderBottom === "4px solid #46A302", "light correct lip unchanged");
+assert(lightHit.background === "#6F7757" && lightHit.color === "#FFFFFF" && lightHit.fontWeight === 800, "light correct key is white on sage");
+assert(contrastRatio(lightHit.color, lightHit.background) >= 4.5, "light correct key text under 4.5");
+assert(lightHit.border === "2px solid #6F7757" && lightHit.borderBottom === "4px solid #6F7757", "light correct lip is sage");
 const lightMiss = spanishKeyboardKeyStyle({ theme: "light", status: "wrong", light: LIGHT });
 assert(lightMiss.background === "#FFDFE0" && lightMiss.color === "#EA2B2B", "light miss key unchanged");
 assert(lightMiss.border === "2px solid #FF4B4B" && lightMiss.borderBottom === "4px solid #EA2B2B", "light miss lip unchanged");
@@ -112,7 +114,7 @@ assert(darkIdle.color === "#F6EFE4" && darkIdle.background === "#1E2128", "idle 
 assert(darkUnused.background === "#1E2128" && darkUnused.color === "#F6EFE4" && darkUnused.border === "2px solid #2A2E36", "unused key matches the idle dark face");
 const lightWordle = spanishKeyboardKeyStyle({ theme: "light", status: "correct", light: { ...LIGHT, wordleCorrect: "#5C7356" } });
 assert(lightWordle.background === "#5C7356" && lightWordle.color === "#FFFFFF", "Wordle can keep its light correct key");
-assert(lightHit.background === "#D7FFB8", "Ahorcado light correct key stays the green chip");
+assert(lightHit.background === "#6F7757" && lightHit.color === "#FFFFFF", "Ahorcado light correct key is sage, not the lime chip");
 assert(Math.abs(contrastRatio(darkIdle.color, darkIdle.background) - 14.11) < 0.02, "idle key is 14.11:1");
 assert(Math.abs(contrastRatio(darkCorrect.color, darkCorrect.background) - 4.58) < 0.02, "correct key is 4.58:1");
 assert(darkIdle.background !== darkWrong.background && darkIdle.color !== darkWrong.color, "idle and wrong keys differ");
