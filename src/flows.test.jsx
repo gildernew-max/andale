@@ -6150,7 +6150,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("paywall_seen")[0].name).toBeUndefined();
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
