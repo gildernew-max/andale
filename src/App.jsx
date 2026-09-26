@@ -4332,7 +4332,7 @@ const LangToggle = ({ uiLang, D, onPick, style }) => (
   </div>
 );
 
-const WordlePlay = ({ run, uiLang, invalid, shake, layout, onType, onBackspace, onCommit, onLayoutChange, onClose, onLang }) => {
+const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, onType, onBackspace, onCommit, onLayoutChange, onClose, onLang }) => {
   const rows = wordleRows(run);
   const keyMarks = wordleKeyState(run.guesses, run.answer);
   const over = run.status !== "play";
@@ -4358,21 +4358,21 @@ const WordlePlay = ({ run, uiLang, invalid, shake, layout, onType, onBackspace, 
             >
               {row.letters.map((letter, ci) => {
                 const mark = row.marks[ci];
+                const flipping = flipRow === ri && !!mark;
                 return (
                   <div
                     key={ci}
                     data-testid="wordle-tile"
                     data-mark={mark || "empty"}
                     data-letter={letter}
-                    className="wordle-tile"
-                    style={mark ? {
-                      background: `var(--wordle-${mark})`,
-                      color: `var(--wordle-${mark}-ink)`,
-                      borderColor: "transparent",
-                    } : {
-                      background: letter ? "#fff" : "transparent",
-                      color: "#3C3C3C",
-                      borderColor: letter ? "#5C7356" : "#E0D2C2",
+                    className={flipping ? "wordle-tile wordle-flip" : "wordle-tile"}
+                    style={{
+                      "--flip-i": ci,
+                      "--tile-bg": mark ? `var(--wordle-${mark})` : "#fff",
+                      "--tile-ink": mark ? `var(--wordle-${mark}-ink)` : "#3C3C3C",
+                      background: mark ? `var(--wordle-${mark})` : "#fff",
+                      color: mark ? `var(--wordle-${mark}-ink)` : "#3C3C3C",
+                      borderColor: mark ? "transparent" : "#C9BBA8",
                     }}
                   >{letter}</div>
                 );
@@ -4383,9 +4383,9 @@ const WordlePlay = ({ run, uiLang, invalid, shake, layout, onType, onBackspace, 
       </div>
       <div data-testid="wordle-invalid" className="wordle-note">{invalid ? wordleInvalidLine(uiLang) : ""}</div>
       {over && (
-        <div data-testid="wordle-reveal" className="wordle-reveal">
-          <div data-testid="wordle-answer">{run.word}</div>
-          <div data-testid="wordle-sentence">{run.sentence}</div>
+        <div data-testid="wordle-reveal" className="wordle-reveal" data-display={run.display}>
+          <div data-testid="wordle-sentence">{run.es}</div>
+          <div data-testid="wordle-gloss">{run.en}</div>
         </div>
       )}
       <div className="wordle-keys">
@@ -4541,6 +4541,7 @@ export default function App() {
   const [wordle, setWordle] = useState(null);
   const [wordleInvalid, setWordleInvalid] = useState(false);
   const [wordleShake, setWordleShake] = useState(0);
+  const [wordleFlip, setWordleFlip] = useState(null);
   const wordleRef = useRef(null);
   const [cubetasGame, setCubetasGame] = useState(null);
   const [memoryGame, setMemoryGame] = useState(null);
@@ -5193,6 +5194,7 @@ export default function App() {
     setWordle(run);
     setWordleInvalid(false);
     setWordleShake(0);
+    setWordleFlip(null);
     setScreen("wordle");
   };
 
@@ -5227,6 +5229,7 @@ export default function App() {
     }
     wordleRef.current = result.run;
     setWordleInvalid(false);
+    setWordleFlip(result.run.guesses.length - 1);
     setWordle(result.run);
   };
 
@@ -6341,6 +6344,7 @@ export default function App() {
       setWordle(loadWordleRun(window.localStorage, new Date()));
       setWordleInvalid(false);
       setWordleShake(0);
+      setWordleFlip(null);
     }
     if (live.cubetasGame) {
       setCubetasGame(live.cubetasGame);
@@ -6498,6 +6502,7 @@ export default function App() {
       setWordle(next);
       setWordleInvalid(false);
       setWordleShake(0);
+      setWordleFlip(null);
       return;
     }
     saveWordleRun(window.localStorage, wordle);
@@ -7200,12 +7205,13 @@ export default function App() {
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 900; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-900.woff2') format('woff2'); }
         html, body, #root { margin: 0; padding: 0; width: 100%; max-width: 100%; }
         :root {
-          --wordle-correct: #5C7356;
-          --wordle-correct-ink: #F6EFE4;
-          --wordle-present: #8C6239;
-          --wordle-present-ink: #F6EFE4;
-          --wordle-absent: #6F6560;
-          --wordle-absent-ink: #F6EFE4;
+          /* Correct reuses the Cubetas / lockup sage. Present is a muted mustard darkened so white letters clear 4.5:1 and stay lighter than the sage. */
+          --wordle-correct: ${MARK_INK};
+          --wordle-correct-ink: #fff;
+          --wordle-present: #96702F;
+          --wordle-present-ink: #fff;
+          --wordle-absent: #7E756E;
+          --wordle-absent-ink: #fff;
         }
         .wordle-screen {
           /* Sticky brand bar is 56px. The board fills what's left so the keyboard stays on screen. */
@@ -7234,14 +7240,14 @@ export default function App() {
           grid-template-rows: repeat(6, minmax(0, 1fr));
           gap: 4px;
         }
-        .wordle-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; min-height: 0; min-width: 0; }
+        .wordle-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; min-height: 0; min-width: 0; perspective: 420px; }
         .wordle-tile {
           box-sizing: border-box;
           width: 100%;
           height: 100%;
           min-width: 0;
           min-height: 0;
-          border: 2px solid #E0D2C2;
+          border: 1px solid #C9BBA8;
           border-radius: 8px;
           display: flex;
           align-items: center;
@@ -7250,11 +7256,24 @@ export default function App() {
           font-size: clamp(15px, 4.8vw, 26px);
           line-height: 1;
           text-transform: uppercase;
+          background: #fff;
+          color: #3C3C3C;
+          transform-style: preserve-3d;
+        }
+        @keyframes wordleFlip {
+          0% { transform: rotateX(0); background: #fff; color: #3C3C3C; border-color: #C9BBA8; }
+          45% { transform: rotateX(-90deg); background: #fff; color: #3C3C3C; border-color: #C9BBA8; }
+          55% { transform: rotateX(-90deg); background: var(--tile-bg); color: var(--tile-ink); border-color: transparent; }
+          100% { transform: rotateX(0); background: var(--tile-bg); color: var(--tile-ink); border-color: transparent; }
+        }
+        .wordle-flip {
+          animation: wordleFlip 420ms ease both;
+          animation-delay: calc(var(--flip-i) * 80ms);
         }
         .wordle-note { flex: 0 0 auto; min-height: 18px; text-align: center; font-size: 13px; font-weight: 800; color: #6F6560; line-height: 1.2; }
-        .wordle-reveal { flex: 0 0 auto; text-align: center; padding: 2px 8px 4px; }
-        .wordle-reveal [data-testid="wordle-answer"] { font-weight: 900; font-size: 18px; letter-spacing: .08em; text-transform: uppercase; color: #5C7356; }
-        .wordle-reveal [data-testid="wordle-sentence"] { font-size: 14px; font-weight: 700; line-height: 1.35; color: #3C3C3C; }
+        .wordle-reveal { flex: 0 0 auto; text-align: center; padding: 2px 8px 4px; font-size: 16px; }
+        .wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 800; line-height: 1.35; color: #3C3C3C; }
+        .wordle-reveal [data-testid="wordle-gloss"] { font-size: 0.7em; font-weight: 700; line-height: 1.35; color: #777777; margin-top: 2px; }
         .wordle-keys { flex: 0 0 auto; width: 100%; max-width: 100%; }
         @keyframes wordleShake {
           0%, 100% { transform: translateX(0); }
@@ -7342,7 +7361,7 @@ export default function App() {
         @keyframes cubetasGemTick { 0%{transform:translateY(8px) scale(.6);opacity:0} 35%{transform:translateY(-4px) scale(1.1);opacity:1} 100%{transform:translateY(-18px) scale(1);opacity:0} }
         .cubetas-gem-tick { animation: cubetasGemTick 360ms ${CUBETAS_EASE_LIFT} ${CUBETAS_GRAB_MS}ms both; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
-        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track { animation:none !important; } }
+        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track,.wordle-flip { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
         .node-btn:active:not(:disabled) { transform: translateY(3px); }
@@ -10277,6 +10296,7 @@ export default function App() {
           uiLang={uiLang}
           invalid={wordleInvalid}
           shake={wordleShake}
+          flipRow={wordleFlip}
           layout={normalizeLetterLayout(prog.letterLayout)}
           onType={typeWordleLetter}
           onBackspace={backspaceWordle}

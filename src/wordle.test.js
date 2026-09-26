@@ -45,9 +45,9 @@ for (const word of WORDLE_FIVE) {
 }
 assert(WORDLE_FIVE.includes("niños"), "ñ stays ñ in niños");
 assert(WORDLE_FIVE.includes("cañon") && WORDLE_FIVE.includes("canon"), "cañon and canon are both real and distinct");
-assert(WORDLE_FIVE.includes("hagas") && WORDLE_FIVE.includes("digas") && WORDLE_FIVE.includes("sepas") && WORDLE_FIVE.includes("vayas"), "subjunctive forms are guessable");
-assert(WORDLE_FIVE.includes("venga") && WORDLE_FIVE.includes("tenga") && WORDLE_FIVE.includes("pueda"), "more subjunctive forms are guessable");
-assert(WORDLE_FIVE.includes("casas") && WORDLE_FIVE.includes("vivas"), "plurals are guessable");
+for (const form of ["venga", "hagas", "digas", "sepan", "hayan", "quepa", "oigas", "pague", "sigas", "pedir", "pagar", "salir", "tomar", "niños", "tacos"]) {
+  assert(WORDLE_FIVE.includes(form), `${form} is a native guess`);
+}
 
 assert(WORDLE_TITLE.es === "Palabra del día" && WORDLE_TITLE.en === "Word of the day", "title is ES/EN");
 assert(wordleTitle("es") === "Palabra del día" && wordleTitle("en") === "Word of the day", "title helper follows uiLang");
@@ -86,15 +86,24 @@ const upgraded = wordleKeyState(["aroma", "feria"], "feria");
 assert(upgraded.R === "correct" && upgraded.A === "correct", "a later correct replaces present");
 
 const dict = wordleGuessSet();
-assert(dict.size >= WORDLE_FIVE.length, "guess set includes the filtered list");
+assert(dict.size === WORDLE_FIVE.length, "guess set is the word list alone");
+assert(WORDLE_ANSWERS.length === 60, "60-day list");
 for (const row of WORDLE_ANSWERS) {
   const norm = normalizeWordle(row.word);
   assert(wordleChars(norm).length === WORDLE_LENGTH, `${row.word} is 5 letters after normalization`);
-  assert(dict.has(norm), `${row.word} is in the valid-guess set`);
+  assert(row.word === norm.toLocaleUpperCase("es"), `${row.word} is stored unaccented and uppercase`);
+  assert(normalizeWordle(row.display) === norm, `${row.display} folds to ${row.word}`);
+  assert(WORDLE_FIVE.includes(norm), `${row.word} is in the valid-guess set`);
   assert(isWordleGuess(row.word), `${row.word} passes isWordleGuess`);
-  assert(typeof row.sentence === "string" && row.sentence.trim(), `${row.word} has a sentence`);
+  assert(row.es && row.en, `${row.word} has Spanish and English`);
+  assert(row.es.toLocaleLowerCase("es").includes(row.display.toLocaleLowerCase("es")), `${row.display} is in the Spanish sentence`);
 }
-assert(WORDLE_ANSWERS.length > 0, "answers list is not empty");
+assert(WORDLE_ANSWERS[18].word === "JABON" && WORDLE_ANSWERS[18].display === "jabón", "jabón keeps its display accent");
+assert(WORDLE_ANSWERS[25].word === "NIÑOS" && WORDLE_ANSWERS[25].display === "niños", "ñ stays in NIÑOS");
+assert(WORDLE_ANSWERS[27].word === "SUEÑO" && WORDLE_ANSWERS[27].display === "sueño", "sueño keeps ñ");
+assert(WORDLE_ANSWERS[36].word === "LIMON" && WORDLE_ANSWERS[36].display === "limón", "limón keeps its display accent");
+assert(WORDLE_ANSWERS[44].word === "ESTES" && WORDLE_ANSWERS[44].display === "estés", "estés keeps its display accent");
+assert(!isWordleGuess("qqqqq"), "a gap is not filled by unioning the answer in");
 
 const late = new Date(2026, 8, 26, 23, 59, 30);
 const early = new Date(2026, 8, 27, 0, 0, 1);
@@ -105,7 +114,9 @@ assert(wordleLocalDayIndex(new Date(2026, 0, 1, 0, 30)) === 0, "epoch morning is
 assert(wordleLocalDayIndex(new Date(2026, 8, 26, 15)) === 268, "2026-09-26 is day 268");
 assert(wordleAnswerForDate(new Date(2026, 8, 26, 8)).word === wordleAnswerForDate(new Date(2026, 8, 26, 23)).word, "same local date, same answer");
 assert(wordleAnswerForDate(late).word !== wordleAnswerForDate(early).word, "next local day is a different answer");
-assert(wordleAnswerForDate(new Date(2026, 8, 26)).word === "digas", "day 268 picks digas from the placeholder bank");
+assert(wordleAnswerForDate(new Date(2026, 8, 26)).word === "PEDIR", "day 268 picks PEDIR");
+assert(wordleAnswerForDate(new Date(2026, 8, 26)).display === "pedir", "PEDIR reveal spelling");
+assert(wordleAnswerForDate(new Date(2026, 8, 26)).es === "Voy a pedir la cuenta.", "PEDIR Spanish sentence");
 assert(wordleLocalDayIndex(new Date(2028, 2, 1)) === wordleLocalDayIndex(new Date(2028, 1, 29)) + 1, "leap day is its own index");
 assert(wordleLocalDayIndex(new Date(2028, 1, 29)) === wordleLocalDayIndex(new Date(2028, 1, 28)) + 1, "2028-02-29 follows 2028-02-28");
 const beforeEpoch = wordleAnswerForDate(new Date(2025, 11, 31));
@@ -146,11 +157,11 @@ run = step.run;
 assert(run.guesses.join("|") === "salsa|dicha" && run.status === "play", "second guess is kept");
 saveWordleRun(store, run);
 const restored = loadWordleRun(store, new Date(2026, 8, 26, 18));
-assert(restored.guesses.join("|") === "salsa|dicha" && restored.status === "play" && restored.answer === "digas", "reload restores today's board");
+assert(restored.guesses.join("|") === "salsa|dicha" && restored.status === "play" && restored.answer === "pedir", "reload restores today's board");
 const nextDay = loadWordleRun(store, new Date(2026, 8, 27, 1));
 assert(nextDay.guesses.length === 0 && nextDay.status === "play" && nextDay.day === "2026-09-27", "a new local day starts empty");
 
-for (const ch of "digas") run = wordleTypeLetter(run, ch);
+for (const ch of "pedir") run = wordleTypeLetter(run, ch);
 step = wordleCommit(run, dict);
 assert(step.run.status === "win" && step.run.guesses.length === 3, "the answer wins");
 saveWordleRun(store, step.run);

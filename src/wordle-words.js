@@ -5,8 +5,8 @@
  *  https://github.com/lorenbrichter/Words/blob/master/LICENSE
  *  Filtered to exactly 5 letters after accent normalization (áéíóúü → aeiou).
  *  Ñ stays Ñ and is not folded into N. Lowercase, deduped. Includes inflected
- *  forms (conjugations, including subjunctive, and plurals). Answer words are
- *  unioned in at runtime so a later answers list stays guessable.
+ *  forms (conjugations, including subjunctive, and plurals). Answers are not
+ *  unioned in; a word missing from this list is not a valid guess.
  *  Count: 10836
  */
 export const WORDLE_FIVE = `

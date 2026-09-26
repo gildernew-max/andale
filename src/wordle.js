@@ -3,6 +3,7 @@
  *  Duplicate letters follow Wordle rules: greens first, then the leftover
  *  counts mark present, and anything beyond that is absent.
  *  Guesses come from the CC0 Letterpress list in wordle-words.js.
+ *  Answers are not added to that set. A missing answer fails the test.
  */
 
 import { WORDLE_ANSWERS } from "./wordle-answers.js";
@@ -134,29 +135,25 @@ export function wordleAnswerForDate(date = new Date(), answers = WORDLE_ANSWERS)
 
 let guessCache = null;
 
-/** Five-letter list, plus every answer, so a new answer is always guessable. */
-export function wordleGuessSet(answers = WORDLE_ANSWERS) {
-  if (!guessCache) {
-    guessCache = new Set(WORDLE_FIVE);
-    for (const row of answers) {
-      const word = normalizeWordle(row?.word);
-      if (word) guessCache.add(word);
-    }
-  }
+/** The filtered list alone. Answers are not unioned in. */
+export function wordleGuessSet() {
+  if (!guessCache) guessCache = new Set(WORDLE_FIVE);
   return guessCache;
 }
 
-export function isWordleGuess(word, answers = WORDLE_ANSWERS) {
-  return wordleGuessSet(answers).has(normalizeWordle(word));
+export function isWordleGuess(word) {
+  return wordleGuessSet().has(normalizeWordle(word));
 }
 
 export function freshWordleRun(date = new Date(), answers = WORDLE_ANSWERS) {
-  const entry = wordleAnswerForDate(date, answers) || { word: "", sentence: "" };
+  const entry = wordleAnswerForDate(date, answers) || { word: "", display: "", es: "", en: "" };
   return {
     day: wordleDayKey(date),
     word: entry.word,
+    display: entry.display || "",
+    es: entry.es || "",
+    en: entry.en || "",
     answer: normalizeWordle(entry.word),
-    sentence: entry.sentence || "",
     guesses: [],
     draft: "",
     status: "play",
