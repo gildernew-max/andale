@@ -5470,6 +5470,8 @@ export default function App() {
   };
 
   const q = session?.questions?.[qi] ?? null;
+  /** Word-order matches Crucigrama: cream + light ink, not the dark theme surfaces. */
+  const orderSurface = q?.type === "order";
 
   /* ---------- grading ---------- */
 
@@ -8951,6 +8953,7 @@ export default function App() {
 
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
+        <div data-testid={orderSurface ? "order-cream-page" : undefined} style={orderSurface ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : undefined}>
         <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
@@ -8959,7 +8962,7 @@ export default function App() {
           )}
           {burst > 0 && status !== "idle" && status !== "wrong" && inter && <Confetti key={burst} count={28} />}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 26 }}>
-            <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+            <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: orderSurface ? D_LIGHT.ink : D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div style={{ flex: 1, height: 16, background: D.line, borderRadius: 99, overflow: "hidden" }}>
               <div style={{ width: `${pct}%`, height: "100%", background: D.green, borderRadius: 99, transition: "width .25s", position: "relative", overflow: "hidden" }}>
                 <div className="shimmer" />
@@ -9085,13 +9088,13 @@ export default function App() {
                     <div className="idle"><CoachPortrait id={session.host} mood="happy" size={86} /></div>
                     <span className="nametag">{coachName(session.host)}</span>
                   </div>
-                  <div style={{ position: "relative", border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", background: D.card, flex: 1, marginBottom: 14 }}>
-                    <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
+                  <div data-testid={q.type === "order" ? "order-prompt" : undefined} style={{ position: "relative", border: `2px solid ${q.type === "order" ? D_LIGHT.line : D.line}`, borderRadius: 16, padding: "14px 16px", background: q.type === "order" ? HUB_CREAM : D.card, color: q.type === "order" ? D_LIGHT.ink : D.ink, flex: 1, marginBottom: 14 }}>
+                    <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: q.type === "order" ? HUB_CREAM : D.card, borderLeft: `2px solid ${q.type === "order" ? D_LIGHT.line : D.line}`, borderBottom: `2px solid ${q.type === "order" ? D_LIGHT.line : D.line}`, transform: "rotate(45deg)" }} />
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                       <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                       <div>
                         <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{q.prompt}</div>
-                        {q.note ? <div style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
+                        {q.note ? <div style={{ fontSize: 13, color: q.type === "order" ? D_LIGHT.ink : D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
                       </div>
                     </div>
                   </div>
@@ -9219,9 +9222,9 @@ export default function App() {
             )}
 
             {q.type === "order" && (
-              <div style={theme === "dark" ? undefined : { background: HUB_CREAM }}>
-                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", marginBottom: 6, ...(theme === "dark" ? {} : { background: HUB_CREAM }) }}>
-	                  {placed.length === 0 && <span style={{ color: D.sub, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
+              <div style={{ background: HUB_CREAM, color: D_LIGHT.ink }}>
+                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${D_LIGHT.line}`, borderTop: `2px solid ${D_LIGHT.line}`, padding: "10px 4px", marginBottom: 6, background: HUB_CREAM }}>
+	                  {placed.length === 0 && <span style={{ color: D_LIGHT.ink, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
                   {placed.map((id, index) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
                     const label = orderTileLabel(t.w, { answer: q.answer, placedIndex: index });
@@ -9230,9 +9233,7 @@ export default function App() {
                         title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
                         aria-label={`${label}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                         onClick={() => unplaceOrderTile(id)}
-                        style={theme === "dark"
-                          ? { background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }
-                          : { background: HUB_CREAM, borderColor: D.line, borderBottomColor: D.line, color: D.ink }}>
+                        style={{ background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }}>
                         {label}
                         <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                       </button>
@@ -9241,10 +9242,10 @@ export default function App() {
                 </div>
                 {placed.length > 0 && status === "idle" && (
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 800, color: D.sub }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 800, color: D_LIGHT.ink }}>
                       {uiLang === "en" ? "Tap a placed word to move it." : "Toca una ficha colocada para moverla."}
                     </div>
-                    <button type="button" onClick={() => { setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: D.sub, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
+                    <button type="button" onClick={() => { setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: D_LIGHT.ink, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
                       {uiLang === "en" ? "Clear" : "Borrar"}
                     </button>
                   </div>
@@ -9264,7 +9265,10 @@ export default function App() {
                           style={{
                             visibility: used ? "hidden" : "visible",
                             pointerEvents: used ? "none" : "auto",
-                            ...(theme === "dark" ? {} : { background: HUB_CREAM, borderColor: D.line, borderBottomColor: D.line, color: D.ink }),
+                            background: HUB_CREAM,
+                            borderColor: D_LIGHT.line,
+                            borderBottomColor: D_LIGHT.line,
+                            color: D_LIGHT.ink,
                           }}>
                           {label}
                         </button>
@@ -9298,14 +9302,14 @@ export default function App() {
           </div>
 
           {/* ---------- ACTION BAR with mascot ---------- */}
-          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? D.card : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderSurface ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderSurface ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
             <div style={{ maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
               {status !== "idle" && (
                 <div className={status === "wrong" ? "" : "jump"} style={{ flexShrink: 0 }}>
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? D.sub : D.okText }}>
+              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderSurface ? D_LIGHT.ink : D.sub) : D.okText }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
                     <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: 0.85 }}>
@@ -9370,6 +9374,7 @@ export default function App() {
               ) : null}
             </div>
           </div>
+        </div>
         </div>
       )}
 

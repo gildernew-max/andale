@@ -43,7 +43,7 @@ const mockSpeech = () => {
   };
 };
 
-const seedLesson = (q) => {
+const seedLesson = (q, extra = {}) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     welcomed: true,
     xp: 42,
@@ -53,6 +53,7 @@ const seedLesson = (q) => {
     hearts: 5,
     uiLang: "es",
     done: {},
+    ...extra,
   }));
   localStorage.setItem(LIVE_KEY, JSON.stringify({
     screen: "lesson",
@@ -71,10 +72,10 @@ const seedLesson = (q) => {
   }));
 };
 
-const openOrder = async (q) => {
+const openOrder = async (q, extra) => {
   localStorage.clear();
   mockSpeech();
-  seedLesson(q);
+  seedLesson(q, extra);
   render(<App />);
   await waitFor(() => expect(screen.getByTestId("order-tile-bank")).toBeTruthy());
 };
@@ -190,5 +191,39 @@ describe("word-order tile layout", () => {
     isFlow(getComputedStyle(screen.getByTestId("order-tile-bank")));
     isFlow(getComputedStyle(screen.getByTestId("order-answer-row")));
     tiles.forEach(isIntrinsicTile);
+  });
+
+  it("stays cream and ink in dark mode, same as Crucigrama", async () => {
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const ink = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
+    const line = /#E5E5E5|rgb\(\s*229,\s*229,\s*229\s*\)/i;
+    const user = userEvent.setup();
+    await openOrder(orderQuestion(
+      AGRADEZCO_WORDS,
+      "Le agradezco de antemano su atención",
+      "Construye el cierre formal: “I thank you in advance for your attention.”",
+    ), { theme: "dark" });
+
+    const page = screen.getByTestId("order-cream-page");
+    expect(page.style.background).toMatch(cream);
+    expect(page.style.color).toMatch(ink);
+    expect(screen.getByTestId("order-prompt").style.background).toMatch(cream);
+    expect(screen.getByTestId("order-prompt").style.color).toMatch(ink);
+    expect(screen.getByTestId("order-prompt").style.borderTopColor).toMatch(line);
+    expect(screen.getByTestId("order-answer-row").style.background).toMatch(cream);
+
+    const bank = screen.getAllByTestId("bank-tile");
+    bank.forEach((tile) => {
+      expect(tile.style.background).toMatch(cream);
+      expect(tile.style.color).toMatch(ink);
+      expect(tile.style.borderTopColor).toMatch(line);
+    });
+
+    await user.click(screen.getByRole("button", { name: "le" }));
+    const placed = screen.getByTestId("placed-tile");
+    expect(placed.style.background).toMatch(cream);
+    expect(placed.style.color).toMatch(ink);
+    expect(placed.style.borderTopColor).toMatch(line);
+    expect(document.body.style.background).not.toMatch(cream);
   });
 });
