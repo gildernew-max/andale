@@ -12,10 +12,9 @@ import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { detectNativeIap, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
+import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
+import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
 import { FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
-import { saveWaitlistNotice, shouldShowFreePathWaitlist } from "./waitlist.js";
-import { WaitlistStrip } from "./WaitlistStrip.jsx";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
 import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
@@ -39,7 +38,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
-import { CenzontleFlyAway, PaywallFlyAway } from "./PaywallFlyAway.jsx";
+import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
 import {
   CUBETAS_BIRD_PX,
@@ -4381,8 +4380,6 @@ export default function App() {
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
   const [paywallArmed, setPaywallArmed] = useState(false);
-  const [waitlistDraft, setWaitlistDraft] = useState("");
-  const [waitlistNote, setWaitlistNote] = useState(null);
   const paywallBusyRef = useRef(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
   const [a2hsSheet, setA2hsSheet] = useState(false);
@@ -6434,9 +6431,13 @@ export default function App() {
     splash: splashOpen,
   });
   const canCharge = detectNativeIap();
+  const [storePrices, setStorePrices] = useState({ annual: null, monthly: null });
+  const [restoreStatus, setRestoreStatus] = useState(null);
+  const [restoreHold, setRestoreHold] = useState(false);
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
-  const showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
+  // A successful Restore tap holds the wall so the status line stays readable.
+  const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
   useEffect(() => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.open });
   }, []);
@@ -6449,6 +6450,14 @@ export default function App() {
       setPaywallArmed(false);
     }
   }, [showSoftPaywall]);
+  useEffect(() => {
+    if (!canCharge) return undefined;
+    let cancelled = false;
+    getProducts().then((prices) => {
+      if (!cancelled) setStorePrices(prices);
+    });
+    return () => { cancelled = true; };
+  }, [canCharge]);
   useEffect(() => {
     if (!showSoftPaywall) {
       setPaywallArmed(false);
@@ -6690,6 +6699,7 @@ export default function App() {
     if (!fromBackdrop) {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.continueFree });
     }
+    setRestoreHold(false);
     setSoftPaywall(false);
     setPaywallArmed(false);
     setPostDismissHandoff(true);
@@ -6702,19 +6712,6 @@ export default function App() {
     if (showA2hs) setA2hsSheet(true);
     save({ paywallSeen: true, ...(showA2hs ? { a2hsSeen: true } : {}) });
   };
-  const onWaitlistDraft = (value) => {
-    setWaitlistDraft(value);
-    if (waitlistNote === "error") setWaitlistNote(null);
-  };
-  const submitSoftPaywallWaitlist = (formEvent) => {
-    formEvent.preventDefault();
-    if (!saveWaitlistNotice(waitlistDraft).ok) {
-      setWaitlistNote("error");
-      return;
-    }
-    emitFunnelEvent({ event: FUNNEL_EVENTS.waitlistSubmit });
-    setWaitlistNote("ok");
-  };
   const buySoftPaywall = async (plan) => {
     if (paywallBusyRef.current) return;
     paywallBusyRef.current = true;
@@ -6726,8 +6723,29 @@ export default function App() {
         plan: result.plan,
         productId: result.productId,
       }));
+      setRestoreHold(false);
       setSoftPaywall(false);
       setPaywallArmed(false);
+    } finally {
+      paywallBusyRef.current = false;
+    }
+  };
+  const applyRestoredPurchase = (result) => {
+    if (result?.status !== "success" || !result.charged) return;
+    save((prev) => (prev.unlockedPrem ? prev : progressAfterPurchaseSuccess(prev, {
+      plan: result.plan,
+      productId: result.productId,
+    })));
+  };
+  const restoreSoftPaywall = async () => {
+    if (paywallBusyRef.current) return;
+    paywallBusyRef.current = true;
+    try {
+      const result = await restorePurchases();
+      applyRestoredPurchase(result);
+      const key = restoreStatusKey(result);
+      setRestoreStatus(key);
+      if (key === "success") setRestoreHold(true);
     } finally {
       paywallBusyRef.current = false;
     }
@@ -7278,23 +7296,6 @@ export default function App() {
               </div>
             );
           })()}
-          {shouldShowFreePathWaitlist({
-            onFreePath: true,
-            paywallOpen: showSoftPaywall,
-            paywallDismissed: postDismissHandoff || !!prog.paywallSeen,
-            unlockedPrem: !!prog.unlockedPrem,
-          }) && (
-            <WaitlistStrip
-              uiLang={uiLang}
-              draft={waitlistDraft}
-              note={waitlistNote}
-              ink={D.ink}
-              sub={D.sub}
-              onDraft={onWaitlistDraft}
-              onSubmit={submitSoftPaywallWaitlist}
-              style={{ margin: "4px 0 14px" }}
-            />
-          )}
           {/* daily goal + Rayo: after first win only — empty 0/40 theater stays off the door */}
           {showDoorMeta && (
           <div data-testid="door-meta" style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0 6px", fontSize: 13, fontWeight: 800, color: D.sub }}>
@@ -8674,16 +8675,37 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one Cenzontle fly-away, George words, loud annual / outline monthly / quiet free. Waitlist may preview under continue free; the same strip stays on the hub after dismiss. Surface cream lock = Learn home HUB_CREAM. Soft chrome parked. Membership attach stays out of this surface. */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Surface cream lock = Learn home HUB_CREAM. Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
           <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
-            <PaywallFlyAway />
+            <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
             <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: D.ink }}>{L.paywallHeadline}</div>
             <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
+              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
               <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: HUB_CREAM }}>{L.paywallMonthly}</Btn>
+              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
+              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: D.sub, lineHeight: 1.45 }}>
+                {disclosureLines(uiLang, storePrices).map((line, i) => (
+                  <p key={i} data-testid={`soft-paywall-disclosure-${i}`} style={{ margin: i === 0 ? "2px 0 0" : "6px 0 0", fontSize: 11, fontWeight: 700, lineHeight: 1.45 }}>
+                    {i === 0 && line.startsWith("Ándale Premium")
+                      ? <><strong>Ándale Premium</strong>{line.slice("Ándale Premium".length)}</>
+                      : line}
+                  </p>
+                ))}
+              </div>
+              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>
+                <a data-testid="soft-paywall-terms" href={TERMS_OF_USE_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].terms}</a>
+                {" · "}
+                <a data-testid="soft-paywall-privacy" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].privacy}</a>
+                {" · "}
+                <a data-testid="soft-paywall-restore" href="#restore" onClick={(event) => { event.preventDefault(); restoreSoftPaywall(); }} style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].restore}</a>
+              </div>
+              {restoreStatus && (
+                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
+              )}
               {!canCharge && (
               <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
@@ -8693,15 +8715,6 @@ export default function App() {
                 style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
                 {L.paywallDismiss}
               </button>
-              <WaitlistStrip
-                uiLang={uiLang}
-                draft={waitlistDraft}
-                note={waitlistNote}
-                ink={D.ink}
-                sub={D.sub}
-                onDraft={onWaitlistDraft}
-                onSubmit={submitSoftPaywallWaitlist}
-              />
             </div>
           </div>
         </div>

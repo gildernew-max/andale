@@ -109,10 +109,11 @@ assert(!/flap-then-perch|paywall-fly-perch/i.test(flySrc + helperSrc), "flap-the
 
 assert(appSrc.includes("from \"./PaywallFlyAway.jsx\""), "App imports paywall fly-away");
 assert(appSrc.includes("CenzontleFlyAway"), "App imports the shared fly-away");
-assert(/<PaywallFlyAway\s*\/>/.test(paywallLayout), "paywall mounts fly-away on the existing bird surface");
-assert(!/<LogoMark size=\{44\} data-testid="soft-paywall-cenzontle"/.test(paywallLayout), "static LogoMark is off the gate");
-assert((paywallLayout.match(/<PaywallFlyAway/g) || []).length === 1, "one fly-away only");
-assert((paywallLayout.match(/<LogoMark/g) || []).length === 0, "no second perched mark on the modal");
+assert(!/<PaywallFlyAway/.test(paywallLayout), "paywall does not fly the bird");
+assert(/<LogoMark size=\{44\} data-testid="soft-paywall-cenzontle"/.test(paywallLayout), "static Cenzontle is back on the gate");
+assert((paywallLayout.match(/<PaywallFlyAway/g) || []).length === 0, "no fly-away on the wall");
+assert((paywallLayout.match(/<LogoMark/g) || []).length === 1, "one static bird on the modal");
+assert(!/animation|paywall-fly|soft-paywall-cenzontle-wing/.test(paywallLayout), "no animation on the wall");
 assert(!/Enroll|enroll|\$99/.test(paywallLayout), "fly-away does not open Enroll / second $99");
 const doneSlice = appSrc.slice(appSrc.indexOf("{/* ---------- DONE ---------- */}"), appSrc.indexOf("{/* ---------- FIRST-SESSION DOCTORA CLOSE"));
 assert(doneSlice.includes("<CenzontleFlyAway"), "free win mounts the shared fly-away");

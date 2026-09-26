@@ -86,6 +86,12 @@ async function capacitorRestore() {
   return AndaleIap.restore();
 }
 
+async function capacitorGetProducts({ productIds }) {
+  const { registerPlugin } = await import("@capacitor/core");
+  const AndaleIap = registerPlugin("AndaleIap");
+  return AndaleIap.getProducts({ productIds });
+}
+
 function nativePurchaseFn(deps = {}) {
   if (typeof deps.nativePurchase === "function") return deps.nativePurchase;
   if (typeof window !== "undefined" && typeof window.__andaleNativePurchase === "function") {
@@ -100,6 +106,14 @@ function nativeRestoreFn(deps = {}) {
     return window.__andaleNativeRestore;
   }
   return capacitorRestore;
+}
+
+function nativeGetProductsFn(deps = {}) {
+  if (typeof deps.nativeGetProducts === "function") return deps.nativeGetProducts;
+  if (typeof window !== "undefined" && typeof window.__andaleNativeGetProducts === "function") {
+    return window.__andaleNativeGetProducts;
+  }
+  return capacitorGetProducts;
 }
 
 function normalizeNativeResult(result, { plan, productId }) {
@@ -183,5 +197,35 @@ export async function restorePurchases(deps = {}) {
     };
   } catch (err) {
     return { status: "failure", charged: false, reason: err?.message || "storekit_failure" };
+  }
+}
+
+function displayPriceFor(list, productId) {
+  const row = list.find((item) => (item?.id || item?.productId) === productId);
+  const price = typeof row?.displayPrice === "string" ? row.displayPrice.trim() : "";
+  return price || null;
+}
+
+/**
+ * StoreKit 2 localized displayPrice for the two premium products.
+ * Both prices are used together, or neither: a missing product, a plugin
+ * error, or web returns null for both so the paywall keeps the locked pair.
+ * Does not emit purchase.
+ */
+export async function getProducts(deps = {}) {
+  const empty = { annual: null, monthly: null };
+  if (!detectNativeIap(deps.env)) return empty;
+  try {
+    const result = await nativeGetProductsFn(deps)({
+      productIds: [IAP_PRODUCTS.annual, IAP_PRODUCTS.monthly],
+    });
+    if (!result || result.status === "failure") return empty;
+    const list = Array.isArray(result.products) ? result.products : [];
+    const annual = displayPriceFor(list, IAP_PRODUCTS.annual);
+    const monthly = displayPriceFor(list, IAP_PRODUCTS.monthly);
+    if (!annual || !monthly) return empty;
+    return { annual, monthly };
+  } catch {
+    return empty;
   }
 }

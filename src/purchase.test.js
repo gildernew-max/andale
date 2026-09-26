@@ -7,6 +7,7 @@ import {
   planForProductId,
   productIdForPlan,
   progressAfterPurchaseSuccess,
+  getProducts,
   requestPurchase,
   restorePurchases,
 } from "./purchase.js";
@@ -172,5 +173,66 @@ const monthlySuccess = await requestPurchase("monthly", {
 });
 assert(monthlySuccess.plan === "monthly" && funnelPurchase().at(-1).plan === "monthly", "monthly success emits funnel purchase");
 assert(funnelPurchase().at(-1).productId === IAP_PRODUCTS.monthly, "monthly success keeps the stub id");
+
+const webPrices = await getProducts();
+assert(webPrices.annual == null && webPrices.monthly == null, "web getProducts has no displayPrice");
+
+const beforeProducts = funnelPurchase().length;
+let seenIds = null;
+const nativePrices = await getProducts({
+  env: { isNative: true, platform: "ios" },
+  nativeGetProducts: async ({ productIds }) => {
+    seenIds = productIds;
+    return {
+      products: [
+        { id: productIds[0], displayPrice: "CA$54.99" },
+        { id: productIds[1], displayPrice: " CA$9.99 " },
+      ],
+    };
+  },
+});
+assert(seenIds[0] === IAP_PRODUCTS.annual && seenIds[1] === IAP_PRODUCTS.monthly, "getProducts asks for the stub ids");
+assert(nativePrices.annual === "CA$54.99" && nativePrices.monthly === "CA$9.99", "getProducts returns trimmed displayPrice");
+assert(funnelPurchase().length === beforeProducts, "getProducts does not emit funnel purchase");
+
+const missingMonthly = await getProducts({
+  env: { isNative: true, platform: "ios" },
+  nativeGetProducts: async () => ({
+    products: [{ id: IAP_PRODUCTS.annual, displayPrice: "$39.99" }],
+  }),
+});
+assert(missingMonthly.annual == null && missingMonthly.monthly == null, "a partial StoreKit result falls back to both locked prices");
+
+const missingAnnual = await getProducts({
+  env: { isNative: true, platform: "ios" },
+  nativeGetProducts: async () => ({
+    products: [{ id: IAP_PRODUCTS.monthly, displayPrice: "€6.99" }],
+  }),
+});
+assert(missingAnnual.annual == null && missingAnnual.monthly == null, "monthly alone does not replace the locked pair");
+
+const blankAnnual = await getProducts({
+  env: { isNative: true, platform: "ios" },
+  nativeGetProducts: async () => ({
+    products: [
+      { id: IAP_PRODUCTS.annual, displayPrice: "  " },
+      { id: IAP_PRODUCTS.monthly, displayPrice: "€6.99" },
+    ],
+  }),
+});
+assert(blankAnnual.annual == null && blankAnnual.monthly == null, "a blank displayPrice falls back to both locked prices");
+
+const failedLookup = await getProducts({
+  env: { isNative: true, platform: "ios" },
+  nativeGetProducts: async () => ({ status: "failure", reason: "store_down", products: [] }),
+});
+assert(failedLookup.annual == null && failedLookup.monthly == null, "getProducts failure falls back to null");
+
+const thrownLookup = await getProducts({
+  env: { isNative: true, platform: "ios" },
+  nativeGetProducts: async () => { throw new Error("sheet_failed"); },
+});
+assert(thrownLookup.annual == null && thrownLookup.monthly == null, "getProducts throw falls back to null");
+assert(funnelPurchase().length === beforeProducts, "getProducts errors do not emit funnel purchase");
 
 console.log("purchase.test.js: ok");
