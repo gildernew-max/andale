@@ -9219,8 +9219,8 @@ export default function App() {
             )}
 
             {q.type === "order" && (
-              <div>
-                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", marginBottom: 6 }}>
+              <div style={theme === "dark" ? undefined : { background: HUB_CREAM }}>
+                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", marginBottom: 6, ...(theme === "dark" ? {} : { background: HUB_CREAM }) }}>
 	                  {placed.length === 0 && <span style={{ color: D.sub, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
                   {placed.map((id, index) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
@@ -9230,7 +9230,9 @@ export default function App() {
                         title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
                         aria-label={`${label}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                         onClick={() => unplaceOrderTile(id)}
-                        style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }}>
+                        style={theme === "dark"
+                          ? { background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }
+                          : { background: HUB_CREAM, borderColor: D.line, borderBottomColor: D.line, color: D.ink }}>
                         {label}
                         <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                       </button>
@@ -9259,7 +9261,11 @@ export default function App() {
                           aria-hidden={used}
                           tabIndex={used ? -1 : 0}
                           onClick={(e) => { e.stopPropagation(); if (!used) placeOrderTile(t.id); }}
-                          style={{ visibility: used ? "hidden" : "visible", pointerEvents: used ? "none" : "auto" }}>
+                          style={{
+                            visibility: used ? "hidden" : "visible",
+                            pointerEvents: used ? "none" : "auto",
+                            ...(theme === "dark" ? {} : { background: HUB_CREAM, borderColor: D.line, borderBottomColor: D.line, color: D.ink }),
+                          }}>
                           {label}
                         </button>
                       </div>

@@ -108,6 +108,8 @@ describe("word-order tile layout", () => {
 
   it("sizes each agradezco tile to its word, with a gap, and wraps in normal flow", async () => {
     const user = userEvent.setup();
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const ink = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
     await openOrder(orderQuestion(
       AGRADEZCO_WORDS,
       "Le agradezco de antemano su atención",
@@ -137,11 +139,16 @@ describe("word-order tile layout", () => {
       expect(css.paddingLeft).toBe(css.paddingRight);
       expect(css.paddingLeft).toBe("14px");
       expect(css.flexGrow).toBe("0");
+      expect(tile.style.background).toMatch(cream);
+      expect(tile.style.color).toMatch(ink);
     });
+
+    expect(screen.getByTestId("app-shell").style.background).toMatch(cream);
 
     const row = screen.getByTestId("order-answer-row");
     isFlow(getComputedStyle(row));
     expect(getComputedStyle(row).justifyContent).toBe("flex-start");
+    expect(row.style.background).toMatch(cream);
 
     for (const word of ["le", "agradezco", "de"]) {
       await user.click(screen.getByRole("button", { name: word }));
@@ -150,7 +157,10 @@ describe("word-order tile layout", () => {
     const placed = screen.getAllByTestId("placed-tile");
     expect(placed.map((el) => el.textContent.replace(/×/g, "").trim())).toEqual(["Le", "agradezco", "de"]);
     placed.forEach(isIntrinsicTile);
-    expect(getComputedStyle(placed[0]).backgroundColor).not.toBe(getComputedStyle(tiles[0]).backgroundColor);
+    placed.forEach((tile) => {
+      expect(tile.style.background).toMatch(cream);
+      expect(tile.style.color).toMatch(ink);
+    });
 
     expect(bank.querySelectorAll("[data-tile-slot]")).toHaveLength(AGRADEZCO_WORDS.length);
     expect(screen.getAllByTestId("bank-tile").map((el) => el.textContent)).toEqual([
