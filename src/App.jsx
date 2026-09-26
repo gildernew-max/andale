@@ -21,7 +21,7 @@ import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pick
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
-import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle } from "./spanishKeyboard.js";
+import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle, spanishKeyboardKeyStyle } from "./spanishKeyboard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { subjFiveLines } from "./subjFive.js";
@@ -4336,6 +4336,85 @@ const LangToggle = ({ uiLang, D, onPick, style }) => (
   </div>
 );
 
+const wordleKeyStatus = (mark) => {
+  if (mark === "correct" || mark === "present") return mark;
+  if (mark === "absent") return "wrong";
+  return "unused";
+};
+
+/** Letter keys are SpanishKeyboardKey. Enter and delete use the same unused-key face. */
+const WordleKeys = ({ D, dark, layout, marks, disabled, onPick, onEnter, onBackspace, onLayoutChange, enterLabel, deleteLabel }) => {
+  const mode = normalizeLetterLayout(layout);
+  const theme = dark ? "dark" : "light";
+  const light = {
+    line: D.line,
+    green: D.green,
+    greenDark: D.greenDark,
+    red: D.red,
+    redDark: D.redDark,
+    okBg: D.okBg,
+    okText: D.okText,
+    badBg: D.badBg,
+    badText: D.badText,
+    card: D.card,
+    cream: "#F6EFE4",
+    muted: D.sub,
+    wordleCorrect: WORDLE_CORRECT,
+    wordlePresent: WORDLE_PRESENT,
+    wordleWrong: WORDLE_ABSENT,
+  };
+  const actionStyle = {
+    ...spanishKeyboardKeyStyle({ theme, status: "unused", disabled, light }),
+    maxWidth: 112,
+  };
+  return (
+    <div data-testid="letter-board" data-layout={mode}>
+      <div style={{ display: "grid", gap: 6 }}>
+        {rowsForLayout(mode).map((row, ri) => (
+          <div key={ri} data-testid="letter-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+            {row.map((letter) => {
+              const status = wordleKeyStatus(marks[letter]);
+              return (
+                <SpanishKeyboardKey
+                  key={letter}
+                  letter={letter}
+                  theme={theme}
+                  status={status}
+                  disabled={disabled}
+                  onPick={onPick}
+                  light={light}
+                />
+              );
+            })}
+          </div>
+        ))}
+        <div data-testid="letter-board-actions" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+          <button type="button" data-testid="letter-board-backspace" aria-label={deleteLabel || "Delete"} disabled={disabled} onClick={onBackspace} style={actionStyle}>⌫</button>
+          <button type="button" data-testid="letter-board-enter" disabled={disabled} onClick={onEnter} style={{ ...actionStyle, flex: "1.6 1 0", maxWidth: 160 }}>{enterLabel || "Enter"}</button>
+        </div>
+      </div>
+      <div data-testid="letter-layout-toggle" role="group" aria-label="ABC QWERTY"
+        style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 10 }}>
+        <button type="button" data-testid="letter-layout-abc" aria-pressed={mode === "abc"}
+          onClick={() => onLayoutChange("abc")}
+          style={{
+            border: "none", background: "none", fontFamily: "inherit", padding: "4px 2px", cursor: "pointer",
+            fontWeight: mode === "abc" ? 900 : 700, fontSize: 11, letterSpacing: ".04em", lineHeight: 1,
+            color: mode === "abc" ? D.ink : D.sub,
+          }}>ABC</button>
+        <span aria-hidden="true" style={{ color: D.sub, fontWeight: 700, fontSize: 11, lineHeight: 1 }}>·</span>
+        <button type="button" data-testid="letter-layout-qwerty" aria-pressed={mode === "qwerty"}
+          onClick={() => onLayoutChange("qwerty")}
+          style={{
+            border: "none", background: "none", fontFamily: "inherit", padding: "4px 2px", cursor: "pointer",
+            fontWeight: mode === "qwerty" ? 900 : 700, fontSize: 11, letterSpacing: ".04em", lineHeight: 1,
+            color: mode === "qwerty" ? D.ink : D.sub,
+          }}>QWERTY</button>
+      </div>
+    </div>
+  );
+};
+
 const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onType, onBackspace, onCommit, onLayoutChange, onClose, onLang }) => {
   const rows = wordleRows(run);
   const keyMarks = wordleKeyState(run.guesses, run.answer);
@@ -4421,16 +4500,16 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
         </div>
       )}
       <div className="wordle-keys">
-        {/* Key colors belong to LetterBoard. Swap this call when the shared dark keyboard lands. */}
-        <LetterBoard
+        <WordleKeys
           D={D}
+          dark={!!dark}
           layout={layout}
           marks={keyMarks}
-          onLayoutChange={onLayoutChange}
           disabled={over}
           onPick={onType}
           onEnter={onCommit}
           onBackspace={onBackspace}
+          onLayoutChange={onLayoutChange}
           enterLabel={wordleEnterLabel(uiLang)}
           deleteLabel={uiLang === "en" ? "Delete" : "Borrar"}
         />

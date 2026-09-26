@@ -11,7 +11,7 @@ export function SpanishKeyboardKey({
   testId = "letter-chip",
   light,
 }) {
-  const blocked = disabled || status !== "idle";
+  const blocked = disabled || (status !== "idle" && status !== "unused");
   return (
     <button
       type="button"
