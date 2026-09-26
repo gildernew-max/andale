@@ -193,10 +193,13 @@ describe("word-order tile layout", () => {
     tiles.forEach(isIntrinsicTile);
   });
 
-  it("stays cream and ink in dark mode, same as Crucigrama", async () => {
-    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
-    const ink = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
-    const line = /#E5E5E5|rgb\(\s*229,\s*229,\s*229\s*\)/i;
+  it("keeps the app dark theme in dark mode", async () => {
+    const page = /#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i;
+    const card = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const ink = /#E8E8EA|rgb\(\s*232,\s*232,\s*234\s*\)/i;
+    const line = /#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\)/i;
+    const placedBg = /#0F2A3A|rgb\(\s*15,\s*42,\s*58\s*\)/i;
+    const placedInk = /#1899D6|rgb\(\s*24,\s*153,\s*214\s*\)/i;
     const user = userEvent.setup();
     await openOrder(orderQuestion(
       AGRADEZCO_WORDS,
@@ -204,26 +207,25 @@ describe("word-order tile layout", () => {
       "Construye el cierre formal: “I thank you in advance for your attention.”",
     ), { theme: "dark" });
 
-    const page = screen.getByTestId("order-cream-page");
-    expect(page.style.background).toMatch(cream);
-    expect(page.style.color).toMatch(ink);
-    expect(screen.getByTestId("order-prompt").style.background).toMatch(cream);
+    expect(screen.queryByTestId("order-cream-page")).toBeNull();
+    expect(screen.getByTestId("app-shell").style.background).toMatch(page);
+    expect(screen.getByTestId("order-prompt").style.background).toMatch(card);
     expect(screen.getByTestId("order-prompt").style.color).toMatch(ink);
     expect(screen.getByTestId("order-prompt").style.borderTopColor).toMatch(line);
-    expect(screen.getByTestId("order-answer-row").style.background).toMatch(cream);
+    expect(screen.getByTestId("order-answer-row").style.background).toBe("");
 
     const bank = screen.getAllByTestId("bank-tile");
     bank.forEach((tile) => {
-      expect(tile.style.background).toMatch(cream);
-      expect(tile.style.color).toMatch(ink);
-      expect(tile.style.borderTopColor).toMatch(line);
+      expect(tile.style.background).toBe("");
+      expect(getComputedStyle(tile).backgroundColor).toMatch(card);
+      expect(getComputedStyle(tile).color).toMatch(ink);
+      expect(getComputedStyle(tile).borderTopColor).toMatch(line);
     });
 
     await user.click(screen.getByRole("button", { name: "le" }));
     const placed = screen.getByTestId("placed-tile");
-    expect(placed.style.background).toMatch(cream);
-    expect(placed.style.color).toMatch(ink);
-    expect(placed.style.borderTopColor).toMatch(line);
-    expect(document.body.style.background).not.toMatch(cream);
+    expect(placed.style.background).toMatch(placedBg);
+    expect(placed.style.color).toMatch(placedInk);
+    expect(document.body.style.background).toMatch(page);
   });
 });
