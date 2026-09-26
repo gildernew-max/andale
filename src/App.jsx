@@ -8,6 +8,7 @@ import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./the
 import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
+import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from "./hoyChoiceCard.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { gradeListedPhrase } from "./wordOrder.js";
@@ -9108,10 +9109,15 @@ export default function App() {
                   if (showState && isAns) { bg = D.okBg; bd = D.green; col = D.okText; }
                   else if (showState && isSel && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
                   else if (isSel) { bg = "#DDF4FF"; bd = D.blue; col = D.blueDark; }
+                  let badgeCol = bd === D.line ? D.sub : col;
+                  if (theme === "dark" && isHoyListenChoiceStep(session, q)) {
+                    const paint = hoyListenChoicePaint(hoyListenChoiceTone({ showState, isSel, isAns }), D, HUB_CREAM);
+                    bg = paint.fill; bd = paint.border; col = paint.text; badgeCol = paint.badge;
+                  }
                   return (
                     <button key={idx} type="button" className="choice-card" data-testid="choice-card" data-selected={isSel ? "true" : undefined} aria-pressed={isSel} disabled={showState} onClick={() => setSelected(idx)}
                       style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd, boxShadow: isSel && !showState ? `0 0 0 3px ${D.blue}` : undefined }}>
-                      <span style={{ fontSize: 12, fontWeight: 900, border: `2px solid ${bd}`, borderRadius: 8, padding: "1px 7px", color: bd === D.line ? D.sub : col }}>{idx + 1}</span>
+                      <span style={{ fontSize: 12, fontWeight: 900, border: `2px solid ${bd}`, borderRadius: 8, padding: "1px 7px", color: badgeCol }}>{idx + 1}</span>
                       {c}
                     </button>
                   );
