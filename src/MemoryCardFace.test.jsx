@@ -1,6 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryCardFace, MEMORY_CARD_GLOSS_COLOR, MEMORY_CARD_GLOSS_SCALE } from "./MemoryCardFace.jsx";
+import {
+  MemoryCardFace,
+  MEMORY_CARD_GLOSS_COLOR,
+  MEMORY_CARD_GLOSS_SCALE,
+  MEMORY_CARD_HERO_MAX,
+  MEMORY_CARD_HERO_MIN,
+  MEMORY_FACE_WRAP,
+  memoryFaceTokens,
+  memoryHeroPx,
+} from "./MemoryCardFace.jsx";
 import {
   MEMORY_BANK,
   memoryCardLabel,
@@ -40,8 +49,15 @@ describe("MemoryCardFace", () => {
     expect(gloss.style.fontWeight).toBe("inherit");
     expect(gloss.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
     expect(word.style.fontSize).toBe("");
+    expect(word.getAttribute("data-hero-px")).toBe(String(MEMORY_CARD_HERO_MAX));
     expect(word.style.fontFamily).toBe("");
     expect(word.style.color).toBe("");
+    expect(word.style.overflowWrap).toBe("normal");
+    expect(word.style.wordBreak).toBe("normal");
+    expect(word.style.hyphens).toBe("none");
+    expect(gloss.style.overflowWrap).toBe("normal");
+    expect(gloss.style.wordBreak).toBe("normal");
+    expect(gloss.style.hyphens).toBe("none");
   });
 
   it("shows the English meaning with the Spanish lemma in parentheses", () => {
@@ -64,5 +80,35 @@ describe("MemoryCardFace", () => {
     expect(screen.getByTestId("memory-card-word").textContent).toBe("trabajo");
     expect(screen.getByTestId("memory-card-gloss").textContent).toBe("(chamba)");
     expect(screen.getByRole("button", { name: "trabajo (chamba)" })).toBeTruthy();
+  });
+
+  it("wraps only at spaces on both the hero and the gloss", () => {
+    render(<FaceUpCard card={meaningCard} uiLang="es" />);
+    const word = screen.getByTestId("memory-card-word");
+    const gloss = screen.getByTestId("memory-card-gloss");
+    for (const el of [word, gloss]) {
+      expect(el.style.overflowWrap).toBe(MEMORY_FACE_WRAP.overflowWrap);
+      expect(el.style.wordBreak).toBe(MEMORY_FACE_WRAP.wordBreak);
+      expect(el.style.hyphens).toBe(MEMORY_FACE_WRAP.hyphens);
+      expect(el.style.whiteSpace).toBe("normal");
+      expect(el.style.overflowWrap).not.toMatch(/anywhere|break-word/);
+      expect(el.style.wordBreak).not.toMatch(/break-all|break-word/);
+    }
+    expect(gloss.style.fontSize).toBe("0.7em");
+    expect(memoryFaceTokens("camioneta colectiva")).toEqual(["camioneta", "colectiva"]);
+    expect(memoryFaceTokens("mercado al aire libre")).toEqual(["mercado", "al", "aire", "libre"]);
+  });
+
+  it("keeps 26px when the longest word fits and steps down to a floor of 18", () => {
+    const fits = () => 80;
+    expect(memoryHeroPx(fits, 100)).toBe(26);
+    expect(memoryHeroPx(fits, 0)).toBe(MEMORY_CARD_HERO_MAX);
+
+    const widths = { 26: 120, 25: 115, 24: 110, 23: 105, 22: 100, 21: 96 };
+    expect(memoryHeroPx((px) => widths[px] ?? 90, 100)).toBe(22);
+
+    expect(memoryHeroPx(() => 400, 40)).toBe(MEMORY_CARD_HERO_MIN);
+    expect(MEMORY_CARD_HERO_MIN).toBe(18);
+    expect(MEMORY_CARD_HERO_MAX).toBe(26);
   });
 });
