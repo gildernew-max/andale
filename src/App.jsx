@@ -7098,9 +7098,11 @@ export default function App() {
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
-        .tile-bank { display:grid; grid-template-columns:repeat(auto-fill, minmax(4.6rem, max-content)); gap:8px; justify-content:center; align-items:start; }
-        .tile-slot { display:flex; min-width:4.6rem; min-height:2.55rem; }
-        .tile-slot .tile { flex:1; }
+        .tile-bank, .tile-row { display:flex; flex-wrap:wrap; align-content:flex-start; gap:8px; width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
+        .tile-bank { justify-content:center; align-items:flex-start; }
+        .tile-row { justify-content:flex-start; align-items:center; }
+        .tile-slot { display:flex; flex:0 0 auto; width:max-content; max-width:100%; min-width:min-content; min-height:2.55rem; }
+        .tile-slot .tile, .tile-row > .tile { flex:0 0 auto; width:max-content; min-width:min-content; max-width:100%; white-space:nowrap; }
       `}</style>
 
       {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={completeCenzontleBeat} />}
@@ -9143,7 +9145,7 @@ export default function App() {
                     </div>
                     {q.answerAid.mode === "bank" && (
                       <div>
-                        <div style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center", marginBottom: 6 }}>
+                        <div className="tile-row" data-testid="answer-tile-row" style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", marginBottom: 6 }}>
                           {typedTileIds.length === 0 && <span style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>{uiLang === "en" ? "Tap words below instead of typing." : "Toca palabras abajo en vez de escribir."}</span>}
                           {typedTileIds.map((id) => {
                             const tile = q.answerAid.tiles.find((t) => t.id === id);
@@ -9191,7 +9193,6 @@ export default function App() {
                                 fontWeight: 800,
                                 padding: "8px 11px",
                                 fontSize: 14,
-                                width: "100%",
                               }}>
                               {tile.w}
                             </button>
@@ -9219,7 +9220,7 @@ export default function App() {
 
             {q.type === "order" && (
               <div>
-                <div style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", marginBottom: 6 }}>
 	                  {placed.length === 0 && <span style={{ color: D.sub, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
                   {placed.map((id) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
@@ -9245,7 +9246,7 @@ export default function App() {
                     </button>
                   </div>
                 )}
-                <div className="tile-bank">
+                <div className="tile-bank" data-testid="order-tile-bank">
                   {q.shuffledWords.map((t) => {
                     const used = placed.includes(t.id);
                     return (
