@@ -6414,7 +6414,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await awaitBajioFlashThenPaywall();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
