@@ -10,7 +10,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
-import { gradeListedPhrase } from "./wordOrder.js";
+import { gradeListedPhrase, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
@@ -5470,6 +5470,8 @@ export default function App() {
   };
 
   const q = session?.questions?.[qi] ?? null;
+  /** Word-order matches Crucigrama: cream + light ink, not the dark theme surfaces. */
+  const orderSurface = q?.type === "order";
 
   /* ---------- grading ---------- */
 
@@ -7098,9 +7100,11 @@ export default function App() {
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
-        .tile-bank { display:grid; grid-template-columns:repeat(auto-fill, minmax(4.6rem, max-content)); gap:8px; justify-content:center; align-items:start; }
-        .tile-slot { display:flex; min-width:4.6rem; min-height:2.55rem; }
-        .tile-slot .tile { flex:1; }
+        .tile-bank, .tile-row { display:flex; flex-wrap:wrap; align-content:flex-start; gap:8px; width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
+        .tile-bank { justify-content:flex-start; align-items:flex-start; }
+        .tile-row { justify-content:flex-start; align-items:center; }
+        .tile-slot { display:flex; flex:0 0 auto; width:max-content; max-width:100%; min-width:min-content; min-height:2.55rem; }
+        .tile-slot .tile, .tile-row > .tile { flex:0 0 auto; width:max-content; min-width:min-content; max-width:100%; white-space:nowrap; }
       `}</style>
 
       {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={completeCenzontleBeat} />}
@@ -8949,6 +8953,7 @@ export default function App() {
 
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
+        <div data-testid={orderSurface ? "order-cream-page" : undefined} style={orderSurface ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : undefined}>
         <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
@@ -8957,7 +8962,7 @@ export default function App() {
           )}
           {burst > 0 && status !== "idle" && status !== "wrong" && inter && <Confetti key={burst} count={28} />}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 26 }}>
-            <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+            <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: orderSurface ? D_LIGHT.ink : D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div style={{ flex: 1, height: 16, background: D.line, borderRadius: 99, overflow: "hidden" }}>
               <div style={{ width: `${pct}%`, height: "100%", background: D.green, borderRadius: 99, transition: "width .25s", position: "relative", overflow: "hidden" }}>
                 <div className="shimmer" />
@@ -9083,13 +9088,13 @@ export default function App() {
                     <div className="idle"><CoachPortrait id={session.host} mood="happy" size={86} /></div>
                     <span className="nametag">{coachName(session.host)}</span>
                   </div>
-                  <div style={{ position: "relative", border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", background: D.card, flex: 1, marginBottom: 14 }}>
-                    <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
+                  <div data-testid={q.type === "order" ? "order-prompt" : undefined} style={{ position: "relative", border: `2px solid ${q.type === "order" ? D_LIGHT.line : D.line}`, borderRadius: 16, padding: "14px 16px", background: q.type === "order" ? HUB_CREAM : D.card, color: q.type === "order" ? D_LIGHT.ink : D.ink, flex: 1, marginBottom: 14 }}>
+                    <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: q.type === "order" ? HUB_CREAM : D.card, borderLeft: `2px solid ${q.type === "order" ? D_LIGHT.line : D.line}`, borderBottom: `2px solid ${q.type === "order" ? D_LIGHT.line : D.line}`, transform: "rotate(45deg)" }} />
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                       <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                       <div>
                         <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{q.prompt}</div>
-                        {q.note ? <div style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
+                        {q.note ? <div style={{ fontSize: 13, color: q.type === "order" ? D_LIGHT.ink : D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
                       </div>
                     </div>
                   </div>
@@ -9143,7 +9148,7 @@ export default function App() {
                     </div>
                     {q.answerAid.mode === "bank" && (
                       <div>
-                        <div style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center", marginBottom: 6 }}>
+                        <div className="tile-row" data-testid="answer-tile-row" style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", marginBottom: 6 }}>
                           {typedTileIds.length === 0 && <span style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>{uiLang === "en" ? "Tap words below instead of typing." : "Toca palabras abajo en vez de escribir."}</span>}
                           {typedTileIds.map((id) => {
                             const tile = q.answerAid.tiles.find((t) => t.id === id);
@@ -9191,7 +9196,6 @@ export default function App() {
                                 fontWeight: 800,
                                 padding: "8px 11px",
                                 fontSize: 14,
-                                width: "100%",
                               }}>
                               {tile.w}
                             </button>
@@ -9218,18 +9222,19 @@ export default function App() {
             )}
 
             {q.type === "order" && (
-              <div>
-                <div style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 6 }}>
-	                  {placed.length === 0 && <span style={{ color: D.sub, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
-                  {placed.map((id) => {
+              <div style={{ background: HUB_CREAM, color: D_LIGHT.ink }}>
+                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${D_LIGHT.line}`, borderTop: `2px solid ${D_LIGHT.line}`, padding: "10px 4px", marginBottom: 6, background: HUB_CREAM }}>
+	                  {placed.length === 0 && <span style={{ color: D_LIGHT.ink, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
+                  {placed.map((id, index) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
+                    const label = orderTileLabel(t.w, { answer: q.answer, placedIndex: index });
                     return (
                       <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" className="tile" disabled={status !== "idle"}
                         title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
-                        aria-label={`${t.w}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
+                        aria-label={`${label}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                         onClick={() => unplaceOrderTile(id)}
-                        style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }}>
-                        {t.w}
+                        style={{ background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }}>
+                        {label}
                         <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                       </button>
                     );
@@ -9237,17 +9242,18 @@ export default function App() {
                 </div>
                 {placed.length > 0 && status === "idle" && (
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 800, color: D.sub }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 800, color: D_LIGHT.ink }}>
                       {uiLang === "en" ? "Tap a placed word to move it." : "Toca una ficha colocada para moverla."}
                     </div>
-                    <button type="button" onClick={() => { setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: D.sub, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
+                    <button type="button" onClick={() => { setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: D_LIGHT.ink, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
                       {uiLang === "en" ? "Clear" : "Borrar"}
                     </button>
                   </div>
                 )}
-                <div className="tile-bank">
+                <div className="tile-bank" data-testid="order-tile-bank">
                   {q.shuffledWords.map((t) => {
                     const used = placed.includes(t.id);
+                    const label = orderTileLabel(t.w, { answer: q.answer });
                     return (
                       <div key={t.id} className="tile-slot" data-tile-slot={t.id}
                         onClick={() => { if (used) unplaceOrderTile(t.id); }}>
@@ -9256,8 +9262,15 @@ export default function App() {
                           aria-hidden={used}
                           tabIndex={used ? -1 : 0}
                           onClick={(e) => { e.stopPropagation(); if (!used) placeOrderTile(t.id); }}
-                          style={{ visibility: used ? "hidden" : "visible", pointerEvents: used ? "none" : "auto" }}>
-                          {t.w}
+                          style={{
+                            visibility: used ? "hidden" : "visible",
+                            pointerEvents: used ? "none" : "auto",
+                            background: HUB_CREAM,
+                            borderColor: D_LIGHT.line,
+                            borderBottomColor: D_LIGHT.line,
+                            color: D_LIGHT.ink,
+                          }}>
+                          {label}
                         </button>
                       </div>
                     );
@@ -9289,14 +9302,14 @@ export default function App() {
           </div>
 
           {/* ---------- ACTION BAR with mascot ---------- */}
-          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? D.card : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderSurface ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderSurface ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
             <div style={{ maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
               {status !== "idle" && (
                 <div className={status === "wrong" ? "" : "jump"} style={{ flexShrink: 0 }}>
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? D.sub : D.okText }}>
+              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderSurface ? D_LIGHT.ink : D.sub) : D.okText }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
                     <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: 0.85 }}>
@@ -9361,6 +9374,7 @@ export default function App() {
               ) : null}
             </div>
           </div>
+        </div>
         </div>
       )}
 
