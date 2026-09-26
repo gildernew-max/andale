@@ -21,7 +21,7 @@ import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pick
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
-import { boardTilePaint, darkGamesButtonStyle } from "./spanishKeyboard.js";
+import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle } from "./spanishKeyboard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { subjFiveLines } from "./subjFive.js";
@@ -9785,7 +9785,7 @@ export default function App() {
               <HangmanMark size={56} />
             </div>
             {over ? (
-              <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
+              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, ...(theme === "dark" ? darkHangmanEndCardStyle() : {}) }}>
                 {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
                 <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>

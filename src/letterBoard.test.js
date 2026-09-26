@@ -12,6 +12,7 @@ import {
   boardTilePaint,
   contrastRatio,
   darkGamesButtonStyle,
+  darkHangmanEndCardStyle,
   isWhiteOrCreamFill,
   spanishKeyboardKeyStyle,
 } from "./spanishKeyboard.js";
@@ -129,5 +130,10 @@ assert(!isWhiteOrCreamFill(gamesBtn.background), "dark Games button is not white
 assert(gamesBtn.background === "#1E2128" && gamesBtn.color === "#F6EFE4", "Games button is cream on the card");
 assert(gamesBtn.border === "2px solid #2A2E36" && gamesBtn.borderBottom === "4px solid #2A2E36", "Games button lip");
 assert(contrastRatio(gamesBtn.color, gamesBtn.background) >= 4.5, "Games button text under 4.5");
+
+const endCard = darkHangmanEndCardStyle();
+assert(endCard.background === "#1E2128", "dark Hangman end card fill is the card");
+assert(endCard.border === "2px solid #677050", "dark Hangman end card border is sage");
+assert(!isWhiteOrCreamFill(endCard.background), "dark Hangman end card is not white or cream");
 
 console.log("ok: letter-board QWERTY / ABC layouts");

@@ -131,6 +131,14 @@ export function darkGamesButtonStyle({
   };
 }
 
+/** Dark Ahorcado end card only. Light mode keeps the green panel in App. */
+export function darkHangmanEndCardStyle() {
+  return {
+    background: SPANISH_KEYBOARD.card,
+    border: `2px solid ${SPANISH_KEYBOARD.sageSmall}`,
+  };
+}
+
 /** Jeopardy category and value tiles. Light returns today's terracotta/cream chip. */
 export function boardTilePaint({
   theme = "light",

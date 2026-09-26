@@ -1929,6 +1929,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hangman-literal")).toBeTruthy());
     expect(screen.getByTestId("hangman-win").textContent).toBe("That's it.");
     expect(screen.getByTestId("hangman-word").textContent).toBe(word);
+    expect(screen.getByTestId("hangman-end").style.background).toMatch(/#F3FBEA|rgb\(\s*243,\s*251,\s*234\s*\)/i);
+    expect(screen.getByTestId("hangman-end").style.border).toMatch(/2px solid (#58CC02|rgb\(\s*88,\s*204,\s*2\s*\))/i);
     const literal = screen.getByTestId("hangman-literal");
     const why = screen.getByTestId("hangman-why");
     expect(literal.textContent).toMatch(/^Literal/);
@@ -5793,6 +5795,14 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     assertDarkControl(screen.getByTestId("hangman-back"), "hangman games");
     expect(paintOf(screen.getByTestId("hangman-back")).fill).toBe("#1e2128");
     expect(paintOf(screen.getByTestId("hangman-back")).ink).toBe("#f6efe4");
+    const end = screen.getByTestId("hangman-end");
+    expect(cssHex(end.style.background)).toBe("#1e2128");
+    expect(end.style.border).toMatch(/2px solid/i);
+    expect(cssHex(end.style.borderColor) || cssHex(end.style.border)).toBe("#677050");
+    expect(cssHex(screen.getByTestId("hangman-win").style.color)).toBe("#e8e8ea");
+    expect(cssHex(screen.getByTestId("hangman-word").style.color)).toBe("#e8e8ea");
+    expect(cssHex(screen.getByTestId("hangman-literal").firstElementChild.style.color)).toBe("#a0a4ab");
+    expect(cssHex(screen.getByTestId("hangman-again").style.background)).toBe("#58cc02");
     expect(screen.queryAllByTestId("letter-chip")).toHaveLength(0);
   });
 
