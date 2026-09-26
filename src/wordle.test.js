@@ -161,6 +161,12 @@ for (const hex of darkFills) {
 }
 assert(Math.abs(rel(WORDLE_DARK.absent) - rel(WORDLE_DARK.correct)) >= 0.03, "mid-gray stays apart from the sage");
 assert(Math.abs(rel(WORDLE_DARK.absent) - rel(WORDLE_DARK.present)) >= 0.03, "mid-gray stays apart from the ochre");
+const wordleKeysAt = appSrc.indexOf('className="wordle-keys"');
+const wordleKeys = appSrc.slice(wordleKeysAt, wordleKeysAt + 700);
+assert(wordleKeys.includes("marks={keyMarks}") && wordleKeys.includes("onEnter={onCommit}") && wordleKeys.includes("onBackspace={onBackspace}"), "Wordle keyboard wiring is marks, enter, and delete");
+assert(!wordleKeys.includes("chrome"), "Wordle does not pass its own keyboard colors");
+const letterSig = appSrc.slice(appSrc.indexOf("const LetterBoard"), appSrc.indexOf("=> {", appSrc.indexOf("const LetterBoard")));
+assert(!letterSig.includes("chrome"), "LetterBoard has no Wordle color skin");
 
 const late = new Date(2026, 8, 26, 23, 59, 30);
 const early = new Date(2026, 8, 27, 0, 0, 1);

@@ -4418,9 +4418,9 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
         </div>
       )}
       <div className="wordle-keys">
+        {/* Key colors belong to LetterBoard. Swap this call when the shared dark keyboard lands. */}
         <LetterBoard
           D={D}
-          chrome={chrome}
           layout={layout}
           marks={keyMarks}
           onLayoutChange={onLayoutChange}
