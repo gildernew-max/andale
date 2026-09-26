@@ -7235,7 +7235,7 @@ export default function App() {
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 900; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-900.woff2') format('woff2'); }
         html, body, #root { margin: 0; padding: 0; width: 100%; max-width: 100%; }
         :root {
-          /* Light tiles only. Dark fills come from WORDLE_DARK on the board. */
+          /* Light tiles only. Dark fills and cream letters come from WORDLE_DARK. */
           --wordle-correct: ${WORDLE_CORRECT};
           --wordle-correct-ink: #fff;
           --wordle-present: ${WORDLE_PRESENT};

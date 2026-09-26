@@ -43,24 +43,25 @@ export const WORDLE_LIGHT = {
 };
 
 /**
- * Dark mode only. Brand has not decided whether games leave cream.
- * Surfaces follow the app dark theme (page #15171C, cards #1E2128). No cream.
- * Tile fills are provisional: they reuse the light tiles so the board stays
- * readable. Change this object when Brand decides. Nothing else needs to move.
+ * Dark mode. Brand ruling: page is the app background, the board and empty
+ * tiles are the app card, borders are the app soft gray, text is cream.
+ * Right spot is the map sage with cream letters. Wrong spot keeps the light
+ * ochre. Absent is a neutral mid-gray, darker than that ochre so cream letters
+ * clear 4.5:1 and the fill stays apart from the card, the sage, and the ochre.
  */
 export const WORDLE_DARK = {
   page: "#15171C",
-  board: "#15171C",
+  board: "#1E2128",
   square: "#1E2128",
   line: "#2A2E36",
-  letter: "#E8E8EA",
+  letter: "#F6EFE4",
   quiet: "#A0A4AB",
-  clue: "#E8E8EA",
+  clue: "#F6EFE4",
   gloss: "#A0A4AB",
-  correct: WORDLE_CORRECT,
+  correct: "#6F7757",
   present: WORDLE_PRESENT,
-  absent: WORDLE_ABSENT,
-  tileInk: "#FFFFFF",
+  absent: "#62666E",
+  tileInk: "#F6EFE4",
 };
 
 export function wordleChrome(dark) {

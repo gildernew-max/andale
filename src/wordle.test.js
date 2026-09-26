@@ -119,9 +119,13 @@ assert(WORDLE_LIGHT.square === "#FFFFFF" && WORDLE_LIGHT.letter === "#3C3C3C", "
 assert(WORDLE_LIGHT.line === "#C9BBA8", "light empty tiles use a thin warm-gray border");
 assert(WORDLE_LIGHT.gloss === "#777777", "light gloss stays the memory gray");
 assert(wordleChrome(true) === WORDLE_DARK, "dark chrome is one isolated object");
-assert(WORDLE_DARK.page === "#15171C" && WORDLE_DARK.board === "#15171C", "dark page follows the app background");
-assert(WORDLE_DARK.square === "#1E2128" && WORDLE_DARK.line === "#2A2E36", "dark tiles follow the app card and line");
-assert(WORDLE_DARK.letter === "#E8E8EA" && WORDLE_DARK.board !== "#F6EFE4" && WORDLE_DARK.letter !== "#F6EFE4", "dark mode does not force cream");
+assert(WORDLE_DARK.page === "#15171C", "dark page is the app background");
+assert(WORDLE_DARK.board === "#1E2128" && WORDLE_DARK.square === "#1E2128", "dark board and empty tiles are the app card");
+assert(WORDLE_DARK.line === "#2A2E36", "dark tile borders are the app soft gray");
+assert(WORDLE_DARK.letter === "#F6EFE4" && WORDLE_DARK.clue === "#F6EFE4" && WORDLE_DARK.tileInk === "#F6EFE4", "dark text and tile letters are cream");
+assert(WORDLE_DARK.correct === "#6F7757", "dark right spot is sage");
+assert(WORDLE_DARK.present === WORDLE_PRESENT && WORDLE_DARK.present === "#96702F", "dark wrong spot keeps the light ochre");
+assert(WORDLE_DARK.absent === "#62666E", "dark absent is the mid-gray");
 
 const channel = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const rel = (hex) => {
@@ -138,9 +142,25 @@ for (const [name, bg] of [["correct", WORDLE_CORRECT], ["present", WORDLE_PRESEN
   assert(ratio("#FFFFFF", bg) >= 4.5, `${name} white letters clear 4.5:1`);
 }
 assert(rel(WORDLE_PRESENT) > rel(WORDLE_CORRECT), "ochre stays lighter than the sage");
-for (const name of ["correct", "present", "absent"]) {
-  assert(ratio(WORDLE_DARK.tileInk, WORDLE_DARK[name]) >= 4.5, `provisional dark ${name} still clears 4.5:1`);
+assert(ratio(WORDLE_DARK.tileInk, WORDLE_DARK.correct) >= 4, "cream on the dark sage stays readable");
+assert(ratio(WORDLE_DARK.tileInk, WORDLE_DARK.present) >= 3.9, "cream on the dark ochre stays readable");
+assert(ratio(WORDLE_DARK.tileInk, WORDLE_DARK.absent) >= 4.5, "cream on the dark mid-gray clears 4.5:1");
+for (const hex of [WORDLE_DARK.letter, WORDLE_DARK.quiet, WORDLE_DARK.gloss]) {
+  assert(ratio(hex, WORDLE_DARK.board) >= 4.5, `${hex} clears 4.5:1 on the dark board`);
 }
+const appSrc = readFileSync(new URL("./App.jsx", import.meta.url), "utf8");
+const darkAt = appSrc.indexOf("const D_DARK");
+const darkBlock = appSrc.slice(darkAt, appSrc.indexOf("const D =", darkAt));
+const darkInk = darkBlock.match(/ink: "([^"]+)"/)[1];
+const darkSub = darkBlock.match(/sub: "([^"]+)"/)[1];
+assert(ratio(darkInk, WORDLE_DARK.board) >= 4.5 && ratio(darkSub, WORDLE_DARK.board) >= 4.5, "ES/EN ink and quiet label clear 4.5:1 on the dark board");
+const darkFills = [WORDLE_DARK.correct, WORDLE_DARK.present, WORDLE_DARK.absent];
+assert(new Set(darkFills).size === 3, "the three dark fills are different colors");
+for (const hex of darkFills) {
+  assert(Math.abs(rel(hex) - rel(WORDLE_DARK.square)) >= 0.08, `${hex} stays apart from the card`);
+}
+assert(Math.abs(rel(WORDLE_DARK.absent) - rel(WORDLE_DARK.correct)) >= 0.03, "mid-gray stays apart from the sage");
+assert(Math.abs(rel(WORDLE_DARK.absent) - rel(WORDLE_DARK.present)) >= 0.03, "mid-gray stays apart from the ochre");
 
 const late = new Date(2026, 8, 26, 23, 59, 30);
 const early = new Date(2026, 8, 27, 0, 0, 1);
