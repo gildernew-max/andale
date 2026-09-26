@@ -4279,6 +4279,8 @@ const LetterBoard = ({ D, theme = "light", layout, onLayoutChange, picked = [], 
     card: D.card,
     cream: HUB_CREAM,
     muted: D.sub,
+    wordleCorrect: WORDLE_CORRECT,
+    wordleWrong: WORDLE_ABSENT,
   };
   const keyStatus = (letter) => {
     const wasPicked = picked.includes(letter);

@@ -1,6 +1,8 @@
 import { contrastRatio, spanishKeyboardKeyStyle } from "./spanishKeyboard.js";
+import { WORDLE_ABSENT, WORDLE_CORRECT } from "./wordle.js";
 import {
   BRIGHT_GREEN,
+  PINK_OR_RED,
   SAGE,
   bucketBodyColor,
   bucketTileStyle,
@@ -72,15 +74,20 @@ assertNoLime(gloss, "light matched translation");
 assertNoLime(darkMatch, "dark matched card");
 
 const idle = spanishKeyboardKeyStyle({ theme: "light", status: "idle", light: lightKey });
-const hit = spanishKeyboardKeyStyle({ theme: "light", status: "correct", light: lightKey });
+const hangmanLight = { ...lightKey, wordleCorrect: WORDLE_CORRECT, wordleWrong: WORDLE_ABSENT };
+const hit = spanishKeyboardKeyStyle({ theme: "light", status: "correct", light: hangmanLight });
+const miss = spanishKeyboardKeyStyle({ theme: "light", status: "wrong", light: hangmanLight });
 const present = spanishKeyboardKeyStyle({ theme: "light", status: "present", light: { ...lightKey, wordlePresent: "#96702F" } });
-const miss = spanishKeyboardKeyStyle({ theme: "light", status: "wrong", light: lightKey });
 const enter = wordleActionKeyChrome("light", { ...idle, maxWidth: 112 });
 assert(idle.color === "#4F5A36" && idle.background === "#fff", "unused key letters are #4F5A36 on white");
 assert(idle.border === "2px solid #E5E5E5" && idle.borderBottom === "4px solid #E5E5E5", "unused key edge stays");
-assert(hit.background === "#D7FFB8" && hit.color === "#58A700" && hit.border === "2px solid #58CC02", "correct key colors stay");
+assert(hit.background === WORDLE_CORRECT && hit.color === "#FFFFFF" && hit.border === "2px solid transparent", "light Hangman correct key matches the Wordle correct key");
+assert(miss.background === WORDLE_ABSENT && miss.color === "#FFFFFF" && miss.border === "2px solid transparent", "light Hangman wrong key matches the Wordle absent key");
+assert(contrastRatio(hit.color, hit.background) >= 4.5 && contrastRatio(miss.color, miss.background) >= 4.5, "used Hangman letters under 4.5");
+assertNoLime(hit, "hangman correct key");
+assertNoLime(miss, "hangman wrong key");
+assert(!PINK_OR_RED.test(paintBlob(hit)) && !PINK_OR_RED.test(paintBlob(miss)), "used Hangman keys are not pink or red");
 assert(present.background === "#96702F" && present.color === "#FFFFFF", "present key colors stay");
-assert(miss.background === "#FFDFE0" && miss.color === "#EA2B2B", "wrong key colors stay");
 assert(enter.background === SAGE.sage && enter.color === SAGE.onSage, "Wordle Enter and backspace fill sage with a white label");
 assert(enter.border === idle.border && enter.borderBottom === idle.borderBottom && enter.maxWidth === 112 && enter.height === idle.height, "Enter size and shape stay");
 assert(contrastRatio(idle.color, "#FFFFFF") >= 4.5, "idle letters on white under 4.5");

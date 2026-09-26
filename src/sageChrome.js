@@ -34,6 +34,9 @@ export const SAGE = {
 /** #58CC02 family: the bright token, its pressed edge, the chip ink, and the chip wash. */
 export const BRIGHT_GREEN = /#(?:58cc02|46a302|58a700|d7ffb8)\b|rgb\(\s*88\s*,\s*204\s*,\s*2\s*\)|rgb\(\s*70\s*,\s*163\s*,\s*2\s*\)|rgb\(\s*88\s*,\s*167\s*,\s*0\s*\)|rgb\(\s*215\s*,\s*255\s*,\s*184\s*\)/i;
 
+/** Pink and red key fills and letters. Wordle and Hangman keys must not use these. */
+export const PINK_OR_RED = /#(?:ffdfe0|ff4b4b|ea2b2b|ff6b6b|ff8c8c|fff1f1)\b|rgb\(\s*255\s*,\s*223\s*,\s*224\s*\)|rgb\(\s*255\s*,\s*75\s*,\s*75\s*\)|rgb\(\s*234\s*,\s*43\s*,\s*43\s*\)|rgb\(\s*255\s*,\s*107\s*,\s*107\s*\)|rgb\(\s*255\s*,\s*140\s*,\s*140\s*\)|rgb\(\s*255\s*,\s*241\s*,\s*241\s*\)/i;
+
 /** Games hub cards. Fill stays the caller's card color. Lip thickness stays 5px. */
 export function gamesHubCardChrome(theme = "light") {
   if (theme === "dark") {

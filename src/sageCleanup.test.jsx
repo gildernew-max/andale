@@ -6,7 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import App from "./App.jsx";
 import { contrastRatio } from "./spanishKeyboard.js";
-import { BRIGHT_GREEN } from "./sageChrome.js";
+import { BRIGHT_GREEN, PINK_OR_RED } from "./sageChrome.js";
+import { WORDLE_ABSENT, WORDLE_CORRECT } from "./wordle.js";
 import { MEMORY_BANK } from "./memory.js";
 import { freshWordleRun, isWordleGuess, WORDLE_STORAGE_KEY } from "./wordle.js";
 
@@ -80,6 +81,22 @@ const nodeBlob = (el) => {
   if (fill) bits.push(fill);
   if (stroke) bits.push(stroke);
   return bits.join(" ");
+};
+
+const assertNoPinkOrRedKeys = (label) => {
+  const keys = [
+    ...screen.queryAllByTestId("letter-chip"),
+    ...screen.queryAllByTestId("accent-chip"),
+    ...screen.queryAllByTestId("letter-board-enter"),
+    ...screen.queryAllByTestId("letter-board-backspace"),
+  ];
+  expect(keys.length, label).toBeGreaterThan(0);
+  keys.forEach((el) => {
+    const blob = nodeBlob(el);
+    const name = el.getAttribute("data-letter") || el.getAttribute("data-testid");
+    expect(blob, `${label} ${name}`).not.toMatch(PINK_OR_RED);
+    expect(blob, `${label} ${name}`).not.toMatch(BRIGHT_GREEN);
+  });
 };
 
 /** Walk a surface. Skip the primary Btn chrome, which stays CHECK lime on purpose. */
@@ -241,6 +258,13 @@ describe("sage cleanup", () => {
     expect(cssHex(back.style.color)).toBe("#ffffff");
     pairContrast(enter, "wordle enter");
     pairContrast(back, "wordle backspace");
+    assertNoPinkOrRedKeys("wordle light keys");
+
+    cleanup();
+    await boot({ uiLang: "en", theme: "dark" }, { screen: "wordle", tab: "practica" }, "letter-board", () => {
+      localStorage.setItem(WORDLE_STORAGE_KEY, JSON.stringify({ day: fresh.day, guesses: [guess], draft: "sol", status: "play" }));
+    });
+    assertNoPinkOrRedKeys("wordle dark keys");
 
     cleanup();
     await boot({ uiLang: "en" }, {
@@ -256,9 +280,18 @@ describe("sage cleanup", () => {
     const letter = screen.getAllByTestId("letter-chip").find((el) => el.getAttribute("data-letter") === "A");
     pairContrast(letter, "hangman idle key");
     const hit = screen.getAllByTestId("letter-chip").find((el) => el.getAttribute("data-letter") === "C");
+    const miss = screen.getAllByTestId("letter-chip").find((el) => el.getAttribute("data-letter") === "W");
     expect(hit.getAttribute("data-state")).toBe("correct");
-    expect(cssHex(hit.style.background)).toBe("#d7ffb8");
-    expect(cssHex(hit.style.color)).toBe("#58a700");
+    expect(miss.getAttribute("data-state")).toBe("wrong");
+    expect(cssHex(hit.style.background)).toBe(WORDLE_CORRECT.toLowerCase());
+    expect(cssHex(hit.style.color)).toBe("#ffffff");
+    expect(hit.style.borderTopColor).toBe("transparent");
+    expect(cssHex(miss.style.background)).toBe(WORDLE_ABSENT.toLowerCase());
+    expect(cssHex(miss.style.color)).toBe("#ffffff");
+    expect(miss.style.borderTopColor).toBe("transparent");
+    pairContrast(hit, "hangman correct key");
+    pairContrast(miss, "hangman wrong key");
+    assertNoPinkOrRedKeys("hangman light keys");
     assertNoBrightGreen(screen.getByTestId("hangman-slots"), "hangman slots");
     const slots = screen.getAllByTestId("hangman-slot");
     const focused = slots.find((el) => el.getAttribute("data-focus") === "on");
@@ -274,7 +307,7 @@ describe("sage cleanup", () => {
     await boot({ uiLang: "en", theme: "dark" }, {
       screen: "ahorcado",
       tab: "practica",
-      ahorcado: { word: "chamba", guessed: ["C"], status: "play", focus: 1 },
+      ahorcado: { word: "chamba", guessed: ["C", "W"], status: "play", focus: 1 },
     }, "hangman-slots");
     const darkSlot = screen.getAllByTestId("hangman-slot").find((el) => el.getAttribute("data-focus") === "on");
     expect(darkSlot.style.borderBottomWidth).toBe("3px");
@@ -283,6 +316,17 @@ describe("sage cleanup", () => {
     const darkKey = screen.getAllByTestId("letter-chip").find((el) => el.getAttribute("data-letter") === "A");
     expect(cssHex(darkKey.style.color)).toBe("#f6efe4");
     expect(cssHex(darkKey.style.background)).toBe("#1e2128");
+    const darkHit = screen.getAllByTestId("letter-chip").find((el) => el.getAttribute("data-letter") === "C");
+    const darkMiss = screen.getAllByTestId("letter-chip").find((el) => el.getAttribute("data-letter") === "W");
+    expect(darkHit.getAttribute("data-state")).toBe("correct");
+    expect(darkMiss.getAttribute("data-state")).toBe("wrong");
+    expect(cssHex(darkHit.style.background)).toBe("#677050");
+    expect(cssHex(darkHit.style.color)).toBe("#f6efe4");
+    expect(cssHex(darkMiss.style.background)).toBe("#2a2e36");
+    expect(cssHex(darkMiss.style.color)).toBe("#a0a4ab");
+    pairContrast(darkHit, "dark hangman correct key");
+    pairContrast(darkMiss, "dark hangman wrong key");
+    assertNoPinkOrRedKeys("hangman dark keys");
 
     cleanup();
     await boot({ uiLang: "en" }, {

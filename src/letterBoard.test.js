@@ -113,7 +113,16 @@ assert(darkIdle.color === "#F6EFE4" && darkIdle.background === "#1E2128", "idle 
 assert(darkUnused.background === "#1E2128" && darkUnused.color === "#F6EFE4" && darkUnused.border === "2px solid #2A2E36", "unused key matches the idle dark face");
 const lightWordle = spanishKeyboardKeyStyle({ theme: "light", status: "correct", light: { ...LIGHT, wordleCorrect: "#5C7356" } });
 assert(lightWordle.background === "#5C7356" && lightWordle.color === "#FFFFFF", "Wordle can keep its light correct key");
-assert(lightHit.background === "#D7FFB8" && lightHit.color === "#58A700", "Ahorcado light correct key stays the lime chip");
+const hangmanUsed = { ...LIGHT, wordleCorrect: "#5C7356", wordleWrong: "#7E756E" };
+const hangmanHit = spanishKeyboardKeyStyle({ theme: "light", status: "correct", light: hangmanUsed });
+const hangmanMiss = spanishKeyboardKeyStyle({ theme: "light", status: "wrong", light: hangmanUsed });
+assert(hangmanHit.background === "#5C7356" && hangmanHit.color === "#FFFFFF" && hangmanHit.border === "2px solid transparent", "light Hangman correct key uses the Wordle correct token");
+assert(hangmanMiss.background === "#7E756E" && hangmanMiss.color === "#FFFFFF" && hangmanMiss.border === "2px solid transparent", "light Hangman wrong key uses the Wordle absent token");
+const darkHangmanLight = { ...hangmanUsed, ...DARK_LIGHT, wordleCorrect: "#5C7356", wordleWrong: "#7E756E" };
+const darkHangmanHit = spanishKeyboardKeyStyle({ theme: "dark", status: "correct", light: darkHangmanLight });
+const darkHangmanMiss = spanishKeyboardKeyStyle({ theme: "dark", status: "wrong", light: darkHangmanLight });
+assert(darkHangmanHit.background === SPANISH_KEYBOARD.sageSmall && darkHangmanHit.color === "#F6EFE4", "dark Hangman correct key stays sage-small");
+assert(darkHangmanMiss.background === "#2A2E36" && darkHangmanMiss.color === "#A0A4AB", "dark Hangman wrong key stays the dark miss");
 assert(Math.abs(contrastRatio(darkIdle.color, darkIdle.background) - 14.11) < 0.02, "idle key is 14.11:1");
 assert(Math.abs(contrastRatio(darkCorrect.color, darkCorrect.background) - 4.58) < 0.02, "correct key is 4.58:1");
 assert(darkIdle.background !== darkWrong.background && darkIdle.color !== darkWrong.color, "idle and wrong keys differ");
