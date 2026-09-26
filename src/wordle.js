@@ -42,13 +42,7 @@ export const WORDLE_LIGHT = {
   gloss: "#777777",
 };
 
-/**
- * Dark mode. Brand ruling: page is the app background, the board and empty
- * tiles are the app card, borders are the app soft gray, text is cream.
- * Right spot is the map sage with cream letters. Wrong spot keeps the light
- * ochre. Absent is a neutral mid-gray, darker than that ochre so cream letters
- * clear 4.5:1 and the fill stays apart from the card, the sage, and the ochre.
- */
+/** Dark tiles. Brand lock. The keyboard does not read these. */
 export const WORDLE_DARK = {
   page: "#15171C",
   board: "#1E2128",
@@ -58,10 +52,12 @@ export const WORDLE_DARK = {
   quiet: "#A0A4AB",
   clue: "#F6EFE4",
   gloss: "#A0A4AB",
-  correct: "#6F7757",
-  present: WORDLE_PRESENT,
-  absent: "#62666E",
-  tileInk: "#F6EFE4",
+  correct: "#677050",
+  present: "#85672C",
+  absent: "#2A2E36",
+  correctInk: "#F6EFE4",
+  presentInk: "#F6EFE4",
+  absentInk: "#A0A4AB",
 };
 
 export function wordleChrome(dark) {

@@ -4356,14 +4356,6 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
         "--wordle-quiet": chrome.quiet,
         "--wordle-clue": chrome.clue,
         "--wordle-gloss": chrome.gloss,
-        ...(dark ? {
-          "--wordle-correct": chrome.correct,
-          "--wordle-present": chrome.present,
-          "--wordle-absent": chrome.absent,
-          "--wordle-correct-ink": chrome.tileInk,
-          "--wordle-present-ink": chrome.tileInk,
-          "--wordle-absent-ink": chrome.tileInk,
-        } : {}),
         background: chrome.board,
         color: chrome.letter,
       }}
@@ -4378,7 +4370,18 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
         <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
       </div>
       <div className="wordle-board-slot">
-        <div className="wordle-grid" data-testid="wordle-grid">
+        <div
+          className="wordle-grid"
+          data-testid="wordle-grid"
+          style={dark ? {
+            "--wordle-correct": chrome.correct,
+            "--wordle-present": chrome.present,
+            "--wordle-absent": chrome.absent,
+            "--wordle-correct-ink": chrome.correctInk,
+            "--wordle-present-ink": chrome.presentInk,
+            "--wordle-absent-ink": chrome.absentInk,
+          } : undefined}
+        >
           {rows.map((row, ri) => (
             <div
               key={`${ri}-${row.current ? shake : "set"}`}

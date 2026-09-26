@@ -122,10 +122,10 @@ assert(wordleChrome(true) === WORDLE_DARK, "dark chrome is one isolated object")
 assert(WORDLE_DARK.page === "#15171C", "dark page is the app background");
 assert(WORDLE_DARK.board === "#1E2128" && WORDLE_DARK.square === "#1E2128", "dark board and empty tiles are the app card");
 assert(WORDLE_DARK.line === "#2A2E36", "dark tile borders are the app soft gray");
-assert(WORDLE_DARK.letter === "#F6EFE4" && WORDLE_DARK.clue === "#F6EFE4" && WORDLE_DARK.tileInk === "#F6EFE4", "dark text and tile letters are cream");
-assert(WORDLE_DARK.correct === "#6F7757", "dark right spot is sage");
-assert(WORDLE_DARK.present === WORDLE_PRESENT && WORDLE_DARK.present === "#96702F", "dark wrong spot keeps the light ochre");
-assert(WORDLE_DARK.absent === "#62666E", "dark absent is the mid-gray");
+assert(WORDLE_DARK.letter === "#F6EFE4" && WORDLE_DARK.square === "#1E2128" && WORDLE_DARK.line === "#2A2E36", "empty dark tiles are card, soft-gray edge, cream letters");
+assert(WORDLE_DARK.correct === "#677050" && WORDLE_DARK.correctInk === "#F6EFE4", "dark right spot is #677050 with cream");
+assert(WORDLE_DARK.present === "#85672C" && WORDLE_DARK.presentInk === "#F6EFE4", "dark wrong spot is #85672C with cream");
+assert(WORDLE_DARK.absent === "#2A2E36" && WORDLE_DARK.absentInk === "#A0A4AB", "dark absent is #2A2E36 with #A0A4AB letters");
 
 const channel = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const rel = (hex) => {
@@ -142,9 +142,10 @@ for (const [name, bg] of [["correct", WORDLE_CORRECT], ["present", WORDLE_PRESEN
   assert(ratio("#FFFFFF", bg) >= 4.5, `${name} white letters clear 4.5:1`);
 }
 assert(rel(WORDLE_PRESENT) > rel(WORDLE_CORRECT), "ochre stays lighter than the sage");
-assert(ratio(WORDLE_DARK.tileInk, WORDLE_DARK.correct) >= 4, "cream on the dark sage stays readable");
-assert(ratio(WORDLE_DARK.tileInk, WORDLE_DARK.present) >= 3.9, "cream on the dark ochre stays readable");
-assert(ratio(WORDLE_DARK.tileInk, WORDLE_DARK.absent) >= 4.5, "cream on the dark mid-gray clears 4.5:1");
+assert(ratio(WORDLE_DARK.correctInk, WORDLE_DARK.correct) >= 4.5, "cream on the dark right spot clears 4.5:1");
+assert(ratio(WORDLE_DARK.presentInk, WORDLE_DARK.present) >= 4.5, "cream on the dark wrong spot clears 4.5:1");
+assert(ratio(WORDLE_DARK.absentInk, WORDLE_DARK.absent) >= 4.5, "absent letters clear 4.5:1");
+assert(ratio(WORDLE_DARK.letter, WORDLE_DARK.square) >= 4.5, "cream on an empty dark tile clears 4.5:1");
 for (const hex of [WORDLE_DARK.letter, WORDLE_DARK.quiet, WORDLE_DARK.gloss]) {
   assert(ratio(hex, WORDLE_DARK.board) >= 4.5, `${hex} clears 4.5:1 on the dark board`);
 }
@@ -154,17 +155,16 @@ const darkBlock = appSrc.slice(darkAt, appSrc.indexOf("const D =", darkAt));
 const darkInk = darkBlock.match(/ink: "([^"]+)"/)[1];
 const darkSub = darkBlock.match(/sub: "([^"]+)"/)[1];
 assert(ratio(darkInk, WORDLE_DARK.board) >= 4.5 && ratio(darkSub, WORDLE_DARK.board) >= 4.5, "ES/EN ink and quiet label clear 4.5:1 on the dark board");
-const darkFills = [WORDLE_DARK.correct, WORDLE_DARK.present, WORDLE_DARK.absent];
-assert(new Set(darkFills).size === 3, "the three dark fills are different colors");
-for (const hex of darkFills) {
-  assert(Math.abs(rel(hex) - rel(WORDLE_DARK.square)) >= 0.08, `${hex} stays apart from the card`);
-}
-assert(Math.abs(rel(WORDLE_DARK.absent) - rel(WORDLE_DARK.correct)) >= 0.03, "mid-gray stays apart from the sage");
-assert(Math.abs(rel(WORDLE_DARK.absent) - rel(WORDLE_DARK.present)) >= 0.03, "mid-gray stays apart from the ochre");
+const darkFills = [WORDLE_DARK.correct, WORDLE_DARK.present, WORDLE_DARK.absent, WORDLE_DARK.square];
+assert(new Set(darkFills).size === 4, "dark right, wrong, absent, and empty tiles are four fills");
 const wordleKeysAt = appSrc.indexOf('className="wordle-keys"');
 const wordleKeys = appSrc.slice(wordleKeysAt, wordleKeysAt + 700);
 assert(wordleKeys.includes("marks={keyMarks}") && wordleKeys.includes("onEnter={onCommit}") && wordleKeys.includes("onBackspace={onBackspace}"), "Wordle keyboard wiring is marks, enter, and delete");
 assert(!wordleKeys.includes("chrome"), "Wordle does not pass its own keyboard colors");
+const gridAt = appSrc.indexOf('data-testid="wordle-grid"');
+const gridBlock = appSrc.slice(gridAt, gridAt + 450);
+assert(gridBlock.includes("chrome.correct") && gridBlock.includes("chrome.absentInk"), "dark tile colors sit on the grid");
+assert(!wordleKeys.includes("correctInk") && !wordleKeys.includes("chrome.absent"), "the keyboard call does not take the dark tile colors");
 const letterSig = appSrc.slice(appSrc.indexOf("const LetterBoard"), appSrc.indexOf("=> {", appSrc.indexOf("const LetterBoard")));
 assert(!letterSig.includes("chrome"), "LetterBoard has no Wordle color skin");
 
