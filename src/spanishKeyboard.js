@@ -2,9 +2,11 @@
  *  Wordle and Ahorcado both paint keys through `spanishKeyboardKeyStyle`
  *  and render them with `SpanishKeyboardKey` (spanishKeyboard.jsx).
  *  Light mode is the current chip: white face, CHECK lime, green/red hits.
- *  Dark mode is the games ruling: card #1E2128, lip #2A2E36, cream #F6EFE4.
- *  Correct keys are Cubetas sage. 14px cream on #6F7757 is 4.13:1, so the
- *  key face uses #677050 (4.58:1) whenever the letter is small text.
+ *  Dark mode, Brand 2026-09-26:
+ *  unused #1E2128 / edge #2A2E36 / cream #F6EFE4 (14.11:1),
+ *  correct #677050 / cream (4.58:1),
+ *  wrong fill #2A2E36 / #A0A4AB (5.44:1),
+ *  present (Wordle) #85672C / cream (4.63:1).
  */
 
 export const SPANISH_KEYBOARD = {
@@ -13,13 +15,12 @@ export const SPANISH_KEYBOARD = {
   line: "#2A2E36",
   cream: "#F6EFE4",
   muted: "#A0A4AB",
-  /** Brand sage. Large bold cream clears 3:1; small text does not clear 4.5:1. */
+  /** Brand sage. 14px cream on this face is 4.13:1, so correct keys use sageSmall. */
   sage: "#6F7757",
-  /** Correct-key face when the letter is small (keyboard keys are 14px). */
+  /** Correct-key face. Cream letters at 14px are 4.58:1. */
   sageSmall: "#677050",
-  /** Wordle wrong-spot. Same gold-dark ochre as the app token, dark ink so letters clear 4.5:1. */
-  ochre: "#E6A800",
-  ochreInk: "#1E2128",
+  /** Wordle present: right letter, wrong spot. Cream letters are 4.63:1. Ahorcado does not use it. */
+  ochre: "#85672C",
 };
 
 const KEY_BOX = {
@@ -91,7 +92,6 @@ export function spanishKeyboardKeyStyle({
   const card = light.card || SPANISH_KEYBOARD.card;
   const line = light.line || SPANISH_KEYBOARD.line;
   const cream = light.cream || SPANISH_KEYBOARD.cream;
-  const muted = light.muted || SPANISH_KEYBOARD.muted;
   let background = card;
   let color = cream;
   let fontWeight = 800;
@@ -100,11 +100,11 @@ export function spanishKeyboardKeyStyle({
     color = cream;
     fontWeight = 900;
   } else if (status === "wrong" || status === "absent" || status === "used") {
-    background = card;
-    color = muted;
+    background = SPANISH_KEYBOARD.line;
+    color = SPANISH_KEYBOARD.muted;
   } else if (status === "present") {
-    background = light.ochre || SPANISH_KEYBOARD.ochre;
-    color = light.ochreInk || SPANISH_KEYBOARD.ochreInk;
+    background = SPANISH_KEYBOARD.ochre;
+    color = cream;
   }
   return {
     ...KEY_BOX,
@@ -156,7 +156,7 @@ export function boardTilePaint({
   const paint = {
     border: `2px solid ${edge}`,
     background: light.card || SPANISH_KEYBOARD.card,
-    color: used ? (light.muted || light.sub || SPANISH_KEYBOARD.muted) : cream,
+    color: cream,
   };
   if (role === "value") paint.borderBottom = `5px solid ${edge}`;
   return paint;

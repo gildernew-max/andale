@@ -5747,7 +5747,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("jeopardy-tile-mex-100").disabled).toBe(true));
     assertDarkControl(screen.getByTestId("jeopardy-tile-mex-100"), "used jeopardy tile");
     assertDarkControl(screen.getByTestId("jeopardy-tile-mex-200"), "open jeopardy tile");
-    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).ink).not.toBe(paintOf(screen.getByTestId("jeopardy-tile-mex-200")).ink);
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-200")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).ink).toBe("#f6efe4");
+    expect(paintOf(screen.getByTestId("jeopardy-cat-mex")).ink).toBe("#f6efe4");
+    expect(paintOf(screen.getByTestId("jeopardy-back")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-back")).ink).toBe("#f6efe4");
 
     await user.click(screen.getByTestId("jeopardy-back"));
     await waitFor(() => expect(screen.getByTestId("hangman-start")).toBeTruthy());
@@ -5755,7 +5760,11 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("letter-board")).toBeTruthy());
     const keys = [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")];
     expect(keys.some((el) => el.getAttribute("data-letter") === "Ñ")).toBe(true);
+    expect(paintOf(keys.find((el) => el.getAttribute("data-letter") === "Ñ")).fill).toBe("#1e2128");
+    expect(paintOf(keys.find((el) => el.getAttribute("data-letter") === "Ñ")).ink).toBe("#f6efe4");
     expect(keys.filter((el) => el.getAttribute("data-testid") === "accent-chip").map((el) => el.textContent).join("")).toBe("ÁÉÍÓÚÜ");
+    expect(paintOf(screen.getAllByTestId("accent-chip")[0]).fill).toBe("#1e2128");
+    expect(paintOf(screen.getAllByTestId("accent-chip")[0]).ink).toBe("#f6efe4");
     keys.forEach((el) => assertDarkControl(el, `key ${el.getAttribute("data-letter")}`));
     const word = screen.getByTestId("hangman-board").getAttribute("data-word");
     const letters = [...new Set([...word.normalize("NFC")].map((ch) => ch.toLocaleUpperCase("es")))];
@@ -5770,8 +5779,11 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")].forEach((el) => {
       assertDarkControl(el, `played key ${el.getAttribute("data-letter")}`);
     });
-    expect(paintOf(chipFor("W")).ink).not.toBe(paintOf(chipFor(letters[0])).ink);
-    expect(paintOf(chipFor("W")).fill).not.toBe(paintOf(chipFor(letters[0])).fill);
+    expect(paintOf(chipFor("W")).fill).toBe("#2a2e36");
+    expect(paintOf(chipFor("W")).ink).toBe("#a0a4ab");
+    expect(paintOf(chipFor(letters[0])).fill).toBe("#677050");
+    expect(paintOf(chipFor(letters[0])).ink).toBe("#f6efe4");
+    expect(contrastRatio("#A0A4AB", "#2A2E36")).toBeGreaterThanOrEqual(5.4);
     for (const ch of letters) {
       if (screen.queryAllByTestId("letter-chip").length + screen.queryAllByTestId("accent-chip").length === 0) break;
       const chip = chipFor(ch);
@@ -5779,6 +5791,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     }
     await waitFor(() => expect(screen.getByTestId("hangman-back")).toBeTruthy());
     assertDarkControl(screen.getByTestId("hangman-back"), "hangman games");
+    expect(paintOf(screen.getByTestId("hangman-back")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("hangman-back")).ink).toBe("#f6efe4");
     expect(screen.queryAllByTestId("letter-chip")).toHaveLength(0);
   });
 

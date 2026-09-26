@@ -99,11 +99,17 @@ assert(darkCorrect.background === SPANISH_KEYBOARD.sageSmall && darkCorrect.colo
 assert(SPANISH_KEYBOARD.sage === "#6F7757" && SPANISH_KEYBOARD.sageSmall === "#677050", "sage tokens stay the ruling");
 assert(contrastRatio("#F6EFE4", "#6F7757") < 4.5, "small cream on brand sage misses 4.5, so keys use sageSmall");
 const darkWrong = spanishKeyboardKeyStyle({ theme: "dark", status: "wrong", light: DARK_LIGHT });
-assert(darkWrong.background === "#1E2128" && darkWrong.color === "#A0A4AB", "wrong key is muted cream-card text");
-assert(darkWrong.color !== darkCorrect.color || darkWrong.background !== darkCorrect.background, "correct and wrong keys differ");
+assert(darkWrong.background === "#2A2E36" && darkWrong.color === "#A0A4AB", "wrong key is #A0A4AB on #2A2E36");
+assert(Math.abs(contrastRatio(darkWrong.color, darkWrong.background) - 5.44) < 0.02, "wrong key stays 5.44:1, not faded further");
+assert(darkWrong.background !== darkCorrect.background, "correct and wrong keys differ");
+const darkPresent = spanishKeyboardKeyStyle({ theme: "dark", status: "present", light: DARK_LIGHT });
+assert(darkPresent.background === "#85672C" && darkPresent.color === "#F6EFE4", "present key is cream on ochre #85672C");
+assert(Math.abs(contrastRatio(darkPresent.color, darkPresent.background) - 4.63) < 0.02, "present key is 4.63:1");
 const darkIdle = spanishKeyboardKeyStyle({ theme: "dark", status: "idle", light: DARK_LIGHT });
 assert(darkIdle.color === "#F6EFE4" && darkIdle.background === "#1E2128", "idle key is cream on the card");
-assert(darkIdle.color !== darkWrong.color, "idle and wrong keys differ");
+assert(Math.abs(contrastRatio(darkIdle.color, darkIdle.background) - 14.11) < 0.02, "idle key is 14.11:1");
+assert(Math.abs(contrastRatio(darkCorrect.color, darkCorrect.background) - 4.58) < 0.02, "correct key is 4.58:1");
+assert(darkIdle.background !== darkWrong.background && darkIdle.color !== darkWrong.color, "idle and wrong keys differ");
 
 const darkCat = boardTilePaint({ theme: "dark", role: "category", light: DARK_LIGHT });
 const darkVal = boardTilePaint({ theme: "dark", role: "value", used: false, light: DARK_LIGHT });
@@ -115,8 +121,8 @@ for (const [name, tile] of [["category", darkCat], ["value", darkVal], ["used", 
 }
 assert(darkVal.borderBottom === "5px solid #2A2E36", "dark value keeps the 5px lip");
 assert(darkCat.borderBottom == null, "dark category does not grow a lip");
-assert(darkVal.color === "#F6EFE4" && darkUsed.color === "#A0A4AB", "value and used text stay distinct");
-assert(darkVal.color !== darkUsed.color, "used value is distinguishable");
+assert(darkVal.color === "#F6EFE4" && darkUsed.color === "#F6EFE4", "board tiles use cream, the unused-key ink");
+assert(darkUsed.background === "#1E2128" && darkCat.background === "#1E2128", "board tiles use the unused-key fill");
 
 const gamesBtn = darkGamesButtonStyle();
 assert(!isWhiteOrCreamFill(gamesBtn.background), "dark Games button is not white or cream");
