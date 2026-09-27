@@ -10290,17 +10290,17 @@ export default function App() {
             </>)}
 
             {lecturaCliffhanger?.storyId === story.id && (
-              <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, background: HUB_CREAM, borderRadius: 14, padding: "14px 14px 12px" }}>
-                <p data-testid="lectura-cliffhanger-line" style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700, lineHeight: 1.55, color: D.sub }}>
+              <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 14, padding: "14px 14px 12px" }}>
+                <p data-testid="lectura-cliffhanger-line" style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700, lineHeight: 1.55, color: D.ink }}>
                   {lecturaCliffhangerLine(story.id)}
                 </p>
-                <div data-testid="lectura-bird-handoff" style={{ background: HUB_CREAM }}>
+                <div data-testid="lectura-bird-handoff" style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM }}>
                   <button
                     type="button"
                     data-testid="lectura-bird-handoff-cta"
                     onClick={handoffCliffhangerToBird}
                     style={{
-                      background: HUB_CREAM,
+                      background: theme === "dark" ? "#1E2128" : HUB_CREAM,
                       color: MARK_INK,
                       border: `1px solid ${MARK_INK}`,
                       borderRadius: 12,

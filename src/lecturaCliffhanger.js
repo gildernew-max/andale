@@ -1,29 +1,18 @@
 /**
- * Cliffhanger end beat for every Lectura chapter.
- * Each value is that chapter's existing final line, held on screen
- * as the to-be-continued moment. Not new story text.
- * TODO(George): story-0 — replace with the cliffhanger.
- * TODO(George): story-1 — replace with the cliffhanger.
- * TODO(George): story-2 — replace with the cliffhanger.
- * TODO(George): story-3 — replace with the cliffhanger.
- * TODO(George): story-4 — replace with the cliffhanger.
- * TODO(George): story-5 — replace with the cliffhanger.
- * TODO(George): story-6 — replace with the cliffhanger.
- * TODO(George): story-7 — replace with the cliffhanger.
- * TODO(George): story-8 — replace with the cliffhanger.
- * TODO(George): story-9 — replace with the cliffhanger.
+ * Closing hook for every Lectura chapter.
+ * Shown only on the cliffhanger beat — not part of the story text.
  */
 export const lecturaCliffhangers = {
-  "story-0": "Ojalá que, cuando me toque a mí, alguien diga mi nombre también.",
-  "story-1": "Quizás ese sea el verdadero motivo para visitar la Casa Azul: no la tragedia, sino las ganas de vivir que cabían en un cuerpo roto.",
-  "story-2": "Pero hágale caso a don Arturo: no se regrese sin ver lo que hay debajo.",
-  "story-3": "Cuando salgo a la arena y el público grita mi nombre, pienso en él, sentado en primera fila sin máscara, aplaudiendo al niño que aprendió a leer entre antifaces.",
-  "story-4": "«El peso extra es por la bendición», le dije, y se rio tanto que casi se le cae la cuchara.",
-  "story-5": "Tenía razón.",
-  "story-6": "Lo único cierto es que, durante cincuenta y un años, mi abuelo cuidó esa historia como otros cuidan un anillo de bodas.",
-  "story-7": "Si alguien me preguntara qué es lo más mexicano de México —no las pirámides, no el mariachi, no el mole—, yo diría: tres hombres viejos jugando dominó en silencio en una cantina centenaria, con un tequila intacto sobre la mesa, esperando a un amigo que no va a llegar.",
-  "story-8": "Yo les digo, igual que mi padre me decía: «Algún día lo entenderán. Por ahora, levanten la copa y respondan: ¡Viva México!»",
-  "story-9": "«El café siempre encuentra su lugar. Los hombres también.»",
+  "story-0": "Hay casas que no olvidan. ¿Conoces una que todavía espere a su dueña?",
+  "story-1": "Ella pintó el mundo desde una cama. ¿Y si alguien viajara lejos solo para no moverse?",
+  "story-2": "No crea que solo la tierra esconda algo. ¿Qué habrá debajo de una máscara?",
+  "story-3": "Cada generación elige su camino. ¿O hay caminos que te eligen a ti?",
+  "story-4": "Para Doña Lupe, yo era de la casa. ¿Y los que viven entre dos casas?",
+  "story-5": "Llevo doce años buscando la verdad. ¿Y si una historia no se pudiera comprobar?",
+  "story-6": "Hay cosas que se cuidan toda la vida. ¿Una historia, un anillo\u2026 o una mesa?",
+  "story-7": "Ellos honran a su amigo en silencio. ¿Y si alguien lo hiciera gritando?",
+  "story-8": "Levanten la copa. Y mañana, cuando tomen café, pregúntense quién lo cosechó.",
+  "story-9": "Siempre hay otra montaña, más alta. ¿Hasta dónde quiere subir usted?",
 };
 
 export function lecturaCliffhangerLine(storyId) {

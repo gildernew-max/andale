@@ -1131,7 +1131,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
     await user.click(screen.getByRole("button", { name: /El olvido/ }));
     await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
-    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toMatch(/Ojalá que, cuando me toque a mí/));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe("Hay casas que no olvidan. ¿Conoces una que todavía espere a su dueña?"));
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
     await waitFor(() => {
