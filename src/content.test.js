@@ -645,11 +645,14 @@ assert(!/WinPerch|WinBounce|Story0Beat|win-bounce|story-0-beat|780ms|cenzontle-c
 assert(!/scaleX\s*\(\s*-1\s*\)/.test(paywallLayout), "paywall Cenzontle stays right-facing");
 assert(!/Confetti|coach-strip|coach jump/.test(paywallLayout), "no confetti / coach crowd inside the modal");
 assert(/data-testid="soft-paywall-card"/.test(paywallLayout), "paywall card is testable");
-assert(/background:\s*HUB_CREAM/.test(paywallLayout), "paywall card uses Learn home HUB_CREAM");
+assert(/soft-paywall-card[\s\S]{0,500}theme === "dark" \? "#1E2128" : HUB_CREAM/.test(paywallLayout), "dark paywall card is #1E2128; light stays HUB_CREAM");
+assert(/soft-paywall-headline[\s\S]{0,180}theme === "dark" \? "#F6EFE4" : D\.ink/.test(paywallLayout), "dark paywall title is cream, not near-white on a light card");
+assert(/soft-paywall-annual-price[\s\S]{0,180}theme === "dark" \? "#F6EFE4" : D\.ink/.test(paywallLayout), "dark annual price is cream");
+assert(/soft-paywall-monthly-price[\s\S]{0,180}theme === "dark" \? "#F6EFE4" : D\.ink/.test(paywallLayout), "dark monthly price is cream");
 assert(!/theme === "dark" \? D\.card : HUB_CREAM/.test(paywallLayout), "paywall card does not fall back to D.card white");
 assert(!/soft-paywall-card[\s\S]{0,220}D\.card/.test(paywallLayout), "paywall card does not read D.card");
-assert(!/soft-paywall-card[\s\S]{0,220}(#fff|#FFFFFF)/.test(paywallLayout), "paywall card kills pure white");
-assert(/soft-paywall-monthly[\s\S]{0,160}background:\s*HUB_CREAM/.test(paywallLayout), "monthly outline sits on cream, not #fff");
+assert(!/soft-paywall-card[\s\S]{0,400}(#fff|#FFFFFF)/.test(paywallLayout), "paywall card kills pure white");
+assert(/soft-paywall-monthly[\s\S]{0,420}theme === "dark" \? "#1E2128" : HUB_CREAM/.test(paywallLayout), "dark monthly sits on #1E2128; light stays cream");
 assert(appSrc.includes('const HUB_CREAM = "#F6EFE4"'), "Learn home surface cream is #F6EFE4");
 assert(/learn-hub[\s\S]{0,220}HUB_CREAM/.test(appSrc), "Learn home uses HUB_CREAM");
 assert(/MARK_INK/.test(paywallLayout), "paywall accents stay sage");

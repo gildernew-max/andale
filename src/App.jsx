@@ -8713,19 +8713,19 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Surface cream lock = Learn home HUB_CREAM. Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is #1E2128 with cream ink. Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
+          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
             <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
-            <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: D.ink }}>{L.paywallHeadline}</div>
-            <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
+            <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{L.paywallHeadline}</div>
+            <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
-              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
-              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: HUB_CREAM }}>{L.paywallMonthly}</Btn>
-              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
-              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: D.sub, lineHeight: 1.45 }}>
+              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
+              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, ...(theme === "dark" ? { color: "#F6EFE4", border: "2px solid #4A5160", borderBottom: "4px solid #4A5160" } : {}) }}>{L.paywallMonthly}</Btn>
+              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
+              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: theme === "dark" ? "#CDBBA6" : D.sub, lineHeight: 1.45 }}>
                 {disclosureLines(uiLang, storePrices).map((line, i) => (
                   <p key={i} data-testid={`soft-paywall-disclosure-${i}`} style={{ margin: i === 0 ? "2px 0 0" : "6px 0 0", fontSize: 11, fontWeight: 700, lineHeight: 1.45 }}>
                     {i === 0 && line.startsWith("Ándale Premium")
@@ -8734,7 +8734,7 @@ export default function App() {
                   </p>
                 ))}
               </div>
-              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>
+              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : D.sub }}>
                 <a data-testid="soft-paywall-terms" href={TERMS_OF_USE_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].terms}</a>
                 {" · "}
                 <a data-testid="soft-paywall-privacy" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].privacy}</a>
@@ -8742,15 +8742,15 @@ export default function App() {
                 <a data-testid="soft-paywall-restore" href="#restore" onClick={(event) => { event.preventDefault(); restoreSoftPaywall(); }} style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].restore}</a>
               </div>
               {restoreStatus && (
-                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
+                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : D.sub }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
               )}
               {!canCharge && (
-              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: D.sub, lineHeight: 1.35 }}>
+              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: theme === "dark" ? "#CDBBA6" : D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
               </div>
               )}
               <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
-                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
+                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
                 {L.paywallDismiss}
               </button>
             </div>
@@ -10195,14 +10195,14 @@ export default function App() {
                   </div>
                 )}
                 {checkpoints[pi] && (
-                  <div style={{ margin: "10px 0 0 48px", border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : D.line}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : "#fff" }}>
-                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : D.sub, marginBottom: 6 }}>
+                  <div style={{ margin: "10px 0 0 48px", border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
+                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => (
                         <button key={choice} disabled={!!checkState[pi]} onClick={() => answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a)}
-                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : D.line}`, background: checkState[pi] === choice ? "#fff" : "#F7F7F7", borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : D.ink }}>
+                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: checkState[pi] === choice ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
                           {choice}
                         </button>
                       ))}

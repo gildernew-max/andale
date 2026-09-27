@@ -3500,6 +3500,32 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
   });
 
+  it("dark soft paywall title and prices are cream on #1E2128, not near-white on cream", async () => {
+    cleanup();
+    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false });
+    await boot();
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-card")).toBeTruthy());
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const nearWhite = /#E8E8EA|#FFFFFF|rgb\(\s*232,\s*232,\s*234\s*\)|rgb\(\s*255,\s*255,\s*255\s*\)/i;
+    const darkCard = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const card = screen.getByTestId("soft-paywall-card");
+    const headline = screen.getByTestId("soft-paywall-headline");
+    const annualPrice = screen.getByTestId("soft-paywall-annual-price");
+    const monthlyPrice = screen.getByTestId("soft-paywall-monthly-price");
+    expect(card.style.background).toMatch(darkCard);
+    expect(card.style.background).not.toMatch(cream);
+    expect(headline.style.color).toMatch(cream);
+    expect(headline.style.color).not.toMatch(nearWhite);
+    expect(annualPrice.style.color).toMatch(cream);
+    expect(annualPrice.style.color).not.toMatch(nearWhite);
+    expect(monthlyPrice.style.color).toMatch(cream);
+    expect(monthlyPrice.style.color).not.toMatch(nearWhite);
+    expect(screen.getByTestId("soft-paywall-monthly").style.background).toMatch(darkCard);
+    expect(screen.getByTestId("soft-paywall-monthly").style.color).toMatch(cream);
+    expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
+  });
+
   it("cold first Hoy CONTINUE shows soft paywall once before idle home", async () => {
     cleanup();
     localStorage.clear();
