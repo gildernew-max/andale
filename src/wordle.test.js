@@ -94,24 +94,30 @@ assert(upgraded.R === "correct" && upgraded.A === "correct", "a later correct re
 
 const dict = wordleGuessSet();
 assert(dict.size === WORDLE_FIVE.length, "guess set is the word list alone");
-assert(WORDLE_ANSWERS.length === 60, "60-day list");
-for (const row of WORDLE_ANSWERS) {
+assert(WORDLE_ANSWERS.length === 120, "120-day list");
+const seenAnswers = new Set();
+WORDLE_ANSWERS.forEach((row, i) => {
+  const day = i + 1;
   const norm = normalizeWordle(row.word);
-  assert(wordleChars(norm).length === WORDLE_LENGTH, `${row.word} is 5 letters after normalization`);
-  assert(row.word === norm.toLocaleUpperCase("es"), `${row.word} is stored unaccented and uppercase`);
-  assert(normalizeWordle(row.display) === norm, `${row.display} folds to ${row.word}`);
-  assert(WORDLE_FIVE.includes(norm), `${row.word} is in the valid-guess set`);
-  assert(isWordleGuess(row.word), `${row.word} passes isWordleGuess`);
-  assert(row.es && row.en, `${row.word} has Spanish and English`);
-  assert(row.es.toLocaleLowerCase("es").includes(row.display.toLocaleLowerCase("es")), `${row.display} is in the Spanish sentence`);
+  assert(wordleChars(norm).length === WORDLE_LENGTH, `day ${day} ${row.word} is 5 letters`);
+  assert(row.word === norm.toLocaleUpperCase("es"), `day ${day} ${row.word} is stored unaccented and uppercase`);
+  assert(normalizeWordle(row.display) === norm, `day ${day} ${row.display} folds to ${row.word}`);
+  assert(!seenAnswers.has(norm), `day ${day} ${row.word} repeats an earlier answer`);
+  seenAnswers.add(norm);
+  assert(WORDLE_FIVE.includes(norm), `day ${day} ${row.word} is in the valid-guess set`);
+  assert(isWordleGuess(row.word), `day ${day} ${row.word} passes isWordleGuess`);
+  assert(row.es && row.en, `day ${day} ${row.word} has Spanish and English`);
+  assert(normalizeWordle(row.es).includes(normalizeWordle(row.display)), `day ${day} ${row.display} appears in the sentence without accents`);
   const parts = wordleSentenceParts(row.es, row.display);
-  assert(parts.bold, `${row.display} is in the Spanish sentence`);
-  assert(parts.bold.toLocaleLowerCase("es") === row.display, `${row.word}: bold word equals the stored accented display spelling`);
-  assert(parts.before + parts.bold + parts.after === row.es, `${row.word}: sentence text is unchanged`);
+  assert(parts.bold, `day ${day} ${row.display} is in the Spanish sentence`);
+  assert(parts.bold.toLocaleLowerCase("es") === row.display, `day ${day} ${row.word}: bold word equals the stored accented display spelling`);
+  assert(parts.before + parts.bold + parts.after === row.es, `day ${day} ${row.word}: sentence text is unchanged`);
   const beforeTail = [...parts.before].at(-1) || "";
   const afterHead = [...parts.after][0] || "";
-  assert(!/\p{L}/u.test(beforeTail) && !/\p{L}/u.test(afterHead), `${row.word}: bold span is the answer word`);
-}
+  assert(!/\p{L}/u.test(beforeTail) && !/\p{L}/u.test(afterHead), `day ${day} ${row.word}: bold span is the answer word`);
+  if (day % 3 === 0) assert(row.subjunctive === true, `day ${day} is marked as a subjunctive form`);
+  else assert(row.subjunctive !== true, `day ${day} is not marked subjunctive`);
+});
 assert(wordleSentenceParts("Ya no hay jabon en el baño.", "jabón").bold === "", "an unaccented stand-in is not the stored spelling");
 assert(WORDLE_ANSWERS[18].word === "JABON" && WORDLE_ANSWERS[18].display === "jabón", "jabón keeps its display accent");
 assert(WORDLE_ANSWERS[25].word === "NIÑOS" && WORDLE_ANSWERS[25].display === "niños", "ñ stays in NIÑOS");
@@ -201,7 +207,19 @@ assert(wordleAnswerForDate(new Date(2026, 8, 26)).es === "Voy a pedir la cuenta.
 assert(wordleLocalDayIndex(new Date(2028, 2, 1)) === wordleLocalDayIndex(new Date(2028, 1, 29)) + 1, "leap day is its own index");
 assert(wordleLocalDayIndex(new Date(2028, 1, 29)) === wordleLocalDayIndex(new Date(2028, 1, 28)) + 1, "2028-02-29 follows 2028-02-28");
 const beforeEpoch = wordleAnswerForDate(new Date(2025, 11, 31));
-assert(beforeEpoch && WORDLE_ANSWERS.some((row) => row.word === beforeEpoch.word), "dates before the epoch still pick a bank word");
+assert(beforeEpoch && beforeEpoch.word && beforeEpoch.display && beforeEpoch.es && beforeEpoch.en, "dates before the epoch still pick a full answer");
+const day120Date = new Date(2026, 0, 1);
+day120Date.setDate(day120Date.getDate() + 119);
+const day120 = wordleAnswerForDate(day120Date);
+assert(day120.word === "PASEN" && day120.display === "pasen" && day120.es && day120.en, "day 120 is a full answer");
+const after120 = new Date(2026, 0, 1);
+after120.setDate(after120.getDate() + 120);
+let wrapped;
+try { wrapped = wordleAnswerForDate(after120); } catch (err) { assert(false, `day 121 crashed: ${err.message}`); }
+assert(wrapped && wrapped.word && wrapped.display && wrapped.es && wrapped.en, "after day 120 the answer is not blank");
+assert(wrapped.word === WORDLE_ANSWERS[0].word && wrapped.display === WORDLE_ANSWERS[0].display, "after day 120 the list rotates to day 1");
+assert(WORDLE_ANSWERS[81].word === "SEÑOR" && WORDLE_ANSWERS[81].display === "señor", "day 82 is señor");
+assert(WORDLE_ANSWERS[93].word === "ARBOL" && WORDLE_ANSWERS[93].display === "árbol", "day 94 is árbol");
 
 const memory = () => {
   const box = new Map();
