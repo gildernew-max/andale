@@ -10290,7 +10290,7 @@ export default function App() {
             </>)}
 
             {lecturaCliffhanger?.storyId === story.id && (
-              <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 14, padding: "14px 14px 12px" }}>
+              <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, marginLeft: -16, marginRight: -16, background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 14, padding: "14px 10px 12px" }}>
                 <p data-testid="lectura-cliffhanger-line" style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700, lineHeight: 1.55, color: D.ink }}>
                   {lecturaCliffhangerLine(story.id)}
                 </p>
