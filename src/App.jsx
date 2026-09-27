@@ -10300,9 +10300,9 @@ export default function App() {
                     data-testid="lectura-bird-handoff-cta"
                     onClick={handoffCliffhangerToBird}
                     style={{
-                      background: theme === "dark" ? "#1E2128" : HUB_CREAM,
-                      color: MARK_INK,
-                      border: `1px solid ${MARK_INK}`,
+                      background: theme === "dark" ? "transparent" : HUB_CREAM,
+                      color: theme === "dark" ? "#B8C0A0" : MARK_INK,
+                      border: theme === "dark" ? "1px solid #B8C0A0" : `1px solid ${MARK_INK}`,
                       borderRadius: 12,
                       padding: "10px 16px",
                       minHeight: 44,
