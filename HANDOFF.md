@@ -2,6 +2,21 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-28 (First-win email, skippable)
+
+**What changed**
+- After the first Hoy Cenzontle win, one quiet email card on the win. Skip opens Lectura (story-0 when unread). Existing `Leer el cuento` stays. Soft chrome, hub EN/ES, Doctora XP, green primaries, and Anterior stay.
+- Copy is the PR 171 waitlist face. Skip reuses Saltar / Skip. No new learner-facing string.
+- `first-win-seen`, `email-submitted`, `email-skipped` ride the local `andale-funnel` bus. Event + timestamp only. The address is not on the bus.
+- `FIRST_WIN_EMAIL_ENDPOINT` is empty. A real address is stored in `andale-waitlist` on the device. A POST happens only after a free inbox URL is pasted into that constant.
+
+**Why**
+- Live Pages learners can leave an email at the first win without a gate, once the inbox URL exists.
+
+**Words / Brand left**
+- George: privacy.md still says nothing leaves the device. Update it when the endpoint is set.
+- No Face: dark card is #1E2128, cream ink #F6EFE4, sage #6F7757 as border only.
+
 ## 2026-09-24 (Funnel purchase on StoreKit success)
 
 **What changed**

@@ -19,10 +19,13 @@ assert(FUNNEL_EVENTS.paywallSeen === "paywall_seen", "paywall_seen is the wall v
 assert(FUNNEL_EVENTS.paywallTap === "paywall_tap", "paywall_tap is the wall CTA");
 assert(FUNNEL_EVENTS.waitlistSubmit === "waitlist_submit", "waitlist_submit is the notice submit");
 assert(FUNNEL_EVENTS.purchase === "purchase", "purchase is the StoreKit success step");
+assert(FUNNEL_EVENTS.firstWinSeen === "first-win-seen", "first-win-seen is the email card");
+assert(FUNNEL_EVENTS.emailSubmitted === "email-submitted", "email-submitted is the address send");
+assert(FUNNEL_EVENTS.emailSkipped === "email-skipped", "email-skipped leaves the card");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "waitlist_submit"].join(","),
-  "funnel allowlist is the conversion chain plus paywall_tap and waitlist_submit",
+    === ["cenzontle_complete", "email-skipped", "email-submitted", "first-win-seen", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "waitlist_submit"].join(","),
+  "funnel allowlist is the conversion chain plus paywall tap, waitlist, and first-win email",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
 assert(PAYWALL_TAP.monthly === "monthly", "monthly tap label");
@@ -121,6 +124,22 @@ assert(notice.email == null && notice.choice == null && notice.storyId == null &
 assert(JSON.stringify(notice) === JSON.stringify({ event: "waitlist_submit", at: notice.at }), "waitlist_submit payload is event + at only");
 assert(bus.events.at(-1).detail.email == null, "CustomEvent detail has no email");
 assert(!/example\.com|@/.test(JSON.stringify(notice)), "waitlist_submit JSON has no address");
+
+for (const event of [FUNNEL_EVENTS.firstWinSeen, FUNNEL_EVENTS.emailSubmitted, FUNNEL_EVENTS.emailSkipped]) {
+  const step = emitFunnelEvent({
+    event,
+    email: "dave@example.com",
+    name: "Dave",
+    choice: "annual",
+    storyId: "story-0",
+    beat: "hoy",
+  }, bus);
+  assert(step.event === event, `${event} names the event`);
+  assert(typeof step.at === "string" && step.at.includes("T"), `${event} carries an ISO timestamp`);
+  assert(step.email == null && step.name == null && step.choice == null && step.storyId == null && step.beat == null, `${event} drops email and other extras`);
+  assert(JSON.stringify(step) === JSON.stringify({ event, at: step.at }), `${event} payload is event + at only`);
+  assert(!/example\.com|@/.test(JSON.stringify(step)), `${event} JSON has no address`);
+}
 
 const bought = emitFunnelEvent({
   event: FUNNEL_EVENTS.purchase,

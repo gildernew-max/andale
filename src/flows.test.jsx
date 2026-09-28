@@ -19,6 +19,7 @@ import { OJALA_QUE_PACK } from "./cubetas.js";
 import { hangmanLetters } from "./hangman.js";
 import { MEMORY_BANK } from "./memory.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
+import { WAITLIST_ERROR, WAITLIST_STORE_KEY, WAITLIST_SUCCESS } from "./waitlist.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -3387,6 +3388,97 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(reader.textContent).toMatch(/La noche en que vuelven/);
     expect(screen.queryByTestId("lectura-handoff")).toBeNull();
     expect(screen.queryByTestId("hoy-win")).toBeNull();
+  });
+
+  const reachFirstHoyWin = async (user) => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["cilantro, cebolla, salsa y guarnición"],
+      answer: "cilantro, cebolla, salsa y guarnición",
+      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        firstHoy: true,
+        host: "luna",
+        questions: [hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:")],
+      },
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelector(".choice-card"));
+    await user.click(screen.getByTestId("lesson-check"));
+    await user.click(await screen.findByRole("button", { name: /^Continuar$/i }));
+    await screen.findByTestId("first-win-email");
+    await screen.findByTestId("lectura-handoff-cta");
+  };
+
+  it("first-win email skip still opens Lectura, and a bad address does not", async () => {
+    const user = userEvent.setup();
+    await reachFirstHoyWin(user);
+    expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
+    expect(screen.getByTestId("first-win-email-skip").textContent).toBe("Saltar");
+    expect(screen.getByTestId("first-win-email-skip").className).not.toMatch(/duo-btn/);
+    await waitFor(() => expect(funnelOf("first-win-seen").length).toBeGreaterThan(0));
+    expect(funnelOf("email-submitted")).toHaveLength(0);
+    expect(funnelOf("email-skipped")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("first-win-email-submit"));
+    expect(screen.getByTestId("first-win-email-error").textContent).toBe(WAITLIST_ERROR.es);
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+    expect(screen.getByTestId("lectura-handoff-cta")).toBeTruthy();
+    expect(funnelOf("email-submitted")).toHaveLength(0);
+
+    await user.type(screen.getByTestId("first-win-email-input"), "not-an-email");
+    await user.click(screen.getByTestId("first-win-email-submit"));
+    expect(screen.getByTestId("first-win-email-error").textContent).toBe(WAITLIST_ERROR.es);
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+    expect(screen.getByTestId("hoy-win")).toBeTruthy();
+    expect(localStorage.getItem(WAITLIST_STORE_KEY)).toBeNull();
+    expect(funnelOf("email-submitted")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("first-win-email-skip"));
+    const reader = await screen.findByTestId("story-reader");
+    expect(reader.getAttribute("data-story-id")).toBe("story-0");
+    expect(reader.textContent).toMatch(/La noche en que vuelven/);
+    expect(funnelOf("email-skipped").length).toBeGreaterThan(0);
+    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
+    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/not-an-email|@/);
+    for (const step of funnelOf("email-skipped").concat(funnelOf("first-win-seen"))) {
+      expect(step.email).toBeUndefined();
+      expect(Object.keys(step).sort()).toEqual(["at", "event"]);
+    }
+  });
+
+  it("a valid first-win email does not block Lectura", async () => {
+    const user = userEvent.setup();
+    await reachFirstHoyWin(user);
+    await user.type(screen.getByTestId("first-win-email-input"), "  ada@example.com ");
+    await user.click(screen.getByTestId("first-win-email-submit"));
+    await waitFor(() => expect(screen.getByTestId("first-win-email-success").textContent).toBe(WAITLIST_SUCCESS.es));
+    expect(screen.queryByTestId("first-win-email-error")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(WAITLIST_STORE_KEY)).email).toBe("ada@example.com");
+    await waitFor(() => expect(funnelOf("email-submitted").length).toBeGreaterThan(0));
+    expect(JSON.stringify(funnelOf("email-submitted"))).not.toMatch(/ada@example|@/);
+    expect(screen.getByTestId("lectura-handoff-cta")).toBeTruthy();
+    await user.click(screen.getByTestId("lectura-handoff-cta"));
+    const reader = await screen.findByTestId("story-reader");
+    expect(reader.getAttribute("data-story-id")).toBe("story-0");
+    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
+    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/ada@example/);
   });
 
   it("Lectura handoff once-gate stays down, and a claimed story-0 opens the next unread", async () => {
