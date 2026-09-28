@@ -2200,6 +2200,12 @@ assert(privacyHtml.includes("and we'll remove it.") && privacyMd.includes("and w
 assert(privacyHtml.includes("There is no Ándale account and no email gate to use the app.") && privacyMd.includes("There is no Ándale account and no email gate to use the app."), "optional email leaves the no-account line in place");
 assert(!privacyHtml.includes("We do not keep a copy on our servers.") && !privacyMd.includes("We do not keep a copy on our servers."), "old server-copy sentence is replaced");
 assert(privacyHtml.includes('as explained in "Your email and your data."') && privacyMd.includes('as explained in "Your email and your data."'), "progress sentence is the writer line");
+assert(!privacyHtml.includes("Your progress stays on your device.") && !privacyMd.includes("Your progress stays on your device."), "the extra progress sentence is gone");
+assert(privacyHtml.includes("<h2>What we collect and what we don't</h2>") && privacyMd.includes("## What we collect and what we don't"), "collect heading is the writer line");
+assert(!privacyHtml.includes("What we do not collect") && !privacyMd.includes("What we do not collect"), "old collect heading is gone");
+assert(privacyHtml.includes("that data is stored with Google in our Google Sheet, under Google's privacy policy.") && privacyMd.includes("that data is stored with Google in our Google Sheet, under Google's privacy policy."), "GitHub section names the Google Sheet");
+assert(supportHtml.includes("We read support mail. If you left") && supportMd.includes("We read support mail. If you left"), "support uses a period before the email sentence");
+assert(!supportHtml.includes("We read support mail;") && !supportMd.includes("We read support mail;"), "support semicolon is gone");
 assert(privacyHtml.includes("We don't use outside analytics services or trackers.") && privacyMd.includes("We don't use outside analytics services or trackers."), "analytics sentence is the writer line");
 assert(!privacyHtml.includes("We do not use third-party analytics in the app.") && !privacyMd.includes("We do not use third-party analytics in the app."), "old analytics sentence is replaced");
 assert(supportHtml.includes("and we'll take you off the list.") && supportMd.includes("and we'll take you off the list."), "support mail sentence is the writer line");

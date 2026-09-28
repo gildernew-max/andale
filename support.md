@@ -16,4 +16,4 @@ For the iOS app: update to the latest build, force-quit, and reopen. Subscriptio
 
 Email: gildernew@gmail.com
 
-Tell us the device, OS version, and what you were doing when it broke. We read support mail; If you left your email in the app, new-story updates come from this address. To stop them, reply and ask, and we'll take you off the list.
+Tell us the device, OS version, and what you were doing when it broke. We read support mail. If you left your email in the app, new-story updates come from this address. To stop them, reply and ask, and we'll take you off the list.

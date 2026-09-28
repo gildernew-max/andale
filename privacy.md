@@ -8,11 +8,11 @@ Last updated: September 28, 2026
 
 There is no Ándale account and no email gate to use the app.
 
-Progress lives on your device: XP, streak, gems, hearts, lessons finished, flashcards, theme, Español/English, the name you type at the door if you type one, and which voice you picked. That is stored locally (for example as `andale-v3`). Clear site data or delete the app and it is gone. Your progress stays on your device. We keep only your email, if you leave it, and anonymous usage events, as explained in "Your email and your data."
+Progress lives on your device: XP, streak, gems, hearts, lessons finished, flashcards, theme, Español/English, the name you type at the door if you type one, and which voice you picked. That is stored locally (for example as `andale-v3`). Clear site data or delete the app and it is gone. We keep only your email, if you leave it, and anonymous usage events, as explained in "Your email and your data."
 
 Readings use the voices already on your device. We do not record you and we do not upload audio.
 
-## What we do not collect
+## What we collect and what we don't
 
 We do not run ads. We do not sell data. We don't use outside analytics services or trackers. We keep anonymous usage events ourselves, in our own Google Sheet. We do not ask for location, camera, or microphone access for learning features.
 
@@ -20,7 +20,7 @@ Purchases (if any) go through Apple. Apple handles payment data under Apple’s 
 
 ## Who else might see something
 
-The web app is hosted on GitHub Pages. GitHub may keep ordinary hosting logs (time, IP, page). That is their service, not a profile we build.
+The web app is hosted on GitHub Pages. GitHub may keep ordinary hosting logs (time, IP, page). That is their service, not a profile we build. If you leave your email, or when the app records usage events, that data is stored with Google in our Google Sheet, under Google's privacy policy.
 
 If you use TestFlight or the App Store build, Apple’s rules for those services also apply.
 
