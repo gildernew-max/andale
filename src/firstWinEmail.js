@@ -54,6 +54,17 @@ export const FIRST_WIN_EMAIL_PRIVACY = {
   es: "Solo te escribimos sobre Ándale. Nunca vendemos tu correo.",
   en: "We only email you about Ándale. We never sell your email.",
 };
+export const FIRST_WIN_EMAIL_PRIVACY_LINK = {
+  es: "Privacidad",
+  en: "Privacy",
+};
+/** Served page is public/privacy.html → /andale/privacy.html. */
+export const FIRST_WIN_EMAIL_PRIVACY_HREF = "privacy.html#correo-y-datos";
+/** Muted ink. Quieter than Ahora no. Light on cream, dark on the card. */
+export const FIRST_WIN_EMAIL_PRIVACY_INK = Object.freeze({
+  light: "#5E6650",
+  dark: "#CDBBA6",
+});
 export const FIRST_WIN_EMAIL_SUCCESS = {
   es: "¡Listo! Te avisamos.",
   en: "Done. We'll let you know.",
@@ -85,6 +96,10 @@ export function firstWinEmailSkipLabel(lang) {
 
 export function firstWinEmailPrivacy(lang) {
   return face(FIRST_WIN_EMAIL_PRIVACY, lang);
+}
+
+export function firstWinEmailPrivacyLink(lang) {
+  return face(FIRST_WIN_EMAIL_PRIVACY_LINK, lang);
 }
 
 export function firstWinEmailSuccess(lang) {

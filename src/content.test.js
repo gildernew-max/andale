@@ -21,7 +21,7 @@ import { MEMORY_BANK, MEMORY_HOWTO, MEMORY_QUIET, MEMORY_TITLE, memoryRegionChip
 import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
 import { COLLECTOR_ENDPOINT } from "./collector.js";
-import { FIRST_WIN_EMAIL_CTA, FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_INVITE, FIRST_WIN_EMAIL_PLACEHOLDER, FIRST_WIN_EMAIL_PRIVACY, FIRST_WIN_EMAIL_SKIP, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
+import { FIRST_WIN_EMAIL_CTA, FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_INVITE, FIRST_WIN_EMAIL_PLACEHOLDER, FIRST_WIN_EMAIL_PRIVACY, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SKIP, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
 import { isAudioGatedStep, LISTEN_SKIP, LISTEN_SKIP_HINT, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { WAITLIST_CTA, WAITLIST_ERROR, WAITLIST_PLACEHOLDER, WAITLIST_PRIVACY, WAITLIST_PRIVACY_URL, WAITLIST_PROMPT, WAITLIST_SUCCESS, waitlistCta, waitlistError, waitlistPlaceholder, waitlistPrivacy, waitlistPrompt, waitlistSuccess } from "./waitlist.js";
 
@@ -762,6 +762,20 @@ assert(!/animation/.test(firstWinEmailSrc), "email card adds no motion");
 assert(appSrc.includes("firstWinEmailInvite(uiLang)"), "invite follows uiLang");
 assert(appSrc.includes("firstWinEmailCta(uiLang)"), "Avísame follows uiLang");
 assert(appSrc.includes("firstWinEmailSkipLabel(uiLang)"), "Ahora no follows uiLang");
+assert(appSrc.includes("firstWinEmailPrivacyLink(uiLang)"), "privacy link follows uiLang");
+assert(appSrc.includes("${import.meta.env.BASE_URL}${FIRST_WIN_EMAIL_PRIVACY_HREF}"), "privacy link is the served privacy.html path");
+assert(FIRST_WIN_EMAIL_PRIVACY_HREF === "privacy.html#correo-y-datos", "privacy href is the correo-y-datos anchor");
+assert(firstWinEmailSrc.includes("FIRST_WIN_EMAIL_PRIVACY_INK.light"), "light privacy link is #5E6650");
+assert(firstWinEmailSrc.includes("FIRST_WIN_EMAIL_PRIVACY_INK.dark"), "dark privacy link is #CDBBA6");
+assert(firstWinEmailSrc.includes('data-testid="first-win-email-privacy-link"'), "privacy link is testable");
+assert(firstWinEmailSrc.includes("fontSize: 11"), "privacy link is smaller than Ahora no");
+assert(firstWinEmailSrc.includes("fontWeight: 500"), "privacy link is quieter than Ahora no");
+assert(firstWinEmailSrc.includes("minHeight: 44"), "privacy link keeps a 44px tap area");
+const privacyLinkAt = firstWinEmailSrc.indexOf('data-testid="first-win-email-privacy-link"');
+const privacyLinkSrc = firstWinEmailSrc.slice(Math.max(0, privacyLinkAt - 40), privacyLinkAt + 700);
+assert(privacyLinkSrc.includes("<a"), "privacy link is an anchor");
+assert(!/<button[\s\S]{0,80}first-win-email-privacy-link/.test(firstWinEmailSrc), "privacy link is not a button");
+assert(privacyLinkSrc.includes('background: "none"') && privacyLinkSrc.includes('border: "none"'), "privacy link has no button chrome");
 assert(/<a data-testid="soft-paywall-restore"/.test(paywallLayout), "restore is a text link");
 assert(!/<button[^>]*data-testid="soft-paywall-restore"/.test(paywallLayout), "restore is not a button");
 const funnelSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "funnel.js"), "utf8");
@@ -2172,6 +2186,11 @@ for (const page of ["privacy", "support", "disclaimer"]) {
   assert(!html.includes("We are not publishing an inbox yet"), `${page}.html is not the August inbox-later copy`);
   assert(html.includes("September 18, 2026"), `${page}.html date is George 2026-09-18`);
 }
+const privacyHtml = readFileSync(join(repoRoot, "public", "privacy.html"), "utf8");
+const privacyMd = readFileSync(join(repoRoot, "privacy.md"), "utf8");
+assert(privacyHtml.includes('<h2 id="correo-y-datos"></h2>'), "privacy page has an empty correo-y-datos heading");
+assert(privacyMd.includes('<h2 id="correo-y-datos"></h2>'), "privacy markdown mirror has the same empty heading");
+assert(!FIRST_WIN_EMAIL_PRIVACY_INK.light || FIRST_WIN_EMAIL_PRIVACY_HREF.endsWith("#correo-y-datos"), "card anchor matches the privacy page");
 assert(pagesYml.includes("privacy.html"), "Pages smoke GETs privacy.html");
 assert(pagesYml.includes("support.html"), "Pages smoke GETs support.html");
 assert(pagesYml.includes("disclaimer.html"), "Pages smoke GETs disclaimer.html");

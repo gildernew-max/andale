@@ -12,6 +12,9 @@ import {
   FIRST_WIN_EMAIL_INVITE,
   FIRST_WIN_EMAIL_PLACEHOLDER,
   FIRST_WIN_EMAIL_PRIVACY,
+  FIRST_WIN_EMAIL_PRIVACY_HREF,
+  FIRST_WIN_EMAIL_PRIVACY_INK,
+  FIRST_WIN_EMAIL_PRIVACY_LINK,
   FIRST_WIN_EMAIL_SKIP,
   FIRST_WIN_EMAIL_SOURCE,
   FIRST_WIN_EMAIL_SUCCESS,
@@ -21,6 +24,7 @@ import {
   firstWinEmailInvite,
   firstWinEmailPlaceholder,
   firstWinEmailPrivacy,
+  firstWinEmailPrivacyLink,
   firstWinEmailSkipLabel,
   firstWinEmailSuccess,
   shouldShowFirstWinEmail,
@@ -56,6 +60,13 @@ assert(FIRST_WIN_EMAIL_DARK.inputBorder === "#2A2E36", "dark input border");
 assert(FIRST_WIN_EMAIL_DARK.focus === "#B8C0A0", "dark input focus ring");
 assert(contrast(FIRST_WIN_EMAIL_DARK.ink, FIRST_WIN_EMAIL_DARK.card) >= 4.5, "cream ink on the dark card is 4.5:1 or better");
 assert(contrast(FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_FILL) >= 4.5, "Avísame cream label on the sage fill is 4.5:1 or better");
+assert(FIRST_WIN_EMAIL_PRIVACY_INK.light === "#5E6650" && FIRST_WIN_EMAIL_PRIVACY_INK.dark === "#CDBBA6", "privacy link muted ink");
+assert(contrast(FIRST_WIN_EMAIL_PRIVACY_INK.light, "#F6EFE4") >= 4.5, "muted ink on cream is 4.5:1 or better");
+assert(contrast(FIRST_WIN_EMAIL_PRIVACY_INK.dark, FIRST_WIN_EMAIL_DARK.card) >= 4.5, "muted ink on the dark card is 4.5:1 or better");
+assert(FIRST_WIN_EMAIL_PRIVACY_LINK.es === "Privacidad" && FIRST_WIN_EMAIL_PRIVACY_LINK.en === "Privacy", "privacy link words");
+assert(firstWinEmailPrivacyLink("es") === "Privacidad" && firstWinEmailPrivacyLink("en") === "Privacy", "privacy link follows uiLang");
+assert(firstWinEmailPrivacyLink("fr") === "Privacidad", "unknown uiLang privacy link stays ES");
+assert(FIRST_WIN_EMAIL_PRIVACY_HREF === "privacy.html#correo-y-datos", "privacy link uses the served page and the correo-y-datos anchor");
 
 assert(FIRST_WIN_EMAIL_INVITE.es === "Déjanos tu correo y te avisamos cuando haya historias nuevas.", "ES invite");
 assert(FIRST_WIN_EMAIL_INVITE.en === "Leave your email and we'll tell you when new stories are out.", "EN invite");

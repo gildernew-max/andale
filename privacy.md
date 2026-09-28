@@ -32,6 +32,8 @@ If you use TestFlight or the App Store build, Apple’s rules for those services
 
 If this page changes in a way that matters, the date at the top will change.
 
+<h2 id="correo-y-datos"></h2>
+
 ## Contact
 
 Privacy questions: gildernew@gmail.com

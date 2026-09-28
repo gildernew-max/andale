@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-28 (Privacy link on the email card)
+
+**What changed**
+- Under the privacy line: `Privacidad` / `Privacy`, underlined muted ink (`#5E6650` on cream, `#CDBBA6` on `#1E2128`), 11px, 44px tap, not a button. Href is `privacy.html#correo-y-datos` (Pages serves `public/privacy.html` at `/andale/privacy.html`).
+- `public/privacy.html` and `privacy.md` have an empty `<h2 id="correo-y-datos"></h2>`. No new policy text.
+
+**Why**
+- The card needed a quiet way to the existing privacy page. The writer fills that section.
+
+**Words / Brand left**
+- Writer writes the `#correo-y-datos` section. This build still sends no email.
+
 ## 2026-09-28 (Collector events)
 
 **What changed**

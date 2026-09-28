@@ -20,7 +20,7 @@ import { hangmanLetters } from "./hangman.js";
 import { MEMORY_BANK } from "./memory.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
 import { WAITLIST_STORE_KEY } from "./waitlist.js";
-import { FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
+import { FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_PRIVACY_LINK, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -3444,6 +3444,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("first-win-email-skip").textContent).toBe("Ahora no");
     expect(screen.getByTestId("first-win-email-prompt").textContent).toBe("Déjanos tu correo y te avisamos cuando haya historias nuevas.");
     expect(screen.getByTestId("first-win-email").textContent).not.toMatch(/Leave your email/);
+    const privacyEs = screen.getByTestId("first-win-email-privacy-link");
+    expect(privacyEs.textContent).toBe(FIRST_WIN_EMAIL_PRIVACY_LINK.es);
+    expect(privacyEs.tagName).toBe("A");
+    expect(privacyEs.getAttribute("href")).toMatch(/privacy\.html#correo-y-datos$/);
+    expect(styleHas(privacyEs, "#5E6650")).toBe(true);
+    expect(privacyEs.className).not.toMatch(/duo-btn/);
     expect(screen.getByTestId("first-win-email-skip").className).not.toMatch(/duo-btn/);
     await waitFor(() => expect(funnelOf("first-win-seen").length).toBeGreaterThan(0));
     expect(funnelOf("email-submitted")).toHaveLength(0);
@@ -3509,6 +3515,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(styleHas(cta, "#B8C0A0")).toBe(true);
     expect(styleHas(box, "#F6EFE4")).toBe(false);
     expect(cta.className).not.toMatch(/duo-btn/);
+    const privacyEn = screen.getByTestId("first-win-email-privacy-link");
+    expect(privacyEn.textContent).toBe(FIRST_WIN_EMAIL_PRIVACY_LINK.en);
+    expect(privacyEn.tagName).toBe("A");
+    expect(privacyEn.getAttribute("href")).toMatch(/privacy\.html#correo-y-datos$/);
+    expect(styleHas(privacyEn, "#CDBBA6")).toBe(true);
+    expect(screen.getByTestId("first-win-email").textContent).not.toMatch(/Privacidad/);
   });
 
   it("Lectura handoff once-gate stays down, and a claimed story-0 opens the next unread", async () => {
