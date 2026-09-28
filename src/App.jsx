@@ -4055,7 +4055,7 @@ const UI = {
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
     comeBackTomorrow: "Come back tomorrow for the next scene.",
     paywallHeadline: "The story goes on.",
-    paywallHeadlineFallback: "There's much more to read.",
+    paywallHeadlineFallback: "There's much\u00A0more to read.",
     paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
     paywallAnnual: "One year",
     paywallMonthly: "One month",
