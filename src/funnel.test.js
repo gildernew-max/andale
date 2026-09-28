@@ -15,6 +15,7 @@ assert(FUNNEL_LOG === "__andaleFunnelLog", "Pages verification log is window.__a
 assert(FUNNEL_EVENTS.open === "open", "open is the first funnel event");
 assert(FUNNEL_EVENTS.cenzontleComplete === "cenzontle_complete", "cenzontle_complete is the bird beat");
 assert(FUNNEL_EVENTS.lecturaStart === "lectura_start", "lectura_start is the story start");
+assert(FUNNEL_EVENTS.lecturaComplete === "lectura_complete", "lectura_complete is the story claim");
 assert(FUNNEL_EVENTS.paywallSeen === "paywall_seen", "paywall_seen is the wall visible");
 assert(FUNNEL_EVENTS.paywallTap === "paywall_tap", "paywall_tap is the wall CTA");
 assert(FUNNEL_EVENTS.waitlistSubmit === "waitlist_submit", "waitlist_submit is the notice submit");
@@ -24,7 +25,7 @@ assert(FUNNEL_EVENTS.emailSubmitted === "email-submitted", "email-submitted is t
 assert(FUNNEL_EVENTS.emailSkipped === "email-skipped", "email-skipped leaves the card");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "email-skipped", "email-submitted", "first-win-seen", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "waitlist_submit"].join(","),
+    === ["cenzontle_complete", "email-skipped", "email-submitted", "first-win-seen", "lectura_complete", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "waitlist_submit"].join(","),
   "funnel allowlist is the conversion chain plus paywall tap, waitlist, and first-win email",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
@@ -85,6 +86,14 @@ const story = emitFunnelEvent({
 }, bus);
 assert(story.storyId === "story-0", "lectura_start keeps the content id");
 assert(story.title == null, "lectura_start does not keep a title");
+
+const done = emitFunnelEvent({
+  event: FUNNEL_EVENTS.lecturaComplete,
+  storyId: "story-0",
+  email: "dave@example.com",
+}, bus);
+assert(done.event === "lectura_complete" && done.storyId === "story-0", "lectura_complete keeps the content id");
+assert(done.email == null, "lectura_complete drops the address");
 
 const badStory = emitFunnelEvent({
   event: FUNNEL_EVENTS.lecturaStart,

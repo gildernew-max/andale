@@ -1,26 +1,20 @@
 /** Optional email on the first Hoy Cenzontle win. Skip never blocks Lectura.
  *  One uiLang face. Spanish is the fallback. The address never goes on the funnel bus.
  *
- *  FIRST_WIN_EMAIL_ENDPOINT is empty unless VITE_FIRST_WIN_EMAIL_ENDPOINT is
- *  set at build time. Empty means a submitted address is written only to
- *  localStorage key `andale-waitlist` on this device. No service receives it.
- *  Nobody outside this browser can read it. Nothing is sold. No email is sent.
+ *  COLLECTOR_ENDPOINT is empty unless VITE_COLLECTOR_ENDPOINT is set at build
+ *  time. Empty means a submitted address is written only to localStorage key
+ *  `andale-waitlist` on this device. No service receives it. No email is sent.
+ *  Funnel events stay on the in-browser bus.
  *
  *  To turn the collector on later: deploy docs/first-win-email-collector.gs
- *  by hand, then set VITE_FIRST_WIN_EMAIL_ENDPOINT to that web app URL and
- *  rebuild. This repo does not deploy it.
+ *  by hand, then set VITE_COLLECTOR_ENDPOINT to that web app URL and rebuild.
+ *  This repo does not deploy it.
  */
 
+import { postCollector, COLLECTOR_ENDPOINT } from "./collector.js";
 import { isWaitlistEmail, saveWaitlistNotice } from "./waitlist.js";
 
-function endpointFromEnv() {
-  const env = import.meta.env;
-  const value = env && env.VITE_FIRST_WIN_EMAIL_ENDPOINT;
-  return typeof value === "string" ? value.trim() : "";
-}
-
-/** Build-time web app URL. Empty = localStorage only. */
-export const FIRST_WIN_EMAIL_ENDPOINT = endpointFromEnv();
+export { COLLECTOR_ENDPOINT };
 
 export const FIRST_WIN_EMAIL_SOURCE = "first-win";
 
@@ -114,16 +108,16 @@ function postedAt(now) {
 }
 
 /**
- * Validate and keep a local copy. When an endpoint is set, also POST
- * email, lang, source, and ts as form fields (no CORS preflight).
- * An empty endpoint does not POST. The return value never includes the address.
- * no-cors hides the response, so a completed POST counts as sent.
+ * Validate and keep a local copy. When COLLECTOR_ENDPOINT is set, also send
+ * { type:'email', email, lang, source, ts } as text/plain.
+ * An empty endpoint does not send. The return value never includes the address.
  */
 export async function deliverFirstWinEmail(email, {
-  endpoint = FIRST_WIN_EMAIL_ENDPOINT,
+  endpoint = COLLECTOR_ENDPOINT,
   lang = "es",
   now,
   fetchImpl = globalThis.fetch,
+  beaconImpl,
   storage,
 } = {}) {
   const trimmed = typeof email === "string" ? email.trim() : "";
@@ -132,22 +126,13 @@ export async function deliverFirstWinEmail(email, {
   if (!saved.ok) return { ok: false };
   const url = typeof endpoint === "string" ? endpoint.trim() : "";
   if (!url) return { ok: true };
-  if (typeof fetchImpl !== "function") return { ok: false };
-  const body = new URLSearchParams({
+  const sent = await postCollector({
+    type: "email",
     email: trimmed,
     lang: lang === "en" ? "en" : "es",
     source: FIRST_WIN_EMAIL_SOURCE,
     ts: postedAt(now),
-  });
-  try {
-    await fetchImpl(url, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
-    });
-    return { ok: true };
-  } catch {
-    return { ok: false };
-  }
+  }, { endpoint: url, fetchImpl, beaconImpl });
+  if (!sent.ok) return { ok: false };
+  return { ok: true };
 }

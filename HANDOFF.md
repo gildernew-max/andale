@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-28 (Collector events)
+
+**What changed**
+- `COLLECTOR_ENDPOINT` (`VITE_COLLECTOR_ENDPOINT`) is still empty. Empty sends nothing. A set URL ships bus events as `{type:'event', name, lang, deviceId, ts}` and emails as `{type:'email', email, lang, source, ts}`. Event rows have no address. `lectura_complete` joins the bus on story claim.
+- The Apps Script writes tabs `emails` and `events`, creating them if missing. It is not deployed.
+
+**Why**
+- The same prepared endpoint has to be able to count the funnel, not only hold an address.
+
+**Words / Brand left**
+- Writer confirms the privacy line. This build still sends no email and no events.
+
 ## 2026-09-28 (Dark Lectura handoff + collector prepared)
 
 **What changed**

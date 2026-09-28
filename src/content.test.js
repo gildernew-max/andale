@@ -20,7 +20,8 @@ import { JEOPARDY_CAT_LABEL, JEOPARDY_CATEGORY_IDS, JEOPARDY_HOWTO, JEOPARDY_QUI
 import { MEMORY_BANK, MEMORY_HOWTO, MEMORY_QUIET, MEMORY_TITLE, memoryRegionChip, memoryTitle } from "./memory.js";
 import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
-import { FIRST_WIN_EMAIL_CTA, FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_ENDPOINT, FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_INVITE, FIRST_WIN_EMAIL_PLACEHOLDER, FIRST_WIN_EMAIL_PRIVACY, FIRST_WIN_EMAIL_SKIP, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
+import { COLLECTOR_ENDPOINT } from "./collector.js";
+import { FIRST_WIN_EMAIL_CTA, FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_INVITE, FIRST_WIN_EMAIL_PLACEHOLDER, FIRST_WIN_EMAIL_PRIVACY, FIRST_WIN_EMAIL_SKIP, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
 import { isAudioGatedStep, LISTEN_SKIP, LISTEN_SKIP_HINT, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { WAITLIST_CTA, WAITLIST_ERROR, WAITLIST_PLACEHOLDER, WAITLIST_PRIVACY, WAITLIST_PRIVACY_URL, WAITLIST_PROMPT, WAITLIST_SUCCESS, waitlistCta, waitlistError, waitlistPlaceholder, waitlistPrivacy, waitlistPrompt, waitlistSuccess } from "./waitlist.js";
 
@@ -707,6 +708,8 @@ assert(appSrc.includes("onComplete={completeCenzontleBeat}"), "fly-away / WinBou
 assert(appSrc.includes("FUNNEL_EVENTS.cenzontleComplete"), "cenzontle_complete is wired");
 assert(appSrc.includes("FUNNEL_EVENTS.lecturaStart"), "lectura_start is wired");
 assert(appSrc.includes("openStory") && appSrc.includes("FUNNEL_EVENTS.lecturaStart"), "lectura_start fires from openStory");
+assert(appSrc.includes("FUNNEL_EVENTS.lecturaComplete"), "lectura_complete is wired");
+assert(appSrc.includes("shipFunnelEvent(ev?.detail, { lang: uiLang })"), "bus events ship only through the collector");
 assert(appSrc.includes("FUNNEL_EVENTS.paywallSeen"), "paywall_seen is wired");
 assert(/if \(showSoftPaywall\) \{\s*setSoftPaywall\(true\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallSeen \}\);/.test(appSrc), "paywall_seen fires when the wall becomes visible");
 assert(appSrc.includes("FUNNEL_EVENTS.paywallTap"), "paywall_tap is wired");
@@ -727,7 +730,8 @@ assert(!appSrc.includes("<WaitlistStrip"), "waitlist strip is off the app");
 assert(!appSrc.includes("from \"./WaitlistStrip.jsx\""), "waitlist strip component is not mounted");
 assert(!appSrc.includes("shouldShowFreePathWaitlist"), "hub no longer gates the waitlist strip");
 assert(!/Tell me when the store opens|Avísame cuando abramos la tienda|I’ll write when it’s ready|Te escribo cuando esté listo/.test(appSrc), "waitlist promise is off the app source — the card calls the helpers");
-assert(FIRST_WIN_EMAIL_ENDPOINT === "", "first-win email endpoint stays empty until the build env is set");
+assert(COLLECTOR_ENDPOINT === "", "collector endpoint stays empty until the build env is set");
+assert(FUNNEL_EVENTS.lecturaComplete === "lectura_complete", "funnel lectura-complete name");
 assert(FIRST_WIN_EMAIL_DARK.page === "#15171C" && FIRST_WIN_EMAIL_DARK.card === "#1E2128", "dark first-win card uses the page and card spec");
 assert(FIRST_WIN_EMAIL_DARK.ink === "#F6EFE4" && FIRST_WIN_EMAIL_DARK.sage === "#6F7757", "dark first-win ink and sage spec");
 assert(FIRST_WIN_EMAIL_DARK.inputBorder === "#2A2E36" && FIRST_WIN_EMAIL_DARK.focus === "#B8C0A0", "dark input border and focus ring");
