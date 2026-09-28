@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-28 (Dark Lectura handoff + collector prepared)
+
+**What changed**
+- Dark Lectura handoff is a `#1E2128` card, `#2A2E36` border, cream `#F6EFE4` text, `#B8C0A0` outline on Read the story. Light stays cream.
+- `VITE_FIRST_WIN_EMAIL_ENDPOINT` can turn on a form POST (`email`, `lang`, `source`, `ts`, `no-cors`). Unset, the address stays in `localStorage` `andale-waitlist`. `docs/first-win-email-collector.gs` is the Apps Script. It is not deployed.
+
+**Why**
+- The handoff box under the email card was still cream in dark mode. The collector stays off until someone deploys it by hand.
+
+**Words / Brand left**
+- Writer confirms the privacy line. This build still sends no email.
+
 ## 2026-09-28 (First-win email words)
 
 **What changed**

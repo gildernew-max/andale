@@ -1,17 +1,28 @@
 /** Optional email on the first Hoy Cenzontle win. Skip never blocks Lectura.
  *  One uiLang face. Spanish is the fallback. The address never goes on the funnel bus.
  *
- *  FIRST_WIN_EMAIL_ENDPOINT is empty. A submitted address is written only to
+ *  FIRST_WIN_EMAIL_ENDPOINT is empty unless VITE_FIRST_WIN_EMAIL_ENDPOINT is
+ *  set at build time. Empty means a submitted address is written only to
  *  localStorage key `andale-waitlist` on this device. No service receives it.
  *  Nobody outside this browser can read it. Nothing is sold. No email is sent.
- *  Formspree (free, no card): create a form, paste https://formspree.io/f/xxxxxxxx
- *  here, redeploy Pages. Do not sign up from this repo.
+ *
+ *  To turn the collector on later: deploy docs/first-win-email-collector.gs
+ *  by hand, then set VITE_FIRST_WIN_EMAIL_ENDPOINT to that web app URL and
+ *  rebuild. This repo does not deploy it.
  */
 
 import { isWaitlistEmail, saveWaitlistNotice } from "./waitlist.js";
 
-/** Paste a free form endpoint. Empty = localStorage only. */
-export const FIRST_WIN_EMAIL_ENDPOINT = "";
+function endpointFromEnv() {
+  const env = import.meta.env;
+  const value = env && env.VITE_FIRST_WIN_EMAIL_ENDPOINT;
+  return typeof value === "string" ? value.trim() : "";
+}
+
+/** Build-time web app URL. Empty = localStorage only. */
+export const FIRST_WIN_EMAIL_ENDPOINT = endpointFromEnv();
+
+export const FIRST_WIN_EMAIL_SOURCE = "first-win";
 
 export const FIRST_WIN_EMAIL_SEEN = "firstWinEmailSeen";
 
@@ -96,12 +107,22 @@ export function shouldShowFirstWinEmail({ firstHoy = false, emailSeen = false } 
   return !!firstHoy;
 }
 
+function postedAt(now) {
+  if (typeof now === "string" && now.trim()) return now.trim();
+  const date = now instanceof Date ? now : new Date();
+  return date.toISOString();
+}
+
 /**
- * Validate, keep a local copy, and POST { email } when an endpoint is set.
- * The return value never includes the address.
+ * Validate and keep a local copy. When an endpoint is set, also POST
+ * email, lang, source, and ts as form fields (no CORS preflight).
+ * An empty endpoint does not POST. The return value never includes the address.
+ * no-cors hides the response, so a completed POST counts as sent.
  */
 export async function deliverFirstWinEmail(email, {
   endpoint = FIRST_WIN_EMAIL_ENDPOINT,
+  lang = "es",
+  now,
   fetchImpl = globalThis.fetch,
   storage,
 } = {}) {
@@ -112,16 +133,19 @@ export async function deliverFirstWinEmail(email, {
   const url = typeof endpoint === "string" ? endpoint.trim() : "";
   if (!url) return { ok: true };
   if (typeof fetchImpl !== "function") return { ok: false };
+  const body = new URLSearchParams({
+    email: trimmed,
+    lang: lang === "en" ? "en" : "es",
+    source: FIRST_WIN_EMAIL_SOURCE,
+    ts: postedAt(now),
+  });
   try {
-    const res = await fetchImpl(url, {
+    await fetchImpl(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ email: trimmed }),
+      mode: "no-cors",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
     });
-    if (!res || res.ok !== true) return { ok: false };
     return { ok: true };
   } catch {
     return { ok: false };

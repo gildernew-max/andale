@@ -6873,7 +6873,7 @@ export default function App() {
     if (firstWinEmailBusy.current) return;
     firstWinEmailBusy.current = true;
     try {
-      const result = await deliverFirstWinEmail(firstWinEmailDraft);
+      const result = await deliverFirstWinEmail(firstWinEmailDraft, { lang: uiLang });
       if (!result.ok) {
         setFirstWinEmailError(true);
         return;
@@ -10548,8 +10548,17 @@ export default function App() {
             </form>
           )}
           {showLecturaHandoff && (
-            <div data-testid="lectura-handoff" style={{ marginTop: 18, background: HUB_CREAM, borderRadius: 14, padding: "10px 12px 12px" }}>
-              <p data-testid="lectura-handoff-quiet" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: D.sub }}>
+            <div
+              data-testid="lectura-handoff"
+              style={{
+                marginTop: 18,
+                background: theme === "dark" ? FIRST_WIN_EMAIL_DARK.card : HUB_CREAM,
+                border: theme === "dark" ? `1px solid ${FIRST_WIN_EMAIL_DARK.inputBorder}` : "none",
+                borderRadius: 14,
+                padding: "10px 12px 12px",
+              }}
+            >
+              <p data-testid="lectura-handoff-quiet" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : D.sub }}>
                 {lecturaHandoffQuiet(uiLang)}
               </p>
               <button
@@ -10558,9 +10567,9 @@ export default function App() {
                 data-story-id={lecturaHandoffStory.id}
                 onClick={openLecturaFromHandoff}
                 style={{
-                  background: HUB_CREAM,
-                  color: MARK_INK,
-                  border: `1px solid ${MARK_INK}`,
+                  background: theme === "dark" ? FIRST_WIN_EMAIL_DARK.card : HUB_CREAM,
+                  color: theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : MARK_INK,
+                  border: `1px solid ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.focus : MARK_INK}`,
                   borderRadius: 12,
                   padding: "10px 16px",
                   minHeight: 44,

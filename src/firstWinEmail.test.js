@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { WAITLIST_STORE_KEY } from "./waitlist.js";
 import {
   FIRST_WIN_EMAIL_CTA,
@@ -10,6 +13,7 @@ import {
   FIRST_WIN_EMAIL_PLACEHOLDER,
   FIRST_WIN_EMAIL_PRIVACY,
   FIRST_WIN_EMAIL_SKIP,
+  FIRST_WIN_EMAIL_SOURCE,
   FIRST_WIN_EMAIL_SUCCESS,
   deliverFirstWinEmail,
   firstWinEmailCta,
@@ -42,7 +46,8 @@ function contrast(a, b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-assert(FIRST_WIN_EMAIL_ENDPOINT === "", "endpoint stays empty until a free inbox URL is pasted");
+assert(FIRST_WIN_EMAIL_ENDPOINT === "", "endpoint stays empty until VITE_FIRST_WIN_EMAIL_ENDPOINT is set");
+assert(FIRST_WIN_EMAIL_SOURCE === "first-win", "collector source is first-win");
 assert(FIRST_WIN_EMAIL_DARK.page === "#15171C", "dark page");
 assert(FIRST_WIN_EMAIL_DARK.card === "#1E2128", "dark card");
 assert(FIRST_WIN_EMAIL_DARK.ink === "#F6EFE4", "dark cream ink");
@@ -112,7 +117,9 @@ assert(JSON.parse(storage.getItem(WAITLIST_STORE_KEY)).email === "dave@example.c
 
 let posted = null;
 const sent = await deliverFirstWinEmail("ada@example.com", {
-  endpoint: "https://formspree.io/f/test",
+  endpoint: "https://script.google.com/macros/s/collector/exec",
+  lang: "en",
+  now: "2026-09-28T18:00:00.000Z",
   storage,
   fetchImpl: async (url, init) => {
     fetches += 1;
@@ -123,16 +130,47 @@ const sent = await deliverFirstWinEmail("ada@example.com", {
 assert(sent.ok === true && sent.email == null, "configured endpoint accepts");
 assert(!/@/.test(JSON.stringify(sent)), "POST result has no address");
 assert(fetches === 1, "configured endpoint POSTs once");
-assert(posted.url === "https://formspree.io/f/test", "POST hits the configured URL");
+assert(posted.url === "https://script.google.com/macros/s/collector/exec", "POST hits the configured URL");
 assert(posted.init.method === "POST", "POST method");
-assert(JSON.parse(posted.init.body).email === "ada@example.com", "body is the trimmed address");
+assert(posted.init.mode === "no-cors", "POST uses no-cors");
+assert(posted.init.headers["Content-Type"] === "application/x-www-form-urlencoded", "POST is form-encoded, not JSON");
+assert(!/application\/json/i.test(JSON.stringify(posted.init)), "POST does not send a JSON content type");
+const params = new URLSearchParams(posted.init.body);
+assert(params.get("email") === "ada@example.com", "body is the trimmed address");
+assert(params.get("lang") === "en", "body carries the face");
+assert(params.get("source") === "first-win", "body source is first-win");
+assert(params.get("ts") === "2026-09-28T18:00:00.000Z", "body carries the timestamp");
+
+const sentEs = await deliverFirstWinEmail("ada@example.com", {
+  endpoint: "https://script.google.com/macros/s/collector/exec",
+  now: "2026-09-28T18:00:00.000Z",
+  storage,
+  fetchImpl: async (url, init) => {
+    fetches += 1;
+    posted = { url, init };
+    return { ok: false, type: "opaque", status: 0 };
+  },
+});
+assert(sentEs.ok === true, "an opaque no-cors response still counts as sent");
+assert(new URLSearchParams(posted.init.body).get("lang") === "es", "missing lang stays Spanish");
 
 const down = await deliverFirstWinEmail("ada@example.com", {
-  endpoint: "https://formspree.io/f/test",
+  endpoint: "https://script.google.com/macros/s/collector/exec",
+  lang: "en",
   storage,
   fetchImpl: async () => { throw new Error("down"); },
 });
 assert(down.ok === false && down.email == null, "a failed POST is not ok and does not return the address");
+assert(JSON.parse(storage.getItem(WAITLIST_STORE_KEY)).email === "ada@example.com", "a failed POST keeps the local copy");
+
+const collector = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "docs", "first-win-email-collector.gs"), "utf8");
+assert(/function doPost\s*\(\s*e\s*\)/.test(collector), "collector exposes doPost(e)");
+assert(collector.includes("appendRow([ts, email, lang, source])"), "collector appends timestamp, email, lang, source");
+assert(collector.includes("Extensions > Apps Script"), "collector names the Apps Script menu");
+assert(collector.includes("Deploy as web app"), "collector names the web app deploy");
+assert(/Execute as: Me/.test(collector) && /Anyone/.test(collector), "collector says execute as me, access anyone");
+assert(collector.includes("VITE_FIRST_WIN_EMAIL_ENDPOINT"), "collector names the build-time URL");
+assert(!/https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+/.test(collector), "collector file has no live web app URL");
 
 const blank = await deliverFirstWinEmail("   ", { storage, fetchImpl: async () => ({ ok: true }) });
 assert(blank.ok === false, "blank is not an email");

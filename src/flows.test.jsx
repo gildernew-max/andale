@@ -3391,9 +3391,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("hoy-win")).toBeNull();
   });
 
-  const reachFirstHoyWin = async (user) => {
+  const reachFirstHoyWin = async (user, extra = {}) => {
     cleanup();
-    seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    const uiLang = extra.uiLang || "es";
+    seedProgress({ streak: 0, lastDay: null, uiLang: "es", ...extra });
     const hoyMc = (prompt) => ({
       type: "mc",
       prompt,
@@ -3422,9 +3423,18 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
     await user.click(document.querySelector(".choice-card"));
     await user.click(screen.getByTestId("lesson-check"));
-    await user.click(await screen.findByRole("button", { name: /^Continuar$/i }));
+    await user.click(await screen.findByRole("button", { name: uiLang === "en" ? /^Continue$/i : /^Continuar$/i }));
     await screen.findByTestId("first-win-email");
     await screen.findByTestId("lectura-handoff-cta");
+  };
+
+  const styleHas = (el, hex) => {
+    const raw = (el.getAttribute("style") || "").toLowerCase().replace(/\s/g, "");
+    const n = hex.replace("#", "");
+    const r = parseInt(n.slice(0, 2), 16);
+    const g = parseInt(n.slice(2, 4), 16);
+    const b = parseInt(n.slice(4, 6), 16);
+    return raw.includes(hex.toLowerCase()) || raw.includes(`rgb(${r},${g},${b})`);
   };
 
   it("first-win email skip still opens Lectura, and a bad address does not", async () => {
@@ -3482,6 +3492,23 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(reader.getAttribute("data-story-id")).toBe("story-0");
     expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/ada@example/);
+  });
+
+  it("dark Lectura handoff under the email card uses the dark card spec", async () => {
+    const user = userEvent.setup();
+    await reachFirstHoyWin(user, { theme: "dark", uiLang: "en" });
+    const box = screen.getByTestId("lectura-handoff");
+    const quiet = screen.getByTestId("lectura-handoff-quiet");
+    const cta = screen.getByTestId("lectura-handoff-cta");
+    expect(quiet.textContent).toBe(LECTURA_HANDOFF_QUIET.en);
+    expect(cta.textContent).toBe(LECTURA_HANDOFF_CTA.en);
+    expect(styleHas(box, "#1E2128")).toBe(true);
+    expect(styleHas(box, "#2A2E36")).toBe(true);
+    expect(styleHas(quiet, "#F6EFE4")).toBe(true);
+    expect(styleHas(cta, "#F6EFE4")).toBe(true);
+    expect(styleHas(cta, "#B8C0A0")).toBe(true);
+    expect(styleHas(box, "#F6EFE4")).toBe(false);
+    expect(cta.className).not.toMatch(/duo-btn/);
   });
 
   it("Lectura handoff once-gate stays down, and a claimed story-0 opens the next unread", async () => {

@@ -727,7 +727,7 @@ assert(!appSrc.includes("<WaitlistStrip"), "waitlist strip is off the app");
 assert(!appSrc.includes("from \"./WaitlistStrip.jsx\""), "waitlist strip component is not mounted");
 assert(!appSrc.includes("shouldShowFreePathWaitlist"), "hub no longer gates the waitlist strip");
 assert(!/Tell me when the store opens|Avísame cuando abramos la tienda|I’ll write when it’s ready|Te escribo cuando esté listo/.test(appSrc), "waitlist promise is off the app source — the card calls the helpers");
-assert(FIRST_WIN_EMAIL_ENDPOINT === "", "first-win email endpoint stays empty until a free inbox is pasted");
+assert(FIRST_WIN_EMAIL_ENDPOINT === "", "first-win email endpoint stays empty until the build env is set");
 assert(FIRST_WIN_EMAIL_DARK.page === "#15171C" && FIRST_WIN_EMAIL_DARK.card === "#1E2128", "dark first-win card uses the page and card spec");
 assert(FIRST_WIN_EMAIL_DARK.ink === "#F6EFE4" && FIRST_WIN_EMAIL_DARK.sage === "#6F7757", "dark first-win ink and sage spec");
 assert(FIRST_WIN_EMAIL_DARK.inputBorder === "#2A2E36" && FIRST_WIN_EMAIL_DARK.focus === "#B8C0A0", "dark input border and focus ring");
@@ -740,7 +740,7 @@ assert(appSrc.includes('data-testid="first-win-email-skip"'), "first-win email c
 assert(appSrc.includes("FUNNEL_EVENTS.firstWinSeen"), "first-win-seen uses the funnel bus");
 assert(appSrc.includes("FUNNEL_EVENTS.emailSubmitted"), "email-submitted uses the funnel bus");
 assert(appSrc.includes("FUNNEL_EVENTS.emailSkipped"), "email-skipped uses the funnel bus");
-assert(appSrc.includes("deliverFirstWinEmail(firstWinEmailDraft)"), "submit delivers through firstWinEmail");
+assert(appSrc.includes("deliverFirstWinEmail(firstWinEmailDraft, { lang: uiLang })"), "submit delivers the face through firstWinEmail");
 assert(appSrc.includes("openLecturaFromHandoff()"), "skip uses the Lectura handoff opener");
 const firstWinEmailSrc = appSrc.slice(appSrc.indexOf('data-testid="first-win-email"'), appSrc.indexOf('data-testid="lectura-handoff"'));
 assert(firstWinEmailSrc.includes("FIRST_WIN_EMAIL_DARK.ink"), "dark labels use cream ink");
