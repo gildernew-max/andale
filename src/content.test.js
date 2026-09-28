@@ -646,6 +646,10 @@ assert(!/scaleX\s*\(\s*-1\s*\)/.test(paywallLayout), "paywall Cenzontle stays ri
 assert(!/Confetti|coach-strip|coach jump/.test(paywallLayout), "no confetti / coach crowd inside the modal");
 assert(/data-testid="soft-paywall-card"/.test(paywallLayout), "paywall card is testable");
 assert(/soft-paywall-card[\s\S]{0,500}theme === "dark" \? "#1E2128" : HUB_CREAM/.test(paywallLayout), "dark paywall card is #1E2128; light stays HUB_CREAM");
+assert(/className=\{theme === "dark" \? undefined : "pop"\}/.test(paywallLayout), "dark paywall sheet skips the pop opacity fade");
+assert(/opacity:\s*theme === "dark" \? 1 : undefined/.test(paywallLayout), "dark paywall sheet opacity is 1");
+assert(/backdropFilter:\s*theme === "dark" \? "none" : undefined/.test(paywallLayout), "dark paywall sheet has no backdrop-filter");
+assert(!/soft-paywall-card[\s\S]{0,160}className="pop"/.test(paywallLayout), "dark paywall card is not locked to the translucent pop");
 assert(/soft-paywall-headline[\s\S]{0,180}theme === "dark" \? "#F6EFE4" : D\.ink/.test(paywallLayout), "dark paywall title is cream, not near-white on a light card");
 assert(/soft-paywall-annual-price[\s\S]{0,180}theme === "dark" \? "#F6EFE4" : D\.ink/.test(paywallLayout), "dark annual price is cream");
 assert(/soft-paywall-monthly-price[\s\S]{0,180}theme === "dark" \? "#F6EFE4" : D\.ink/.test(paywallLayout), "dark monthly price is cream");

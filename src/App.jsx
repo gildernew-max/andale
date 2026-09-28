@@ -8713,10 +8713,10 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is #1E2128 with cream ink. Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is opaque #1E2128 (no pop fade). Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
+          <div data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
             <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
             <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{L.paywallHeadline}</div>
             <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>

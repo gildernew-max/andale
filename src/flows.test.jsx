@@ -3513,6 +3513,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const annualPrice = screen.getByTestId("soft-paywall-annual-price");
     const monthlyPrice = screen.getByTestId("soft-paywall-monthly-price");
     expect(card.style.background).toMatch(darkCard);
+    expect(card.style.background).not.toMatch(/rgba|hsla|\/\s*0?\.\d/);
+    expect(card.style.opacity).toBe("1");
+    expect(card.style.backdropFilter).toBe("none");
+    expect(card.className).not.toMatch(/\bpop\b/);
     expect(card.style.background).not.toMatch(cream);
     expect(headline.style.color).toMatch(cream);
     expect(headline.style.color).not.toMatch(nearWhite);
