@@ -2,20 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
-## 2026-09-28 (First-win email, skippable)
+## 2026-09-28 (First-win email words)
 
 **What changed**
-- After the first Hoy Cenzontle win, one quiet email card on the win. Skip opens Lectura (story-0 when unread). Existing `Leer el cuento` stays. Soft chrome, hub EN/ES, Doctora XP, green primaries, and Anterior stay.
-- Copy is the PR 171 waitlist face. Skip reuses Saltar / Skip. No new learner-facing string.
-- `first-win-seen`, `email-submitted`, `email-skipped` ride the local `andale-funnel` bus. Event + timestamp only. The address is not on the bus.
-- `FIRST_WIN_EMAIL_ENDPOINT` is empty. A real address is stored in `andale-waitlist` on the device. A POST happens only after a free inbox URL is pasted into that constant.
+- Card copy is the locked face: invite, `tu@correo.com` / `you@email.com`, filled `Avísame` / `Notify me`, text link `Ahora no` / `Not now`, privacy, success, bad address. One language per face. No unsubscribe line.
+- Dark input: fill `#1E2128`, border `#2A2E36`, cream `#F6EFE4`, focus `#B8C0A0`. No new bird or motion.
+- A submitted address still lands only in `localStorage` `andale-waitlist`. `FIRST_WIN_EMAIL_ENDPOINT` is empty, so no service receives it and no email is sent.
 
 **Why**
-- Live Pages learners can leave an email at the first win without a gate, once the inbox URL exists.
+- George and Brand cleared the words and the filled / quiet pair.
 
 **Words / Brand left**
-- George: privacy.md still says nothing leaves the device. Update it when the endpoint is set.
-- No Face: dark card is #1E2128, cream ink #F6EFE4, sage #6F7757 as border only.
+- Writer confirms the privacy line against localStorage-only storage. `privacy.md` still says nothing leaves the device.
 
 ## 2026-09-24 (Funnel purchase on StoreKit success)
 

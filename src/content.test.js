@@ -20,7 +20,7 @@ import { JEOPARDY_CAT_LABEL, JEOPARDY_CATEGORY_IDS, JEOPARDY_HOWTO, JEOPARDY_QUI
 import { MEMORY_BANK, MEMORY_HOWTO, MEMORY_QUIET, MEMORY_TITLE, memoryRegionChip, memoryTitle } from "./memory.js";
 import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
-import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_ENDPOINT } from "./firstWinEmail.js";
+import { FIRST_WIN_EMAIL_CTA, FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_ENDPOINT, FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_INVITE, FIRST_WIN_EMAIL_PLACEHOLDER, FIRST_WIN_EMAIL_PRIVACY, FIRST_WIN_EMAIL_SKIP, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
 import { isAudioGatedStep, LISTEN_SKIP, LISTEN_SKIP_HINT, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { WAITLIST_CTA, WAITLIST_ERROR, WAITLIST_PLACEHOLDER, WAITLIST_PRIVACY, WAITLIST_PRIVACY_URL, WAITLIST_PROMPT, WAITLIST_SUCCESS, waitlistCta, waitlistError, waitlistPlaceholder, waitlistPrivacy, waitlistPrompt, waitlistSuccess } from "./waitlist.js";
 
@@ -730,6 +730,11 @@ assert(!/Tell me when the store opens|Avísame cuando abramos la tienda|I’ll w
 assert(FIRST_WIN_EMAIL_ENDPOINT === "", "first-win email endpoint stays empty until a free inbox is pasted");
 assert(FIRST_WIN_EMAIL_DARK.page === "#15171C" && FIRST_WIN_EMAIL_DARK.card === "#1E2128", "dark first-win card uses the page and card spec");
 assert(FIRST_WIN_EMAIL_DARK.ink === "#F6EFE4" && FIRST_WIN_EMAIL_DARK.sage === "#6F7757", "dark first-win ink and sage spec");
+assert(FIRST_WIN_EMAIL_DARK.inputBorder === "#2A2E36" && FIRST_WIN_EMAIL_DARK.focus === "#B8C0A0", "dark input border and focus ring");
+assert(FIRST_WIN_EMAIL_INVITE.es.startsWith("Déjanos") && FIRST_WIN_EMAIL_CTA.es === "Avísame" && FIRST_WIN_EMAIL_SKIP.es === "Ahora no", "first-win copy is the locked Spanish face");
+assert(FIRST_WIN_EMAIL_PLACEHOLDER.en === "you@email.com" && FIRST_WIN_EMAIL_SUCCESS.en === "Done. We'll let you know.", "first-win copy is the locked English face");
+assert(FIRST_WIN_EMAIL_PRIVACY.es.includes("Nunca vendemos") && FIRST_WIN_EMAIL_ERROR.en.startsWith("Check your email"), "privacy and bad-address lines are locked");
+assert(!/unsubscribe|darse de baja/i.test([FIRST_WIN_EMAIL_INVITE, FIRST_WIN_EMAIL_PRIVACY, FIRST_WIN_EMAIL_SUCCESS, FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_SKIP, FIRST_WIN_EMAIL_CTA].flatMap((row) => [row.es, row.en]).join("\n")), "first-win copy has no unsubscribe promise");
 assert(appSrc.includes('data-testid="first-win-email"'), "first-win email card is on the win");
 assert(appSrc.includes('data-testid="first-win-email-skip"'), "first-win email can be skipped");
 assert(appSrc.includes("FUNNEL_EVENTS.firstWinSeen"), "first-win-seen uses the funnel bus");
@@ -739,9 +744,20 @@ assert(appSrc.includes("deliverFirstWinEmail(firstWinEmailDraft)"), "submit deli
 assert(appSrc.includes("openLecturaFromHandoff()"), "skip uses the Lectura handoff opener");
 const firstWinEmailSrc = appSrc.slice(appSrc.indexOf('data-testid="first-win-email"'), appSrc.indexOf('data-testid="lectura-handoff"'));
 assert(firstWinEmailSrc.includes("FIRST_WIN_EMAIL_DARK.ink"), "dark labels use cream ink");
-assert(firstWinEmailSrc.includes("FIRST_WIN_EMAIL_DARK.card"), "dark card fill is the spec card");
-assert(!firstWinEmailSrc.includes("D.green"), "first-win email is not a green primary");
-assert(!/duo-btn/.test(firstWinEmailSrc), "first-win email is not a duo button");
+assert(firstWinEmailSrc.includes("FIRST_WIN_EMAIL_DARK.card"), "dark input fill is the spec card");
+assert(firstWinEmailSrc.includes("FIRST_WIN_EMAIL_DARK.inputBorder"), "dark input border is #2A2E36");
+assert(firstWinEmailSrc.includes("FIRST_WIN_EMAIL_DARK.focus"), "dark input focus ring is #B8C0A0");
+assert(firstWinEmailSrc.includes("FIRST_WIN_EMAIL_FILL"), "Avísame uses the filled sage");
+assert(firstWinEmailSrc.includes('textDecoration: "underline"'), "Ahora no is a text link");
+assert(firstWinEmailSrc.includes('background: "transparent"'), "Ahora no has no fill");
+assert(firstWinEmailSrc.includes("minHeight: 44"), "Ahora no keeps a 44px reach");
+assert(!firstWinEmailSrc.includes("D.green"), "first-win email does not restyle the green primary");
+assert(!/duo-btn/.test(firstWinEmailSrc), "first-win email does not reuse the green duo button");
+assert(!/<img/.test(firstWinEmailSrc), "email card adds no bird");
+assert(!/animation/.test(firstWinEmailSrc), "email card adds no motion");
+assert(appSrc.includes("firstWinEmailInvite(uiLang)"), "invite follows uiLang");
+assert(appSrc.includes("firstWinEmailCta(uiLang)"), "Avísame follows uiLang");
+assert(appSrc.includes("firstWinEmailSkipLabel(uiLang)"), "Ahora no follows uiLang");
 assert(/<a data-testid="soft-paywall-restore"/.test(paywallLayout), "restore is a text link");
 assert(!/<button[^>]*data-testid="soft-paywall-restore"/.test(paywallLayout), "restore is not a button");
 const funnelSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "funnel.js"), "utf8");

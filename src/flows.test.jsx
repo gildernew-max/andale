@@ -19,7 +19,8 @@ import { OJALA_QUE_PACK } from "./cubetas.js";
 import { hangmanLetters } from "./hangman.js";
 import { MEMORY_BANK } from "./memory.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
-import { WAITLIST_ERROR, WAITLIST_STORE_KEY, WAITLIST_SUCCESS } from "./waitlist.js";
+import { WAITLIST_STORE_KEY } from "./waitlist.js";
+import { FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -3430,21 +3431,23 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const user = userEvent.setup();
     await reachFirstHoyWin(user);
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("first-win-email-skip").textContent).toBe("Saltar");
+    expect(screen.getByTestId("first-win-email-skip").textContent).toBe("Ahora no");
+    expect(screen.getByTestId("first-win-email-prompt").textContent).toBe("Déjanos tu correo y te avisamos cuando haya historias nuevas.");
+    expect(screen.getByTestId("first-win-email").textContent).not.toMatch(/Leave your email/);
     expect(screen.getByTestId("first-win-email-skip").className).not.toMatch(/duo-btn/);
     await waitFor(() => expect(funnelOf("first-win-seen").length).toBeGreaterThan(0));
     expect(funnelOf("email-submitted")).toHaveLength(0);
     expect(funnelOf("email-skipped")).toHaveLength(0);
 
     await user.click(screen.getByTestId("first-win-email-submit"));
-    expect(screen.getByTestId("first-win-email-error").textContent).toBe(WAITLIST_ERROR.es);
+    expect(screen.getByTestId("first-win-email-error").textContent).toBe(FIRST_WIN_EMAIL_ERROR.es);
     expect(screen.queryByTestId("story-reader")).toBeNull();
     expect(screen.getByTestId("lectura-handoff-cta")).toBeTruthy();
     expect(funnelOf("email-submitted")).toHaveLength(0);
 
     await user.type(screen.getByTestId("first-win-email-input"), "not-an-email");
     await user.click(screen.getByTestId("first-win-email-submit"));
-    expect(screen.getByTestId("first-win-email-error").textContent).toBe(WAITLIST_ERROR.es);
+    expect(screen.getByTestId("first-win-email-error").textContent).toBe(FIRST_WIN_EMAIL_ERROR.es);
     expect(screen.queryByTestId("story-reader")).toBeNull();
     expect(screen.getByTestId("hoy-win")).toBeTruthy();
     expect(localStorage.getItem(WAITLIST_STORE_KEY)).toBeNull();
@@ -3468,7 +3471,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await reachFirstHoyWin(user);
     await user.type(screen.getByTestId("first-win-email-input"), "  ada@example.com ");
     await user.click(screen.getByTestId("first-win-email-submit"));
-    await waitFor(() => expect(screen.getByTestId("first-win-email-success").textContent).toBe(WAITLIST_SUCCESS.es));
+    await waitFor(() => expect(screen.getByTestId("first-win-email-success").textContent).toBe(FIRST_WIN_EMAIL_SUCCESS.es));
     expect(screen.queryByTestId("first-win-email-error")).toBeNull();
     expect(JSON.parse(localStorage.getItem(WAITLIST_STORE_KEY)).email).toBe("ada@example.com");
     await waitFor(() => expect(funnelOf("email-submitted").length).toBeGreaterThan(0));

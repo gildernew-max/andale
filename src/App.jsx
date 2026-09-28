@@ -15,8 +15,8 @@ import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
 import { FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
-import { isWaitlistEmail, waitlistCta, waitlistError, waitlistPlaceholder, waitlistPrivacy, waitlistPrompt, waitlistSuccess } from "./waitlist.js";
-import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailSkipLabel, shouldShowFirstWinEmail } from "./firstWinEmail.js";
+import { isWaitlistEmail } from "./waitlist.js";
+import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
 import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
@@ -10448,9 +10448,13 @@ export default function App() {
                   color: ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : "#3C3C3C"};
                   opacity: 1;
                 }
+                .first-win-email-input:focus {
+                  outline: 2px solid ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.focus : MARK_INK};
+                  outline-offset: 2px;
+                }
               `}</style>
               <label htmlFor="first-win-email-input" data-testid="first-win-email-prompt" style={{ display: "block", margin: "0 0 8px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: "inherit" }}>
-                {waitlistPrompt(uiLang)}
+                {firstWinEmailInvite(uiLang)}
               </label>
               <input
                 id="first-win-email-input"
@@ -10464,7 +10468,7 @@ export default function App() {
                 spellCheck={false}
                 maxLength={254}
                 value={firstWinEmailDraft}
-                placeholder={waitlistPlaceholder(uiLang)}
+                placeholder={firstWinEmailPlaceholder(uiLang)}
                 onChange={(e) => { setFirstWinEmailDraft(e.target.value); if (firstWinEmailError) setFirstWinEmailError(false); }}
                 style={{
                   display: "block",
@@ -10472,7 +10476,7 @@ export default function App() {
                   boxSizing: "border-box",
                   background: theme === "dark" ? FIRST_WIN_EMAIL_DARK.card : HUB_CREAM,
                   color: theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : D.ink,
-                  border: `1px solid ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.sage : MARK_INK}`,
+                  border: `1px solid ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.inputBorder : MARK_INK}`,
                   borderRadius: 12,
                   padding: "10px 12px",
                   minHeight: 44,
@@ -10480,20 +10484,19 @@ export default function App() {
                   fontWeight: 700,
                   fontSize: 15,
                   lineHeight: 1.35,
-                  outline: "none",
                 }}
               />
               <p data-testid="first-win-email-privacy" style={{ margin: "8px 0 0", fontSize: 12, fontWeight: 700, lineHeight: 1.35, color: "inherit" }}>
-                {waitlistPrivacy(uiLang)}
+                {firstWinEmailPrivacy(uiLang)}
               </p>
               {firstWinEmailError && (
                 <p data-testid="first-win-email-error" style={{ margin: "8px 0 0", fontSize: 12, fontWeight: 700, lineHeight: 1.35, color: "inherit" }}>
-                  {waitlistError(uiLang)}
+                  {firstWinEmailErrorLine(uiLang)}
                 </p>
               )}
               {firstWinEmailDone && (
                 <p data-testid="first-win-email-success" style={{ margin: "8px 0 0", fontSize: 12, fontWeight: 700, lineHeight: 1.35, color: "inherit" }}>
-                  {waitlistSuccess(uiLang)}
+                  {firstWinEmailSuccess(uiLang)}
                 </p>
               )}
               <button
@@ -10503,9 +10506,9 @@ export default function App() {
                   display: "block",
                   width: "100%",
                   marginTop: 10,
-                  background: theme === "dark" ? FIRST_WIN_EMAIL_DARK.card : HUB_CREAM,
-                  color: theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : MARK_INK,
-                  border: `1px solid ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.sage : MARK_INK}`,
+                  background: FIRST_WIN_EMAIL_FILL,
+                  color: FIRST_WIN_EMAIL_FILL_INK,
+                  border: "none",
                   borderRadius: 12,
                   padding: "10px 16px",
                   minHeight: 44,
@@ -10516,7 +10519,7 @@ export default function App() {
                   cursor: "pointer",
                 }}
               >
-                {waitlistCta(uiLang)}
+                {firstWinEmailCta(uiLang)}
               </button>
               <button
                 type="button"
@@ -10526,7 +10529,7 @@ export default function App() {
                   display: "block",
                   width: "100%",
                   marginTop: 6,
-                  background: "none",
+                  background: "transparent",
                   color: theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : D.ink,
                   border: "none",
                   borderRadius: 12,
@@ -10536,6 +10539,7 @@ export default function App() {
                   fontWeight: 700,
                   fontSize: 13,
                   lineHeight: 1.35,
+                  textDecoration: "underline",
                   cursor: "pointer",
                 }}
               >

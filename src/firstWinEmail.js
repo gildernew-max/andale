@@ -1,32 +1,93 @@
 /** Optional email on the first Hoy Cenzontle win. Skip never blocks Lectura.
- *  Copy is the existing waitlist face. Skip reuses Saltar / Skip (listenSkip).
- *  The address never goes on the funnel bus.
+ *  One uiLang face. Spanish is the fallback. The address never goes on the funnel bus.
  *
- *  FIRST_WIN_EMAIL_ENDPOINT is empty on purpose. Until someone pastes a free
- *  inbox URL, saveWaitlistNotice keeps the address in localStorage only.
- *  Nobody outside this browser can read it.
+ *  FIRST_WIN_EMAIL_ENDPOINT is empty. A submitted address is written only to
+ *  localStorage key `andale-waitlist` on this device. No service receives it.
+ *  Nobody outside this browser can read it. Nothing is sold. No email is sent.
  *  Formspree (free, no card): create a form, paste https://formspree.io/f/xxxxxxxx
  *  here, redeploy Pages. Do not sign up from this repo.
  */
 
-import { listenSkipLabel } from "./listenSkip.js";
 import { isWaitlistEmail, saveWaitlistNotice } from "./waitlist.js";
 
-/** Paste a free form endpoint. Empty = on-device store only. */
+/** Paste a free form endpoint. Empty = localStorage only. */
 export const FIRST_WIN_EMAIL_ENDPOINT = "";
 
 export const FIRST_WIN_EMAIL_SEEN = "firstWinEmailSeen";
 
-/** Dark card spec. Sage is the border only — cream ink carries the labels. */
+/** Dark card spec. Sage is the card border. Cream ink carries the labels. */
 export const FIRST_WIN_EMAIL_DARK = Object.freeze({
   page: "#15171C",
   card: "#1E2128",
   ink: "#F6EFE4",
   sage: "#6F7757",
+  inputBorder: "#2A2E36",
+  focus: "#B8C0A0",
 });
 
+/** Avísame fill. Adult sage, cream label. Not the green primary. */
+export const FIRST_WIN_EMAIL_FILL = "#5C7356";
+export const FIRST_WIN_EMAIL_FILL_INK = "#F6EFE4";
+
+export const FIRST_WIN_EMAIL_INVITE = {
+  es: "Déjanos tu correo y te avisamos cuando haya historias nuevas.",
+  en: "Leave your email and we'll tell you when new stories are out.",
+};
+export const FIRST_WIN_EMAIL_PLACEHOLDER = {
+  es: "tu@correo.com",
+  en: "you@email.com",
+};
+export const FIRST_WIN_EMAIL_CTA = {
+  es: "Avísame",
+  en: "Notify me",
+};
+export const FIRST_WIN_EMAIL_SKIP = {
+  es: "Ahora no",
+  en: "Not now",
+};
+export const FIRST_WIN_EMAIL_PRIVACY = {
+  es: "Solo te escribimos sobre Ándale. Nunca vendemos tu correo.",
+  en: "We only email you about Ándale. We never sell your email.",
+};
+export const FIRST_WIN_EMAIL_SUCCESS = {
+  es: "¡Listo! Te avisamos.",
+  en: "Done. We'll let you know.",
+};
+export const FIRST_WIN_EMAIL_ERROR = {
+  es: "Revisa tu correo, parece incompleto.",
+  en: "Check your email. It looks incomplete.",
+};
+
+function face(row, lang) {
+  return lang === "en" ? row.en : row.es;
+}
+
+export function firstWinEmailInvite(lang) {
+  return face(FIRST_WIN_EMAIL_INVITE, lang);
+}
+
+export function firstWinEmailPlaceholder(lang) {
+  return face(FIRST_WIN_EMAIL_PLACEHOLDER, lang);
+}
+
+export function firstWinEmailCta(lang) {
+  return face(FIRST_WIN_EMAIL_CTA, lang);
+}
+
 export function firstWinEmailSkipLabel(lang) {
-  return listenSkipLabel(lang);
+  return face(FIRST_WIN_EMAIL_SKIP, lang);
+}
+
+export function firstWinEmailPrivacy(lang) {
+  return face(FIRST_WIN_EMAIL_PRIVACY, lang);
+}
+
+export function firstWinEmailSuccess(lang) {
+  return face(FIRST_WIN_EMAIL_SUCCESS, lang);
+}
+
+export function firstWinEmailError(lang) {
+  return face(FIRST_WIN_EMAIL_ERROR, lang);
 }
 
 /** Once, on the first Hoy Cenzontle win, until the learner submits or leaves. */
