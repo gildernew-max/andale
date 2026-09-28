@@ -562,14 +562,14 @@ assert(!/come-back-tomorrow[^>]*border:\s*`2px solid/.test(appSrc), "teaser has 
 assert(/learn-hub-tiles[\s\S]{0,4200}\{showLine && \(\s*<p data-testid="come-back-tomorrow"/.test(appSrc), "titled teaser sits outside the equal hub grid — not a CTA");
 assert(appSrc.includes("hoySceneForDay"), "Hoy day pick is shared");
 assert(appSrc.includes("nextDayKey(todayKey)"), "tomorrow Hoy uses the same day hash");
-assert(UI.es.paywallHeadline === "Sigue con tu racha", "UI.es.paywallHeadline George lock");
-assert(UI.es.paywallBody === "Escenas, Cubetas y la doctora — sin techo.", "UI.es.paywallBody George lock");
+assert(UI.es.paywallHeadline === "La historia sigue.", "UI.es.paywallHeadline George lock");
+assert(UI.es.paywallBody === "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", "UI.es.paywallBody George lock");
 assert(UI.es.paywallAnnual === "Un año", "UI.es.paywallAnnual George lock — no price in the label");
 assert(UI.es.paywallMonthly === "Un mes", "UI.es.paywallMonthly George lock");
 assert(UI.es.paywallHonesty === "Práctica · sin cobro todavía", "UI.es.paywallHonesty existing Coin display");
 assert(UI.es.paywallDismiss === "Seguir gratis", "UI.es.paywallDismiss George lock");
-assert(UI.en.paywallHeadline === "Keep your streak", "UI.en.paywallHeadline George lock");
-assert(UI.en.paywallBody === "Stories, Cubetas, and Phrase Doctor — no ceiling.", "UI.en.paywallBody George lock");
+assert(UI.en.paywallHeadline === "The story goes on.", "UI.en.paywallHeadline George lock");
+assert(UI.en.paywallBody === "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", "UI.en.paywallBody George lock");
 assert(UI.en.paywallAnnual === "One year", "UI.en.paywallAnnual George lock — no price in the label");
 assert(UI.en.paywallMonthly === "One month", "UI.en.paywallMonthly George lock");
 assert(UI.en.paywallHonesty === "Practice · no charge yet", "UI.en.paywallHonesty existing Coin display");
