@@ -654,6 +654,8 @@ assert(/backdropFilter:\s*theme === "dark" \? "none" : undefined/.test(paywallLa
 assert(!/soft-paywall-card[\s\S]{0,160}className="pop"/.test(paywallLayout), "dark paywall card is not locked to the translucent pop");
 assert(/soft-paywall-headline[\s\S]{0,180}theme === "dark" \? "#F6EFE4" : D\.ink/.test(paywallLayout), "dark paywall title is cream, not near-white on a light card");
 assert(/soft-paywall-headline[\s\S]{0,160}fontWeight: 900, fontSize: 22/.test(paywallLayout), "paywall headline stays 22px weight 900");
+assert(/soft-paywall-headline[\s\S]{0,200}textWrap: "balance"/.test(paywallLayout), "paywall headline uses text-wrap balance");
+assert(!/soft-paywall-headline[\s\S]{0,220}letterSpacing/.test(paywallLayout), "paywall headline letter spacing is unchanged");
 assert(/data-paywall-source=\{paywallHeadlineSource\}/.test(paywallLayout), "headline choice is passed from the open source");
 assert(/paywallHeadlineSource = chapterBirdHandoff \? PAYWALL_SOURCE\.lecturaBirdHandoff : paywallSource/.test(appSrc), "Lectura hook source wins the story headline");
 assert(/paywallHeadlineText = paywallHeadlineFor\(L, paywallHeadlineSource\)/.test(appSrc), "headline text comes from the open source");

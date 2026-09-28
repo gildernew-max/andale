@@ -6521,6 +6521,8 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).toBe("lectura-bird-handoff");
     expect(screen.getByTestId("soft-paywall-headline").style.fontWeight).toBe("900");
     expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");
+    expect(screen.getByTestId("soft-paywall-headline").style.textWrap).toBe("balance");
+    expect(screen.getByTestId("soft-paywall-headline").style.letterSpacing).toBe("");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.");
     expect(funnelOf("paywall_seen")).toHaveLength(1);
     expect(funnelOf("lectura_chapter_done")).toHaveLength(1);
@@ -6566,6 +6568,8 @@ const assertPaywallHeadline = (source, lang = "es") => {
   expect(headline.getAttribute("data-paywall-source")).toBe(source);
   expect(headline.style.fontWeight).toBe("900");
   expect(headline.style.fontSize).toBe("22px");
+  expect(headline.style.textWrap).toBe("balance");
+  expect(headline.style.letterSpacing).toBe("");
   expect(screen.getByTestId("soft-paywall-body").textContent).toBe(HOOK_BODY[lang]);
 };
 
