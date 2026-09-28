@@ -6,6 +6,7 @@ import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuest
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
@@ -3966,6 +3967,7 @@ const UI = {
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
     comeBackTomorrow: "Vuelve mañana por la siguiente escena.",
     paywallHeadline: "La historia sigue.",
+    paywallHeadlineFallback: "Hay mucho más por leer.",
     paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
     paywallAnnual: "Un año",
     paywallMonthly: "Un mes",
@@ -4053,6 +4055,7 @@ const UI = {
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
     comeBackTomorrow: "Come back tomorrow for the next scene.",
     paywallHeadline: "The story goes on.",
+    paywallHeadlineFallback: "There's much more to read.",
     paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
     paywallAnnual: "One year",
     paywallMonthly: "One month",
@@ -4382,6 +4385,7 @@ export default function App() {
   const [softPaywall, setSoftPaywall] = useState(false);
   const [lecturaCliffhanger, setLecturaCliffhanger] = useState(null);
   const [chapterBirdHandoff, setChapterBirdHandoff] = useState(false);
+  const [paywallSource, setPaywallSource] = useState(PAYWALL_SOURCE.boot);
   const [paywallArmed, setPaywallArmed] = useState(false);
   const paywallBusyRef = useRef(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
@@ -5003,6 +5007,13 @@ export default function App() {
   };
 
   const closeGamesSurface = () => {
+    const gameSource = {
+      cubetas: PAYWALL_SOURCE.cubetas,
+      ahorcado: PAYWALL_SOURCE.hangman,
+      memory: PAYWALL_SOURCE.memory,
+      jeopardy: PAYWALL_SOURCE.jeopardy,
+    }[screen];
+    if (gameSource) setPaywallSource(gameSource);
     if (gamesReturnRef.current === "games") {
       setScreen("games");
       return;
@@ -5886,6 +5897,7 @@ export default function App() {
       releaseLecturaWin(lecturaCliffhanger);
       return;
     }
+    setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
     setChapterBirdHandoff(true);
   };
 
@@ -5997,6 +6009,7 @@ export default function App() {
     };
     beep(quality === "again" ? "bad" : "ok");
     const earned = quality === "again" ? 0 : 2;
+    if (earned) setPaywallSource(PAYWALL_SOURCE.flashcards);
     const t = todayStr();
     const y = yesterdayStr();
     save((prev) => {
@@ -6470,6 +6483,8 @@ export default function App() {
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
   // A successful Restore tap holds the wall so the status line stays readable.
   const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue() || chapterBirdHandoff;
+  const paywallHeadlineSource = chapterBirdHandoff ? PAYWALL_SOURCE.lecturaBirdHandoff : paywallSource;
+  const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource);
   useEffect(() => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.open });
   }, []);
@@ -6864,6 +6879,7 @@ export default function App() {
   };
 
   const continueFromWin = () => {
+    setPaywallSource(PAYWALL_SOURCE.winContinue);
     const t = todayStr();
     const firstStreakEso = isFirstStreakEsoWin(session);
     const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
@@ -6989,6 +7005,7 @@ export default function App() {
 
   /** Brand CLEAR: one tap on the header lockup lands on Learn home (6-card hub + Sendero/path). Not Perfil, Lectura, last lesson, Camino-legacy-only, or splash. */
   const goLearnHome = () => {
+    setPaywallSource(PAYWALL_SOURCE.brandHome);
     stopSpeak();
     setConfirmExit(false);
     setSheet(null);
@@ -7003,6 +7020,7 @@ export default function App() {
   };
 
   const dismissSessionClose = () => {
+    setPaywallSource(PAYWALL_SOURCE.sessionClose);
     setScreen("home");
     setTab("camino");
     if (bajioFlashPending || isBajioUnlockFlashDue()) {
@@ -8504,10 +8522,10 @@ export default function App() {
                   e.preventDefault(); e.stopPropagation();
                   const order = session.questions.map((qq) => ({ u: qq._u, i: qq._i }));
                   save({ resume: { unitId: session.unitId, order, qi, xp: sessionXP, right: lessonStats.right, wrong: lessonStats.wrong } });
-                  stopSpeak(); setConfirmExit(false); setScreen("home");
+                  stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home");
                 }}>{uiLang === "en" ? "Save & quit" : "Guardar y salir"}</Btn>
               )}
-              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); stopSpeak(); setConfirmExit(false); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
+              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
             </div>
           </div>
         </div>
@@ -8718,7 +8736,7 @@ export default function App() {
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
           <div data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
             <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
-            <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{L.paywallHeadline}</div>
+            <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
             <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
@@ -9408,10 +9426,10 @@ export default function App() {
         const maxScore = activeDuel.steps.length * 3;
         const stars = dialogue.score >= 8 ? 3 : dialogue.score >= 5 ? 2 : 1;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
+          <div data-testid="dialogue-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
             {burst > 0 && dialogue.done && <Confetti key={burst} count={42} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <button onClick={() => { setScreen("home"); setTab("misiones"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.dialogue); setScreen("home"); setTab("misiones"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, height: 14, background: D.line, borderRadius: 99, overflow: "hidden" }}>
                 <div style={{ width: `${Math.round((dialogue.done ? 1 : dialogue.idx / activeDuel.steps.length) * 100)}%`, height: "100%", background: activeDuel.color }} />
               </div>
@@ -9441,7 +9459,7 @@ export default function App() {
                   ))}
                 </div>
                 <Btn color={activeDuel.color} dark={activeDuel.dark} onClick={() => startDialogue(activeDuel)}>{uiLang === "en" ? "Rematch" : "Revancha"}</Btn>
-	                <Btn outline onClick={() => { setScreen("home"); setTab("misiones"); }} style={{ marginLeft: 10 }}>{L.missions}</Btn>
+	                <Btn outline onClick={() => { setPaywallSource(PAYWALL_SOURCE.dialogue); setScreen("home"); setTab("misiones"); }} style={{ marginLeft: 10 }}>{L.missions}</Btn>
               </div>
             ) : (
               <div style={{ display: "grid", gap: 10 }}>
@@ -9464,10 +9482,10 @@ export default function App() {
         const tiles = Array.from({ length: 24 }, (_, i) => 24 - i);
         const trophyCount = Object.values(prog.missions?.gameTrophies || {}).filter(Boolean).length;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 14px 130px" }}>
+          <div data-testid="snakes-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 14px 130px" }}>
             {burst > 0 && snakeGame.done && <Confetti key={burst} count={54} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-              <button onClick={() => { setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.snake); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".08em" }}>{uiLang === "en" ? "BOARD RUN" : "CARRERA DE TABLERO"}</div>
                 <div style={{ fontWeight: 900, fontSize: 21 }}>Serpientes y Escaleras</div>
@@ -9531,7 +9549,7 @@ export default function App() {
                   {snakeGame.wrong === 0 && <span style={{ border: `1.5px solid ${D.gold}`, borderRadius: 99, padding: "4px 9px", fontSize: 11, fontWeight: 900, color: D.goldDark, background: D.card }}>★ {uiLang === "en" ? "No slides" : "Sin resbalones"}</span>}
                 </div>
                 <Btn color={D.green} dark={D.greenDark} onClick={startSnakes}>{uiLang === "en" ? "Play again" : "Jugar otra vez"}</Btn>
-                <Btn outline onClick={() => { setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
+                <Btn outline onClick={() => { setPaywallSource(PAYWALL_SOURCE.snake); setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
               </div>
             ) : (
               <div className="pop" style={{ border: `2px solid ${D.line}`, borderBottom: `5px solid ${D.line}`, borderRadius: 16, padding: 15, background: D.card }}>
@@ -9592,10 +9610,10 @@ export default function App() {
         const revealed = safeRiskyIsRevealed(item, safeGame);
         const hit = revealed && tappedWrong.length === 0;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
+          <div data-testid="safe-risky-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
             {burst > 0 && safeGame.done && <Confetti key={burst} count={36} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <button onClick={() => { setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.safeRisky); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, height: 14, background: D.line, borderRadius: 99, overflow: "hidden" }}>
                 <div style={{ width: `${safeGame.done ? 100 : Math.round((safeGame.idx / safeGame.items.length) * 100)}%`, height: "100%", background: D.red }} />
               </div>
@@ -9620,7 +9638,7 @@ export default function App() {
                 </div>
                 <p style={{ color: D.sub, fontWeight: 800, margin: "0 0 16px" }}><IcGem size={14} /> +{safeGame.gems || 0}</p>
                 <Btn color={D.red} dark={D.redDark} onClick={startSafeRisky}>{uiLang === "en" ? "Play again" : "Jugar otra vez"}</Btn>
-                <Btn outline onClick={() => { setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
+                <Btn outline onClick={() => { setPaywallSource(PAYWALL_SOURCE.safeRisky); setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
               </div>
             ) : (
               <>
@@ -9694,7 +9712,7 @@ export default function App() {
       {screen === "games" && (
         <div data-testid="games-hub" style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-            <button type="button" onClick={() => { setScreen("home"); setTab("camino"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+            <button type="button" onClick={() => { setPaywallSource(PAYWALL_SOURCE.gamesHub); setScreen("home"); setTab("camino"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div data-testid="games-hub-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{L.hubGames}</div>
             <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
           </div>
@@ -9747,11 +9765,11 @@ export default function App() {
 
       {/* ---------- MATCH PAIRS (Práctica) ---------- */}
       {screen === "matchPairs" && matchGame && (() => {
-        const goPractica = () => { setScreen("home"); setTab("practica"); };
+        const goPractica = () => { setPaywallSource(PAYWALL_SOURCE.matchPairs); setScreen("home"); setTab("practica"); };
         const n = matchGame.pairs?.length || 0;
         const got = matchGame.matched?.length || 0;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
+          <div data-testid="match-pairs-screen" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
             {burst > 0 && matchGame.done && <Confetti key={burst} count={36} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <button onClick={goPractica} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -10056,7 +10074,7 @@ export default function App() {
         return (
           <div data-testid="story-reader" data-story-id={story.id} style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 150px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-	              <button type="button" onClick={() => { setWordSel(null); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+	              <button type="button" onClick={() => { setWordSel(null); setPaywallSource(PAYWALL_SOURCE.storyClose); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: sec.color }}>{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
@@ -10432,7 +10450,7 @@ export default function App() {
           </div>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
-	            <Btn data-testid={continueTestId} onClick={continueFromWin}>{L.continue}</Btn>
+	            <Btn data-testid={continueTestId || "win-continue"} onClick={continueFromWin}>{L.continue}</Btn>
           </div>
           {showLecturaHandoff && (
             <div data-testid="lectura-handoff" style={{ marginTop: 18, background: HUB_CREAM, borderRadius: 14, padding: "10px 12px 12px" }}>
@@ -10533,7 +10551,7 @@ export default function App() {
                   </Btn>
                 )}
 	                {trackedCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview(true)}>{L.reviewErrors}</Btn>}
-	                <Btn outline onClick={() => { setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
+	                <Btn outline data-testid="hearts-to-path" onClick={() => { setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
               </div>
             </>
           ) : (
@@ -10544,10 +10562,10 @@ export default function App() {
               </p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22, flexWrap: "wrap" }}>
 	                {trackedCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview(true)}>{L.practiceRecover} <IcHeart size={15} /></Btn>}
-                <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < REFILL_COST} onClick={() => { refillHearts(); setScreen("home"); setTab("camino"); }}>
+                <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < REFILL_COST} onClick={() => { refillHearts(); setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>
 	                  {L.refill} · <IcGem size={15} /> {REFILL_COST}
                 </Btn>
-	                <Btn outline onClick={() => { setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
+	                <Btn outline data-testid="hearts-to-path" onClick={() => { setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
               </div>
             </>
           )}
@@ -10586,7 +10604,7 @@ export default function App() {
               <Btn color={COACHES.diego.color} dark={COACHES.diego.dark} onClick={() => startRivalDuel()}>
                 {uiLang === "en" ? "Accept the challenge" : "Aceptar el reto"}
               </Btn>
-              <Btn outline onClick={() => { setScreen("home"); setTab("misiones"); }}>
+              <Btn outline data-testid="rival-back" onClick={() => { setPaywallSource(PAYWALL_SOURCE.rival); setScreen("home"); setTab("misiones"); }}>
                 {uiLang === "en" ? "Not now" : "Ahora no"}
               </Btn>
             </div>
@@ -10625,7 +10643,7 @@ export default function App() {
               <Btn color={COACHES.diego.color} dark={COACHES.diego.dark} onClick={() => startRivalDuel()}>
                 {uiLang === "en" ? "Rematch" : "Revancha"}
               </Btn>
-              <Btn outline onClick={() => { setScreen("home"); setTab("misiones"); }}>
+              <Btn outline data-testid="rival-done-back" onClick={() => { setPaywallSource(PAYWALL_SOURCE.rival); setScreen("home"); setTab("misiones"); }}>
                 {uiLang === "en" ? "Done" : "Listo"}
               </Btn>
             </div>

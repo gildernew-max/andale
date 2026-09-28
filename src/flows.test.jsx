@@ -14,13 +14,15 @@ import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaName, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
-import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
-import { OJALA_QUE_PACK } from "./cubetas.js";
-import { hangmanLetters } from "./hangman.js";
-import { MEMORY_BANK } from "./memory.js";
+import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride, startSafeRiskyRun } from "./safeRisky.js";
+import { OJALA_QUE_PACK, startCubetasRun } from "./cubetas.js";
+import { hangmanLetters, startHangmanRun } from "./hangman.js";
+import { MEMORY_BANK, startMemoryRun } from "./memory.js";
+import { startJeopardyRun } from "./jeopardy.js";
+import { startMatchRun } from "./matchPairs.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
 import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
-
+import { PAYWALL_SOURCE } from "./paywallHeadline.js";
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
 
@@ -326,8 +328,8 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const honesty = screen.getByTestId("soft-paywall-honesty");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
   const copy = lang === "en"
-    ? { title: "The story goes on.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", annual: "One year", monthly: "One month", honesty: "Practice · no charge yet", dismiss: "Continue free" }
-    : { title: "La historia sigue.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", annual: "Un año", monthly: "Un mes", honesty: "Práctica · sin cobro todavía", dismiss: "Seguir gratis" };
+    ? { title: "There's much more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", annual: "One year", monthly: "One month", honesty: "Practice · no charge yet", dismiss: "Continue free" }
+    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", annual: "Un año", monthly: "Un mes", honesty: "Práctica · sin cobro todavía", dismiss: "Seguir gratis" };
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
   expect(screen.getByTestId("soft-paywall-body").textContent).toBe(copy.benefit);
   expect(annual.textContent).toBe(copy.annual);
@@ -2883,7 +2885,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
-    expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\./);
+    expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\.|Hay mucho más por leer\.|There's much more to read\./);
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     await openCaminoMore(userEvent.setup());
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
@@ -2988,7 +2990,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
       expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
       expect(screen.queryByTestId("first-door-title")).toBeNull();
-      expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\./);
+      expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\.|Hay mucho más por leer\.|There's much more to read\./);
     } finally {
       vi.useRealTimers();
     }
@@ -3002,7 +3004,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await awaitHome();
     expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\./);
+    expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\.|Hay mucho más por leer\.|There's much more to read\./);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
@@ -3278,7 +3280,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
     expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Vuelve mañana por «.+»\.$/);
     expect(screen.getByTestId("come-back-tomorrow").textContent).not.toBe("Vuelve mañana por la siguiente escena.");
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-hoy-done")).toBe("1");
     expect(screen.getByTestId("hub-hoy-done")).toBeTruthy();
@@ -3552,7 +3554,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByTestId("hoy-win-continue"));
     await lecturaThenBajioWall(user);
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     assertSoftPaywallAnnualPrimary("es");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
@@ -3632,7 +3634,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy(), { timeout: 3000 });
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     assertSoftPaywallAnnualPrimary("es");
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
 
     cleanup();
     seedProgress({ streak: 0, lastDay: null, bajioUnlockSeen: true, paywallSeen: false });
@@ -3685,7 +3687,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(screen.queryByTestId("soft-paywall")).toBeNull();
       await user.click(screen.getByTestId("hoy-win-continue"));
       await lecturaThenBajioWall(user);
-      expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+      expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
       assertSoftPaywallAnnualPrimary("es");
     } finally {
       vi.useRealTimers();
@@ -3735,7 +3737,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("hoy-win-continue"));
     await lecturaThenBajioWall(user);
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     assertSoftPaywallAnnualPrimary("es");
   });
 
@@ -4708,7 +4710,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
     await user.click(screen.getByTestId("hoy-win-continue"));
     await lecturaThenBajioWall(user);
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     assertSoftPaywallAnnualPrimary("es");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).bajioUnlockSeen).toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).cdmxUnlockSeen).not.toBe(true);
@@ -4950,7 +4952,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByText(/Vuelve mañana|Come back tomorrow/)).toBeNull();
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     const handoff = screen.getByTestId("post-dismiss-handoff");
@@ -5079,7 +5081,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByRole("button", { name: /¡Empezar!|Start!/ })).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByTestId("word-order-tip")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\./);
+    expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\.|Hay mucho más por leer\.|There's much more to read\./);
     expect(document.body.textContent).not.toMatch(/Orden distinto, mismo sentido|Different order, same meaning/);
 
     cleanup();
@@ -5123,7 +5125,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(prog.streak).toBe(1);
       expect(prog.lastDay).toBe(today);
     });
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.");
     assertSoftPaywallAnnualPrimary("es");
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Orden distinto, mismo sentido|Different order, same meaning/);
@@ -5169,7 +5171,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     await awaitSoftPaywallAfterFirstWin();
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("The story goes on.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("There's much more to read.");
     expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.");
     assertSoftPaywallAnnualPrimary("en");
 
@@ -5299,7 +5301,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
-    expect(screen.getByTestId("learn-hub").textContent).not.toMatch(/La historia sigue\.|Un año|Seguir gratis/);
+    expect(screen.getByTestId("learn-hub").textContent).not.toMatch(/La historia sigue\.|Hay mucho más por leer\.|Un año|Seguir gratis/);
   });
 
   it("armed soft-paywall backdrop free-dismiss lands on post-dismiss-handoff", async () => {
@@ -5338,7 +5340,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).a2hsSeen).toBe(true);
-    expect(document.body.textContent).not.toMatch(/La historia sigue\./);
+    expect(document.body.textContent).not.toMatch(/La historia sigue\.|Hay mucho más por leer\./);
     expect(screen.getByTestId("a2hs-sheet").textContent).not.toMatch(/\$39\.99|\$6\.99/);
 
     await user.click(screen.getByTestId("lang-en"));
@@ -6336,7 +6338,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await user.click(screen.getByTestId("brand-home"));
     await awaitBajioFlashThenPaywall();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
     expect(funnelOf("purchase")).toHaveLength(0);
 
@@ -6415,7 +6417,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await user.click(screen.getByTestId("brand-home"));
     await awaitBajioFlashThenPaywall();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
     expect(funnelOf("purchase")).toHaveLength(0);
 
@@ -6515,6 +6517,11 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
 
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
     await waitFor(() => expect(screen.getByTestId("soft-paywall-cenzontle")).toBeTruthy());
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).toBe("lectura-bird-handoff");
+    expect(screen.getByTestId("soft-paywall-headline").style.fontWeight).toBe("900");
+    expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");
+    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.");
     expect(funnelOf("paywall_seen")).toHaveLength(1);
     expect(funnelOf("lectura_chapter_done")).toHaveLength(1);
     expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
@@ -6541,6 +6548,258 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(at("purchase")).toBe(-1);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
   }, 15000);
+});
+
+const FALLBACK_HEADLINE = {
+  es: "Hay mucho más por leer.",
+  en: "There's much more to read.",
+};
+const HOOK_BODY = {
+  es: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
+  en: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
+};
+
+const assertPaywallHeadline = (source, lang = "es") => {
+  const headline = screen.getByTestId("soft-paywall-headline");
+  const expected = source === PAYWALL_SOURCE.lecturaBirdHandoff ? (lang === "en" ? "The story goes on." : "La historia sigue.") : FALLBACK_HEADLINE[lang];
+  expect(headline.textContent).toBe(expected);
+  expect(headline.getAttribute("data-paywall-source")).toBe(source);
+  expect(headline.style.fontWeight).toBe("900");
+  expect(headline.style.fontSize).toBe("22px");
+  expect(screen.getByTestId("soft-paywall-body").textContent).toBe(HOOK_BODY[lang]);
+};
+
+const lessonLive = (screenName, extra = {}) => ({
+  screen: screenName,
+  qi: 0,
+  status: "idle",
+  lessonStats: { right: 1, wrong: 0 },
+  session: {
+    title: "Hola",
+    host: "luna",
+    unitId: "greetings",
+    questions: [{ type: "mc", prompt: "Hola", choices: ["sí"], answer: "sí", shuffledChoices: ["sí"] }],
+  },
+  ...extra,
+});
+
+const openPaywallFrom = async (live, { streak = 1 } = {}) => {
+  cleanup();
+  markBajioUnlockFlashDue(false);
+  localStorage.removeItem(LIVE_KEY);
+  seedProgress({
+    streak,
+    lastDay: streak ? localToday() : null,
+    paywallSeen: false,
+    bajioUnlockSeen: true,
+    uiLang: "es",
+  });
+  if (live) localStorage.setItem(LIVE_KEY, JSON.stringify(live));
+  const user = userEvent.setup();
+  render(<App />);
+  return user;
+};
+
+const waitSurfaceClear = async (testid) => {
+  await waitFor(() => expect(screen.getByTestId(testid)).toBeTruthy());
+  await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+};
+
+const clickClose = async (user, rootTestId) => {
+  const root = screen.getByTestId(rootTestId);
+  const btn = [...root.querySelectorAll("button")].find((el) => /^(Cerrar|Close)$/.test(el.getAttribute("aria-label") || ""));
+  expect(btn).toBeTruthy();
+  await user.click(btn);
+};
+
+describe("paywall headline follows the open source", () => {
+  it("boot on the hub uses the fallback headline", async () => {
+    await openPaywallFrom(null);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.boot);
+  });
+
+  it("boot in English uses the English fallback headline", async () => {
+    cleanup();
+    markBajioUnlockFlashDue(false);
+    seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: false, bajioUnlockSeen: true, uiLang: "en" });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.boot, "en");
+  });
+
+  it("brand-home uses the fallback headline", async () => {
+    const user = await openPaywallFrom(lessonLive("lesson"));
+    await waitSurfaceClear("lesson-exit");
+    await user.click(screen.getByTestId("brand-home"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.brandHome);
+  });
+
+  it("win continue uses the fallback headline", async () => {
+    const user = await openPaywallFrom(lessonLive("done"), { streak: 0 });
+    await waitSurfaceClear("win-continue");
+    await user.click(screen.getByTestId("win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.winContinue);
+  });
+
+  it("session close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "sessionClose" });
+    await waitSurfaceClear("session-close-dismiss");
+    await user.click(screen.getByTestId("session-close-dismiss"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.sessionClose);
+  });
+
+  it("cubetas close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "cubetas", cubetasGame: startCubetasRun() });
+    await waitSurfaceClear("cubetas-board");
+    await clickClose(user, "cubetas-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.cubetas);
+  });
+
+  it("hangman close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "ahorcado", ahorcado: startHangmanRun() });
+    await waitSurfaceClear("hangman-board");
+    await clickClose(user, "hangman-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.hangman);
+  });
+
+  it("match pairs close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "matchPairs", matchGame: startMatchRun([["hola", "hi"], ["adiós", "bye"]]) });
+    await waitSurfaceClear("match-pairs-screen");
+    await clickClose(user, "match-pairs-screen");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.matchPairs);
+  });
+
+  it("memory close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "memory", memoryGame: startMemoryRun() });
+    await waitSurfaceClear("memory-board");
+    await clickClose(user, "memory-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.memory);
+  });
+
+  it("dialogue close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "dialogue" });
+    await waitSurfaceClear("dialogue-board");
+    await clickClose(user, "dialogue-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.dialogue);
+  });
+
+  it("flashcard grade uses the fallback headline", async () => {
+    cleanup();
+    markBajioUnlockFlashDue(false);
+    seedProgress({
+      streak: 0,
+      lastDay: null,
+      paywallSeen: false,
+      bajioUnlockSeen: true,
+      uiLang: "es",
+      flashcards: {
+        hola: { word: "hola", en: "hi", note: "", story: "Hola", sentence: "Hola.", added: 1, due: 0, interval: 0, reps: 0, lapses: 0 },
+      },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("camino-more")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("camino-more"));
+    await user.click(screen.getByTestId("hub-flashcards"));
+    await waitFor(() => expect(screen.getByTestId("flash-reveal")).toBeTruthy());
+    await user.click(screen.getByTestId("flash-reveal"));
+    await user.click(screen.getByTestId("flash-hard"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.flashcards);
+  });
+
+  it("games hub close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "games" });
+    await waitSurfaceClear("games-hub");
+    await clickClose(user, "games-hub");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.gamesHub);
+  });
+
+  it("snake close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({
+      screen: "snakes",
+      snakeGame: {
+        tile: 1, turn: 0, status: "idle", done: false, correct: 0, wrong: 0, ladders: 0, slides: 0,
+        focus: { host: "luna", title: { es: "Vocab", en: "Vocab" } },
+        question: { prompt: "Hola", answer: "Hi", choices: ["Hi", "Bye"], explain: "", skill: "vocab" },
+      },
+    });
+    await waitSurfaceClear("snakes-board");
+    await clickClose(user, "snakes-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.snake);
+  });
+
+  it("safe-or-risky close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "safeRisky", safeGame: startSafeRiskyRun([SAFE_RISKY_MULTI_FIXTURE]) });
+    await waitSurfaceClear("safe-risky-board");
+    await clickClose(user, "safe-risky-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.safeRisky);
+  });
+
+  it("jeopardy close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "jeopardy", jeopardy: startJeopardyRun() });
+    await waitSurfaceClear("jeopardy-board");
+    await clickClose(user, "jeopardy-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.jeopardy);
+  });
+
+  it("story close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "story", storyId: "story-0", paraIdx: 0 });
+    await waitSurfaceClear("story-reader");
+    await clickClose(user, "story-reader");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.storyClose);
+  });
+
+  it("lesson quit uses the fallback headline", async () => {
+    const user = await openPaywallFrom(lessonLive("lesson"));
+    await waitSurfaceClear("lesson-exit");
+    await user.click(screen.getByTestId("lesson-exit"));
+    await user.click(screen.getByTestId("quit-without-save"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.lessonQuit);
+  });
+
+  it("out of hearts uses the fallback headline", async () => {
+    const user = await openPaywallFrom(lessonLive("failed"));
+    await waitSurfaceClear("hearts-to-path");
+    await user.click(screen.getByTestId("hearts-to-path"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.hearts);
+  });
+
+  it("rival back uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "rivalIntro" });
+    await waitSurfaceClear("rival-back");
+    await user.click(screen.getByTestId("rival-back"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.rival);
+  });
+
+  it("rival done uses the fallback headline", async () => {
+    const user = await openPaywallFrom({
+      screen: "rivalDone",
+      rivalOutcome: { won: true, you: 3, diego: 1, delta: 1, rankName: "Novato", reaction: "Otra.", record: "1–0" },
+    });
+    await waitSurfaceClear("rival-done-back");
+    await user.click(screen.getByTestId("rival-done-back"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.rival);
+  });
 });
 
 const EN_DISCLOSURE = [
