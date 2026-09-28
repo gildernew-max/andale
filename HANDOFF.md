@@ -2,6 +2,18 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-09-28 (Writer privacy and support text)
+
+**What changed**
+- `#correo-y-datos` is filled with the writer’s Spanish and English, on `privacy.md` and `public/privacy.html`. Date is September 28, 2026 on privacy and support. The no-account line stays.
+- The collector is still off. This build does not write to Google Sheets.
+
+**Why**
+- George sent the section. The words are copied, not rewritten.
+
+**Words / Brand left**
+- None on this page. The Sheets sentence describes the collector once `VITE_COLLECTOR_ENDPOINT` is set.
+
 ## 2026-09-28 (Privacy link on the email card)
 
 **What changed**
