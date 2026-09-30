@@ -7,6 +7,7 @@ export const FUNNEL_EVENTS = Object.freeze({
   open: "open",
   cenzontleComplete: "cenzontle_complete",
   lecturaStart: "lectura_start",
+  lecturaChapterDone: "lectura_chapter_done",
   paywallSeen: "paywall_seen",
   paywallTap: "paywall_tap",
   waitlistSubmit: "waitlist_submit",
@@ -48,7 +49,7 @@ function safeStoryId(id) {
 export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId } = {}, bus = eventBus()) {
   if (!EVENTS.has(event)) return null;
   const payload = { event, at: new Date().toISOString() };
-  if (event === FUNNEL_EVENTS.lecturaStart) {
+  if (event === FUNNEL_EVENTS.lecturaStart || event === FUNNEL_EVENTS.lecturaChapterDone) {
     const id = safeStoryId(storyId);
     if (id) payload.storyId = id;
   }
