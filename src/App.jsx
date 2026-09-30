@@ -101,6 +101,7 @@ import {
   hangmanSlotIndexForKey,
   hangmanSlotKey,
   hangmanTitle,
+  emphasisParts,
   hangmanWhy,
   hangmanWhyLabel,
   hangmanWinLine,
@@ -4369,6 +4370,12 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
 );
 
 /* ---------------- APP ---------------- */
+
+function HangmanEmphasis({ text }) {
+  return emphasisParts(text).map((part, i) => (
+    part.em ? <em key={i}>{part.text}</em> : <span key={i}>{part.text}</span>
+  ));
+}
 
 export default function App() {
   /* Theme: persisted under prog.theme; memoized D shadows the file-level D
@@ -9842,13 +9849,13 @@ export default function App() {
                 </div>
                 <div data-testid="hangman-why" style={{ marginTop: 8 }}>
                   <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}><HangmanEmphasis text={hangmanWhy(ahorcado, uiLang)} /></div>
                 </div>
                 {hangmanRegionChip(ahorcado) && (
                   <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
                     <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                     {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
-                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}><HangmanEmphasis text={hangmanRegionNote(ahorcado, uiLang)} /></div>
                     )}
                   </div>
                 )}
@@ -9913,13 +9920,13 @@ export default function App() {
                     </div>
                     <div data-testid="hangman-why" style={{ marginTop: 8 }}>
                       <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}><HangmanEmphasis text={hangmanWhy(ahorcado, uiLang)} /></div>
                     </div>
                     {hangmanRegionChip(ahorcado) && (
                       <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
                         <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                         {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
-                          <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                          <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}><HangmanEmphasis text={hangmanRegionNote(ahorcado, uiLang)} /></div>
                         )}
                       </div>
                     )}

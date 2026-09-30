@@ -16,7 +16,7 @@ import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaName, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
 import { OJALA_QUE_PACK } from "./cubetas.js";
-import { hangmanLetters } from "./hangman.js";
+import { HANGMAN_BANK, hangmanLetters } from "./hangman.js";
 import { MEMORY_BANK } from "./memory.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
 
@@ -1976,6 +1976,47 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hangman-win").textContent).toBe("¡Eso!"));
     expect(screen.getByTestId("hangman-literal").textContent).toMatch(/^Literal/);
     expect(screen.getByTestId("hangman-why").textContent).toMatch(/^Por qué/);
+  });
+
+  it("Hangman Why and region lines italicize starred words and drop the asterisks", async () => {
+    const show = async (word, theme, uiLang = "en") => {
+      cleanup();
+      localStorage.clear();
+      seedProgress({ uiLang, theme });
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "ahorcado",
+        tab: "practica",
+        ahorcado: {
+          word,
+          letters: hangmanLetters(word),
+          guessed: hangmanLetters(word),
+          status: "win",
+        },
+      }));
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("hangman-why")).toBeTruthy());
+    };
+    await show("morra", "light");
+    const why = screen.getByTestId("hangman-why");
+    expect(why.textContent).toContain("Pair morro for guys");
+    expect(why.textContent).not.toMatch(/\*/);
+    expect(why.querySelector("em")?.textContent).toBe("morro");
+    await show("cruda", "dark");
+    const note = screen.getByTestId("hangman-region-note");
+    expect(note.textContent).toBe("ES/AR/CO resaca");
+    expect(note.textContent).not.toMatch(/\*/);
+    expect(note.querySelector("em")?.textContent).toBe("resaca");
+    expect(screen.getByTestId("hangman-why").textContent).not.toMatch(/\*/);
+    for (const row of HANGMAN_BANK) {
+      for (const uiLang of ["en", "es"]) {
+        await show(row.word, "light", uiLang);
+        for (const id of ["hangman-literal", "hangman-why"]) {
+          expect(screen.getByTestId(id).textContent, `${row.word} ${uiLang} ${id}`).not.toMatch(/\*/);
+        }
+        const region = screen.queryByTestId("hangman-region-note");
+        if (region) expect(region.textContent, `${row.word} ${uiLang} region`).not.toMatch(/\*/);
+      }
+    }
   });
 
   it("Jeopardy round: pick a tile, answer, return to the board", async () => {
@@ -6267,7 +6308,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("paywall_seen")[0].name).toBeUndefined();
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
@@ -6381,7 +6422,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     localStorage.removeItem(LIVE_KEY);
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
     await user.click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect(funnelOf("purchase")).toHaveLength(1));
@@ -6448,7 +6489,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await awaitBajioFlashThenPaywall();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
@@ -6527,7 +6568,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await awaitBajioFlashThenPaywall();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
@@ -6605,7 +6646,7 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(fine.compareDocumentPosition(screen.getByTestId("soft-paywall-dismiss")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
 
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
     await user.click(restore);
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
@@ -6692,7 +6733,7 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(screen.getByTestId("soft-paywall-annual").className).toMatch(/duo-btn/);
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Continue free");
     expect(screen.getByTestId("soft-paywall-dismiss").style.background).toBe("none");
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
 
     expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
