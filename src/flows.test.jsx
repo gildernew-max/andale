@@ -20,6 +20,7 @@ import { OJALA_QUE_PACK } from "./cubetas.js";
 import { HANGMAN_BANK, hangmanLetters } from "./hangman.js";
 import { MEMORY_BANK } from "./memory.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
+import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -1169,6 +1170,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
     await user.click(screen.getByRole("button", { name: /El olvido/ }));
     await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe("Hay casas que no olvidan. ¿Conoces una que todavía espere a su dueña?"));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
     await waitFor(() => {
       expect(screen.getByTestId("story-0-win")).toBeTruthy();
       expect(screen.getByTestId("win-fly-away")).toBeTruthy();
@@ -1214,6 +1218,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /El tranvía y Diego/ }));
     await user.click(screen.getByRole("button", { name: /Viva la vida/ }));
     await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
     await waitFor(() => {
       expect(screen.getByTestId("lectura-win")).toBeTruthy();
       expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
@@ -3680,6 +3687,32 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("win-perch")).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
+  });
+
+  it("dark soft paywall title and prices are cream on #1E2128, not near-white on cream", async () => {
+    cleanup();
+    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false });
+    await boot();
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-card")).toBeTruthy());
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const nearWhite = /#E8E8EA|#FFFFFF|rgb\(\s*232,\s*232,\s*234\s*\)|rgb\(\s*255,\s*255,\s*255\s*\)/i;
+    const darkCard = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const card = screen.getByTestId("soft-paywall-card");
+    const headline = screen.getByTestId("soft-paywall-headline");
+    const annualPrice = screen.getByTestId("soft-paywall-annual-price");
+    const monthlyPrice = screen.getByTestId("soft-paywall-monthly-price");
+    expect(card.style.background).toMatch(darkCard);
+    expect(card.style.background).not.toMatch(cream);
+    expect(headline.style.color).toMatch(cream);
+    expect(headline.style.color).not.toMatch(nearWhite);
+    expect(annualPrice.style.color).toMatch(cream);
+    expect(annualPrice.style.color).not.toMatch(nearWhite);
+    expect(monthlyPrice.style.color).toMatch(cream);
+    expect(monthlyPrice.style.color).not.toMatch(nearWhite);
+    expect(screen.getByTestId("soft-paywall-monthly").style.background).toMatch(darkCard);
+    expect(screen.getByTestId("soft-paywall-monthly").style.color).toMatch(cream);
+    expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
   });
 
   it("cold first Hoy CONTINUE shows soft paywall once before idle home", async () => {
@@ -6698,6 +6731,112 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(at("cenzontle_complete")).toBeGreaterThan(at("open"));
     expect(at("lectura_start")).toBeGreaterThan(at("cenzontle_complete"));
     expect(at("paywall_seen")).toBeGreaterThan(at("lectura_start"));
+    expect(at("purchase")).toBe(-1);
+    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
+  }, 15000);
+
+  it("Hoy win, then lectura_start, then the chapter cliffhanger hands off to the paywall bird", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    delete window.__andaleIapEnv;
+    delete window.__andaleNativePurchase;
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["cilantro, cebolla, salsa y guarnición"],
+      answer: "cilantro, cebolla, salsa y guarnición",
+      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        firstHoy: true,
+        host: "luna",
+        questions: [hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:")],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(funnelOf("open").length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelector(".choice-card"));
+    await user.click(screen.getByTestId("lesson-check"));
+    await user.click(await screen.findByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("lectura-handoff-cta")).toBeTruthy());
+    await waitFor(() => expect(funnelOf("cenzontle_complete").some((e) => e.beat === "hoy")).toBe(true), { timeout: 1500 });
+    assertNoWallBeforeLectura();
+    expect(funnelOf("lectura_start")).toHaveLength(0);
+    expect(funnelOf("lectura_chapter_done")).toHaveLength(0);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(funnelOf("purchase")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("lectura-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));
+    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("lectura-cliffhanger")).toBeNull();
+
+    for (;;) {
+      const next = screen.queryByRole("button", { name: /^(Siguiente|Next) →$/ });
+      if (!next) break;
+      await user.click(next);
+    }
+    await user.click(screen.getByRole("button", { name: /^(Preguntas|Questions) →$/ }));
+    await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
+    expect(funnelOf("lectura_chapter_done")).toHaveLength(0);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
+    await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
+    await user.click(screen.getByRole("button", { name: /El olvido/ }));
+    await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
+    const done = funnelOf("lectura_chapter_done");
+    expect(done).toHaveLength(1);
+    expect(done[0].storyId).toBe("story-0");
+    expect(done[0].title).toBeUndefined();
+    expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe(lecturaCliffhangers["story-0"]);
+    expect(screen.getByTestId("lectura-bird-handoff-cta").textContent).toBe("Continuar");
+    expect(screen.getByTestId("lectura-bird-handoff-cta").className).not.toMatch(/duo-btn/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
+
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-cenzontle")).toBeTruthy());
+    expect(funnelOf("paywall_seen")).toHaveLength(1);
+    expect(funnelOf("lectura_chapter_done")).toHaveLength(1);
+    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("Un año");
+    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis");
+    expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-dismiss").style.background).toBe("none");
+    expect(funnelOf("purchase")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
+    expect(funnelOf("paywall_tap").filter((e) => e.choice === "annual")).toHaveLength(1);
+    expect(funnelOf("purchase")).toHaveLength(0);
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
+    const names = window.__andaleFunnelLog.map((e) => e.event);
+    const at = (name) => names.indexOf(name);
+    expect(at("open")).toBeGreaterThanOrEqual(0);
+    expect(at("cenzontle_complete")).toBeGreaterThan(at("open"));
+    expect(at("lectura_start")).toBeGreaterThan(at("cenzontle_complete"));
+    expect(at("lectura_chapter_done")).toBeGreaterThan(at("lectura_start"));
+    expect(at("paywall_seen")).toBeGreaterThan(at("lectura_chapter_done"));
+    expect(at("paywall_tap")).toBeGreaterThan(at("paywall_seen"));
     expect(at("purchase")).toBe(-1);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
   }, 15000);
