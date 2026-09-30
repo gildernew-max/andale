@@ -296,8 +296,9 @@ const assertFreeWinFlyAway = () => {
   expect(css).toMatch(/position: fixed;/);
   expect(css).toMatch(/overflow: hidden;/);
   expect(css).toMatch(/translate\(calc\(-50% \+ 100vw \+ 168px\)/);
-  expect(css).toMatch(/78% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 1; \}/);
-  expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 0; \}/);
+  expect(css).toMatch(/78% \{ transform: translate\(calc\(-50% \+ 40vw\), -\d+px\) rotate\(-10deg\); opacity: 1; \}/);
+  expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -\d+px\) rotate\(-10deg\); opacity: 0; \}/);
+  expect(css).not.toMatch(/-40px/);
   expect(css).not.toMatch(/260px/);
   expect(css).not.toMatch(/780ms|cenzontle-courier|story0Courier/);
   if (bird) {
