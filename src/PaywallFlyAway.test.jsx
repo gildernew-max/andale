@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { CenzontleFlyAway, PaywallFlyAway } from "./PaywallFlyAway.jsx";
 import {
   FLY_AWAY_CLEAR_AT,
@@ -9,6 +9,7 @@ import {
   PAYWALL_WING_MS,
   WIN_FLY_SIZE,
   flyAwayExitTranslate,
+  flyAwayExitTranslateY,
   flyAwayFadesOnlyAfterExit,
   flyAwayHoldsOpaqueThroughExit,
   flyAwayMotionCss,
@@ -25,24 +26,35 @@ const parseFlyKeyframes = (css) => {
   }));
 };
 
-const assertExitBeforeFade = (css, size) => {
+const assertExitBeforeFade = (css, size, startTop = 0) => {
   const frames = parseFlyKeyframes(css);
   const exit = flyAwayExitTranslate(size);
-  expect(frames.length).toBeGreaterThanOrEqual(4);
-  expect(css).toContain(flyAwayMotionCss(size).trim());
+  const exitY = flyAwayExitTranslateY(startTop, size);
+  expect(frames.length).toBeGreaterThanOrEqual(5);
+  expect(css).toContain(flyAwayMotionCss(size, startTop).trim());
   expect(css).toContain(exit);
   expect(css).not.toMatch(/260px/);
+  expect(css).not.toMatch(/-40px/);
   expect(flyAwayHoldsOpaqueThroughExit(frames, size)).toBe(true);
   expect(flyAwayFadesOnlyAfterExit(frames, size)).toBe(true);
   const clear = frames.find((f) => f.at === FLY_AWAY_CLEAR_AT);
   expect(clear?.opacity).toBe(1);
-  expect(clear?.transform).toContain(exit);
+  expect(clear?.transform).toContain(`${exitY}px`);
+  expect(clear?.transform).not.toContain(exit);
   const end = frames.find((f) => f.at === 100);
   expect(end?.opacity).toBe(0);
   expect(end?.transform).toContain(exit);
+  expect(end?.transform).toContain(`${exitY}px`);
   for (const frame of frames) {
-    if (frame.opacity < 1) expect(frame.transform).toContain(exit);
+    if (frame.opacity < 1) {
+      expect(frame.transform).toContain(exit);
+      expect(frame.transform).toContain(`${exitY}px`);
+    }
   }
+};
+
+const endFlight = (layer) => {
+  fireEvent.animationEnd(layer, { animationName: "paywallFlyAway" });
 };
 
 afterEach(() => {
@@ -124,11 +136,24 @@ describe("CenzontleFlyAway on free story-win / CONTINUAR", () => {
     expect(onComplete).not.toHaveBeenCalled();
     act(() => { vi.advanceTimersByTime(PAYWALL_FLY_MS - 1); });
     expect(onComplete).not.toHaveBeenCalled();
+    expect(screen.getByTestId("win-fly-away-bird")).toBeTruthy();
     act(() => { vi.advanceTimersByTime(1); });
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     expect(screen.queryByTestId("win-fly-away-bird")).toBeNull();
     expect(screen.queryByTestId("win-fly-away-clip")).toBeNull();
+    expect(screen.queryByTestId("win-perch")).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("unmounts on animationend once the off-screen frame has played", () => {
+    vi.useFakeTimers();
+    const onComplete = vi.fn();
+    render(<CenzontleFlyAway surface="win" onComplete={onComplete} />);
+    expect(screen.getByTestId("win-fly-away-bird")).toBeTruthy();
+    act(() => { endFlight(screen.getByTestId("win-fly-away-layer")); });
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("win-fly-away-bird")).toBeNull();
     expect(screen.queryByTestId("win-perch")).toBeNull();
     vi.useRealTimers();
   });
