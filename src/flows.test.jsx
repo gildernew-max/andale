@@ -12,11 +12,12 @@ import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
 import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED } from "./recuerdos.js";
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
+import { isWhiteOrCreamFill } from "./spanishKeyboard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaName, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride, startSafeRiskyRun } from "./safeRisky.js";
 import { OJALA_QUE_PACK, startCubetasRun } from "./cubetas.js";
-import { hangmanLetters, startHangmanRun } from "./hangman.js";
+import { HANGMAN_BANK, hangmanLetters, startHangmanRun } from "./hangman.js";
 import { MEMORY_BANK, startMemoryRun } from "./memory.js";
 import { startJeopardyRun } from "./jeopardy.js";
 import { startMatchRun } from "./matchPairs.js";
@@ -119,6 +120,29 @@ const awaitHome = async () => {
 };
 
 const CREAM_FILL = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+
+const channelLum = (v) => {
+  const c = v / 255;
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+};
+
+const parseCssColor = (value) => {
+  const hex = String(value).trim().match(/^#([0-9a-f]{6})$/i);
+  if (hex) {
+    const n = Number.parseInt(hex[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const rgb = String(value).match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (!rgb) throw new Error(`unparsed color ${value}`);
+  return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
+};
+
+const contrastRatio = (fg, bg) => {
+  const lum = (channels) => 0.2126 * channelLum(channels[0]) + 0.7152 * channelLum(channels[1]) + 0.0722 * channelLum(channels[2]);
+  const lighter = Math.max(lum(parseCssColor(fg)), lum(parseCssColor(bg)));
+  const darker = Math.min(lum(parseCssColor(fg)), lum(parseCssColor(bg)));
+  return (lighter + 0.05) / (darker + 0.05);
+};
 const PAGE_WHITE = /^(#fff|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\))$/i;
 
 const ELLIPSIS_RE = /…|\.\.\.$/;
@@ -136,8 +160,22 @@ const assertFullWordChip = (el, text) => {
 
 const assertMemoryBoardCard = (el, text) => {
   if (text != null) {
-    expect(el.textContent).toBe(text);
-    expect(el.textContent).not.toMatch(ELLIPSIS_RE);
+    const wordEl = el.querySelector("[data-testid='memory-card-word']");
+    const glossEl = el.querySelector("[data-testid='memory-card-gloss']");
+    expect(wordEl).toBeTruthy();
+    expect(wordEl.textContent).toBe(text);
+    expect(wordEl.textContent).not.toMatch(ELLIPSIS_RE);
+    expect(glossEl).toBeTruthy();
+    expect(glossEl.textContent.startsWith("(")).toBe(true);
+    expect(glossEl.textContent.endsWith(")")).toBe(true);
+    expect(glossEl.textContent).not.toMatch(ELLIPSIS_RE);
+    expect(glossEl.style.fontSize).toBe("0.7em");
+    expect(glossEl.style.fontFamily).toBe("inherit");
+    expect(glossEl.style.fontWeight).toBe("inherit");
+    expect(glossEl.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
+    expect(el.textContent).toContain(text);
+    expect(el.textContent).toContain(glossEl.textContent);
+    expect(el.getAttribute("aria-label")).toBe(`${text} ${glossEl.textContent}`);
   }
   expect(el.className).toMatch(/word-chip/);
   expect(el.className).toMatch(/memory-card/);
@@ -299,8 +337,9 @@ const assertFreeWinFlyAway = () => {
   expect(css).toMatch(/position: fixed;/);
   expect(css).toMatch(/overflow: hidden;/);
   expect(css).toMatch(/translate\(calc\(-50% \+ 100vw \+ 168px\)/);
-  expect(css).toMatch(/78% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 1; \}/);
-  expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 0; \}/);
+  expect(css).toMatch(/78% \{ transform: translate\(calc\(-50% \+ 40vw\), -\d+px\) rotate\(-10deg\); opacity: 1; \}/);
+  expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -\d+px\) rotate\(-10deg\); opacity: 0; \}/);
+  expect(css).not.toMatch(/-40px/);
   expect(css).not.toMatch(/260px/);
   expect(css).not.toMatch(/780ms|cenzontle-courier|story0Courier/);
   if (bird) {
@@ -1937,6 +1976,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hangman-literal")).toBeTruthy());
     expect(screen.getByTestId("hangman-win").textContent).toBe("That's it.");
     expect(screen.getByTestId("hangman-word").textContent).toBe(word);
+    expect(screen.getByTestId("hangman-end").style.background).toMatch(/#F3FBEA|rgb\(\s*243,\s*251,\s*234\s*\)/i);
+    expect(screen.getByTestId("hangman-end").style.border).toMatch(/2px solid (#58CC02|rgb\(\s*88,\s*204,\s*2\s*\))/i);
     const literal = screen.getByTestId("hangman-literal");
     const why = screen.getByTestId("hangman-why");
     expect(literal.textContent).toMatch(/^Literal/);
@@ -1947,6 +1988,47 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hangman-win").textContent).toBe("¡Eso!"));
     expect(screen.getByTestId("hangman-literal").textContent).toMatch(/^Literal/);
     expect(screen.getByTestId("hangman-why").textContent).toMatch(/^Por qué/);
+  });
+
+  it("Hangman Why and region lines italicize starred words and drop the asterisks", async () => {
+    const show = async (word, theme, uiLang = "en") => {
+      cleanup();
+      localStorage.clear();
+      seedProgress({ uiLang, theme });
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "ahorcado",
+        tab: "practica",
+        ahorcado: {
+          word,
+          letters: hangmanLetters(word),
+          guessed: hangmanLetters(word),
+          status: "win",
+        },
+      }));
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("hangman-why")).toBeTruthy());
+    };
+    await show("morra", "light");
+    const why = screen.getByTestId("hangman-why");
+    expect(why.textContent).toContain("Pair morro for guys");
+    expect(why.textContent).not.toMatch(/\*/);
+    expect(why.querySelector("em")?.textContent).toBe("morro");
+    await show("cruda", "dark");
+    const note = screen.getByTestId("hangman-region-note");
+    expect(note.textContent).toBe("ES/AR/CO resaca");
+    expect(note.textContent).not.toMatch(/\*/);
+    expect(note.querySelector("em")?.textContent).toBe("resaca");
+    expect(screen.getByTestId("hangman-why").textContent).not.toMatch(/\*/);
+    for (const row of HANGMAN_BANK) {
+      for (const uiLang of ["en", "es"]) {
+        await show(row.word, "light", uiLang);
+        for (const id of ["hangman-literal", "hangman-why"]) {
+          expect(screen.getByTestId(id).textContent, `${row.word} ${uiLang} ${id}`).not.toMatch(/\*/);
+        }
+        const region = screen.queryByTestId("hangman-region-note");
+        if (region) expect(region.textContent, `${row.word} ${uiLang} region`).not.toMatch(/\*/);
+      }
+    }
   });
 
   it("Jeopardy round: pick a tile, answer, return to the board", async () => {
@@ -1963,6 +2045,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("jeopardy-answered").textContent).toBe("0/18");
     expect(screen.getByTestId("jeopardy-grid")).toBeTruthy();
     expect(screen.getByTestId("jeopardy-tile-subj-100")).toBeTruthy();
+    const lightFill = (el) => `${el.style.backgroundColor} ${el.style.background}`;
+    expect(lightFill(screen.getByTestId("jeopardy-cat-reg"))).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(lightFill(screen.getByTestId("jeopardy-tile-subj-100"))).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(lightFill(screen.getByTestId("jeopardy-back"))).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
     expect(screen.getByTestId("jeopardy-cat-reg").textContent).toBe("Registro");
     expect(screen.getByTestId("jeopardy-cat-subj").textContent).toBe("Subjuntivo");
     expect(screen.getByTestId("jeopardy-cat-mex").textContent).toBe("México");
@@ -2050,6 +2136,14 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(tapMate).toBeTruthy();
     await user.click(tapCard);
     await waitFor(() => expect(tapCard.getAttribute("data-face")).toBe("up"));
+    const tapEntry = MEMORY_BANK.find((row) => row.word === tapPair);
+    const tapWord = tapKind === "word" ? tapEntry.word : tapEntry.meaning.es;
+    const tapGloss = tapKind === "word" ? tapEntry.meaning.es : tapEntry.word;
+    expect(tapCard.querySelector("[data-testid='memory-card-word']").textContent).toBe(tapWord);
+    expect(tapCard.querySelector("[data-testid='memory-card-gloss']").textContent).toBe(`(${tapGloss})`);
+    expect(tapCard.getAttribute("aria-label")).toBe(`${tapWord} (${tapGloss})`);
+    const stillDown = cards.find((el) => el !== tapCard && el.getAttribute("data-face") === "down");
+    expect(stillDown.querySelector("[data-testid='memory-card-gloss']")).toBeNull();
     await user.click(tapMate);
     await waitFor(() => expect(screen.getByTestId("memory-teach")).toBeTruthy());
     expect(tapCard.getAttribute("data-face")).toBe("up");
@@ -2441,11 +2535,32 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const byId = (id) => cards.find((el) => el.getAttribute("data-card") === id);
     expect(byId("apapacho-word").getAttribute("data-face")).toBe("up");
     assertMemoryBoardCard(byId("apapacho-word"), "apapacho");
-    assertMemoryBoardCard(byId("apapacho-meaning"), "warm hug / comfort");
+    expect(byId("apapacho-word").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(warm hug)");
+    assertMemoryBoardCard(byId("apapacho-meaning"), "warm hug");
+    expect(byId("apapacho-meaning").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(apapacho)");
     assertMemoryBoardCard(byId("tianguis-word"), "tianguis");
-    assertMemoryBoardCard(byId("morra-meaning"), "young woman (casual)");
+    expect(byId("tianguis-word").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(street market)");
+    assertMemoryBoardCard(byId("morra-meaning"), "girl, young woman");
+    expect(byId("morra-meaning").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(morra)");
+    expect(byId("tianguis-meaning").getAttribute("data-face")).toBe("down");
+    expect(byId("tianguis-meaning").querySelector("[data-testid='memory-card-gloss']")).toBeNull();
+    expect(byId("morra-word").getAttribute("data-face")).toBe("down");
+    expect(byId("morra-word").querySelector("[data-testid='memory-card-gloss']")).toBeNull();
     expect(byId("apapacho-meaning").className).toMatch(/word-chip--phrase/);
     expect(byId("apapacho-word").style.fontSize).toBe(byId("apapacho-meaning").style.fontSize);
+    const creamFace = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const whiteFace = /#fff|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\)/i;
+    const terracotta = /#C46B3A|rgb\(\s*196,\s*107,\s*58\s*\)/i;
+    const lightInk = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
+    expect(byId("tianguis-meaning").style.background).toMatch(creamFace);
+    expect(byId("tianguis-meaning").style.borderTopColor).toMatch(terracotta);
+    expect(byId("tianguis-meaning").style.borderBottomColor).toMatch(terracotta);
+    expect(byId("apapacho-word").style.background).toMatch(whiteFace);
+    expect(byId("apapacho-word").style.color).toMatch(lightInk);
+    expect(byId("apapacho-word").style.borderTopColor).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("memory-title").style.color).toMatch(/#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i);
+    expect(screen.getByTestId("memory-mark").querySelectorAll("rect")[1].getAttribute("fill")).toBe("#5C7356");
+    expect(screen.getByTestId("app-shell").style.background).toMatch(creamFace);
 
     cleanup();
     seedProgress({ uiLang: "en" });
@@ -2508,6 +2623,80 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(el.style.textOverflow).not.toBe("ellipsis");
       expect(el.className).toMatch(/word-chip/);
     });
+  });
+
+  it("Memory dark theme follows the dark-game board and keeps light chrome off it", async () => {
+    cleanup();
+    seedProgress({ uiLang: "es", theme: "dark" });
+    const combi = MEMORY_BANK.find((r) => r.word === "combi");
+    const tian = MEMORY_BANK.find((r) => r.word === "tianguis");
+    const elote = MEMORY_BANK.find((r) => r.word === "elote");
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "memory",
+      tab: "practica",
+      memoryGame: {
+        packId: "mexicanismos-v1",
+        hub: "games",
+        pairs: [combi, tian, elote],
+        cards: [
+          { id: "combi-word", pairId: "combi", kind: "word" },
+          { id: "combi-meaning", pairId: "combi", kind: "meaning" },
+          { id: "tianguis-word", pairId: "tianguis", kind: "word" },
+          { id: "tianguis-meaning", pairId: "tianguis", kind: "meaning" },
+          { id: "elote-word", pairId: "elote", kind: "word" },
+          { id: "elote-meaning", pairId: "elote", kind: "meaning" },
+        ],
+        faceUp: ["combi-word", "combi-meaning", "tianguis-word"],
+        matched: ["combi"],
+        lastMatch: "combi",
+        miss: false,
+        lastWrong: [],
+        status: "play",
+      },
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("memory-board")).toBeTruthy());
+    const page = /#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i;
+    const card = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const edge = /#252830|rgb\(\s*37,\s*40,\s*48\s*\)/i;
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const gloss = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
+    const sage = /#677050|rgb\(\s*103,\s*112,\s*80\s*\)/i;
+    const label = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
+    expect(screen.getByTestId("app-shell").style.background).toMatch(page);
+    expect(document.body.style.background).toMatch(page);
+    expect(screen.getByTestId("memory-board").style.background).toMatch(page);
+    expect(screen.getByTestId("memory-title").style.color).toMatch(label);
+    expect(screen.getByTestId("memory-quiet").style.color).toMatch(label);
+    expect(screen.getByTestId("memory-matched").style.color).toMatch(label);
+    expect(screen.getByTestId("memory-howto").style.color).toMatch(label);
+    const cards = screen.getAllByTestId("memory-card");
+    const byId = (id) => cards.find((el) => el.getAttribute("data-card") === id);
+    const down = byId("elote-meaning");
+    expect(down.getAttribute("data-face")).toBe("down");
+    expect(down.style.background).toMatch(card);
+    expect(down.style.borderTopColor).toMatch(edge);
+    expect(down.style.borderBottomColor).toMatch(edge);
+    expect(down.style.background).not.toMatch(cream);
+    const downMark = down.querySelectorAll("rect");
+    expect(downMark[0].getAttribute("fill")).toBe("#F6EFE4");
+    expect(downMark[1].getAttribute("fill")).toBe("#B8C0A0");
+    expect(downMark[1].getAttribute("stroke")).toBe("#F6EFE4");
+    const openCard = byId("tianguis-word");
+    expect(openCard.getAttribute("data-face")).toBe("up");
+    expect(openCard.style.background).toMatch(card);
+    expect(openCard.style.color).toMatch(cream);
+    expect(openCard.querySelector("[data-testid='memory-card-gloss']").style.color).toMatch(gloss);
+    expect(openCard.querySelector("[data-testid='memory-card-gloss']").style.fontSize).toBe("0.7em");
+    const matchedCard = byId("combi-meaning");
+    expect(matchedCard.style.background).toMatch(sage);
+    expect(matchedCard.style.color).toMatch(cream);
+    expect(matchedCard.querySelector("[data-testid='memory-card-word']").textContent).toBe("camioneta colectiva");
+    const matchedGloss = matchedCard.querySelector("[data-testid='memory-card-gloss']");
+    expect(matchedGloss.style.color).toMatch(cream);
+    expect(matchedGloss.style.fontSize).toBe("0.7em");
+    expect(contrastRatio(matchedGloss.style.color, matchedCard.style.background)).toBeGreaterThanOrEqual(4.5);
+    expect(screen.getByTestId("memory-mark").querySelectorAll("rect")[1].getAttribute("fill")).toBe("#B8C0A0");
   });
 
   it("Safe/Risky hub reward is extra por racha / streak extra, not bonus", async () => {
@@ -4918,15 +5107,20 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     expect(screen.queryByTestId("win-earned-xp")).toBeNull();
     expect(screen.queryByTestId("win-earned-gems")).toBeNull();
-    expect(screen.getByTestId("win-earned-streak")).toBeTruthy();
+    expect(screen.getByTestId("win-earned-streak").textContent.replace(/\s+/g, " ").trim()).toBe("Racha de 1 día");
+    expect(screen.getByTestId("win-earned-streak").textContent).not.toMatch(/streak days/);
     const doctoraWinScreen = screen.getByTestId("doctora-win").parentElement;
     expect(doctoraWinScreen.textContent).not.toMatch(/\+\d+/);
     expect(doctoraWinScreen.textContent).not.toMatch(/\bXP\b/);
     expect(doctoraWinScreen.textContent).not.toMatch(/gemas|\bgems\b/i);
+    expect(doctoraWinScreen.textContent).not.toMatch(/streak days/);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(42);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(9);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("That's it."));
+    expect(screen.getByTestId("win-earned-streak").textContent.replace(/\s+/g, " ").trim()).toBe("1-day streak");
+    expect(screen.getByTestId("win-earned-streak").textContent).not.toMatch(/streak days/);
+    expect(screen.getByTestId("doctora-win").parentElement.textContent).not.toMatch(/streak days/);
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /You won!|¡Ganaste!|Lesson complete/ })).toBeNull();
     assertFreeWinFlyAway();
@@ -4989,8 +5183,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     expect(screen.queryByTestId("win-earned-xp")).toBeNull();
     expect(screen.queryByTestId("win-earned-gems")).toBeNull();
-    expect(screen.getByTestId("win-earned-streak")).toBeTruthy();
+    expect(screen.getByTestId("win-earned-streak").textContent.replace(/\s+/g, " ").trim()).toBe("Racha de 1 día");
+    expect(screen.getByTestId("win-earned-streak").textContent).not.toMatch(/streak days/);
     expect(screen.getByTestId("doctora-win").parentElement.textContent).not.toMatch(/\+\d+|\bXP\b|gemas|\bgems\b/i);
+    expect(screen.getByTestId("doctora-win").parentElement.textContent).not.toMatch(/streak days/);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(42);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(9);
     await user.click(screen.getByTestId("doctora-win-continue"));
@@ -5731,6 +5927,113 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(tiles.some((tile) => /llegues|temprano|reunión/i.test(tile.textContent))).toBe(true);
   });
 
+  const cssHex = (value) => {
+    const s = String(value || "").trim().toLowerCase();
+    const hex = s.match(/#([0-9a-f]{3,8})/);
+    if (hex) {
+      let h = hex[1];
+      if (h.length === 3) h = h.split("").map((ch) => ch + ch).join("");
+      return `#${h.slice(0, 6)}`;
+    }
+    const rgb = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (!rgb) return "";
+    return `#${[rgb[1], rgb[2], rgb[3]].map((n) => Number(n).toString(16).padStart(2, "0")).join("")}`;
+  };
+  const paintOf = (el) => ({
+    fill: cssHex(el.style.backgroundColor) || cssHex(el.style.background),
+    ink: cssHex(el.style.color),
+  });
+  const assertDarkControl = (el, label) => {
+    const { fill, ink } = paintOf(el);
+    expect(fill, `${label} fill`).toBeTruthy();
+    expect(ink, `${label} ink`).toBeTruthy();
+    expect(isWhiteOrCreamFill(fill), `${label} rendered a white or cream fill ${fill}`).toBe(false);
+    expect(contrastRatio(ink, fill), `${label} ${ink} on ${fill}`).toBeGreaterThanOrEqual(4.5);
+  };
+
+  it("dark Jeopardy tiles, keyboard keys, and Games buttons stay off white and cream at 4.5:1", async () => {
+    cleanup();
+    seedProgress({ theme: "dark", uiLang: "en" });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(cssHex(screen.getByTestId("app-shell").style.background)).toBe("#15171c");
+    await user.click(screen.getByTestId("hub-games"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-start")).toBeTruthy());
+    await user.click(screen.getByTestId("jeopardy-start"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-grid")).toBeTruthy());
+    ["subj", "past", "porpara", "mex", "pron", "reg"].forEach((id) => {
+      assertDarkControl(screen.getByTestId(`jeopardy-cat-${id}`), `jeopardy-cat-${id}`);
+    });
+    screen.getAllByTestId(/^jeopardy-tile-/).forEach((tile) => {
+      assertDarkControl(tile, tile.getAttribute("data-testid"));
+    });
+    assertDarkControl(screen.getByTestId("jeopardy-back"), "jeopardy games");
+    await user.click(screen.getByTestId("jeopardy-tile-mex-100"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-choice-0")).toBeTruthy());
+    await user.click(screen.getByTestId("jeopardy-choice-0"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-continue")).toBeTruthy());
+    await user.click(screen.getByTestId("jeopardy-continue"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-tile-mex-100").disabled).toBe(true));
+    assertDarkControl(screen.getByTestId("jeopardy-tile-mex-100"), "used jeopardy tile");
+    assertDarkControl(screen.getByTestId("jeopardy-tile-mex-200"), "open jeopardy tile");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-200")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).ink).toBe("#f6efe4");
+    expect(paintOf(screen.getByTestId("jeopardy-cat-mex")).ink).toBe("#f6efe4");
+    expect(paintOf(screen.getByTestId("jeopardy-back")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-back")).ink).toBe("#f6efe4");
+
+    await user.click(screen.getByTestId("jeopardy-back"));
+    await waitFor(() => expect(screen.getByTestId("hangman-start")).toBeTruthy());
+    await user.click(screen.getByTestId("hangman-start"));
+    await waitFor(() => expect(screen.getByTestId("letter-board")).toBeTruthy());
+    const keys = [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")];
+    expect(keys.some((el) => el.getAttribute("data-letter") === "Ñ")).toBe(true);
+    expect(paintOf(keys.find((el) => el.getAttribute("data-letter") === "Ñ")).fill).toBe("#1e2128");
+    expect(paintOf(keys.find((el) => el.getAttribute("data-letter") === "Ñ")).ink).toBe("#f6efe4");
+    expect(keys.filter((el) => el.getAttribute("data-testid") === "accent-chip").map((el) => el.textContent).join("")).toBe("ÁÉÍÓÚÜ");
+    expect(paintOf(screen.getAllByTestId("accent-chip")[0]).fill).toBe("#1e2128");
+    expect(paintOf(screen.getAllByTestId("accent-chip")[0]).ink).toBe("#f6efe4");
+    keys.forEach((el) => assertDarkControl(el, `key ${el.getAttribute("data-letter")}`));
+    const word = screen.getByTestId("hangman-board").getAttribute("data-word");
+    const letters = [...new Set([...word.normalize("NFC")].map((ch) => ch.toLocaleUpperCase("es")))];
+    const chipFor = (ch) => [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")]
+      .find((el) => el.getAttribute("data-letter") === ch);
+    expect(chipFor("W")).toBeTruthy();
+    await user.click(chipFor("W"));
+    await user.click(chipFor(letters[0]));
+    await waitFor(() => expect(chipFor("W").getAttribute("data-state")).toBe("wrong"));
+    expect(chipFor(letters[0]).getAttribute("data-state")).toBe("correct");
+    expect(Number.parseInt(chipFor(letters[0]).style.fontWeight, 10)).toBeGreaterThanOrEqual(900);
+    [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")].forEach((el) => {
+      assertDarkControl(el, `played key ${el.getAttribute("data-letter")}`);
+    });
+    expect(paintOf(chipFor("W")).fill).toBe("#2a2e36");
+    expect(paintOf(chipFor("W")).ink).toBe("#a0a4ab");
+    expect(paintOf(chipFor(letters[0])).fill).toBe("#677050");
+    expect(paintOf(chipFor(letters[0])).ink).toBe("#f6efe4");
+    expect(contrastRatio("#A0A4AB", "#2A2E36")).toBeGreaterThanOrEqual(5.4);
+    for (const ch of letters) {
+      if (screen.queryAllByTestId("letter-chip").length + screen.queryAllByTestId("accent-chip").length === 0) break;
+      const chip = chipFor(ch);
+      if (chip && !chip.disabled) await user.click(chip);
+    }
+    await waitFor(() => expect(screen.getByTestId("hangman-back")).toBeTruthy());
+    assertDarkControl(screen.getByTestId("hangman-back"), "hangman games");
+    expect(paintOf(screen.getByTestId("hangman-back")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("hangman-back")).ink).toBe("#f6efe4");
+    const end = screen.getByTestId("hangman-end");
+    expect(cssHex(end.style.background)).toBe("#1e2128");
+    expect(end.style.border).toMatch(/2px solid/i);
+    expect(cssHex(end.style.borderColor) || cssHex(end.style.border)).toBe("#677050");
+    expect(cssHex(screen.getByTestId("hangman-win").style.color)).toBe("#e8e8ea");
+    expect(cssHex(screen.getByTestId("hangman-word").style.color)).toBe("#e8e8ea");
+    expect(cssHex(screen.getByTestId("hangman-literal").firstElementChild.style.color)).toBe("#a0a4ab");
+    expect(cssHex(screen.getByTestId("hangman-again").style.background)).toBe("#58cc02");
+    expect(screen.queryAllByTestId("letter-chip")).toHaveLength(0);
+  });
+
   it("letter boards default to QWERTY with Ñ after L; ABC toggle persists", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("ahorcado-section-start"));
@@ -6158,7 +6461,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("paywall_seen")[0].name).toBeUndefined();
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
@@ -6272,7 +6575,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     localStorage.removeItem(LIVE_KEY);
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
     await user.click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect(funnelOf("purchase")).toHaveLength(1));
@@ -6863,7 +7166,7 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(fine.compareDocumentPosition(screen.getByTestId("soft-paywall-dismiss")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
 
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
     await user.click(restore);
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
@@ -6950,7 +7253,7 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(screen.getByTestId("soft-paywall-annual").className).toMatch(/duo-btn/);
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Continue free");
     expect(screen.getByTestId("soft-paywall-dismiss").style.background).toBe("none");
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
 
     expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();

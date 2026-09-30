@@ -156,6 +156,22 @@ export function hangmanRegionNote(entry, uiLang) {
   return uiLang === "en" ? (entry.weird.en || "") : (entry.weird.es || "");
 }
 
+/** Split *word* marks into italic parts. The bank strings stay starred. */
+export function emphasisParts(text) {
+  const src = String(text || "");
+  const parts = [];
+  const re = /\*([^*]+)\*/g;
+  let last = 0;
+  let match;
+  while ((match = re.exec(src))) {
+    if (match.index > last) parts.push({ em: false, text: src.slice(last, match.index) });
+    parts.push({ em: true, text: match[1] });
+    last = match.index + match[0].length;
+  }
+  if (last < src.length || parts.length === 0) parts.push({ em: false, text: src.slice(last) });
+  return parts;
+}
+
 export function hangmanSoundsWeirdOutside(entry) {
   return (entry?.odd || []).length > 0;
 }

@@ -11,6 +11,7 @@ import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } fr
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
+import { streakChipLabel } from "./streakChip.js";
 import { gradeListedPhrase } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
@@ -21,8 +22,11 @@ import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClu
 import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
+import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
+import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle } from "./spanishKeyboard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
+import { MemoryCardFace } from "./MemoryCardFace.jsx";
 import { subjFiveLines } from "./subjFive.js";
 import {
   sobremesaDeepen,
@@ -101,6 +105,7 @@ import {
   hangmanSlotIndexForKey,
   hangmanSlotKey,
   hangmanTitle,
+  emphasisParts,
   hangmanWhy,
   hangmanWhyLabel,
   hangmanWinLine,
@@ -142,7 +147,9 @@ import {
   finishMemoryRun,
   hydrateMemory,
   isMemoryDone,
+  memoryCardLabel,
   memoryCardText,
+  memoryCardTranslation,
   memoryHowTo,
   memoryIsOpen,
   memoryLiteralWhyLabel,
@@ -2092,11 +2099,35 @@ const JeopardyMark = ({ size = 44 }) => (
   </svg>
 );
 
+/** Dark-game Memory board. Light mode keeps the cream / white / terracotta chrome. */
+const MEMORY_DARK_PAGE = "#15171C";
+const MEMORY_DARK_CARD = "#1E2128";
+/** Soft gray, one step lighter than the card (same step as D_DARK.subtle). */
+const MEMORY_DARK_EDGE = "#252830";
+const MEMORY_DARK_INK = "#F6EFE4";
+/** Muted gray. 6.44:1 on the card, including at 70% of the hero. */
+const MEMORY_DARK_GLOSS = "#A0A4AB";
+/** Matched fill. Cream on this sage is 4.58:1, so the small gloss clears 4.5. */
+const MEMORY_DARK_SAGE = "#677050";
+/** Header labels on the page. 7.17:1 against the page. */
+const MEMORY_DARK_LABEL = "#A0A4AB";
+/** Card-back sage tile, lightened so it stays visible on the dark card. */
+const MEMORY_DARK_MARK = "#B8C0A0";
+
 /** Flat geometric two-tile / flip-card mark — cream / terracotta / sage. No second mascot. */
-const MemoryMark = ({ size = 44, labeled = false }) => (
+const MemoryMark = ({ size = 44, labeled = false, onDark = false }) => (
   <svg data-testid={labeled ? "memory-mark" : undefined} width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
     <rect x="5" y="9" width="16" height="26" rx="4" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="2" />
-    <rect x="23" y="9" width="16" height="26" rx="4" fill="#5C7356" />
+    <rect
+      x="23"
+      y="9"
+      width="16"
+      height="26"
+      rx="4"
+      fill={onDark ? MEMORY_DARK_MARK : "#5C7356"}
+      stroke={onDark ? MEMORY_DARK_INK : undefined}
+      strokeWidth={onDark ? 2 : undefined}
+    />
   </svg>
 );
 
@@ -2151,8 +2182,8 @@ const MEMORY_CARD_FACE = {
   overflow: "visible",
   textOverflow: "unset",
   wordBreak: "normal",
-  overflowWrap: "break-word",
-  hyphens: "manual",
+  overflowWrap: "normal",
+  hyphens: "none",
 };
 
 /** One-screen Memory playfield. Tap two cards or drag a pair. Soft chrome parked. */
@@ -2162,6 +2193,8 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
   const cardsRef = useRef({});
   const done = isMemoryDone(run);
   const teach = memoryShowTeach(run) ? memoryEntryForRun(run) : null;
+  const darkBoard = D === D_DARK;
+  const labelColor = darkBoard ? MEMORY_DARK_LABEL : D.sub;
 
   const onCardPointerDown = (e, id) => {
     if (run.status !== "play" || run.miss) return;
@@ -2197,18 +2230,18 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
   };
 
   return (
-    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box" }}>
+    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: labelColor, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{memoryTitle(uiLang)}</div>
-          <div data-testid="memory-quiet" style={{ fontSize: 12, fontWeight: 700, color: D.sub }}>{memoryQuiet(uiLang)}</div>
+          <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: labelColor }}>{memoryTitle(uiLang)}</div>
+          <div data-testid="memory-quiet" style={{ fontSize: 12, fontWeight: 700, color: labelColor }}>{memoryQuiet(uiLang)}</div>
         </div>
-        <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
+        <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: labelColor }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
         <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
       </div>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-        <MemoryMark size={40} labeled />
+        <MemoryMark size={40} labeled onDark={darkBoard} />
       </div>
       {done ? (
         <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
@@ -2221,7 +2254,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
         </div>
       ) : (
         <>
-          <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
+          <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: labelColor, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
           <div data-testid="memory-grid" data-cols="3" className="memory-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gridAutoRows: `minmax(${MEMORY_CARD_MIN}px, auto)`, gap: 8, width: "100%", maxWidth: "none", justifyItems: "stretch", alignItems: "stretch" }}>
             {(run.cards || []).map((card) => {
               const open = memoryIsOpen(run, card);
@@ -2229,7 +2262,22 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
               const hovered = drag?.hover === card.id;
               const wrong = run.miss && (run.lastWrong || []).includes(card.id);
               const showFace = open || dragging;
+              const matched = open && (run.matched || []).includes(card.pairId);
               const text = memoryCardText(card, uiLang, run);
+              const gloss = memoryCardTranslation(card, uiLang, run);
+              const borderSide = darkBoard
+                ? (wrong ? D.red : MEMORY_DARK_EDGE)
+                : (wrong ? D.red : hovered ? "#C46B3A" : open ? D.green : "#C46B3A");
+              const borderFoot = darkBoard
+                ? (wrong ? D.redDark : MEMORY_DARK_EDGE)
+                : (wrong ? D.redDark : hovered ? "#C46B3A" : open ? D.greenDark : "#C46B3A");
+              const background = darkBoard
+                ? (showFace ? (wrong ? D.redBg : matched ? MEMORY_DARK_SAGE : MEMORY_DARK_CARD) : MEMORY_DARK_CARD)
+                : (showFace ? (wrong ? D.redBg : matched ? D.greenBg : "#fff") : HUB_CREAM);
+              const ink = darkBoard
+                ? (wrong ? D.redDark : MEMORY_DARK_INK)
+                : (wrong ? D.redDark : matched ? D.greenDark : D.ink);
+              const glossColor = darkBoard ? (matched && !wrong ? MEMORY_DARK_INK : MEMORY_DARK_GLOSS) : D.sub;
               return (
                 <div key={card.id} className="memory-cell" style={{ minHeight: MEMORY_CARD_MIN, width: "100%", minWidth: 0, display: "flex", height: "100%" }}>
                   <button
@@ -2240,6 +2288,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                     data-pair={card.pairId}
                     data-kind={card.kind}
                     data-face={showFace ? "up" : "down"}
+                    aria-label={showFace ? memoryCardLabel(card, uiLang, run) : undefined}
                     data-open={open ? "yes" : "no"}
                     data-miss={wrong ? "yes" : "no"}
                     data-card-min={MEMORY_CARD_MIN}
@@ -2265,12 +2314,12 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       top: dragging ? drag.y - (drag.dy || 0) : undefined,
                       zIndex: dragging ? 20 : 1,
                       margin: 0,
-                      border: `2px solid ${wrong ? D.red : hovered ? "#C46B3A" : open ? D.green : "#C46B3A"}`,
-                      borderBottom: `4px solid ${wrong ? D.redDark : hovered ? "#C46B3A" : open ? D.greenDark : "#C46B3A"}`,
-                      background: showFace ? (wrong ? D.redBg : open && (run.matched || []).includes(card.pairId) ? D.greenBg : "#fff") : HUB_CREAM,
-                      color: wrong ? D.redDark : open && (run.matched || []).includes(card.pairId) ? D.greenDark : D.ink,
+                      border: `2px solid ${borderSide}`,
+                      borderBottom: `4px solid ${borderFoot}`,
+                      background,
+                      color: ink,
                       borderRadius: 18,
-                      padding: "16px 8px",
+                      padding: showFace ? "14px 8px" : "16px 8px",
                       fontFamily: "inherit",
                       fontWeight: 900,
                       fontSize: MEMORY_CARD_TYPE,
@@ -2278,13 +2327,14 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       letterSpacing: "-0.03em",
                       textAlign: "center",
                       whiteSpace: "normal",
-                      overflowWrap: "break-word",
+                      overflowWrap: "normal",
                       wordBreak: "normal",
+                      hyphens: "none",
                       cursor: (run.matched || []).includes(card.pairId) ? "default" : "grab",
                       touchAction: "none",
                     }}
                   >
-                    {showFace ? text : <MemoryMark size={MEMORY_CARD_MARK} />}
+                    {showFace ? <MemoryCardFace word={text} translation={gloss} color={glossColor} /> : <MemoryMark size={MEMORY_CARD_MARK} onDark={darkBoard} />}
                   </button>
                 </div>
               );
@@ -4211,57 +4261,54 @@ const diegoReaction = (won, delta, lang) => {
 
 
 
-const LetterBoard = ({ D, layout, onLayoutChange, picked = [], inWord, disabled, onPick, extraRow }) => {
+const LetterBoard = ({ D, theme = "light", layout, onLayoutChange, picked = [], inWord, disabled, onPick, extraRow }) => {
   const mode = normalizeLetterLayout(layout);
   const rows = rowsForLayout(mode);
-  const chipStyle = (letter) => {
+  const keyLight = {
+    line: D.line,
+    green: D.green,
+    greenDark: D.greenDark,
+    red: D.red,
+    redDark: D.redDark,
+    okBg: D.okBg,
+    okText: D.okText,
+    badBg: D.badBg,
+    badText: D.badText,
+    card: D.card,
+    cream: HUB_CREAM,
+    muted: D.sub,
+  };
+  const keyStatus = (letter) => {
     const wasPicked = picked.includes(letter);
-    const hit = wasPicked && inWord?.(letter);
-    return {
-      wasPicked,
-      hit,
-      style: {
-        flex: "1 1 0", maxWidth: 38, minWidth: 0, height: 38, borderRadius: 10,
-        border: `2px solid ${wasPicked ? (hit ? D.green : D.red) : D.line}`,
-        borderBottom: `4px solid ${wasPicked ? (hit ? D.greenDark : D.redDark) : D.line}`,
-        background: wasPicked ? (hit ? D.okBg : D.badBg) : "#fff",
-        color: wasPicked ? (hit ? D.okText : D.badText) : D.green,
-        fontWeight: 800, fontSize: 14, fontFamily: "inherit",
-        cursor: wasPicked || disabled ? "default" : "pointer",
-      },
-    };
+    const hit = wasPicked && !!inWord?.(letter);
+    return wasPicked ? (hit ? "correct" : "wrong") : "idle";
+  };
+  const renderKey = (letter, testId) => {
+    const status = keyStatus(letter);
+    return (
+      <SpanishKeyboardKey
+        key={letter}
+        letter={letter}
+        testId={testId}
+        theme={theme}
+        status={status}
+        disabled={disabled || status !== "idle"}
+        onPick={onPick}
+        light={keyLight}
+      />
+    );
   };
   return (
     <div data-testid="letter-board" data-layout={mode}>
       <div style={{ display: "grid", gap: 6 }}>
         {rows.map((row, ri) => (
           <div key={ri} data-testid="letter-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-            {row.map((letter) => {
-              const { wasPicked, style } = chipStyle(letter);
-              return (
-                <button key={letter} type="button" data-testid="letter-chip" data-letter={letter}
-                  disabled={disabled || wasPicked} onClick={() => onPick(letter)}
-                  aria-label={letter}
-                  style={style}>
-                  {letter}
-                </button>
-              );
-            })}
+            {row.map((letter) => renderKey(letter, "letter-chip"))}
           </div>
         ))}
         {extraRow?.length ? (
           <div data-testid="accent-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-            {extraRow.map((letter) => {
-              const { wasPicked, style } = chipStyle(letter);
-              return (
-                <button key={letter} type="button" data-testid="accent-chip" data-letter={letter}
-                  disabled={disabled || wasPicked} onClick={() => onPick(letter)}
-                  aria-label={letter}
-                  style={style}>
-                  {letter}
-                </button>
-              );
-            })}
+            {extraRow.map((letter) => renderKey(letter, "accent-chip"))}
           </div>
         ) : null}
       </div>
@@ -4326,6 +4373,12 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
 );
 
 /* ---------------- APP ---------------- */
+
+function HangmanEmphasis({ text }) {
+  return emphasisParts(text).map((part, i) => (
+    part.em ? <em key={i}>{part.text}</em> : <span key={i}>{part.text}</span>
+  ));
+}
 
 export default function App() {
   /* Theme: persisted under prog.theme; memoized D shadows the file-level D
@@ -7149,8 +7202,8 @@ export default function App() {
         .memory-board { width:100%; max-width:none; margin:0; padding-left:${MEMORY_BOARD_PAD}px; padding-right:${MEMORY_BOARD_PAD}px; box-sizing:border-box; }
         .memory-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:minmax(${MEMORY_CARD_MIN}px, auto); gap:8px; width:100%; max-width:none; justify-items:stretch; align-items:stretch; }
         .memory-cell { min-width:0; width:100%; display:flex; height:100%; }
-        .memory-card { width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:break-word; word-break:normal; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
-        .memory-board .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:break-word; word-break:normal; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
+        .memory-card { width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
+        .memory-board .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
@@ -9842,7 +9895,7 @@ export default function App() {
               <HangmanMark size={56} />
             </div>
             {over ? (
-              <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
+              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, ...(theme === "dark" ? darkHangmanEndCardStyle() : {}) }}>
                 {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
                 <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
@@ -9851,18 +9904,18 @@ export default function App() {
                 </div>
                 <div data-testid="hangman-why" style={{ marginTop: 8 }}>
                   <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}><HangmanEmphasis text={hangmanWhy(ahorcado, uiLang)} /></div>
                 </div>
                 {hangmanRegionChip(ahorcado) && (
                   <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
                     <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                     {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
-                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}><HangmanEmphasis text={hangmanRegionNote(ahorcado, uiLang)} /></div>
                     )}
                   </div>
                 )}
                 <Btn color={D.green} dark={D.greenDark} data-testid="hangman-again" onClick={() => startAhorcado(gamesReturnRef.current)} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
-                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
+                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8, ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
               </div>
             ) : (
               <>
@@ -9922,13 +9975,13 @@ export default function App() {
                     </div>
                     <div data-testid="hangman-why" style={{ marginTop: 8 }}>
                       <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}><HangmanEmphasis text={hangmanWhy(ahorcado, uiLang)} /></div>
                     </div>
                     {hangmanRegionChip(ahorcado) && (
                       <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
                         <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                         {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
-                          <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                          <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}><HangmanEmphasis text={hangmanRegionNote(ahorcado, uiLang)} /></div>
                         )}
                       </div>
                     )}
@@ -9936,6 +9989,7 @@ export default function App() {
                 )}
                 <LetterBoard
                   D={D}
+                  theme={theme}
                   layout={letterLayout}
                   extraRow={HANGMAN_ACCENTS}
                   onLayoutChange={(next) => save({ letterLayout: normalizeLetterLayout(next) })}
@@ -10016,7 +10070,7 @@ export default function App() {
               <div data-testid="jeopardy-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(min-content, 1fr))`, gap: 5, overflow: "visible", paddingBottom: 4 }}>
                 {jeopardyCategories.map((cat) => (
                   <div key={cat.id} style={{ display: "grid", gap: 5, minWidth: "min-content", justifyItems: "center" }}>
-                    <div data-testid={`jeopardy-cat-${cat.id}`} className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, minHeight: 44, width: "max-content", maxWidth: "100%", border: `2px solid #C46B3A`, borderRadius: 10, background: HUB_CREAM, color: MARK_INK, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center", padding: "5px 6px", lineHeight: 1.15 }}>
+                    <div data-testid={`jeopardy-cat-${cat.id}`} className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, minHeight: 44, width: "max-content", maxWidth: "100%", borderRadius: 10, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center", padding: "5px 6px", lineHeight: 1.15, ...boardTilePaint({ theme, role: "category", light: { cream: HUB_CREAM, mark: MARK_INK, line: D.line, card: D.card, muted: D.sub } }) }}>
                       {jeopardyCatLabel(cat.id, uiLang)}
                     </div>
                     {JEOPARDY_VALUES.map((value) => {
@@ -10024,7 +10078,7 @@ export default function App() {
                       const used = !!jeopardy.used?.[key];
                       return (
                         <button key={key} data-testid={`jeopardy-tile-${key}`} disabled={used} onClick={() => openJeopardyTile(cat, value)}
-                          style={{ height: 58, border: `2px solid ${used ? D.line : "#C46B3A"}`, borderBottom: `5px solid ${used ? D.line : "#C46B3A"}`, borderRadius: 12, background: used ? D.subtle : HUB_CREAM, color: used ? D.sub : "#C46B3A", fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer" }}>
+                          style={{ height: 58, borderRadius: 12, fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer", ...boardTilePaint({ theme, role: "value", used, light: { cream: HUB_CREAM, line: D.line, subtle: D.subtle, sub: D.sub, card: D.card, muted: D.sub } }) }}>
                           {used ? "✓" : value}
                         </button>
                       );
@@ -10034,7 +10088,7 @@ export default function App() {
               </div>
               <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
                 <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-again" onClick={() => startJeopardy(gamesReturnRef.current)} style={{ width: "100%" }}>{jeopardyResetLabel(uiLang)}</Btn>
-                <Btn outline data-testid="jeopardy-back" onClick={closeGamesSurface} style={{ width: "100%" }}>{L.games}</Btn>
+                <Btn outline data-testid="jeopardy-back" onClick={closeGamesSurface} style={{ width: "100%", ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
               </div>
             </>
           )}
@@ -10402,6 +10456,7 @@ export default function App() {
         const quietWin = session.firstHoy || session.firstDoctora || session.firstStory0 || session.lecturaWin;
         const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : session.lecturaWin ? "lectura-win" : undefined;
         const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : session.lecturaWin ? "lectura-win-continue" : undefined;
+        const streakChip = streakChipLabel(prog.streak, uiLang);
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
           {!quietWin && <Confetti count={perfect ? 160 : 70} />}
@@ -10440,11 +10495,11 @@ export default function App() {
             {[
               { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, testid: "win-earned-xp" },
 	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, testid: "win-earned-gems" },
-	              { v: <span><IcFlame size={20} className="flame" /> {prog.streak}</span>, l: L.streakDays, c: "#FF9600", testid: "win-earned-streak" },
+	              ...(streakChip ? [{ v: <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}><IcFlame size={20} className="flame" />{streakChip}</span>, l: null, c: "#FF9600", testid: "win-earned-streak" }] : []),
             ].filter((s) => !session.firstDoctora || s.testid === "win-earned-streak").map((s, i) => (
               <div key={i} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
-                <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: 22, color: s.c }}>{s.v}</div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>
+                <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: s.testid === "win-earned-streak" ? 16 : 22, color: s.c, lineHeight: 1.25, whiteSpace: s.testid === "win-earned-streak" ? "nowrap" : undefined }}>{s.v}</div>
+                {s.l != null && <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>}
               </div>
             ))}
           </div>
