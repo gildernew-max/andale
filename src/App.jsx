@@ -21,6 +21,8 @@ import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClu
 import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
+import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
+import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle } from "./spanishKeyboard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { MemoryCardFace } from "./MemoryCardFace.jsx";
@@ -4255,57 +4257,54 @@ const diegoReaction = (won, delta, lang) => {
 
 
 
-const LetterBoard = ({ D, layout, onLayoutChange, picked = [], inWord, disabled, onPick, extraRow }) => {
+const LetterBoard = ({ D, theme = "light", layout, onLayoutChange, picked = [], inWord, disabled, onPick, extraRow }) => {
   const mode = normalizeLetterLayout(layout);
   const rows = rowsForLayout(mode);
-  const chipStyle = (letter) => {
+  const keyLight = {
+    line: D.line,
+    green: D.green,
+    greenDark: D.greenDark,
+    red: D.red,
+    redDark: D.redDark,
+    okBg: D.okBg,
+    okText: D.okText,
+    badBg: D.badBg,
+    badText: D.badText,
+    card: D.card,
+    cream: HUB_CREAM,
+    muted: D.sub,
+  };
+  const keyStatus = (letter) => {
     const wasPicked = picked.includes(letter);
-    const hit = wasPicked && inWord?.(letter);
-    return {
-      wasPicked,
-      hit,
-      style: {
-        flex: "1 1 0", maxWidth: 38, minWidth: 0, height: 38, borderRadius: 10,
-        border: `2px solid ${wasPicked ? (hit ? D.green : D.red) : D.line}`,
-        borderBottom: `4px solid ${wasPicked ? (hit ? D.greenDark : D.redDark) : D.line}`,
-        background: wasPicked ? (hit ? D.okBg : D.badBg) : "#fff",
-        color: wasPicked ? (hit ? D.okText : D.badText) : D.green,
-        fontWeight: 800, fontSize: 14, fontFamily: "inherit",
-        cursor: wasPicked || disabled ? "default" : "pointer",
-      },
-    };
+    const hit = wasPicked && !!inWord?.(letter);
+    return wasPicked ? (hit ? "correct" : "wrong") : "idle";
+  };
+  const renderKey = (letter, testId) => {
+    const status = keyStatus(letter);
+    return (
+      <SpanishKeyboardKey
+        key={letter}
+        letter={letter}
+        testId={testId}
+        theme={theme}
+        status={status}
+        disabled={disabled || status !== "idle"}
+        onPick={onPick}
+        light={keyLight}
+      />
+    );
   };
   return (
     <div data-testid="letter-board" data-layout={mode}>
       <div style={{ display: "grid", gap: 6 }}>
         {rows.map((row, ri) => (
           <div key={ri} data-testid="letter-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-            {row.map((letter) => {
-              const { wasPicked, style } = chipStyle(letter);
-              return (
-                <button key={letter} type="button" data-testid="letter-chip" data-letter={letter}
-                  disabled={disabled || wasPicked} onClick={() => onPick(letter)}
-                  aria-label={letter}
-                  style={style}>
-                  {letter}
-                </button>
-              );
-            })}
+            {row.map((letter) => renderKey(letter, "letter-chip"))}
           </div>
         ))}
         {extraRow?.length ? (
           <div data-testid="accent-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-            {extraRow.map((letter) => {
-              const { wasPicked, style } = chipStyle(letter);
-              return (
-                <button key={letter} type="button" data-testid="accent-chip" data-letter={letter}
-                  disabled={disabled || wasPicked} onClick={() => onPick(letter)}
-                  aria-label={letter}
-                  style={style}>
-                  {letter}
-                </button>
-              );
-            })}
+            {extraRow.map((letter) => renderKey(letter, "accent-chip"))}
           </div>
         ) : null}
       </div>
@@ -9840,7 +9839,7 @@ export default function App() {
               <HangmanMark size={56} />
             </div>
             {over ? (
-              <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
+              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, ...(theme === "dark" ? darkHangmanEndCardStyle() : {}) }}>
                 {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
                 <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
@@ -9860,7 +9859,7 @@ export default function App() {
                   </div>
                 )}
                 <Btn color={D.green} dark={D.greenDark} data-testid="hangman-again" onClick={() => startAhorcado(gamesReturnRef.current)} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
-                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
+                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8, ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
               </div>
             ) : (
               <>
@@ -9934,6 +9933,7 @@ export default function App() {
                 )}
                 <LetterBoard
                   D={D}
+                  theme={theme}
                   layout={letterLayout}
                   extraRow={HANGMAN_ACCENTS}
                   onLayoutChange={(next) => save({ letterLayout: normalizeLetterLayout(next) })}
@@ -10014,7 +10014,7 @@ export default function App() {
               <div data-testid="jeopardy-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(min-content, 1fr))`, gap: 5, overflow: "visible", paddingBottom: 4 }}>
                 {jeopardyCategories.map((cat) => (
                   <div key={cat.id} style={{ display: "grid", gap: 5, minWidth: "min-content", justifyItems: "center" }}>
-                    <div data-testid={`jeopardy-cat-${cat.id}`} className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, minHeight: 44, width: "max-content", maxWidth: "100%", border: `2px solid #C46B3A`, borderRadius: 10, background: HUB_CREAM, color: MARK_INK, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center", padding: "5px 6px", lineHeight: 1.15 }}>
+                    <div data-testid={`jeopardy-cat-${cat.id}`} className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, minHeight: 44, width: "max-content", maxWidth: "100%", borderRadius: 10, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center", padding: "5px 6px", lineHeight: 1.15, ...boardTilePaint({ theme, role: "category", light: { cream: HUB_CREAM, mark: MARK_INK, line: D.line, card: D.card, muted: D.sub } }) }}>
                       {jeopardyCatLabel(cat.id, uiLang)}
                     </div>
                     {JEOPARDY_VALUES.map((value) => {
@@ -10022,7 +10022,7 @@ export default function App() {
                       const used = !!jeopardy.used?.[key];
                       return (
                         <button key={key} data-testid={`jeopardy-tile-${key}`} disabled={used} onClick={() => openJeopardyTile(cat, value)}
-                          style={{ height: 58, border: `2px solid ${used ? D.line : "#C46B3A"}`, borderBottom: `5px solid ${used ? D.line : "#C46B3A"}`, borderRadius: 12, background: used ? D.subtle : HUB_CREAM, color: used ? D.sub : "#C46B3A", fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer" }}>
+                          style={{ height: 58, borderRadius: 12, fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer", ...boardTilePaint({ theme, role: "value", used, light: { cream: HUB_CREAM, line: D.line, subtle: D.subtle, sub: D.sub, card: D.card, muted: D.sub } }) }}>
                           {used ? "✓" : value}
                         </button>
                       );
@@ -10032,7 +10032,7 @@ export default function App() {
               </div>
               <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
                 <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-again" onClick={() => startJeopardy(gamesReturnRef.current)} style={{ width: "100%" }}>{jeopardyResetLabel(uiLang)}</Btn>
-                <Btn outline data-testid="jeopardy-back" onClick={closeGamesSurface} style={{ width: "100%" }}>{L.games}</Btn>
+                <Btn outline data-testid="jeopardy-back" onClick={closeGamesSurface} style={{ width: "100%", ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
               </div>
             </>
           )}

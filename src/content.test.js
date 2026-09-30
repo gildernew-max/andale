@@ -1741,8 +1741,12 @@ assert(appSrc.includes("save({ letterLayout:"), "letter layout persists on the p
 assert(appSrc.includes("normalizeLetterLayout(prog.letterLayout)"), "Hangman reads persisted letter layout");
 assert(!appSrc.includes('const ALPHA = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"'), "no hardcoded A–Z wrap on Hangman");
 assert(!/switch to ABC|cambia a ABC|keyboard layout|elige el teclado|press QWERTY/i.test(appSrc), "no instructional letter-layout banner");
-assert(appSrc.includes("color: wasPicked ? (hit ? D.okText : D.badText) : D.green"), "unused letter chips use CHECK lime");
-assert(appSrc.includes('background: wasPicked ? (hit ? D.okBg : D.badBg) : "#fff"'), "unused letter chips stay on a white chip");
+const keyboardSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "spanishKeyboard.js"), "utf8");
+assert(appSrc.includes("<SpanishKeyboardKey"), "on-screen keys render the shared SpanishKeyboardKey");
+assert(/<LetterBoard[\s\S]{0,500}theme=\{theme\}/.test(appSrc), "LetterBoard receives the app theme");
+assert(/background: wasPicked \? \(hit \? okBg : badBg\) : "#fff"/.test(keyboardSrc), "light unused letter chips stay on a white chip");
+assert(/color: wasPicked \? \(hit \? okText : badText\) : green/.test(keyboardSrc), "unused letter chips use CHECK lime");
+assert(keyboardSrc.includes('export function SpanishKeyboardKey') || readFileSync(join(dirname(fileURLToPath(import.meta.url)), "spanishKeyboard.jsx"), "utf8").includes("export function SpanishKeyboardKey"), "SpanishKeyboardKey is the shared keyboard export");
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const pngMagic = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const mascotPng = join(repoRoot, "public", "mascot", "cenzontle.png");
