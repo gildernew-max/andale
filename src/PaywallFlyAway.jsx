@@ -30,6 +30,7 @@ export function CenzontleFlyAway({ surface = "paywall", onComplete } = {}) {
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
   const stageRef = useRef(null);
+  const layerRef = useRef(null);
   const reduce = prefersReducedMotion();
   const src = markSrc();
   const ids = flyAwaySurface(surface);
@@ -38,6 +39,7 @@ export function CenzontleFlyAway({ surface = "paywall", onComplete } = {}) {
   const wingH = Math.round((size * 11) / 44);
   const [origin, setOrigin] = useState(null);
   const [gone, setGone] = useState(false);
+  const startTop = origin?.y ?? 0;
 
   useLayoutEffect(() => {
     if (reduce) return;
@@ -47,22 +49,37 @@ export function CenzontleFlyAway({ surface = "paywall", onComplete } = {}) {
   }, [reduce, size]);
 
   useEffect(() => {
-    const finish = (unmount) => {
-      if (doneRef.current) return;
-      doneRef.current = true;
-      if (unmount) setGone(true);
-      onCompleteRef.current?.();
-    };
     if (reduce) {
-      finish(false);
+      if (doneRef.current) return undefined;
+      doneRef.current = true;
+      onCompleteRef.current?.();
       return undefined;
     }
-    const t = setTimeout(() => finish(true), PAYWALL_FLY_MS);
-    return () => clearTimeout(t);
-  }, [reduce]);
+    const node = layerRef.current;
+    if (!node) return undefined;
+    const finish = () => {
+      if (doneRef.current) return;
+      doneRef.current = true;
+      setGone(true);
+      onCompleteRef.current?.();
+    };
+    const onFlyEnd = (event) => {
+      if (event.target !== node) return;
+      if (event.animationName && event.animationName !== "paywallFlyAway") return;
+      finish();
+    };
+    node.addEventListener("animationend", onFlyEnd);
+    // Fallback if the browser never emits animationend. Starts with the mounted
+    // bird, at the full duration, after the off-screen clear frame (78%).
+    const timer = setTimeout(finish, PAYWALL_FLY_MS);
+    return () => {
+      node.removeEventListener("animationend", onFlyEnd);
+      clearTimeout(timer);
+    };
+  }, [reduce, origin]);
 
   const bird = (className, style) => (
-    <div className={className} data-testid={ids.layerTestId} style={style}>
+    <div ref={layerRef} className={className} data-testid={ids.layerTestId} style={style}>
       <img
         data-testid={ids.birdTestId}
         src={src}
@@ -133,7 +150,7 @@ export function CenzontleFlyAway({ surface = "paywall", onComplete } = {}) {
           animation: paywallFlyFade ${PAYWALL_REDUCE_FADE_MS}ms ease-out both;
         }
         @keyframes paywallFlyAway {
-          ${flyAwayMotionCss(size)}
+          ${flyAwayMotionCss(size, startTop)}
         }
         @keyframes paywallWingBeat {
           0% { transform: rotate(-12deg); }
