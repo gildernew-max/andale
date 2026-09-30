@@ -12,7 +12,7 @@ import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
 import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED } from "./recuerdos.js";
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
-import { contrastRatio, isWhiteOrCreamFill } from "./spanishKeyboard.js";
+import { isWhiteOrCreamFill } from "./spanishKeyboard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaName, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
