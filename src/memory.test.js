@@ -19,7 +19,9 @@ import {
   finishMemoryRun,
   hydrateMemory,
   isMemoryDone,
+  memoryCardLabel,
   memoryCardText,
+  memoryCardTranslation,
   memoryHasDeadLabel,
   memoryHowTo,
   memoryIsOpen,
@@ -71,11 +73,40 @@ MEMORY_BANK.forEach((row) => {
   assert(!/\n/.test(`${row.meaning.es}${row.meaning.en}${row.why.es}${row.why.en}`), `${row.word} faces are one-liners`);
   assert(!memoryHasDeadLabel(`${row.word} ${row.meaning.es} ${row.meaning.en} ${row.why.es} ${row.why.en}`), `${row.word} has no dead chrome`);
 });
-assert(memoryMeaning(MEMORY_BANK[0], "en") === "a job / work", "chamba meaning EN is the stamp");
-assert(memoryMeaning(MEMORY_BANK[0], "es") === "trabajo / chamba", "chamba meaning ES is the stamp");
+const APPROVED_MEANINGS = [
+  ["chamba", "job, work", "trabajo"],
+  ["neta", "for real, the truth", "la verdad"],
+  ["órale", "come on, all right", "ándale, de acuerdo"],
+  ["carnal", "buddy, bro", "amigo, hermano"],
+  ["morra", "girl, young woman", "chica"],
+  ["chido", "cool", "genial"],
+  ["gacho", "lousy, mean", "feo, malo"],
+  ["chafa", "cheap, shoddy", "de mala calidad"],
+  ["bronca", "trouble, fight", "problema, pelea"],
+  ["onda", "vibe, what's up", "ambiente"],
+  ["chela", "beer", "cerveza"],
+  ["antro", "nightclub", "discoteca"],
+  ["elote", "corn on the cob", "mazorca de maíz"],
+  ["esquites", "corn kernels in a cup", "maíz en vaso"],
+  ["tianguis", "street market", "mercado al aire libre"],
+  ["combi", "shared van", "camioneta colectiva"],
+  ["cruda", "hangover", "resaca"],
+  ["chisme", "gossip", "rumor"],
+  ["apapacho", "warm hug", "abrazo cariñoso"],
+  ["fresa", "preppy, snobby", "presumido"],
+];
+APPROVED_MEANINGS.forEach(([word, en, es], i) => {
+  const row = MEMORY_BANK[i];
+  assert(row.word === word, `${word} stays in approved order`);
+  assert(row.meaning.en === en, `${word} English meaning is the approved wording`);
+  assert(row.meaning.es === es, `${word} Spanish meaning is the approved wording`);
+  assert(!/[()/]/.test(`${en}${es}`), `${word} meanings have no slash or parentheses`);
+});
+assert(memoryMeaning(MEMORY_BANK[0], "en") === "job, work", "chamba meaning EN is the stamp");
+assert(memoryMeaning(MEMORY_BANK[0], "es") === "trabajo", "chamba meaning ES is the stamp");
 assert(memoryWhy(MEMORY_BANK[0], "en") === "Everyday MX for work", "chamba Why EN");
 assert(memoryWhy(MEMORY_BANK[0], "es") === "Forma viva MX de trabajo", "chamba Why ES");
-assert(memoryMeaning(MEMORY_BANK[2], "en") === "come on / alright", "órale meaning EN");
+assert(memoryMeaning(MEMORY_BANK[2], "en") === "come on, all right", "órale meaning EN");
 assert(memoryWhy(MEMORY_BANK[2], "es") === "Anima, acepta o sorprende", "órale Why ES");
 assert(memoryRegionChip(MEMORY_BANK[0]) === "MX · odd in ES/AR", "chamba chip flags ES/AR");
 assert(memorySoundsWeirdOutside(MEMORY_BANK[0]), "chamba is weird outside MX");
@@ -102,8 +133,18 @@ const chambaWord = run.cards.find((card) => card.pairId === "chamba" && card.kin
 const chambaMeaning = run.cards.find((card) => card.pairId === "chamba" && card.kind === "meaning");
 const broncaWord = run.cards.find((card) => card.pairId === "bronca" && card.kind === "word");
 assert(memoryCardText(chambaWord, "en", run) === "chamba", "word bubble is the lemma");
-assert(memoryCardText(chambaMeaning, "en", run) === "a job / work", "meaning bubble follows uiLang EN");
-assert(memoryCardText(chambaMeaning, "es", run) === "trabajo / chamba", "meaning bubble follows uiLang ES");
+assert(memoryCardText(chambaMeaning, "en", run) === "job, work", "meaning bubble follows uiLang EN");
+assert(memoryCardText(chambaMeaning, "es", run) === "trabajo", "meaning bubble follows uiLang ES");
+assert(memoryCardTranslation(chambaWord, "en", run) === "job, work", "Spanish card translation is the English partner");
+assert(memoryCardTranslation(chambaMeaning, "en", run) === "chamba", "English card translation is the Spanish partner");
+assert(memoryCardTranslation(chambaWord, "es", run) === "trabajo", "ES uiLang lemma card uses the ES partner gloss");
+assert(memoryCardTranslation(chambaMeaning, "es", run) === "chamba", "meaning card translation stays the lemma");
+assert(memoryCardText(chambaMeaning, "en", run) === memoryCardTranslation(chambaWord, "en", run), "EN meaning face matches the gloss under the lemma");
+assert(memoryCardText(chambaWord, "en", run) === memoryCardTranslation(chambaMeaning, "en", run), "EN lemma matches the gloss under the meaning");
+assert(memoryCardLabel(chambaWord, "en", run) === "chamba (job, work)", "EN lemma accessible name is word plus parenthesized partner");
+assert(memoryCardLabel(chambaMeaning, "en", run) === "job, work (chamba)", "EN meaning accessible name is word plus parenthesized lemma");
+assert(memoryCardLabel(chambaWord, "es", run) === "chamba (trabajo)", "ES lemma accessible name uses the ES partner");
+assert(memoryCardLabel(chambaMeaning, "es", run) === "trabajo (chamba)", "ES meaning accessible name uses the lemma");
 
 run = applyMemoryTap(run, chambaWord.id);
 assert(run.faceUp.includes(chambaWord.id), "first tap flips the card");
@@ -156,7 +197,7 @@ const live = hydrateMemory({
   matched: ["chamba"],
   lastMatch: "chamba",
 });
-assert(live.pairs[0].meaning.en === "a job / work", "hydrate reloads stamp faces");
+assert(live.pairs[0].meaning.en === "job, work", "hydrate reloads stamp faces");
 assert(live.lastMatch === "chamba" && memoryShowTeach(live), "hydrate keeps the Why beat");
 assert(hydrateMemory(null) === null, "empty live is null");
 
