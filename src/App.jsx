@@ -12,7 +12,7 @@ import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { streakChipLabel } from "./streakChip.js";
-import { gradeListedPhrase } from "./wordOrder.js";
+import { gradeListedPhrase, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
@@ -22,6 +22,8 @@ import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClu
 import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
+import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
+import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle } from "./spanishKeyboard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { MemoryCardFace } from "./MemoryCardFace.jsx";
@@ -40,6 +42,7 @@ import {
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -4256,57 +4259,54 @@ const diegoReaction = (won, delta, lang) => {
 
 
 
-const LetterBoard = ({ D, layout, onLayoutChange, picked = [], inWord, disabled, onPick, extraRow }) => {
+const LetterBoard = ({ D, theme = "light", layout, onLayoutChange, picked = [], inWord, disabled, onPick, extraRow }) => {
   const mode = normalizeLetterLayout(layout);
   const rows = rowsForLayout(mode);
-  const chipStyle = (letter) => {
+  const keyLight = {
+    line: D.line,
+    green: D.green,
+    greenDark: D.greenDark,
+    red: D.red,
+    redDark: D.redDark,
+    okBg: D.okBg,
+    okText: D.okText,
+    badBg: D.badBg,
+    badText: D.badText,
+    card: D.card,
+    cream: HUB_CREAM,
+    muted: D.sub,
+  };
+  const keyStatus = (letter) => {
     const wasPicked = picked.includes(letter);
-    const hit = wasPicked && inWord?.(letter);
-    return {
-      wasPicked,
-      hit,
-      style: {
-        flex: "1 1 0", maxWidth: 38, minWidth: 0, height: 38, borderRadius: 10,
-        border: `2px solid ${wasPicked ? (hit ? D.green : D.red) : D.line}`,
-        borderBottom: `4px solid ${wasPicked ? (hit ? D.greenDark : D.redDark) : D.line}`,
-        background: wasPicked ? (hit ? D.okBg : D.badBg) : "#fff",
-        color: wasPicked ? (hit ? D.okText : D.badText) : D.green,
-        fontWeight: 800, fontSize: 14, fontFamily: "inherit",
-        cursor: wasPicked || disabled ? "default" : "pointer",
-      },
-    };
+    const hit = wasPicked && !!inWord?.(letter);
+    return wasPicked ? (hit ? "correct" : "wrong") : "idle";
+  };
+  const renderKey = (letter, testId) => {
+    const status = keyStatus(letter);
+    return (
+      <SpanishKeyboardKey
+        key={letter}
+        letter={letter}
+        testId={testId}
+        theme={theme}
+        status={status}
+        disabled={disabled || status !== "idle"}
+        onPick={onPick}
+        light={keyLight}
+      />
+    );
   };
   return (
     <div data-testid="letter-board" data-layout={mode}>
       <div style={{ display: "grid", gap: 6 }}>
         {rows.map((row, ri) => (
           <div key={ri} data-testid="letter-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-            {row.map((letter) => {
-              const { wasPicked, style } = chipStyle(letter);
-              return (
-                <button key={letter} type="button" data-testid="letter-chip" data-letter={letter}
-                  disabled={disabled || wasPicked} onClick={() => onPick(letter)}
-                  aria-label={letter}
-                  style={style}>
-                  {letter}
-                </button>
-              );
-            })}
+            {row.map((letter) => renderKey(letter, "letter-chip"))}
           </div>
         ))}
         {extraRow?.length ? (
           <div data-testid="accent-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-            {extraRow.map((letter) => {
-              const { wasPicked, style } = chipStyle(letter);
-              return (
-                <button key={letter} type="button" data-testid="accent-chip" data-letter={letter}
-                  disabled={disabled || wasPicked} onClick={() => onPick(letter)}
-                  aria-label={letter}
-                  style={style}>
-                  {letter}
-                </button>
-              );
-            })}
+            {extraRow.map((letter) => renderKey(letter, "accent-chip"))}
           </div>
         ) : null}
       </div>
@@ -4434,6 +4434,8 @@ export default function App() {
   }, []);
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
+  const [lecturaCliffhanger, setLecturaCliffhanger] = useState(null);
+  const [chapterBirdHandoff, setChapterBirdHandoff] = useState(false);
   const [paywallArmed, setPaywallArmed] = useState(false);
   const paywallBusyRef = useRef(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
@@ -4484,6 +4486,7 @@ export default function App() {
   const storyPagesSeenRef = useRef({});
   const lecturaStartedRef = useRef(false);
   const lecturaHandoffHold = useRef(false);
+  const chapterDoneRef = useRef(new Set());
   const [doctorHits, setDoctorHits] = useState(0);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [wordOrderMiss, setWordOrderMiss] = useState("");
@@ -5850,8 +5853,39 @@ export default function App() {
     storyPagesSeenRef.current = { ...storyPagesSeenRef.current, [storyView.id]: [...prev, idx] };
   }, [screen, storyView, paraIdx]);
 
+  const releaseLecturaWin = (beat) => {
+    if (!beat) return;
+    setLecturaCliffhanger(null);
+    setChapterBirdHandoff(false);
+    if (!(beat.playStory0 || beat.playLecturaWin)) return;
+    const story = STORIES.find((item) => item.id === beat.storyId);
+    if (!story) return;
+    const playStory0 = beat.playStory0;
+    const playLecturaWin = beat.playLecturaWin;
+    setSession({
+      firstStory0: playStory0,
+      lecturaWin: playLecturaWin,
+      storyId: story.id,
+      title: story.title,
+      host: "rafa",
+      questions: [{}],
+      awarded: true,
+      earnedXP: beat.earned,
+      earnedGems: 10,
+    });
+    setLessonStats({ right: beat.correct, wrong: story.questions.length - beat.correct });
+    setScreenQuip("");
+    if (playStory0) {
+        winBouncePlayed.current = true;
+        setWinBounce(true);
+    }
+    setScreen("done");
+  };
+
   const claimStory = (story, correct) => {
     if (prog.stories?.[story.id]) return;
+    if (chapterDoneRef.current.has(story.id)) return;
+    chapterDoneRef.current.add(story.id);
     const playStory0 = shouldArmStory0Beat({
       storyId: story.id,
       claimed: prog.stories?.[story.id],
@@ -5890,26 +5924,23 @@ export default function App() {
         storyCollectibles: { ...(prev.storyCollectibles || {}), [story.id]: true },
       };
     });
-    if (playStory0 || playLecturaWin) {
-      setSession({
-        firstStory0: playStory0,
-        lecturaWin: playLecturaWin,
-        storyId: story.id,
-        title: story.title,
-        host: "rafa",
-        questions: [{}],
-        awarded: true,
-        earnedXP: earned,
-        earnedGems: 10,
-      });
-      setLessonStats({ right: correct, wrong: story.questions.length - correct });
-      setScreenQuip("");
-      if (playStory0) {
-        winBouncePlayed.current = true;
-        setWinBounce(true);
-      }
-      setScreen("done");
+    emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaChapterDone, storyId: story.id });
+    setLecturaCliffhanger({
+      storyId: story.id,
+      correct,
+      earned,
+      playStory0,
+      playLecturaWin,
+    });
+  };
+
+  const handoffCliffhangerToBird = () => {
+    if (!lecturaCliffhanger) return;
+    if (prog.paywallSeen || prog.unlockedPrem) {
+      releaseLecturaWin(lecturaCliffhanger);
+      return;
     }
+    setChapterBirdHandoff(true);
   };
 
   const discoverStoryWord = (story, key) => {
@@ -6492,7 +6523,7 @@ export default function App() {
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
   // A successful Restore tap holds the wall so the status line stays readable.
-  const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
+  const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue() || chapterBirdHandoff;
   useEffect(() => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.open });
   }, []);
@@ -6754,6 +6785,8 @@ export default function App() {
     if (!fromBackdrop) {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.continueFree });
     }
+    const beat = lecturaCliffhanger;
+    setChapterBirdHandoff(false);
     setRestoreHold(false);
     setSoftPaywall(false);
     setPaywallArmed(false);
@@ -6766,6 +6799,7 @@ export default function App() {
     });
     if (showA2hs) setA2hsSheet(true);
     save({ paywallSeen: true, ...(showA2hs ? { a2hsSeen: true } : {}) });
+    if (beat) releaseLecturaWin(beat);
   };
   const buySoftPaywall = async (plan) => {
     if (paywallBusyRef.current) return;
@@ -6774,6 +6808,8 @@ export default function App() {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: plan });
       const result = await requestPurchase(plan);
       if (result.status !== "success" || !result.charged) return;
+      const beat = lecturaCliffhanger;
+      setChapterBirdHandoff(false);
       save((prev) => progressAfterPurchaseSuccess(prev, {
         plan: result.plan,
         productId: result.productId,
@@ -6781,6 +6817,7 @@ export default function App() {
       setRestoreHold(false);
       setSoftPaywall(false);
       setPaywallArmed(false);
+      if (beat) releaseLecturaWin(beat);
     } finally {
       paywallBusyRef.current = false;
     }
@@ -7153,9 +7190,11 @@ export default function App() {
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
-        .tile-bank { display:grid; grid-template-columns:repeat(auto-fill, minmax(4.6rem, max-content)); gap:8px; justify-content:center; align-items:start; }
-        .tile-slot { display:flex; min-width:4.6rem; min-height:2.55rem; }
-        .tile-slot .tile { flex:1; }
+        .tile-bank, .tile-row { display:flex; flex-wrap:wrap; align-content:flex-start; gap:8px; width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
+        .tile-bank { justify-content:flex-start; align-items:flex-start; }
+        .tile-row { justify-content:flex-start; align-items:center; }
+        .tile-slot { display:flex; flex:0 0 auto; width:max-content; max-width:100%; min-width:min-content; min-height:2.55rem; }
+        .tile-slot .tile, .tile-row > .tile { flex:0 0 auto; width:max-content; min-width:min-content; max-width:100%; white-space:nowrap; }
       `}</style>
 
       {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={completeCenzontleBeat} />}
@@ -8730,19 +8769,19 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Surface cream lock = Learn home HUB_CREAM. Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is #1E2128 with cream ink. Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
+          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
             <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
-            <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: D.ink }}>{L.paywallHeadline}</div>
-            <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
+            <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{L.paywallHeadline}</div>
+            <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
-              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
-              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: HUB_CREAM }}>{L.paywallMonthly}</Btn>
-              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
-              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: D.sub, lineHeight: 1.45 }}>
+              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
+              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, ...(theme === "dark" ? { color: "#F6EFE4", border: "2px solid #4A5160", borderBottom: "4px solid #4A5160" } : {}) }}>{L.paywallMonthly}</Btn>
+              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
+              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: theme === "dark" ? "#CDBBA6" : D.sub, lineHeight: 1.45 }}>
                 {disclosureLines(uiLang, storePrices).map((line, i) => (
                   <p key={i} data-testid={`soft-paywall-disclosure-${i}`} style={{ margin: i === 0 ? "2px 0 0" : "6px 0 0", fontSize: 11, fontWeight: 700, lineHeight: 1.45 }}>
                     {i === 0 && line.startsWith("Ándale Premium")
@@ -8751,7 +8790,7 @@ export default function App() {
                   </p>
                 ))}
               </div>
-              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>
+              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : D.sub }}>
                 <a data-testid="soft-paywall-terms" href={TERMS_OF_USE_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].terms}</a>
                 {" · "}
                 <a data-testid="soft-paywall-privacy" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].privacy}</a>
@@ -8759,15 +8798,15 @@ export default function App() {
                 <a data-testid="soft-paywall-restore" href="#restore" onClick={(event) => { event.preventDefault(); restoreSoftPaywall(); }} style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].restore}</a>
               </div>
               {restoreStatus && (
-                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
+                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : D.sub }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
               )}
               {!canCharge && (
-              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: D.sub, lineHeight: 1.35 }}>
+              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: theme === "dark" ? "#CDBBA6" : D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
               </div>
               )}
               <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
-                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
+                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
                 {L.paywallDismiss}
               </button>
             </div>
@@ -9202,7 +9241,7 @@ export default function App() {
                     </div>
                     {q.answerAid.mode === "bank" && (
                       <div>
-                        <div style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center", marginBottom: 6 }}>
+                        <div className="tile-row" data-testid="answer-tile-row" style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", marginBottom: 6 }}>
                           {typedTileIds.length === 0 && <span style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>{uiLang === "en" ? "Tap words below instead of typing." : "Toca palabras abajo en vez de escribir."}</span>}
                           {typedTileIds.map((id) => {
                             const tile = q.answerAid.tiles.find((t) => t.id === id);
@@ -9250,7 +9289,6 @@ export default function App() {
                                 fontWeight: 800,
                                 padding: "8px 11px",
                                 fontSize: 14,
-                                width: "100%",
                               }}>
                               {tile.w}
                             </button>
@@ -9278,17 +9316,18 @@ export default function App() {
 
             {q.type === "order" && (
               <div>
-                <div style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", marginBottom: 6 }}>
 	                  {placed.length === 0 && <span style={{ color: D.sub, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
-                  {placed.map((id) => {
+                  {placed.map((id, index) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
+                    const label = orderTileLabel(t.w, { answer: q.answer, placedIndex: index });
                     return (
                       <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" className="tile" disabled={status !== "idle"}
                         title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
-                        aria-label={`${t.w}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
+                        aria-label={`${label}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                         onClick={() => unplaceOrderTile(id)}
                         style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }}>
-                        {t.w}
+                        {label}
                         <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                       </button>
                     );
@@ -9304,9 +9343,10 @@ export default function App() {
                     </button>
                   </div>
                 )}
-                <div className="tile-bank">
+                <div className="tile-bank" data-testid="order-tile-bank">
                   {q.shuffledWords.map((t) => {
                     const used = placed.includes(t.id);
+                    const label = orderTileLabel(t.w, { answer: q.answer });
                     return (
                       <div key={t.id} className="tile-slot" data-tile-slot={t.id}
                         onClick={() => { if (used) unplaceOrderTile(t.id); }}>
@@ -9316,7 +9356,7 @@ export default function App() {
                           tabIndex={used ? -1 : 0}
                           onClick={(e) => { e.stopPropagation(); if (!used) placeOrderTile(t.id); }}
                           style={{ visibility: used ? "hidden" : "visible", pointerEvents: used ? "none" : "auto" }}>
-                          {t.w}
+                          {label}
                         </button>
                       </div>
                     );
@@ -9845,7 +9885,7 @@ export default function App() {
               <HangmanMark size={56} />
             </div>
             {over ? (
-              <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
+              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, ...(theme === "dark" ? darkHangmanEndCardStyle() : {}) }}>
                 {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
                 <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
@@ -9865,7 +9905,7 @@ export default function App() {
                   </div>
                 )}
                 <Btn color={D.green} dark={D.greenDark} data-testid="hangman-again" onClick={() => startAhorcado(gamesReturnRef.current)} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
-                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
+                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8, ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
               </div>
             ) : (
               <>
@@ -9939,6 +9979,7 @@ export default function App() {
                 )}
                 <LetterBoard
                   D={D}
+                  theme={theme}
                   layout={letterLayout}
                   extraRow={HANGMAN_ACCENTS}
                   onLayoutChange={(next) => save({ letterLayout: normalizeLetterLayout(next) })}
@@ -10019,7 +10060,7 @@ export default function App() {
               <div data-testid="jeopardy-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(min-content, 1fr))`, gap: 5, overflow: "visible", paddingBottom: 4 }}>
                 {jeopardyCategories.map((cat) => (
                   <div key={cat.id} style={{ display: "grid", gap: 5, minWidth: "min-content", justifyItems: "center" }}>
-                    <div data-testid={`jeopardy-cat-${cat.id}`} className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, minHeight: 44, width: "max-content", maxWidth: "100%", border: `2px solid #C46B3A`, borderRadius: 10, background: HUB_CREAM, color: MARK_INK, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center", padding: "5px 6px", lineHeight: 1.15 }}>
+                    <div data-testid={`jeopardy-cat-${cat.id}`} className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, minHeight: 44, width: "max-content", maxWidth: "100%", borderRadius: 10, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center", padding: "5px 6px", lineHeight: 1.15, ...boardTilePaint({ theme, role: "category", light: { cream: HUB_CREAM, mark: MARK_INK, line: D.line, card: D.card, muted: D.sub } }) }}>
                       {jeopardyCatLabel(cat.id, uiLang)}
                     </div>
                     {JEOPARDY_VALUES.map((value) => {
@@ -10027,7 +10068,7 @@ export default function App() {
                       const used = !!jeopardy.used?.[key];
                       return (
                         <button key={key} data-testid={`jeopardy-tile-${key}`} disabled={used} onClick={() => openJeopardyTile(cat, value)}
-                          style={{ height: 58, border: `2px solid ${used ? D.line : "#C46B3A"}`, borderBottom: `5px solid ${used ? D.line : "#C46B3A"}`, borderRadius: 12, background: used ? D.subtle : HUB_CREAM, color: used ? D.sub : "#C46B3A", fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer" }}>
+                          style={{ height: 58, borderRadius: 12, fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer", ...boardTilePaint({ theme, role: "value", used, light: { cream: HUB_CREAM, line: D.line, subtle: D.subtle, sub: D.sub, card: D.card, muted: D.sub } }) }}>
                           {used ? "✓" : value}
                         </button>
                       );
@@ -10037,7 +10078,7 @@ export default function App() {
               </div>
               <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
                 <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-again" onClick={() => startJeopardy(gamesReturnRef.current)} style={{ width: "100%" }}>{jeopardyResetLabel(uiLang)}</Btn>
-                <Btn outline data-testid="jeopardy-back" onClick={closeGamesSurface} style={{ width: "100%" }}>{L.games}</Btn>
+                <Btn outline data-testid="jeopardy-back" onClick={closeGamesSurface} style={{ width: "100%", ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
               </div>
             </>
           )}
@@ -10216,14 +10257,14 @@ export default function App() {
                   </div>
                 )}
                 {checkpoints[pi] && (
-                  <div style={{ margin: "10px 0 0 48px", border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : D.line}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : "#fff" }}>
-                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : D.sub, marginBottom: 6 }}>
+                  <div style={{ margin: "10px 0 0 48px", border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
+                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => (
                         <button key={choice} disabled={!!checkState[pi]} onClick={() => answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a)}
-                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : D.line}`, background: checkState[pi] === choice ? "#fff" : "#F7F7F7", borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : D.ink }}>
+                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: checkState[pi] === choice ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
                           {choice}
                         </button>
                       ))}
@@ -10309,6 +10350,36 @@ export default function App() {
               )}
             </div>
             </>)}
+
+            {lecturaCliffhanger?.storyId === story.id && (
+              <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, marginLeft: -16, marginRight: -16, background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 14, padding: "14px 10px 12px" }}>
+                <p data-testid="lectura-cliffhanger-line" style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700, lineHeight: 1.55, color: D.ink }}>
+                  {lecturaCliffhangerLine(story.id)}
+                </p>
+                <div data-testid="lectura-bird-handoff" style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM }}>
+                  <button
+                    type="button"
+                    data-testid="lectura-bird-handoff-cta"
+                    onClick={handoffCliffhangerToBird}
+                    style={{
+                      background: theme === "dark" ? "transparent" : HUB_CREAM,
+                      color: theme === "dark" ? "#B8C0A0" : MARK_INK,
+                      border: theme === "dark" ? "1px solid #B8C0A0" : `1px solid ${MARK_INK}`,
+                      borderRadius: 12,
+                      padding: "10px 16px",
+                      minHeight: 44,
+                      fontFamily: "inherit",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      lineHeight: 1.35,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {L.continue}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* sticky definition card */}
             {wordSel && (() => {

@@ -12,6 +12,7 @@ import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
 import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED } from "./recuerdos.js";
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
+import { isWhiteOrCreamFill } from "./spanishKeyboard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaName, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
@@ -19,6 +20,7 @@ import { OJALA_QUE_PACK } from "./cubetas.js";
 import { HANGMAN_BANK, hangmanLetters } from "./hangman.js";
 import { MEMORY_BANK } from "./memory.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
+import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -1168,6 +1170,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
     await user.click(screen.getByRole("button", { name: /El olvido/ }));
     await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe("Hay casas que no olvidan. ¿Conoces una que todavía espere a su dueña?"));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
     await waitFor(() => {
       expect(screen.getByTestId("story-0-win")).toBeTruthy();
       expect(screen.getByTestId("win-fly-away")).toBeTruthy();
@@ -1213,6 +1218,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /El tranvía y Diego/ }));
     await user.click(screen.getByRole("button", { name: /Viva la vida/ }));
     await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
     await waitFor(() => {
       expect(screen.getByTestId("lectura-win")).toBeTruthy();
       expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
@@ -1966,6 +1974,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hangman-literal")).toBeTruthy());
     expect(screen.getByTestId("hangman-win").textContent).toBe("That's it.");
     expect(screen.getByTestId("hangman-word").textContent).toBe(word);
+    expect(screen.getByTestId("hangman-end").style.background).toMatch(/#F3FBEA|rgb\(\s*243,\s*251,\s*234\s*\)/i);
+    expect(screen.getByTestId("hangman-end").style.border).toMatch(/2px solid (#58CC02|rgb\(\s*88,\s*204,\s*2\s*\))/i);
     const literal = screen.getByTestId("hangman-literal");
     const why = screen.getByTestId("hangman-why");
     expect(literal.textContent).toMatch(/^Literal/);
@@ -2033,6 +2043,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("jeopardy-answered").textContent).toBe("0/18");
     expect(screen.getByTestId("jeopardy-grid")).toBeTruthy();
     expect(screen.getByTestId("jeopardy-tile-subj-100")).toBeTruthy();
+    const lightFill = (el) => `${el.style.backgroundColor} ${el.style.background}`;
+    expect(lightFill(screen.getByTestId("jeopardy-cat-reg"))).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(lightFill(screen.getByTestId("jeopardy-tile-subj-100"))).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(lightFill(screen.getByTestId("jeopardy-back"))).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
     expect(screen.getByTestId("jeopardy-cat-reg").textContent).toBe("Registro");
     expect(screen.getByTestId("jeopardy-cat-subj").textContent).toBe("Subjuntivo");
     expect(screen.getByTestId("jeopardy-cat-mex").textContent).toBe("México");
@@ -3673,6 +3687,32 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("win-perch")).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
+  });
+
+  it("dark soft paywall title and prices are cream on #1E2128, not near-white on cream", async () => {
+    cleanup();
+    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false });
+    await boot();
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-card")).toBeTruthy());
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const nearWhite = /#E8E8EA|#FFFFFF|rgb\(\s*232,\s*232,\s*234\s*\)|rgb\(\s*255,\s*255,\s*255\s*\)/i;
+    const darkCard = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const card = screen.getByTestId("soft-paywall-card");
+    const headline = screen.getByTestId("soft-paywall-headline");
+    const annualPrice = screen.getByTestId("soft-paywall-annual-price");
+    const monthlyPrice = screen.getByTestId("soft-paywall-monthly-price");
+    expect(card.style.background).toMatch(darkCard);
+    expect(card.style.background).not.toMatch(cream);
+    expect(headline.style.color).toMatch(cream);
+    expect(headline.style.color).not.toMatch(nearWhite);
+    expect(annualPrice.style.color).toMatch(cream);
+    expect(annualPrice.style.color).not.toMatch(nearWhite);
+    expect(monthlyPrice.style.color).toMatch(cream);
+    expect(monthlyPrice.style.color).not.toMatch(nearWhite);
+    expect(screen.getByTestId("soft-paywall-monthly").style.background).toMatch(darkCard);
+    expect(screen.getByTestId("soft-paywall-monthly").style.color).toMatch(cream);
+    expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
   });
 
   it("cold first Hoy CONTINUE shows soft paywall once before idle home", async () => {
@@ -5881,6 +5921,113 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(tiles.some((tile) => /llegues|temprano|reunión/i.test(tile.textContent))).toBe(true);
   });
 
+  const cssHex = (value) => {
+    const s = String(value || "").trim().toLowerCase();
+    const hex = s.match(/#([0-9a-f]{3,8})/);
+    if (hex) {
+      let h = hex[1];
+      if (h.length === 3) h = h.split("").map((ch) => ch + ch).join("");
+      return `#${h.slice(0, 6)}`;
+    }
+    const rgb = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (!rgb) return "";
+    return `#${[rgb[1], rgb[2], rgb[3]].map((n) => Number(n).toString(16).padStart(2, "0")).join("")}`;
+  };
+  const paintOf = (el) => ({
+    fill: cssHex(el.style.backgroundColor) || cssHex(el.style.background),
+    ink: cssHex(el.style.color),
+  });
+  const assertDarkControl = (el, label) => {
+    const { fill, ink } = paintOf(el);
+    expect(fill, `${label} fill`).toBeTruthy();
+    expect(ink, `${label} ink`).toBeTruthy();
+    expect(isWhiteOrCreamFill(fill), `${label} rendered a white or cream fill ${fill}`).toBe(false);
+    expect(contrastRatio(ink, fill), `${label} ${ink} on ${fill}`).toBeGreaterThanOrEqual(4.5);
+  };
+
+  it("dark Jeopardy tiles, keyboard keys, and Games buttons stay off white and cream at 4.5:1", async () => {
+    cleanup();
+    seedProgress({ theme: "dark", uiLang: "en" });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(cssHex(screen.getByTestId("app-shell").style.background)).toBe("#15171c");
+    await user.click(screen.getByTestId("hub-games"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-start")).toBeTruthy());
+    await user.click(screen.getByTestId("jeopardy-start"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-grid")).toBeTruthy());
+    ["subj", "past", "porpara", "mex", "pron", "reg"].forEach((id) => {
+      assertDarkControl(screen.getByTestId(`jeopardy-cat-${id}`), `jeopardy-cat-${id}`);
+    });
+    screen.getAllByTestId(/^jeopardy-tile-/).forEach((tile) => {
+      assertDarkControl(tile, tile.getAttribute("data-testid"));
+    });
+    assertDarkControl(screen.getByTestId("jeopardy-back"), "jeopardy games");
+    await user.click(screen.getByTestId("jeopardy-tile-mex-100"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-choice-0")).toBeTruthy());
+    await user.click(screen.getByTestId("jeopardy-choice-0"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-continue")).toBeTruthy());
+    await user.click(screen.getByTestId("jeopardy-continue"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-tile-mex-100").disabled).toBe(true));
+    assertDarkControl(screen.getByTestId("jeopardy-tile-mex-100"), "used jeopardy tile");
+    assertDarkControl(screen.getByTestId("jeopardy-tile-mex-200"), "open jeopardy tile");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-200")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).ink).toBe("#f6efe4");
+    expect(paintOf(screen.getByTestId("jeopardy-cat-mex")).ink).toBe("#f6efe4");
+    expect(paintOf(screen.getByTestId("jeopardy-back")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-back")).ink).toBe("#f6efe4");
+
+    await user.click(screen.getByTestId("jeopardy-back"));
+    await waitFor(() => expect(screen.getByTestId("hangman-start")).toBeTruthy());
+    await user.click(screen.getByTestId("hangman-start"));
+    await waitFor(() => expect(screen.getByTestId("letter-board")).toBeTruthy());
+    const keys = [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")];
+    expect(keys.some((el) => el.getAttribute("data-letter") === "Ñ")).toBe(true);
+    expect(paintOf(keys.find((el) => el.getAttribute("data-letter") === "Ñ")).fill).toBe("#1e2128");
+    expect(paintOf(keys.find((el) => el.getAttribute("data-letter") === "Ñ")).ink).toBe("#f6efe4");
+    expect(keys.filter((el) => el.getAttribute("data-testid") === "accent-chip").map((el) => el.textContent).join("")).toBe("ÁÉÍÓÚÜ");
+    expect(paintOf(screen.getAllByTestId("accent-chip")[0]).fill).toBe("#1e2128");
+    expect(paintOf(screen.getAllByTestId("accent-chip")[0]).ink).toBe("#f6efe4");
+    keys.forEach((el) => assertDarkControl(el, `key ${el.getAttribute("data-letter")}`));
+    const word = screen.getByTestId("hangman-board").getAttribute("data-word");
+    const letters = [...new Set([...word.normalize("NFC")].map((ch) => ch.toLocaleUpperCase("es")))];
+    const chipFor = (ch) => [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")]
+      .find((el) => el.getAttribute("data-letter") === ch);
+    expect(chipFor("W")).toBeTruthy();
+    await user.click(chipFor("W"));
+    await user.click(chipFor(letters[0]));
+    await waitFor(() => expect(chipFor("W").getAttribute("data-state")).toBe("wrong"));
+    expect(chipFor(letters[0]).getAttribute("data-state")).toBe("correct");
+    expect(Number.parseInt(chipFor(letters[0]).style.fontWeight, 10)).toBeGreaterThanOrEqual(900);
+    [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")].forEach((el) => {
+      assertDarkControl(el, `played key ${el.getAttribute("data-letter")}`);
+    });
+    expect(paintOf(chipFor("W")).fill).toBe("#2a2e36");
+    expect(paintOf(chipFor("W")).ink).toBe("#a0a4ab");
+    expect(paintOf(chipFor(letters[0])).fill).toBe("#677050");
+    expect(paintOf(chipFor(letters[0])).ink).toBe("#f6efe4");
+    expect(contrastRatio("#A0A4AB", "#2A2E36")).toBeGreaterThanOrEqual(5.4);
+    for (const ch of letters) {
+      if (screen.queryAllByTestId("letter-chip").length + screen.queryAllByTestId("accent-chip").length === 0) break;
+      const chip = chipFor(ch);
+      if (chip && !chip.disabled) await user.click(chip);
+    }
+    await waitFor(() => expect(screen.getByTestId("hangman-back")).toBeTruthy());
+    assertDarkControl(screen.getByTestId("hangman-back"), "hangman games");
+    expect(paintOf(screen.getByTestId("hangman-back")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("hangman-back")).ink).toBe("#f6efe4");
+    const end = screen.getByTestId("hangman-end");
+    expect(cssHex(end.style.background)).toBe("#1e2128");
+    expect(end.style.border).toMatch(/2px solid/i);
+    expect(cssHex(end.style.borderColor) || cssHex(end.style.border)).toBe("#677050");
+    expect(cssHex(screen.getByTestId("hangman-win").style.color)).toBe("#e8e8ea");
+    expect(cssHex(screen.getByTestId("hangman-word").style.color)).toBe("#e8e8ea");
+    expect(cssHex(screen.getByTestId("hangman-literal").firstElementChild.style.color)).toBe("#a0a4ab");
+    expect(cssHex(screen.getByTestId("hangman-again").style.background)).toBe("#58cc02");
+    expect(screen.queryAllByTestId("letter-chip")).toHaveLength(0);
+  });
+
   it("letter boards default to QWERTY with Ñ after L; ABC toggle persists", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("ahorcado-section-start"));
@@ -6584,6 +6731,112 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(at("cenzontle_complete")).toBeGreaterThan(at("open"));
     expect(at("lectura_start")).toBeGreaterThan(at("cenzontle_complete"));
     expect(at("paywall_seen")).toBeGreaterThan(at("lectura_start"));
+    expect(at("purchase")).toBe(-1);
+    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
+  }, 15000);
+
+  it("Hoy win, then lectura_start, then the chapter cliffhanger hands off to the paywall bird", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    delete window.__andaleIapEnv;
+    delete window.__andaleNativePurchase;
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["cilantro, cebolla, salsa y guarnición"],
+      answer: "cilantro, cebolla, salsa y guarnición",
+      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        firstHoy: true,
+        host: "luna",
+        questions: [hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:")],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(funnelOf("open").length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelector(".choice-card"));
+    await user.click(screen.getByTestId("lesson-check"));
+    await user.click(await screen.findByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("lectura-handoff-cta")).toBeTruthy());
+    await waitFor(() => expect(funnelOf("cenzontle_complete").some((e) => e.beat === "hoy")).toBe(true), { timeout: 1500 });
+    assertNoWallBeforeLectura();
+    expect(funnelOf("lectura_start")).toHaveLength(0);
+    expect(funnelOf("lectura_chapter_done")).toHaveLength(0);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(funnelOf("purchase")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("lectura-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));
+    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("lectura-cliffhanger")).toBeNull();
+
+    for (;;) {
+      const next = screen.queryByRole("button", { name: /^(Siguiente|Next) →$/ });
+      if (!next) break;
+      await user.click(next);
+    }
+    await user.click(screen.getByRole("button", { name: /^(Preguntas|Questions) →$/ }));
+    await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
+    expect(funnelOf("lectura_chapter_done")).toHaveLength(0);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
+    await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
+    await user.click(screen.getByRole("button", { name: /El olvido/ }));
+    await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
+    const done = funnelOf("lectura_chapter_done");
+    expect(done).toHaveLength(1);
+    expect(done[0].storyId).toBe("story-0");
+    expect(done[0].title).toBeUndefined();
+    expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe(lecturaCliffhangers["story-0"]);
+    expect(screen.getByTestId("lectura-bird-handoff-cta").textContent).toBe("Continuar");
+    expect(screen.getByTestId("lectura-bird-handoff-cta").className).not.toMatch(/duo-btn/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
+
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-cenzontle")).toBeTruthy());
+    expect(funnelOf("paywall_seen")).toHaveLength(1);
+    expect(funnelOf("lectura_chapter_done")).toHaveLength(1);
+    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("Un año");
+    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis");
+    expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-dismiss").style.background).toBe("none");
+    expect(funnelOf("purchase")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
+    expect(funnelOf("paywall_tap").filter((e) => e.choice === "annual")).toHaveLength(1);
+    expect(funnelOf("purchase")).toHaveLength(0);
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
+    const names = window.__andaleFunnelLog.map((e) => e.event);
+    const at = (name) => names.indexOf(name);
+    expect(at("open")).toBeGreaterThanOrEqual(0);
+    expect(at("cenzontle_complete")).toBeGreaterThan(at("open"));
+    expect(at("lectura_start")).toBeGreaterThan(at("cenzontle_complete"));
+    expect(at("lectura_chapter_done")).toBeGreaterThan(at("lectura_start"));
+    expect(at("paywall_seen")).toBeGreaterThan(at("lectura_chapter_done"));
+    expect(at("paywall_tap")).toBeGreaterThan(at("paywall_seen"));
     expect(at("purchase")).toBe(-1);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
   }, 15000);
