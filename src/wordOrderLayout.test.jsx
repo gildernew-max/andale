@@ -43,7 +43,7 @@ const mockSpeech = () => {
   };
 };
 
-const seedLesson = (q) => {
+const seedLesson = (q, extra = {}) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     welcomed: true,
     xp: 42,
@@ -53,6 +53,7 @@ const seedLesson = (q) => {
     hearts: 5,
     uiLang: "es",
     done: {},
+    ...extra,
   }));
   localStorage.setItem(LIVE_KEY, JSON.stringify({
     screen: "lesson",
@@ -71,10 +72,10 @@ const seedLesson = (q) => {
   }));
 };
 
-const openOrder = async (q) => {
+const openOrder = async (q, extra) => {
   localStorage.clear();
   mockSpeech();
-  seedLesson(q);
+  seedLesson(q, extra);
   render(<App />);
   await waitFor(() => expect(screen.getByTestId("order-tile-bank")).toBeTruthy());
 };
@@ -108,6 +109,8 @@ describe("word-order tile layout", () => {
 
   it("sizes each agradezco tile to its word, with a gap, and wraps in normal flow", async () => {
     const user = userEvent.setup();
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const ink = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
     await openOrder(orderQuestion(
       AGRADEZCO_WORDS,
       "Le agradezco de antemano su atención",
@@ -137,11 +140,16 @@ describe("word-order tile layout", () => {
       expect(css.paddingLeft).toBe(css.paddingRight);
       expect(css.paddingLeft).toBe("14px");
       expect(css.flexGrow).toBe("0");
+      expect(tile.style.background).toMatch(cream);
+      expect(tile.style.color).toMatch(ink);
     });
+
+    expect(screen.getByTestId("app-shell").style.background).toMatch(cream);
 
     const row = screen.getByTestId("order-answer-row");
     isFlow(getComputedStyle(row));
     expect(getComputedStyle(row).justifyContent).toBe("flex-start");
+    expect(row.style.background).toMatch(cream);
 
     for (const word of ["le", "agradezco", "de"]) {
       await user.click(screen.getByRole("button", { name: word }));
@@ -150,7 +158,10 @@ describe("word-order tile layout", () => {
     const placed = screen.getAllByTestId("placed-tile");
     expect(placed.map((el) => el.textContent.replace(/×/g, "").trim())).toEqual(["Le", "agradezco", "de"]);
     placed.forEach(isIntrinsicTile);
-    expect(getComputedStyle(placed[0]).backgroundColor).not.toBe(getComputedStyle(tiles[0]).backgroundColor);
+    placed.forEach((tile) => {
+      expect(tile.style.background).toMatch(cream);
+      expect(tile.style.color).toMatch(ink);
+    });
 
     expect(bank.querySelectorAll("[data-tile-slot]")).toHaveLength(AGRADEZCO_WORDS.length);
     expect(screen.getAllByTestId("bank-tile").map((el) => el.textContent)).toEqual([
@@ -180,5 +191,48 @@ describe("word-order tile layout", () => {
     isFlow(getComputedStyle(screen.getByTestId("order-tile-bank")));
     isFlow(getComputedStyle(screen.getByTestId("order-answer-row")));
     tiles.forEach(isIntrinsicTile);
+  });
+
+  it("uses the app dark page and card with cream text", async () => {
+    const page = /#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i;
+    const card = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const line = /#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\)/i;
+    const user = userEvent.setup();
+    await openOrder(orderQuestion(
+      AGRADEZCO_WORDS,
+      "Le agradezco de antemano su atención",
+      "Construye el cierre formal: “I thank you in advance for your attention.”",
+    ), { theme: "dark" });
+
+    expect(screen.queryByTestId("order-cream-page")).toBeNull();
+    const darkPage = screen.getByTestId("order-dark-page");
+    expect(darkPage.style.background).toMatch(page);
+    expect(darkPage.style.color).toMatch(cream);
+    expect(screen.getByTestId("app-shell").style.background).toMatch(page);
+    const prompt = screen.getByTestId("order-prompt");
+    expect(prompt.style.background).toMatch(card);
+    expect(prompt.style.color).toMatch(cream);
+    expect(prompt.style.borderTopColor).toMatch(line);
+    const row = screen.getByTestId("order-answer-row");
+    expect(row.style.background).toMatch(card);
+    expect(row.style.borderTopColor).toMatch(line);
+
+    const bank = screen.getAllByTestId("bank-tile");
+    bank.forEach((tile) => {
+      expect(tile.style.background).toMatch(card);
+      expect(tile.style.color).toMatch(cream);
+      expect(tile.style.borderTopColor).toMatch(line);
+    });
+
+    await user.click(screen.getByRole("button", { name: "le" }));
+    const placed = screen.getByTestId("placed-tile");
+    expect(placed.style.background).toMatch(card);
+    expect(placed.style.color).toMatch(cream);
+    expect(placed.style.borderTopColor).toMatch(line);
+    expect(screen.getByText("Toca una ficha colocada para moverla.").style.color).toMatch(cream);
+    expect(screen.getByRole("button", { name: "Borrar" }).style.color).toMatch(cream);
+    expect(screen.getByTestId("lang-en").style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
+    expect(document.body.style.background).toMatch(page);
   });
 });
