@@ -67,7 +67,8 @@ const LIGHT = {
 
 const lightIdle = spanishKeyboardKeyStyle({ theme: "light", status: "idle", light: LIGHT });
 assert(lightIdle.background === "#fff", "light idle key is white");
-assert(lightIdle.color === "#58CC02", "light idle key is CHECK lime");
+assert(lightIdle.color === "#4F5A36", "light idle key letters are #4F5A36");
+assert(contrastRatio(lightIdle.color, "#FFFFFF") >= 4.5, "light idle key text under 4.5");
 assert(lightIdle.fontWeight === 800 && lightIdle.fontSize === 14 && lightIdle.height === 38 && lightIdle.maxWidth === 38, "light key size unchanged");
 assert(lightIdle.border === "2px solid #E5E5E5" && lightIdle.borderBottom === "4px solid #E5E5E5", "light idle lip unchanged");
 const lightHit = spanishKeyboardKeyStyle({ theme: "light", status: "correct", light: LIGHT });
@@ -107,7 +108,21 @@ const darkPresent = spanishKeyboardKeyStyle({ theme: "dark", status: "present", 
 assert(darkPresent.background === "#85672C" && darkPresent.color === "#F6EFE4", "present key is cream on ochre #85672C");
 assert(Math.abs(contrastRatio(darkPresent.color, darkPresent.background) - 4.63) < 0.02, "present key is 4.63:1");
 const darkIdle = spanishKeyboardKeyStyle({ theme: "dark", status: "idle", light: DARK_LIGHT });
+const darkUnused = spanishKeyboardKeyStyle({ theme: "dark", status: "unused", light: DARK_LIGHT });
 assert(darkIdle.color === "#F6EFE4" && darkIdle.background === "#1E2128", "idle key is cream on the card");
+assert(darkUnused.background === "#1E2128" && darkUnused.color === "#F6EFE4" && darkUnused.border === "2px solid #2A2E36", "unused key matches the idle dark face");
+const lightWordle = spanishKeyboardKeyStyle({ theme: "light", status: "correct", light: { ...LIGHT, wordleCorrect: "#5C7356" } });
+assert(lightWordle.background === "#5C7356" && lightWordle.color === "#FFFFFF", "Wordle can keep its light correct key");
+const hangmanUsed = { ...LIGHT, wordleCorrect: "#5C7356", wordleWrong: "#7E756E" };
+const hangmanHit = spanishKeyboardKeyStyle({ theme: "light", status: "correct", light: hangmanUsed });
+const hangmanMiss = spanishKeyboardKeyStyle({ theme: "light", status: "wrong", light: hangmanUsed });
+assert(hangmanHit.background === "#5C7356" && hangmanHit.color === "#FFFFFF" && hangmanHit.border === "2px solid transparent", "light Hangman correct key uses the Wordle correct token");
+assert(hangmanMiss.background === "#7E756E" && hangmanMiss.color === "#FFFFFF" && hangmanMiss.border === "2px solid transparent", "light Hangman wrong key uses the Wordle absent token");
+const darkHangmanLight = { ...hangmanUsed, ...DARK_LIGHT, wordleCorrect: "#5C7356", wordleWrong: "#7E756E" };
+const darkHangmanHit = spanishKeyboardKeyStyle({ theme: "dark", status: "correct", light: darkHangmanLight });
+const darkHangmanMiss = spanishKeyboardKeyStyle({ theme: "dark", status: "wrong", light: darkHangmanLight });
+assert(darkHangmanHit.background === SPANISH_KEYBOARD.sageSmall && darkHangmanHit.color === "#F6EFE4", "dark Hangman correct key stays sage-small");
+assert(darkHangmanMiss.background === "#2A2E36" && darkHangmanMiss.color === "#A0A4AB", "dark Hangman wrong key stays the dark miss");
 assert(Math.abs(contrastRatio(darkIdle.color, darkIdle.background) - 14.11) < 0.02, "idle key is 14.11:1");
 assert(Math.abs(contrastRatio(darkCorrect.color, darkCorrect.background) - 4.58) < 0.02, "correct key is 4.58:1");
 assert(darkIdle.background !== darkWrong.background && darkIdle.color !== darkWrong.color, "idle and wrong keys differ");

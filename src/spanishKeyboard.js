@@ -1,7 +1,9 @@
 /** Shared Spanish on-screen keyboard.
  *  Wordle and Ahorcado both paint keys through `spanishKeyboardKeyStyle`
  *  and render them with `SpanishKeyboardKey` (spanishKeyboard.jsx).
- *  Light mode is the current chip: white face, CHECK lime, green/red hits.
+ *  Light unused keys keep the white face and gray edge. Letters are #4F5A36.
+ *  Correct, present, and wrong key colors stay the existing chips.
+ *  Wordle marked keys still pass their own tile colors and skip this chip.
  *  Dark mode, Brand 2026-09-26:
  *  unused #1E2128 / edge #2A2E36 / cream #F6EFE4 (14.11:1),
  *  correct #677050 / cream (4.58:1),
@@ -99,7 +101,7 @@ export function spanishKeyboardKeyStyle({
       border: `2px solid ${wasPicked ? (hit ? green : red) : line}`,
       borderBottom: `4px solid ${wasPicked ? (hit ? greenDark : redDark) : line}`,
       background: wasPicked ? (hit ? okBg : badBg) : "#fff",
-      color: wasPicked ? (hit ? okText : badText) : green,
+      color: wasPicked ? (hit ? okText : badText) : "#4F5A36",
       fontWeight: 800,
       cursor,
     };
