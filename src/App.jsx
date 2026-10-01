@@ -10318,8 +10318,8 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={() => startCrossword("games")} data-testid="crossword-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => startCrossword("games")} data-testid="crossword-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
