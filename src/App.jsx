@@ -6,11 +6,14 @@ import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuest
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
+import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from "./hoyChoiceCard.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
-import { gradeListedPhrase } from "./wordOrder.js";
+import { streakChipLabel } from "./streakChip.js";
+import { gradeListedPhrase, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
@@ -25,6 +28,7 @@ import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle, spanishK
 import { bucketBodyColor, bucketTileStyle, gamesHubCardChrome, gamesHubFocusColor, hangmanLightEndChrome, letterSlotUnderline, letterSlotUnderlineWidth, memoryCardPaint, wordleActionKeyChrome } from "./sageChrome.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
+import { MemoryCardFace } from "./MemoryCardFace.jsx";
 import { subjFiveLines } from "./subjFive.js";
 import {
   sobremesaDeepen,
@@ -40,6 +44,7 @@ import {
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -102,6 +107,7 @@ import {
   hangmanSlotIndexForKey,
   hangmanSlotKey,
   hangmanTitle,
+  emphasisParts,
   hangmanWhy,
   hangmanWhyLabel,
   hangmanWinLine,
@@ -165,7 +171,9 @@ import {
   finishMemoryRun,
   hydrateMemory,
   isMemoryDone,
+  memoryCardLabel,
   memoryCardText,
+  memoryCardTranslation,
   memoryHowTo,
   memoryIsOpen,
   memoryLiteralWhyLabel,
@@ -178,6 +186,19 @@ import {
   memoryWinLine,
   startMemoryRun,
 } from "./memory.js";
+import { CrosswordMark, CrosswordPlayfield } from "./CrosswordPlayfield.jsx";
+import {
+  CROSSWORD_GRID,
+  backspaceCrossword,
+  crosswordQuiet,
+  crosswordTitle,
+  hydrateCrossword,
+  revealCrosswordWord,
+  selectCrosswordCell,
+  selectCrosswordClue,
+  startCrosswordRun,
+  typeCrosswordLetter,
+} from "./crossword.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -273,6 +294,7 @@ const snapshotLive = (s) => {
     ahorcado: s.ahorcado,
     cubetasGame: s.cubetasGame,
     memoryGame: s.memoryGame,
+    crosswordGame: s.crosswordGame,
   };
 };
 
@@ -2108,9 +2130,9 @@ const HangmanMark = ({ size = 44 }) => (
 );
 
 /** Flat geometric board — cream / terracotta / sage. No second mascot. */
-const JeopardyMark = ({ size = 44 }) => (
+const JeopardyMark = ({ size = 44, tile = "#F6EFE4" }) => (
   <svg data-testid="jeopardy-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="5" y="5" width="34" height="34" rx="6" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="2" />
+    <rect x="5" y="5" width="34" height="34" rx="6" fill={tile} stroke="#C46B3A" strokeWidth="2" />
     <rect x="10" y="10" width="7" height="7" rx="1" fill="#5C7356" />
     <rect x="19" y="10" width="7" height="7" rx="1" fill="#5C7356" />
     <rect x="28" y="10" width="7" height="7" rx="1" fill="#5C7356" />
@@ -2123,6 +2145,21 @@ const JeopardyMark = ({ size = 44 }) => (
   </svg>
 );
 
+/** Dark-game Memory board. Light mode keeps the cream / white / terracotta chrome. */
+const MEMORY_DARK_PAGE = "#15171C";
+const MEMORY_DARK_CARD = "#1E2128";
+/** Soft gray, one step lighter than the card (same step as D_DARK.subtle). */
+const MEMORY_DARK_EDGE = "#252830";
+const MEMORY_DARK_INK = "#F6EFE4";
+/** Muted gray. 6.44:1 on the card, including at 70% of the hero. */
+const MEMORY_DARK_GLOSS = "#A0A4AB";
+/** Matched fill. Cream on this sage is 4.58:1, so the small gloss clears 4.5. */
+const MEMORY_DARK_SAGE = "#677050";
+/** Header labels on the page. 7.17:1 against the page. */
+const MEMORY_DARK_LABEL = "#A0A4AB";
+/** Card-back sage tile, lightened so it stays visible on the dark card. */
+const MEMORY_DARK_MARK = "#B8C0A0";
+
 /** Flat five-tile mark — cream / terracotta / sage. No second mascot. */
 const WordleMark = ({ size = 44, tile = "#F6EFE4" }) => (
   <svg data-testid="wordle-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
@@ -2134,11 +2171,21 @@ const WordleMark = ({ size = 44, tile = "#F6EFE4" }) => (
   </svg>
 );
 
-/** Flat geometric two-tile / flip-card mark — cream / terracotta / sage. No second mascot. */
-const MemoryMark = ({ size = 44, labeled = false }) => (
+/** Flat geometric two-tile / flip-card mark — cream / terracotta / sage. No second mascot.
+ *  `tile` is the left plate (Games hub passes the dark card). `onDark` lightens the sage half on the Memory board. */
+const MemoryMark = ({ size = 44, labeled = false, tile = "#F6EFE4", onDark = false }) => (
   <svg data-testid={labeled ? "memory-mark" : undefined} width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="5" y="9" width="16" height="26" rx="4" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="2" />
-    <rect x="23" y="9" width="16" height="26" rx="4" fill="#5C7356" />
+    <rect x="5" y="9" width="16" height="26" rx="4" fill={tile} stroke="#C46B3A" strokeWidth="2" />
+    <rect
+      x="23"
+      y="9"
+      width="16"
+      height="26"
+      rx="4"
+      fill={onDark ? MEMORY_DARK_MARK : "#5C7356"}
+      stroke={onDark ? MEMORY_DARK_INK : undefined}
+      strokeWidth={onDark ? 2 : undefined}
+    />
   </svg>
 );
 
@@ -2193,8 +2240,8 @@ const MEMORY_CARD_FACE = {
   overflow: "visible",
   textOverflow: "unset",
   wordBreak: "normal",
-  overflowWrap: "break-word",
-  hyphens: "manual",
+  overflowWrap: "normal",
+  hyphens: "none",
 };
 
 /** One-screen Memory playfield. Tap two cards or drag a pair. Soft chrome parked. */
@@ -2204,6 +2251,8 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
   const cardsRef = useRef({});
   const done = isMemoryDone(run);
   const teach = memoryShowTeach(run) ? memoryEntryForRun(run) : null;
+  const darkBoard = D === D_DARK;
+  const labelColor = darkBoard ? MEMORY_DARK_LABEL : D.sub;
 
   const onCardPointerDown = (e, id) => {
     if (run.status !== "play" || run.miss) return;
@@ -2239,18 +2288,18 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
   };
 
   return (
-    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box" }}>
+    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: labelColor, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{memoryTitle(uiLang)}</div>
-          <div data-testid="memory-quiet" style={{ fontSize: 12, fontWeight: 700, color: D.sub }}>{memoryQuiet(uiLang)}</div>
+          <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: labelColor }}>{memoryTitle(uiLang)}</div>
+          <div data-testid="memory-quiet" style={{ fontSize: 12, fontWeight: 700, color: labelColor }}>{memoryQuiet(uiLang)}</div>
         </div>
-        <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
+        <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: labelColor }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
         <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
       </div>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-        <MemoryMark size={40} labeled />
+        <MemoryMark size={40} labeled onDark={darkBoard} />
       </div>
       {done ? (
         <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
@@ -2263,7 +2312,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
         </div>
       ) : (
         <>
-          <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
+          <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: labelColor, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
           <div data-testid="memory-grid" data-cols="3" className="memory-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gridAutoRows: `minmax(${MEMORY_CARD_MIN}px, auto)`, gap: 8, width: "100%", maxWidth: "none", justifyItems: "stretch", alignItems: "stretch" }}>
             {(run.cards || []).map((card) => {
               const open = memoryIsOpen(run, card);
@@ -2272,8 +2321,9 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
               const showFace = open || dragging;
               const matched = open && (run.matched || []).includes(card.pairId);
               const text = memoryCardText(card, uiLang, run);
+              const gloss = memoryCardTranslation(card, uiLang, run);
               const paint = memoryCardPaint({
-                theme,
+                theme: darkBoard ? "dark" : "light",
                 matched,
                 wrong,
                 faceUp: showFace,
@@ -2282,8 +2332,18 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
                 wrongLip: D.redDark,
                 wrongFill: D.redBg,
                 wrongInk: D.redDark,
-                ink: D.ink,
+                ink: darkBoard ? MEMORY_DARK_INK : D.ink,
               });
+              const darkUnmatched = darkBoard && !matched && !wrong;
+              const border = darkUnmatched ? `2px solid ${MEMORY_DARK_EDGE}` : paint.border;
+              const borderBottom = darkUnmatched ? `4px solid ${MEMORY_DARK_EDGE}` : paint.borderBottom;
+              const background = darkUnmatched ? MEMORY_DARK_CARD : (darkBoard && matched && !wrong ? MEMORY_DARK_SAGE : paint.background);
+              const ink = darkUnmatched ? MEMORY_DARK_INK : paint.color;
+              const glossColor = wrong
+                ? paint.color
+                : matched
+                  ? (darkBoard ? MEMORY_DARK_INK : "#5E6650")
+                  : (darkBoard ? MEMORY_DARK_GLOSS : D.sub);
               return (
                 <div key={card.id} className="memory-cell" style={{ minHeight: MEMORY_CARD_MIN, width: "100%", minWidth: 0, display: "flex", height: "100%" }}>
                   <button
@@ -2294,6 +2354,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
                     data-pair={card.pairId}
                     data-kind={card.kind}
                     data-face={showFace ? "up" : "down"}
+                    aria-label={showFace ? memoryCardLabel(card, uiLang, run) : undefined}
                     data-open={open ? "yes" : "no"}
                     data-miss={wrong ? "yes" : "no"}
                     data-card-min={MEMORY_CARD_MIN}
@@ -2319,12 +2380,12 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
                       top: dragging ? drag.y - (drag.dy || 0) : undefined,
                       zIndex: dragging ? 20 : 1,
                       margin: 0,
-                      border: paint.border,
-                      borderBottom: paint.borderBottom,
-                      background: paint.background,
-                      color: paint.color,
+                      border,
+                      borderBottom,
+                      background,
+                      color: ink,
                       borderRadius: 18,
-                      padding: "16px 8px",
+                      padding: showFace ? "14px 8px" : "16px 8px",
                       fontFamily: "inherit",
                       fontWeight: 900,
                       fontSize: MEMORY_CARD_TYPE,
@@ -2332,13 +2393,14 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
                       letterSpacing: "-0.03em",
                       textAlign: "center",
                       whiteSpace: "normal",
-                      overflowWrap: "break-word",
+                      overflowWrap: "normal",
                       wordBreak: "normal",
+                      hyphens: "none",
                       cursor: (run.matched || []).includes(card.pairId) ? "default" : "grab",
                       touchAction: "none",
                     }}
                   >
-                    {showFace ? text : <MemoryMark size={MEMORY_CARD_MARK} />}
+                    {showFace ? <MemoryCardFace word={text} translation={gloss} color={glossColor} /> : <MemoryMark size={MEMORY_CARD_MARK} onDark={darkBoard} />}
                   </button>
                 </div>
               );
@@ -4020,8 +4082,9 @@ const UI = {
     testFailed: "Examen no superado", testFailedDesc: "Tres errores — el límite era dos. Tus fallos ya están en Práctica; repásalos y vuelve a intentarlo.",
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
     comeBackTomorrow: "Vuelve mañana por la siguiente escena.",
-    paywallHeadline: "Sigue con tu racha",
-    paywallBody: "Escenas, Cubetas y la doctora — sin techo.",
+    paywallHeadline: "La historia sigue.",
+    paywallHeadlineFallback: "Hay mucho más por leer.",
+    paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
     paywallAnnual: "Un año",
     paywallMonthly: "Un mes",
     paywallHonesty: "Práctica · sin cobro todavía",
@@ -4107,8 +4170,9 @@ const UI = {
     testFailed: "Test not passed", testFailedDesc: "Three mistakes — the limit was two. Your misses are in Review; revisit them and try again.",
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
     comeBackTomorrow: "Come back tomorrow for the next scene.",
-    paywallHeadline: "Keep your streak",
-    paywallBody: "Stories, Cubetas, and Phrase Doctor — no ceiling.",
+    paywallHeadline: "The story goes on.",
+    paywallHeadlineFallback: "There's much\u00A0more to read.",
+    paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
     paywallAnnual: "One year",
     paywallMonthly: "One month",
     paywallHonesty: "Practice · no charge yet",
@@ -4561,6 +4625,12 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
 
 /* ---------------- APP ---------------- */
 
+function HangmanEmphasis({ text }) {
+  return emphasisParts(text).map((part, i) => (
+    part.em ? <em key={i}>{part.text}</em> : <span key={i}>{part.text}</span>
+  ));
+}
+
 export default function App() {
   /* Theme: persisted under prog.theme; memoized D shadows the file-level D
      for every component rendered inside App. Existing D.* call sites work. */
@@ -4617,6 +4687,9 @@ export default function App() {
   }, []);
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
+  const [lecturaCliffhanger, setLecturaCliffhanger] = useState(null);
+  const [chapterBirdHandoff, setChapterBirdHandoff] = useState(false);
+  const [paywallSource, setPaywallSource] = useState(PAYWALL_SOURCE.boot);
   const [paywallArmed, setPaywallArmed] = useState(false);
   const paywallBusyRef = useRef(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
@@ -4667,6 +4740,7 @@ export default function App() {
   const storyPagesSeenRef = useRef({});
   const lecturaStartedRef = useRef(false);
   const lecturaHandoffHold = useRef(false);
+  const chapterDoneRef = useRef(new Set());
   const [doctorHits, setDoctorHits] = useState(0);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [wordOrderMiss, setWordOrderMiss] = useState("");
@@ -4682,6 +4756,7 @@ export default function App() {
   const wordleRef = useRef(null);
   const [cubetasGame, setCubetasGame] = useState(null);
   const [memoryGame, setMemoryGame] = useState(null);
+  const [crosswordGame, setCrosswordGame] = useState(null);
   const cubetasTimerRef = useRef(null);
   const memoryTimerRef = useRef(null);
   const gamesReturnRef = useRef("practica");
@@ -5245,6 +5320,13 @@ export default function App() {
   };
 
   const closeGamesSurface = () => {
+    const gameSource = {
+      cubetas: PAYWALL_SOURCE.cubetas,
+      ahorcado: PAYWALL_SOURCE.hangman,
+      memory: PAYWALL_SOURCE.memory,
+      jeopardy: PAYWALL_SOURCE.jeopardy,
+    }[screen];
+    if (gameSource) setPaywallSource(gameSource);
     if (gamesReturnRef.current === "games") {
       setScreen("games");
       return;
@@ -5705,6 +5787,12 @@ export default function App() {
     setScreen("memory");
   };
 
+  const startCrossword = (from = "practica") => {
+    gamesReturnRef.current = from === "games" ? "games" : "practica";
+    setCrosswordGame(startCrosswordRun(CROSSWORD_GRID));
+    setScreen("crossword");
+  };
+
   const scheduleMemory = (ms, fn) => {
     if (memoryTimerRef.current) clearTimeout(memoryTimerRef.current);
     memoryTimerRef.current = setTimeout(fn, ms);
@@ -5762,6 +5850,9 @@ export default function App() {
   };
 
   const q = session?.questions?.[qi] ?? null;
+  /** Light word-order is Learn cream. Dark word-order is the app dark page and card, with cream text. */
+  const orderCream = q?.type === "order" && theme !== "dark";
+  const orderDark = q?.type === "order" && theme === "dark";
 
   /* ---------- grading ---------- */
 
@@ -6087,8 +6178,39 @@ export default function App() {
     storyPagesSeenRef.current = { ...storyPagesSeenRef.current, [storyView.id]: [...prev, idx] };
   }, [screen, storyView, paraIdx]);
 
+  const releaseLecturaWin = (beat) => {
+    if (!beat) return;
+    setLecturaCliffhanger(null);
+    setChapterBirdHandoff(false);
+    if (!(beat.playStory0 || beat.playLecturaWin)) return;
+    const story = STORIES.find((item) => item.id === beat.storyId);
+    if (!story) return;
+    const playStory0 = beat.playStory0;
+    const playLecturaWin = beat.playLecturaWin;
+    setSession({
+      firstStory0: playStory0,
+      lecturaWin: playLecturaWin,
+      storyId: story.id,
+      title: story.title,
+      host: "rafa",
+      questions: [{}],
+      awarded: true,
+      earnedXP: beat.earned,
+      earnedGems: 10,
+    });
+    setLessonStats({ right: beat.correct, wrong: story.questions.length - beat.correct });
+    setScreenQuip("");
+    if (playStory0) {
+        winBouncePlayed.current = true;
+        setWinBounce(true);
+    }
+    setScreen("done");
+  };
+
   const claimStory = (story, correct) => {
     if (prog.stories?.[story.id]) return;
+    if (chapterDoneRef.current.has(story.id)) return;
+    chapterDoneRef.current.add(story.id);
     const playStory0 = shouldArmStory0Beat({
       storyId: story.id,
       claimed: prog.stories?.[story.id],
@@ -6127,26 +6249,24 @@ export default function App() {
         storyCollectibles: { ...(prev.storyCollectibles || {}), [story.id]: true },
       };
     });
-    if (playStory0 || playLecturaWin) {
-      setSession({
-        firstStory0: playStory0,
-        lecturaWin: playLecturaWin,
-        storyId: story.id,
-        title: story.title,
-        host: "rafa",
-        questions: [{}],
-        awarded: true,
-        earnedXP: earned,
-        earnedGems: 10,
-      });
-      setLessonStats({ right: correct, wrong: story.questions.length - correct });
-      setScreenQuip("");
-      if (playStory0) {
-        winBouncePlayed.current = true;
-        setWinBounce(true);
-      }
-      setScreen("done");
+    emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaChapterDone, storyId: story.id });
+    setLecturaCliffhanger({
+      storyId: story.id,
+      correct,
+      earned,
+      playStory0,
+      playLecturaWin,
+    });
+  };
+
+  const handoffCliffhangerToBird = () => {
+    if (!lecturaCliffhanger) return;
+    if (prog.paywallSeen || prog.unlockedPrem) {
+      releaseLecturaWin(lecturaCliffhanger);
+      return;
     }
+    setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
+    setChapterBirdHandoff(true);
   };
 
   const discoverStoryWord = (story, key) => {
@@ -6257,6 +6377,7 @@ export default function App() {
     };
     beep(quality === "again" ? "bad" : "ok");
     const earned = quality === "again" ? 0 : 2;
+    if (earned) setPaywallSource(PAYWALL_SOURCE.flashcards);
     const t = todayStr();
     const y = yesterdayStr();
     save((prev) => {
@@ -6398,6 +6519,7 @@ export default function App() {
     matchSel, matched, sessionXP, itemXpLock: [...itemXpLockRef.current], combo, lessonStats, showWhy, failKind, quip,
     screenQuip, storyView, paraIdx, storyMode, ansSel, storyShuffle, wordReveal, dialogue,
     rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame,
+    crosswordGame,
   };
   wordleRef.current = wordle;
 
@@ -6492,6 +6614,9 @@ export default function App() {
       setMemoryGame(restored);
       if (restored?.awarded || isMemoryDone(restored)) awardLockRef.current.add("memory");
     }
+    if (live.crosswordGame) {
+      setCrosswordGame(hydrateCrossword(CROSSWORD_GRID, live.crosswordGame) || startCrosswordRun(CROSSWORD_GRID));
+    }
     setScreen(live.screen);
   };
 
@@ -6532,7 +6657,7 @@ export default function App() {
   useEffect(() => {
     if (!liveReady.current) return;
     writeLive(snapshotLive(liveRef.current));
-  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, storyShuffle, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame]);
+  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, storyShuffle, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame, crosswordGame]);
 
   useEffect(() => {
     const flush = () => {
@@ -6776,7 +6901,9 @@ export default function App() {
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
   // A successful Restore tap holds the wall so the status line stays readable.
-  const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
+  const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue() || chapterBirdHandoff;
+  const paywallHeadlineSource = chapterBirdHandoff ? PAYWALL_SOURCE.lecturaBirdHandoff : paywallSource;
+  const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource);
   useEffect(() => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.open });
   }, []);
@@ -7038,6 +7165,8 @@ export default function App() {
     if (!fromBackdrop) {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.continueFree });
     }
+    const beat = lecturaCliffhanger;
+    setChapterBirdHandoff(false);
     setRestoreHold(false);
     setSoftPaywall(false);
     setPaywallArmed(false);
@@ -7050,6 +7179,7 @@ export default function App() {
     });
     if (showA2hs) setA2hsSheet(true);
     save({ paywallSeen: true, ...(showA2hs ? { a2hsSeen: true } : {}) });
+    if (beat) releaseLecturaWin(beat);
   };
   const buySoftPaywall = async (plan) => {
     if (paywallBusyRef.current) return;
@@ -7058,6 +7188,8 @@ export default function App() {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: plan });
       const result = await requestPurchase(plan);
       if (result.status !== "success" || !result.charged) return;
+      const beat = lecturaCliffhanger;
+      setChapterBirdHandoff(false);
       save((prev) => progressAfterPurchaseSuccess(prev, {
         plan: result.plan,
         productId: result.productId,
@@ -7065,6 +7197,7 @@ export default function App() {
       setRestoreHold(false);
       setSoftPaywall(false);
       setPaywallArmed(false);
+      if (beat) releaseLecturaWin(beat);
     } finally {
       paywallBusyRef.current = false;
     }
@@ -7165,6 +7298,7 @@ export default function App() {
   };
 
   const continueFromWin = () => {
+    setPaywallSource(PAYWALL_SOURCE.winContinue);
     const t = todayStr();
     const firstStreakEso = isFirstStreakEsoWin(session);
     const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
@@ -7290,6 +7424,7 @@ export default function App() {
 
   /** Brand CLEAR: one tap on the header lockup lands on Learn home (6-card hub + Sendero/path). Not Perfil, Lectura, last lesson, Camino-legacy-only, or splash. */
   const goLearnHome = () => {
+    setPaywallSource(PAYWALL_SOURCE.brandHome);
     stopSpeak();
     setConfirmExit(false);
     setSheet(null);
@@ -7304,6 +7439,7 @@ export default function App() {
   };
 
   const dismissSessionClose = () => {
+    setPaywallSource(PAYWALL_SOURCE.sessionClose);
     setScreen("home");
     setTab("camino");
     if (bajioFlashPending || isBajioUnlockFlashDue()) {
@@ -7513,14 +7649,16 @@ export default function App() {
         .memory-board { width:100%; max-width:none; margin:0; padding-left:${MEMORY_BOARD_PAD}px; padding-right:${MEMORY_BOARD_PAD}px; box-sizing:border-box; }
         .memory-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:minmax(${MEMORY_CARD_MIN}px, auto); gap:8px; width:100%; max-width:none; justify-items:stretch; align-items:stretch; }
         .memory-cell { min-width:0; width:100%; display:flex; height:100%; }
-        .memory-card { width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:break-word; word-break:normal; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
-        .memory-board .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:break-word; word-break:normal; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
+        .memory-card { width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
+        .memory-board .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
-        .tile-bank { display:grid; grid-template-columns:repeat(auto-fill, minmax(4.6rem, max-content)); gap:8px; justify-content:center; align-items:start; }
-        .tile-slot { display:flex; min-width:4.6rem; min-height:2.55rem; }
-        .tile-slot .tile { flex:1; }
+        .tile-bank, .tile-row { display:flex; flex-wrap:wrap; align-content:flex-start; gap:8px; width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
+        .tile-bank { justify-content:flex-start; align-items:flex-start; }
+        .tile-row { justify-content:flex-start; align-items:center; }
+        .tile-slot { display:flex; flex:0 0 auto; width:max-content; max-width:100%; min-width:min-content; min-height:2.55rem; }
+        .tile-slot .tile, .tile-row > .tile { flex:0 0 auto; width:max-content; min-width:min-content; max-width:100%; white-space:nowrap; }
       `}</style>
 
       {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={completeCenzontleBeat} />}
@@ -8311,6 +8449,17 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
+          <button onClick={() => startCrossword("practica")} data-testid="crossword-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
           </div>
           </div>
           <details style={{ margin: "0 0 14px", textAlign: "left" }}>
@@ -8897,10 +9046,10 @@ export default function App() {
                   e.preventDefault(); e.stopPropagation();
                   const order = session.questions.map((qq) => ({ u: qq._u, i: qq._i }));
                   save({ resume: { unitId: session.unitId, order, qi, xp: sessionXP, right: lessonStats.right, wrong: lessonStats.wrong } });
-                  stopSpeak(); setConfirmExit(false); setScreen("home");
+                  stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home");
                 }}>{uiLang === "en" ? "Save & quit" : "Guardar y salir"}</Btn>
               )}
-              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); stopSpeak(); setConfirmExit(false); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
+              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
             </div>
           </div>
         </div>
@@ -9106,19 +9255,19 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Surface cream lock = Learn home HUB_CREAM. Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is opaque #1E2128 (no pop fade). Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
+          <div data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
             <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
-            <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: D.ink }}>{L.paywallHeadline}</div>
-            <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
+            <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
+            <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
-              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
-              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: HUB_CREAM }}>{L.paywallMonthly}</Btn>
-              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
-              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: D.sub, lineHeight: 1.45 }}>
+              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
+              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, ...(theme === "dark" ? { color: "#F6EFE4", border: "2px solid #4A5160", borderBottom: "4px solid #4A5160" } : {}) }}>{L.paywallMonthly}</Btn>
+              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
+              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: theme === "dark" ? "#CDBBA6" : D.sub, lineHeight: 1.45 }}>
                 {disclosureLines(uiLang, storePrices).map((line, i) => (
                   <p key={i} data-testid={`soft-paywall-disclosure-${i}`} style={{ margin: i === 0 ? "2px 0 0" : "6px 0 0", fontSize: 11, fontWeight: 700, lineHeight: 1.45 }}>
                     {i === 0 && line.startsWith("Ándale Premium")
@@ -9127,7 +9276,7 @@ export default function App() {
                   </p>
                 ))}
               </div>
-              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>
+              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : D.sub }}>
                 <a data-testid="soft-paywall-terms" href={TERMS_OF_USE_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].terms}</a>
                 {" · "}
                 <a data-testid="soft-paywall-privacy" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].privacy}</a>
@@ -9135,15 +9284,15 @@ export default function App() {
                 <a data-testid="soft-paywall-restore" href="#restore" onClick={(event) => { event.preventDefault(); restoreSoftPaywall(); }} style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].restore}</a>
               </div>
               {restoreStatus && (
-                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
+                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : D.sub }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
               )}
               {!canCharge && (
-              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: D.sub, lineHeight: 1.35 }}>
+              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: theme === "dark" ? "#CDBBA6" : D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
               </div>
               )}
               <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
-                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
+                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
                 {L.paywallDismiss}
               </button>
             </div>
@@ -9380,6 +9529,7 @@ export default function App() {
 
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
+        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : undefined} style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : orderDark ? { background: D.bg, color: HUB_CREAM, minHeight: "100vh" } : undefined}>
         <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
@@ -9388,7 +9538,7 @@ export default function App() {
           )}
           {burst > 0 && status !== "idle" && status !== "wrong" && inter && <Confetti key={burst} count={28} />}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 26 }}>
-            <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+            <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div style={{ flex: 1, height: 16, background: D.line, borderRadius: 99, overflow: "hidden" }}>
               <div style={{ width: `${pct}%`, height: "100%", background: D.green, borderRadius: 99, transition: "width .25s", position: "relative", overflow: "hidden" }}>
                 <div className="shimmer" />
@@ -9514,13 +9664,13 @@ export default function App() {
                     <div className="idle"><CoachPortrait id={session.host} mood="happy" size={86} /></div>
                     <span className="nametag">{coachName(session.host)}</span>
                   </div>
-                  <div style={{ position: "relative", border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", background: D.card, flex: 1, marginBottom: 14 }}>
-                    <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
+                  <div data-testid={q.type === "order" ? "order-prompt" : undefined} style={{ position: "relative", border: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderRadius: 16, padding: "14px 16px", background: orderCream ? HUB_CREAM : D.card, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.ink, flex: 1, marginBottom: 14 }}>
+                    <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: orderCream ? HUB_CREAM : D.card, borderLeft: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderBottom: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, transform: "rotate(45deg)" }} />
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                       <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                       <div>
                         <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{q.prompt}</div>
-                        {q.note ? <div style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
+                        {q.note ? <div style={{ fontSize: 13, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
                       </div>
                     </div>
                   </div>
@@ -9539,10 +9689,14 @@ export default function App() {
                   if (showState && isAns) { bg = D.okBg; bd = D.green; col = D.okText; }
                   else if (showState && isSel && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
                   else if (isSel) { bg = "#DDF4FF"; bd = D.blue; col = D.blueDark; }
+                  let badgeCol = bd === D.line ? D.sub : col;
+                  const hoyDark = theme === "dark" && isHoyListenChoiceStep(session, q);
+                  const paint = hoyDark ? hoyListenChoicePaint(hoyListenChoiceTone({ showState, isSel, isAns }), D, HUB_CREAM) : null;
+                  if (paint) { bg = paint.fill; bd = paint.border; col = paint.text; badgeCol = paint.badge; }
                   return (
                     <button key={idx} type="button" className="choice-card" data-testid="choice-card" data-selected={isSel ? "true" : undefined} aria-pressed={isSel} disabled={showState} onClick={() => setSelected(idx)}
-                      style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd, boxShadow: isSel && !showState ? `0 0 0 3px ${D.blue}` : undefined }}>
-                      <span style={{ fontSize: 12, fontWeight: 900, border: `2px solid ${bd}`, borderRadius: 8, padding: "1px 7px", color: bd === D.line ? D.sub : col }}>{idx + 1}</span>
+                      style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd, borderWidth: paint?.edge, borderBottomWidth: paint?.edge, boxShadow: hoyDark ? "none" : (isSel && !showState ? `0 0 0 3px ${D.blue}` : undefined) }}>
+                      <span style={{ fontSize: 12, fontWeight: 900, border: `2px solid ${bd}`, borderRadius: 8, padding: "1px 7px", color: badgeCol }}>{idx + 1}</span>
                       {c}
                     </button>
                   );
@@ -9574,7 +9728,7 @@ export default function App() {
                     </div>
                     {q.answerAid.mode === "bank" && (
                       <div>
-                        <div style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center", marginBottom: 6 }}>
+                        <div className="tile-row" data-testid="answer-tile-row" style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", marginBottom: 6 }}>
                           {typedTileIds.length === 0 && <span style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>{uiLang === "en" ? "Tap words below instead of typing." : "Toca palabras abajo en vez de escribir."}</span>}
                           {typedTileIds.map((id) => {
                             const tile = q.answerAid.tiles.find((t) => t.id === id);
@@ -9622,7 +9776,6 @@ export default function App() {
                                 fontWeight: 800,
                                 padding: "8px 11px",
                                 fontSize: 14,
-                                width: "100%",
                               }}>
                               {tile.w}
                             </button>
@@ -9649,18 +9802,21 @@ export default function App() {
             )}
 
             {q.type === "order" && (
-              <div>
-                <div style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 6 }}>
-	                  {placed.length === 0 && <span style={{ color: D.sub, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
-                  {placed.map((id) => {
+              <div style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : { color: HUB_CREAM }}>
+                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderTop: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, padding: "10px 4px", marginBottom: 6, background: orderCream ? HUB_CREAM : D.card }}>
+	                  {placed.length === 0 && <span style={{ color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
+                  {placed.map((id, index) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
+                    const label = orderTileLabel(t.w, { answer: q.answer, placedIndex: index });
                     return (
                       <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" className="tile" disabled={status !== "idle"}
                         title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
-                        aria-label={`${t.w}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
+                        aria-label={`${label}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                         onClick={() => unplaceOrderTile(id)}
-                        style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }}>
-                        {t.w}
+                        style={orderCream
+                          ? { background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }
+                          : { background: D.card, borderColor: D.line, borderBottomColor: D.line, color: HUB_CREAM }}>
+                        {label}
                         <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                       </button>
                     );
@@ -9668,17 +9824,18 @@ export default function App() {
                 </div>
                 {placed.length > 0 && status === "idle" && (
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 800, color: D.sub }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 800, color: orderCream ? D_LIGHT.ink : HUB_CREAM }}>
                       {uiLang === "en" ? "Tap a placed word to move it." : "Toca una ficha colocada para moverla."}
                     </div>
-                    <button type="button" onClick={() => { setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: D.sub, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
+                    <button type="button" onClick={() => { setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
                       {uiLang === "en" ? "Clear" : "Borrar"}
                     </button>
                   </div>
                 )}
-                <div className="tile-bank">
+                <div className="tile-bank" data-testid="order-tile-bank">
                   {q.shuffledWords.map((t) => {
                     const used = placed.includes(t.id);
+                    const label = orderTileLabel(t.w, { answer: q.answer });
                     return (
                       <div key={t.id} className="tile-slot" data-tile-slot={t.id}
                         onClick={() => { if (used) unplaceOrderTile(t.id); }}>
@@ -9687,8 +9844,14 @@ export default function App() {
                           aria-hidden={used}
                           tabIndex={used ? -1 : 0}
                           onClick={(e) => { e.stopPropagation(); if (!used) placeOrderTile(t.id); }}
-                          style={{ visibility: used ? "hidden" : "visible", pointerEvents: used ? "none" : "auto" }}>
-                          {t.w}
+                          style={{
+                            visibility: used ? "hidden" : "visible",
+                            pointerEvents: used ? "none" : "auto",
+                            ...(orderCream
+                              ? { background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }
+                              : { background: D.card, borderColor: D.line, borderBottomColor: D.line, color: HUB_CREAM }),
+                          }}>
+                          {label}
                         </button>
                       </div>
                     );
@@ -9720,14 +9883,14 @@ export default function App() {
           </div>
 
           {/* ---------- ACTION BAR with mascot ---------- */}
-          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? D.card : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
             <div style={{ maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
               {status !== "idle" && (
                 <div className={status === "wrong" ? "" : "jump"} style={{ flexShrink: 0 }}>
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? D.sub : D.okText }}>
+              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : D.okText }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
                     <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: 0.85 }}>
@@ -9793,6 +9956,7 @@ export default function App() {
             </div>
           </div>
         </div>
+        </div>
       )}
 
       {/* ---------- DIALOGUE DUEL ---------- */}
@@ -9801,10 +9965,10 @@ export default function App() {
         const maxScore = activeDuel.steps.length * 3;
         const stars = dialogue.score >= 8 ? 3 : dialogue.score >= 5 ? 2 : 1;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
+          <div data-testid="dialogue-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
             {burst > 0 && dialogue.done && <Confetti key={burst} count={42} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <button onClick={() => { setScreen("home"); setTab("misiones"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.dialogue); setScreen("home"); setTab("misiones"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, height: 14, background: D.line, borderRadius: 99, overflow: "hidden" }}>
                 <div style={{ width: `${Math.round((dialogue.done ? 1 : dialogue.idx / activeDuel.steps.length) * 100)}%`, height: "100%", background: activeDuel.color }} />
               </div>
@@ -9834,7 +9998,7 @@ export default function App() {
                   ))}
                 </div>
                 <Btn color={activeDuel.color} dark={activeDuel.dark} onClick={() => startDialogue(activeDuel)}>{uiLang === "en" ? "Rematch" : "Revancha"}</Btn>
-	                <Btn outline onClick={() => { setScreen("home"); setTab("misiones"); }} style={{ marginLeft: 10 }}>{L.missions}</Btn>
+	                <Btn outline onClick={() => { setPaywallSource(PAYWALL_SOURCE.dialogue); setScreen("home"); setTab("misiones"); }} style={{ marginLeft: 10 }}>{L.missions}</Btn>
               </div>
             ) : (
               <div style={{ display: "grid", gap: 10 }}>
@@ -9857,10 +10021,10 @@ export default function App() {
         const tiles = Array.from({ length: 24 }, (_, i) => 24 - i);
         const trophyCount = Object.values(prog.missions?.gameTrophies || {}).filter(Boolean).length;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 14px 130px" }}>
+          <div data-testid="snakes-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 14px 130px" }}>
             {burst > 0 && snakeGame.done && <Confetti key={burst} count={54} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-              <button onClick={() => { setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.snake); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".08em" }}>{uiLang === "en" ? "BOARD RUN" : "CARRERA DE TABLERO"}</div>
                 <div style={{ fontWeight: 900, fontSize: 21 }}>Serpientes y Escaleras</div>
@@ -9924,7 +10088,7 @@ export default function App() {
                   {snakeGame.wrong === 0 && <span style={{ border: `1.5px solid ${D.gold}`, borderRadius: 99, padding: "4px 9px", fontSize: 11, fontWeight: 900, color: D.goldDark, background: D.card }}>★ {uiLang === "en" ? "No slides" : "Sin resbalones"}</span>}
                 </div>
                 <Btn color={D.green} dark={D.greenDark} onClick={startSnakes}>{uiLang === "en" ? "Play again" : "Jugar otra vez"}</Btn>
-                <Btn outline onClick={() => { setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
+                <Btn outline onClick={() => { setPaywallSource(PAYWALL_SOURCE.snake); setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
               </div>
             ) : (
               <div className="pop" style={{ border: `2px solid ${D.line}`, borderBottom: `5px solid ${D.line}`, borderRadius: 16, padding: 15, background: D.card }}>
@@ -9985,10 +10149,10 @@ export default function App() {
         const revealed = safeRiskyIsRevealed(item, safeGame);
         const hit = revealed && tappedWrong.length === 0;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
+          <div data-testid="safe-risky-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
             {burst > 0 && safeGame.done && <Confetti key={burst} count={36} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <button onClick={() => { setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.safeRisky); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, height: 14, background: D.line, borderRadius: 99, overflow: "hidden" }}>
                 <div style={{ width: `${safeGame.done ? 100 : Math.round((safeGame.idx / safeGame.items.length) * 100)}%`, height: "100%", background: D.red }} />
               </div>
@@ -10013,7 +10177,7 @@ export default function App() {
                 </div>
                 <p style={{ color: D.sub, fontWeight: 800, margin: "0 0 16px" }}><IcGem size={14} /> +{safeGame.gems || 0}</p>
                 <Btn color={D.red} dark={D.redDark} onClick={startSafeRisky}>{uiLang === "en" ? "Play again" : "Jugar otra vez"}</Btn>
-                <Btn outline onClick={() => { setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
+                <Btn outline onClick={() => { setPaywallSource(PAYWALL_SOURCE.safeRisky); setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
               </div>
             ) : (
               <>
@@ -10087,7 +10251,7 @@ export default function App() {
       {screen === "games" && (
         <div data-testid="games-hub" style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-            <button type="button" onClick={() => { setScreen("home"); setTab("camino"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+            <button type="button" onClick={() => { setPaywallSource(PAYWALL_SOURCE.gamesHub); setScreen("home"); setTab("camino"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div data-testid="games-hub-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{L.hubGames}</div>
             <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
           </div>
@@ -10105,7 +10269,7 @@ export default function App() {
           <button onClick={() => startAhorcado("games")} data-testid="hangman-start" className="games-hub-card"
             style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{hangmanTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{hangmanQuiet(uiLang)}</div>
@@ -10116,7 +10280,7 @@ export default function App() {
           <button onClick={() => startJeopardy("games")} data-testid="jeopardy-start" className="games-hub-card"
             style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{jeopardyTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{jeopardyQuiet(uiLang)}</div>
@@ -10138,10 +10302,21 @@ export default function App() {
           <button onClick={() => startMemory("games")} data-testid="memory-start" className="games-hub-card"
             style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{memoryTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{memoryQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={() => startCrossword("games")} data-testid="crossword-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>
               </div>
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
@@ -10151,11 +10326,11 @@ export default function App() {
 
       {/* ---------- MATCH PAIRS (Práctica) ---------- */}
       {screen === "matchPairs" && matchGame && (() => {
-        const goPractica = () => { setScreen("home"); setTab("practica"); };
+        const goPractica = () => { setPaywallSource(PAYWALL_SOURCE.matchPairs); setScreen("home"); setTab("practica"); };
         const n = matchGame.pairs?.length || 0;
         const got = matchGame.matched?.length || 0;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
+          <div data-testid="match-pairs-screen" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
             {burst > 0 && matchGame.done && <Confetti key={burst} count={36} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <button onClick={goPractica} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -10241,13 +10416,13 @@ export default function App() {
                 </div>
                 <div data-testid="hangman-why" style={{ marginTop: 8 }}>
                   <div style={{ fontSize: 10, fontWeight: 900, color: endLabel, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: endBody }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: endBody }}><HangmanEmphasis text={hangmanWhy(ahorcado, uiLang)} /></div>
                 </div>
                 {hangmanRegionChip(ahorcado) && (
                   <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
                     <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: endLabel, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                     {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
-                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: endLabel, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: endLabel, lineHeight: 1.35, marginTop: 4 }}><HangmanEmphasis text={hangmanRegionNote(ahorcado, uiLang)} /></div>
                     )}
                   </div>
                 )}
@@ -10312,13 +10487,13 @@ export default function App() {
                     </div>
                     <div data-testid="hangman-why" style={{ marginTop: 8 }}>
                       <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}><HangmanEmphasis text={hangmanWhy(ahorcado, uiLang)} /></div>
                     </div>
                     {hangmanRegionChip(ahorcado) && (
                       <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
                         <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                         {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
-                          <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                          <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}><HangmanEmphasis text={hangmanRegionNote(ahorcado, uiLang)} /></div>
                         )}
                       </div>
                     )}
@@ -10468,6 +10643,22 @@ export default function App() {
         />
       )}
 
+      {screen === "crossword" && crosswordGame && (
+        <CrosswordPlayfield
+          run={crosswordGame}
+          grid={CROSSWORD_GRID}
+          uiLang={uiLang}
+          onType={(letter) => setCrosswordGame((cur) => typeCrosswordLetter(CROSSWORD_GRID, cur, letter))}
+          onBackspace={() => setCrosswordGame((cur) => backspaceCrossword(CROSSWORD_GRID, cur))}
+          onSelectCell={(row, col) => setCrosswordGame((cur) => selectCrosswordCell(CROSSWORD_GRID, cur, row, col))}
+          onSelectClue={(wordId) => setCrosswordGame((cur) => selectCrosswordClue(CROSSWORD_GRID, cur, wordId))}
+          onReveal={() => setCrosswordGame((cur) => revealCrosswordWord(CROSSWORD_GRID, cur))}
+          onClose={closeGamesSurface}
+          langControl={<LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />}
+          dark={theme === "dark"}
+        />
+      )}
+
       {/* ---------- STORY READER (tap-to-define) ---------- */}
       {screen === "story" && storyView && (() => {
         const story = storyView;
@@ -10486,7 +10677,7 @@ export default function App() {
         return (
           <div data-testid="story-reader" data-story-id={story.id} style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 150px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-	              <button type="button" onClick={() => { setWordSel(null); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+	              <button type="button" onClick={() => { setWordSel(null); setPaywallSource(PAYWALL_SOURCE.storyClose); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: sec.color }}>{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
@@ -10625,14 +10816,14 @@ export default function App() {
                   </div>
                 )}
                 {checkpoints[pi] && (
-                  <div style={{ margin: "10px 0 0 48px", border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : D.line}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : "#fff" }}>
-                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : D.sub, marginBottom: 6 }}>
+                  <div style={{ margin: "10px 0 0 48px", border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
+                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => (
                         <button key={choice} disabled={!!checkState[pi]} onClick={() => answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a)}
-                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : D.line}`, background: checkState[pi] === choice ? "#fff" : "#F7F7F7", borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : D.ink }}>
+                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: checkState[pi] === choice ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
                           {choice}
                         </button>
                       ))}
@@ -10719,6 +10910,36 @@ export default function App() {
             </div>
             </>)}
 
+            {lecturaCliffhanger?.storyId === story.id && (
+              <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, marginLeft: -16, marginRight: -16, background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 14, padding: "14px 10px 12px" }}>
+                <p data-testid="lectura-cliffhanger-line" style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700, lineHeight: 1.55, color: D.ink }}>
+                  {lecturaCliffhangerLine(story.id)}
+                </p>
+                <div data-testid="lectura-bird-handoff" style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM }}>
+                  <button
+                    type="button"
+                    data-testid="lectura-bird-handoff-cta"
+                    onClick={handoffCliffhangerToBird}
+                    style={{
+                      background: theme === "dark" ? "transparent" : HUB_CREAM,
+                      color: theme === "dark" ? "#B8C0A0" : MARK_INK,
+                      border: theme === "dark" ? "1px solid #B8C0A0" : `1px solid ${MARK_INK}`,
+                      borderRadius: 12,
+                      padding: "10px 16px",
+                      minHeight: 44,
+                      fontFamily: "inherit",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      lineHeight: 1.35,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {L.continue}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* sticky definition card */}
             {wordSel && (() => {
               const vw = typeof window !== "undefined" ? window.innerWidth : 400;
@@ -10784,6 +11005,7 @@ export default function App() {
         const quietWin = session.firstHoy || session.firstDoctora || session.firstStory0 || session.lecturaWin;
         const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : session.lecturaWin ? "lectura-win" : undefined;
         const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : session.lecturaWin ? "lectura-win-continue" : undefined;
+        const streakChip = streakChipLabel(prog.streak, uiLang);
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
           {!quietWin && <Confetti count={perfect ? 160 : 70} />}
@@ -10822,17 +11044,17 @@ export default function App() {
             {[
               { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, testid: "win-earned-xp" },
 	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, testid: "win-earned-gems" },
-	              { v: <span><IcFlame size={20} className="flame" /> {prog.streak}</span>, l: L.streakDays, c: "#FF9600", testid: "win-earned-streak" },
+	              ...(streakChip ? [{ v: <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}><IcFlame size={20} className="flame" />{streakChip}</span>, l: null, c: "#FF9600", testid: "win-earned-streak" }] : []),
             ].filter((s) => !session.firstDoctora || s.testid === "win-earned-streak").map((s, i) => (
               <div key={i} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
-                <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: 22, color: s.c }}>{s.v}</div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>
+                <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: s.testid === "win-earned-streak" ? 16 : 22, color: s.c, lineHeight: 1.25, whiteSpace: s.testid === "win-earned-streak" ? "nowrap" : undefined }}>{s.v}</div>
+                {s.l != null && <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>}
               </div>
             ))}
           </div>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
-	            <Btn data-testid={continueTestId} onClick={continueFromWin}>{L.continue}</Btn>
+	            <Btn data-testid={continueTestId || "win-continue"} onClick={continueFromWin}>{L.continue}</Btn>
           </div>
           {showLecturaHandoff && (
             <div data-testid="lectura-handoff" style={{ marginTop: 18, background: HUB_CREAM, borderRadius: 14, padding: "10px 12px 12px" }}>
@@ -10933,7 +11155,7 @@ export default function App() {
                   </Btn>
                 )}
 	                {trackedCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview(true)}>{L.reviewErrors}</Btn>}
-	                <Btn outline onClick={() => { setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
+	                <Btn outline data-testid="hearts-to-path" onClick={() => { setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
               </div>
             </>
           ) : (
@@ -10944,10 +11166,10 @@ export default function App() {
               </p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22, flexWrap: "wrap" }}>
 	                {trackedCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview(true)}>{L.practiceRecover} <IcHeart size={15} /></Btn>}
-                <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < REFILL_COST} onClick={() => { refillHearts(); setScreen("home"); setTab("camino"); }}>
+                <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < REFILL_COST} onClick={() => { refillHearts(); setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>
 	                  {L.refill} · <IcGem size={15} /> {REFILL_COST}
                 </Btn>
-	                <Btn outline onClick={() => { setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
+	                <Btn outline data-testid="hearts-to-path" onClick={() => { setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
               </div>
             </>
           )}
@@ -10986,7 +11208,7 @@ export default function App() {
               <Btn color={COACHES.diego.color} dark={COACHES.diego.dark} onClick={() => startRivalDuel()}>
                 {uiLang === "en" ? "Accept the challenge" : "Aceptar el reto"}
               </Btn>
-              <Btn outline onClick={() => { setScreen("home"); setTab("misiones"); }}>
+              <Btn outline data-testid="rival-back" onClick={() => { setPaywallSource(PAYWALL_SOURCE.rival); setScreen("home"); setTab("misiones"); }}>
                 {uiLang === "en" ? "Not now" : "Ahora no"}
               </Btn>
             </div>
@@ -11025,7 +11247,7 @@ export default function App() {
               <Btn color={COACHES.diego.color} dark={COACHES.diego.dark} onClick={() => startRivalDuel()}>
                 {uiLang === "en" ? "Rematch" : "Revancha"}
               </Btn>
-              <Btn outline onClick={() => { setScreen("home"); setTab("misiones"); }}>
+              <Btn outline data-testid="rival-done-back" onClick={() => { setPaywallSource(PAYWALL_SOURCE.rival); setScreen("home"); setTab("misiones"); }}>
                 {uiLang === "en" ? "Done" : "Listo"}
               </Btn>
             </div>
