@@ -1578,6 +1578,13 @@ const CoachPortrait = ({ id = "luna", mood = "happy", size = 92, badge }) => {
 
 const coachName = (id) => COACHES[id]?.name || COACHES.luna.name;
 
+/** Dark mode only, and only the Luna name tag. Light mode stays on .nametag. */
+const lunaNameTagChrome = (theme, name) => (
+  theme === "dark" && name === "Luna"
+    ? { background: "#1E2128", borderColor: "#2A2E36", color: "#CDBBA6" }
+    : undefined
+);
+
 /* ---------------- CONFETTI ---------------- */
 
 const CONF_COLORS = ["#58CC02", "#1CB0F6", "#FFC800", "#FF4B4B", "#CE82FF", "#FF9600", "#E4007C"];
@@ -8981,7 +8988,7 @@ export default function App() {
             <div style={{ display: "flex", gap: 10, alignItems: "center", margin: "10px 0 2px", background: D.subtle, borderRadius: 14, padding: "8px 12px" }}>
               <div style={{ flexShrink: 0, lineHeight: 0 }}><CoachPortrait id={hostForUnit(sheet.unit.id)} mood="happy" size={46} /></div>
               <div>
-                <span className="nametag" style={{ marginRight: 6 }}>{VOICES[hostForUnit(sheet.unit.id)].name}</span>
+                <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, VOICES[hostForUnit(sheet.unit.id)].name) }}>{VOICES[hostForUnit(sheet.unit.id)].name}</span>
                 <span style={{ fontSize: 13.5, fontWeight: 800, fontStyle: "italic" }}>«{UNIT_INTROS[sheet.unit.id] || "¡Vamos!"}»</span>
               </div>
             </div>
@@ -9662,7 +9669,7 @@ export default function App() {
                 <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
                     <div className="idle"><CoachPortrait id={session.host} mood="happy" size={86} /></div>
-                    <span className="nametag">{coachName(session.host)}</span>
+                    <span className="nametag" style={lunaNameTagChrome(theme, coachName(session.host))}>{coachName(session.host)}</span>
                   </div>
                   <div data-testid={q.type === "order" ? "order-prompt" : undefined} style={{ position: "relative", border: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderRadius: 16, padding: "14px 16px", background: orderCream ? HUB_CREAM : D.card, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.ink, flex: 1, marginBottom: 14 }}>
                     <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: orderCream ? HUB_CREAM : D.card, borderLeft: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderBottom: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, transform: "rotate(45deg)" }} />
@@ -11026,7 +11033,7 @@ export default function App() {
             </div>
           )}
           {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
-            <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
+            <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, coachName(session.host)) }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
           <h2 data-testid={winTestId} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
@@ -11140,7 +11147,7 @@ export default function App() {
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "70px 20px", textAlign: "center" }}>
           <CoachPortrait id={session.host} mood="sad" size={120} />
           {screenQuip && <div style={{ fontWeight: 800, fontStyle: "italic", margin: "6px 0 0", fontSize: 15 }}>
-            <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
+            <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, coachName(session.host)) }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
           {failKind === "test" ? (
             <>
