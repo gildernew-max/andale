@@ -2342,9 +2342,10 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
                 ink: darkBoard ? MEMORY_DARK_INK : D.ink,
               });
               const darkUnmatched = darkBoard && !matched && !wrong;
-              const border = darkUnmatched ? `2px solid ${MEMORY_DARK_EDGE}` : paint.border;
-              const borderBottom = darkUnmatched ? `4px solid ${MEMORY_DARK_EDGE}` : paint.borderBottom;
-              const background = darkUnmatched ? MEMORY_DARK_CARD : (darkBoard && matched && !wrong ? MEMORY_DARK_SAGE : paint.background);
+              const lightUnmatched = !darkBoard && !matched && !wrong;
+              const border = darkUnmatched ? `2px solid ${MEMORY_DARK_EDGE}` : lightUnmatched ? "2px solid #C46B3A" : paint.border;
+              const borderBottom = darkUnmatched ? `4px solid ${MEMORY_DARK_EDGE}` : lightUnmatched ? "4px solid #C46B3A" : paint.borderBottom;
+              const background = darkUnmatched ? MEMORY_DARK_CARD : lightUnmatched ? (showFace ? "#fff" : HUB_CREAM) : (darkBoard && matched && !wrong ? MEMORY_DARK_SAGE : paint.background);
               const ink = darkUnmatched ? MEMORY_DARK_INK : paint.color;
               const glossColor = wrong
                 ? paint.color
