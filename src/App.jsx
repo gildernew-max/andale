@@ -24,7 +24,7 @@ import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pick
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
-import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle } from "./spanishKeyboard.js";
+import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle, spanishKeyboardKeyStyle } from "./spanishKeyboard.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
 import { MemoryCardFace } from "./MemoryCardFace.jsx";
@@ -116,6 +116,28 @@ import {
   isHangmanSolved,
   startHangmanRun,
 } from "./hangman.js";
+import {
+  loadWordleRun,
+  saveWordleRun,
+  WORDLE_ABSENT,
+  WORDLE_CORRECT,
+  WORDLE_PRESENT,
+  wordleBackspace,
+  wordleChrome,
+  wordleCommit,
+  wordleDayKey,
+  wordleEnterLabel,
+  wordleGuessSet,
+  wordleHowTo,
+  wordleInvalidLine,
+  wordleKeyState,
+  wordleLetterFromKey,
+  wordleQuiet,
+  wordleRows,
+  wordleSentenceParts,
+  wordleTitle,
+  wordleTypeLetter,
+} from "./wordle.js";
 import {
   JEOPARDY_VALUES,
   chooseJeopardyChoice,
@@ -2128,6 +2150,17 @@ const MEMORY_DARK_SAGE = "#677050";
 const MEMORY_DARK_LABEL = "#A0A4AB";
 /** Card-back sage tile, lightened so it stays visible on the dark card. */
 const MEMORY_DARK_MARK = "#B8C0A0";
+
+/** Flat five-tile mark — cream / terracotta / sage. No second mascot. */
+const WordleMark = ({ size = 44, tile = "#F6EFE4" }) => (
+  <svg data-testid="wordle-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
+    <rect x="3" y="16" width="6.4" height="6.4" rx="1.2" fill={tile} stroke="#C46B3A" strokeWidth="1.4" />
+    <rect x="11.2" y="16" width="6.4" height="6.4" rx="1.2" fill="#5C7356" />
+    <rect x="19.4" y="16" width="6.4" height="6.4" rx="1.2" fill="#C46B3A" />
+    <rect x="27.6" y="16" width="6.4" height="6.4" rx="1.2" fill="#5C7356" />
+    <rect x="35.2" y="16" width="6.4" height="6.4" rx="1.2" fill={tile} stroke="#C46B3A" strokeWidth="1.4" />
+  </svg>
+);
 
 /** Flat geometric two-tile / flip-card mark — cream / terracotta / sage. No second mascot.
  *  `tile` is the left plate (Games hub passes the dark card). `onDark` lightens the sage half on the Memory board. */
@@ -4372,6 +4405,189 @@ const LangToggle = ({ uiLang, D, onPick, style }) => (
   </div>
 );
 
+const wordleKeyStatus = (mark) => {
+  if (mark === "correct" || mark === "present") return mark;
+  if (mark === "absent") return "wrong";
+  return "unused";
+};
+
+/** Letter keys are SpanishKeyboardKey. Enter and delete use the same unused-key face. */
+const WordleKeys = ({ D, dark, layout, marks, disabled, onPick, onEnter, onBackspace, onLayoutChange, enterLabel, deleteLabel }) => {
+  const mode = normalizeLetterLayout(layout);
+  const theme = dark ? "dark" : "light";
+  const light = {
+    line: D.line,
+    green: D.green,
+    greenDark: D.greenDark,
+    red: D.red,
+    redDark: D.redDark,
+    okBg: D.okBg,
+    okText: D.okText,
+    badBg: D.badBg,
+    badText: D.badText,
+    card: D.card,
+    cream: "#F6EFE4",
+    muted: D.sub,
+    wordleCorrect: WORDLE_CORRECT,
+    wordlePresent: WORDLE_PRESENT,
+    wordleWrong: WORDLE_ABSENT,
+  };
+  const actionStyle = {
+    ...spanishKeyboardKeyStyle({ theme, status: "unused", disabled, light }),
+    maxWidth: 112,
+  };
+  return (
+    <div data-testid="letter-board" data-layout={mode}>
+      <div style={{ display: "grid", gap: 6 }}>
+        {rowsForLayout(mode).map((row, ri) => (
+          <div key={ri} data-testid="letter-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+            {row.map((letter) => {
+              const status = wordleKeyStatus(marks[letter]);
+              return (
+                <SpanishKeyboardKey
+                  key={letter}
+                  letter={letter}
+                  theme={theme}
+                  status={status}
+                  disabled={disabled}
+                  onPick={onPick}
+                  light={light}
+                />
+              );
+            })}
+          </div>
+        ))}
+        <div data-testid="letter-board-actions" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+          <button type="button" data-testid="letter-board-backspace" aria-label={deleteLabel || "Delete"} disabled={disabled} onClick={onBackspace} style={actionStyle}>⌫</button>
+          <button type="button" data-testid="letter-board-enter" disabled={disabled} onClick={onEnter} style={{ ...actionStyle, flex: "1.6 1 0", maxWidth: 160 }}>{enterLabel || "Enter"}</button>
+        </div>
+      </div>
+      <div data-testid="letter-layout-toggle" role="group" aria-label="ABC QWERTY"
+        style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 10 }}>
+        <button type="button" data-testid="letter-layout-abc" aria-pressed={mode === "abc"}
+          onClick={() => onLayoutChange("abc")}
+          style={{
+            border: "none", background: "none", fontFamily: "inherit", padding: "4px 2px", cursor: "pointer",
+            fontWeight: mode === "abc" ? 900 : 700, fontSize: 11, letterSpacing: ".04em", lineHeight: 1,
+            color: mode === "abc" ? D.ink : D.sub,
+          }}>ABC</button>
+        <span aria-hidden="true" style={{ color: D.sub, fontWeight: 700, fontSize: 11, lineHeight: 1 }}>·</span>
+        <button type="button" data-testid="letter-layout-qwerty" aria-pressed={mode === "qwerty"}
+          onClick={() => onLayoutChange("qwerty")}
+          style={{
+            border: "none", background: "none", fontFamily: "inherit", padding: "4px 2px", cursor: "pointer",
+            fontWeight: mode === "qwerty" ? 900 : 700, fontSize: 11, letterSpacing: ".04em", lineHeight: 1,
+            color: mode === "qwerty" ? D.ink : D.sub,
+          }}>QWERTY</button>
+      </div>
+    </div>
+  );
+};
+
+const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onType, onBackspace, onCommit, onLayoutChange, onClose, onLang }) => {
+  const rows = wordleRows(run);
+  const keyMarks = wordleKeyState(run.guesses, run.answer);
+  const over = run.status !== "play";
+  const reveal = wordleSentenceParts(run.es, run.display);
+  const chrome = wordleChrome(!!dark);
+  return (
+    <div
+      data-testid="wordle-board"
+      data-status={run.status}
+      data-day={run.day}
+      data-theme={dark ? "dark" : "light"}
+      className="wordle-screen"
+      style={{
+        "--wordle-square": chrome.square,
+        "--wordle-letter": chrome.letter,
+        "--wordle-line": chrome.line,
+        "--wordle-board": chrome.board,
+        "--wordle-quiet": chrome.quiet,
+        "--wordle-clue": chrome.clue,
+        "--wordle-gloss": chrome.gloss,
+        background: chrome.board,
+        color: chrome.letter,
+      }}
+    >
+      <div className="wordle-head">
+        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: chrome.quiet, padding: "8px 10px", margin: "-8px -10px", minWidth: 44, minHeight: 44 }}>✕</button>
+        <WordleMark size={28} tile={chrome.square} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div data-testid="wordle-title" style={{ fontWeight: 800, fontSize: 15, color: chrome.quiet }}>{wordleTitle(uiLang)}</div>
+          <div data-testid="wordle-howto" style={{ fontSize: 12, fontWeight: 700, color: chrome.quiet }}>{wordleHowTo(uiLang)}</div>
+        </div>
+        <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
+      </div>
+      <div className="wordle-board-slot">
+        <div
+          className="wordle-grid"
+          data-testid="wordle-grid"
+          style={dark ? {
+            "--wordle-correct": chrome.correct,
+            "--wordle-present": chrome.present,
+            "--wordle-absent": chrome.absent,
+            "--wordle-correct-ink": chrome.correctInk,
+            "--wordle-present-ink": chrome.presentInk,
+            "--wordle-absent-ink": chrome.absentInk,
+          } : undefined}
+        >
+          {rows.map((row, ri) => (
+            <div
+              key={`${ri}-${row.current ? shake : "set"}`}
+              data-testid="wordle-row"
+              className={row.current && shake ? "wordle-row wordle-shake" : "wordle-row"}
+            >
+              {row.letters.map((letter, ci) => {
+                const mark = row.marks[ci];
+                const flipping = flipRow === ri && !!mark;
+                return (
+                  <div
+                    key={ci}
+                    data-testid="wordle-tile"
+                    data-mark={mark || "empty"}
+                    data-letter={letter}
+                    className={flipping ? "wordle-tile wordle-flip" : "wordle-tile"}
+                    style={{
+                      "--flip-i": ci,
+                      "--tile-bg": mark ? `var(--wordle-${mark})` : chrome.square,
+                      "--tile-ink": mark ? `var(--wordle-${mark}-ink)` : chrome.letter,
+                      background: mark ? `var(--wordle-${mark})` : chrome.square,
+                      color: mark ? `var(--wordle-${mark}-ink)` : chrome.letter,
+                      borderColor: mark ? "transparent" : chrome.line,
+                    }}
+                  >{letter}</div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div data-testid="wordle-invalid" className="wordle-note">{invalid ? wordleInvalidLine(uiLang) : ""}</div>
+      {over && (
+        <div data-testid="wordle-reveal" className="wordle-reveal" data-display={run.display}>
+          <div data-testid="wordle-sentence">{reveal.before}{reveal.bold ? <span data-testid="wordle-answer">{reveal.bold}</span> : null}{reveal.after}</div>
+          <div data-testid="wordle-gloss">{run.en}</div>
+        </div>
+      )}
+      <div className="wordle-keys">
+        <WordleKeys
+          D={D}
+          dark={!!dark}
+          layout={layout}
+          marks={keyMarks}
+          disabled={over}
+          onPick={onType}
+          onEnter={onCommit}
+          onBackspace={onBackspace}
+          onLayoutChange={onLayoutChange}
+          enterLabel={wordleEnterLabel(uiLang)}
+          deleteLabel={uiLang === "en" ? "Delete" : "Borrar"}
+        />
+      </div>
+    </div>
+  );
+};
+
 const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, ...rest }) => (
   <button type="button" onClick={onClick} disabled={disabled} className="duo-btn"
     style={{
@@ -4514,6 +4730,11 @@ export default function App() {
   const [snakeGame, setSnakeGame] = useState(null);
   const [matchGame, setMatchGame] = useState(null);
   const [ahorcado, setAhorcado] = useState(null);
+  const [wordle, setWordle] = useState(null);
+  const [wordleInvalid, setWordleInvalid] = useState(false);
+  const [wordleShake, setWordleShake] = useState(0);
+  const [wordleFlip, setWordleFlip] = useState(null);
+  const wordleRef = useRef(null);
   const [cubetasGame, setCubetasGame] = useState(null);
   const [memoryGame, setMemoryGame] = useState(null);
   const [crosswordGame, setCrosswordGame] = useState(null);
@@ -4538,6 +4759,7 @@ export default function App() {
   const narrationRef = useRef(null);
   const liveReady = useRef(false);
   const liveRef = useRef(null);
+  const hydrated = useRef(false);
   const awardLockRef = useRef(new Set());
   const sessionXPRef = useRef(0);
   const itemXpLockRef = useRef(new Set());
@@ -4570,10 +4792,11 @@ export default function App() {
 	        merged.mistakes.forEach((m) => { srs[`${m.u}|${m.i}`] = { ef: 2.5, reps: 0, interval: 0, due: Date.now() }; });
 	        merged = { ...merged, srs, mistakes: [] };
 	      }
-	      if (merged.voiceName) window.__andaleVoiceName = merged.voiceName;
-	      loaded = regen(merged);
-	      return loaded;
-	    });
+      if (merged.voiceName) window.__andaleVoiceName = merged.voiceName;
+      loaded = regen(merged);
+      hydrated.current = true;
+      return loaded;
+    });
 	    try { window.speechSynthesis.getVoices(); } catch (e) {}
 	    // Streak gap check: if last activity was 2 days ago, the streak is "salvageable"
 	    const today = todayStr(); const y = yesterdayStr();
@@ -4637,9 +4860,10 @@ export default function App() {
   const save = (patch) =>
     setProg((prev) => (typeof patch === "function" ? patch(prev) : { ...prev, ...patch }));
 
-  const hydrated = useRef(false);
   useEffect(() => {
-    if (!hydrated.current) { hydrated.current = true; return; } // skip pre-hydration default state
+    // Skip the default state. Strict Mode replays this effect; flipping the
+    // flag inside the skip would write those defaults over a real save.
+    if (!hydrated.current) return;
     try { storage.set(STORAGE_KEY, JSON.stringify({ ...prog, contentVersion: CONTENT_VERSION })); } catch (e) {}
   }, [prog]);
 
@@ -5161,6 +5385,52 @@ export default function App() {
       }
       return next;
     });
+  };
+
+  const startWordle = (from = "practica") => {
+    gamesReturnRef.current = from === "games" ? "games" : from === "practica" ? "practica" : "camino";
+    const run = loadWordleRun(window.localStorage, new Date());
+    wordleRef.current = run;
+    setWordle(run);
+    setWordleInvalid(false);
+    setWordleShake(0);
+    setWordleFlip(null);
+    setScreen("wordle");
+  };
+
+  const typeWordleLetter = (letter) => {
+    const cur = wordleRef.current;
+    if (!cur) return;
+    const next = wordleTypeLetter(cur, letter);
+    if (next === cur) return;
+    wordleRef.current = next;
+    setWordleInvalid(false);
+    setWordle(next);
+  };
+
+  const backspaceWordle = () => {
+    const cur = wordleRef.current;
+    if (!cur) return;
+    const next = wordleBackspace(cur);
+    if (next === cur) return;
+    wordleRef.current = next;
+    setWordleInvalid(false);
+    setWordle(next);
+  };
+
+  const commitWordleGuess = () => {
+    const cur = wordleRef.current;
+    if (!cur || cur.status !== "play") return;
+    const result = wordleCommit(cur, wordleGuessSet());
+    if (result.invalid || result.short) {
+      setWordleShake((n) => n + 1);
+      setWordleInvalid(!!result.invalid);
+      return;
+    }
+    wordleRef.current = result.run;
+    setWordleInvalid(false);
+    setWordleFlip(result.run.guesses.length - 1);
+    setWordle(result.run);
   };
 
   const startAhorcado = (from = "camino") => {
@@ -6232,6 +6502,7 @@ export default function App() {
     rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame,
     crosswordGame,
   };
+  wordleRef.current = wordle;
 
   const applyLive = (live, claimedStories) => {
     const storyResumeBlocked = live?.screen === "story"
@@ -6308,6 +6579,12 @@ export default function App() {
       const restored = hydrateHangman(live.ahorcado);
       setAhorcado(restored);
       if (restored?.awarded || isHangmanOver(restored)) awardLockRef.current.add("ahorcado");
+    }
+    if (live.screen === "wordle") {
+      setWordle(loadWordleRun(window.localStorage, new Date()));
+      setWordleInvalid(false);
+      setWordleShake(0);
+      setWordleFlip(null);
     }
     if (live.cubetasGame) {
       setCubetasGame(live.cubetasGame);
@@ -6458,6 +6735,46 @@ export default function App() {
     return () => window.removeEventListener("keydown", h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, ahorcado]);
+
+  useEffect(() => {
+    if (!wordle) return;
+    const today = wordleDayKey(new Date(now));
+    if (wordle.day !== today) {
+      const next = loadWordleRun(window.localStorage, new Date(now));
+      wordleRef.current = next;
+      setWordle(next);
+      setWordleInvalid(false);
+      setWordleShake(0);
+      setWordleFlip(null);
+      return;
+    }
+    saveWordleRun(window.localStorage, wordle);
+  }, [wordle, now]);
+
+  useEffect(() => {
+    if (screen !== "wordle") return;
+    const h = (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitWordleGuess();
+        return;
+      }
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        backspaceWordle();
+        return;
+      }
+      if (wordleLetterFromKey(e.key)) {
+        e.preventDefault();
+        typeWordleLetter(e.key);
+      }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [screen]);
 
   const pct = session ? Math.round((qi / session.questions.length) * 100) : 0;
   const srsEntries = Object.entries(prog.srs || {});
@@ -7141,6 +7458,86 @@ export default function App() {
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 800; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-800.woff2') format('woff2'); }
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 900; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-900.woff2') format('woff2'); }
         html, body, #root { margin: 0; padding: 0; width: 100%; max-width: 100%; }
+        :root {
+          /* Light tiles only. Dark fills and cream letters come from WORDLE_DARK. */
+          --wordle-correct: ${WORDLE_CORRECT};
+          --wordle-correct-ink: #fff;
+          --wordle-present: ${WORDLE_PRESENT};
+          --wordle-present-ink: #fff;
+          --wordle-absent: ${WORDLE_ABSENT};
+          --wordle-absent-ink: #fff;
+        }
+        .wordle-screen {
+          /* Sticky brand bar is 56px. The board fills what's left so the keyboard stays on screen. */
+          height: calc(100vh - 56px);
+          height: calc(100dvh - 56px);
+          max-height: calc(100dvh - 56px);
+          width: 100%;
+          max-width: 480px;
+          margin: 0 auto;
+          padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          background: var(--wordle-board, #F6EFE4);
+          color: var(--wordle-letter, #3C3C3C);
+        }
+        .wordle-head { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .wordle-board-slot { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .wordle-grid {
+          height: 100%;
+          width: auto;
+          max-width: 100%;
+          aspect-ratio: 5 / 6;
+          display: grid;
+          grid-template-rows: repeat(6, minmax(0, 1fr));
+          gap: 4px;
+        }
+        .wordle-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; min-height: 0; min-width: 0; perspective: 420px; }
+        .wordle-tile {
+          box-sizing: border-box;
+          width: 100%;
+          height: 100%;
+          min-width: 0;
+          min-height: 0;
+          border: 1px solid var(--wordle-line, #D9CFC3);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 900;
+          font-size: clamp(15px, 4.8vw, 26px);
+          line-height: 1;
+          text-transform: uppercase;
+          background: var(--wordle-square, #fff);
+          color: var(--wordle-letter, #3C3C3C);
+          transform-style: preserve-3d;
+        }
+        @keyframes wordleFlip {
+          0% { transform: rotateX(0); background: var(--wordle-square, #fff); color: var(--wordle-letter, #3C3C3C); border-color: var(--wordle-line, #D9CFC3); }
+          45% { transform: rotateX(-90deg); background: var(--wordle-square, #fff); color: var(--wordle-letter, #3C3C3C); border-color: var(--wordle-line, #D9CFC3); }
+          55% { transform: rotateX(-90deg); background: var(--tile-bg); color: var(--tile-ink); border-color: transparent; }
+          100% { transform: rotateX(0); background: var(--tile-bg); color: var(--tile-ink); border-color: transparent; }
+        }
+        .wordle-flip {
+          animation: wordleFlip 420ms ease both;
+          animation-delay: calc(var(--flip-i) * 80ms);
+        }
+        .wordle-note { flex: 0 0 auto; min-height: 18px; text-align: center; font-size: 13px; font-weight: 800; color: var(--wordle-quiet, #8A8175); line-height: 1.2; }
+        .wordle-reveal { flex: 0 0 auto; text-align: center; padding: 2px 8px 4px; font-size: 16px; }
+        .wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 600; line-height: 1.35; color: var(--wordle-clue, #3C3C3C); }
+        .wordle-reveal [data-testid="wordle-answer"] { font-weight: 900; }
+        .wordle-reveal [data-testid="wordle-gloss"] { font-size: 0.7em; font-weight: 700; line-height: 1.35; color: var(--wordle-gloss, #777777); margin-top: 2px; }
+        .wordle-keys { flex: 0 0 auto; width: 100%; max-width: 100%; }
+        @keyframes wordleShake {
+          0%, 100% { transform: translateX(0); }
+          18% { transform: translateX(-6px); }
+          36% { transform: translateX(6px); }
+          54% { transform: translateX(-4px); }
+          72% { transform: translateX(4px); }
+        }
+        .wordle-shake { animation: wordleShake .45s ease; }
         * { -webkit-tap-highlight-color: transparent; }
         button, input, select, textarea { touch-action: manipulation; }
         .duo-btn:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px !important; }
@@ -7219,7 +7616,7 @@ export default function App() {
         @keyframes cubetasGemTick { 0%{transform:translateY(8px) scale(.6);opacity:0} 35%{transform:translateY(-4px) scale(1.1);opacity:1} 100%{transform:translateY(-18px) scale(1);opacity:0} }
         .cubetas-gem-tick { animation: cubetasGemTick 360ms ${CUBETAS_EASE_LIFT} ${CUBETAS_GRAB_MS}ms both; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
-        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track { animation:none !important; } }
+        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track,.wordle-flip { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
         .node-btn:active:not(:disabled) { transform: translateY(3px); }
@@ -8006,6 +8403,17 @@ export default function App() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{jeopardyTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{jeopardyQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={() => startWordle("practica")} data-testid="wordle-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{wordleTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{wordleQuiet(uiLang)}</div>
               </div>
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
@@ -9860,6 +10268,17 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
+          <button onClick={() => startWordle("games")} data-testid="wordle-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{wordleTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{wordleQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
           <button onClick={() => startMemory("games")} data-testid="memory-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -10162,6 +10581,26 @@ export default function App() {
             </>
           )}
         </div>
+      )}
+
+      {/* ---------- WORDLE ---------- */}
+      {screen === "wordle" && wordle && (
+        <WordlePlay
+          run={wordle}
+          uiLang={uiLang}
+          invalid={wordleInvalid}
+          shake={wordleShake}
+          flipRow={wordleFlip}
+          dark={theme === "dark"}
+          D={D}
+          layout={normalizeLetterLayout(prog.letterLayout)}
+          onType={typeWordleLetter}
+          onBackspace={backspaceWordle}
+          onCommit={commitWordleGuess}
+          onLayoutChange={(next) => save({ letterLayout: normalizeLetterLayout(next) })}
+          onClose={closeGamesSurface}
+          onLang={(code) => save({ uiLang: code })}
+        />
       )}
 
       {/* ---------- MEMORY ---------- */}

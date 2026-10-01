@@ -78,6 +78,21 @@ export function spanishKeyboardKeyStyle({
   const hit = status === "correct";
   const cursor = wasPicked || disabled ? "default" : "pointer";
   if (theme !== "dark") {
+    const wordleFill = status === "correct" ? light.wordleCorrect
+      : status === "present" ? light.wordlePresent
+      : (status === "wrong" || status === "absent") ? light.wordleWrong
+      : null;
+    if (wordleFill) {
+      return {
+        ...KEY_BOX,
+        border: "2px solid transparent",
+        borderBottom: "4px solid transparent",
+        background: wordleFill,
+        color: "#FFFFFF",
+        fontWeight: 800,
+        cursor,
+      };
+    }
     const { line, green, greenDark, red, redDark, okBg, okText, badBg, badText } = light;
     return {
       ...KEY_BOX,

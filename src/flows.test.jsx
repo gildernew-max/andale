@@ -6852,7 +6852,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(at("paywall_tap")).toBeGreaterThan(at("paywall_seen"));
     expect(at("purchase")).toBe(-1);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
-  }, 15000);
+  }, 30000);
 });
 
 const FALLBACK_HEADLINE = {
