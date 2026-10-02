@@ -7203,7 +7203,9 @@ describe("first session before the paywall", () => {
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("onboarding-level-some")).toBeTruthy());
     await user.click(screen.getByTestId("onboarding-level-some"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-1")).toBeTruthy());
     await user.click(screen.getByTestId("onboarding-goal-1"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
     await user.click(screen.getByTestId("onboarding-start"));
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
     expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
@@ -8116,10 +8118,16 @@ describe("short onboarding", () => {
     await tap(screen.getByTestId("onboarding-goal-3"));
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("plan"));
     expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.planTitle, "en"));
-    expect(screen.getByTestId("onboarding-plan-level").textContent).toContain(onboardingLine(onboardingCopy.levels.conversation.name, "en"));
-    expect(screen.getByTestId("onboarding-plan-goal").textContent).toContain(onboardingLine(onboardingCopy.goals[3], "en"));
+    expect(screen.getByTestId("onboarding-plan-level").textContent).toBe(
+      `${onboardingLine(onboardingCopy.planLevel, "en")}: ${onboardingLine(onboardingCopy.levels.conversation.name, "en")}`,
+    );
+    expect(screen.getByTestId("onboarding-plan-goal").textContent).toBe(
+      `${onboardingLine(onboardingCopy.planGoal, "en")}: ${onboardingLine(onboardingCopy.goals[3], "en")}`,
+    );
     expect(screen.getByTestId("onboarding").querySelectorAll("button")).toHaveLength(1);
     expect(screen.getByTestId("onboarding-start").textContent).toBe(onboardingLine(onboardingCopy.planStart, "en"));
+    expect(screen.getByTestId("onboarding-start").style.color).toMatch(/#fff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    expect(screen.getByTestId("onboarding-plan-level").style.border).toMatch(/2px solid (#6F7757|rgb\(\s*111,\s*119,\s*87\s*\))/i);
     await tap(screen.getByTestId("onboarding-start"));
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
     expect(taps).toBeLessThanOrEqual(3);
@@ -8134,7 +8142,7 @@ describe("short onboarding", () => {
     expect(saved.welcomed).toBe(true);
   });
 
-  it("a beginner fresh save opens Lectura in 3 taps and never meets the register question first", async () => {
+  it("a beginner fresh save opens the zero-start session in 3 taps", async () => {
     localStorage.clear();
     const user = userEvent.setup();
     render(<App />);
@@ -8142,17 +8150,40 @@ describe("short onboarding", () => {
     let taps = 0;
     const tap = async (el) => { taps += 1; await user.click(el); };
     await tap(screen.getByTestId("onboarding-level-beginner"));
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("goal"));
     await tap(screen.getByTestId("onboarding-goal-1"));
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("plan"));
+    expect(screen.getByTestId("onboarding-plan-level").textContent).toBe("Your level: Starting from zero");
+    expect(screen.getByTestId("onboarding-plan-goal").textContent).toBe("Your goal: 1 lesson a day");
     await tap(screen.getByTestId("onboarding-start"));
-    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));
-    expect(taps).toBeLessThanOrEqual(3);
-    expect(document.querySelector("[data-first-session]")).toBeNull();
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-beginner-first")).toBe("1"));
+    expect(taps).toBe(3);
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+    expect(document.body.textContent).toContain(`Which one means "good morning"?`);
+    const cards = screen.getAllByTestId("choice-card").map((el) => el.textContent.replace(/^\d+/, ""));
+    expect(cards).toEqual(["Buenas noches", "Buenos días", "Hasta luego", "Con permiso"]);
     expect(document.body.textContent).not.toMatch(/Es obvio que Marisol/);
+    expect(document.body.textContent).not.toMatch(/story-0/);
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(saved.learnerLevel).toBe("beginner");
     expect(saved.dailyGoalLessons).toBe(1);
     expect(saved.onboardingDone).toBe(true);
     expect(saved.firstSessionDone).not.toBe(true);
+  });
+
+  it("some Spanish keeps the existing first session", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding-level-some")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-level-some"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-2")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-goal-2"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-beginner-first")).toBe("0"));
+    expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
+    expect(document.body.textContent).not.toMatch(/good morning/);
   });
 
   it("EN and ES onboarding strings come from onboardingCopy.js", async () => {
@@ -8173,12 +8204,37 @@ describe("short onboarding", () => {
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-2").textContent).toBe(onboardingLine(onboardingCopy.goals[2], "en")));
     await user.click(screen.getByTestId("onboarding-goal-2"));
     await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.planTitle, "en")));
-    expect(screen.getByTestId("onboarding-plan-level").textContent).toContain(onboardingLine(onboardingCopy.planLevel, "en"));
+    expect(screen.getByTestId("onboarding-plan-level").textContent).toBe(
+      `${onboardingLine(onboardingCopy.planLevel, "en")}: ${onboardingLine(onboardingCopy.levels.some.name, "en")}`,
+    );
     expect(screen.getByTestId("onboarding-start").textContent).toBe(onboardingLine(onboardingCopy.planStart, "en"));
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("onboarding-start").textContent).toBe(onboardingLine(onboardingCopy.planStart, "es")));
-    expect(screen.getByTestId("onboarding-plan-goal").textContent).toContain(onboardingLine(onboardingCopy.planGoal, "es"));
-    expect(screen.getByTestId("onboarding-plan-goal").textContent).toContain(onboardingLine(onboardingCopy.goals[2], "es"));
+    expect(screen.getByTestId("onboarding-plan-level").textContent).toBe(
+      `${onboardingLine(onboardingCopy.planLevel, "es")}: ${onboardingLine(onboardingCopy.levels.some.name, "es")}`,
+    );
+    expect(screen.getByTestId("onboarding-plan-goal").textContent).toBe(
+      `${onboardingLine(onboardingCopy.planGoal, "es")}: ${onboardingLine(onboardingCopy.goals[2], "es")}`,
+    );
+  });
+
+  it("a held level card shows the check and does not advance", async () => {
+    localStorage.clear();
+    window.__andaleHoldOnboardingSelection = true;
+    try {
+      const user = userEvent.setup();
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("onboarding-level-beginner")).toBeTruthy());
+      await user.click(screen.getByTestId("onboarding-level-beginner"));
+      const card = screen.getByTestId("onboarding-level-beginner");
+      expect(card.getAttribute("data-selected")).toBe("true");
+      expect(screen.getByTestId("onboarding-check")).toBeTruthy();
+      expect(card.style.border).toMatch(/2px solid (#6F7757|rgb\(\s*111,\s*119,\s*87\s*\))/i);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level");
+    } finally {
+      window.__andaleHoldOnboardingSelection = false;
+    }
   });
 
   it("existing saves with a marker, a resume, or a finished lesson skip onboarding", async () => {
@@ -8246,4 +8302,61 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.goalTitle, "es"));
     expect(screen.queryByTestId("splash")).toBeNull();
   });
+
+  it("a wrong beginner answer is rejected and the right ones finish on the beginner win, then the paywall", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding-level-beginner")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-level-beginner"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-1")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-goal-1"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(document.querySelector("[data-beginner-first]")?.getAttribute("data-beginner-first")).toBe("1"));
+    const wrong = screen.getAllByTestId("choice-card").find((el) => el.textContent.includes("Buenas noches"));
+    await user.click(wrong);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe(
+      `"Buenos días" is what you say in the morning, until about midday. "Buenas noches" is for the night.`,
+    ));
+    await user.click(screen.getByRole("button", { name: /^Continue$/ }));
+    const beats = [
+      { type: "type", tile: "gusto", prompt: "Mucho ___." },
+      { type: "order", tiles: ["un", "café,", "por", "favor"], prompt: `Build: "A coffee, please."` },
+      { type: "mc", choice: "¿Cuánto cuesta?", prompt: `How do you ask "How much is it?"` },
+      { type: "type", tile: "llamas", prompt: "¿Cómo te ___?" },
+    ];
+    for (const beat of beats) {
+      await waitFor(() => expect(document.querySelector("[data-qtype]")?.getAttribute("data-qtype")).toBe(beat.type));
+      expect(document.body.textContent).toContain(beat.prompt);
+      if (beat.choice) {
+        const cards = screen.getAllByTestId("choice-card").map((el) => el.textContent.replace(/^\d+/, ""));
+        expect(cards).toEqual(["¿Dónde está?", "¿Cómo estás?", "¿Qué hora es?", "¿Cuánto cuesta?"]);
+        await user.click(screen.getAllByTestId("choice-card").find((el) => el.textContent.includes(beat.choice)));
+      } else if (beat.tile) {
+        await user.click(screen.getAllByTestId("bank-tile").find((el) => el.textContent.trim() === beat.tile));
+      } else {
+        for (const word of beat.tiles) {
+          const tile = screen.getAllByTestId("bank-tile").find((el) => el.textContent.trim().toLowerCase() === word);
+          expect(tile, word).toBeTruthy();
+          await user.click(tile);
+        }
+      }
+      await user.click(screen.getByTestId("lesson-check"));
+      await user.click(screen.getByRole("button", { name: /^Continue$/ }));
+    }
+    await waitFor(() => expect(screen.getByTestId("first-session-win-line").textContent).toBe(
+      "First lesson done. You have your first words to say hello, order a coffee and ask the price. Come back tomorrow for the next one.",
+    ));
+    expect(document.body.textContent).not.toMatch(/[Ss]ubjuntiv/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("first-session-win-line").textContent).toBe(
+      "Primera lección lista. Ya tienes tus primeras palabras para saludar, pedir un café y preguntar el precio. Mañana seguimos con la siguiente.",
+    ));
+    await user.click(screen.getByTestId("win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
+  }, 20000);
 });

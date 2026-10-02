@@ -1,31 +1,31 @@
-/** Onboarding screen copy. EN and Mexican Spanish. Placeholder lines for the writer to replace. */
+/** Onboarding screen copy. EN and Mexican Spanish. */
 
 export const onboardingCopy = {
-  levelTitle: { en: "Your Spanish", es: "Tu español" },
+  levelTitle: { en: "Where are you with Spanish?", es: "¿En qué punto estás con el español?" },
   levels: {
     beginner: {
-      name: { en: "Beginner", es: "Principiante" },
-      desc: { en: "Starting from zero", es: "Empiezo desde cero" },
+      name: { en: "Starting from zero", es: "Empiezo de cero" },
+      desc: { en: "Spanish is new to me.", es: "El español es nuevo para mí." },
     },
     some: {
-      name: { en: "Some Spanish", es: "Algo de español" },
-      desc: { en: "I know some already", es: "Ya sé un poco" },
+      name: { en: "I know some", es: "Sé algo" },
+      desc: { en: "I know some words and phrases.", es: "Conozco algunas palabras y frases." },
     },
     conversation: {
-      name: { en: "Can hold a conversation", es: "Puedo conversar" },
-      desc: { en: "I can keep one going", es: "Sostengo una conversación" },
+      name: { en: "I can hold a conversation", es: "Puedo conversar" },
+      desc: { en: "I want to get the details right.", es: "Quiero afinar los detalles." },
     },
   },
-  goalTitle: { en: "Lessons a day", es: "Lecciones al día" },
+  goalTitle: { en: "How many lessons a day?", es: "¿Cuántas lecciones al día?" },
   goals: {
     1: { en: "1 lesson a day", es: "1 lección al día" },
     2: { en: "2 lessons a day", es: "2 lecciones al día" },
     3: { en: "3 lessons a day", es: "3 lecciones al día" },
   },
   planTitle: { en: "Your plan", es: "Tu plan" },
-  planLevel: { en: "Level", es: "Nivel" },
-  planGoal: { en: "Each day", es: "Al día" },
-  planStart: { en: "Start the first lesson", es: "Empezar la primera lección" },
+  planLevel: { en: "Your level", es: "Tu nivel" },
+  planGoal: { en: "Your goal", es: "Tu meta" },
+  planStart: { en: "Start my first lesson", es: "Empezar mi primera lección" },
 };
 
 export function onboardingLine(slot, lang) {

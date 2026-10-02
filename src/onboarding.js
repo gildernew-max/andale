@@ -6,15 +6,20 @@ export const ONBOARDING_GOALS = Object.freeze([1, 2, 3]);
 /** Level, daily goal, then the plan button. */
 export const ONBOARDING_TAPS = 3;
 
-/**
- * No zero-start lesson is in the repo. Beginners open Lectura story-0 so the
- * subjunctive register question is not first. story-0 is literary Spanish, not
- * a beginner lesson. The closest grammar unit is subj1.
- */
-export const BEGINNER_CONTENT_GAP = "No zero-start lesson exists. Beginners open Lectura story-0 so the subjunctive register question is not first. story-0 is literary Spanish, not a beginner lesson. The closest grammar unit is subj1.";
+/** How long a tapped level or goal card holds its check before the next screen. */
+export const ONBOARDING_SELECT_MS = 250;
+
+/** Set on window to freeze the selected card for a screenshot or test. */
+export const ONBOARDING_HOLD_KEY = "__andaleHoldOnboardingSelection";
+
+export function onboardingSelectionHeld() {
+  return typeof window !== "undefined" && window[ONBOARDING_HOLD_KEY] === true;
+}
 
 export const EASIEST_UNIT_ID = "subj1";
-export const BEGINNER_STORY_ID = "story-0";
+
+/** Lesson CONTINUE label. Green buttons use this text colour. */
+export const CONTINUE_LABEL = "#fff";
 
 export const ONBOARDING_PAINT = Object.freeze({
   light: Object.freeze({
@@ -23,7 +28,7 @@ export const ONBOARDING_PAINT = Object.freeze({
     ink: "#3C3C3C",
     accent: "#6F7757",
     button: "#58CC02",
-    buttonInk: "#15171C",
+    buttonInk: CONTINUE_LABEL,
     buttonLip: "#46A302",
   }),
   dark: Object.freeze({
@@ -32,7 +37,7 @@ export const ONBOARDING_PAINT = Object.freeze({
     ink: "#F6EFE4",
     accent: "#6F7757",
     button: "#58CC02",
-    buttonInk: "#15171C",
+    buttonInk: CONTINUE_LABEL,
     buttonLip: "#46A302",
   }),
 });
@@ -83,8 +88,8 @@ export function onboardingResume(saved) {
   return { step: "level", level: null, goal: null };
 }
 
-/** Beginner → Lectura. Anyone else → the existing five-exercise first session. */
+/** Beginner → the zero-start first session. Anyone else → the existing five-exercise first session. */
 export function firstLessonForLevel(level) {
-  if (level === "beginner") return { kind: "lectura", storyId: BEGINNER_STORY_ID };
-  return { kind: "firstSession", unitId: EASIEST_UNIT_ID };
+  if (level === "beginner") return { kind: "firstSession", unitId: EASIEST_UNIT_ID, beginner: true };
+  return { kind: "firstSession", unitId: EASIEST_UNIT_ID, beginner: false };
 }

@@ -50,8 +50,9 @@ import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, should
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
-import { firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
+import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import Onboarding from "./Onboarding.jsx";
+import { beginnerFirstQuestions, beginnerWhyLine, beginnerWinLine, BEGINNER_SESSION_TITLE } from "./beginnerFirstSession.js";
 import { firstSessionWhyLine, firstSessionWinLine } from "./firstSessionWords.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
@@ -4629,7 +4630,7 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
       fontFamily: "inherit", fontWeight: 800, fontSize: 15, letterSpacing: ".06em", textTransform: "uppercase",
       borderRadius: 14, padding: "13px 24px", cursor: disabled ? "default" : "pointer",
       background: outline ? "#fff" : disabled ? D.lockGray : color,
-      color: outline ? color : disabled ? D.lockIcon : "#fff",
+      color: outline ? color : disabled ? D.lockIcon : CONTINUE_LABEL,
       border: outline ? `2px solid ${D.line}` : "none",
       borderBottom: outline ? `4px solid ${D.line}` : `4px solid ${disabled ? "#CFCFCF" : dark}`,
       ...style,
@@ -4944,7 +4945,7 @@ export default function App() {
 
   const prepQuestion = (q) => {
     const p = normalizeQuestion(q);
-    if (p.type === "mc") p.shuffledChoices = shuffle(p.choices);
+    if (p.type === "mc") p.shuffledChoices = p.fixedChoices ? p.choices.slice() : shuffle(p.choices);
     if (p.type === "order") p.shuffledWords = shuffle((p.words || []).map((w, i) => ({ w, id: i })));
     if (p.type === "match") { p.left = shuffle((p.pairs || []).map((pr, i) => ({ t: pr[0], id: i }))); p.right = shuffle((p.pairs || []).map((pr, i) => ({ t: pr[1], id: i }))); }
     p.answerAid = answerAidFor(p);
@@ -4956,18 +4957,24 @@ export default function App() {
     if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
     const firstSnap = !prog.firstSessionDone && prog.resume?.unitId === "_first" && Array.isArray(prog.resume.order) ? prog.resume : null;
     if (firstSnap) {
+      const beginnerResume = firstSnap.order.some((o) => o.u === "_beginner");
       const qs = firstSnap.order.map((o) => {
+        if (o.u === "_beginner") {
+          const src = beginnerFirstQuestions()[o.i];
+          return src ? { ...src } : null;
+        }
         const src = UNITS.find((x) => x.id === o.u);
         if (!src) return null;
         return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...src.questions[o.i], _u: o.u, _i: o.i };
       }).filter(Boolean).map(prepQuestion);
       if (qs.length) {
         beginSession({
-          title: u?.title || UNITS[0].title,
+          title: beginnerResume ? BEGINNER_SESSION_TITLE : (u?.title || UNITS[0].title),
           color: section?.color || SECTIONS[0].color,
           dark: section?.dark || SECTIONS[0].dark,
           unitId: "_first",
           firstSession: true,
+          beginnerFirst: beginnerResume,
           review: false,
           host: hostForUnit(u?.id || "subj1"),
           questions: qs,
@@ -4996,7 +5003,7 @@ export default function App() {
       return;
     }
     if (shouldUseFirstSession({ done: prog.done, firstSessionDone: prog.firstSessionDone })) {
-      beginFirstSession(u, section);
+      beginFirstSession(u, section, { beginner: prog.learnerLevel === "beginner" });
       return;
     }
     const qs = u.questions.map((q, i) => ({ ...q, _u: u.id, _i: i }));
@@ -5004,16 +5011,17 @@ export default function App() {
     beginSession({ title: u.title, color: section.color, dark: section.dark, unitId: u.id, review: false, host: hostForUnit(u.id), questions: withMatch.map(prepQuestion) });
   };
 
-  const beginFirstSession = (u, section, { fromLectura = false } = {}) => {
-    const questions = firstSessionQuestions(UNITS).map(prepQuestion);
+  const beginFirstSession = (u, section, { fromLectura = false, beginner = false } = {}) => {
+    const questions = (beginner ? beginnerFirstQuestions() : firstSessionQuestions(UNITS)).map(prepQuestion);
     if (!questions.length) return;
     save({ firstSessionArmed: true });
     beginSession({
-      title: u?.title || UNITS[0].title,
+      title: beginner ? BEGINNER_SESSION_TITLE : (u?.title || UNITS[0].title),
       color: section?.color || SECTIONS[0].color,
       dark: section?.dark || SECTIONS[0].dark,
       unitId: "_first",
       firstSession: true,
+      beginnerFirst: !!beginner,
       review: false,
       host: hostForUnit(u?.id || "subj1"),
       questions,
@@ -6833,6 +6841,10 @@ export default function App() {
   const flashDeck = flashRun?.deck || [];
   const activeCard = flashRun && !flashRun.done && flashRun.idx < flashDeck.length ? flashDeck[flashRun.idx] : null;
   const uiLang = prog.uiLang === "en" ? "en" : "es";
+  const firstSessionWhy = session?.firstSession
+    ? (session.beginnerFirst ? beginnerWhyLine(qi, uiLang) : firstSessionWhyLine(qi, uiLang))
+    : null;
+  const firstSessionWin = session?.beginnerFirst ? beginnerWinLine(uiLang) : firstSessionWinLine(uiLang);
   const L = UI[uiLang];
   const greetingPool = GREETINGS[uiLang] || GREETINGS.es;
   const greeting = greetingPool[greetingPick % greetingPool.length];
@@ -7520,14 +7532,9 @@ export default function App() {
       dailyGoalLessons: goal,
       welcomed: true,
     });
-    if (route.kind === "lectura") {
-      const story = STORIES.find((item) => item.id === route.storyId);
-      if (story) openStory(story);
-      return;
-    }
     const unit = UNITS.find((item) => item.id === route.unitId) || UNITS[0];
     const section = SECTIONS.find((item) => item.unitIds.includes(unit.id)) || SECTIONS[0];
-    beginFirstSession(unit, section);
+    beginFirstSession(unit, section, { beginner: route.beginner === true });
   };
 
   return (
@@ -9622,7 +9629,7 @@ export default function App() {
 
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
-        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-qtype={q.type} style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : orderDark ? { background: D.bg, color: HUB_CREAM, minHeight: "100vh" } : undefined}>
+        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : orderDark ? { background: D.bg, color: HUB_CREAM, minHeight: "100vh" } : undefined}>
         <div data-testid="lesson-body" style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
@@ -9762,8 +9769,8 @@ export default function App() {
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                       <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                       <div>
-                        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{q.prompt}</div>
-                        {q.note ? <div style={{ fontSize: 13, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
+                        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{uiText(q.prompt, uiLang)}</div>
+                        {q.note ? <div style={{ fontSize: 13, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub, fontWeight: 700, marginTop: 3 }}>{uiText(q.note, uiLang)}</div> : null}
                       </div>
                     </div>
                   </div>
@@ -10025,8 +10032,8 @@ export default function App() {
 	                        {L.why} {showWhy ? "▴" : "▾"}
                       </button>
                       {showWhy && <div data-testid="practice-why" className="pop" style={{ marginTop: 4, color: D.ink, background: D.card, border: `2px solid ${D.line}`, borderRadius: 10, padding: "8px 11px", fontSize: 13.5 }}>{explainText(q, uiLang)}</div>}
-                      {session.firstSession && firstSessionWhyLine(qi, uiLang) && (
-                        <div data-testid="first-session-why" style={{ marginTop: 4, fontSize: 13, fontWeight: 800, lineHeight: 1.35, fontFamily: "inherit", color: theme === "dark" ? D.badText : D.ink }}>{firstSessionWhyLine(qi, uiLang)}</div>
+                      {firstSessionWhy && (
+                        <div data-testid="first-session-why" style={{ marginTop: 4, fontSize: 13, fontWeight: 800, lineHeight: 1.35, fontFamily: "inherit", color: theme === "dark" ? D.badText : D.ink }}>{firstSessionWhy}</div>
                       )}
                     </div>
                   );
@@ -11139,7 +11146,7 @@ export default function App() {
             </div>
           )}
           <p style={{ color: D.sub, fontWeight: 700 }}>
-	            «{session.title}» · {lessonStats.right} {L.hits}, {lessonStats.wrong} {L.misses}{!quietWin && lessonStats.wrong === 0 ? ` · ${L.impeccable}` : ""}
+	            «{uiText(session.title, uiLang)}» · {lessonStats.right} {L.hits}, {lessonStats.wrong} {L.misses}{!quietWin && lessonStats.wrong === 0 ? ` · ${L.impeccable}` : ""}
 	            {session.testOut != null && <span><br />{L.unlockedSection}</span>}
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", margin: "24px 0", flexWrap: "wrap" }}>
@@ -11154,8 +11161,8 @@ export default function App() {
               </div>
             ))}
           </div>
-          {firstWin && firstSessionWinLine(uiLang) && (
-            <p data-testid="first-session-win-line" style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 700, lineHeight: 1.35, color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}>{firstSessionWinLine(uiLang)}</p>
+          {firstWin && firstSessionWin && (
+            <p data-testid="first-session-win-line" style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 700, lineHeight: 1.35, color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}>{firstSessionWin}</p>
           )}
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}

@@ -2,13 +2,23 @@
  *  tokens→words, source→base, answer→answers, {es,en} pairs.
  *  Shuffle / answerAid stay in App — they are not schema. */
 
+function listenLine(value) {
+  if (typeof value === "string") return value.trim();
+  if (value && typeof value === "object") {
+    const picked = value.es || value.en || "";
+    return typeof picked === "string" ? picked.trim() : "";
+  }
+  if (value == null) return "";
+  return String(value).trim();
+}
+
 /** Spanish the Listen control should play. Hoy scene MC carries `text`/`line` (the line), not the Why prompt. */
 export function lessonListenText(q) {
   if (!q || typeof q !== "object") return "";
-  if (q.type === "listen") return String(q.text || "").trim();
-  if (q.type === "transform") return String(q.base || q.text || "").trim();
-  if (q.type === "order") return String(q.answer || q.text || "").trim();
-  return String(q.text || q.line || q.prompt || "").trim();
+  if (q.type === "listen") return listenLine(q.text);
+  if (q.type === "transform") return listenLine(q.base || q.text);
+  if (q.type === "order") return listenLine(q.answer || q.text);
+  return listenLine(q.text || q.line || q.prompt);
 }
 
 export function prepQuestion(q) {

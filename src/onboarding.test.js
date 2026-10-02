@@ -3,12 +3,13 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { migrateFirstSession } from "./firstSession.js";
 import {
-  BEGINNER_CONTENT_GAP,
-  BEGINNER_STORY_ID,
+  CONTINUE_LABEL,
   EASIEST_UNIT_ID,
   ONBOARDING_GOALS,
+  ONBOARDING_HOLD_KEY,
   ONBOARDING_LEVELS,
   ONBOARDING_PAINT,
+  ONBOARDING_SELECT_MS,
   ONBOARDING_TAPS,
   firstLessonForLevel,
   hasFinishedLesson,
@@ -26,6 +27,7 @@ const read = (name) => readFileSync(join(dir, name), "utf8");
 const appSrc = read("App.jsx");
 const uiSrc = read("Onboarding.jsx");
 const copySrc = read("onboardingCopy.js");
+const gateSrc = read("onboarding.js");
 
 function channelLum(v) {
   const c = v / 255;
@@ -83,13 +85,15 @@ assert(onboardingResume({ learnerLevel: "conversation", dailyGoalLessons: 3 }).s
 const beginner = firstLessonForLevel("beginner");
 const some = firstLessonForLevel("some");
 const conversation = firstLessonForLevel("conversation");
-assert(beginner.kind === "lectura" && beginner.storyId === BEGINNER_STORY_ID, "a beginner opens Lectura");
-assert(beginner.storyId === "story-0", "beginner Lectura is story-0");
-assert(some.kind === "firstSession" && some.unitId === EASIEST_UNIT_ID, "some Spanish keeps the first session");
-assert(conversation.kind === "firstSession" && conversation.unitId === "subj1", "conversation keeps the first session");
-assert(beginner.kind !== some.kind, "beginner and non-beginner routes differ");
-assert(appSrc.includes('id: "story-0"'), "story-0 is existing Lectura content");
-assert(BEGINNER_CONTENT_GAP.includes("story-0") && BEGINNER_CONTENT_GAP.includes("subj1"), "the gap names Lectura and the closest grammar unit");
+assert(beginner.kind === "firstSession" && beginner.beginner === true && beginner.unitId === EASIEST_UNIT_ID, "a beginner opens the zero-start first session");
+assert(beginner.storyId == null, "beginner is not a story");
+assert(some.kind === "firstSession" && some.beginner === false && some.unitId === EASIEST_UNIT_ID, "some Spanish keeps the existing first session");
+assert(conversation.kind === "firstSession" && conversation.beginner === false && conversation.unitId === "subj1", "conversation keeps the existing first session");
+assert(!gateSrc.includes("story-0") && !gateSrc.includes("lectura"), "the story-0 stopgap is gone");
+const startFn = appSrc.slice(appSrc.indexOf("const startOnboardingLesson"), appSrc.indexOf("return (", appSrc.indexOf("const startOnboardingLesson")));
+assert(!startFn.includes("openStory") && !startFn.includes("story-0"), "onboarding start does not open Lectura");
+assert(startFn.includes("beginner: route.beginner === true"), "the beginner flag reaches the first session");
+assert(appSrc.includes("beginner ? beginnerFirstQuestions() : firstSessionQuestions(UNITS)"), "only the beginner level swaps the question list");
 
 const lines = slots(onboardingCopy);
 assert(lines.length >= 12, "every screen string is an EN/ES pair");
@@ -105,8 +109,13 @@ const onboardingRender = appSrc.slice(appSrc.indexOf("<Onboarding"), appSrc.inde
 assert(onboardingRender.includes("lang={uiLang}"), "App passes the live language into the screen");
 assert(!/>[^<]*[A-Za-zÁÉÍÓÚáéíóúñ]{3,}/.test(onboardingRender), "App does not put screen words on the onboarding element");
 assert(uiSrc.includes('from "./onboardingCopy.js"'), "the screen reads onboardingCopy.js");
-assert(uiSrc.includes("onClick={() => onLevel(id)}"), "a level tap advances by itself");
-assert(uiSrc.includes("onClick={() => onGoal(count)}"), "a goal tap advances by itself");
+assert(uiSrc.includes("onLevel(id)"), "a level tap advances by itself");
+assert(uiSrc.includes("onGoal(count)"), "a goal tap advances by itself");
+assert(ONBOARDING_SELECT_MS === 250, "the selected card holds for 250 ms");
+assert(uiSrc.includes("ONBOARDING_SELECT_MS"), "the screen uses that hold");
+assert(uiSrc.includes(ONBOARDING_HOLD_KEY) || uiSrc.includes("onboardingSelectionHeld"), "a hold hook can freeze the selected card");
+assert(uiSrc.includes('data-testid="onboarding-check"'), "the selected card shows a check");
+assert(uiSrc.includes("2px solid ${paint.accent}"), "level and goal cards keep the sage edge");
 assert(uiSrc.includes("onClick={onStart}"), "the plan button is the start tap");
 assert(appSrc.includes("shouldShowOnboarding(p)"), "the gate runs on the loaded save");
 assert(appSrc.includes("migrateFirstSession(p)"), "existing saves still migrate first");
@@ -119,14 +128,20 @@ for (const mode of ["light", "dark"]) {
   const paint = ONBOARDING_PAINT[mode];
   assert(contrast(paint.ink, paint.page) >= 4.5, `${mode} ink on the page clears 4.5`);
   assert(contrast(paint.ink, paint.card) >= 4.5, `${mode} ink on the card clears 4.5`);
-  assert(contrast(paint.buttonInk, paint.button) >= 4.5, `${mode} button label clears 4.5`);
+  assert(paint.buttonInk === CONTINUE_LABEL, `${mode} button text is the CONTINUE label`);
+  assert(paint.accent === "#6F7757", `${mode} card edge stays sage`);
 }
+assert(CONTINUE_LABEL === "#fff", "CONTINUE label is white");
+assert(appSrc.includes("CONTINUE_LABEL"), "the lesson CONTINUE button uses the same token");
+assert(uiSrc.includes("CONTINUE_LABEL"), "the plan button uses the same token");
+assert(uiSrc.includes('letterSpacing: ".06em"') && uiSrc.includes('textTransform: "uppercase"'), "the plan button matches the CONTINUE button");
+assert(!uiSrc.includes("#15171C"), "the plan button does not use the dark ink");
 assert(ONBOARDING_PAINT.dark.page === "#15171C", "dark page");
 assert(ONBOARDING_PAINT.dark.card === "#1E2128", "dark card");
 assert(ONBOARDING_PAINT.dark.ink === "#F6EFE4", "dark ink is cream");
-assert(ONBOARDING_PAINT.dark.accent === "#6F7757" && ONBOARDING_PAINT.light.accent === "#6F7757", "sage accent");
 assert(ONBOARDING_PAINT.light.page === "#F6EFE4", "light page stays cream");
-assert(!uiSrc.includes("#58CC02") || uiSrc.includes("paint.button"), "green is the paint token, used on the start button");
+assert(uiSrc.includes("paint.button") && uiSrc.includes("paint.buttonLip"), "green fill and lip come from the paint");
+assert(uiSrc.includes("{onboardingLine(onboardingCopy.planLevel, lang)}: {onboardingLine(levelSlot?.name, lang)}"), "the plan level line is label, colon, name");
+assert(uiSrc.includes("{onboardingLine(onboardingCopy.planGoal, lang)}: {onboardingLine(goalSlot, lang)}"), "the plan goal line is label, colon, goal");
 
-console.log(BEGINNER_CONTENT_GAP);
 console.log("onboarding.test.js: ok");
