@@ -1222,6 +1222,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /Viva la vida/ }));
     await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
     await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
+    expect(screen.getByRole("button", { name: /^XP reclamados$/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^XP ya reclamado$/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-en"));
+    expect(screen.getByRole("button", { name: /^XP claimed$/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^XP already claimed$/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
     await waitFor(() => {
@@ -1254,7 +1260,11 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /Porque era a quien mejor conocía/ }));
     await user.click(screen.getByRole("button", { name: /El tranvía y Diego/ }));
     await user.click(screen.getByRole("button", { name: /Viva la vida/ }));
-    expect(screen.getByRole("button", { name: /XP ya reclamado|XP already claimed/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^XP already claimed$/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^XP claimed$/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    expect(screen.getByRole("button", { name: /^XP ya reclamado$/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^XP reclamados$/ })).toBeNull();
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
     expect(screen.queryByTestId("lectura-win")).toBeNull();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
@@ -2264,8 +2274,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     render(<App />);
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await userEvent.setup().click(screen.getByRole("button", { name: /^Continuar$/i }));
-    await waitFor(() => expect(screen.getByRole("heading", { name: /Examen no superado|Test not passed/ })).toBeTruthy());
-    expect(screen.getByText(/Tres errores|Three mistakes/)).toBeTruthy();
+    await waitFor(() => expect(screen.getByRole("heading", { name: /Esta vez no|Not this time/ })).toBeTruthy());
+    expect(screen.getByText(/Tres errores, y el límite es dos\. Quedaron en Repaso\. Reintenta cuando quieras\.|Three mistakes, and the limit is two\. They're saved in Review\. Retry when you're ready\./)).toBeTruthy();
   });
 
   it("Hoy still matches city/title or the still is dropped", async () => {

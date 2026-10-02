@@ -2522,14 +2522,14 @@ const VOICES = {
       { es: "Ese giro sí vive en la calle.", en: "That turn actually lives on the street." },
     ],
     wrong: [
-      { es: "Cerca. Vamos a afinarlo.", en: "Close. Let's sharpen it." },
+      { es: "Cerca. Mira la palabra antes del verbo. Casi siempre te lo dice.", en: "Close. Check the word before the verb. It usually tells you." },
       { es: "La idea está; falta precisión.", en: "The idea’s there; it needs precision." },
       { es: "Respira. Esta es justo la parte que se entrena.", en: "Breathe. This is exactly the part you train." },
       { es: "No está perdido, solo mal estacionado.", en: "Not lost — just parked in the wrong spot." },
     ],
     win: [
-      { es: "Buenísima sesión. Hoy hablaste más fino.", en: "Great session. You sounded sharper today." },
-      { es: "Eso ya se siente como español real.", en: "That already feels like real Spanish." },
+      { es: "Buenísima sesión. Fuiste afinando conforme avanzaste.", en: "Great session. You got more precise as you went." },
+      { es: "Ya suenas como alguien que lo usa.", en: "You sound like someone who actually uses it." },
       { es: "La racha tiene estilo.", en: "The streak has style." },
       { es: "Te estás volviendo peligroso en conversación.", en: "You're getting dangerous in conversation." },
     ],
@@ -2574,10 +2574,10 @@ const VOICES = {
       { es: "Buen control del registro.", en: "Good control of register." },
     ],
     wrong: [
-      { es: "No. El matiz importa.", en: "No. The nuance matters." },
+      { es: "Cerca, pero el matiz lo cambia. Mira otra vez.", en: "Close, but the nuance changes it. Look again." },
       { es: "Cuidado: suena menos formal de lo que crees.", en: "Careful: it sounds less formal than you think." },
-      { es: "La estructura no sostiene la idea.", en: "The structure doesn't hold the idea." },
-      { es: "Eso se entiende, pero no convence.", en: "That's understandable, but it doesn't persuade." },
+      { es: "A la estructura le falta un ajuste. Léela en voz alta.", en: "The structure needs one fix. Read it aloud." },
+      { es: "Te entenderían. Ahora hazla convencer.", en: "They'd understand you. Now make it persuade." },
       { es: "Vuelve a mirar el modo verbal.", en: "Look at the verb mood again." },
     ],
     win: [
@@ -2600,10 +2600,10 @@ const VOICES = {
       { es: "Ok, esa respuesta sí pega.", en: "Ok, that answer lands." },
     ],
     wrong: [
-      { es: "Demasiado lento.", en: "Too slow." },
-      { es: "Eso suena traducido.", en: "That sounds translated." },
-      { es: "Yo no respondería así.", en: "I wouldn't answer like that." },
-      { es: "Te faltó calle y timing.", en: "You lacked street and timing." },
+      { es: "Un segundo tarde. Otra vez.", en: "A beat late. Go again." },
+      { es: "Esa suena traducida. Tienes una mejor.", en: "That one sounds translated. You've got a better one." },
+      { es: "Yo lo diría de otra forma. Mira otra vez.", en: "I'd say it another way. Look again." },
+      { es: "La idea va; le falta calle todavía.", en: "Right idea, not enough street yet." },
     ],
     win: [
       { es: "Ganaste esta. No te acostumbres.", en: "You won this one. Don't get used to it." },
@@ -2623,14 +2623,14 @@ const GREETINGS = {
     "Luna ya tiene tu rutina de hoy.",
     "Don Rafa te guardó un cuento con palabras que valen.",
     "Valeria dice que la precisión es un gesto de cariño.",
-    "Cinco minutos. Español de verdad. Nada de turista.",
+    "Español de verdad. Nada de turista.",
   ],
   en: [
     "Build real Mexican Spanish through stories, challenges, and sharp feedback.",
     "Luna has your daily routine ready.",
     "Don Rafa saved you a story with words worth keeping.",
     "Valeria says precision is a kindness.",
-    "Five minutes. Real Spanish. No tourist mode.",
+    "Real Spanish. No tourist mode.",
   ],
 };
 
@@ -4086,10 +4086,10 @@ const UI = {
     focus: "Foco", time: "¡Tiempo!", spelling: "Ojo con la ortografía", matchInstruction: "Toca una pareja en cada columna.", enterCheck: "Enter para comprobar.",
     selfGrade: "¿QUÉ TAN BIEN LO SABÍAS?", storyTip: "Lee el párrafo. Toca una palabra solo si te frena.",
     wordOrderTip: "Orden distinto, mismo sentido. En formal, ambas valen.",
-    comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
+    comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", xpJustClaimed: "XP reclamados", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
     completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel! Ahora eres",
     hits: "aciertos", misses: "fallos", impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
-    testFailed: "Examen no superado", testFailedDesc: "Tres errores — el límite era dos. Tus fallos ya están en Práctica; repásalos y vuelve a intentarlo.",
+    testFailed: "Esta vez no", testFailedDesc: "Tres errores, y el límite es dos. Quedaron en Repaso. Reintenta cuando quieras.",
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
     comeBackTomorrow: "Vuelve mañana por la siguiente escena.",
     paywallHeadline: "La historia sigue.",
@@ -4174,10 +4174,10 @@ const UI = {
     focus: "Focus", time: "Time!", spelling: "Watch the spelling", matchInstruction: "Tap one pair from each column.", enterCheck: "Enter to check.",
     selfGrade: "HOW WELL DID YOU KNOW IT?", storyTip: "Read the paragraph. Tap a word only if it stops you.",
     wordOrderTip: "Different order, same meaning. Formally, both work.",
-    comprehension: "Comprehension", easyQuestions: "Three easy questions · up to", xpClaimed: "XP already claimed", claim: "Claim", saveCard: "Save flashcard", inDeck: "In your deck",
+    comprehension: "Comprehension", easyQuestions: "Three easy questions · up to", xpClaimed: "XP already claimed", xpJustClaimed: "XP claimed", claim: "Claim", saveCard: "Save flashcard", inDeck: "In your deck",
     completed: "Lesson complete!", sectionPassed: "Section passed!", levelUp: "Level up! You are now",
     hits: "correct", misses: "misses", impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
-    testFailed: "Test not passed", testFailedDesc: "Three mistakes — the limit was two. Your misses are in Review; revisit them and try again.",
+    testFailed: "Not this time", testFailedDesc: "Three mistakes, and the limit is two. They're saved in Review. Retry when you're ready.",
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
     comeBackTomorrow: "Come back tomorrow for the next scene.",
     paywallHeadline: "The story goes on.",
@@ -4675,6 +4675,7 @@ export default function App() {
   const [screenQuip, setScreenQuip] = useState(""); // host line on done/failed screens
   const greetingPick = React.useMemo(() => Math.floor(Math.random() * GREETINGS.es.length), []);
   const [storyView, setStoryView] = useState(null); // active story object
+  const [freshClaimId, setFreshClaimId] = useState(null); // story whose XP was claimed this visit
   const [wordSel, setWordSel] = useState(null); // {display, def, note, pi, ti}
   const [wordReveal, setWordReveal] = useState(true);
   const [ansSel, setAnsSel] = useState({}); // story question selections (choice value, or legacy display index)
@@ -6076,6 +6077,7 @@ export default function App() {
     }
     const extra = STORY_EXTRAS[story?.id] || {};
     setStoryShuffle(shuffleStoryChoiceOrder(story, extra.checkpoints || []));
+    setFreshClaimId(null);
     setStoryView(story); setWordSel(null); setWordReveal(true); setAnsSel({}); setParaIdx(0); setScreen("story");
   };
 
@@ -6121,6 +6123,7 @@ export default function App() {
     if (prog.stories?.[story.id]) return;
     if (chapterDoneRef.current.has(story.id)) return;
     chapterDoneRef.current.add(story.id);
+    setFreshClaimId(story.id);
     const playStory0 = shouldArmStory0Beat({
       storyId: story.id,
       claimed: prog.stories?.[story.id],
@@ -10812,7 +10815,7 @@ export default function App() {
 	                    {correct}/{story.questions.length} {uiLang === "en" ? "correct" : "correctas"} {correct === 3 ? "— ¡qué padre!" : ""}
                   </div>
                   {claimed ? (
-	                    <Btn outline disabled>{L.xpClaimed}</Btn>
+	                    <Btn outline disabled>{freshClaimId === story.id ? L.xpJustClaimed : L.xpClaimed}</Btn>
                   ) : (
 	                    <Btn onClick={() => claimStory(story, correct)}>{L.claim} +{5 + correct * 10} XP · <IcGem size={14} /> 10</Btn>
                   )}
