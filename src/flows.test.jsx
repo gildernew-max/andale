@@ -7319,7 +7319,14 @@ describe("first session before the paywall", () => {
     expect(heading.style.color).toBe("rgb(133, 103, 44)");
     expect(document.querySelector(".confetti-bit")).toBeNull();
     expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/cenzontle\.png/);
-    expect(screen.getByTestId("win-earned-xp")).toBeTruthy();
+    const xp = screen.getByTestId("win-earned-xp");
+    const gems = screen.getByTestId("win-earned-gems");
+    expect(xp.style.color).toBe("rgb(133, 103, 44)");
+    expect(gems.style.color).toBe("rgb(133, 103, 44)");
+    expect(xp.querySelector("span").style.color).toBe("");
+    expect(gems.querySelector("span").style.color).toBe("");
+    expect(xp.parentElement.style.borderTopColor).toBe("rgb(255, 200, 0)");
+    expect(gems.parentElement.style.borderTopColor).toBe("rgb(28, 176, 246)");
     const perfect = screen.getByTestId("perfect-lesson");
     expect(perfect.tagName).toBe("P");
     expect(perfect.textContent).toBe("Lección perfecta — +5 XP");
@@ -7347,6 +7354,8 @@ describe("first session before the paywall", () => {
     render(<App />);
     const darkHeading = await screen.findByRole("heading", { name: /Lesson complete!/ });
     expect(darkHeading.style.color).toBe("rgb(255, 212, 59)");
+    expect(screen.getByTestId("win-earned-xp").style.color).toBe("rgb(255, 212, 59)");
+    expect(screen.getByTestId("win-earned-gems").style.color).toBe("rgb(28, 176, 246)");
     expect(document.querySelector(".confetti-bit")).toBeNull();
     cleanup();
 
@@ -7369,6 +7378,8 @@ describe("first session before the paywall", () => {
     render(<App />);
     const later = await screen.findByRole("heading", { name: /¡Lección completada!/ });
     expect(later.style.color).toBe("rgb(255, 200, 0)");
+    expect(screen.getByTestId("win-earned-xp").style.color).toBe("rgb(133, 103, 44)");
+    expect(screen.getByTestId("win-earned-gems").style.color).toBe("rgb(133, 103, 44)");
     expect(document.querySelector(".confetti-bit")).toBeTruthy();
     expect(screen.queryByTestId("win-perch")).toBeNull();
     const laterPerfect = screen.getByTestId("perfect-lesson");
