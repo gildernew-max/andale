@@ -380,7 +380,19 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(monthly.textContent).not.toMatch(/\$39\.99|\$6\.99/);
   expect(bird.tagName).toBe("IMG");
   expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-  expect(bird.getAttribute("width")).toBe("44");
+  const still = screen.queryByTestId("soft-paywall-still");
+  if (still) {
+    expect(bird.getAttribute("width")).toBe("48");
+    expect(still.getAttribute("src")).toMatch(/lectura\/story-/);
+    expect(still.style.aspectRatio).toMatch(/16\s*\/\s*9/);
+    expect(still.style.borderRadius).toBe("16px");
+    expect(still.style.objectFit).toBe("cover");
+    expect(still.style.borderStyle || "none").toBe("none");
+    expect(wall.querySelectorAll("[data-testid='soft-paywall-cenzontle']")).toHaveLength(1);
+  } else {
+    expect(bird.getAttribute("width")).toBe("44");
+    expect(screen.queryByTestId("soft-paywall-still")).toBeNull();
+  }
   expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)|animation/);
   expect(screen.queryByTestId("soft-paywall-cenzontle-stage")).toBeNull();
   expect(screen.queryByTestId("soft-paywall-cenzontle-wing")).toBeNull();
@@ -407,8 +419,17 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(dismiss.className).not.toMatch(/duo-btn/);
   expect(dismiss.style.background).toBe("none");
   expect(dismiss.style.padding).toBe("11px 0px");
+  expect(dismiss.style.minHeight).toBe("44px");
+  expect(dismiss.style.fontSize).toBe("15px");
+  expect(dismiss.style.fontWeight).toBe("700");
   expect(dismiss.style.borderBottom).not.toMatch(/4px/);
-  expect(dismiss.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
+  expect(dismiss.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+  const fine = screen.getByTestId("soft-paywall-disclosure");
+  expect(fine.style.fontSize).toBe("11px");
+  expect(fine.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+  expect(screen.getByTestId("soft-paywall-terms").style.textDecoration).toMatch(/underline/);
+  expect(fine.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(dismiss.compareDocumentPosition(honesty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   const filled = [...wall.querySelectorAll("button.duo-btn")]
     .filter((el) => /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i.test(el.style.background));
   expect(filled).toHaveLength(1);
@@ -7177,15 +7198,26 @@ describe("paywall headline follows the open source", () => {
 });
 
 const EN_DISCLOSURE = [
-  "Ándale Premium is an auto-renewing subscription.",
-  "One year: $39.99 per year (about $3.33 a month). One month: $6.99 per month.",
-  "Payment is charged to your Apple ID when you confirm your purchase. Your subscription renews automatically unless you cancel at least 24 hours before the current period ends. Your account is charged for the renewal within the 24 hours before the period ends. You can manage or cancel anytime in Settings > Apple ID > Subscriptions.",
+  "Ándale Premium is an auto-renewing subscription: one year at $39.99 or one month at $6.99.",
+  "Payment is charged to your Apple ID when you confirm. It renews automatically at the same price unless you cancel at least 24 hours before the period ends; the renewal is charged within those 24 hours. Manage or cancel in Settings > Apple ID > Subscriptions.",
 ];
 const ES_DISCLOSURE = [
-  "Ándale Premium es una suscripción con renovación automática.",
-  "Un año: $39.99 al año (unos $3.33 al mes). Un mes: $6.99 al mes.",
-  "El pago se carga a tu ID de Apple al confirmar la compra. La suscripción se renueva sola a menos que la canceles al menos 24 horas antes de que termine el periodo actual. El cargo de la renovación se hace dentro de las 24 horas previas al fin del periodo. Puedes administrarla o cancelarla cuando quieras en Ajustes > ID de Apple > Suscripciones.",
+  "Ándale Premium es una suscripción con renovación automática: un año por $39.99 o un mes por $6.99.",
+  "El pago se carga a tu ID de Apple al confirmar. Se renueva sola al mismo precio, a menos que la canceles al menos 24 horas antes de que termine el periodo; la renovación se cobra dentro de esas 24 horas. Administra o cancela en Ajustes > ID de Apple > Suscripciones.",
 ];
+
+const assertFinePrintMatchesButtons = (lang) => {
+  const annual = screen.getByTestId("soft-paywall-annual-price").textContent.split(" ")[0];
+  const monthly = screen.getByTestId("soft-paywall-monthly-price").textContent.split(" ")[0];
+  const lead = screen.getByTestId("soft-paywall-disclosure-0").textContent;
+  expect(lead).toContain(annual);
+  expect(lead).toContain(monthly);
+  const expected = lang === "en"
+    ? `Ándale Premium is an auto-renewing subscription: one year at ${annual} or one month at ${monthly}.`
+    : `Ándale Premium es una suscripción con renovación automática: un año por ${annual} o un mes por ${monthly}.`;
+  expect(lead).toBe(expected);
+  expect(screen.queryByTestId("soft-paywall-disclosure-2")).toBeNull();
+};
 
 describe("paywall 3.1.2 disclosure", () => {
   it("renders EN prices, fine print, restore, and legal links without a purchase", async () => {
@@ -7210,6 +7242,7 @@ describe("paywall 3.1.2 disclosure", () => {
     EN_DISCLOSURE.forEach((line, i) => {
       expect(screen.getByTestId(`soft-paywall-disclosure-${i}`).textContent).toBe(line);
     });
+    assertFinePrintMatchesButtons("en");
     expect(screen.queryByText(ES_DISCLOSURE[0])).toBeNull();
     const fine = screen.getByTestId("soft-paywall-disclosure");
     expect(parseFloat(fine.style.fontSize)).toBeLessThan(parseFloat(annual.style.fontSize));
@@ -7265,6 +7298,7 @@ describe("paywall 3.1.2 disclosure", () => {
     ES_DISCLOSURE.forEach((line, i) => {
       expect(screen.getByTestId(`soft-paywall-disclosure-${i}`).textContent).toBe(line);
     });
+    assertFinePrintMatchesButtons("es");
     expect(screen.queryByText(EN_DISCLOSURE[0])).toBeNull();
     expect(screen.getByTestId("soft-paywall-legal").textContent).toBe("Términos de uso · Política de privacidad · Restaurar compras");
     expect(screen.getByTestId("soft-paywall-terms").getAttribute("href")).toBe("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/");
@@ -7313,10 +7347,10 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Practice · no charge yet|Práctica · sin cobro todavía/);
     await waitFor(() => expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("€39.99 / year"));
     expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("€6.99 / month");
-    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).toBe(EN_DISCLOSURE[0]);
-    expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).toBe("One year: €39.99 per year. One month: €6.99 per month.");
-    expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).not.toMatch(/\$3\.33/);
-    expect(screen.getByTestId("soft-paywall-disclosure-2").textContent).toBe(EN_DISCLOSURE[2]);
+    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).toBe("Ándale Premium is an auto-renewing subscription: one year at €39.99 or one month at €6.99.");
+    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).not.toMatch(/\$3\.33/);
+    expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).toBe(EN_DISCLOSURE[1]);
+    assertFinePrintMatchesButtons("en");
     expect(screen.getByTestId("soft-paywall-annual").className).toMatch(/duo-btn/);
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Continue free");
     expect(screen.getByTestId("soft-paywall-dismiss").style.background).toBe("none");
@@ -7484,7 +7518,9 @@ describe("paywall 3.1.2 disclosure", () => {
     await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("$39.99 / year");
     expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("$6.99 / month");
+    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).toBe(EN_DISCLOSURE[0]);
     expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).toBe(EN_DISCLOSURE[1]);
+    assertFinePrintMatchesButtons("en");
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/€/);
     expect(funnelOf("purchase")).toHaveLength(0);
   }, 15000);

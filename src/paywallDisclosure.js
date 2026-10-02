@@ -20,16 +20,26 @@ export const PLAN_PRICE_LINE = Object.freeze({
   }),
 });
 
+/** George's trimmed 3.1.2 lines. Prices are filled from LOCKED_DISPLAY_PRICE / StoreKit, same amounts as the plan buttons. */
+const FINE_PRINT = Object.freeze({
+  en: Object.freeze({
+    lead: (annual, monthly) => `Ándale Premium is an auto-renewing subscription: one year at ${annual} or one month at ${monthly}.`,
+    renew: "Payment is charged to your Apple ID when you confirm. It renews automatically at the same price unless you cancel at least 24 hours before the period ends; the renewal is charged within those 24 hours. Manage or cancel in Settings > Apple ID > Subscriptions.",
+  }),
+  es: Object.freeze({
+    lead: (annual, monthly) => `Ándale Premium es una suscripción con renovación automática: un año por ${annual} o un mes por ${monthly}.`,
+    renew: "El pago se carga a tu ID de Apple al confirmar. Se renueva sola al mismo precio, a menos que la canceles al menos 24 horas antes de que termine el periodo; la renovación se cobra dentro de esas 24 horas. Administra o cancela en Ajustes > ID de Apple > Suscripciones.",
+  }),
+});
+
 export const DISCLOSURE = Object.freeze({
   en: Object.freeze([
-    "Ándale Premium is an auto-renewing subscription.",
-    "One year: $39.99 per year (about $3.33 a month). One month: $6.99 per month.",
-    "Payment is charged to your Apple ID when you confirm your purchase. Your subscription renews automatically unless you cancel at least 24 hours before the current period ends. Your account is charged for the renewal within the 24 hours before the period ends. You can manage or cancel anytime in Settings > Apple ID > Subscriptions.",
+    FINE_PRINT.en.lead(LOCKED_DISPLAY_PRICE.annual, LOCKED_DISPLAY_PRICE.monthly),
+    FINE_PRINT.en.renew,
   ]),
   es: Object.freeze([
-    "Ándale Premium es una suscripción con renovación automática.",
-    "Un año: $39.99 al año (unos $3.33 al mes). Un mes: $6.99 al mes.",
-    "El pago se carga a tu ID de Apple al confirmar la compra. La suscripción se renueva sola a menos que la canceles al menos 24 horas antes de que termine el periodo actual. El cargo de la renovación se hace dentro de las 24 horas previas al fin del periodo. Puedes administrarla o cancelarla cuando quieras en Ajustes > ID de Apple > Suscripciones.",
+    FINE_PRINT.es.lead(LOCKED_DISPLAY_PRICE.annual, LOCKED_DISPLAY_PRICE.monthly),
+    FINE_PRINT.es.renew,
   ]),
 });
 
@@ -62,11 +72,6 @@ export const RESTORE_STATUS = Object.freeze({
   }),
 });
 
-const ANNUAL_EQUIV = Object.freeze({
-  en: " (about $3.33 a month)",
-  es: " (unos $3.33 al mes)",
-});
-
 function uiCode(lang) {
   return lang === "en" ? "en" : "es";
 }
@@ -88,33 +93,27 @@ function storePrice(value) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+/** Billed amount for a plan. StoreKit displayPrice wins; otherwise the locked amount the buttons use. */
+export function billedAmount(plan, displayPrice) {
+  return storePrice(displayPrice) || LOCKED_DISPLAY_PRICE[plan] || "";
+}
+
 /** Button subline. Locked string unless StoreKit sent a different displayPrice. */
 export function planPriceLine(plan, lang, displayPrice) {
   const code = uiCode(lang);
   const locked = PLAN_PRICE_LINE[code][plan];
-  const price = storePrice(displayPrice);
+  const price = billedAmount(plan, displayPrice);
   if (!price || price === LOCKED_DISPLAY_PRICE[plan]) return locked || "";
   if (plan === "annual") return code === "en" ? `${price} / year` : `${price} al año`;
   if (plan === "monthly") return code === "en" ? `${price} / month` : `${price} al mes`;
   return locked || "";
 }
 
-/**
- * One language of section (a). displayPrice replaces $39.99 / $6.99.
- * The $3.33 equivalent drops when the annual display price is not the locked amount.
- */
+/** One language of the trimmed 3.1.2 fine print. Amounts come from billedAmount, same as the plan buttons. */
 export function disclosureLines(lang, prices = {}) {
   const code = uiCode(lang);
-  const annual = storePrice(prices.annual) || LOCKED_DISPLAY_PRICE.annual;
-  const monthly = storePrice(prices.monthly) || LOCKED_DISPLAY_PRICE.monthly;
-  return DISCLOSURE[code].map((line) => {
-    let next = line;
-    if (annual !== LOCKED_DISPLAY_PRICE.annual) {
-      next = next.replace(ANNUAL_EQUIV[code], "").split(LOCKED_DISPLAY_PRICE.annual).join(annual);
-    }
-    if (monthly !== LOCKED_DISPLAY_PRICE.monthly) {
-      next = next.split(LOCKED_DISPLAY_PRICE.monthly).join(monthly);
-    }
-    return next;
-  });
+  const face = FINE_PRINT[code];
+  const annual = billedAmount("annual", prices.annual);
+  const monthly = billedAmount("monthly", prices.monthly);
+  return [face.lead(annual, monthly), face.renew];
 }
