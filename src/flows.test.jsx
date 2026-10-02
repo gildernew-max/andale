@@ -26,6 +26,7 @@ import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
 import { PAYWALL_SOURCE } from "./paywallHeadline.js";
 import { FIRST_WIN_MINUTES, splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
 import { firstSessionWords } from "./firstSessionWords.js";
+import { onboardingCopy, onboardingLine } from "./onboardingCopy.js";
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
 
@@ -38,6 +39,15 @@ const seedProgress = (extra = {}) => {
     contentVersion: 2,
     hearts: 5,
     done: {},
+    ...extra,
+  }));
+};
+
+/** First visit that already has a first-session marker: splash as today, no onboarding. */
+const seedColdFirstVisit = (extra = {}) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    firstSessionDone: false,
+    uiLang: "en",
     ...extra,
   }));
 };
@@ -1739,6 +1749,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("splash has only header ES|EN — no Español/English dump", async () => {
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
@@ -1764,6 +1775,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("splash locks exact line + one primary CTA, no equal Saltar, cenzontle hero", async () => {
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
@@ -1848,35 +1860,33 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
   });
 
-  it("first boot with empty storage always shows splash Start after hydrate", async () => {
+  it("first boot with empty storage shows onboarding, not the subjunctive question", async () => {
     localStorage.clear();
     mockBrowser();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
-    await waitFor(() => expect(screen.getByTestId("splash-start").textContent).toBe("Start!"));
-    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Your first win starts here.");
-    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
-    expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
-    // Async load + persist must not dismiss splash on a true first visit.
+    await waitFor(() => {
+      expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level");
+      expect(screen.queryByTestId("splash")).toBeNull();
+    });
+    expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.levelTitle, "en"));
+    expect(document.body.textContent).not.toMatch(/Es obvio que Marisol/);
     await waitFor(() => {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        expect(saved.welcomed).toBeFalsy();
-        expect(saved.xp > 0).toBeFalsy();
-        expect(saved.uiLang).toBe("en");
-      }
-      expect(screen.getByTestId("splash")).toBeTruthy();
-      expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
+      expect(raw).toBeTruthy();
+      const saved = JSON.parse(raw);
+      expect(saved.welcomed).toBeFalsy();
+      expect(saved.xp > 0).toBeFalsy();
+      expect(saved.uiLang).toBe("en");
+      expect(saved.onboardingPending).toBe(true);
     });
-    expect(screen.queryByTestId("nav-camino")).toBeTruthy();
-    expect(screen.queryByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("splash")).toBeTruthy();
+    expect(screen.getByTestId("onboarding")).toBeTruthy();
+    expect(screen.queryByTestId("splash-start")).toBeNull();
   });
 
   it("leftover LIVE lesson does not skip first-visit splash", async () => {
     localStorage.clear();
     mockBrowser();
+    seedColdFirstVisit();
     localStorage.setItem(LIVE_KEY, JSON.stringify({
       screen: "lesson",
       tab: "camino",
@@ -2362,6 +2372,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("buries empty level theater, weakness map, and Atajos until earned", async () => {
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
@@ -2417,6 +2428,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("cold-open defaults uiLang EN; user can flip ES; skill chips stay Spanish", async () => {
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
@@ -2975,6 +2987,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("cold open / streak 0 hides Meta, Rayo OFF, and the four-coach strip", async () => {
     cleanup();
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
@@ -3108,6 +3121,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("name field warm line is ¿Cómo te dicen? / What should we call you?", async () => {
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
@@ -3865,6 +3879,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("cold first Hoy CONTINUE shows soft paywall once before idle home", async () => {
     cleanup();
     localStorage.clear();
+    seedColdFirstVisit();
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
@@ -3990,6 +4005,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     try {
       cleanup();
       localStorage.clear();
+      seedColdFirstVisit();
       markBajioUnlockFlashDue(false);
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
       render(
@@ -4254,6 +4270,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     try {
       cleanup();
       localStorage.clear();
+      seedColdFirstVisit();
       markBajioUnlockFlashDue(false);
       markCdmxUnlockFlashDue(false);
       markOaxacaUnlockFlashDue(false);
@@ -5414,6 +5431,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("soft paywall does not render on splash or boot before a win", async () => {
     cleanup();
     localStorage.clear();
+    seedColdFirstVisit();
     render(<App />);
     await waitFor(() => expect(screen.getByRole("button", { name: /¡Empezar!|Start!/ })).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
@@ -6527,7 +6545,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     localStorage.clear();
     mockBrowser();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("onboarding")).toBeTruthy());
     await waitFor(() => expect(funnelOf("open").length).toBeGreaterThan(0));
     const open = funnelOf("open")[0];
     expect(open.event).toBe("open");
@@ -7183,13 +7201,15 @@ describe("first session before the paywall", () => {
     localStorage.clear();
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
-    await user.click(screen.getByTestId("splash-start"));
-    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("onboarding-level-some")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-level-some"));
+    await user.click(screen.getByTestId("onboarding-goal-1"));
+    await user.click(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
+    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(false);
-    await user.click(screen.getByTestId("hub-sendero"));
-    await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
-    expect(screen.getByTestId("path-sheet").textContent).toMatch(/5 challenges/);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionArmed).toBe(true);
+    expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
   });
 
   it("Save & quit resumes the first session at the saved beat", async () => {
@@ -8069,4 +8089,161 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/€/);
     expect(funnelOf("purchase")).toHaveLength(0);
   }, 15000);
+});
+
+describe("short onboarding", () => {
+  const onboardingText = (lang) => screen.getByTestId("onboarding").textContent;
+
+  it("a fresh save shows onboarding and reaches a non-beginner lesson in 3 taps", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level"));
+    expect(screen.queryByTestId("splash")).toBeNull();
+    expect(screen.getByTestId("onboarding").style.overflow).toBe("hidden");
+    expect(screen.getByTestId("onboarding-level-beginner").textContent).toBe(
+      `${onboardingLine(onboardingCopy.levels.beginner.name, "en")}${onboardingLine(onboardingCopy.levels.beginner.desc, "en")}`,
+    );
+    expect(screen.getByTestId("onboarding-level-some").textContent).toContain(onboardingLine(onboardingCopy.levels.some.name, "en"));
+    expect(screen.getByTestId("onboarding-level-conversation").textContent).toContain(onboardingLine(onboardingCopy.levels.conversation.name, "en"));
+    let taps = 0;
+    const tap = async (el) => { taps += 1; await user.click(el); };
+    await tap(screen.getByTestId("onboarding-level-conversation"));
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("goal"));
+    expect(screen.getByTestId("onboarding-goal-1").textContent).toBe(onboardingLine(onboardingCopy.goals[1], "en"));
+    expect(screen.getByTestId("onboarding-goal-2").textContent).toBe(onboardingLine(onboardingCopy.goals[2], "en"));
+    expect(screen.getByTestId("onboarding-goal-3").textContent).toBe(onboardingLine(onboardingCopy.goals[3], "en"));
+    await tap(screen.getByTestId("onboarding-goal-3"));
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("plan"));
+    expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.planTitle, "en"));
+    expect(screen.getByTestId("onboarding-plan-level").textContent).toContain(onboardingLine(onboardingCopy.levels.conversation.name, "en"));
+    expect(screen.getByTestId("onboarding-plan-goal").textContent).toContain(onboardingLine(onboardingCopy.goals[3], "en"));
+    expect(screen.getByTestId("onboarding").querySelectorAll("button")).toHaveLength(1);
+    expect(screen.getByTestId("onboarding-start").textContent).toBe(onboardingLine(onboardingCopy.planStart, "en"));
+    await tap(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
+    expect(taps).toBeLessThanOrEqual(3);
+    expect(taps).toBe(3);
+    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
+    expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(saved.learnerLevel).toBe("conversation");
+    expect(saved.dailyGoalLessons).toBe(3);
+    expect(saved.onboardingDone).toBe(true);
+    expect(saved.onboardingPending).toBe(false);
+    expect(saved.welcomed).toBe(true);
+  });
+
+  it("a beginner fresh save opens Lectura in 3 taps and never meets the register question first", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding-level-beginner")).toBeTruthy());
+    let taps = 0;
+    const tap = async (el) => { taps += 1; await user.click(el); };
+    await tap(screen.getByTestId("onboarding-level-beginner"));
+    await tap(screen.getByTestId("onboarding-goal-1"));
+    await tap(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));
+    expect(taps).toBeLessThanOrEqual(3);
+    expect(document.querySelector("[data-first-session]")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Es obvio que Marisol/);
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(saved.learnerLevel).toBe("beginner");
+    expect(saved.dailyGoalLessons).toBe(1);
+    expect(saved.onboardingDone).toBe(true);
+    expect(saved.firstSessionDone).not.toBe(true);
+  });
+
+  it("EN and ES onboarding strings come from onboardingCopy.js", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.levelTitle, "en")));
+    expect(onboardingText("en")).toContain(onboardingLine(onboardingCopy.levels.some.desc, "en"));
+    expect(onboardingText("en")).not.toMatch(/stripe|paypal|revenuecat|minute|audio/i);
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.levelTitle, "es")));
+    expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.beginner.name, "es"));
+    expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.beginner.desc, "es"));
+    expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.conversation.desc, "es"));
+    await user.click(screen.getByTestId("onboarding-level-some"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-2").textContent).toBe(onboardingLine(onboardingCopy.goals[2], "es")));
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-2").textContent).toBe(onboardingLine(onboardingCopy.goals[2], "en")));
+    await user.click(screen.getByTestId("onboarding-goal-2"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.planTitle, "en")));
+    expect(screen.getByTestId("onboarding-plan-level").textContent).toContain(onboardingLine(onboardingCopy.planLevel, "en"));
+    expect(screen.getByTestId("onboarding-start").textContent).toBe(onboardingLine(onboardingCopy.planStart, "en"));
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-start").textContent).toBe(onboardingLine(onboardingCopy.planStart, "es")));
+    expect(screen.getByTestId("onboarding-plan-goal").textContent).toContain(onboardingLine(onboardingCopy.planGoal, "es"));
+    expect(screen.getByTestId("onboarding-plan-goal").textContent).toContain(onboardingLine(onboardingCopy.goals[2], "es"));
+  });
+
+  it("existing saves with a marker, a resume, or a finished lesson skip onboarding", async () => {
+    const expectHub = async (extra) => {
+      cleanup();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        welcomed: true,
+        xp: 10,
+        hearts: 5,
+        contentVersion: 2,
+        uiLang: "en",
+        done: {},
+        ...extra,
+      }));
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+      expect(screen.queryByTestId("onboarding")).toBeNull();
+      expect(screen.queryByTestId("splash")).toBeNull();
+    };
+    await expectHub({ firstSessionDone: false });
+    await expectHub({ firstSessionDone: true });
+    await expectHub({ firstSessionArmed: true });
+    await expectHub({ resume: { unitId: "_first", order: [{ u: "subj1", i: 3 }], qi: 1 } });
+    await expectHub({ done: { subj1: 1 } });
+    await expectHub({ stories: { "story-0": true }, firstSessionDone: true });
+    await expectHub({ xp: 40, streak: 3, lastDay: "2026-01-02" });
+  });
+
+  it("an existing first-session save opens the lesson with no onboarding tap", async () => {
+    cleanup();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      welcomed: true,
+      xp: 0,
+      hearts: 5,
+      contentVersion: 2,
+      uiLang: "en",
+      done: {},
+      firstSessionDone: false,
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    expect(screen.queryByTestId("onboarding")).toBeNull();
+    await user.click(screen.getByTestId("hub-sendero"));
+    await user.click(screen.getByRole("button", { name: /Start · \+XP/ }));
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
+    expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
+  });
+
+  it("a pending dark save stays on onboarding and keeps the stored level", async () => {
+    cleanup();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      onboardingPending: true,
+      firstSessionDone: false,
+      learnerLevel: "beginner",
+      theme: "dark",
+      uiLang: "es",
+      contentVersion: 2,
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("goal"));
+    expect(screen.getByTestId("onboarding").getAttribute("data-theme")).toBe("dark");
+    expect(screen.getByTestId("onboarding").style.background).toMatch(/#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i);
+    expect(screen.getByTestId("onboarding").style.color).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.goalTitle, "es"));
+    expect(screen.queryByTestId("splash")).toBeNull();
+  });
 });

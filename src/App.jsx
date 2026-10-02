@@ -50,6 +50,8 @@ import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, should
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
+import { firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
+import Onboarding from "./Onboarding.jsx";
 import { firstSessionWhyLine, firstSessionWinLine } from "./firstSessionWords.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
@@ -4778,6 +4780,10 @@ export default function App() {
   const gamesReturnRef = useRef("practica");
   const [burst, setBurst] = useState(0); // mini confetti trigger
   const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {}, firstSessionDone: false });
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState("level");
+  const [onboardingLevel, setOnboardingLevel] = useState(null);
+  const [onboardingGoal, setOnboardingGoal] = useState(null);
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
      file-level D constant, so all `D.green` reads inside App pick this up. */
   const theme = prog.theme || "light";
@@ -4789,6 +4795,12 @@ export default function App() {
       document.body.style.transition = "background 200ms ease, color 200ms ease";
     }
   }, [theme, D.bg, D.ink]);
+  useEffect(() => {
+    if (!onboardingOpen || typeof document === "undefined") return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [onboardingOpen]);
   const inputRef = useRef(null);
   const audioCtx = useRef(null);
   const narrationRef = useRef(null);
@@ -4818,9 +4830,11 @@ export default function App() {
 	    try { const r = await storage.get(STORAGE_KEY); if (r && r.value) p = JSON.parse(r.value); } catch (e) {}
 	    p = acceptProgress(p);
 	    if (p) p = migrateFirstSession(p);
+	    const needsOnboarding = shouldShowOnboarding(p);
 	    let loaded = null;
 	    setProg((base) => {
 	      let merged = { ...base, ...(p || {}), contentVersion: CONTENT_VERSION };
+	      if (needsOnboarding) merged = { ...merged, onboardingPending: true };
 	      // First visit keeps DEFAULT_UI_LANG (EN). Returning saves without uiLang stay ES.
 	      if (p && p.uiLang !== "en" && p.uiLang !== "es") merged = { ...merged, uiLang: "es" };
 	      if (merged.mistakes?.length && !Object.keys(merged.srs || {}).length) {
@@ -4833,6 +4847,15 @@ export default function App() {
       hydrated.current = true;
       return loaded;
     });
+	    if (needsOnboarding) {
+	      const resume = onboardingResume(p);
+	      setOnboardingLevel(resume.level);
+	      setOnboardingGoal(resume.goal);
+	      setOnboardingStep(resume.step);
+	      setOnboardingOpen(true);
+	    } else {
+	      setOnboardingOpen(false);
+	    }
 	    try { window.speechSynthesis.getVoices(); } catch (e) {}
 	    // Streak gap check: if last activity was 2 days ago, the streak is "salvageable"
 	    const today = todayStr(); const y = yesterdayStr();
@@ -6870,7 +6893,10 @@ export default function App() {
       ready: true,
     }));
   const inLesson = screen !== "home";
-  const splashOpen = isFirstVisit(prog);
+  const splashOpen = isFirstVisit(prog) && !onboardingOpen;
+  const headerD = onboardingOpen
+    ? (theme === "dark" ? { ...D, ink: "#F6EFE4", sub: "#CDBBA6" } : { ...D, sub: "#6B6258" })
+    : D;
   const paywallGate = shouldShowSoftPaywall({
     paywallSeen: !!prog.paywallSeen,
     unlockedPrem: !!prog.unlockedPrem,
@@ -7471,6 +7497,39 @@ export default function App() {
     }
   };
 
+  const pickOnboardingLevel = (level) => {
+    setOnboardingLevel(level);
+    setOnboardingStep("goal");
+    save({ learnerLevel: level, onboardingPending: true });
+  };
+  const pickOnboardingGoal = (goal) => {
+    setOnboardingGoal(goal);
+    setOnboardingStep("plan");
+    save({ dailyGoalLessons: goal, onboardingPending: true });
+  };
+  const startOnboardingLesson = () => {
+    const level = onboardingLevel;
+    const goal = onboardingGoal;
+    if (!level || !goal) return;
+    const route = firstLessonForLevel(level);
+    setOnboardingOpen(false);
+    save({
+      onboardingDone: true,
+      onboardingPending: false,
+      learnerLevel: level,
+      dailyGoalLessons: goal,
+      welcomed: true,
+    });
+    if (route.kind === "lectura") {
+      const story = STORIES.find((item) => item.id === route.storyId);
+      if (story) openStory(story);
+      return;
+    }
+    const unit = UNITS.find((item) => item.id === route.unitId) || UNITS[0];
+    const section = SECTIONS.find((item) => item.unitIds.includes(unit.id)) || SECTIONS[0];
+    beginFirstSession(unit, section);
+  };
+
   return (
     <div data-testid="app-shell" style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
       <style>{`
@@ -7666,18 +7725,18 @@ export default function App() {
       {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={completeCenzontleBeat} />}
 
       {/* ---------- TOP STAT BAR ---------- */}
-      <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 50, background: splashOpen ? (theme === "dark" ? "#15171C" : "#F6EFE4") : D.card, borderBottom: splashOpen ? "none" : `2px solid ${D.line}` }}>
+      <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 50, background: (splashOpen || onboardingOpen) ? (theme === "dark" ? "#15171C" : "#F6EFE4") : D.card, borderBottom: (splashOpen || onboardingOpen) ? "none" : `2px solid ${D.line}` }}>
         <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
           <button type="button" data-testid="brand-home" onClick={goLearnHome}
             style={{ display: "flex", alignItems: "center", gap: 7, border: "none", background: "none", padding: "6px 8px", margin: "-6px -8px", cursor: "pointer", fontFamily: "inherit", minWidth: 44, minHeight: 44 }}>
             <LogoMark size={34} />
-            <span style={{ fontWeight: 900, fontSize: 23, color: MARK_INK, letterSpacing: "-0.02em" }}>ándale</span>
+            <span style={{ fontWeight: 900, fontSize: 23, color: onboardingOpen && theme === "dark" ? "#F6EFE4" : MARK_INK, letterSpacing: "-0.02em" }}>ándale</span>
           </button>
           {!inLesson && (
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
-              <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>
-              <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>
-              {(voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
+              {!onboardingOpen && <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>}
+              {!onboardingOpen && <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>}
+              {!onboardingOpen && (voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
                 <button onClick={() => { if (voiceDead || (voicesReady && !voices.length)) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label={uiLang === "en" ? "Sound" : "Sonido"}
                   title={(voicesReady && !voices.length) ? (uiLang === "en" ? "No Spanish voices — tap to fix" : "Sin voces en español — toca para arreglar") : (uiLang === "en" ? "Sound off" : "Sonido apagado")}
                   style={{ background: "none", border: "none", cursor: "pointer", padding: "12px 10px", margin: "-12px -10px", lineHeight: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minWidth: 44, minHeight: 44 }}>
@@ -7685,14 +7744,14 @@ export default function App() {
                   <span style={{ position: "absolute", top: -2, right: -3, width: 8, height: 8, borderRadius: 99, border: `1.5px solid ${D.card}`, background: voiceDead || (voicesReady && !voices.length) ? D.red : "#BBB" }} />
                 </button>
               )}
-              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+              <LangToggle uiLang={uiLang} D={headerD} onPick={(code) => save({ uiLang: code })} />
             </div>
           )}
         </div>
       </div>
 
       {/* voice-dead banner: silence should never be mysterious */}
-      {voiceDead && !inLesson && (
+      {voiceDead && !inLesson && !onboardingOpen && (
         <button onClick={() => setTab("perfil")}
           style={{ display: "block", width: "100%", maxWidth: 480, margin: "8px auto 0", border: `2px solid ${D.red}`, borderBottom: `4px solid ${D.redDark}`, background: D.redBg, color: D.badText, borderRadius: 14, padding: "10px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 12.5, cursor: "pointer", textAlign: "left", lineHeight: 1.4 }}>
           🔇 {uiLang === "en"
@@ -9013,6 +9072,19 @@ export default function App() {
         </div>
       )}
 
+      {onboardingOpen && (
+        <Onboarding
+          lang={uiLang}
+          theme={theme}
+          step={onboardingStep}
+          level={onboardingLevel}
+          goal={onboardingGoal}
+          onLevel={pickOnboardingLevel}
+          onGoal={pickOnboardingGoal}
+          onStart={startOnboardingLesson}
+        />
+      )}
+
       {/* ---------- FIRST-RUN WELCOME ---------- */}
       {splashOpen && (
         <div data-testid="splash" style={{ position: "fixed", inset: 0, zIndex: 60, background: theme === "dark" ? "#15171C" : "#F6EFE4", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -9518,7 +9590,7 @@ export default function App() {
       })()}
 
       {/* ---------- BOTTOM TABS ---------- */}
-      {!inLesson && (
+      {!inLesson && !onboardingOpen && (
         <nav aria-label={uiLang === "en" ? "Primary navigation" : "Navegación principal"} style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: D.card, borderTop: `2px solid ${D.line}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           <div style={{ maxWidth: 480, margin: "0 auto", display: "flex" }}>
 	            {[
