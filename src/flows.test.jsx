@@ -24,6 +24,7 @@ import { startMatchRun } from "./matchPairs.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
 import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
 import { PAYWALL_SOURCE } from "./paywallHeadline.js";
+import { FIRST_WIN_MINUTES, splashPromiseLine } from "./splashCopy.js";
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
 
@@ -1665,7 +1666,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       b.textContent === "Español" || b.textContent === "English")).toHaveLength(0);
     await waitFor(() => expect(localStorage.getItem(STORAGE_KEY)).toBeTruthy());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
-    expect(screen.getByPlaceholderText("What do they call you?")).toBeTruthy();
+    expect(screen.getByPlaceholderText("What should we call you?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Start!" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
     await user.click(screen.getByTestId("lang-es"));
@@ -1682,7 +1683,28 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
-    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
+    expect(FIRST_WIN_MINUTES).toBeNull();
+    expect(screen.getByTestId("splash-line").textContent).toBe(splashPromiseLine("en"));
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Your first win starts here.");
+    expect(splashPromiseLine("en", 5)).toBe("Real Mexican Spanish. Your first win takes 5 minutes.");
+    expect(splashPromiseLine("es", 1)).toBe("Español mexicano real. Tu primer logro toma 1 minuto.");
+    const line = screen.getByTestId("splash-line");
+    expect(line.style.fontSize).toBe("16px");
+    expect(line.style.fontWeight).toBe("600");
+    expect(line.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+    expect(line.style.textWrap).toBe("balance");
+    expect(line.style.webkitLineClamp).toBe("2");
+    expect(screen.getByTestId("splash").style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(screen.getByTestId("splash-hero").getAttribute("width")).toBe("168");
+    expect(screen.getByTestId("splash-wordmark").style.fontWeight).toBe("900");
+    expect(screen.getByTestId("splash-wordmark").style.color).toMatch(/#5C7356|rgb\(\s*92,\s*115,\s*86\s*\)/i);
+    const name = screen.getByPlaceholderText("What should we call you?");
+    expect(name.style.background).toMatch(/#FFFFFF|#fff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    expect(name.style.borderRadius).toBe("16px");
+    expect(name.style.border).toMatch(/2px solid (#848A72|rgb\(\s*132,\s*138,\s*114\s*\))/i);
+    const header = screen.getByTestId("brand-home").parentElement.parentElement;
+    expect(header.style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(header.style.borderBottomStyle).toBe("none");
     expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
     expect(screen.queryByTestId("splash-skip")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
@@ -1698,7 +1720,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByRole("button", { name: /Let's go!/ })).toBeNull();
 
     await user.click(screen.getByTestId("lang-es"));
-    await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico."));
+    await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Tu primer logro empieza aquí."));
     expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
     expect(screen.queryByTestId("splash-skip")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
@@ -1712,13 +1734,33 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("word-order-tip")).toBeNull();
   });
 
+  it("dark first-open uses the Lectura page, wordmark, promise, and name field", async () => {
+    localStorage.clear();
+    mockBrowser();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme: "dark", uiLang: "en" }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe(splashPromiseLine("en")));
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    expect(screen.getByTestId("splash").style.background).toMatch(/#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i);
+    expect(screen.getByTestId("splash-wordmark").style.color).toMatch(cream);
+    expect(screen.getByTestId("splash-line").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
+    const name = screen.getByPlaceholderText("What should we call you?");
+    expect(name.style.background).toMatch(/#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i);
+    expect(name.style.border).toMatch(/2px solid (#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\))/i);
+    expect(name.style.color).toMatch(cream);
+    const header = screen.getByTestId("brand-home").parentElement.parentElement;
+    expect(header.style.background).toMatch(/#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i);
+    expect(header.style.borderBottomStyle).toBe("none");
+    expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
+  });
+
   it("first boot with empty storage always shows splash Start after hydrate", async () => {
     localStorage.clear();
     mockBrowser();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
     await waitFor(() => expect(screen.getByTestId("splash-start").textContent).toBe("Start!"));
-    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Your first win starts here.");
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
     expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
     // Async load + persist must not dismiss splash on a true first visit.
@@ -1755,7 +1797,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     }));
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
-    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Your first win starts here.");
     expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
     expect(screen.queryByTestId("lesson-exit")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
@@ -2287,7 +2329,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
     expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByTestId("lang-es").getAttribute("aria-pressed")).toBe("false");
-    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Your first win starts here.");
     expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
     await waitFor(() => {
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
@@ -2895,7 +2937,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByText("Rival")).toBeTruthy();
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByTestId("home-pitch")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/Español mexicano real\. Más allá de lo básico/);
+    expect(document.body.textContent).not.toMatch(/Español mexicano real\. Tu primer logro empieza aquí/);
     assertEqualHub();
     expect(screen.getByTestId("camino-more")).toBeTruthy();
   });
@@ -2970,14 +3012,15 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Rutina diaria/);
   });
 
-  it("name field warm line is ¿Cómo te dicen? / What do they call you?", async () => {
+  it("name field warm line is ¿Cómo te dicen? / What should we call you?", async () => {
     localStorage.clear();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
-    expect(screen.getByPlaceholderText("What do they call you?")).toBeTruthy();
-    expect(screen.queryByPlaceholderText("What should we call you?")).toBeNull();
+    expect(screen.getByPlaceholderText("What should we call you?")).toBeTruthy();
+    expect(screen.queryByPlaceholderText("What do they call you?")).toBeNull();
+    expect(screen.queryByPlaceholderText("¿Cómo te llamamos?")).toBeNull();
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByPlaceholderText("¿Cómo te dicen?")).toBeTruthy());
     expect(screen.queryByPlaceholderText("¿Cómo te llamamos?")).toBeNull();
@@ -3071,8 +3114,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("hub-hoy").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Arreglar una frase|Fix a phrase/);
     expect(promised.title).toBeTruthy();
     expect(screen.queryByTestId("home-pitch")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/Español mexicano real\. Más allá de lo básico/);
-    expect(document.body.textContent).not.toMatch(/Real Mexican Spanish\. Past the basics/);
+    expect(document.body.textContent).not.toMatch(/Español mexicano real\. Tu primer logro empieza aquí/);
+    expect(document.body.textContent).not.toMatch(/Real Mexican Spanish\. Your first win starts here/);
     expect(screen.queryByTestId("first-door-title")).toBeNull();
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();

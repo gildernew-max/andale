@@ -22,6 +22,7 @@ import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
 import { isAudioGatedStep, LISTEN_SKIP, LISTEN_SKIP_HINT, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { WAITLIST_CTA, WAITLIST_ERROR, WAITLIST_PLACEHOLDER, WAITLIST_PRIVACY, WAITLIST_PRIVACY_URL, WAITLIST_PROMPT, WAITLIST_SUCCESS, waitlistCta, waitlistError, waitlistPlaceholder, waitlistPrivacy, waitlistPrompt, waitlistSuccess } from "./waitlist.js";
+import { FIRST_WIN_MINUTES, splashPromiseLine } from "./splashCopy.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -480,7 +481,7 @@ assert(GREETINGS.en[2] === "Don Rafa saved you a story with words worth keeping.
 assert(GREETINGS.en[3] === "Valeria says precision is a kindness.", "EN greetings stay English");
 assert(GREETINGS.en[4] === "Five minutes. Real Spanish. No tourist mode.", "EN greetings stay English");
 
-const UI = Function(`"use strict"; return (${extractConst(appSrc, "UI")});`)();
+const UI = Function("splashPromiseLine", `"use strict"; return (${extractConst(appSrc, "UI")});`)(splashPromiseLine);
 assert(UI.es.cards === "Tarjetas", "UI.es.cards");
 assert(UI.es.dialogueDuel === "DUELO", "UI.es.dialogueDuel");
 assert(UI.es.duel === "Duelo", "UI.es.duel");
@@ -1090,14 +1091,17 @@ assert(UI.es.narrationLabel === "NARRACIÓN", "UI.es.narrationLabel");
 assert(UI.en.narrationLabel === "NARRATION", "UI.en.narrationLabel");
 assert(!/LAB/.test(UI.es.narrationLabel + UI.en.narrationLabel), "narration chrome is not a LAB");
 assert(!/LAB DE NARRACIÓN|NARRATION LAB/.test(appSrc), "LAB DE NARRACIÓN / NARRATION LAB are gone");
-assert(UI.es.splashLine === "Español mexicano real. Más allá de lo básico.", "UI.es.splashLine");
-assert(UI.en.splashLine === "Real Mexican Spanish. Past the basics.", "UI.en.splashLine");
+assert(FIRST_WIN_MINUTES === null, "FIRST_WIN_MINUTES ships null");
+assert(UI.es.splashLine === "Español mexicano real. Tu primer logro empieza aquí.", "UI.es.splashLine null state");
+assert(UI.en.splashLine === "Real Mexican Spanish. Your first win starts here.", "UI.en.splashLine null state");
+assert(splashPromiseLine("en", 5) === "Real Mexican Spanish. Your first win takes 5 minutes.", "timed EN promise");
+assert(splashPromiseLine("es", 1) === "Español mexicano real. Tu primer logro toma 1 minuto.", "timed ES singular");
 assert(UI.es.splashCta === "¡Empezar!", "UI.es.splashCta");
 assert(UI.en.splashCta === "Start!", "UI.en.splashCta");
 assert(UI.es.more === "Más", "UI.es.more bury label");
 assert(UI.en.more === "More", "UI.en.more bury label");
 assert(UI.es.namePrompt === "¿Cómo te dicen?", "UI.es.namePrompt");
-assert(UI.en.namePrompt === "What do they call you?", "UI.en.namePrompt");
+assert(UI.en.namePrompt === "What should we call you?", "UI.en.namePrompt");
 assert(!/Más opciones|See more|More options|Camino extra/.test(`${UI.es.more}${UI.en.more}`), "do not invent other bury labels");
 const landlord = TODAY_SCENES.find((sc) => sc.id === "landlord");
 assert(landlord, "landlord Hoy scene exists");
@@ -1148,7 +1152,8 @@ assert(appSrc.includes("data-testid=\"coach-strip\""), "four-coach strip is test
 assert(appSrc.includes("data-testid=\"camino-more\""), "Intermedio bury control is testable");
 assert(UI.es.more === "Más" && UI.en.more === "More", "L.more stays parked — not a hub header");
 assert(appSrc.includes("{L.namePrompt}"), "name field uses L.namePrompt");
-assert(!/What should we call you\?|¿Cómo te llamamos\?/.test(appSrc), "form-feel name prompt is gone");
+assert(appSrc.includes("What should we call you?"), "EN name prompt is What should we call you?");
+assert(!/¿Cómo te llamamos\?/.test(appSrc), "name prompt is not ¿Cómo te llamamos?");
 assert(!Object.hasOwn(UI.es, "splashSkip"), "ES splash has no skip key");
 assert(!Object.hasOwn(UI.en, "splashSkip"), "EN splash has no skip key");
 assert(!/Let's go!/.test(UI.en.splashCta), "EN splash CTA is Start!, not Let's go!");

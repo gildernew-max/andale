@@ -10,6 +10,7 @@ import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneF
 import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
+import { splashPromiseLine } from "./splashCopy.js";
 import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from "./hoyChoiceCard.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
@@ -4131,7 +4132,7 @@ const UI = {
     literalLabel: "Traducción",
     whyLabel: "Por qué",
     narrationLabel: "NARRACIÓN",
-    splashLine: "Español mexicano real. Más allá de lo básico.",
+    splashLine: splashPromiseLine("es"),
     splashCta: "¡Empezar!",
     more: "Más",
     namePrompt: "¿Cómo te dicen?",
@@ -4219,10 +4220,10 @@ const UI = {
     literalLabel: "Literal",
     whyLabel: "Why",
     narrationLabel: "NARRATION",
-    splashLine: "Real Mexican Spanish. Past the basics.",
+    splashLine: splashPromiseLine("en"),
     splashCta: "Start!",
     more: "More",
-    namePrompt: "What do they call you?",
+    namePrompt: "What should we call you?",
     hoyWin: "That's it.",
     sessionClose: "Done",
     recuerdosTitle: "Souvenir trail",
@@ -7573,7 +7574,7 @@ export default function App() {
       {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={completeCenzontleBeat} />}
 
       {/* ---------- TOP STAT BAR ---------- */}
-      <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 50, background: D.card, borderBottom: `2px solid ${D.line}` }}>
+      <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 50, background: splashOpen ? (theme === "dark" ? "#15171C" : "#F6EFE4") : D.card, borderBottom: splashOpen ? "none" : `2px solid ${D.line}` }}>
         <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
           <button type="button" data-testid="brand-home" onClick={goLearnHome}
             style={{ display: "flex", alignItems: "center", gap: 7, border: "none", background: "none", padding: "6px 8px", margin: "-6px -8px", cursor: "pointer", fontFamily: "inherit", minWidth: 44, minHeight: 44 }}>
@@ -8918,18 +8919,19 @@ export default function App() {
 
       {/* ---------- FIRST-RUN WELCOME ---------- */}
       {splashOpen && (
-        <div data-testid="splash" style={{ position: "fixed", inset: 0, zIndex: 60, background: D.card, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div data-testid="splash" style={{ position: "fixed", inset: 0, zIndex: 60, background: theme === "dark" ? "#15171C" : "#F6EFE4", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <style>{`.splash-name::placeholder{color:${theme === "dark" ? "#A0A4AB" : "#6B6258"};opacity:1}`}</style>
           <div style={{ maxWidth: 380, width: "100%", textAlign: "center" }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
-              <LogoMark size={130} data-testid="splash-hero" />
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+              <LogoMark size={168} data-testid="splash-hero" />
             </div>
-            <div style={{ fontWeight: 900, fontSize: 30, color: MARK_INK, letterSpacing: "-0.02em", marginBottom: 4 }}>¡ándale!</div>
-            <div data-testid="splash-line" style={{ fontWeight: 800, fontSize: 14.5, color: D.sub, marginBottom: 22, lineHeight: 1.4 }}>
+            <div data-testid="splash-wordmark" style={{ fontWeight: 900, fontSize: 30, color: theme === "dark" ? "#F6EFE4" : MARK_INK, letterSpacing: "-0.02em", marginBottom: 4 }}>¡ándale!</div>
+            <div data-testid="splash-line" style={{ fontWeight: 600, fontSize: 16, color: theme === "dark" ? "#CDBBA6" : "#6B6258", margin: "0 auto 22px", lineHeight: 1.35, maxWidth: "22em", textWrap: "balance", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
               {L.splashLine}
             </div>
-            <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={20}
+            <input className="splash-name" value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={20}
               placeholder={L.namePrompt}
-              style={{ width: "100%", boxSizing: "border-box", border: `2px solid ${D.line}`, borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 15, marginBottom: 16, outline: "none", textAlign: "center" }} />
+              style={{ width: "100%", boxSizing: "border-box", border: `2px solid ${theme === "dark" ? "#2A2E36" : "#848A72"}`, borderRadius: 16, padding: "13px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 15, marginBottom: 16, outline: "none", textAlign: "center", background: theme === "dark" ? "#1E2128" : "#FFFFFF", color: theme === "dark" ? "#F6EFE4" : D.ink }} />
             <div data-testid="splash-actions" style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
               <Btn data-testid="splash-start" onClick={() => save({ name: nameDraft.trim(), welcomed: true })} style={{ display: "block", width: "100%", fontSize: 16, textTransform: "none", letterSpacing: "normal" }}>
                 {L.splashCta}
