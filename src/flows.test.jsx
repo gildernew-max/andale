@@ -7322,7 +7322,7 @@ describe("first session before the paywall", () => {
     const xp = screen.getByTestId("win-earned-xp");
     const gems = screen.getByTestId("win-earned-gems");
     expect(xp.style.color).toBe("rgb(133, 103, 44)");
-    expect(gems.style.color).toBe("rgb(133, 103, 44)");
+    expect(gems.style.color).toBe("rgb(15, 111, 166)");
     expect(xp.querySelector("span").style.color).toBe("");
     expect(gems.querySelector("span").style.color).toBe("");
     expect(xp.parentElement.style.borderTopColor).toBe("rgb(255, 200, 0)");
@@ -7379,7 +7379,7 @@ describe("first session before the paywall", () => {
     const later = await screen.findByRole("heading", { name: /¡Lección completada!/ });
     expect(later.style.color).toBe("rgb(255, 200, 0)");
     expect(screen.getByTestId("win-earned-xp").style.color).toBe("rgb(133, 103, 44)");
-    expect(screen.getByTestId("win-earned-gems").style.color).toBe("rgb(133, 103, 44)");
+    expect(screen.getByTestId("win-earned-gems").style.color).toBe("rgb(15, 111, 166)");
     expect(document.querySelector(".confetti-bit")).toBeTruthy();
     expect(screen.queryByTestId("win-perch")).toBeNull();
     const laterPerfect = screen.getByTestId("perfect-lesson");
