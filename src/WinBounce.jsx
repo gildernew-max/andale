@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { WIN_NUMERAL_LIGHT } from "./winNumeral.js";
 import {
   STORY0_BEAT_MS,
   STORY0_DROP_MS,
@@ -23,9 +22,9 @@ function markSrc() {
   return `${import.meta.env.BASE_URL}${WIN_BOUNCE_SRC}`;
 }
 
-function XpChip({ testId, ink }) {
+function XpChip({ testId }) {
   return (
-    <div data-testid={testId} className="cenzontle-chip" style={ink ? { color: ink } : undefined}>
+    <div data-testid={testId} className="cenzontle-chip">
       <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6.2 3h11.6L22 9 12 21.5 2 9z" fill="#1CB0F6" />
         <path d="M2 9h20L12 21.5z" fill="#1899D6" />
@@ -47,8 +46,7 @@ const CHIP_CSS = `
 `;
 
 /** Landed courier + points on the first-win screen. Stays until CONTINUE. */
-export function WinPerch({ theme = "light" }) {
-  const xpInk = theme === "dark" ? undefined : WIN_NUMERAL_LIGHT;
+export function WinPerch() {
   return (
     <div data-testid="win-perch" aria-hidden="true" className="cenzontle-perch">
       <style>{`
@@ -70,7 +68,7 @@ export function WinPerch({ theme = "light" }) {
         height={168}
         className="cenzontle-perch-bird"
       />
-      <XpChip testId="win-perch-chip" ink={xpInk} />
+      <XpChip testId="win-perch-chip" />
     </div>
   );
 }
