@@ -9953,7 +9953,7 @@ export default function App() {
                       </button>
                       {showWhy && <div data-testid="practice-why" className="pop" style={{ marginTop: 4, color: D.ink, background: D.card, border: `2px solid ${D.line}`, borderRadius: 10, padding: "8px 11px", fontSize: 13.5 }}>{explainText(q, uiLang)}</div>}
                       {session.firstSession && firstSessionWhyLine(qi, uiLang) && (
-                        <div data-testid="first-session-why" style={{ marginTop: 4, fontSize: 13, fontWeight: 800, lineHeight: 1.35 }}>{firstSessionWhyLine(qi, uiLang)}</div>
+                        <div data-testid="first-session-why" style={{ marginTop: 4, fontSize: 13, fontWeight: 800, lineHeight: 1.35, fontFamily: "inherit", color: theme === "dark" ? D.badText : D.ink }}>{firstSessionWhyLine(qi, uiLang)}</div>
                       )}
                     </div>
                   );
@@ -11026,13 +11026,19 @@ export default function App() {
         const milestones = [3, 7, 14, 30, 50, 100, 365];
         const hitMilestone = milestones.includes(prog.streak);
         const quietWin = session.firstHoy || session.firstDoctora || session.firstStory0 || session.lecturaWin;
+        const firstWin = !!session.firstSession;
         const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : session.lecturaWin ? "lectura-win" : undefined;
         const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : session.lecturaWin ? "lectura-win-continue" : undefined;
         const streakChip = streakChipLabel(prog.streak, uiLang);
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
-          {!quietWin && <Confetti count={perfect ? 160 : 70} />}
-          {!quietWin && (
+          {!quietWin && !firstWin && <Confetti count={perfect ? 160 : 70} />}
+          {firstWin && (
+            <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
+              <WinPerch />
+            </div>
+          )}
+          {!quietWin && !firstWin && (
           <div style={{ display: "flex", justifyContent: "center", gap: 0, alignItems: "flex-end" }}>
             {[session.host, "luna", "rafa"].filter((id, i, arr) => arr.indexOf(id) === i).slice(0, 3).map((id, i) => (
               <div key={id} className="jump" style={{ marginLeft: i ? -18 : 0, zIndex: 3 - i }}>
@@ -11048,15 +11054,12 @@ export default function App() {
                 : <WinPerch />}
             </div>
           )}
-          {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
+          {screenQuip && !quietWin && !firstWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
             <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, coachName(session.host)) }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
-          <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
+          <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: firstWin && theme !== "dark" ? "#85672C" : D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
-          {session.firstSession && firstSessionWinLine(uiLang) && (
-            <p data-testid="first-session-win-line" style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 800, lineHeight: 1.35, color: D.sub }}>{firstSessionWinLine(uiLang)}</p>
-          )}
           {levelUp && !session.firstDoctora && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", margin: "4px 0 8px", fontWeight: 900, color: D.goldDark }}>
 	              <IcBolt size={18} /> {L.levelUp} <span style={{ textTransform: "uppercase", letterSpacing: ".03em" }}>{levelLabel(levelUp, uiLang)}</span>
@@ -11078,6 +11081,9 @@ export default function App() {
               </div>
             ))}
           </div>
+          {firstWin && firstSessionWinLine(uiLang) && (
+            <p data-testid="first-session-win-line" style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 700, lineHeight: 1.35, color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}>{firstSessionWinLine(uiLang)}</p>
+          )}
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
 	            <Btn data-testid={continueTestId || "win-continue"} onClick={continueFromWin}>{L.continue}</Btn>
@@ -11124,9 +11130,15 @@ export default function App() {
 
           {/* perfect-lesson banner */}
           {perfect && !quietWin && (session.perfectBonus || 0) > 0 && (
-            <div data-testid="perfect-lesson" className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
-              ★ {L.perfectLesson}
-            </div>
+            firstWin ? (
+              <p data-testid="perfect-lesson" style={{ margin: "14px 0 0", padding: 0, border: "none", background: "none", fontWeight: 700, fontSize: 13, lineHeight: 1.35, color: theme === "dark" ? D.gold : "#85672C" }}>
+                {L.perfectLesson}
+              </p>
+            ) : (
+              <div data-testid="perfect-lesson" className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
+                ★ {L.perfectLesson}
+              </div>
+            )
           )}
 
           {/* streak milestone badge */}

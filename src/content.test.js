@@ -1217,8 +1217,9 @@ assert(appSrc.includes("shouldArmLecturaWin"), "later Lectura claim arms static 
 assert(appSrc.includes("shouldPlayLecturaWin(session)"), "later Lectura preloads Cenzontle for the perch");
 assert(appSrc.includes("story-0-win"), "story-0 ¡Eso! heading is testable");
 assert(appSrc.includes("lectura-win"), "later Lectura ¡Eso! heading is testable");
-assert(appSrc.includes("{!quietWin && <Confetti"), "first-win mutes confetti so the courier is visible");
-assert(appSrc.includes("{!quietWin && ("), "first-win hides the party-coach row");
+assert(appSrc.includes("{!quietWin && !firstWin && <Confetti"), "first-win mutes confetti so the courier is visible");
+assert(appSrc.includes("{!quietWin && !firstWin && ("), "first-win hides the party-coach row");
+assert(appSrc.includes("firstWin && theme !== \"dark\" ? \"#85672C\" : D.gold"), "first-session light heading is ochre; other wins keep gold");
 assert(appSrc.includes("data-testid={winTestId}"), "¡Eso! heading stays the existing win test id");
 assert(appSrc.includes("className={quietWin ? \"eso-rise\" : undefined}"), "¡Eso! copy is opacity / 3px rise only");
 assert(appSrc.includes('const MARK_INK = "#5C7356"'), "lockup wordmark uses adult sage, not Duo lime");

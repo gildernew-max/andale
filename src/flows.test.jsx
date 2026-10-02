@@ -7293,14 +7293,96 @@ describe("first session before the paywall", () => {
     expect(lectura.gems).toBe(25);
     expect(lectura.streak).toBe(1);
     expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).toBe("lectura-bird-handoff");
-  }, 30000);
+  }, 60000);
+
+  it("first-session win uses the ochre heading, one bird, and a plain perfect line", async () => {
+    cleanup();
+    freshEligible({ uiLang: "es", theme: "light", quickTipSeen: true });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "done",
+      qi: 4,
+      status: "correct",
+      lessonStats: { right: 5, wrong: 0 },
+      session: {
+        title: "Subjuntivo presente",
+        host: "luna",
+        unitId: "_first",
+        firstSession: true,
+        perfectBonus: 5,
+        earnedXP: 62,
+        earnedGems: 15,
+        questions: [{ type: "type", prompt: "Te llamo", answers: ["salga"] }],
+      },
+    }));
+    render(<App />);
+    const heading = await screen.findByRole("heading", { name: /¡Lección completada!/ });
+    expect(heading.style.color).toBe("rgb(133, 103, 44)");
+    expect(document.querySelector(".confetti-bit")).toBeNull();
+    expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/cenzontle\.png/);
+    expect(screen.getByTestId("win-earned-xp")).toBeTruthy();
+    const perfect = screen.getByTestId("perfect-lesson");
+    expect(perfect.tagName).toBe("P");
+    expect(perfect.textContent).toBe("Lección perfecta — +5 XP");
+    expect(perfect.style.borderStyle).toBe("none");
+    expect(perfect.style.backgroundColor).toBe("transparent");
+    cleanup();
+
+    freshEligible({ uiLang: "en", theme: "dark", quickTipSeen: true });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "done",
+      qi: 4,
+      status: "correct",
+      lessonStats: { right: 5, wrong: 0 },
+      session: {
+        title: "Subjuntivo presente",
+        host: "luna",
+        unitId: "_first",
+        firstSession: true,
+        perfectBonus: 5,
+        earnedXP: 62,
+        earnedGems: 15,
+        questions: [{ type: "type", prompt: "Te llamo", answers: ["salga"] }],
+      },
+    }));
+    render(<App />);
+    const darkHeading = await screen.findByRole("heading", { name: /Lesson complete!/ });
+    expect(darkHeading.style.color).toBe("rgb(255, 212, 59)");
+    expect(document.querySelector(".confetti-bit")).toBeNull();
+    cleanup();
+
+    freshEligible({ uiLang: "es", theme: "light", quickTipSeen: true, firstSessionDone: true });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "done",
+      qi: 11,
+      status: "correct",
+      lessonStats: { right: 12, wrong: 0 },
+      session: {
+        title: "Subjuntivo presente",
+        host: "luna",
+        unitId: "subj1",
+        perfectBonus: 5,
+        earnedXP: 80,
+        earnedGems: 15,
+        questions: [{ type: "mc", prompt: "Hola", choices: ["no"], answer: "sí" }],
+      },
+    }));
+    render(<App />);
+    const later = await screen.findByRole("heading", { name: /¡Lección completada!/ });
+    expect(later.style.color).toBe("rgb(255, 200, 0)");
+    expect(document.querySelector(".confetti-bit")).toBeTruthy();
+    expect(screen.queryByTestId("win-perch")).toBeNull();
+    const laterPerfect = screen.getByTestId("perfect-lesson");
+    expect(laterPerfect.tagName).toBe("DIV");
+    expect(laterPerfect.style.borderTopWidth).toBe("2px");
+    expect(laterPerfect.style.backgroundColor).not.toBe("transparent");
+  });
 
   it("George's why and win lines render only for a first session, and nothing when null", async () => {
     const why = firstSessionWords[0].why;
     const win = firstSessionWords.win;
     const prev = { en: why.en, es: why.es, winEn: win.en, winEs: win.es };
-    why.en = "Certainty stays indicative.";
-    why.es = "La certeza se queda en indicativo.";
+    why.en = "«Es obvio que» stays indicative.";
+    why.es = "«Es obvio que» se queda en indicativo.";
     win.en = "First session done.";
     win.es = "Primera sesión lista.";
     try {
@@ -7314,9 +7396,14 @@ describe("first session before the paywall", () => {
       const wrong = [...document.querySelectorAll(".choice-card")].find((el) => !el.textContent.includes("tiene"));
       await user.click(wrong);
       await user.click(screen.getByTestId("lesson-check"));
-      await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe("La certeza se queda en indicativo."));
+      await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe("«Es obvio que» se queda en indicativo."));
+      const whyLine = screen.getByTestId("first-session-why");
+      expect(whyLine.textContent).toMatch(/«Es obvio que»/);
+      expect(whyLine.style.fontSize).toBe("13px");
+      expect(whyLine.style.fontWeight).toBe("800");
+      expect(whyLine.style.color).toBe("rgb(60, 60, 60)");
       await user.click(screen.getByTestId("lang-en"));
-      await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe("Certainty stays indicative."));
+      await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe("«Es obvio que» stays indicative."));
       cleanup();
 
       freshEligible({ firstSessionDone: true, uiLang: "en" });
@@ -7355,7 +7442,13 @@ describe("first session before the paywall", () => {
         },
       }));
       render(<App />);
-      await waitFor(() => expect(screen.getByTestId("first-session-win-line").textContent).toBe("Primera sesión lista."));
+      const winLine = await screen.findByTestId("first-session-win-line");
+      expect(winLine.textContent).toBe("Primera sesión lista.");
+      expect(winLine.style.fontSize).toBe("15px");
+      expect(winLine.style.fontWeight).toBe("700");
+      expect(winLine.style.color).toBe("rgb(107, 98, 88)");
+      const continueBtn = screen.getByTestId("win-continue");
+      expect(winLine.compareDocumentPosition(continueBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       await user.click(screen.getByTestId("lang-en"));
       await waitFor(() => expect(screen.getByTestId("first-session-win-line").textContent).toBe("First session done."));
       cleanup();
