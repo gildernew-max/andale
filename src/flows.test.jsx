@@ -295,6 +295,59 @@ const startHoyFromHub = async (user) => {
 
 const continueBtn = () => screen.getByRole("button", { name: /^Continuar$/i });
 
+const firstSessionRoot = () => document.querySelector("[data-first-session]");
+
+const answerFirstSessionBeat = async (user) => {
+  await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
+  const type = firstSessionRoot().getAttribute("data-qtype");
+  const body = document.body.textContent;
+  let taps = 0;
+  const tap = async (el) => { taps += 1; await user.click(el); };
+  if (type === "mc") {
+    const want = body.includes("Es obvio") ? "tiene" : "vengas";
+    const card = [...document.querySelectorAll(".choice-card")].find((el) => el.textContent.includes(want));
+    expect(card, want).toBeTruthy();
+    await tap(card);
+  } else if (type === "type") {
+    const want = body.includes("Ojalá") ? "llueva" : "salga";
+    const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() === want);
+    expect(tile, want).toBeTruthy();
+    await tap(tile);
+  } else if (type === "order") {
+    for (const word of ["dudo", "que", "sea", "verdad"]) {
+      const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim().toLowerCase() === word);
+      expect(tile, word).toBeTruthy();
+      await tap(tile);
+    }
+  } else {
+    throw new Error(`unexpected first-session type ${type}`);
+  }
+  await tap(screen.getByTestId("lesson-check"));
+  await tap(screen.getByRole("button", { name: /^(Continuar|Continue)$/ }));
+  return taps;
+};
+
+const missFirstSessionBeat = async (user) => {
+  await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
+  const type = firstSessionRoot().getAttribute("data-qtype");
+  const body = document.body.textContent;
+  if (type === "mc") {
+    const avoid = body.includes("Es obvio") ? "tiene" : "vengas";
+    const card = [...document.querySelectorAll(".choice-card")].find((el) => !el.textContent.includes(avoid));
+    expect(card).toBeTruthy();
+    await user.click(card);
+  } else if (type === "type") {
+    const avoid = body.includes("Ojalá") ? "llueva" : "salga";
+    const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() !== avoid);
+    expect(tile).toBeTruthy();
+    await user.click(tile);
+  } else {
+    await user.click(screen.getAllByTestId("bank-tile")[0]);
+  }
+  await user.click(screen.getByTestId("lesson-check"));
+  await user.click(screen.getByRole("button", { name: /^(Continuar|Continue)$/ }));
+};
+
 /** First short-Hoy beat is the scene MC. Read the live answer — do not hardcode a day-hash list. */
 const clickHoySceneMc = async (user) => {
   const live = JSON.parse(localStorage.getItem(LIVE_KEY) || "null");
@@ -6907,6 +6960,14 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
 
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(Number(firstSessionRoot().getAttribute("data-count"))).toBe(5);
+    for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
+    await waitFor(() => expect(screen.getByTestId("win-continue")).toBeTruthy());
+    expect(screen.getByRole("heading", { name: /¡Lección completada!/ })).toBeTruthy();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("win-continue"));
     await waitFor(() => expect(screen.getByTestId("soft-paywall-cenzontle")).toBeTruthy());
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
     expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).toBe("lectura-bird-handoff");
@@ -6941,6 +7002,133 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(at("purchase")).toBe(-1);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
   }, 30000);
+});
+
+describe("first session before the paywall", () => {
+  it("a learner with no completed lessons gets 5 exercises, then a win, then the paywall", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, hearts: 5, uiLang: "es", bajioUnlockSeen: true });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    let taps = 0;
+    const tap = async (el) => { taps += 1; await user.click(el); };
+    await tap(screen.getByTestId("hub-sendero"));
+    await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
+    expect(screen.getByTestId("path-sheet").textContent).toMatch(/5 retos/);
+    expect(screen.getByTestId("path-sheet").textContent).not.toMatch(/12 retos/);
+    await tap(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
+    expect(Number(firstSessionRoot().getAttribute("data-count"))).toBe(5);
+    expect(screen.getByTestId("lesson-progress").getAttribute("data-pct")).toBe("0");
+    const seen = [];
+    for (let i = 0; i < 5; i++) {
+      await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBeTruthy());
+      seen.push(firstSessionRoot().getAttribute("data-qtype"));
+      if (i === 2) expect(screen.getByTestId("lesson-progress").getAttribute("data-pct")).toBe("40");
+      if (i === 4) {
+        const type = firstSessionRoot().getAttribute("data-qtype");
+        const body = document.body.textContent;
+        if (type === "type") {
+          const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() === "salga");
+          await tap(tile);
+        } else {
+          throw new Error(`expected the last beat to be type, got ${type}`);
+        }
+        expect(body).toMatch(/Te llamo cuando/);
+        await tap(screen.getByTestId("lesson-check"));
+        await waitFor(() => expect(screen.getByTestId("lesson-progress").getAttribute("data-pct")).toBe("100"));
+        expect(screen.queryByTestId("soft-paywall")).toBeNull();
+        await tap(screen.getByRole("button", { name: /^Continuar$/ }));
+      } else {
+        taps += await answerFirstSessionBeat(user);
+      }
+    }
+    expect(seen).toEqual(["mc", "type", "order", "mc", "type"]);
+    await waitFor(() => expect(screen.getByTestId("win-continue")).toBeTruthy());
+    expect(screen.getByRole("heading", { name: /¡Lección completada!/ })).toBeTruthy();
+    expect(screen.getByTestId("win-earned-xp")).toBeTruthy();
+    expect(screen.getByTestId("win-earned-streak").textContent).toMatch(/Racha de 1 día/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("out-of-lives")).toBeNull();
+    await tap(screen.getByTestId("win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(taps).toBe(21);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).done?._first).toBeUndefined();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).done?.subj1 || 0).toBe(0);
+  }, 20000);
+
+  it("after the first session, Sendero is the full 12-challenge unit", async () => {
+    cleanup();
+    seedProgress({ firstSessionDone: true, hearts: 5, paywallSeen: true, streak: 1, lastDay: localToday() });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    await user.click(screen.getByTestId("hub-sendero"));
+    await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
+    expect(screen.getByTestId("path-sheet").textContent).toMatch(/12 retos/);
+    await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+    await waitFor(() => expect(document.querySelector("[data-count]")).toBeTruthy());
+    expect(document.querySelector("[data-first-session]").getAttribute("data-first-session")).toBe("0");
+    expect(Number(document.querySelector("[data-count]").getAttribute("data-count"))).toBe(12);
+  });
+
+  it("five wrong answers in the first session show Review and recover and no paywall", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, hearts: 5, uiLang: "es", bajioUnlockSeen: true });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    await user.click(screen.getByTestId("hub-sendero"));
+    await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+    for (let i = 0; i < 5; i++) await missFirstSessionBeat(user);
+    await waitFor(() => expect(screen.getByTestId("out-of-lives")).toBeTruthy());
+    expect(screen.getByTestId("out-of-lives").textContent).toBe("¡Te quedaste sin vidas!");
+    expect(screen.getByTestId("review-and-recover").textContent).toMatch(/Practicar y recuperar/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).hearts).toBe(0);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallHold).toBe(true);
+    await user.click(screen.getByTestId("hearts-to-path"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("out-of-lives")).toBeNull();
+  }, 20000);
+
+  it("a held first-session hearts fail does not open the paywall on an existing streak", async () => {
+    cleanup();
+    markBajioUnlockFlashDue(false);
+    seedProgress({
+      streak: 1,
+      lastDay: localToday(),
+      paywallSeen: false,
+      bajioUnlockSeen: true,
+      paywallHold: true,
+      hearts: 0,
+      uiLang: "en",
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "failed",
+      failKind: "hearts",
+      tab: "camino",
+      lessonStats: { right: 0, wrong: 5 },
+      session: {
+        title: "Subjuntivo presente",
+        host: "luna",
+        unitId: "_first",
+        firstSession: true,
+        questions: [{ type: "mc", prompt: "Hola", choices: ["no"], answer: "sí", shuffledChoices: ["no"] }],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("out-of-lives")).toBeTruthy());
+    expect(screen.getByTestId("out-of-lives").textContent).toBe("Out of lives!");
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("hearts-to-path"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+  });
 });
 
 const FALLBACK_HEADLINE = {

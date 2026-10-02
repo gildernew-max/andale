@@ -167,6 +167,7 @@ export function streakAfterWin(prev = {}, today, yesterday) {
 /**
  * Soft paywall once after first win: showComeBackTomorrow && !paywallSeen && !unlockedPrem && !splash.
  * Hook waits for home so Hoy celebration is first; Phrase Doctor Curarla has no done screen.
+ * paywallHold: first-session hearts fail. The wall stays down until a later win clears it.
  */
 export function shouldShowSoftPaywall({
   paywallSeen,
@@ -177,7 +178,9 @@ export function shouldShowSoftPaywall({
   today,
   screen = "home",
   splash = false,
+  paywallHold = false,
 } = {}) {
+  if (paywallHold) return false;
   if (paywallSeen) return false;
   if (unlockedPrem) return false;
   if (splash) return false;
