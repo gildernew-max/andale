@@ -8,6 +8,7 @@ import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
+import { paywallStillPath } from "./paywallStill.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
@@ -6809,6 +6810,7 @@ export default function App() {
   });
   const canCharge = detectNativeIap();
   const [storePrices, setStorePrices] = useState({ annual: null, monthly: null });
+  const [paywallStillMiss, setPaywallStillMiss] = useState(false);
   const [restoreStatus, setRestoreStatus] = useState(null);
   const [restoreHold, setRestoreHold] = useState(false);
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
@@ -6817,6 +6819,13 @@ export default function App() {
   const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue() || chapterBirdHandoff;
   const paywallHeadlineSource = chapterBirdHandoff ? PAYWALL_SOURCE.lecturaBirdHandoff : paywallSource;
   const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource);
+  const paywallStillRel = paywallStillPath(storyView, paraIdx);
+  const paywallStillSrc = paywallStillRel && !paywallStillMiss
+    ? `${import.meta.env.BASE_URL}${paywallStillRel}`
+    : null;
+  useEffect(() => {
+    setPaywallStillMiss(false);
+  }, [paywallStillRel]);
   useEffect(() => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.open });
   }, []);
@@ -9169,11 +9178,24 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is opaque #1E2128 (no pop fade). Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is opaque #1E2128 (no pop fade). Soft chrome parked. Trimmed 3.1.2 fine print sits under the plans. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
           <div data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
-            <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
+            {paywallStillSrc ? (
+              <div data-testid="soft-paywall-still-frame" style={{ position: "relative", width: "calc(100% + 40px)", margin: "0 -20px 2px" }}>
+                <img
+                  data-testid="soft-paywall-still"
+                  src={paywallStillSrc}
+                  alt=""
+                  onError={() => setPaywallStillMiss(true)}
+                  style={{ display: "block", width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 16, border: "none" }}
+                />
+                <LogoMark size={48} data-testid="soft-paywall-cenzontle" style={{ position: "absolute", right: 8, bottom: -8, display: "block", width: 48, height: 48, objectFit: "contain" }} />
+              </div>
+            ) : (
+              <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
+            )}
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
             <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
@@ -9181,7 +9203,7 @@ export default function App() {
               <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
               <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, ...(theme === "dark" ? { color: "#F6EFE4", border: "2px solid #4A5160", borderBottom: "4px solid #4A5160" } : {}) }}>{L.paywallMonthly}</Btn>
               <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
-              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: theme === "dark" ? "#CDBBA6" : D.sub, lineHeight: 1.45 }}>
+              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: theme === "dark" ? "#A0A4AB" : "#6B6258", lineHeight: 1.45 }}>
                 {disclosureLines(uiLang, storePrices).map((line, i) => (
                   <p key={i} data-testid={`soft-paywall-disclosure-${i}`} style={{ margin: i === 0 ? "2px 0 0" : "6px 0 0", fontSize: 11, fontWeight: 700, lineHeight: 1.45 }}>
                     {i === 0 && line.startsWith("Ándale Premium")
@@ -9190,25 +9212,25 @@ export default function App() {
                   </p>
                 ))}
               </div>
-              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : D.sub }}>
-                <a data-testid="soft-paywall-terms" href={TERMS_OF_USE_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].terms}</a>
+              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#A0A4AB" : "#6B6258" }}>
+                <a data-testid="soft-paywall-terms" href={TERMS_OF_USE_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline" }}>{DISCLOSURE_LINKS[uiLang].terms}</a>
                 {" · "}
-                <a data-testid="soft-paywall-privacy" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].privacy}</a>
+                <a data-testid="soft-paywall-privacy" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline" }}>{DISCLOSURE_LINKS[uiLang].privacy}</a>
                 {" · "}
-                <a data-testid="soft-paywall-restore" href="#restore" onClick={(event) => { event.preventDefault(); restoreSoftPaywall(); }} style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].restore}</a>
+                <a data-testid="soft-paywall-restore" href="#restore" onClick={(event) => { event.preventDefault(); restoreSoftPaywall(); }} style={{ color: "inherit", textDecoration: "underline" }}>{DISCLOSURE_LINKS[uiLang].restore}</a>
               </div>
               {restoreStatus && (
-                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : D.sub }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
+                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#A0A4AB" : "#6B6258" }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
               )}
+              <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
+                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : "#6B6258", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
+                {L.paywallDismiss}
+              </button>
               {!canCharge && (
               <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: theme === "dark" ? "#CDBBA6" : D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
               </div>
               )}
-              <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
-                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
-                {L.paywallDismiss}
-              </button>
             </div>
           </div>
         </div>
