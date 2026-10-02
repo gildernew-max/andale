@@ -474,12 +474,12 @@ assert(GREETINGS.es[0] === "Español mexicano real: cuentos, misiones y un empuj
 assert(GREETINGS.es[1] === "Luna ya tiene tu rutina de hoy.", "GREETINGS.es[1]");
 assert(GREETINGS.es[2] === "Don Rafa te guardó un cuento con palabras que valen.", "GREETINGS.es[2]");
 assert(GREETINGS.es[3] === "Valeria dice que la precisión es un gesto de cariño.", "GREETINGS.es[3]");
-assert(GREETINGS.es[4] === "Cinco minutos. Español de verdad. Nada de turista.", "GREETINGS.es[4]");
+assert(GREETINGS.es[4] === "Español de verdad. Nada de turista.", "GREETINGS.es[4]");
 assert(GREETINGS.en[0] === "Build real Mexican Spanish through stories, challenges, and sharp feedback.", "EN greetings stay English");
 assert(GREETINGS.en[1] === "Luna has your daily routine ready.", "EN greetings stay English");
 assert(GREETINGS.en[2] === "Don Rafa saved you a story with words worth keeping.", "EN greetings stay English");
 assert(GREETINGS.en[3] === "Valeria says precision is a kindness.", "EN greetings stay English");
-assert(GREETINGS.en[4] === "Five minutes. Real Spanish. No tourist mode.", "EN greetings stay English");
+assert(GREETINGS.en[4] === "Real Spanish. No tourist mode.", "EN greetings stay English");
 
 const UI = Function("splashPromiseLine", `"use strict"; return (${extractConst(appSrc, "UI")});`)(splashPromiseLine);
 assert(UI.es.cards === "Tarjetas", "UI.es.cards");
@@ -499,6 +499,11 @@ assert(UI.es.storyTip === "Lee el párrafo. Toca una palabra solo si te frena.",
 assert(UI.en.storyTip === "Read the paragraph. Tap a word only if it stops you.", "UI.en.storyTip");
 assert(UI.es.wordOrderTip === "Orden distinto, mismo sentido. En formal, ambas valen.", "UI.es.wordOrderTip");
 assert(UI.en.wordOrderTip === "Different order, same meaning. Formally, both work.", "UI.en.wordOrderTip");
+assert(UI.es.xpJustClaimed === "XP reclamados", "fresh Lectura claim ES is XP reclamados");
+assert(UI.en.xpJustClaimed === "XP claimed", "fresh Lectura claim EN is XP claimed");
+assert(UI.es.xpClaimed === "XP ya reclamado", "reopened Lectura ES stays XP ya reclamado");
+assert(UI.en.xpClaimed === "XP already claimed", "reopened Lectura EN stays XP already claimed");
+assert(appSrc.includes("freshClaimId === story.id ? L.xpJustClaimed : L.xpClaimed"), "fresh claim and reopen use different reward labels");
 assert(appSrc.includes("{L.wordOrderTip}"), "word-order tip uses L.wordOrderTip");
 assert(appSrc.includes("data-testid=\"word-order-tip\""), "word-order tip is testable");
 assert(appSrc.includes("data-testid=\"phrase-doctor-guess\""), "Phrase Doctor guess is testable");

@@ -2623,14 +2623,14 @@ const GREETINGS = {
     "Luna ya tiene tu rutina de hoy.",
     "Don Rafa te guardó un cuento con palabras que valen.",
     "Valeria dice que la precisión es un gesto de cariño.",
-    "Cinco minutos. Español de verdad. Nada de turista.",
+    "Español de verdad. Nada de turista.",
   ],
   en: [
     "Build real Mexican Spanish through stories, challenges, and sharp feedback.",
     "Luna has your daily routine ready.",
     "Don Rafa saved you a story with words worth keeping.",
     "Valeria says precision is a kindness.",
-    "Five minutes. Real Spanish. No tourist mode.",
+    "Real Spanish. No tourist mode.",
   ],
 };
 
@@ -4086,7 +4086,7 @@ const UI = {
     focus: "Foco", time: "¡Tiempo!", spelling: "Ojo con la ortografía", matchInstruction: "Toca una pareja en cada columna.", enterCheck: "Enter para comprobar.",
     selfGrade: "¿QUÉ TAN BIEN LO SABÍAS?", storyTip: "Lee el párrafo. Toca una palabra solo si te frena.",
     wordOrderTip: "Orden distinto, mismo sentido. En formal, ambas valen.",
-    comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
+    comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", xpJustClaimed: "XP reclamados", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
     completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel! Ahora eres",
     hits: "aciertos", misses: "fallos", impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
     testFailed: "Examen no superado", testFailedDesc: "Tres errores — el límite era dos. Tus fallos ya están en Práctica; repásalos y vuelve a intentarlo.",
@@ -4174,7 +4174,7 @@ const UI = {
     focus: "Focus", time: "Time!", spelling: "Watch the spelling", matchInstruction: "Tap one pair from each column.", enterCheck: "Enter to check.",
     selfGrade: "HOW WELL DID YOU KNOW IT?", storyTip: "Read the paragraph. Tap a word only if it stops you.",
     wordOrderTip: "Different order, same meaning. Formally, both work.",
-    comprehension: "Comprehension", easyQuestions: "Three easy questions · up to", xpClaimed: "XP already claimed", claim: "Claim", saveCard: "Save flashcard", inDeck: "In your deck",
+    comprehension: "Comprehension", easyQuestions: "Three easy questions · up to", xpClaimed: "XP already claimed", xpJustClaimed: "XP claimed", claim: "Claim", saveCard: "Save flashcard", inDeck: "In your deck",
     completed: "Lesson complete!", sectionPassed: "Section passed!", levelUp: "Level up! You are now",
     hits: "correct", misses: "misses", impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
     testFailed: "Test not passed", testFailedDesc: "Three mistakes — the limit was two. Your misses are in Review; revisit them and try again.",
@@ -4675,6 +4675,7 @@ export default function App() {
   const [screenQuip, setScreenQuip] = useState(""); // host line on done/failed screens
   const greetingPick = React.useMemo(() => Math.floor(Math.random() * GREETINGS.es.length), []);
   const [storyView, setStoryView] = useState(null); // active story object
+  const [freshClaimId, setFreshClaimId] = useState(null); // story whose XP was claimed this visit
   const [wordSel, setWordSel] = useState(null); // {display, def, note, pi, ti}
   const [wordReveal, setWordReveal] = useState(true);
   const [ansSel, setAnsSel] = useState({}); // story question selections (choice value, or legacy display index)
@@ -6076,6 +6077,7 @@ export default function App() {
     }
     const extra = STORY_EXTRAS[story?.id] || {};
     setStoryShuffle(shuffleStoryChoiceOrder(story, extra.checkpoints || []));
+    setFreshClaimId(null);
     setStoryView(story); setWordSel(null); setWordReveal(true); setAnsSel({}); setParaIdx(0); setScreen("story");
   };
 
@@ -6121,6 +6123,7 @@ export default function App() {
     if (prog.stories?.[story.id]) return;
     if (chapterDoneRef.current.has(story.id)) return;
     chapterDoneRef.current.add(story.id);
+    setFreshClaimId(story.id);
     const playStory0 = shouldArmStory0Beat({
       storyId: story.id,
       claimed: prog.stories?.[story.id],
@@ -10812,7 +10815,7 @@ export default function App() {
 	                    {correct}/{story.questions.length} {uiLang === "en" ? "correct" : "correctas"} {correct === 3 ? "— ¡qué padre!" : ""}
                   </div>
                   {claimed ? (
-	                    <Btn outline disabled>{L.xpClaimed}</Btn>
+	                    <Btn outline disabled>{freshClaimId === story.id ? L.xpJustClaimed : L.xpClaimed}</Btn>
                   ) : (
 	                    <Btn onClick={() => claimStory(story, correct)}>{L.claim} +{5 + correct * 10} XP · <IcGem size={14} /> 10</Btn>
                   )}
