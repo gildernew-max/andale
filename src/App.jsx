@@ -16,6 +16,7 @@ import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { streakChipLabel } from "./streakChip.js";
+import { winNumeralColor } from "./winNumeral.js";
 import { gradeListedPhrase, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
@@ -11071,12 +11072,12 @@ export default function App() {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", margin: "24px 0", flexWrap: "wrap" }}>
             {[
-              { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, testid: "win-earned-xp" },
-	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, testid: "win-earned-gems" },
+              { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, ink: winNumeralColor(theme, "xp", D), testid: "win-earned-xp" },
+	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, ink: winNumeralColor(theme, "gems", D), testid: "win-earned-gems" },
 	              ...(streakChip ? [{ v: <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}><IcFlame size={20} className="flame" />{streakChip}</span>, l: null, c: "#FF9600", testid: "win-earned-streak" }] : []),
             ].filter((s) => !session.firstDoctora || s.testid === "win-earned-streak").map((s, i) => (
               <div key={i} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
-                <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: s.testid === "win-earned-streak" ? 16 : 22, color: s.c, lineHeight: 1.25, whiteSpace: s.testid === "win-earned-streak" ? "nowrap" : undefined }}>{s.v}</div>
+                <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: s.testid === "win-earned-streak" ? 16 : 22, color: s.ink || s.c, lineHeight: 1.25, whiteSpace: s.testid === "win-earned-streak" ? "nowrap" : undefined }}>{s.v}</div>
                 {s.l != null && <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>}
               </div>
             ))}
