@@ -2,6 +2,16 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-10-02 (sage cleanup flow-test timeout)
+
+**What changed**
+- `sageCleanup.test.jsx` describe timeout is 15s, same as the long flows suite.
+- The Games / Memory / Hangman / Wordle walk boots the app many times. Default 5s was already tight; splash sentence blocks on #197 pushed CI over.
+- No product change. Lime stays off those surfaces. Primary Btn still skipped.
+
+**Why**
+- `main` CI `test` failed on `8a95e75`: that one `it` timed out at 5000ms (5366ms). Not a lime regression.
+
 ## 2026-09-24 (Funnel purchase on StoreKit success)
 
 **What changed**
