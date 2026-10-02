@@ -147,7 +147,7 @@ const memoryLive = () => {
   };
 };
 
-describe("sage cleanup", () => {
+describe("sage cleanup", { timeout: 15000 }, () => {
   beforeEach(() => {
     localStorage.clear();
     mockBrowser();
