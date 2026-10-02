@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
 import { playSound as playGameSound } from "./playSound.js";
 import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
@@ -17,6 +17,10 @@ import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { streakChipLabel } from "./streakChip.js";
 import { winNumeralColor } from "./winNumeral.js";
+import { scoreCountClause } from "./scoreLine.js";
+import { probeAudioFile, storyAudioPath, storyAudioUrl } from "./storyAudio.js";
+import { watchWordSheetPlacement, wordSheetClose, wordSheetReveal } from "./wordSheet.js";
+import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
@@ -784,21 +788,6 @@ const wordDiff = (correct, user) => {
 };
 
 const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-
-/* Audio note: .m4a (AAC) plays in Chrome, Edge, Firefox, and Safari; the previous
-   .aiff files were Safari-only. Convert the local prototypes with:
-   for f in audio/story-0-p*.aiff; do ffmpeg -i "$f" -c:a aac -b:a 96k "${f%.aiff}.m4a"; done
-   Missing/unsupported files still fall back to chunked TTS automatically. */
-const STORY_AUDIO = {
-  "story-0": [
-    "audio/story-0-p0.m4a",
-    "audio/story-0-p1.m4a",
-    "audio/story-0-p2.m4a",
-    "audio/story-0-p3.m4a",
-    "audio/story-0-p4.m4a",
-    "audio/story-0-p5.m4a",
-  ],
-};
 
 const splitSentences = (text) => text
   .replace(/[«»]/g, "")
@@ -4095,7 +4084,7 @@ const UI = {
     wordOrderTip: "Orden distinto, mismo sentido. En formal, ambas valen.",
     comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", xpJustClaimed: "XP reclamados", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
     completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel! Ahora eres",
-    hits: "aciertos", misses: "fallos", impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
+    impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
     testFailed: "Esta vez no", testFailedDesc: "Tres errores, y el límite es dos. Quedaron en Repaso. Reintenta cuando quieras.",
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
     comeBackTomorrow: "Vuelve mañana por la siguiente escena.",
@@ -4183,7 +4172,7 @@ const UI = {
     wordOrderTip: "Different order, same meaning. Formally, both work.",
     comprehension: "Comprehension", easyQuestions: "Three easy questions · up to", xpClaimed: "XP already claimed", xpJustClaimed: "XP claimed", claim: "Claim", saveCard: "Save flashcard", inDeck: "In your deck",
     completed: "Lesson complete!", sectionPassed: "Section passed!", levelUp: "Level up! You are now",
-    hits: "correct", misses: "misses", impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
+    impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
     testFailed: "Not this time", testFailedDesc: "Three mistakes, and the limit is two. They're saved in Review. Retry when you're ready.",
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
     comeBackTomorrow: "Come back tomorrow for the next scene.",
@@ -4684,6 +4673,18 @@ export default function App() {
   const [storyView, setStoryView] = useState(null); // active story object
   const [freshClaimId, setFreshClaimId] = useState(null); // story whose XP was claimed this visit
   const [wordSel, setWordSel] = useState(null); // {display, def, note, pi, ti}
+  const [wordSheetBox, setWordSheetBox] = useState(null);
+  const [wordSheetSpacer, setWordSheetSpacer] = useState(0);
+  const [storyAudioOk, setStoryAudioOk] = useState(false);
+  const checkpointAnswersRef = useRef(null);
+  const wordTapRef = useRef(null);
+  const wordSheetRef = useRef(null);
+  const wordSheetContentRef = useRef(null);
+  const wordSheetBoxRef = useRef(null);
+  const wordSheetLock = useRef(false);
+  const wordSheetCloseScrollRef = useRef(null);
+  wordSheetBoxRef.current = wordSheetBox;
+  const storyAudioUrlRef = useRef(null);
   const [wordReveal, setWordReveal] = useState(true);
   const [ansSel, setAnsSel] = useState({}); // story question selections (choice value, or legacy display index)
   const [storyShuffle, setStoryShuffle] = useState(null); // per-open Lectura choice order
@@ -6186,6 +6187,109 @@ export default function App() {
     storyPagesSeenRef.current = { ...storyPagesSeenRef.current, [storyView.id]: [...prev, idx] };
   }, [screen, storyView, paraIdx]);
 
+  useEffect(() => {
+    if (screen !== "story" || !storyView?.id) {
+      storyAudioUrlRef.current = null;
+      setStoryAudioOk(false);
+      return undefined;
+    }
+    const pi = paraIdx;
+    if (!Number.isInteger(pi) || pi < 0 || pi >= storyView.paragraphs.length) {
+      storyAudioUrlRef.current = null;
+      setStoryAudioOk(false);
+      return undefined;
+    }
+    let cancelled = false;
+    const url = storyAudioUrl(storyView.id, pi, import.meta.env.BASE_URL);
+    storyAudioUrlRef.current = null;
+    setStoryAudioOk(false);
+    if (!url) return undefined;
+    probeAudioFile(url).then((ok) => {
+      if (cancelled) return;
+      storyAudioUrlRef.current = ok ? url : null;
+      setStoryAudioOk(!!ok);
+    });
+    return () => { cancelled = true; };
+  }, [screen, storyView, paraIdx]);
+
+  useLayoutEffect(() => {
+    if (!wordSel || screen !== "story") {
+      wordTapRef.current = null;
+      if (wordSheetBoxRef.current) setWordSheetBox(null);
+      const held = wordSheetClose({
+        scrollY: wordSheetCloseScrollRef.current ?? window.scrollY,
+        spacer: wordSheetSpacer,
+      });
+      if (wordSheetSpacer) {
+        if (screen === "story") wordSheetCloseScrollRef.current = held.scrollY;
+        setWordSheetSpacer(held.spacer);
+        return undefined;
+      }
+      if (screen === "story" && wordSheetCloseScrollRef.current != null && Math.abs(window.scrollY - held.scrollY) > 0.5) {
+        window.scrollTo(0, held.scrollY);
+      }
+      wordSheetCloseScrollRef.current = null;
+      return undefined;
+    }
+    wordSheetCloseScrollRef.current = null;
+    const place = () => {
+      if (wordSheetLock.current) return;
+      const wordEl = wordTapRef.current;
+      const sheetEl = wordSheetRef.current;
+      if (!wordEl || !sheetEl) return;
+      const word = wordEl.getBoundingClientRect();
+      const cp = checkpointAnswersRef.current?.getBoundingClientRect();
+      const hasCp = !!(cp && cp.width > 0 && cp.height > 0);
+      const box = sheetEl.getBoundingClientRect();
+      const borderY = sheetEl.offsetHeight - sheetEl.clientHeight;
+      const contentHeight = Math.max(box.height, sheetEl.scrollHeight + borderY);
+      let topInset = 0;
+      let node = document.querySelector("[data-testid='brand-home']");
+      while (node) {
+        if (getComputedStyle(node).position === "sticky") {
+          topInset = node.getBoundingClientRect().bottom + 4;
+          break;
+        }
+        node = node.parentElement;
+      }
+      const plan = wordSheetReveal({
+        viewportHeight: window.innerHeight,
+        viewportWidth: window.innerWidth,
+        wordTop: word.top,
+        wordBottom: word.bottom,
+        checkpointTop: hasCp ? cp.top : null,
+        checkpointBottom: hasCp ? cp.bottom : null,
+        contentHeight,
+        currentSpacer: wordSheetSpacer,
+        topInset,
+      });
+      if (Math.abs(plan.spacer - wordSheetSpacer) > 0.5) {
+        setWordSheetSpacer(plan.spacer);
+        return;
+      }
+      wordSheetLock.current = true;
+      if (Math.abs(plan.scrollDelta) > 1) window.scrollBy(0, plan.scrollDelta);
+      wordSheetLock.current = false;
+      const anchorLeft = hasCp ? plan.frame.left - cp.left : plan.frame.left;
+      setWordSheetBox((prev) => {
+        const next = { ...plan.frame, anchored: hasCp, anchorLeft };
+        if (prev && prev.left === next.left && prev.width === next.width && prev.bottom === next.bottom && prev.maxHeight === next.maxHeight && prev.backdropBottom === next.backdropBottom && prev.anchored === next.anchored && prev.anchorLeft === next.anchorLeft) return prev;
+        return next;
+      });
+    };
+    place();
+    return watchWordSheetPlacement(window, {
+      place,
+      content: wordSheetContentRef.current,
+      readContentHeight: () => {
+        const sheetEl = wordSheetRef.current;
+        const inner = wordSheetContentRef.current;
+        if (!sheetEl) return 0;
+        return Math.max(sheetEl.scrollHeight, inner ? inner.offsetHeight : 0);
+      },
+    });
+  }, [wordSel, screen, wordSheetSpacer]);
+
   const releaseLecturaWin = (beat) => {
     if (!beat) return;
     setLecturaCliffhanger(null);
@@ -6320,10 +6424,7 @@ export default function App() {
       if (audioMode === "shadow") speak(text, 0.82, { chunk: true, shadow: true });
       else speak(text, audioMode === "slow" ? 0.68 : 0.88, { chunk: true, pauseMs: audioMode === "slow" ? 420 : 220 });
     };
-    /* Flip to true once the /audio/*.m4a files exist (see ffmpeg note at STORY_AUDIO).
-       Until then every paragraph goes straight to TTS — no probe, no delay. */
-    const USE_CACHED_AUDIO = false;
-    const audioUrl = USE_CACHED_AUDIO ? STORY_AUDIO[story.id]?.[pi] : null;
+    const audioUrl = storyAudioUrlRef.current;
     if (audioMode === "normal" && audioUrl) {
       /* The cached-audio branch can fail FOUR ways: 404 (onerror), rejected play()
          (catch), wrong MIME, or — the killer — a sandboxed/stalled media fetch that
@@ -10777,6 +10878,47 @@ export default function App() {
         const qOrder = storyShuffle?.storyId === story.id ? storyShuffle.questions : null;
         const cpOrder = storyShuffle?.storyId === story.id ? storyShuffle.checkpoints : null;
         const correct = story.questions.reduce((n, qq, i) => n + (isStoryChoiceCorrect(qq, ansSel[i], qOrder?.[i]) ? 1 : 0), 0);
+        const renderWordSheet = (anchored) => (
+          <div ref={wordSheetRef} data-testid="word-sheet" className="pop" style={{ visibility: wordSheetBox ? "visible" : "hidden", position: anchored ? "absolute" : "fixed", left: anchored ? (wordSheetBox ? wordSheetBox.anchorLeft : 0) : (wordSheetBox ? wordSheetBox.left : 8), width: wordSheetBox ? wordSheetBox.width : 320, bottom: anchored ? "calc(100% + 10px)" : (wordSheetBox ? wordSheetBox.bottom : 8), zIndex: 30, boxSizing: "border-box", background: D.card, border: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: wordSheetBox ? wordSheetBox.maxHeight : "none", overflowY: "auto" }}>
+            <div ref={wordSheetContentRef} style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <button onClick={() => speak(wordSel.display)} aria-label={uiLang === "en" ? "Listen to word" : "Escuchar palabra"}
+                style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "7px 9px", flexShrink: 0, lineHeight: 0 }}>
+                <IcSpeaker size={18} color={"#1CB0F6"} />
+              </button>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontWeight: 900, fontSize: 18 }}>{wordSel.display}</span>
+                {wordSel.en && (storyMode !== "challenge" || wordReveal) ? (
+                  <span style={{ fontWeight: 700, fontSize: 15, color: D.sub }}> — {wordSel.en}</span>
+                ) : wordSel.en ? (
+                  <span style={{ fontWeight: 700, fontSize: 14, color: D.sub, fontStyle: "italic" }}> — {uiLang === "en" ? "guess from context first" : "adivina por contexto"}</span>
+                ) : null}
+                {storyMode === "challenge" && wordSel.en && !wordReveal && (
+                  <button onClick={() => setWordReveal(true)} className="duo-btn"
+                    style={{ marginTop: 8, background: sec.color, border: "none", borderBottom: `4px solid ${sec.dark}`, color: "#fff", borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
+                    {uiLang === "en" ? "Reveal meaning" : "Revelar significado"}
+                  </button>
+                )}
+                {wordSel.note && (storyMode !== "challenge" || wordReveal) && <div style={{ fontSize: 13, fontWeight: 700, color: D.ink, marginTop: 3, background: D.goldBg, border: `1.5px solid ${D.gold}`, borderRadius: 8, padding: "5px 9px" }}>{wordSel.note}</div>}
+                {wordSel.key && <div style={{ marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5, background: D.greenBg, border: `1.5px solid ${D.green}`, color: D.greenDark, borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 900 }}>{uiLang === "en" ? "KEY WORD FOUND" : "PALABRA CLAVE"} · {wordSel.key}</div>}
+                {wordSel.source && wordSel.source !== wordSel.clean && (storyMode !== "challenge" || wordReveal) && (
+                  <div style={{ fontSize: 12, fontWeight: 800, color: D.sub, marginTop: 5 }}>{uiLang === "en" ? "Related form" : "Forma relacionada"}: <b>{wordSel.source}</b></div>
+                )}
+                {wordSel.en && (storyMode !== "challenge" || wordReveal) && (
+                  <div style={{ marginTop: 7, fontSize: 12.5, color: D.sub, fontWeight: 800, lineHeight: 1.35 }}>
+                    <b style={{ color: D.ink }}>{uiLang === "en" ? "Context" : "Contexto"}:</b> «{wordSel.sentence.length > 160 ? `${wordSel.sentence.slice(0, 160)}...` : wordSel.sentence}»
+                  </div>
+                )}
+                {wordSel.en && (storyMode !== "challenge" || wordReveal) && (
+                  <button onClick={() => addFlashcard(story, wordSel, wordSel.sentence)} className="duo-btn"
+                    style={{ marginTop: 8, background: prog.flashcards?.[strip(wordSel.display)] ? D.green : D.blue, border: "none", borderBottom: `4px solid ${prog.flashcards?.[strip(wordSel.display)] ? D.greenDark : D.blueDark}`, color: "#fff", borderRadius: 11, padding: "8px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
+                    <IcCards size={14} color="#fff" /> {prog.flashcards?.[strip(wordSel.display)] ? L.inDeck : L.saveCard}
+                  </button>
+                )}
+              </div>
+              <button onClick={() => setWordSel(null)} aria-label={L.close} style={{ border: "none", background: "none", fontSize: 18, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", lineHeight: 1, minWidth: 44, minHeight: 44 }}>✕</button>
+            </div>
+          </div>
+        );
         return (
           <div data-testid="story-reader" data-story-id={story.id} style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 150px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
@@ -10802,12 +10944,98 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <div style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 10, background: D.card, marginBottom: 14 }}>
+            <div data-testid="lectura-progress" style={{ display: "flex", gap: 5, alignItems: "center", margin: "2px 0 14px" }}>
+              {story.paragraphs.map((_, i) => (
+                <button key={i} onClick={() => { stopNarration(); setWordSel(null); setParaIdx(i); }} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
+                  style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : "#E8E8E8", outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
+              ))}
+              <button onClick={() => { stopNarration(); setWordSel(null); setParaIdx(story.paragraphs.length); }} aria-label={uiLang === "en" ? "Questions" : "Preguntas"}
+                style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : "#E8E8E8", color: paraIdx >= story.paragraphs.length ? "#fff" : D.sub }}>?</button>
+            </div>
+            {paraIdx < story.paragraphs.length && (
+              <div style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>
+                {uiLang === "en" ? "Paragraph" : "Párrafo"} {paraIdx + 1} / {story.paragraphs.length}
+              </div>
+            )}
+
+            {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
+              <div key={pi} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
+                <img
+                  src={`${import.meta.env.BASE_URL}lectura/${story.id}/p${pi}.png`}
+                  alt=""
+                  aria-hidden="true"
+                  data-testid={`lectura-still-${pi}`}
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  style={{ display: "block", width: "auto", height: "auto", maxWidth: "100%", maxHeight: 148, margin: "0 auto 12px", borderRadius: 10 }}
+                />
+                <div style={{ display: "flex", gap: storyAudioOk ? 10 : 0 }}>
+                {storyAudioOk && (
+                <button onClick={() => playStoryParagraph(story, pi, para)} aria-label={uiLang === "en" ? "Listen to paragraph" : "Escuchar párrafo"}
+                  style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "4px 7px", flexShrink: 0, alignSelf: "flex-start", lineHeight: 0, marginTop: 3 }}>
+                  <IcSpeaker size={15} color={"#1CB0F6"} />
+                </button>
+                )}
+                <p style={{ margin: 0, fontSize: 17, lineHeight: 1.75, fontWeight: 600 }}>
+                  {segmentGlossText(para).map((seg, ti) => {
+                    if (/^\s+$/.test(seg.raw) || !seg.raw) return seg.raw;
+                    const tok = seg.raw;
+                    const def = lookupStoryWord(story, tok);
+                    const clean = cleanStoryToken(tok);
+                    const hitKey = keyWords.includes(def?.source) ? def.source : keyWords.includes(clean) ? clean : null;
+                    const isSel = wordSel && wordSel.pi === pi && wordSel.ti === ti;
+                    const known = !!def?.en;
+                    if (seg.key || lookupGloss(tok, uiLang)) {
+                      return (
+                        <GlossWord
+                          key={ti}
+                          token={tok}
+                          uiLang={uiLang}
+                          D={D}
+                          accent={sec.color}
+                          onActivate={() => { if (hitKey) discoverStoryWord(story, hitKey); }}
+                        />
+                      );
+                    }
+                    return (
+	                      <span key={ti} onClick={(e) => { wordTapRef.current = e.currentTarget; if (hitKey) discoverStoryWord(story, hitKey); setWordReveal(storyMode !== "challenge"); setWordSel({ display: tok.replace(/[«»".,;:¡!¿?—()]/g, ""), clean, key: hitKey, ...def, sentence: para, pi, ti, x: e.clientX, y: e.clientY }); }}
+                        style={{ cursor: "pointer", borderRadius: 4, padding: "0 1px", background: isSel ? "#FFE9A8" : "transparent", borderBottom: known ? `2px dotted ${sec.color}66` : "none" }}>
+                        {tok}
+                      </span>
+                    );
+                  })}
+                </p>
+                </div>
+                {storyMode === "bilingual" && extra.en?.[pi] && (
+                  <div className="pop" style={{ margin: storyAudioOk ? "8px 0 0 48px" : "8px 0 0", borderLeft: `4px solid ${sec.color}`, background: D.subtle, borderRadius: 10, padding: "8px 11px", color: D.sub, fontSize: 13, fontWeight: 800, lineHeight: 1.45 }}>
+                    {extra.en[pi]}
+                  </div>
+                )}
+                {checkpoints[pi] && (
+                  <div data-testid="lectura-checkpoint" style={{ position: "relative", zIndex: wordSel && wordSel.pi === pi ? 31 : "auto", marginTop: 10 + wordSheetSpacer, marginLeft: storyAudioOk ? 48 : 0, border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
+                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
+                      {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
+                    </div>
+                    <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => (
+                        <button key={choice} disabled={!!checkState[pi]} onClick={() => answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a)}
+                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: checkState[pi] === choice ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
+                          {choice}
+                        </button>
+                      ))}
+                      {wordSel && wordSel.pi === pi && renderWordSheet(true)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ); })}
+
+            {storyAudioOk && (
+            <div data-testid="narration-card" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 10, background: D.card, marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 8 }}>
                 <div>
                   <div data-testid="narration-label" style={{ fontSize: 11, fontWeight: 900, color: sec.dark, letterSpacing: ".06em" }}>{L.narrationLabel}</div>
                   <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>
-                    {STORY_AUDIO[story.id] ? (uiLang === "en" ? "Story 1 uses cached paragraph audio in Normal mode." : "El cuento 1 usa audio cacheado en modo Normal.") : (uiLang === "en" ? "Sentence-chunked browser audio." : "Audio del navegador por frases.")}
+                    {storyAudioPath(story.id, paraIdx) ? (uiLang === "en" ? "Story 1 uses cached paragraph audio in Normal mode." : "El cuento 1 usa audio cacheado en modo Normal.") : (uiLang === "en" ? "Sentence-chunked browser audio." : "Audio del navegador por frases.")}
                   </div>
                 </div>
                 <button onClick={stopNarration} style={{ border: `2px solid ${D.line}`, background: D.subtle, borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", color: D.sub }}>
@@ -10828,7 +11056,8 @@ export default function App() {
                 {renderVoiceSelect()}
               </div>
             </div>
-            <div className="pop" style={{ border: `2px solid ${sec.color}`, borderBottom: `5px solid ${sec.dark}`, borderRadius: 16, padding: 13, background: D.card, marginBottom: 18 }}>
+            )}
+            <div data-testid="word-hunt-card" className="pop" style={{ border: `2px solid ${sec.color}`, borderBottom: `5px solid ${sec.dark}`, borderRadius: 16, padding: 13, background: D.card, marginBottom: 18 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 9 }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 900, color: sec.dark, letterSpacing: ".06em" }}>{uiLang === "en" ? "WORD HUNT" : "CACERÍA DE PALABRAS"}</div>
@@ -10852,89 +11081,6 @@ export default function App() {
                 ))}
               </div>
             </div>
-
-            {/* chunk progress — segments per paragraph + final questions step */}
-            <div style={{ display: "flex", gap: 5, alignItems: "center", margin: "2px 0 14px" }}>
-              {story.paragraphs.map((_, i) => (
-                <button key={i} onClick={() => { stopNarration(); setWordSel(null); setParaIdx(i); }} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
-                  style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : "#E8E8E8", outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
-              ))}
-              <button onClick={() => { stopNarration(); setWordSel(null); setParaIdx(story.paragraphs.length); }} aria-label={uiLang === "en" ? "Questions" : "Preguntas"}
-                style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : "#E8E8E8", color: paraIdx >= story.paragraphs.length ? "#fff" : D.sub }}>?</button>
-            </div>
-            {paraIdx < story.paragraphs.length && (
-              <div style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>
-                {uiLang === "en" ? "Paragraph" : "Párrafo"} {paraIdx + 1} / {story.paragraphs.length}
-              </div>
-            )}
-
-            {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
-              <div key={pi} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
-                <img
-                  src={`${import.meta.env.BASE_URL}lectura/${story.id}/p${pi}.png`}
-                  alt=""
-                  aria-hidden="true"
-                  data-testid={`lectura-still-${pi}`}
-                  onError={(e) => { e.currentTarget.style.display = "none"; }}
-                  style={{ display: "block", width: "100%", borderRadius: 10, marginBottom: 12, objectFit: "cover" }}
-                />
-                <div style={{ display: "flex", gap: 10 }}>
-                <button onClick={() => playStoryParagraph(story, pi, para)} aria-label={uiLang === "en" ? "Listen to paragraph" : "Escuchar párrafo"}
-                  style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "4px 7px", flexShrink: 0, alignSelf: "flex-start", lineHeight: 0, marginTop: 3 }}>
-                  <IcSpeaker size={15} color={"#1CB0F6"} />
-                </button>
-                <p style={{ margin: 0, fontSize: 17, lineHeight: 1.75, fontWeight: 600 }}>
-                  {segmentGlossText(para).map((seg, ti) => {
-                    if (/^\s+$/.test(seg.raw) || !seg.raw) return seg.raw;
-                    const tok = seg.raw;
-                    const def = lookupStoryWord(story, tok);
-                    const clean = cleanStoryToken(tok);
-                    const hitKey = keyWords.includes(def?.source) ? def.source : keyWords.includes(clean) ? clean : null;
-                    const isSel = wordSel && wordSel.pi === pi && wordSel.ti === ti;
-                    const known = !!def?.en;
-                    if (seg.key || lookupGloss(tok, uiLang)) {
-                      return (
-                        <GlossWord
-                          key={ti}
-                          token={tok}
-                          uiLang={uiLang}
-                          D={D}
-                          accent={sec.color}
-                          onActivate={() => { if (hitKey) discoverStoryWord(story, hitKey); }}
-                        />
-                      );
-                    }
-                    return (
-	                      <span key={ti} onClick={(e) => { if (hitKey) discoverStoryWord(story, hitKey); setWordReveal(storyMode !== "challenge"); setWordSel({ display: tok.replace(/[«»".,;:¡!¿?—()]/g, ""), clean, key: hitKey, ...def, sentence: para, pi, ti, x: e.clientX, y: e.clientY }); }}
-                        style={{ cursor: "pointer", borderRadius: 4, padding: "0 1px", background: isSel ? "#FFE9A8" : "transparent", borderBottom: known ? `2px dotted ${sec.color}66` : "none" }}>
-                        {tok}
-                      </span>
-                    );
-                  })}
-                </p>
-                </div>
-                {storyMode === "bilingual" && extra.en?.[pi] && (
-                  <div className="pop" style={{ margin: "8px 0 0 48px", borderLeft: `4px solid ${sec.color}`, background: D.subtle, borderRadius: 10, padding: "8px 11px", color: D.sub, fontSize: 13, fontWeight: 800, lineHeight: 1.45 }}>
-                    {extra.en[pi]}
-                  </div>
-                )}
-                {checkpoints[pi] && (
-                  <div style={{ margin: "10px 0 0 48px", border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
-                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
-                      {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
-                    </div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => (
-                        <button key={choice} disabled={!!checkState[pi]} onClick={() => answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a)}
-                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: checkState[pi] === choice ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
-                          {choice}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ); })}
 
             {/* chunk navigation */}
             {paraIdx < story.paragraphs.length && (
@@ -11043,59 +11189,11 @@ export default function App() {
               </div>
             )}
 
-            {/* sticky definition card */}
-            {wordSel && (() => {
-              const vw = typeof window !== "undefined" ? window.innerWidth : 400;
-              const vh = typeof window !== "undefined" ? window.innerHeight : 700;
-              const cw = Math.min(320, vw - 16);
-              const left = Math.min(Math.max((wordSel.x || vw / 2) - cw / 2, 8), vw - cw - 8);
-              const below = (wordSel.y || 0) < vh * 0.45;
-              const pos = below ? { top: (wordSel.y || 0) + 16 } : { bottom: vh - (wordSel.y || 0) + 14 };
-              return (
-              <>
-              <div onClick={() => setWordSel(null)} style={{ position: "fixed", inset: 0, zIndex: 29 }} />
-              <div className="pop" style={{ position: "fixed", left, width: cw, ...pos, zIndex: 30, background: D.card, border: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: "46vh", overflowY: "auto" }}>
-                <div style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <button onClick={() => speak(wordSel.display)} aria-label={uiLang === "en" ? "Listen to word" : "Escuchar palabra"}
-                    style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "7px 9px", flexShrink: 0, lineHeight: 0 }}>
-                    <IcSpeaker size={18} color={"#1CB0F6"} />
-                  </button>
-	                  <div style={{ flex: 1 }}>
-	                    <span style={{ fontWeight: 900, fontSize: 18 }}>{wordSel.display}</span>
-	                    {wordSel.en && (storyMode !== "challenge" || wordReveal) ? (
-	                      <span style={{ fontWeight: 700, fontSize: 15, color: D.sub }}> — {wordSel.en}</span>
-                    ) : wordSel.en ? (
-	                      <span style={{ fontWeight: 700, fontSize: 14, color: D.sub, fontStyle: "italic" }}> — {uiLang === "en" ? "guess from context first" : "adivina por contexto"}</span>
-                    ) : null}
-	                    {storyMode === "challenge" && wordSel.en && !wordReveal && (
-	                      <button onClick={() => setWordReveal(true)} className="duo-btn"
-	                        style={{ marginTop: 8, background: sec.color, border: "none", borderBottom: `4px solid ${sec.dark}`, color: "#fff", borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
-	                        {uiLang === "en" ? "Reveal meaning" : "Revelar significado"}
-	                      </button>
-	                    )}
-	                    {wordSel.note && (storyMode !== "challenge" || wordReveal) && <div style={{ fontSize: 13, fontWeight: 700, color: D.ink, marginTop: 3, background: D.goldBg, border: `1.5px solid ${D.gold}`, borderRadius: 8, padding: "5px 9px" }}>{wordSel.note}</div>}
-	                    {wordSel.key && <div style={{ marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5, background: D.greenBg, border: `1.5px solid ${D.green}`, color: D.greenDark, borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 900 }}>{uiLang === "en" ? "KEY WORD FOUND" : "PALABRA CLAVE"} · {wordSel.key}</div>}
-	                    {wordSel.source && wordSel.source !== wordSel.clean && (storyMode !== "challenge" || wordReveal) && (
-	                      <div style={{ fontSize: 12, fontWeight: 800, color: D.sub, marginTop: 5 }}>{uiLang === "en" ? "Related form" : "Forma relacionada"}: <b>{wordSel.source}</b></div>
-	                    )}
-	                    {wordSel.en && (storyMode !== "challenge" || wordReveal) && (
-	                      <div style={{ marginTop: 7, fontSize: 12.5, color: D.sub, fontWeight: 800, lineHeight: 1.35 }}>
-	                        <b style={{ color: D.ink }}>{uiLang === "en" ? "Context" : "Contexto"}:</b> «{wordSel.sentence.length > 160 ? `${wordSel.sentence.slice(0, 160)}...` : wordSel.sentence}»
-	                      </div>
-	                    )}
-	                    {wordSel.en && (storyMode !== "challenge" || wordReveal) && (
-	                      <button onClick={() => addFlashcard(story, wordSel, wordSel.sentence)} className="duo-btn"
-	                        style={{ marginTop: 8, background: prog.flashcards?.[strip(wordSel.display)] ? D.green : D.blue, border: "none", borderBottom: `4px solid ${prog.flashcards?.[strip(wordSel.display)] ? D.greenDark : D.blueDark}`, color: "#fff", borderRadius: 11, padding: "8px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
-		                        <IcCards size={14} color="#fff" /> {prog.flashcards?.[strip(wordSel.display)] ? L.inDeck : L.saveCard}
-	                      </button>
-	                    )}
-	                  </div>
-	                  <button onClick={() => setWordSel(null)} aria-label={L.close} style={{ border: "none", background: "none", fontSize: 18, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", lineHeight: 1, minWidth: 44, minHeight: 44 }}>✕</button>
-                </div>
-              </div>
-              </>
-              );
-            })()}
+            {/* definition card — placed on open; a later scroll does not move the page back */}
+            {wordSel && (
+              <div onClick={() => setWordSel(null)} style={{ display: wordSheetBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: wordSheetBox ? wordSheetBox.backdropBottom : 0, zIndex: 29 }} />
+            )}
+            {wordSel && !checkpoints[wordSel.pi] && renderWordSheet(false)}
           </div>
         );
       })()}
@@ -11107,18 +11205,19 @@ export default function App() {
         const hitMilestone = milestones.includes(prog.streak);
         const quietWin = session.firstHoy || session.firstDoctora || session.firstStory0 || session.lecturaWin;
         const firstWin = !!session.firstSession;
+        const perchCard = firstWin || isSenderoLesson(session);
         const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : session.lecturaWin ? "lectura-win" : undefined;
         const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : session.lecturaWin ? "lectura-win-continue" : undefined;
         const streakChip = streakChipLabel(prog.streak, uiLang);
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
-          {!quietWin && !firstWin && <Confetti count={perfect ? 160 : 70} />}
-          {firstWin && (
+          {!quietWin && !perchCard && <Confetti count={perfect ? 160 : 70} />}
+          {perchCard && (
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
-              <WinPerch />
+              <WinPerch theme={theme} />
             </div>
           )}
-          {!quietWin && !firstWin && (
+          {!quietWin && !perchCard && (
           <div style={{ display: "flex", justifyContent: "center", gap: 0, alignItems: "flex-end" }}>
             {[session.host, "luna", "rafa"].filter((id, i, arr) => arr.indexOf(id) === i).slice(0, 3).map((id, i) => (
               <div key={id} className="jump" style={{ marginLeft: i ? -18 : 0, zIndex: 3 - i }}>
@@ -11131,13 +11230,13 @@ export default function App() {
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
               {shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session)
                 ? <CenzontleFlyAway surface="win" onComplete={completeCenzontleBeat} />
-                : <WinPerch />}
+                : <WinPerch theme={theme} />}
             </div>
           )}
-          {screenQuip && !quietWin && !firstWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
+          {screenQuip && !quietWin && !perchCard && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
             <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, coachName(session.host)) }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
-          <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: firstWin && theme !== "dark" ? "#85672C" : D.gold }}>
+          <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: perchCard && theme !== "dark" ? "#85672C" : D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
           {levelUp && !session.firstDoctora && (
@@ -11146,7 +11245,7 @@ export default function App() {
             </div>
           )}
           <p style={{ color: D.sub, fontWeight: 700 }}>
-	            «{uiText(session.title, uiLang)}» · {lessonStats.right} {L.hits}, {lessonStats.wrong} {L.misses}{!quietWin && lessonStats.wrong === 0 ? ` · ${L.impeccable}` : ""}
+	            «{uiText(session.title, uiLang)}» · {scoreCountClause(lessonStats.right, lessonStats.wrong, uiLang)}{!quietWin && lessonStats.wrong === 0 ? ` · ${L.impeccable}` : ""}
 	            {session.testOut != null && <span><br />{L.unlockedSection}</span>}
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", margin: "24px 0", flexWrap: "wrap" }}>
