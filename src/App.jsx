@@ -48,8 +48,6 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
-import { firstSessionWhyLine, firstSessionWinLine } from "./firstSessionWords.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -4754,7 +4752,6 @@ export default function App() {
   const storyPagesSeenRef = useRef({});
   const lecturaStartedRef = useRef(false);
   const lecturaHandoffHold = useRef(false);
-  const lecturaPaywallAfterWin = useRef(false);
   const chapterDoneRef = useRef(new Set());
   const [doctorHits, setDoctorHits] = useState(0);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
@@ -4776,7 +4773,7 @@ export default function App() {
   const memoryTimerRef = useRef(null);
   const gamesReturnRef = useRef("practica");
   const [burst, setBurst] = useState(0); // mini confetti trigger
-  const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {}, firstSessionDone: false });
+  const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
      file-level D constant, so all `D.green` reads inside App pick this up. */
   const theme = prog.theme || "light";
@@ -4816,7 +4813,6 @@ export default function App() {
 	    let p = null;
 	    try { const r = await storage.get(STORAGE_KEY); if (r && r.value) p = JSON.parse(r.value); } catch (e) {}
 	    p = acceptProgress(p);
-	    if (p) p = migrateFirstSession(p);
 	    let loaded = null;
 	    setProg((base) => {
 	      let merged = { ...base, ...(p || {}), contentVersion: CONTENT_VERSION };
@@ -4930,32 +4926,6 @@ export default function App() {
   const startUnit = (u, section) => {
     setSheet(null);
     if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
-    const firstSnap = !prog.firstSessionDone && prog.resume?.unitId === "_first" && Array.isArray(prog.resume.order) ? prog.resume : null;
-    if (firstSnap) {
-      const qs = firstSnap.order.map((o) => {
-        const src = UNITS.find((x) => x.id === o.u);
-        if (!src) return null;
-        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...src.questions[o.i], _u: o.u, _i: o.i };
-      }).filter(Boolean).map(prepQuestion);
-      if (qs.length) {
-        beginSession({
-          title: u?.title || UNITS[0].title,
-          color: section?.color || SECTIONS[0].color,
-          dark: section?.dark || SECTIONS[0].dark,
-          unitId: "_first",
-          firstSession: true,
-          review: false,
-          host: hostForUnit(u?.id || "subj1"),
-          questions: qs,
-        });
-        setQi(Math.min(firstSnap.qi || 0, qs.length - 1));
-        sessionXPRef.current = firstSnap.xp || 0;
-        setSessionXP(sessionXPRef.current);
-        setLessonStats({ right: firstSnap.right || 0, wrong: firstSnap.wrong || 0 });
-        save({ resume: null, firstSessionArmed: true });
-        return;
-      }
-    }
     const snap = prog.resume && prog.resume.unitId === u.id ? prog.resume : null;
     if (snap && Array.isArray(snap.order)) {
       // Resume a saved session: same question order, same position, same score.
@@ -4971,30 +4941,9 @@ export default function App() {
       save({ resume: null });
       return;
     }
-    if (shouldUseFirstSession({ done: prog.done, firstSessionDone: prog.firstSessionDone })) {
-      beginFirstSession(u, section);
-      return;
-    }
     const qs = u.questions.map((q, i) => ({ ...q, _u: u.id, _i: i }));
     const withMatch = [...shuffle(qs), { type: "match", pairs: u.pairs, _u: u.id, _i: -1 }];
     beginSession({ title: u.title, color: section.color, dark: section.dark, unitId: u.id, review: false, host: hostForUnit(u.id), questions: withMatch.map(prepQuestion) });
-  };
-
-  const beginFirstSession = (u, section, { fromLectura = false } = {}) => {
-    const questions = firstSessionQuestions(UNITS).map(prepQuestion);
-    if (!questions.length) return;
-    save({ firstSessionArmed: true });
-    beginSession({
-      title: u?.title || UNITS[0].title,
-      color: section?.color || SECTIONS[0].color,
-      dark: section?.dark || SECTIONS[0].dark,
-      unitId: "_first",
-      firstSession: true,
-      review: false,
-      host: hostForUnit(u?.id || "subj1"),
-      questions,
-    });
-    if (fromLectura) lecturaPaywallAfterWin.current = true;
   };
 
   const startTestOut = (sec, si) => {
@@ -5800,7 +5749,6 @@ export default function App() {
   const onMemoryPair = (fromId, toId) => applyMemoryMove(applyMemoryPair, fromId, toId);
 
   const beginSession = (s) => {
-    lecturaPaywallAfterWin.current = false;
     awardLockRef.current.delete("lesson");
     itemXpLockRef.current = new Set();
     sessionXPRef.current = 0;
@@ -5960,19 +5908,13 @@ export default function App() {
 
   const next = () => {
     if (status === "wrong" && session.testOut != null && lessonStats.wrong >= 3) { setFailKind("test"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return; }
-    if (status === "wrong" && (prog.hearts ?? 0) <= 0 && !session.review && !session.rival) {
-      if (session.firstSession) {
-        lecturaPaywallAfterWin.current = false;
-        save({ paywallHold: true });
-      }
-      setFailKind("hearts"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return;
-    }
+    if (status === "wrong" && (prog.hearts ?? 0) <= 0 && !session.review && !session.rival) { setFailKind("hearts"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return; }
     if (status !== "wrong" && shouldHoyEarlyWin({ firstHoy: session.firstHoy, hits: lessonStats.right })) {
       finishLesson();
       return;
     }
     let queue = session.questions;
-    if (status === "wrong" && session.testOut == null && !session.rival && !session.firstSession) {
+    if (status === "wrong" && session.testOut == null && !session.rival) {
       // mastery loop: the miss comes back near the end of the lesson
       queue = [...queue, prepQuestion({ ...q, _requeued: true })];
       setSession({ ...session, questions: queue });
@@ -5995,8 +5937,6 @@ export default function App() {
   const finishLesson = () => {
     if (session?.awarded || !lockAward("lesson")) return;
     beep("win");
-    const lecturaHandoffWin = !!session.firstSession && lecturaPaywallAfterWin.current;
-    lecturaPaywallAfterWin.current = false;
     const t = todayStr();
     const xpNow = sessionXPRef.current;
 
@@ -6035,7 +5975,6 @@ export default function App() {
       earnedXP: earned,
       earnedGems: gemsEarned,
       perfectBonus,
-      ...(lecturaHandoffWin ? { lecturaPaywallAfterWin: true } : {}),
       ...(s.firstHoy || s.firstDoctora || s.todaySceneId ? { esoWin: true } : {}),
     } : s));
     const before = levelOf(prog.xp || 0).idx, after = levelOf((prog.xp || 0) + earned).idx;
@@ -6071,7 +6010,7 @@ export default function App() {
           });
           testOutSrs = srs;
         }
-      } else if (!session.review && !session.rival && !session.missionId && !session.daily && !session.firstSession) {
+      } else if (!session.review && !session.rival && !session.missionId && !session.daily) {
         done[session.unitId] = (done[session.unitId] || 0) + 1;
       }
       let rivalPatch = null;
@@ -6107,8 +6046,6 @@ export default function App() {
         perfects: (prev.perfects || 0) + (lessonStats.wrong === 0 ? 1 : 0),
         resume: null, coachStats, freezes,
         earnedFreeze: earnedFreeze ? t : prev.earnedFreeze, quickTipSeen: true,
-        ...(session.firstSession ? { firstSessionDone: true } : {}),
-        ...(prev.paywallHold ? { paywallHold: false } : {}),
       };
       // Review lessons refund one heart against fresh state. Normal lessons leave
       // hearts alone — they were already decremented per-miss against fresh state,
@@ -6240,13 +6177,6 @@ export default function App() {
     if (!lecturaCliffhanger) return;
     if (prog.paywallSeen || prog.unlockedPrem) {
       releaseLecturaWin(lecturaCliffhanger);
-      return;
-    }
-    if (shouldUseFirstSession({ done: prog.done, firstSessionDone: prog.firstSessionDone })) {
-      if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
-      setLecturaCliffhanger(null);
-      setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
-      beginFirstSession(UNITS[0], SECTIONS[0], { fromLectura: true });
       return;
     }
     setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
@@ -6779,9 +6709,7 @@ export default function App() {
     return () => window.removeEventListener("keydown", h);
   }, [screen]);
 
-  const pct = session?.firstSession
-    ? firstSessionProgressPct(qi, status, session.questions.length)
-    : (session ? Math.round((qi / session.questions.length) * 100) : 0);
+  const pct = session ? Math.round((qi / session.questions.length) * 100) : 0;
   const srsEntries = Object.entries(prog.srs || {});
   const dueCount = srsEntries.filter(([, it]) => it.due <= Date.now()).length;
   const trackedCount = srsEntries.length;
@@ -6879,7 +6807,6 @@ export default function App() {
     today: todayKey,
     screen,
     splash: splashOpen,
-    paywallHold: !!prog.paywallHold,
   });
   const canCharge = detectNativeIap();
   const [storePrices, setStorePrices] = useState({ annual: null, monthly: null });
@@ -7293,13 +7220,7 @@ export default function App() {
   };
 
   const continueFromWin = () => {
-    lecturaPaywallAfterWin.current = false;
-    if (session?.lecturaPaywallAfterWin) {
-      setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
-      if (!prog.paywallSeen && !prog.unlockedPrem) setChapterBirdHandoff(true);
-    } else {
-      setPaywallSource(PAYWALL_SOURCE.winContinue);
-    }
+    setPaywallSource(PAYWALL_SOURCE.winContinue);
     const t = todayStr();
     const firstStreakEso = isFirstStreakEsoWin(session);
     const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
@@ -8987,11 +8908,7 @@ export default function App() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 14, margin: "14px 0 18px", fontSize: 12.5, fontWeight: 800, color: D.sub, flexWrap: "wrap" }}>
-	              <span>{(shouldUseFirstSession({
-                  done: prog.done,
-                  firstSessionDone: prog.firstSessionDone,
-                  hasResume: !!(prog.resume && prog.resume.unitId === sheet.unit.id && Array.isArray(prog.resume.order)),
-                }) ? FIRST_SESSION_COUNT : sheet.unit.questions.length + 1)} {L.challenges}</span>
+	              <span>{sheet.unit.questions.length + 1} {L.challenges}</span>
               <span>·</span>
 	              <span style={{ color: sheet.crowns > 0 ? D.goldDark : D.sub }}><IcCrown size={14} /> {sheet.crowns} {sheet.crowns === 1 && uiLang === "es" ? "corona" : L.crowns}</span>
               <span>·</span>
@@ -9048,15 +8965,14 @@ export default function App() {
             <div style={{ display: "grid", gap: 9 }}>
               <Btn onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmExit(false); }}>{uiLang === "en" ? "Keep going" : "Seguir"}</Btn>
               {!session.review && !session.rival && !session.testOut && !session.missionId && !session.daily && session.unitId !== "_test" && (
-                <Btn color={D.blue} dark={D.blueDark} data-testid="save-and-quit" onClick={(e) => {
+                <Btn color={D.blue} dark={D.blueDark} onClick={(e) => {
                   e.preventDefault(); e.stopPropagation();
-                  if (session.firstSession) lecturaPaywallAfterWin.current = false;
                   const order = session.questions.map((qq) => ({ u: qq._u, i: qq._i }));
                   save({ resume: { unitId: session.unitId, order, qi, xp: sessionXP, right: lessonStats.right, wrong: lessonStats.wrong } });
                   stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home");
                 }}>{uiLang === "en" ? "Save & quit" : "Guardar y salir"}</Btn>
               )}
-              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (session.firstSession) lecturaPaywallAfterWin.current = false; stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
+              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
             </div>
           </div>
         </div>
@@ -9064,7 +8980,7 @@ export default function App() {
 
       {/* ---------- NO-HEARTS MODAL ---------- */}
       {heartsModal && (
-        <div data-testid="hearts-modal" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setHeartsModal(false)}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setHeartsModal(false)}>
           <div className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center" }}>
             <div style={{ fontSize: 0, display: "flex", justifyContent: "center", gap: 4, marginBottom: 10 }}>
               {[...Array(MAX_HEARTS)].map((_, i) => <IcHeart key={i} size={26} off />)}
@@ -9549,8 +9465,8 @@ export default function App() {
 
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
-        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-qtype={q.type} style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : orderDark ? { background: D.bg, color: HUB_CREAM, minHeight: "100vh" } : undefined}>
-        <div data-testid="lesson-body" style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
+        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : undefined} style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : orderDark ? { background: D.bg, color: HUB_CREAM, minHeight: "100vh" } : undefined}>
+        <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
               <span style={{ fontWeight: 900, fontSize: 42, color: "#FF9600", textShadow: "0 3px 0 rgba(0,0,0,.12), 0 0 24px rgba(255,200,0,.5)", letterSpacing: ".02em" }}>{inter.text}</span>
@@ -9559,8 +9475,8 @@ export default function App() {
           {burst > 0 && status !== "idle" && status !== "wrong" && inter && <Confetti key={burst} count={28} />}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 26 }}>
             <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
-            <div data-testid="lesson-progress" data-pct={pct} style={{ flex: 1, height: 16, background: D.line, borderRadius: 99, overflow: "hidden" }}>
-              <div data-testid="lesson-progress-fill" style={{ width: `${pct}%`, height: "100%", background: D.green, borderRadius: 99, transition: "width .25s", position: "relative", overflow: "hidden" }}>
+            <div style={{ flex: 1, height: 16, background: D.line, borderRadius: 99, overflow: "hidden" }}>
+              <div style={{ width: `${pct}%`, height: "100%", background: D.green, borderRadius: 99, transition: "width .25s", position: "relative", overflow: "hidden" }}>
                 <div className="shimmer" />
               </div>
             </div>
@@ -9952,9 +9868,6 @@ export default function App() {
 	                        {L.why} {showWhy ? "▴" : "▾"}
                       </button>
                       {showWhy && <div data-testid="practice-why" className="pop" style={{ marginTop: 4, color: D.ink, background: D.card, border: `2px solid ${D.line}`, borderRadius: 10, padding: "8px 11px", fontSize: 13.5 }}>{explainText(q, uiLang)}</div>}
-                      {session.firstSession && firstSessionWhyLine(qi, uiLang) && (
-                        <div data-testid="first-session-why" style={{ marginTop: 4, fontSize: 13, fontWeight: 800, lineHeight: 1.35, fontFamily: "inherit", color: theme === "dark" ? D.badText : D.ink }}>{firstSessionWhyLine(qi, uiLang)}</div>
-                      )}
                     </div>
                   );
                 })()}
@@ -11026,19 +10939,13 @@ export default function App() {
         const milestones = [3, 7, 14, 30, 50, 100, 365];
         const hitMilestone = milestones.includes(prog.streak);
         const quietWin = session.firstHoy || session.firstDoctora || session.firstStory0 || session.lecturaWin;
-        const firstWin = !!session.firstSession;
         const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : session.lecturaWin ? "lectura-win" : undefined;
         const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : session.lecturaWin ? "lectura-win-continue" : undefined;
         const streakChip = streakChipLabel(prog.streak, uiLang);
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
-          {!quietWin && !firstWin && <Confetti count={perfect ? 160 : 70} />}
-          {firstWin && (
-            <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
-              <WinPerch />
-            </div>
-          )}
-          {!quietWin && !firstWin && (
+          {!quietWin && <Confetti count={perfect ? 160 : 70} />}
+          {!quietWin && (
           <div style={{ display: "flex", justifyContent: "center", gap: 0, alignItems: "flex-end" }}>
             {[session.host, "luna", "rafa"].filter((id, i, arr) => arr.indexOf(id) === i).slice(0, 3).map((id, i) => (
               <div key={id} className="jump" style={{ marginLeft: i ? -18 : 0, zIndex: 3 - i }}>
@@ -11054,10 +10961,10 @@ export default function App() {
                 : <WinPerch />}
             </div>
           )}
-          {screenQuip && !quietWin && !firstWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
+          {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
             <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, coachName(session.host)) }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
-          <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: firstWin && theme !== "dark" ? "#85672C" : D.gold }}>
+          <h2 data-testid={winTestId} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
           {levelUp && !session.firstDoctora && (
@@ -11081,9 +10988,6 @@ export default function App() {
               </div>
             ))}
           </div>
-          {firstWin && firstSessionWinLine(uiLang) && (
-            <p data-testid="first-session-win-line" style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 700, lineHeight: 1.35, color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}>{firstSessionWinLine(uiLang)}</p>
-          )}
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
 	            <Btn data-testid={continueTestId || "win-continue"} onClick={continueFromWin}>{L.continue}</Btn>
@@ -11130,15 +11034,9 @@ export default function App() {
 
           {/* perfect-lesson banner */}
           {perfect && !quietWin && (session.perfectBonus || 0) > 0 && (
-            firstWin ? (
-              <p data-testid="perfect-lesson" style={{ margin: "14px 0 0", padding: 0, border: "none", background: "none", fontWeight: 700, fontSize: 13, lineHeight: 1.35, color: theme === "dark" ? D.gold : "#85672C" }}>
-                {L.perfectLesson}
-              </p>
-            ) : (
-              <div data-testid="perfect-lesson" className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
-                ★ {L.perfectLesson}
-              </div>
-            )
+            <div data-testid="perfect-lesson" className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
+              ★ {L.perfectLesson}
+            </div>
           )}
 
           {/* streak milestone badge */}
@@ -11198,12 +11096,12 @@ export default function App() {
             </>
           ) : (
             <>
-	              <h2 data-testid="out-of-lives" style={{ fontWeight: 900, fontSize: 24, margin: "12px 0 4px", color: D.red }}>{L.outHearts}</h2>
+	              <h2 style={{ fontWeight: 900, fontSize: 24, margin: "12px 0 4px", color: D.red }}>{L.outHearts}</h2>
               <p style={{ color: D.sub, fontWeight: 700 }}>
 	                {L.outHeartsDesc} <IcHeart size={15} /> +1, {uiLang === "en" ? "wait" : "espera"} ~{nextHeartMin} min.
               </p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22, flexWrap: "wrap" }}>
-	                {trackedCount > 0 && <Btn color={D.blue} dark={D.blueDark} data-testid="review-and-recover" onClick={() => startReview(true)}>{L.practiceRecover} <IcHeart size={15} /></Btn>}
+	                {trackedCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview(true)}>{L.practiceRecover} <IcHeart size={15} /></Btn>}
                 <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < REFILL_COST} onClick={() => { refillHearts(); setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>
 	                  {L.refill} · <IcGem size={15} /> {REFILL_COST}
                 </Btn>
