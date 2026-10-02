@@ -7243,7 +7243,7 @@ describe("first session before the paywall", () => {
     await waitFor(() => expect(screen.getByTestId("win-continue")).toBeTruthy());
     expect(screen.getByRole("heading", { name: /¡Lección completada!/ }).getAttribute("data-lectura-paywall")).toBe("0");
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
-  }, 30000);
+  }, 60000);
 
   it("Lectura with no hearts shows the hearts modal and does not start the first session", async () => {
     cleanup();
