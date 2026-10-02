@@ -2274,8 +2274,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     render(<App />);
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await userEvent.setup().click(screen.getByRole("button", { name: /^Continuar$/i }));
-    await waitFor(() => expect(screen.getByRole("heading", { name: /Examen no superado|Test not passed/ })).toBeTruthy());
-    expect(screen.getByText(/Tres errores|Three mistakes/)).toBeTruthy();
+    await waitFor(() => expect(screen.getByRole("heading", { name: /Esta vez no|Not this time/ })).toBeTruthy());
+    expect(screen.getByText(/Tres errores, y el límite es dos\. Quedaron en Repaso\. Reintenta cuando quieras\.|Three mistakes, and the limit is two\. They're saved in Review\. Retry when you're ready\./)).toBeTruthy();
   });
 
   it("Hoy still matches city/title or the still is dropped", async () => {
