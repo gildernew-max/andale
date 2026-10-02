@@ -43,6 +43,25 @@ export function completedLessonCount(done) {
   }, 0);
 }
 
+/** This release writes firstSessionDone (true or false) or firstSessionArmed. Older saves have neither. */
+export function hasFirstSessionMarker(saved) {
+  if (!saved || typeof saved !== "object") return false;
+  if (typeof saved.firstSessionDone === "boolean") return true;
+  if (saved.firstSessionArmed === true) return true;
+  return false;
+}
+
+/**
+ * Load-time gate. A save from before this release has no first-session marker,
+ * so that learner keeps the 12-challenge unit. Null storage (a fresh install)
+ * stays eligible.
+ */
+export function migrateFirstSession(saved) {
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) return saved;
+  if (hasFirstSessionMarker(saved)) return saved;
+  return { ...saved, firstSessionDone: true };
+}
+
 /** No unit crown yet, and this is not a saved longer resume. */
 export function shouldUseFirstSession({ done, firstSessionDone, hasResume = false } = {}) {
   if (hasResume) return false;

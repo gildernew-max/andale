@@ -10,9 +10,11 @@ import {
   firstSessionQuestions,
   firstSessionTypes,
   formatWalkClock,
+  migrateFirstSession,
   scriptedWalkStats,
   shouldUseFirstSession,
 } from "./firstSession.js";
+import { firstSessionWhyLine, firstSessionWinLine, firstSessionWords } from "./firstSessionWords.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -73,6 +75,29 @@ assert(!shouldUseFirstSession({ done: {}, hasResume: true }), "a saved resume is
 assert(completedLessonCount({ subj1: 0, pret: 2 }) === 1, "only crowns count as completed");
 assert(completedLessonCount({ "_today:taqueria": 1 }) === 0, "a Hoy scene is not a completed Sendero lesson");
 
+assert(migrateFirstSession(null) == null, "fresh storage stays eligible");
+assert(migrateFirstSession(undefined) == null, "missing storage stays eligible");
+const freshMarked = { xp: 0, firstSessionDone: false };
+assert(migrateFirstSession(freshMarked) === freshMarked, "a this-release save keeps its marker");
+assert(shouldUseFirstSession(migrateFirstSession(freshMarked)), "explicit false marker is still the first session");
+for (const old of [
+  { xp: 40, streak: 3, lastDay: "2026-01-02" },
+  { streak: 1, lastDay: "2026-01-02", done: { "_today:taqueria": 1 } },
+  { xp: 12, gems: 5, missions: { safeRiskyBest: 3 } },
+  { welcomed: true, xp: 8, stories: { "story-0": true } },
+]) {
+  const migrated = migrateFirstSession(old);
+  assert(migrated.firstSessionDone === true, "a pre-release save is marked done");
+  assert(!shouldUseFirstSession(migrated), "a pre-release save keeps the 12-challenge unit");
+}
+assert(migrateFirstSession({ firstSessionDone: true, xp: 10 }).firstSessionDone === true, "a finished marker stays finished");
+assert(!migrateFirstSession({ firstSessionArmed: true }).firstSessionDone, "an in-progress first session is not closed by migration");
+
+assert([0, 1, 2, 3, 4].every((beat) => firstSessionWords[beat].why.en == null && firstSessionWords[beat].why.es == null), "beat why slots stay empty for George");
+assert(firstSessionWords.win.en == null && firstSessionWords.win.es == null, "win slot stays empty for George");
+assert(firstSessionWhyLine(0, "en") == null && firstSessionWhyLine(0, "es") == null, "null why renders nothing");
+assert(firstSessionWinLine("en") == null && firstSessionWinLine("es") == null, "null win line renders nothing");
+
 assert(firstSessionProgressPct(0, "idle", 5) === 0, "bar starts empty");
 assert(firstSessionProgressPct(2, "idle", 5) === 40, "two answered exercises fill 40%");
 assert(firstSessionProgressPct(4, "correct", 5) === 100, "last answer fills the bar");
@@ -103,6 +128,10 @@ assert(/const MAX_HEARTS = 5/.test(appSrc), "hearts stay at 5");
 assert(appSrc.includes("paywallHold: !!prog.paywallHold"), "hearts-fail hold is wired into the paywall gate");
 assert(appSrc.includes('data-testid="review-and-recover"'), "Review and recover stays on the out-of-lives screen");
 assert(appSrc.includes("XP reclamados") && appSrc.includes("XP claimed"), "XP claimed / XP reclamados wording stays");
-assert(!/TODO-WORDS/.test(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "firstSession.js"), "utf8")), "first session adds no new learner-facing strings");
+assert(appSrc.includes("migrateFirstSession(p)"), "old saves are migrated at load");
+assert(appSrc.includes("resume?.unitId === \"_first\""), "first-session Save & quit resumes at the saved beat");
+assert(appSrc.includes("if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }"), "hearts check still gates a lesson start");
+const cleared = appSrc.split("lecturaPaywallAfterWin.current = false").length - 1;
+assert(cleared >= 6, "the Lectura handoff flag clears on session start, hearts fail, both quits, win, and continue");
 
 console.log("firstSession.test.js: ok");

@@ -48,7 +48,8 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, shouldUseFirstSession } from "./firstSession.js";
+import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
+import { firstSessionWhyLine, firstSessionWinLine } from "./firstSessionWords.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -4775,7 +4776,7 @@ export default function App() {
   const memoryTimerRef = useRef(null);
   const gamesReturnRef = useRef("practica");
   const [burst, setBurst] = useState(0); // mini confetti trigger
-  const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
+  const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {}, firstSessionDone: false });
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
      file-level D constant, so all `D.green` reads inside App pick this up. */
   const theme = prog.theme || "light";
@@ -4815,6 +4816,7 @@ export default function App() {
 	    let p = null;
 	    try { const r = await storage.get(STORAGE_KEY); if (r && r.value) p = JSON.parse(r.value); } catch (e) {}
 	    p = acceptProgress(p);
+	    if (p) p = migrateFirstSession(p);
 	    let loaded = null;
 	    setProg((base) => {
 	      let merged = { ...base, ...(p || {}), contentVersion: CONTENT_VERSION };
@@ -4928,6 +4930,32 @@ export default function App() {
   const startUnit = (u, section) => {
     setSheet(null);
     if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
+    const firstSnap = !prog.firstSessionDone && prog.resume?.unitId === "_first" && Array.isArray(prog.resume.order) ? prog.resume : null;
+    if (firstSnap) {
+      const qs = firstSnap.order.map((o) => {
+        const src = UNITS.find((x) => x.id === o.u);
+        if (!src) return null;
+        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...src.questions[o.i], _u: o.u, _i: o.i };
+      }).filter(Boolean).map(prepQuestion);
+      if (qs.length) {
+        beginSession({
+          title: u?.title || UNITS[0].title,
+          color: section?.color || SECTIONS[0].color,
+          dark: section?.dark || SECTIONS[0].dark,
+          unitId: "_first",
+          firstSession: true,
+          review: false,
+          host: hostForUnit(u?.id || "subj1"),
+          questions: qs,
+        });
+        setQi(Math.min(firstSnap.qi || 0, qs.length - 1));
+        sessionXPRef.current = firstSnap.xp || 0;
+        setSessionXP(sessionXPRef.current);
+        setLessonStats({ right: firstSnap.right || 0, wrong: firstSnap.wrong || 0 });
+        save({ resume: null, firstSessionArmed: true });
+        return;
+      }
+    }
     const snap = prog.resume && prog.resume.unitId === u.id ? prog.resume : null;
     if (snap && Array.isArray(snap.order)) {
       // Resume a saved session: same question order, same position, same score.
@@ -4955,7 +4983,6 @@ export default function App() {
   const beginFirstSession = (u, section, { fromLectura = false } = {}) => {
     const questions = firstSessionQuestions(UNITS).map(prepQuestion);
     if (!questions.length) return;
-    if (fromLectura) lecturaPaywallAfterWin.current = true;
     save({ firstSessionArmed: true });
     beginSession({
       title: u?.title || UNITS[0].title,
@@ -4967,6 +4994,7 @@ export default function App() {
       host: hostForUnit(u?.id || "subj1"),
       questions,
     });
+    if (fromLectura) lecturaPaywallAfterWin.current = true;
   };
 
   const startTestOut = (sec, si) => {
@@ -5772,6 +5800,7 @@ export default function App() {
   const onMemoryPair = (fromId, toId) => applyMemoryMove(applyMemoryPair, fromId, toId);
 
   const beginSession = (s) => {
+    lecturaPaywallAfterWin.current = false;
     awardLockRef.current.delete("lesson");
     itemXpLockRef.current = new Set();
     sessionXPRef.current = 0;
@@ -5932,7 +5961,10 @@ export default function App() {
   const next = () => {
     if (status === "wrong" && session.testOut != null && lessonStats.wrong >= 3) { setFailKind("test"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return; }
     if (status === "wrong" && (prog.hearts ?? 0) <= 0 && !session.review && !session.rival) {
-      if (session.firstSession) save({ paywallHold: true });
+      if (session.firstSession) {
+        lecturaPaywallAfterWin.current = false;
+        save({ paywallHold: true });
+      }
       setFailKind("hearts"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return;
     }
     if (status !== "wrong" && shouldHoyEarlyWin({ firstHoy: session.firstHoy, hits: lessonStats.right })) {
@@ -5963,6 +5995,8 @@ export default function App() {
   const finishLesson = () => {
     if (session?.awarded || !lockAward("lesson")) return;
     beep("win");
+    const lecturaHandoffWin = !!session.firstSession && lecturaPaywallAfterWin.current;
+    lecturaPaywallAfterWin.current = false;
     const t = todayStr();
     const xpNow = sessionXPRef.current;
 
@@ -6001,6 +6035,7 @@ export default function App() {
       earnedXP: earned,
       earnedGems: gemsEarned,
       perfectBonus,
+      ...(lecturaHandoffWin ? { lecturaPaywallAfterWin: true } : {}),
       ...(s.firstHoy || s.firstDoctora || s.todaySceneId ? { esoWin: true } : {}),
     } : s));
     const before = levelOf(prog.xp || 0).idx, after = levelOf((prog.xp || 0) + earned).idx;
@@ -6208,6 +6243,7 @@ export default function App() {
       return;
     }
     if (shouldUseFirstSession({ done: prog.done, firstSessionDone: prog.firstSessionDone })) {
+      if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
       setLecturaCliffhanger(null);
       setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
       beginFirstSession(UNITS[0], SECTIONS[0], { fromLectura: true });
@@ -7257,8 +7293,8 @@ export default function App() {
   };
 
   const continueFromWin = () => {
-    if (lecturaPaywallAfterWin.current) {
-      lecturaPaywallAfterWin.current = false;
+    lecturaPaywallAfterWin.current = false;
+    if (session?.lecturaPaywallAfterWin) {
       setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
       if (!prog.paywallSeen && !prog.unlockedPrem) setChapterBirdHandoff(true);
     } else {
@@ -9012,14 +9048,15 @@ export default function App() {
             <div style={{ display: "grid", gap: 9 }}>
               <Btn onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmExit(false); }}>{uiLang === "en" ? "Keep going" : "Seguir"}</Btn>
               {!session.review && !session.rival && !session.testOut && !session.missionId && !session.daily && session.unitId !== "_test" && (
-                <Btn color={D.blue} dark={D.blueDark} onClick={(e) => {
+                <Btn color={D.blue} dark={D.blueDark} data-testid="save-and-quit" onClick={(e) => {
                   e.preventDefault(); e.stopPropagation();
+                  if (session.firstSession) lecturaPaywallAfterWin.current = false;
                   const order = session.questions.map((qq) => ({ u: qq._u, i: qq._i }));
                   save({ resume: { unitId: session.unitId, order, qi, xp: sessionXP, right: lessonStats.right, wrong: lessonStats.wrong } });
                   stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home");
                 }}>{uiLang === "en" ? "Save & quit" : "Guardar y salir"}</Btn>
               )}
-              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
+              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (session.firstSession) lecturaPaywallAfterWin.current = false; stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
             </div>
           </div>
         </div>
@@ -9027,7 +9064,7 @@ export default function App() {
 
       {/* ---------- NO-HEARTS MODAL ---------- */}
       {heartsModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setHeartsModal(false)}>
+        <div data-testid="hearts-modal" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setHeartsModal(false)}>
           <div className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center" }}>
             <div style={{ fontSize: 0, display: "flex", justifyContent: "center", gap: 4, marginBottom: 10 }}>
               {[...Array(MAX_HEARTS)].map((_, i) => <IcHeart key={i} size={26} off />)}
@@ -9915,6 +9952,9 @@ export default function App() {
 	                        {L.why} {showWhy ? "▴" : "▾"}
                       </button>
                       {showWhy && <div data-testid="practice-why" className="pop" style={{ marginTop: 4, color: D.ink, background: D.card, border: `2px solid ${D.line}`, borderRadius: 10, padding: "8px 11px", fontSize: 13.5 }}>{explainText(q, uiLang)}</div>}
+                      {session.firstSession && firstSessionWhyLine(qi, uiLang) && (
+                        <div data-testid="first-session-why" style={{ marginTop: 4, fontSize: 13, fontWeight: 800, lineHeight: 1.35 }}>{firstSessionWhyLine(qi, uiLang)}</div>
+                      )}
                     </div>
                   );
                 })()}
@@ -11011,9 +11051,12 @@ export default function App() {
           {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
             <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, coachName(session.host)) }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
-          <h2 data-testid={winTestId} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
+          <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
+          {session.firstSession && firstSessionWinLine(uiLang) && (
+            <p data-testid="first-session-win-line" style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 800, lineHeight: 1.35, color: D.sub }}>{firstSessionWinLine(uiLang)}</p>
+          )}
           {levelUp && !session.firstDoctora && (
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", margin: "4px 0 8px", fontWeight: 900, color: D.goldDark }}>
 	              <IcBolt size={18} /> {L.levelUp} <span style={{ textTransform: "uppercase", letterSpacing: ".03em" }}>{levelLabel(levelUp, uiLang)}</span>
