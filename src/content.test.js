@@ -1217,9 +1217,10 @@ assert(appSrc.includes("shouldArmLecturaWin"), "later Lectura claim arms static 
 assert(appSrc.includes("shouldPlayLecturaWin(session)"), "later Lectura preloads Cenzontle for the perch");
 assert(appSrc.includes("story-0-win"), "story-0 ¡Eso! heading is testable");
 assert(appSrc.includes("lectura-win"), "later Lectura ¡Eso! heading is testable");
-assert(appSrc.includes("{!quietWin && !firstWin && <Confetti"), "first-win mutes confetti so the courier is visible");
-assert(appSrc.includes("{!quietWin && !firstWin && ("), "first-win hides the party-coach row");
-assert(appSrc.includes("firstWin && theme !== \"dark\" ? \"#85672C\" : D.gold"), "first-session light heading is ochre; other wins keep gold");
+assert(appSrc.includes("{!quietWin && !perchCard && <Confetti"), "first-session and Sendero mute confetti");
+assert(appSrc.includes("{!quietWin && !perchCard && ("), "first-session and Sendero hide the party-coach row");
+assert(appSrc.includes("perchCard && theme !== \"dark\" ? \"#85672C\" : D.gold"), "first-session and Sendero light heading is ochre");
+assert(appSrc.includes("isSenderoLesson(session)"), "Sendero lesson-end reuses the first-session perch card");
 assert(appSrc.includes("data-testid={winTestId}"), "¡Eso! heading stays the existing win test id");
 assert(appSrc.includes("className={quietWin ? \"eso-rise\" : undefined}"), "¡Eso! copy is opacity / 3px rise only");
 assert(appSrc.includes('const MARK_INK = "#5C7356"'), "lockup wordmark uses adult sage, not Duo lime");
@@ -2039,6 +2040,10 @@ assert(existsSync(join(repoRoot, "public", "lectura", "story-9", "MANIFEST.md"))
 const story9Cast = readFileSync(join(repoRoot, "public", "lectura", "story-9", "CAST.md"), "utf8");
 assert(/don Adán/.test(story9Cast) && /White hair/.test(story9Cast) && /Straw hat/.test(story9Cast) && /red sash/.test(story9Cast), "story-9 CAST locks white hair/mustache, straw hat, white shirt, red sash");
 assert(appSrc.includes("lectura/${story.id}/p${pi}.png"), "Lectura still src is public/lectura/{storyId}/pN.png");
+const lecturaStillStyle = appSrc.slice(appSrc.indexOf("lectura-still-"), appSrc.indexOf("lectura-still-") + 520);
+assert(lecturaStillStyle.includes('width: "auto"') && lecturaStillStyle.includes('height: "auto"') && lecturaStillStyle.includes("maxHeight: 148"), "Lectura still scales with its aspect ratio under a height cap");
+assert(lecturaStillStyle.includes("margin: \"0 auto 12px\"") && lecturaStillStyle.includes("borderRadius: 10"), "Lectura still stays centered with the same corner radius");
+assert(!/objectFit:\s*"cover"|objectPosition/.test(lecturaStillStyle), "Lectura still is not cropped");
 for (const s of STORIES) {
   s.paragraphs.forEach((_, i) => {
     const stillPng = join(repoRoot, "public", "lectura", s.id, `p${i}.png`);

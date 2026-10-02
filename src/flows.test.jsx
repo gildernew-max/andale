@@ -2862,19 +2862,24 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("safe-risky-reward").textContent).not.toMatch(/bonus/i);
   });
 
-  it("Lectura narration chrome is NARRACIÓN / NARRATION, not LAB", async () => {
+  it("Lectura hides the narration card when the paragraph file is missing", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
     await user.click(openers[openers.length - 1]);
-    await waitFor(() => expect(screen.getByTestId("narration-label")).toBeTruthy());
-    expect(screen.getByTestId("narration-label").textContent).toBe("NARRACIÓN");
-    expect(screen.getByTestId("narration-label").textContent).not.toMatch(/LAB/);
-    expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB/);
+    await waitFor(() => expect(screen.getByTestId("lectura-paragraph-first")).toBeTruthy());
+    expect(screen.queryByTestId("narration-card")).toBeNull();
+    expect(screen.queryByTestId("narration-label")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB|cached paragraph audio|audio cacheado/);
+    const paragraph = screen.getByTestId("lectura-paragraph-first");
+    const hunt = screen.getByTestId("word-hunt-card");
+    expect(paragraph.compareDocumentPosition(hunt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(hunt.textContent).toMatch(/CACERÍA DE PALABRAS/);
+    expect(hunt.textContent).toMatch(/0\/8/);
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("narration-label").textContent).toBe("NARRATION"));
-    expect(screen.getByTestId("narration-label").textContent).not.toMatch(/LAB/);
-    expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB/);
+    await waitFor(() => expect(screen.getByTestId("word-hunt-card").textContent).toMatch(/WORD HUNT/));
+    expect(screen.queryByTestId("narration-card")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/cached paragraph audio|audio cacheado/);
   });
 
   it("unread Lectura does not lift cerezas / story comprehension into later Hoy", async () => {
@@ -5876,7 +5881,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
     expect(screen.getByRole("button", { name: "Párrafo 1" }).getAttribute("aria-label")).toBe("Párrafo 1");
     expect(screen.getByRole("button", { name: "Preguntas" }).getAttribute("aria-label")).toBe("Preguntas");
-    expect(screen.getByRole("button", { name: "Escuchar párrafo" }).getAttribute("aria-label")).toBe("Escuchar párrafo");
+    expect(screen.queryByRole("button", { name: "Escuchar párrafo" })).toBeNull();
     const storyWord = [...document.querySelectorAll("span")].find((el) =>
       el.textContent === "cempasúchil" && el.style.cursor === "pointer");
     expect(storyWord).toBeTruthy();
@@ -5887,7 +5892,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Paragraph 1" })).toBeTruthy());
     expect(screen.getByRole("button", { name: "Paragraph 1" }).getAttribute("aria-label")).toBe("Paragraph 1");
     expect(screen.getByRole("button", { name: "Questions" }).getAttribute("aria-label")).toBe("Questions");
-    expect(screen.getByRole("button", { name: "Listen to paragraph" }).getAttribute("aria-label")).toBe("Listen to paragraph");
+    expect(screen.queryByRole("button", { name: "Listen to paragraph" })).toBeNull();
     expect(screen.getByRole("button", { name: "Listen to word" }).getAttribute("aria-label")).toBe("Listen to word");
     expect(screen.queryByRole("button", { name: "Párrafo 1" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Escuchar párrafo" })).toBeNull();
@@ -7399,11 +7404,13 @@ describe("first session before the paywall", () => {
     }));
     render(<App />);
     const later = await screen.findByRole("heading", { name: /¡Lección completada!/ });
-    expect(later.style.color).toBe("rgb(255, 200, 0)");
+    expect(later.style.color).toBe("rgb(133, 103, 44)");
     expect(screen.getByTestId("win-earned-xp").style.color).toBe("rgb(133, 103, 44)");
     expect(screen.getByTestId("win-earned-gems").style.color).toBe("rgb(15, 111, 166)");
-    expect(document.querySelector(".confetti-bit")).toBeTruthy();
-    expect(screen.queryByTestId("win-perch")).toBeNull();
+    expect(document.querySelector(".confetti-bit")).toBeNull();
+    expect(screen.getByTestId("win-perch-bird")).toBeTruthy();
+    expect(document.querySelectorAll(".jump").length).toBe(0);
+    expect(screen.getByTestId("win-perch-chip").style.color).toBe("rgb(133, 103, 44)");
     const laterPerfect = screen.getByTestId("perfect-lesson");
     expect(laterPerfect.tagName).toBe("DIV");
     expect(laterPerfect.style.borderTopWidth).toBe("2px");
