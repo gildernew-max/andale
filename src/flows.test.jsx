@@ -24,7 +24,7 @@ import { startMatchRun } from "./matchPairs.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
 import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
 import { PAYWALL_SOURCE } from "./paywallHeadline.js";
-import { FIRST_WIN_MINUTES, splashPromiseLine } from "./splashCopy.js";
+import { FIRST_WIN_MINUTES, splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
 
@@ -1689,6 +1689,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(splashPromiseLine("en", 5)).toBe("Real Mexican Spanish. Your first win takes 5 minutes.");
     expect(splashPromiseLine("es", 1)).toBe("Español mexicano real. Tu primer logro toma 1 minuto.");
     const line = screen.getByTestId("splash-line");
+    const blocks = () => [...line.querySelectorAll("[data-testid='splash-sentence']")];
+    expect(blocks()).toHaveLength(2);
+    expect(blocks().every((el) => el.style.display === "block")).toBe(true);
+    expect(blocks()[0].textContent).toBe(splashPromiseSentences("en")[0]);
+    expect(blocks()[1].textContent).toBe(splashPromiseSentences("en")[1]);
+    expect(line.textContent).toBe(`${blocks()[0].textContent} ${blocks()[1].textContent}`);
     expect(line.style.fontSize).toBe("16px");
     expect(line.style.fontWeight).toBe("600");
     expect(line.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
@@ -1721,6 +1727,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Tu primer logro empieza aquí."));
+    expect(blocks()[0].textContent).toBe("Español mexicano real.");
+    expect(blocks()[1].textContent).toBe("Tu primer logro empieza aquí.");
+    expect(blocks().every((el) => el.style.display === "block")).toBe(true);
     expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
     expect(screen.queryByTestId("splash-skip")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();

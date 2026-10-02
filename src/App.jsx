@@ -10,7 +10,7 @@ import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneF
 import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
-import { splashPromiseLine } from "./splashCopy.js";
+import { splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
 import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from "./hoyChoiceCard.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
@@ -8927,7 +8927,7 @@ export default function App() {
             </div>
             <div data-testid="splash-wordmark" style={{ fontWeight: 900, fontSize: 30, color: theme === "dark" ? "#F6EFE4" : MARK_INK, letterSpacing: "-0.02em", marginBottom: 4 }}>¡ándale!</div>
             <div data-testid="splash-line" style={{ fontWeight: 600, fontSize: 16, color: theme === "dark" ? "#CDBBA6" : "#6B6258", margin: "0 auto 22px", lineHeight: 1.35, maxWidth: "22em", textWrap: "balance", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-              {L.splashLine}
+              <span data-testid="splash-sentence" style={{ display: "block" }}>{splashPromiseSentences(uiLang)[0]}</span>{" "}<span data-testid="splash-sentence" style={{ display: "block" }}>{splashPromiseSentences(uiLang)[1]}</span>
             </div>
             <input className="splash-name" value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={20}
               placeholder={L.namePrompt}

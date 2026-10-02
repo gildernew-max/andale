@@ -9,17 +9,24 @@ const LEAD = {
   es: "Español mexicano real.",
 };
 
-export function splashPromiseLine(lang, minutes = FIRST_WIN_MINUTES) {
-  const es = lang !== "en";
-  const lead = es ? LEAD.es : LEAD.en;
+function secondSentence(es, minutes) {
   const timed = typeof minutes === "number" && Number.isFinite(minutes);
-  if (!timed) {
-    return es ? `${lead} Tu primer logro empieza aquí.` : `${lead} Your first win starts here.`;
-  }
+  if (!timed) return es ? "Tu primer logro empieza aquí." : "Your first win starts here.";
   if (es) {
     const unit = minutes === 1 ? "minuto" : "minutos";
-    return `${lead} Tu primer logro toma ${minutes} ${unit}.`;
+    return `Tu primer logro toma ${minutes} ${unit}.`;
   }
   const unit = minutes === 1 ? "minute" : "minutes";
-  return `${lead} Your first win takes ${minutes} ${unit}.`;
+  return `Your first win takes ${minutes} ${unit}.`;
+}
+
+/** Two sentences. The screen paints each as its own block; the joined line keeps one space. */
+export function splashPromiseSentences(lang, minutes = FIRST_WIN_MINUTES) {
+  const es = lang !== "en";
+  return [es ? LEAD.es : LEAD.en, secondSentence(es, minutes)];
+}
+
+export function splashPromiseLine(lang, minutes = FIRST_WIN_MINUTES) {
+  const [lead, second] = splashPromiseSentences(lang, minutes);
+  return `${lead} ${second}`;
 }

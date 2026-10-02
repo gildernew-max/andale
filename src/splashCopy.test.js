@@ -1,4 +1,4 @@
-import { FIRST_WIN_MINUTES, splashPromiseLine } from "./splashCopy.js";
+import { FIRST_WIN_MINUTES, splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -18,4 +18,18 @@ assert(splashPromiseLine("es", 1) === "Español mexicano real. Tu primer logro t
 assert(splashPromiseLine("en", 0) === "Real Mexican Spanish. Your first win takes 0 minutes.", "EN 0 stays plural");
 assert(splashPromiseLine("es", 2) === "Español mexicano real. Tu primer logro toma 2 minutos.", "ES 2 stays plural");
 
-console.log("ok: splash promise — null starts here; a number interpolates the timed line.");
+const pair = (lang, minutes) => {
+  const [lead, second] = splashPromiseSentences(lang, minutes);
+  assert(lead.endsWith("."), `${lang} lead is its own sentence`);
+  assert(!second.startsWith(" "), `${lang} second sentence has no leading space`);
+  assert(`${lead} ${second}` === splashPromiseLine(lang, minutes), `${lang} blocks join with one space`);
+  return [lead, second];
+};
+assert(pair("en").join("|") === "Real Mexican Spanish.|Your first win starts here.", "null EN is two sentences");
+assert(pair("es").join("|") === "Español mexicano real.|Tu primer logro empieza aquí.", "null ES is two sentences");
+assert(pair("en", 5)[1] === "Your first win takes 5 minutes.", "timed EN second sentence is its own block");
+assert(pair("es", 1)[1] === "Tu primer logro toma 1 minuto.", "timed ES singular second sentence is its own block");
+assert(pair("es", 5)[1] === "Tu primer logro toma 5 minutos.", "timed ES plural second sentence is its own block");
+assert(pair("en", 1)[0] === "Real Mexican Spanish.", "timed EN keeps the same first sentence");
+
+console.log("ok: splash promise — null starts here; a number interpolates the timed line; two sentences.");
