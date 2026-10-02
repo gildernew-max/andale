@@ -93,10 +93,15 @@ for (const old of [
 assert(migrateFirstSession({ firstSessionDone: true, xp: 10 }).firstSessionDone === true, "a finished marker stays finished");
 assert(!migrateFirstSession({ firstSessionArmed: true }).firstSessionDone, "an in-progress first session is not closed by migration");
 
-assert([0, 1, 2, 3, 4].every((beat) => firstSessionWords[beat].why.en == null && firstSessionWords[beat].why.es == null), "beat why slots stay empty for George");
-assert(firstSessionWords.win.en == null && firstSessionWords.win.es == null, "win slot stays empty for George");
-assert(firstSessionWhyLine(0, "en") == null && firstSessionWhyLine(0, "es") == null, "null why renders nothing");
-assert(firstSessionWinLine("en") == null && firstSessionWinLine("es") == null, "null win line renders nothing");
+assert([0, 1, 2, 3, 4].every((beat) => {
+  const why = firstSessionWords[beat].why;
+  return typeof why.en === "string" && why.en.trim() && typeof why.es === "string" && why.es.trim()
+    && firstSessionWhyLine(beat, "en") === why.en && firstSessionWhyLine(beat, "es") === why.es
+    && why.es.includes("«") && why.es.includes("»");
+}), "each beat why is a non-empty EN and ES line, and the Spanish line keeps both guillemets");
+assert(typeof firstSessionWords.win.en === "string" && firstSessionWords.win.en.trim() && typeof firstSessionWords.win.es === "string" && firstSessionWords.win.es.trim(), "win lines are non-empty strings");
+assert(firstSessionWinLine("en") === firstSessionWords.win.en && firstSessionWinLine("es") === firstSessionWords.win.es, "win helper returns the slot strings");
+assert(!firstSessionWords.win.es.includes("«") && !firstSessionWords.win.es.includes("»"), "the Spanish win line has no guillemets");
 
 assert(firstSessionProgressPct(0, "idle", 5) === 0, "bar starts empty");
 assert(firstSessionProgressPct(2, "idle", 5) === 40, "two answered exercises fill 40%");
