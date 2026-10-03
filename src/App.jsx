@@ -63,7 +63,7 @@ import { beginnerFirstQuestions, beginnerWhyLine, beginnerWinLine, BEGINNER_SESS
 import { firstSessionWhyLine, firstSessionWinLine } from "./firstSessionWords.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
-import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
+import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyCorrectKeys, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
 import {
   CUBETAS_BIRD_PX,
   CUBETAS_BUCKET_SRC,
@@ -10427,6 +10427,8 @@ export default function App() {
         const tappedWrong = safeRiskyTappedWrong(item, safeGame);
         const revealed = safeRiskyIsRevealed(item, safeGame);
         const hit = revealed && tappedWrong.length === 0;
+        const correctKeys = safeRiskyCorrectKeys(item);
+        const correctLeft = correctKeys.filter((key) => !tapped.includes(key)).length;
         return (
           <div data-testid="safe-risky-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
             {burst > 0 && safeGame.done && <Confetti key={burst} count={36} />}
@@ -10490,6 +10492,13 @@ export default function App() {
                     );
                   })}
                 </div>
+                {!revealed && correctKeys.length > 1 && (
+                  <div data-testid="safe-risky-remaining" style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: theme === "dark" ? D.sub : "#6B6258", textAlign: "center" }}>
+                    {uiLang === "en"
+                      ? `${correctKeys.length} right answers · ${correctLeft} left to tap`
+                      : `${correctKeys.length} respuestas correctas · ${correctLeft} por tocar`}
+                  </div>
+                )}
                 {revealed && (
                   <div className="pop" style={{ marginTop: 14, border: `2px solid ${hit ? D.green : D.red}`, borderRadius: 14, padding: "11px 13px", background: hit ? D.greenBg : D.redBg, textAlign: "left" }}>
                     <div style={{ fontWeight: 900, color: hit ? D.greenDark : D.redDark, marginBottom: 4 }}>
