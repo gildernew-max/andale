@@ -6934,8 +6934,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
     await user.click(screen.getByTestId("hub-hoy"));
     await waitFor(() => expect(screen.getByTestId("hoy-plan")).toBeTruthy());
-    expect(screen.getByTestId("hoy-plan-eyebrow").textContent).toBe("HOY · 10 MIN");
-    expect(screen.getByTestId("hoy-plan-sell").textContent).toBe("Un plan corto para hoy. Diez minutos. Luego paras.");
+    expect(screen.getByTestId("hoy-plan-eyebrow").textContent).toBe("HOY · ~10 MIN");
+    expect(screen.getByTestId("hoy-plan-sell").textContent).toBe("Un plan corto para hoy. Unos diez minutos. Luego paras.");
     expect(screen.getByTestId("hoy-plan-step").textContent).toBe("Jugar la escena");
     expect(screen.getByTestId("hoy-plan-start").textContent).toBe("Empezar el plan");
     expect(screen.getByTestId("hub-hoy").textContent).not.toMatch(/Jugar la escena|Empezar el plan/);
@@ -6949,8 +6949,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Subjunctive rules");
 
     await user.click(screen.getByTestId("hub-hoy"));
-    await waitFor(() => expect(screen.getByTestId("hoy-plan-eyebrow").textContent).toBe("TODAY · 10 MIN"));
-    expect(screen.getByTestId("hoy-plan-sell").textContent).toBe("A short plan for today. Ten minutes. Then you stop.");
+    await waitFor(() => expect(screen.getByTestId("hoy-plan-eyebrow").textContent).toBe("TODAY · ~10 MIN"));
+    expect(screen.getByTestId("hoy-plan-sell").textContent).toBe("A short plan for today. About ten minutes. Then you stop.");
     expect(screen.getByTestId("hoy-plan-step").textContent).toBe("Play the scene");
     expect(screen.getByTestId("hoy-plan-start").textContent).toBe("Start the plan");
 

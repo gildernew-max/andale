@@ -1391,8 +1391,8 @@ assert(appSrc.includes("title: L.hubSendero"), "Sendero tile label follows uiLan
 assert(!appSrc.includes("title: L.hubSobremesa"), "Sobremesa wrap stamp is not a hub tile title");
 assert(UI.es.hubHoy === "Hoy" && UI.en.hubHoy === "Hoy", "Hoy label is Hoy");
 assert(UI.es.hubHoyQuiet === "Plan de hoy" && UI.en.hubHoyQuiet === "Today's plan", "Hoy quiet is Plan de hoy / Today's plan");
-assert(UI.es.hoyPlanEyebrow === "HOY · 10 MIN" && UI.en.hoyPlanEyebrow === "TODAY · 10 MIN", "Hoy plan eyebrow is George stamp");
-assert(UI.es.hoyPlanSell === "Un plan corto para hoy. Diez minutos. Luego paras." && UI.en.hoyPlanSell === "A short plan for today. Ten minutes. Then you stop.", "Hoy plan sell is George stamp");
+assert(UI.es.hoyPlanEyebrow === "HOY · ~10 MIN" && UI.en.hoyPlanEyebrow === "TODAY · ~10 MIN", "Hoy plan eyebrow is George stamp");
+assert(UI.es.hoyPlanSell === "Un plan corto para hoy. Unos diez minutos. Luego paras." && UI.en.hoyPlanSell === "A short plan for today. About ten minutes. Then you stop.", "Hoy plan sell is George stamp");
 assert(UI.es.hoyPlanCta === "Empezar el plan" && UI.en.hoyPlanCta === "Start the plan", "Hoy plan CTA is George stamp");
 assert(UI.es.playScene === "Jugar la escena" && UI.en.playScene === "Play the scene", "scene step stays playScene");
 assert(UI.es.hubStories === "Cuentos" && UI.en.hubStories === "Stories", "Stories title follows uiLang");
