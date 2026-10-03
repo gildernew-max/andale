@@ -8311,7 +8311,7 @@ export default function App() {
             </div>
 	            <span>{L.goal}: {prog.xpToday || 0}/{DAILY_GOAL} XP</span>
 	            <button data-testid="rayo-toggle" aria-pressed={!!prog.rayo} onClick={() => save({ rayo: !prog.rayo })} title={uiLang === "en" ? "Lightning mode: answer against the clock. Correct in time: +3 XP. Time out counts as a mistake." : "Modo Rayo: responde contra reloj. Acierta a tiempo: +3 XP. Se acaba el tiempo: cuenta como error."}
-	              style={{ display: "flex", alignItems: "center", gap: 5, border: `2px solid ${prog.rayo ? D.gold : D.line}`, borderBottom: `3px solid ${prog.rayo ? D.goldDark : D.line}`, background: prog.rayo ? "#FFF6DC" : "#fff", color: prog.rayo ? D.goldDark : D.sub, borderRadius: 99, padding: "4px 12px", fontWeight: 900, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+	              style={{ display: "flex", alignItems: "center", gap: 5, border: `2px solid ${prog.rayo ? D.gold : D.line}`, borderBottom: `3px solid ${prog.rayo ? D.goldDark : D.line}`, background: prog.rayo ? "#FFF6DC" : (theme === "dark" ? D.card : "#fff"), color: prog.rayo ? D.goldDark : (theme === "dark" ? MEMORY_DARK_INK : D.sub), borderRadius: 99, padding: "4px 12px", fontWeight: 900, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
 	              <IcBolt size={14} /> {L.rayo} {prog.rayo ? L.on : L.off}
             </button>
           </div>
@@ -8320,7 +8320,9 @@ export default function App() {
           {(() => {
             let g = -1; // global node index
             return SECTIONS.map((sec, si) => {
-              const bg = ["#F3FBEA", "#F8F0FF", "#EAF7FE"][si % 3];
+              const pathPastel = ["#F3FBEA", "#F8F0FF", "#EAF7FE"][si % 3];
+              const laneDark = theme === "dark" && pathPastel === "#F3FBEA";
+              const bg = laneDark ? D.card : pathPastel;
               const sectionDone = sec.unitIds.every((id) => (prog.done?.[id] || 0) > 0);
               const chestId = `chest-${si}`;
               const chestClaimed = !!prog.chests?.[chestId];
@@ -8339,9 +8341,9 @@ export default function App() {
                       </button>
                     )}
                   </div>
-                  <div style={{ position: "relative", background: bg, borderRadius: "0 0 22px 22px", padding: "20px 0 26px", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
-                    <div aria-hidden="true" style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,.9), rgba(255,255,255,0) 70%)", top: -60, right: -60, pointerEvents: "none" }} />
-                    <div aria-hidden="true" style={{ position: "absolute", width: 260, height: 260, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,.7), rgba(255,255,255,0) 70%)", bottom: -80, left: -80, pointerEvents: "none" }} />
+                  <div data-testid="section-lane" data-section={si} style={{ position: "relative", background: bg, borderRadius: "0 0 22px 22px", padding: "20px 0 26px", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
+                    <div aria-hidden="true" style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", background: laneDark ? "transparent" : "radial-gradient(circle, rgba(255,255,255,.9), rgba(255,255,255,0) 70%)", top: -60, right: -60, pointerEvents: "none" }} />
+                    <div aria-hidden="true" style={{ position: "absolute", width: 260, height: 260, borderRadius: "50%", background: laneDark ? "transparent" : "radial-gradient(circle, rgba(255,255,255,.7), rgba(255,255,255,0) 70%)", bottom: -80, left: -80, pointerEvents: "none" }} />
                     {sec.unitIds.map((uid) => {
                       g += 1;
                       const u = UNITS.find((x) => x.id === uid);
@@ -8372,7 +8374,7 @@ export default function App() {
                           {crowns > 1 && (
                             <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", background: D.card, border: `2px solid ${D.gold}`, borderRadius: 99, fontSize: 11, fontWeight: 900, color: D.goldDark, padding: "0 8px" }}>×{crowns}</div>
                           )}
-                          <div style={{ textAlign: "center", fontSize: 12, fontWeight: 800, color: unlocked ? D.ink : D.lockIcon, marginTop: 10, width: 116, marginLeft: -19 }}>
+                          <div data-testid="section-lane-label" style={{ textAlign: "center", fontSize: 12, fontWeight: 800, color: laneDark ? MEMORY_DARK_INK : (unlocked ? D.ink : D.lockIcon), marginTop: 10, width: 116, marginLeft: -19 }}>
                             {u.title}
                           </div>
                         </div>
@@ -11734,7 +11736,7 @@ export default function App() {
           )}
           {showLecturaHandoff && (
             <div data-testid="lectura-handoff" style={{ marginTop: 18, background: HUB_CREAM, borderRadius: 14, padding: "10px 12px 12px" }}>
-              <p data-testid="lectura-handoff-quiet" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: D.sub }}>
+              <p data-testid="lectura-handoff-quiet" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: theme === "dark" ? "#6B6258" : D.sub }}>
                 {lecturaHandoffQuiet(uiLang)}
               </p>
               <button
