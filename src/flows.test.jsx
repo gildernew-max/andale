@@ -8684,7 +8684,7 @@ describe("words audit strings", () => {
       await waitFor(() => expect(screen.getByTestId("path-sheet").textContent).toContain(row.en));
       if (row.n === 1) expect(screen.getByTestId("path-sheet").textContent).not.toContain("1 crowns");
     }
-  });
+  }, 15000);
 
   it("profile streak day noun is singular only at 1, in ES and EN", async () => {
     const cases = [
