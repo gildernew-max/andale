@@ -3442,7 +3442,11 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("narration-card")).toBeTruthy());
     const activeMode = screen.getByRole("button", { name: "Cuento" });
     const idleMode = screen.getByRole("button", { name: "Bilingüe" });
-    expect(activeMode.style.background).toMatch(WHITE);
+    expect(activeMode.style.background).toMatch(GREEN_BG);
+    expect(activeMode.style.background).not.toMatch(WHITE);
+    expect(activeMode.style.color).toMatch(GREEN);
+    expect(activeMode.style.color).not.toMatch(GREEN_DARK);
+    expect(contrastRatio(activeMode.style.color, activeMode.style.background)).toBeGreaterThanOrEqual(4.5);
     expect(idleMode.style.background).toMatch(SUBTLE);
     expect(idleMode.style.background).not.toMatch(LIGHT_SUBTLE);
     expect(contrastRatio(idleMode.style.color, idleMode.style.background)).toBeGreaterThanOrEqual(4.5);
@@ -3500,6 +3504,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await lightUser.click(lightClaimed);
     await waitFor(() => expect(screen.getByTestId("narration-card")).toBeTruthy());
     expect(screen.getByRole("button", { name: "Cuento" }).style.background).toMatch(WHITE);
+    expect(screen.getByRole("button", { name: "Cuento" }).style.color).toMatch(GREEN_DARK);
     expect(screen.getByRole("button", { name: "Bilingüe" }).style.background).toMatch(LIGHT_SUBTLE);
     expect(screen.getByTestId("lectura-progress").querySelectorAll("button")[1].style.background).toMatch(TRACK);
     expect(screen.getByRole("button", { name: "Preguntas" }).style.background).toMatch(TRACK);

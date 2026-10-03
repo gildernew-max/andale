@@ -11259,7 +11259,7 @@ export default function App() {
                 { id: "challenge", l: uiLang === "en" ? "Challenge" : "Reto" },
               ].map((m) => (
                 <button key={m.id} onClick={() => { setStoryMode(m.id); setWordReveal(m.id !== "challenge"); }}
-                  style={{ border: `2px solid ${storyMode === m.id ? sec.color : D.line}`, borderBottom: `4px solid ${storyMode === m.id ? sec.dark : D.line}`, background: storyMode === m.id ? "#fff" : (theme === "dark" ? D.subtle : "#F7F7F7"), color: storyMode === m.id ? sec.dark : D.sub, borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
+                  style={{ border: `2px solid ${storyMode === m.id ? sec.color : D.line}`, borderBottom: `4px solid ${storyMode === m.id ? sec.dark : D.line}`, background: storyMode === m.id ? (theme === "dark" ? D.greenBg : "#fff") : (theme === "dark" ? D.subtle : "#F7F7F7"), color: storyMode === m.id ? (theme === "dark" ? D.green : sec.dark) : D.sub, borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
                   {m.l}
                 </button>
               ))}
