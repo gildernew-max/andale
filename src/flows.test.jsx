@@ -3048,6 +3048,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(fail.style.color).toBe(sub.style.color);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("narration-fail").textContent).toBe(NARRATION_FAIL_EN));
+    await user.click(screen.getByRole("button", { name: "STOP" }));
   }, 20000);
 
   it("unread Lectura does not lift cerezas / story comprehension into later Hoy", async () => {
