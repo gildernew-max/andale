@@ -22,7 +22,7 @@ export const lecturaCliffhangers = {
   },
   "story-4": {
     es: "Para Doña Lupe, yo era de la casa. ¿Y los que viven entre dos casas?",
-    en: "To Doña Lupe, I was part of the household. What about people who live between two homes?",
+    en: "To Doña Lupe, I was part of the house. What about those between two homes?",
   },
   "story-5": {
     es: "Llevo doce años buscando la verdad. ¿Y si una historia no se pudiera comprobar?",

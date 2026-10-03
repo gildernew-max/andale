@@ -29,7 +29,7 @@ const EN = {
   "story-1": "She painted the world from a bed. What if someone traveled far just to avoid moving?",
   "story-2": "Don\u2019t assume only the earth hides something. What might be under a mask?",
   "story-3": "Every generation picks its own road. Or are there roads that pick you?",
-  "story-4": "To Doña Lupe, I was part of the household. What about people who live between two homes?",
+  "story-4": "To Doña Lupe, I was part of the house. What about those between two homes?",
   "story-5": "I\u2019ve spent twelve years looking for the truth. What if a story could never be proven?",
   "story-6": "Some things you look after for a lifetime. A story, a ring\u2026 or a table?",
   "story-7": "They honor their friend in silence. What if someone did it out loud?",
