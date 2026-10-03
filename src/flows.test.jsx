@@ -6969,6 +6969,79 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("run-timer-off-chip")).toBeNull();
     expect(screen.getByTestId("rayo-clock").innerHTML).not.toMatch(/#FF4B4B|#FF6B6B|#EA2B2B/i);
   });
+
+  it("long wrong listening answer caps the footer and blurs the field", async () => {
+    const sentence = "El mesero nos trajo los platos calientes y después pidió la cuenta de la mesa.";
+    expect(sentence.trim().split(/\s+/).length).toBeGreaterThanOrEqual(12);
+    const prevW = window.innerWidth;
+    const prevH = window.innerHeight;
+    Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+    Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: 844 });
+    try {
+      cleanup();
+      seedProgress({ uiLang: "en", hearts: 5, onboardingDone: true, firstSessionDone: true, theme: "light" });
+      const filler = (i) => ({
+        type: "mc",
+        prompt: `filler ${i}`,
+        choices: ["sí", "no"],
+        answer: "sí",
+        shuffledChoices: ["sí", "no"],
+        _u: "mex",
+        _i: i,
+      });
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "lesson",
+        tab: "camino",
+        status: "idle",
+        qi: 4,
+        typed: "",
+        lessonStats: { right: 3, wrong: 0 },
+        session: {
+          title: "Sprint",
+          unitId: "mex",
+          host: "luna",
+          questions: [filler(0), filler(1), filler(2), filler(3), {
+            type: "listen",
+            text: sentence,
+            answers: [sentence],
+            _u: "mex",
+            _i: 4,
+          }],
+        },
+      }));
+      const user = userEvent.setup();
+      render(<App />);
+      const input = await screen.findByPlaceholderText("Write the full sentence…");
+      input.focus();
+      expect(document.activeElement).toBe(input);
+      await user.type(input, "La mesera trajo platos frios y nunca pidio la cuenta de nadie");
+      expect(document.activeElement).toBe(input);
+      await user.keyboard("{Enter}");
+      await waitFor(() => expect(screen.getByTestId("practice-quip")).toBeTruthy());
+      expect(document.activeElement).not.toBe(input);
+
+      const footer = screen.getByTestId("lesson-footer");
+      expect(window.innerWidth).toBe(390);
+      expect(window.innerHeight).toBe(844);
+      expect(footer.style.position).toBe("fixed");
+      expect(footer.style.bottom).toBe("0px");
+      expect(footer.style.display).toBe("flex");
+      expect(footer.style.flexDirection).toBe("column");
+      expect(footer.style.overflow).toBe("hidden");
+      expect(footer.style.maxHeight).toMatch(/60(d)?vh/);
+      const css = [...document.querySelectorAll("style")].map((node) => node.textContent || "").join("\n");
+      expect(css).toMatch(/\.lesson-footer-cap\s*\{[^}]*max-height:\s*60vh;\s*max-height:\s*60dvh;/);
+      const scroll = screen.getByTestId("lesson-footer-scroll");
+      expect(scroll.style.overflowY).toBe("auto");
+      const actions = screen.getByTestId("lesson-footer-actions");
+      const cont = screen.getByRole("button", { name: "Continue" });
+      expect(actions.contains(cont)).toBe(true);
+      expect(scroll.contains(cont)).toBe(false);
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: prevW });
+      Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: prevH });
+    }
+  });
 });
 
 const funnelOf = (name) => (window.__andaleFunnelLog || []).filter((e) => e.event === name);

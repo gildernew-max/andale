@@ -4821,6 +4821,9 @@ export default function App() {
     return () => { document.body.style.overflow = prev; };
   }, [onboardingOpen]);
   const inputRef = useRef(null);
+  const lessonFooterRef = useRef(null);
+  const footerScrollRef = useRef(null);
+  const [footerCapped, setFooterCapped] = useState(false);
   const audioCtx = useRef(null);
   const narrationRef = useRef(null);
   const liveReady = useRef(false);
@@ -5910,6 +5913,7 @@ export default function App() {
     if (itemXpLockRef.current.has(awardKey)) return;
     itemXpLockRef.current.add(awardKey);
     setStatus(r);
+    if (r === "wrong" || r === "correct" || r === "almost") inputRef.current?.blur();
     const thisKey = `${q._u}|${q._i}`;
     setQuip(pickQuip(session.host, r === "wrong" ? "wrong" : "correct"));
     if (r === "wrong") {
@@ -6633,6 +6637,28 @@ export default function App() {
     if (screen === "lesson" && q?.type === "listen" && status === "idle") setTimeout(() => speak(lessonListenText(q)), 350);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qi, screen]);
+
+  // Cap the lesson footer and keep Check/Continue out of the scrolling copy.
+  // 60vh first, then 60dvh, so a browser that rejects dvh still clamps.
+  useLayoutEffect(() => {
+    const node = lessonFooterRef.current;
+    if (node) {
+      node.style.setProperty("max-height", "60vh");
+      node.style.setProperty("max-height", "60dvh");
+    }
+    const el = footerScrollRef.current;
+    if (!el) return undefined;
+    const measure = () => {
+      const over = el.scrollHeight - el.clientHeight > 2;
+      setFooterCapped((prev) => (prev === over ? prev : over));
+    };
+    measure();
+    if (typeof ResizeObserver !== "function") return undefined;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => ro.disconnect();
+  }, [status, qi, showWhy, typed, quip, theme, prog.uiLang, screen]);
 
   // Drop leftover overlays when the view swaps so the first tap hits the new screen.
   useEffect(() => {
@@ -7803,6 +7829,9 @@ export default function App() {
         .wordle-shake { animation: wordleShake .45s ease; }
         * { -webkit-tap-highlight-color: transparent; }
         button, input, select, textarea { touch-action: manipulation; }
+        .lesson-footer-cap { max-height: 60vh; max-height: 60dvh; }
+        .lesson-footer-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+        .lesson-footer-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
         .duo-btn:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px !important; }
         .duo-btn { transition: transform .05s, filter .1s; }
         .duo-btn:hover:not(:disabled) { filter: brightness(1.05); }
@@ -9806,7 +9835,7 @@ export default function App() {
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
         <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : orderDark ? { background: D.bg, color: HUB_CREAM, minHeight: "100vh" } : undefined}>
-        <div data-testid="lesson-body" style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
+        <div data-testid="lesson-body" style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px calc(240px + env(safe-area-inset-bottom, 0px))", position: "relative" }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
               <span style={{ fontWeight: 900, fontSize: 42, color: "#FF9600", textShadow: "0 3px 0 rgba(0,0,0,.12), 0 0 24px rgba(255,200,0,.5)", letterSpacing: ".02em" }}>{inter.text}</span>
@@ -10159,14 +10188,16 @@ export default function App() {
           </div>
 
           {/* ---------- ACTION BAR with mascot ---------- */}
-          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-            <div style={{ maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+          <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className="lesson-footer-cap" style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div style={{ maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, minWidth: 0, minHeight: 0, flex: "1 1 auto", overflow: "hidden" }}>
+              <div ref={footerScrollRef} data-testid="lesson-footer-scroll" className="lesson-footer-scroll" style={{ flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", alignSelf: "stretch" }}>
+                <div style={{ display: "flex", alignItems: footerCapped ? "flex-start" : "center", gap: 14, minWidth: 0 }}>
               {status !== "idle" && (
                 <div className={status === "wrong" ? "" : "jump"} style={{ flexShrink: 0 }}>
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : D.okText }}>
+              <div style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : D.okText }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
                     <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: 0.85 }}>
@@ -10195,7 +10226,7 @@ export default function App() {
                           <div style={{ fontSize: 15.5, marginTop: 2 }}>
 	                            <span style={{ opacity: 0.8, fontSize: 12.5 }}>{L.correct}: </span>
                             {marks.map((m, i) => (
-                              <b key={i} style={{ color: m.k === "ok" ? D.okText : m.k === "accent" ? "#E08600" : D.badText, borderBottom: m.k === "ok" ? "none" : "2.5px solid currentColor", marginRight: 5 }}>{m.w}</b>
+                              <b key={i} style={{ display: "inline-block", overflowWrap: "anywhere", color: m.k === "ok" ? D.okText : m.k === "accent" ? "#E08600" : D.badText, borderBottom: m.k === "ok" ? "none" : "2.5px solid currentColor", marginRight: 5 }}>{m.w}</b>
                             ))}
                           </div>
 	                          {hasAccent && <div style={{ fontSize: 11.5, color: D.accent, marginTop: 2 }}>{uiLang === "en" ? "orange = only the accent is missing" : "naranja = solo falta el acento"}</div>}
@@ -10216,8 +10247,11 @@ export default function App() {
                 })()}
 	                {status === "idle" && (q.type === "match" ? L.matchInstruction : L.enterCheck)}
               </div>
+                </div>
+              </div>
               {q.type !== "match" || status !== "idle" ? (
-                status === "idle" ? (
+                <div data-testid="lesson-footer-actions" style={{ flexShrink: 0, alignSelf: footerCapped ? "flex-end" : "center" }}>
+                {status === "idle" ? (
 	                  <Btn data-testid="lesson-check" onClick={check} style={{ flexShrink: 0 }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
@@ -10230,7 +10264,8 @@ export default function App() {
                   </div>
                 ) : (
 	                  <Btn color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ flexShrink: 0 }}>{L.continue}</Btn>
-                )
+                )}
+                </div>
               ) : null}
             </div>
           </div>
