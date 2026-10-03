@@ -7078,6 +7078,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       render(<App />);
       await waitFor(() => expect(screen.getByTestId("safe-risky-continue")).toBeTruthy());
       expect(screen.getByText(/Better answer: Formal/)).toBeTruthy();
+      expect(screen.queryByTestId("safe-risky-remaining")).toBeNull();
       expect(window.innerWidth).toBe(390);
       expect(window.innerHeight).toBe(844);
 
