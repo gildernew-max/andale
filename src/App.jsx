@@ -8443,7 +8443,7 @@ export default function App() {
                     <div style={{ flex: 1 }}>
 	                      <div style={{ fontWeight: 900, fontSize: 18 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
 	                      <div style={{ fontSize: 13, color: D.sub, fontWeight: 800 }}>{meta.place ? `${meta.place} · ` : ""}{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
-		                      <div style={{ fontSize: 12, color: sec.color, fontWeight: 900, marginTop: 4 }}>{story.paragraphs.length} {L.paragraphs} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
+		                      <div style={{ fontSize: 12, color: sec.color, fontWeight: 900, marginTop: 4 }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
 		                      {souvenir && <div style={{ fontSize: 11.5, color: claimed ? D.greenDark : D.sub, fontWeight: 900, marginTop: 4 }}>{claimed ? "✓ " : ""}{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
 	                    </div>
                     {claimed && <IcCrown size={26} />}

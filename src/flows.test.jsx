@@ -2896,6 +2896,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   const NARRATION_BANNED = /cached|cacheado/i;
   const LIBRARY_ES = "párrafos · toca palabras · escucha por párrafo";
   const LIBRARY_EN = "paragraphs · tap words · listen by paragraph";
+  const LIBRARY_QUIET_ES = "párrafos · toca palabras";
+  const LIBRARY_QUIET_EN = "paragraphs · tap words";
   const NARRATION_ES = "La voz en español de tu dispositivo, frase por frase.";
   const NARRATION_EN = "Your device's Spanish voice, one sentence at a time.";
   const NARRATION_FAIL_ES = "El audio no suena ahora. Puedes leer el cuento sin él.";
@@ -2951,6 +2953,37 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("story-shelf-story-0")).toBeTruthy());
     expect(screen.getByTestId("story-shelf-story-0").textContent).toContain(LIBRARY_EN);
     expect(document.body.textContent).not.toMatch(NARRATION_BANNED);
+  });
+
+  it("library subtitle keeps the listen clause in ES and EN when a Latin American voice exists", async () => {
+    withVoices([{ lang: "es-MX", name: "Paulina" }]);
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    for (const id of ["story-0", "story-9"]) {
+      expect(screen.getByTestId(`story-shelf-${id}`).textContent).toContain(LIBRARY_ES);
+    }
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("story-shelf-story-0").textContent).toContain(LIBRARY_EN));
+    expect(screen.getByTestId("story-shelf-story-9").textContent).toContain(LIBRARY_EN);
+  });
+
+  it("library subtitle drops the listen clause in ES and EN when no Latin American voice exists", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    for (const id of ["story-0", "story-9"]) {
+      const text = screen.getByTestId(`story-shelf-${id}`).textContent;
+      expect(text).toContain(LIBRARY_QUIET_ES);
+      expect(text).not.toContain("escucha por párrafo");
+      expect(text).not.toContain("audio por párrafo");
+    }
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("story-shelf-story-0").textContent).toContain(LIBRARY_QUIET_EN));
+    for (const id of ["story-0", "story-9"]) {
+      const text = screen.getByTestId(`story-shelf-${id}`).textContent;
+      expect(text).toContain(LIBRARY_QUIET_EN);
+      expect(text).not.toContain("listen by paragraph");
+      expect(text).not.toContain("audio by paragraph");
+    }
   });
 
   it.each([
