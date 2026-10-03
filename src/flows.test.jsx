@@ -7023,20 +7023,24 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       const footer = screen.getByTestId("lesson-footer");
       expect(window.innerWidth).toBe(390);
       expect(window.innerHeight).toBe(844);
+      // jsdom has no layout, so the footer stays on the at-rest row. The cap is proven in Chromium.
+      expect(footer.getAttribute("data-capped")).toBe("0");
       expect(footer.style.position).toBe("fixed");
       expect(footer.style.bottom).toBe("0px");
-      expect(footer.style.display).toBe("flex");
-      expect(footer.style.flexDirection).toBe("column");
-      expect(footer.style.overflow).toBe("hidden");
-      expect(footer.style.maxHeight).toMatch(/60(d)?vh/);
+      expect(footer.style.display).toBe("");
+      expect(footer.style.overflow).toBe("");
+      expect(footer.style.maxHeight).toBe("");
+      expect(footer.className || "").not.toMatch(/lesson-footer-cap/);
       const css = [...document.querySelectorAll("style")].map((node) => node.textContent || "").join("\n");
       expect(css).toMatch(/\.lesson-footer-cap\s*\{[^}]*max-height:\s*60vh;\s*max-height:\s*60dvh;/);
-      const scroll = screen.getByTestId("lesson-footer-scroll");
-      expect(scroll.style.overflowY).toBe("auto");
-      const actions = screen.getByTestId("lesson-footer-actions");
+      expect(screen.queryByTestId("lesson-footer-scroll")).toBeNull();
+      expect(screen.queryByTestId("lesson-footer-actions")).toBeNull();
       const cont = screen.getByRole("button", { name: "Continue" });
-      expect(actions.contains(cont)).toBe(true);
-      expect(scroll.contains(cont)).toBe(false);
+      expect(footer.contains(cont)).toBe(true);
+      const row = footer.firstElementChild;
+      expect(row.contains(cont)).toBe(true);
+      expect(row.style.display).toBe("flex");
+      expect(row.style.alignItems).toBe("center");
     } finally {
       Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: prevW });
       Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: prevH });
@@ -7083,6 +7087,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(window.innerHeight).toBe(844);
 
       const footer = screen.getByTestId("safe-risky-feedback");
+      // jsdom's 0×0 layout takes the pinned branch. This checks containment, not a real viewport.
       expect(footer.className).toMatch(/lesson-footer-cap/);
       expect(footer.style.display).toBe("flex");
       expect(footer.style.flexDirection).toBe("column");
