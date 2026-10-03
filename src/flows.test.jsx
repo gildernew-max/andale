@@ -8951,3 +8951,96 @@ describe("words audit strings", () => {
     }
   }, 20000);
 });
+
+describe("cream caption contrast", { timeout: 20000 }, () => {
+  const LIGHT_CAPTION = /#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i;
+  const DARK_SUB = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
+  const LIGHT_SUB = /#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i;
+
+  const assertCaption = (el, colorRe) => {
+    expect(el.style.color).toMatch(colorRe);
+    expect(el.style.fontSize).toBe("12px");
+    expect(el.style.fontWeight).toBe("700");
+  };
+
+  const captionProgress = (theme) => ({
+    uiLang: "es",
+    theme,
+    onboardingDone: true,
+    paywallSeen: true,
+    firstSessionDone: true,
+    xp: 50,
+    done: { subj1: 1 },
+    srs: { "subj1|0": { ef: 2.5, reps: 1, interval: 1, due: 1 } },
+  });
+
+  const bootHome = async (theme) => {
+    cleanup();
+    localStorage.clear();
+    mockBrowser();
+    seedProgress(captionProgress(theme));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("atajos")).toBeTruthy());
+    return user;
+  };
+
+  const bootLive = async (theme, live, testId) => {
+    cleanup();
+    localStorage.clear();
+    mockBrowser();
+    seedProgress(captionProgress(theme));
+    localStorage.setItem(LIVE_KEY, JSON.stringify(live));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId(testId)).toBeTruthy());
+  };
+
+  it("light cream captions are #6B6258 at 12px/700 and D_LIGHT.sub still paints #777777", async () => {
+    const user = await bootHome("light");
+    assertCaption(screen.getByTestId("atajos"), LIGHT_CAPTION);
+    expect(screen.getByTestId("atajos").style.color).not.toMatch(LIGHT_SUB);
+    const divider = screen.getByTestId("lang-toggle").querySelector("[aria-hidden='true']");
+    expect(divider.textContent).toBe("|");
+    expect(divider.style.color).toMatch(LIGHT_SUB);
+
+    await user.click(screen.getByTestId("nav-practica"));
+    await waitFor(() => expect(screen.getByTestId("memory-window")).toBeTruthy());
+    expect(screen.getByRole("button", { name: /Repasar hoy/ })).toBeTruthy();
+    expect(screen.getByTestId("memory-window").textContent).toMatch(/60/);
+    assertCaption(screen.getByTestId("memory-window"), LIGHT_CAPTION);
+
+    await user.click(screen.getByTestId("nav-perfil"));
+    await waitFor(() => expect(screen.getAllByTestId("achievement-desc").length).toBeGreaterThan(0));
+    const descs = screen.getAllByTestId("achievement-desc");
+    expect(descs[0].textContent).toBe("Completa una lección");
+    descs.forEach((el) => assertCaption(el, LIGHT_CAPTION));
+
+    await bootLive("light", { screen: "ahorcado", tab: "practica", ahorcado: startHangmanRun() }, "hangman-quiet");
+    assertCaption(screen.getByTestId("hangman-quiet"), LIGHT_CAPTION);
+
+    await bootLive("light", { screen: "jeopardy", tab: "practica", jeopardy: startJeopardyRun() }, "jeopardy-quiet");
+    assertCaption(screen.getByTestId("jeopardy-quiet"), LIGHT_CAPTION);
+  });
+
+  it("dark cream captions stay D.sub #A0A4AB at 12px/700", async () => {
+    const user = await bootHome("dark");
+    assertCaption(screen.getByTestId("atajos"), DARK_SUB);
+    expect(screen.getByTestId("atajos").style.color).not.toMatch(LIGHT_CAPTION);
+    const divider = screen.getByTestId("lang-toggle").querySelector("[aria-hidden='true']");
+    expect(divider.style.color).toMatch(DARK_SUB);
+
+    await user.click(screen.getByTestId("nav-practica"));
+    await waitFor(() => expect(screen.getByTestId("memory-window")).toBeTruthy());
+    assertCaption(screen.getByTestId("memory-window"), DARK_SUB);
+
+    await user.click(screen.getByTestId("nav-perfil"));
+    await waitFor(() => expect(screen.getAllByTestId("achievement-desc").length).toBeGreaterThan(0));
+    screen.getAllByTestId("achievement-desc").forEach((el) => assertCaption(el, DARK_SUB));
+
+    await bootLive("dark", { screen: "ahorcado", tab: "practica", ahorcado: startHangmanRun() }, "hangman-quiet");
+    assertCaption(screen.getByTestId("hangman-quiet"), DARK_SUB);
+
+    await bootLive("dark", { screen: "jeopardy", tab: "practica", jeopardy: startJeopardyRun() }, "jeopardy-quiet");
+    assertCaption(screen.getByTestId("jeopardy-quiet"), DARK_SUB);
+  });
+});

@@ -8252,7 +8252,7 @@ export default function App() {
 	            ))}
 	          </div>
 	          )}
-	          {showAtajos && <p data-testid="atajos" style={{ textAlign: "center", fontSize: 12, color: D.sub, fontWeight: 700 }}>{L.shortcuts}</p>}
+	          {showAtajos && <p data-testid="atajos" style={{ textAlign: "center", fontSize: 12, color: theme === "dark" ? D.sub : "#6B6258", fontWeight: 700 }}>{L.shortcuts}</p>}
         </div>
       )}
 
@@ -8758,7 +8758,7 @@ export default function App() {
 	                {L.practiceFree} <b style={{ color: D.green }}><IcHeart size={15} /> +1</b>.
               </p>
 	              <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.reviewToday} ({dueCount})</Btn>
-              <p style={{ fontSize: 12, color: D.sub, fontWeight: 700, marginTop: 14 }}>
+              <p data-testid="memory-window" style={{ fontSize: 12, color: theme === "dark" ? D.sub : "#6B6258", fontWeight: 700, marginTop: 14 }}>
 	                {L.memory} {GRADUATE_DAYS} {uiLang === "en" ? "days" : "días"}.
               </p>
             </>
@@ -9115,7 +9115,7 @@ export default function App() {
             ].map((a, i) => (
               <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", border: `2px solid ${D.line}`, borderRadius: 14, padding: "10px 14px", opacity: a.ok ? 1 : 0.45 }}>
                 <span style={{ lineHeight: 0 }}><IcMedal size={28} gray={!a.ok} /></span>
-                <div><div style={{ fontWeight: 900, fontSize: 14 }}>{a.t}</div><div style={{ fontSize: 12, color: D.sub, fontWeight: 700 }}>{a.d}</div></div>
+                <div><div style={{ fontWeight: 900, fontSize: 14 }}>{a.t}</div><div data-testid="achievement-desc" style={{ fontSize: 12, color: theme === "dark" ? D.sub : "#6B6258", fontWeight: 700 }}>{a.d}</div></div>
               </div>
             ))}
           </div>
@@ -10677,7 +10677,7 @@ export default function App() {
               <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div data-testid="hangman-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{hangmanTitle(uiLang)}</div>
-                <div data-testid="hangman-quiet" style={{ fontSize: 12, fontWeight: 700, color: D.sub }}>{hangmanQuiet(uiLang)}</div>
+                <div data-testid="hangman-quiet" style={{ fontSize: 12, fontWeight: 700, color: theme === "dark" ? D.sub : "#6B6258" }}>{hangmanQuiet(uiLang)}</div>
               </div>
               <div data-testid="hangman-misses" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{misses.length}/{HANGMAN_MAX}</div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
@@ -10803,7 +10803,7 @@ export default function App() {
             <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div data-testid="jeopardy-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{jeopardyTitle(uiLang)}</div>
-              <div data-testid="jeopardy-quiet" style={{ fontSize: 12, fontWeight: 700, color: D.sub }}>{jeopardyQuiet(uiLang)}</div>
+              <div data-testid="jeopardy-quiet" style={{ fontSize: 12, fontWeight: 700, color: theme === "dark" ? D.sub : "#6B6258" }}>{jeopardyQuiet(uiLang)}</div>
             </div>
             <div data-testid="jeopardy-score" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{jeopardy.score}</div>
             <div data-testid="jeopardy-answered" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{jeopardyAnswered(jeopardy)}/{jeopardyBoardCount}</div>
