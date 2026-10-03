@@ -58,8 +58,9 @@ const seedColdFirstVisit = (extra = {}) => {
 /** Claimed stories stay open for a re-read. The first unread stays the frontier. */
 const claimStories = (...ids) => Object.fromEntries(ids.map((id) => [id, true]));
 
-const mockBrowser = () => {
-  const voices = [];
+const mockBrowser = ({ voices: seedVoices = [] } = {}) => {
+  const voices = seedVoices.map((v) => ({ localService: true, name: "Voz", ...v }));
+  const voiceListeners = [];
   window.SpeechSynthesisUtterance = class {
     constructor(text) {
       this.text = text;
@@ -73,20 +74,32 @@ const mockBrowser = () => {
     }
   };
   const speak = vi.fn((u) => { try { u?.onstart?.(); } catch (e) {} });
+  const synth = {
+    getVoices: () => voices,
+    speak,
+    cancel: () => {},
+    resume: () => {},
+    addEventListener: (type, fn) => {
+      if (type === "voiceschanged" && typeof fn === "function") voiceListeners.push(fn);
+    },
+    removeEventListener: (type, fn) => {
+      if (type !== "voiceschanged") return;
+      const idx = voiceListeners.indexOf(fn);
+      if (idx >= 0) voiceListeners.splice(idx, 1);
+    },
+    onvoiceschanged: null,
+    speaking: false,
+    pending: false,
+    paused: false,
+    pushVoices(next) {
+      voices.splice(0, voices.length, ...next.map((v) => ({ localService: true, name: "Voz", ...v })));
+      try { if (typeof synth.onvoiceschanged === "function") synth.onvoiceschanged(); } catch (e) {}
+      voiceListeners.slice().forEach((fn) => { try { fn(); } catch (e) {} });
+    },
+  };
   Object.defineProperty(window, "speechSynthesis", {
     configurable: true,
-    value: {
-      getVoices: () => voices,
-      speak,
-      cancel: () => {},
-      resume: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      onvoiceschanged: null,
-      speaking: false,
-      pending: false,
-      paused: false,
-    },
+    value: synth,
   });
   const toneNode = () => ({
     connect() {},
@@ -831,6 +844,10 @@ afterEach(() => {
       delete navigator.sendBeacon;
     }
   }
+  delete window.__andaleSpoke;
+  delete window.__andaleRetried;
+  delete window.__andaleVoiceDead;
+  delete window.__andaleVoiceName;
   delete window.__andaleIapEnv;
   delete window.__andaleNativePurchase;
   delete window.__andaleNativeRestore;
@@ -2876,25 +2893,196 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("safe-risky-reward").textContent).not.toMatch(/bonus/i);
   });
 
-  it("Lectura hides the narration card when the paragraph file is missing", async () => {
+  const NARRATION_BANNED = /cached|cacheado/i;
+  const LIBRARY_ES = "párrafos · toca palabras · escucha por párrafo";
+  const LIBRARY_EN = "paragraphs · tap words · listen by paragraph";
+  const LIBRARY_QUIET_ES = "párrafos · toca palabras";
+  const LIBRARY_QUIET_EN = "paragraphs · tap words";
+  const NARRATION_ES = "La voz en español de tu dispositivo, frase por frase.";
+  const NARRATION_EN = "Your device's Spanish voice, one sentence at a time.";
+  const NARRATION_FAIL_ES = "El audio no suena ahora. Puedes leer el cuento sin él.";
+  const NARRATION_FAIL_EN = "Audio isn't playing right now. The story reads fine without it.";
+
+  const withVoices = (voices) => {
+    cleanup();
+    mockBrowser({ voices });
+    seedProgress();
+  };
+
+  const openShelfStory = async (user, storyId) => {
+    if (screen.queryByTestId("story-reader")) {
+      await user.click(screen.getByRole("button", { name: /^(Cerrar|Close)$/ }));
+      await waitFor(() => expect(screen.queryByTestId("story-reader")).toBeNull());
+    }
+    if (!screen.queryByTestId(`story-shelf-${storyId}`)) {
+      await user.click(screen.getByTestId("nav-lectura"));
+    }
+    const shelf = screen.getByTestId(`story-shelf-${storyId}`);
+    expect(shelf.getAttribute("data-locked")).toBe("false");
+    await user.click(shelf);
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe(storyId));
+  };
+
+  it("Lectura narration uses the device voice line in both languages", async () => {
+    withVoices([{ lang: "es-MX", name: "Paulina" }]);
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
-    const openers = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
-    await user.click(openers[openers.length - 1]);
-    await waitFor(() => expect(screen.getByTestId("lectura-paragraph-first")).toBeTruthy());
-    expect(screen.queryByTestId("narration-card")).toBeNull();
-    expect(screen.queryByTestId("narration-label")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB|cached paragraph audio|audio cacheado/);
+    expect(screen.getByTestId("story-shelf-story-0").textContent).toContain(LIBRARY_ES);
+    expect(document.body.textContent).not.toMatch(NARRATION_BANNED);
+    await user.click(screen.getByTestId("story-shelf-story-0"));
+    await waitFor(() => expect(screen.getByTestId("narration-card")).toBeTruthy());
+    expect(screen.getByTestId("narration-label").textContent).toBe("NARRACIÓN");
+    expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_ES);
+    expect(screen.getByRole("button", { name: "Escuchar párrafo" })).toBeTruthy();
+    expect(screen.queryByTestId("narration-fail")).toBeNull();
+    expect(screen.getByTestId("story-reader").textContent).not.toMatch(NARRATION_BANNED);
+    expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB/);
     const paragraph = screen.getByTestId("lectura-paragraph-first");
     const hunt = screen.getByTestId("word-hunt-card");
     expect(paragraph.compareDocumentPosition(hunt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(hunt.textContent).toMatch(/CACERÍA DE PALABRAS/);
     expect(hunt.textContent).toMatch(/0\/8/);
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("word-hunt-card").textContent).toMatch(/WORD HUNT/));
-    expect(screen.queryByTestId("narration-card")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/cached paragraph audio|audio cacheado/);
+    await waitFor(() => expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_EN));
+    expect(screen.getByTestId("narration-label").textContent).toBe("NARRATION");
+    expect(screen.getByRole("button", { name: "Listen to paragraph" })).toBeTruthy();
+    expect(screen.getByTestId("word-hunt-card").textContent).toMatch(/WORD HUNT/);
+    expect(screen.queryByTestId("narration-fail")).toBeNull();
+    expect(screen.getByTestId("story-reader").textContent).not.toMatch(NARRATION_BANNED);
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(screen.getByTestId("story-shelf-story-0")).toBeTruthy());
+    expect(screen.getByTestId("story-shelf-story-0").textContent).toContain(LIBRARY_EN);
+    expect(document.body.textContent).not.toMatch(NARRATION_BANNED);
   });
+
+  it("library subtitle keeps the listen clause in ES and EN when a Latin American voice exists", async () => {
+    withVoices([{ lang: "es-MX", name: "Paulina" }]);
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    for (const id of ["story-0", "story-9"]) {
+      expect(screen.getByTestId(`story-shelf-${id}`).textContent).toContain(LIBRARY_ES);
+    }
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("story-shelf-story-0").textContent).toContain(LIBRARY_EN));
+    expect(screen.getByTestId("story-shelf-story-9").textContent).toContain(LIBRARY_EN);
+  });
+
+  it("library subtitle drops the listen clause in ES and EN when no Latin American voice exists", async () => {
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    for (const id of ["story-0", "story-9"]) {
+      const text = screen.getByTestId(`story-shelf-${id}`).textContent;
+      expect(text).toContain(LIBRARY_QUIET_ES);
+      expect(text).not.toContain("escucha por párrafo");
+      expect(text).not.toContain("audio por párrafo");
+    }
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("story-shelf-story-0").textContent).toContain(LIBRARY_QUIET_EN));
+    for (const id of ["story-0", "story-9"]) {
+      const text = screen.getByTestId(`story-shelf-${id}`).textContent;
+      expect(text).toContain(LIBRARY_QUIET_EN);
+      expect(text).not.toContain("listen by paragraph");
+      expect(text).not.toContain("audio by paragraph");
+    }
+  });
+
+  it.each([
+    ["es-MX", "Paulina"],
+    ["es-US", "Monica"],
+    ["es-419", "Paulina"],
+    ["es_MX", "Paulina"],
+    ["ES-us", "Monica"],
+  ])("Lectura shows narration for a %s voice", async (lang, name) => {
+    withVoices([{ lang, name }]);
+    const user = await boot();
+    await openShelfStory(user, "story-0");
+    expect(screen.getByTestId("narration-card")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Escuchar párrafo" })).toBeTruthy();
+    expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_ES);
+    expect(screen.queryByTestId("narration-fail")).toBeNull();
+  });
+
+  it("Lectura shows narration when es-ES is installed beside es-MX", async () => {
+    withVoices([
+      { lang: "es-ES", name: "Helena" },
+      { lang: "es-MX", name: "Paulina" },
+    ]);
+    const user = await boot();
+    await openShelfStory(user, "story-0");
+    expect(screen.getByTestId("narration-card")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Escuchar párrafo" })).toBeTruthy();
+  });
+
+  it.each([
+    ["no voices", []],
+    ["es-ES only", [{ lang: "es-ES", name: "Helena" }]],
+    ["generic es only", [{ lang: "es", name: "Spanish" }]],
+    ["ES_ES only", [{ lang: "ES_ES", name: "Helena" }]],
+  ])("Lectura hides narration for %s", async (_label, voices) => {
+    withVoices(voices);
+    const user = await boot();
+    await openShelfStory(user, "story-0");
+    expect(screen.queryByTestId("narration-card")).toBeNull();
+    expect(screen.queryByTestId("narration-label")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Escuchar párrafo" })).toBeNull();
+    expect(screen.getByTestId("story-reader").textContent).not.toMatch(NARRATION_BANNED);
+  });
+
+  it("Lectura narration is on stories 1-9 with a Latin American voice", async () => {
+    cleanup();
+    mockBrowser({ voices: [{ lang: "es-419", name: "Paulina" }] });
+    seedProgress({ stories: claimStories(...Array.from({ length: 10 }, (_, i) => `story-${i}`)) });
+    const user = await boot();
+    for (let i = 1; i <= 9; i++) {
+      await openShelfStory(user, `story-${i}`);
+      expect(screen.getByTestId("narration-card")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Escuchar párrafo" })).toBeTruthy();
+      expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_ES);
+      expect(screen.getByTestId("story-reader").textContent).not.toMatch(NARRATION_BANNED);
+    }
+  });
+
+  it("Lectura narration appears when a Latin American voice loads on voiceschanged", async () => {
+    const user = await boot();
+    await openShelfStory(user, "story-0");
+    expect(screen.queryByTestId("narration-card")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Escuchar párrafo" })).toBeNull();
+    window.speechSynthesis.pushVoices([{ lang: "es_MX", name: "Paulina" }]);
+    await waitFor(() => expect(screen.getByTestId("narration-card")).toBeTruthy());
+    expect(screen.getByRole("button", { name: "Escuchar párrafo" })).toBeTruthy();
+    expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_ES);
+  });
+
+  it("narration failure line appears only after speech fails", async () => {
+    withVoices([{ lang: "es-US", name: "Monica" }]);
+    const user = await boot();
+    await openShelfStory(user, "story-0");
+    expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_ES);
+    expect(screen.queryByTestId("narration-fail")).toBeNull();
+    window.__andaleSpoke = false;
+    window.__andaleRetried = false;
+    window.__andaleVoiceDead = false;
+    await user.click(screen.getByRole("button", { name: "Escuchar párrafo" }));
+    await new Promise((r) => setTimeout(r, 2800));
+    expect(screen.queryByTestId("narration-fail")).toBeNull();
+    window.__andaleSpoke = false;
+    window.__andaleRetried = false;
+    window.__andaleVoiceDead = false;
+    window.speechSynthesis.speak = vi.fn(() => {});
+    await user.click(screen.getByRole("button", { name: "Escuchar párrafo" }));
+    await waitFor(() => {
+      expect(screen.getByTestId("narration-fail").textContent).toBe(NARRATION_FAIL_ES);
+    }, { timeout: 9000 });
+    const sub = screen.getByTestId("narration-sub");
+    const fail = screen.getByTestId("narration-fail");
+    expect(screen.getByTestId("narration-card").contains(fail)).toBe(true);
+    expect(fail.style.fontSize).toBe(sub.style.fontSize);
+    expect(fail.style.fontWeight).toBe(sub.style.fontWeight);
+    expect(fail.style.color).toBe(sub.style.color);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("narration-fail").textContent).toBe(NARRATION_FAIL_EN));
+    await user.click(screen.getByRole("button", { name: "STOP" }));
+  }, 20000);
 
   it("unread Lectura does not lift cerezas / story comprehension into later Hoy", async () => {
     laterHoySeed();
