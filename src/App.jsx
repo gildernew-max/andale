@@ -1815,6 +1815,160 @@ const WORD_CHIP_PHRASE_STYLE = {
   overflowWrap: "anywhere",
 };
 
+/** Scroll copy inside a 60dvh cap and keep the action row on screen.
+ *  Short cards stay in flow. A card whose bottom would leave the viewport
+ *  pins to the bottom edge (jsdom has no layout, so it pins structurally). */
+function CappedActions({ children }) {
+  return children;
+}
+
+const PINNED_BOARD_BOTTOM = "calc(240px + env(safe-area-inset-bottom, 0px))";
+
+/** Bottom padding is its own longhand. A shorthand calc() is dropped by jsdom, so the extra space never shows up in tests. */
+function boardPadding(top, x, bottom, pinned) {
+  return {
+    paddingTop: top,
+    paddingRight: x,
+    paddingBottom: pinned ? PINNED_BOARD_BOTTOM : bottom,
+    paddingLeft: x,
+  };
+}
+
+function CappedFeedback({ testId, className = "", style, onPin, children }) {
+  const ref = useRef(null);
+  const [pin, setPin] = useState(false);
+  const [box, setBox] = useState(null);
+  const onPinRef = useRef(onPin);
+  onPinRef.current = onPin;
+  const items = React.Children.toArray(children);
+  const actionIdx = items.findIndex((child) => React.isValidElement(child) && child.type === CappedActions);
+  const actions = actionIdx >= 0 ? items[actionIdx] : null;
+  const body = actionIdx >= 0 ? items.filter((_, i) => i !== actionIdx) : items;
+
+  useLayoutEffect(() => {
+    onPinRef.current?.(pin);
+  }, [pin]);
+  // Clear only when this card leaves the tree. A cleanup on the effect that
+  // publishes `pin` also runs when that publish re-renders the parent, and
+  // that pass does not set the flag back.
+  useLayoutEffect(() => () => {
+    onPinRef.current?.(false);
+  }, []);
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+    const measure = () => {
+      const vh = window.innerHeight || 0;
+      if (pin) {
+        node.style.setProperty("max-height", "60vh");
+        node.style.setProperty("max-height", "60dvh");
+      } else {
+        node.style.removeProperty("max-height");
+      }
+      const r = node.getBoundingClientRect();
+      const noLayout = r.width === 0 && r.height === 0;
+      if (noLayout) {
+        setPin((prev) => (prev ? prev : true));
+        return;
+      }
+      const height = pin ? (box?.height || r.height) : r.height;
+      const top = pin ? (box?.top ?? r.top) : r.top;
+      const actionEl = node.querySelector("button");
+      const actionTop = pin ? (box?.actionTop ?? top) : (actionEl ? actionEl.getBoundingClientRect().top : top + height);
+      // A short card whose button is already on screen stays in flow, even
+      // when the button's bottom edge hangs past the viewport. That keeps a
+      // short answer identical to main. Pin when the card is taller than the
+      // screen, or when the action itself starts below the fold.
+      const taller = height > vh + 0.5;
+      const actionOff = actionTop > vh + 0.5;
+      const overflow = taller || actionOff;
+      if (overflow && !pin) {
+        setBox({ left: r.left, width: r.width, height: r.height, top: r.top, actionTop });
+        setPin(true);
+      } else if (!overflow && pin) {
+        setBox(null);
+        setPin(false);
+      }
+    };
+    measure();
+    // Re-measure against the new viewport. Stay mounted while the pin
+    // decision holds, so the scroll position and the pop animation survive.
+    const onResize = () => {
+      const vh = window.innerHeight || 0;
+      if (pin && box) {
+        const taller = box.height > vh + 0.5;
+        const actionOff = (box.actionTop ?? box.top) > vh + 0.5;
+        if (taller || actionOff) {
+          node.style.setProperty("max-height", "60vh");
+          node.style.setProperty("max-height", "60dvh");
+          const ph = node.previousElementSibling;
+          const pr = ph?.getBoundingClientRect();
+          if (pr && pr.width > 0 && (Math.abs(pr.left - box.left) > 0.5 || Math.abs(pr.width - box.width) > 0.5)) {
+            setBox((prev) => (prev ? { ...prev, left: pr.left, width: pr.width } : prev));
+          }
+          return;
+        }
+      }
+      measure();
+    };
+    window.addEventListener("resize", onResize);
+    let ro;
+    if (typeof ResizeObserver === "function") {
+      ro = new ResizeObserver(measure);
+      ro.observe(node);
+    }
+    return () => {
+      window.removeEventListener("resize", onResize);
+      ro?.disconnect();
+    };
+  }, [pin, box]);
+
+  if (!pin) {
+    return (
+      <div ref={ref} data-testid={testId} data-pinned="0" className={className || undefined} style={style}>
+        {body}
+        {actions}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {box ? <div aria-hidden="true" style={{ height: box.height }} /> : null}
+      <div
+        ref={ref}
+        data-testid={testId}
+        data-pinned="1"
+        className={`lesson-footer-cap${className ? ` ${className}` : ""}`}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          boxSizing: "border-box",
+          minHeight: 0,
+          ...style,
+          position: "fixed",
+          bottom: 0,
+          zIndex: 12,
+          marginTop: 0,
+          marginBottom: "env(safe-area-inset-bottom, 0px)",
+          ...(box ? { left: box.left, width: box.width, right: "auto" } : { left: 0, right: 0, width: "100%" }),
+        }}
+      >
+        <div data-testid={testId ? `${testId}-scroll` : undefined} className="lesson-footer-scroll" style={{ flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+          {body}
+        </div>
+        {actions ? (
+          <div data-testid={testId ? `${testId}-actions` : undefined} style={{ flexShrink: 0, width: "100%" }}>
+            {actions}
+          </div>
+        ) : null}
+      </div>
+    </>
+  );
+}
+
 const cubetasBucketAt = (refs, x, y) => {
   for (const id of CUBETAS_BUCKETS) {
     const el = refs[id];
@@ -1828,6 +1982,7 @@ const cubetasBucketAt = (refs, x, y) => {
 /** One-screen Cubetas playfield. Same Cenzontle PNG as the mark. Win motion ON. */
 const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, onClose, onAgain, onLang }) => {
   const [drag, setDrag] = useState(null);
+  const [revealPinned, setRevealPinned] = useState(false);
   const bucketsRef = useRef({ subjunctive: null, indicative: null });
   const chip = currentChip(run);
   const taught = scoredChip(run);
@@ -1856,7 +2011,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
   };
 
   return (
-    <div data-testid="cubetas-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
+    <div data-testid="cubetas-board" style={{ maxWidth: 560, margin: "0 auto", ...boardPadding(22, 20, 40, revealPinned) }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
         <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div data-testid="cubetas-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{cubetasTitle(uiLang)}</div>
@@ -2075,7 +2230,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
           )}
 
           {run.status === "reveal" && taught && (
-            <div className="pop" style={{ marginTop: 18, border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, textAlign: "left" }}>
+            <CappedFeedback testId="cubetas-reveal" onPin={setRevealPinned} className="pop" style={{ marginTop: 18, border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, textAlign: "left" }}>
               <div data-testid="cubetas-literal" style={{ marginTop: 2 }}>
                 <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.literalLabel}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasLiteral(taught, uiLang)}</div>
@@ -2087,8 +2242,10 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
                 <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.whyLabel}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasWhy(taught, uiLang)}</div>
               </div>
-              <Btn data-testid="cubetas-next" color={D.green} dark={D.greenDark} onClick={onNext} style={{ width: "100%", marginTop: 12 }}>{cubetasNextLabel(uiLang)}</Btn>
-            </div>
+              <CappedActions>
+                <Btn data-testid="cubetas-next" color={D.green} dark={D.greenDark} onClick={onNext} style={{ width: "100%", marginTop: 12 }}>{cubetasNextLabel(uiLang)}</Btn>
+              </CappedActions>
+            </CappedFeedback>
           )}
 
           {run.status === "clear" && (
@@ -2259,6 +2416,7 @@ const MEMORY_CARD_FACE = {
 /** One-screen Memory playfield. Tap two cards or drag a pair. Soft chrome parked. */
 const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, onClose, onAgain, onLang }) => {
   const [drag, setDrag] = useState(null);
+  const [endPinned, setEndPinned] = useState(false);
   const dragRef = useRef(null);
   const cardsRef = useRef({});
   const done = isMemoryDone(run);
@@ -2300,7 +2458,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
   };
 
   return (
-    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
+    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, ...boardPadding(12, MEMORY_BOARD_PAD, 28, endPinned), boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
         <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: labelColor, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -2314,14 +2472,16 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
         <MemoryMark size={40} labeled onDark={darkBoard} />
       </div>
       {done ? (
-        <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
-          <div data-testid="memory-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{memoryWinLine(uiLang)}</div>
-          {teach && (
-            <MemoryTeach entry={teach} uiLang={uiLang} D={D} />
-          )}
-          <Btn color={D.green} dark={D.greenDark} data-testid="memory-again" onClick={onAgain} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New pairs" : "Otros pares"}</Btn>
-          <Btn outline data-testid="memory-back" onClick={onClose} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
-        </div>
+        <CappedFeedback testId="memory-end" onPin={setEndPinned} className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
+            <div data-testid="memory-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{memoryWinLine(uiLang)}</div>
+            {teach && (
+              <MemoryTeach entry={teach} uiLang={uiLang} D={D} />
+            )}
+          <CappedActions>
+            <Btn color={D.green} dark={D.greenDark} data-testid="memory-again" onClick={onAgain} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New pairs" : "Otros pares"}</Btn>
+            <Btn outline data-testid="memory-back" onClick={onClose} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
+          </CappedActions>
+        </CappedFeedback>
       ) : (
         <>
           <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: labelColor, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
@@ -4821,6 +4981,13 @@ export default function App() {
     return () => { document.body.style.overflow = prev; };
   }, [onboardingOpen]);
   const inputRef = useRef(null);
+  const lessonFooterRef = useRef(null);
+  const footerScrollRef = useRef(null);
+  const [footerCapped, setFooterCapped] = useState(false);
+  const [snakesPinned, setSnakesPinned] = useState(false);
+  const [safePinned, setSafePinned] = useState(false);
+  const [hangmanPinned, setHangmanPinned] = useState(false);
+  const [jeopardyPinned, setJeopardyPinned] = useState(false);
   const audioCtx = useRef(null);
   const narrationRef = useRef(null);
   const liveReady = useRef(false);
@@ -6634,6 +6801,37 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qi, screen]);
 
+  // Cap the lesson footer only when the at-rest row is taller than 60vh.
+  // A short row stays the main layout. jsdom reports no height, so it stays uncapped.
+  const footerCapKey = `${screen}|${status}|${qi}|${showWhy}|${typed}|${theme}|${prog.uiLang}`;
+  const footerCapKeyRef = useRef(footerCapKey);
+  useLayoutEffect(() => {
+    const keyChanged = footerCapKeyRef.current !== footerCapKey;
+    if (keyChanged) footerCapKeyRef.current = footerCapKey;
+    if (keyChanged && footerCapped) {
+      setFooterCapped(false);
+      return undefined;
+    }
+    const node = lessonFooterRef.current;
+    if (!node) return undefined;
+    if (footerCapped) {
+      node.style.setProperty("max-height", "60vh");
+      node.style.setProperty("max-height", "60dvh");
+      return undefined;
+    }
+    node.style.removeProperty("max-height");
+    const row = node.firstElementChild;
+    const vh = window.innerHeight || 0;
+    if (!row || !vh || row.offsetHeight === 0) return undefined;
+    if (row.offsetHeight > vh * 0.6 + 0.5) setFooterCapped(true);
+    return undefined;
+  }, [footerCapped, footerCapKey]);
+
+  // Blur only after the footer actually caps. A short answer keeps main's focus.
+  useEffect(() => {
+    if (footerCapped && status !== "idle") inputRef.current?.blur();
+  }, [footerCapped, status]);
+
   // Drop leftover overlays when the view swaps so the first tap hits the new screen.
   useEffect(() => {
     setConfirmExit(false);
@@ -7803,6 +8001,9 @@ export default function App() {
         .wordle-shake { animation: wordleShake .45s ease; }
         * { -webkit-tap-highlight-color: transparent; }
         button, input, select, textarea { touch-action: manipulation; }
+        .lesson-footer-cap { max-height: 60vh; max-height: 60dvh; }
+        .lesson-footer-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+        .lesson-footer-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
         .duo-btn:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px !important; }
         .duo-btn { transition: transform .05s, filter .1s; }
         .duo-btn:hover:not(:disabled) { filter: brightness(1.05); }
@@ -9806,7 +10007,7 @@ export default function App() {
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
         <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : orderDark ? { background: D.bg, color: HUB_CREAM, minHeight: "100vh" } : undefined}>
-        <div data-testid="lesson-body" style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
+        <div data-testid="lesson-body" style={{ maxWidth: 600, margin: "0 auto", padding: footerCapped ? "20px 20px calc(240px + env(safe-area-inset-bottom, 0px))" : "20px 20px 190px", position: "relative" }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
               <span style={{ fontWeight: 900, fontSize: 42, color: "#FF9600", textShadow: "0 3px 0 rgba(0,0,0,.12), 0 0 24px rgba(255,200,0,.5)", letterSpacing: ".02em" }}>{inter.text}</span>
@@ -10159,14 +10360,16 @@ export default function App() {
           </div>
 
           {/* ---------- ACTION BAR with mascot ---------- */}
-          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-            <div style={{ maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+          <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className={footerCapped ? "lesson-footer-cap" : undefined} style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(footerCapped ? { display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
+            <div style={footerCapped ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", minWidth: 0, minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", overflow: "hidden" } : { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+              <div ref={footerCapped ? footerScrollRef : undefined} data-testid={footerCapped ? "lesson-footer-scroll" : undefined} className={footerCapped ? "lesson-footer-scroll" : undefined} style={footerCapped ? { flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", padding: "14px 20px 0" } : { display: "flex", flex: "1 1 auto", minWidth: 0, alignItems: "center", gap: 14 }}>
+                <div style={footerCapped ? { display: "flex", alignItems: "flex-start", gap: 14, minWidth: 0 } : { display: "contents" }}>
               {status !== "idle" && (
                 <div className={status === "wrong" ? "" : "jump"} style={{ flexShrink: 0 }}>
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : D.okText }}>
+              <div style={{ flex: 1, ...(footerCapped ? { minWidth: 0 } : null), fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : D.okText }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
                     <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: 0.85 }}>
@@ -10216,7 +10419,27 @@ export default function App() {
                 })()}
 	                {status === "idle" && (q.type === "match" ? L.matchInstruction : L.enterCheck)}
               </div>
+                </div>
+              </div>
               {q.type !== "match" || status !== "idle" ? (
+                footerCapped ? (
+                <div data-testid="lesson-footer-actions" style={{ flexShrink: 0, width: "100%", boxSizing: "border-box", padding: "12px 20px 14px" }}>
+                {status === "idle" ? (
+	                  <Btn data-testid="lesson-check" onClick={check} style={{ width: "100%", flexShrink: 0 }}>{L.check}</Btn>
+                ) : session.review && (status === "correct" || status === "almost") ? (
+                  <div style={{ flexShrink: 0, textAlign: "center" }}>
+	                    <div style={{ fontSize: 11, fontWeight: 900, color: D.okText, marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
+                    <div style={{ display: "flex", gap: 7 }}>
+	                      <Btn color={"#FF9600"} dark={"#D97F00"} onClick={() => gradeAndNext(3)} style={{ padding: "10px 13px", fontSize: 12 }}>{L.hard}</Btn>
+	                      <Btn color={D.blue} dark={D.blueDark} onClick={() => gradeAndNext(4)} style={{ padding: "10px 13px", fontSize: 12 }}>{L.good}</Btn>
+	                      <Btn onClick={() => gradeAndNext(5)} style={{ padding: "10px 13px", fontSize: 12 }}>{L.easy}</Btn>
+                    </div>
+                  </div>
+                ) : (
+	                  <Btn color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ width: "100%", flexShrink: 0 }}>{L.continue}</Btn>
+                )}
+                </div>
+                ) : (
                 status === "idle" ? (
 	                  <Btn data-testid="lesson-check" onClick={check} style={{ flexShrink: 0 }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
@@ -10230,6 +10453,7 @@ export default function App() {
                   </div>
                 ) : (
 	                  <Btn color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ flexShrink: 0 }}>{L.continue}</Btn>
+                )
                 )
               ) : null}
             </div>
@@ -10300,7 +10524,7 @@ export default function App() {
         const tiles = Array.from({ length: 24 }, (_, i) => 24 - i);
         const trophyCount = Object.values(prog.missions?.gameTrophies || {}).filter(Boolean).length;
         return (
-          <div data-testid="snakes-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 14px 130px" }}>
+          <div data-testid="snakes-board" style={{ maxWidth: 560, margin: "0 auto", ...boardPadding(22, 14, 130, snakesPinned) }}>
             {burst > 0 && snakeGame.done && <Confetti key={burst} count={54} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
               <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.snake); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -10393,7 +10617,7 @@ export default function App() {
                   })}
                 </div>
                 {snakeGame.status !== "idle" && (
-                  <div className="pop" style={{ marginTop: 12, border: `2px solid ${snakeGame.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: snakeGame.status === "correct" ? D.greenBg : D.redBg }}>
+                  <CappedFeedback testId="snakes-feedback" onPin={setSnakesPinned} className="pop" style={{ marginTop: 12, border: `2px solid ${snakeGame.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: snakeGame.status === "correct" ? D.greenBg : D.redBg }}>
                     <div style={{ fontWeight: 900, color: snakeGame.status === "correct" ? D.greenDark : D.redDark }}>
                       {snakeGame.status === "correct"
                         ? `${uiLang === "en" ? "Roll" : "Tiro"} ${snakeGame.roll}: ${snakeGame.tile} → ${snakeGame.pendingTile}${snakeGame.link ? ` → ${snakeGame.finalTile}` : ""}`
@@ -10402,8 +10626,10 @@ export default function App() {
                     <div style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>
                       {snakeGame.link?.kind === "ladder" ? (uiLang === "en" ? "Shortcut unlocked." : "Atajo desbloqueado.") : snakeGame.link?.kind === "snake" ? (uiLang === "en" ? "A slide tile pulled you back." : "Una casilla de resbalón te bajó.") : explainText(qg, uiLang)}
                     </div>
-                    <Btn color={D.green} dark={D.greenDark} onClick={nextSnake} style={{ width: "100%", marginTop: 12 }}>{snakeGame.finalTile >= 24 ? (uiLang === "en" ? "Claim prize" : "Cobrar premio") : L.continue}</Btn>
-                  </div>
+                    <CappedActions>
+                      <Btn color={D.green} dark={D.greenDark} onClick={nextSnake} style={{ width: "100%", marginTop: 12 }}>{snakeGame.finalTile >= 24 ? (uiLang === "en" ? "Claim prize" : "Cobrar premio") : L.continue}</Btn>
+                    </CappedActions>
+                  </CappedFeedback>
                 )}
               </div>
             )}
@@ -10430,7 +10656,7 @@ export default function App() {
         const correctKeys = safeRiskyCorrectKeys(item);
         const correctLeft = correctKeys.filter((key) => !tapped.includes(key)).length;
         return (
-          <div data-testid="safe-risky-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
+          <div data-testid="safe-risky-board" style={{ maxWidth: 560, margin: "0 auto", ...boardPadding(22, 20, 130, safePinned) }}>
             {burst > 0 && safeGame.done && <Confetti key={burst} count={36} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.safeRisky); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -10500,7 +10726,7 @@ export default function App() {
                   </div>
                 )}
                 {revealed && (
-                  <div className="pop" style={{ marginTop: 14, border: `2px solid ${hit ? D.green : D.red}`, borderRadius: 14, padding: "11px 13px", background: hit ? D.greenBg : D.redBg, textAlign: "left" }}>
+                  <CappedFeedback testId="safe-risky-feedback" onPin={setSafePinned} className="pop" style={{ marginTop: 14, border: `2px solid ${hit ? D.green : D.red}`, borderRadius: 14, padding: "11px 13px", background: hit ? D.greenBg : D.redBg, textAlign: "left" }}>
                     <div style={{ fontWeight: 900, color: hit ? D.greenDark : D.redDark, marginBottom: 4 }}>
                       {hit ? (safeGame.streak >= 3 ? (uiLang === "en" ? "Combo judgment." : "Juicio en combo.") : (uiLang === "en" ? "Good judgment." : "Buen juicio.")) : `${uiLang === "en" ? "Better answer" : "Mejor respuesta"}: ${safeRiskyAnswerLabel(item, labels)}`}
                     </div>
@@ -10512,8 +10738,10 @@ export default function App() {
                       <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.whyLabel}</div>
                       <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{item.note[uiLang]}</div>
                     </div>
-                    <Btn data-testid="safe-risky-continue" color={D.red} dark={D.redDark} onClick={nextSafeRisky} style={{ width: "100%", marginTop: 12 }}>{safeGame.idx + 1 >= safeGame.items.length ? (uiLang === "en" ? "Finish" : "Terminar") : L.continue}</Btn>
-                  </div>
+                    <CappedActions>
+                      <Btn data-testid="safe-risky-continue" color={D.red} dark={D.redDark} onClick={nextSafeRisky} style={{ width: "100%", marginTop: 12 }}>{safeGame.idx + 1 >= safeGame.items.length ? (uiLang === "en" ? "Finish" : "Terminar") : L.continue}</Btn>
+                    </CappedActions>
+                  </CappedFeedback>
                 )}
               </>
             )}
@@ -10681,7 +10909,7 @@ export default function App() {
         const endLabel = theme === "dark" ? D.sub : lightEnd.quiet;
         const endBody = theme === "dark" ? D.ink : lightEnd.quiet;
         return (
-          <div data-testid="hangman-board" data-word={ahorcado.word} data-timer={ahorcado.timerOn ? "on" : "off"} style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
+          <div data-testid="hangman-board" data-word={ahorcado.word} data-timer={ahorcado.timerOn ? "on" : "off"} style={{ maxWidth: 480, margin: "0 auto", ...boardPadding(22, 20, 40, hangmanPinned) }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -10695,7 +10923,7 @@ export default function App() {
               <HangmanMark size={56} />
             </div>
             {over ? (
-              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", borderRadius: 14, padding: "11px 13px", ...(theme === "dark" ? darkHangmanEndCardStyle() : { background: lightEnd.background, border: lightEnd.border, borderBottom: lightEnd.borderBottom }) }}>
+              <CappedFeedback testId="hangman-end" onPin={setHangmanPinned} className="pop" style={{ textAlign: "left", borderRadius: 14, padding: "11px 13px", ...(theme === "dark" ? darkHangmanEndCardStyle() : { background: lightEnd.background, border: lightEnd.border, borderBottom: lightEnd.borderBottom }) }}>
                 {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: endTitle, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
                 <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: endTitle, margin: "0 0 12px" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
@@ -10714,9 +10942,11 @@ export default function App() {
                     )}
                   </div>
                 )}
-                <Btn color={D.green} dark={D.greenDark} data-testid="hangman-again" onClick={() => startAhorcado(gamesReturnRef.current)} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
-                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8, ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
-              </div>
+                <CappedActions>
+                  <Btn color={D.green} dark={D.greenDark} data-testid="hangman-again" onClick={() => startAhorcado(gamesReturnRef.current)} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
+                  <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8, ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
+                </CappedActions>
+              </CappedFeedback>
             ) : (
               <>
                 <p data-testid="hangman-howto" style={{ margin: "0 0 14px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{hangmanHowTo(uiLang)}</p>
@@ -10806,7 +11036,7 @@ export default function App() {
 
       {/* ---------- JEOPARDY ---------- */}
       {screen === "jeopardy" && jeopardy && (
-        <div data-testid="jeopardy-board" style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
+        <div data-testid="jeopardy-board" style={{ maxWidth: 480, margin: "0 auto", ...boardPadding(22, 20, 40, jeopardyPinned) }}>
           {burst > 0 && jeopardy.complete && <Confetti key={burst} count={48} />}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
             <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -10847,13 +11077,15 @@ export default function App() {
                 })}
               </div>
               {jeopardy.status !== "idle" && (
-                <div data-testid="jeopardy-result" className="pop" style={{ marginTop: 13, border: `2px solid ${jeopardy.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: jeopardy.status === "correct" ? D.greenBg : D.redBg }}>
+                <CappedFeedback testId="jeopardy-result" onPin={setJeopardyPinned} className="pop" style={{ marginTop: 13, border: `2px solid ${jeopardy.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: jeopardy.status === "correct" ? D.greenBg : D.redBg }}>
                   <div style={{ fontWeight: 900, color: jeopardy.status === "correct" ? D.greenDark : D.redDark }}>
                     {jeopardy.status === "correct" ? `+${jeopardy.active.stake || jeopardy.active.value}` : `${jeopardy.active.double ? `-${Math.floor((jeopardy.active.stake || jeopardy.active.value) / 2)} · ` : ""}${jeopardyAnswerLabel(uiLang)}: ${jeopardy.active.answer}`}
                   </div>
                   <div data-testid="jeopardy-why" style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>{explainText(jeopardy.active, uiLang) || uiText(jeopardy.active.focusDesc, uiLang)}</div>
-                  <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-continue" onClick={closeJeopardyPrompt} style={{ width: "100%", marginTop: 12 }}>{L.continue}</Btn>
-                </div>
+                  <CappedActions>
+                    <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-continue" onClick={closeJeopardyPrompt} style={{ width: "100%", marginTop: 12 }}>{L.continue}</Btn>
+                  </CappedActions>
+                </CappedFeedback>
               )}
             </div>
           ) : (
