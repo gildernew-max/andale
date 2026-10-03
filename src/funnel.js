@@ -1,4 +1,7 @@
-/** Pages conversion funnel. Local bus only — no third-party SDK, no PII. */
+/** Pages conversion funnel. Local bus only — no third-party SDK, no PII.
+ *  first-win-seen / email-submitted / email-skipped are event + timestamp only.
+ *  The address never rides this bus. Delivery lives in firstWinEmail.js.
+ */
 
 export const FUNNEL_EVENT = "andale-funnel";
 export const FUNNEL_LOG = "__andaleFunnelLog";
@@ -12,6 +15,9 @@ export const FUNNEL_EVENTS = Object.freeze({
   paywallTap: "paywall_tap",
   waitlistSubmit: "waitlist_submit",
   purchase: "purchase",
+  firstWinSeen: "first-win-seen",
+  emailSubmitted: "email-submitted",
+  emailSkipped: "email-skipped",
 });
 
 export const PAYWALL_TAP = Object.freeze({
@@ -43,7 +49,8 @@ function safeStoryId(id) {
  * Tiny allowlisted payload. Never copies caller extras.
  * Local bus only: window.__andaleFunnelLog + CustomEvent. No network.
  * storyId / beat / choice are content labels only.
- * waitlist_submit is event + timestamp only — never the email.
+ * waitlist_submit, first-win-seen, email-submitted, and email-skipped
+ * are event + timestamp only — never the email.
  * purchase is event + at + allowlisted plan / productId only.
  */
 export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId } = {}, bus = eventBus()) {
