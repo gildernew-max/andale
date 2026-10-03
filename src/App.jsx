@@ -18,7 +18,7 @@ import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward
 import { STREAK_FLAME, streakChipLabel, streakLabelColor } from "./streakChip.js";
 import { winNumeralColor } from "./winNumeral.js";
 import { scoreCountClause } from "./scoreLine.js";
-import { probeAudioFile, storyAudioPath, storyAudioUrl } from "./storyAudio.js";
+import { probeAudioFile, storyAudioUrl } from "./storyAudio.js";
 import { watchWordSheetPlacement, wordSheetClose, wordSheetReveal } from "./wordSheet.js";
 import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, orderTileLabel } from "./wordOrder.js";
@@ -819,6 +819,10 @@ const isSpanishVoice = (v) => {
   const name = (v.name || "").toLowerCase();
   return /paulina|español|espanol|\bspanish\b/.test(name);
 };
+/* Lectura narration: Mexican / Latin American system voices only.
+   es-ES and a bare "es" stay hidden. voiceLang already folds case and _. */
+const LATAM_READING_LANGS = new Set(["es-mx", "es-us", "es-419"]);
+const isLatamReadingVoice = (v) => !!v && LATAM_READING_LANGS.has(voiceLang(v));
 
 const voiceScore = (v, preferredName) => {
   const name = (v.name || "").toLowerCase();
@@ -4064,7 +4068,7 @@ const UI = {
     storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4.",
     missionsTitle: "Misiones", missionsDesc: "Situaciones reales con mezcla de gramática, oído y tono.", enter: "Entrar",
     dialogueDuel: "DUELO", best: "mejor marca", duel: "Duelo",
-    library: "Biblioteca", storiesClaimed: "cuentos reclamados · lectura sin vidas", paragraphs: "párrafos · toca palabras · audio por párrafo",
+    library: "Biblioteca", storiesClaimed: "cuentos reclamados · lectura sin vidas", paragraphs: "párrafos · toca palabras · escucha por párrafo",
     practiceTitle: "Práctica", dueToday: "para repasar hoy", tracked: "en seguimiento", practiceFree: "El repaso no cuesta vidas — y te regresa", reviewToday: "Repasar hoy",
     memory: "Memoria programada (SM-2): lo difícil vuelve pronto, lo dominado se aleja y se gradúa a los", noDue: "Nada vence hoy — la memoria está trabajando sola.",
     nextReview: "próximo repaso", earlyReview: "Adelantar repaso", noErrors: "Sin errores en seguimiento. Ve al camino por más retos.",
@@ -4131,6 +4135,8 @@ const UI = {
     literalLabel: "Traducción",
     whyLabel: "Por qué",
     narrationLabel: "NARRACIÓN",
+    narrationSub: "La voz en español de tu dispositivo, frase por frase.",
+    narrationFail: "El audio no suena ahora. Puedes leer el cuento sin él.",
     splashLine: splashPromiseLine("es"),
     splashCta: "¡Empezar!",
     more: "Más",
@@ -4152,7 +4158,7 @@ const UI = {
     storyPrefix: "Story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
     missionsTitle: "Challenges", missionsDesc: "Real situations mixing grammar, listening, and tone.", enter: "Enter",
     dialogueDuel: "DIALOGUE DUEL", best: "best score", duel: "Duel",
-    library: "Library", storiesClaimed: "stories claimed · reading costs no lives", paragraphs: "paragraphs · tap words · audio by paragraph",
+    library: "Library", storiesClaimed: "stories claimed · reading costs no lives", paragraphs: "paragraphs · tap words · listen by paragraph",
     practiceTitle: "Review", dueToday: "due for review today", tracked: "tracked", practiceFree: "Review costs no lives — and gives back", reviewToday: "Review today",
     memory: "Scheduled memory (SM-2): hard items return soon, mastered items spread out and graduate after", noDue: "Nothing is due today — memory is working in the background.",
     nextReview: "next review", earlyReview: "Review early", noErrors: "No tracked errors. Go to Learn for more challenges.",
@@ -4219,6 +4225,8 @@ const UI = {
     literalLabel: "Literal",
     whyLabel: "Why",
     narrationLabel: "NARRATION",
+    narrationSub: "Your device's Spanish voice, one sentence at a time.",
+    narrationFail: "Audio isn't playing right now. The story reads fine without it.",
     splashLine: splashPromiseLine("en"),
     splashCta: "Start!",
     more: "More",
@@ -4678,7 +4686,6 @@ export default function App() {
   const [wordSel, setWordSel] = useState(null); // {display, def, note, pi, ti}
   const [wordSheetBox, setWordSheetBox] = useState(null);
   const [wordSheetSpacer, setWordSheetSpacer] = useState(0);
-  const [storyAudioOk, setStoryAudioOk] = useState(false);
   const checkpointAnswersRef = useRef(null);
   const wordTapRef = useRef(null);
   const wordSheetRef = useRef(null);
@@ -6200,24 +6207,20 @@ export default function App() {
   useEffect(() => {
     if (screen !== "story" || !storyView?.id) {
       storyAudioUrlRef.current = null;
-      setStoryAudioOk(false);
       return undefined;
     }
     const pi = paraIdx;
     if (!Number.isInteger(pi) || pi < 0 || pi >= storyView.paragraphs.length) {
       storyAudioUrlRef.current = null;
-      setStoryAudioOk(false);
       return undefined;
     }
     let cancelled = false;
     const url = storyAudioUrl(storyView.id, pi, import.meta.env.BASE_URL);
     storyAudioUrlRef.current = null;
-    setStoryAudioOk(false);
     if (!url) return undefined;
     probeAudioFile(url).then((ok) => {
       if (cancelled) return;
       storyAudioUrlRef.current = ok ? url : null;
-      setStoryAudioOk(!!ok);
     });
     return () => { cancelled = true; };
   }, [screen, storyView, paraIdx]);
@@ -6960,6 +6963,7 @@ export default function App() {
   const greetingPool = GREETINGS[uiLang] || GREETINGS.es;
   const greeting = greetingPool[greetingPick % greetingPool.length];
   const paulinaVoice = pickPaulina(voices);
+  const latamNarration = voices.some(isLatamReadingVoice);
   const renderVoiceSelect = () => voices.length > 0 && (
     <select value={prog.voiceName || ""} onChange={(e) => chooseVoice(e.target.value)}
       aria-label={uiLang === "en" ? "Reading voice" : "Voz de lectura"}
@@ -11039,8 +11043,8 @@ export default function App() {
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
                   style={{ display: "block", width: "auto", height: "auto", maxWidth: "100%", maxHeight: 148, margin: "0 auto 12px", borderRadius: 10 }}
                 />
-                <div style={{ display: "flex", gap: storyAudioOk ? 10 : 0 }}>
-                {storyAudioOk && (
+                <div style={{ display: "flex", gap: latamNarration ? 10 : 0 }}>
+                {latamNarration && (
                 <button onClick={() => playStoryParagraph(story, pi, para)} aria-label={uiLang === "en" ? "Listen to paragraph" : "Escuchar párrafo"}
                   style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "4px 7px", flexShrink: 0, alignSelf: "flex-start", lineHeight: 0, marginTop: 3 }}>
                   <IcSpeaker size={15} color={"#1CB0F6"} />
@@ -11077,12 +11081,12 @@ export default function App() {
                 </p>
                 </div>
                 {storyMode === "bilingual" && extra.en?.[pi] && (
-                  <div className="pop" style={{ margin: storyAudioOk ? "8px 0 0 48px" : "8px 0 0", borderLeft: `4px solid ${sec.color}`, background: D.subtle, borderRadius: 10, padding: "8px 11px", color: D.sub, fontSize: 13, fontWeight: 800, lineHeight: 1.45 }}>
+                  <div className="pop" style={{ margin: latamNarration ? "8px 0 0 48px" : "8px 0 0", borderLeft: `4px solid ${sec.color}`, background: D.subtle, borderRadius: 10, padding: "8px 11px", color: D.sub, fontSize: 13, fontWeight: 800, lineHeight: 1.45 }}>
                     {extra.en[pi]}
                   </div>
                 )}
                 {checkpoints[pi] && (
-                  <div data-testid="lectura-checkpoint" style={{ position: "relative", zIndex: wordSel && wordSel.pi === pi ? 31 : "auto", marginTop: 10 + wordSheetSpacer, marginLeft: storyAudioOk ? 48 : 0, border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
+                  <div data-testid="lectura-checkpoint" style={{ position: "relative", zIndex: wordSel && wordSel.pi === pi ? 31 : "auto", marginTop: 10 + wordSheetSpacer, marginLeft: latamNarration ? 48 : 0, border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
                     <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
@@ -11100,14 +11104,19 @@ export default function App() {
               </div>
             ); })}
 
-            {storyAudioOk && (
+            {latamNarration && (
             <div data-testid="narration-card" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 10, background: D.card, marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 8 }}>
                 <div>
                   <div data-testid="narration-label" style={{ fontSize: 11, fontWeight: 900, color: sec.dark, letterSpacing: ".06em" }}>{L.narrationLabel}</div>
-                  <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>
-                    {storyAudioPath(story.id, paraIdx) ? (uiLang === "en" ? "Story 1 uses cached paragraph audio in Normal mode." : "El cuento 1 usa audio cacheado en modo Normal.") : (uiLang === "en" ? "Sentence-chunked browser audio." : "Audio del navegador por frases.")}
+                  <div data-testid="narration-sub" style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>
+                    {L.narrationSub}
                   </div>
+                  {voiceDead && (
+                    <div data-testid="narration-fail" style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>
+                      {L.narrationFail}
+                    </div>
+                  )}
                 </div>
                 <button onClick={stopNarration} style={{ border: `2px solid ${D.line}`, background: D.subtle, borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", color: D.sub }}>
                   {uiLang === "en" ? "STOP" : "PARAR"}

@@ -1,5 +1,6 @@
 /**
- * Cached Lectura paragraph files. Missing files must not advertise a player.
+ * Optional Lectura paragraph files. A missing file is not audio.
+ * Playback uses the file when the probe succeeds, otherwise device speech.
  * .m4a (AAC) plays in Chrome, Edge, Firefox, and Safari.
  */
 
