@@ -15,7 +15,7 @@ import { splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
 import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from "./hoyChoiceCard.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
-import { streakChipLabel } from "./streakChip.js";
+import { STREAK_FLAME, streakChipLabel, streakLabelColor } from "./streakChip.js";
 import { winNumeralColor } from "./winNumeral.js";
 import { scoreCountClause } from "./scoreLine.js";
 import { probeAudioFile, storyAudioPath, storyAudioUrl } from "./storyAudio.js";
@@ -1630,10 +1630,10 @@ const I = ({ size = 18, vb = 24, style, children }) => (
   <svg width={size} height={size} viewBox={`0 0 ${vb} ${vb}`} style={{ verticalAlign: "-3px", ...style }} aria-hidden="true">{children}</svg>
 );
 
-const IcFlame = ({ size, style, className }) => (
+const IcFlame = ({ size, style, className, fill = "#FF9600" }) => (
   <span className={className} style={{ display: "inline-block" }}>
     <I size={size} style={style}>
-      <path d="M12 2C13 6.5 7.6 8 7.6 12a4.4 4.4 0 0 0 8.8 0c0-1.3-.8-2.4-.8-2.4 2.3 1.3 3.9 3.5 3.9 6.2a7.5 7.5 0 1 1-15 0C4.5 9.6 10.2 8 12 2z" fill="#FF9600" />
+      <path d="M12 2C13 6.5 7.6 8 7.6 12a4.4 4.4 0 0 0 8.8 0c0-1.3-.8-2.4-.8-2.4 2.3 1.3 3.9 3.5 3.9 6.2a7.5 7.5 0 1 1-15 0C4.5 9.6 10.2 8 12 2z" fill={fill} />
       <path d="M12 22.5a4.4 4.4 0 0 1-4.4-4.4c0-2.6 2.5-3.7 4.4-6.2 1.9 2.5 4.4 3.6 4.4 6.2A4.4 4.4 0 0 1 12 22.5z" fill="#FFC800" />
     </I>
   </span>
@@ -7842,7 +7842,7 @@ export default function App() {
           </button>
           {!inLesson && (
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
-              {!onboardingOpen && <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>}
+              {!onboardingOpen && <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3 }} title={streakChipLabel(prog.streak, uiLang) || L.streakDays}><IcFlame size={19} fill={STREAK_FLAME} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>}
               {!onboardingOpen && <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>}
               {!onboardingOpen && (voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
                 <button onClick={() => { if (voiceDead || (voicesReady && !voices.length)) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label={uiLang === "en" ? "Sound" : "Sonido"}
@@ -8884,7 +8884,7 @@ export default function App() {
           </div>}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
-	              { icon: <IcFlame size={26} />, v: prog.streak || 0, l: L.streakDays },
+	              { icon: <IcFlame size={26} fill={STREAK_FLAME} />, v: prog.streak || 0, l: L.streakDays, ink: streakLabelColor(theme) },
 	              { icon: <IcBolt size={26} />, v: prog.xp || 0, l: L.totalXp },
 	              { icon: <IcCrown size={26} />, v: totalCrowns, l: L.crowns },
 	              { icon: <IcGem size={24} />, v: prog.gems || 0, l: L.gems },
@@ -8893,7 +8893,7 @@ export default function App() {
             ].map((s, i) => (
               <div key={i} style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>
                 <span style={{ lineHeight: 0 }}>{s.icon}</span>
-                <div><div style={{ fontWeight: 900, fontSize: 18 }}>{s.v}</div><div style={{ fontSize: 11, color: D.sub, fontWeight: 800 }}>{s.l}</div></div>
+                <div><div style={{ fontWeight: 900, fontSize: 18, color: s.ink }}>{s.v}</div><div style={{ fontSize: 11, color: D.sub, fontWeight: 800 }}>{s.l}</div></div>
               </div>
             ))}
           </div>
@@ -11252,7 +11252,7 @@ export default function App() {
             {[
               { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, ink: winNumeralColor(theme, "xp", D), testid: "win-earned-xp" },
 	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, ink: winNumeralColor(theme, "gems", D), testid: "win-earned-gems" },
-	              ...(streakChip ? [{ v: <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}><IcFlame size={20} className="flame" />{streakChip}</span>, l: null, c: "#FF9600", testid: "win-earned-streak" }] : []),
+	              ...(streakChip ? [{ v: <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}><IcFlame size={20} fill={STREAK_FLAME} className="flame" />{streakChip}</span>, l: null, c: "#FF9600", ink: streakLabelColor(theme), testid: "win-earned-streak" }] : []),
             ].filter((s) => !session.firstDoctora || s.testid === "win-earned-streak").map((s, i) => (
               <div key={i} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
                 <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: s.testid === "win-earned-streak" ? 16 : 22, color: s.ink || s.c, lineHeight: 1.25, whiteSpace: s.testid === "win-earned-streak" ? "nowrap" : undefined }}>{s.v}</div>
@@ -11322,8 +11322,8 @@ export default function App() {
 
           {/* streak milestone badge */}
           {hitMilestone && !quietWin && (
-            <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: D.orangeBg, border: `2px solid #FF9600`, borderBottom: `4px solid #D97F00`, borderRadius: 14, padding: "10px 20px", marginTop: 12, fontWeight: 900, color: "#A35E00", fontSize: 14 }}>
-              <IcFlame size={22} className="flame" />
+            <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: D.orangeBg, border: `2px solid #FF9600`, borderBottom: `4px solid #D97F00`, borderRadius: 14, padding: "10px 20px", marginTop: 12, fontWeight: 900, color: streakLabelColor(theme), fontSize: 14 }}>
+              <IcFlame size={22} fill={STREAK_FLAME} className="flame" />
               {uiLang === "en" ? `${prog.streak}-day streak!` : `¡Racha de ${prog.streak} días!`}
               <span style={{ fontSize: 11, fontWeight: 800, color: "#B97500" }}>
                 {prog.streak === 3 ? (uiLang === "en" ? "warming up" : "calentando") :
@@ -11343,7 +11343,7 @@ export default function App() {
       {screen === "sessionClose" && (
         <div data-testid="session-close" style={{ maxWidth: 480, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
           <div style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 20, padding: "28px 22px 22px" }}>
-            <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 900, fontSize: 18 }} title={L.streakDays}><IcFlame size={22} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}</span>
+            <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 900, fontSize: 18 }} title={streakChipLabel(prog.streak, uiLang) || L.streakDays}><IcFlame size={22} fill={STREAK_FLAME} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}</span>
             <p data-testid="session-close-next" style={{ margin: "16px 0 22px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
               {L.playScene}
             </p>
