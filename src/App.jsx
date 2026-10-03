@@ -4061,7 +4061,7 @@ const UI = {
     goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina hecha", workoutToday: "Rutina de hoy", dailyWorkout: "Rutina diaria",
     workoutDesc: "5 retos: escucha, trampa gramatical, mexicanismo, repaso y lectura.", play: "Jugar", repeat: "Repetir",
     sectionSkills: "habilidades + cofre", skip: "SALTAR", start: "EMPIEZA", claimed: "Reclamado", chest: "Cofre", openMe: "¡Ábreme!",
-    storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4.",
+    storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
     missionsTitle: "Misiones", missionsDesc: "Situaciones reales con mezcla de gramática, oído y tono.", enter: "Entrar",
     dialogueDuel: "DUELO", best: "mejor marca", duel: "Duelo",
     library: "Biblioteca", storiesClaimed: "cuentos reclamados · lectura sin vidas", paragraphs: "párrafos · toca palabras · audio por párrafo",
@@ -4069,7 +4069,7 @@ const UI = {
     memory: "Memoria programada (SM-2): lo difícil vuelve pronto, lo dominado se aleja y se gradúa a los", noDue: "Nada vence hoy — la memoria está trabajando sola.",
     nextReview: "próximo repaso", earlyReview: "Adelantar repaso", noErrors: "Sin errores en seguimiento. Ve al camino por más retos.",
     weaknessMap: "Mapa de debilidades", weaknessDesc: "Ándale ajusta esto con tus errores y recuperaciones.", noPatterns: "Todavía no hay un mapa. Juega una misión o falla con estilo — entonces aparece.",
-    adaptiveReview: "Repaso adaptivo", lives: "vidas", nextLife: "Próxima vida gratis en", refill: "Rellenar",
+    adaptiveReview: "Repaso adaptativo", lives: "vidas", nextLife: "Próxima vida gratis en", refill: "Rellenar",
     flashTitle: "Tarjetas", saved: "guardadas", ready: "listas para practicar", emptyDeck: "Todavía no hay tarjetas",
     emptyDeckDesc: "Abre un cuento, toca una palabra que te frena, y guárdala con su frase.", goReading: "Ir a Lectura",
     dueReview: "REPASO VENCIDO", ahead: "ADELANTO", tapReveal: "Toca para revelar", again: "Otra vez", hard: "Difícil", good: "Bien", easy: "Fácil", reveal: "Revelar", today: "hoy",
@@ -4096,7 +4096,7 @@ const UI = {
     paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
     paywallAnnual: "Un año",
     paywallMonthly: "Un mes",
-    paywallHonesty: "Práctica · sin cobro todavía",
+    paywallHonesty: "Vista previa · aún no se cobra",
     paywallDismiss: "Seguir gratis",
     perfectLesson: "Lección perfecta — +5 XP",
     a2hsTitle: "Agrega Ándale a tu pantalla de inicio",
@@ -4113,8 +4113,8 @@ const UI = {
     hubDoctor: "Doctora de frases",
     hubEighty: "80/20",
     hubEightyQuiet: "Reglas del subjuntivo",
-    hubPins: "Pin chase",
-    hubFlash: "Flashcards",
+    hubPins: "Caza de pines",
+    hubFlash: "Tarjetas",
     hubSendero: "Sendero",
     hubSenderoQuiet: "Tu camino",
     hubSection: "Intermedio",
@@ -4184,7 +4184,7 @@ const UI = {
     paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
     paywallAnnual: "One year",
     paywallMonthly: "One month",
-    paywallHonesty: "Practice · no charge yet",
+    paywallHonesty: "Preview · you won\u2019t be charged yet",
     paywallDismiss: "Continue free",
     perfectLesson: "Perfect lesson — +5 XP",
     a2hsTitle: "Add Ándale to your Home Screen",
@@ -4201,7 +4201,7 @@ const UI = {
     hubDoctor: "Phrase Doctor",
     hubEighty: "80/20",
     hubEightyQuiet: "Subjunctive rules",
-    hubPins: "Pin chase",
+    hubPins: "Pin hunt",
     hubFlash: "Flashcards",
     hubSendero: "Sendero",
     hubSenderoQuiet: "Your path",
@@ -8191,7 +8191,7 @@ export default function App() {
                       if (!story) return null;
                       const readDone = !!prog.stories?.[story.id];
                       const readable = isLecturaStoryOpen(STORIES, prog.stories, story.id);
-                      const lockedSuffix = readable ? "" : (uiLang === "en" ? " (blocked)" : " (bloqueado)");
+                      const lockedSuffix = readable ? "" : (uiLang === "en" ? " (locked)" : " (cerrado)");
                       return (
                         <div style={{ position: "relative", margin: "14px 0 4px", zIndex: 1, textAlign: "center" }}>
                           <button className="node-btn" data-testid={`camino-story-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable} onClick={() => openStory(story)}
@@ -8424,7 +8424,7 @@ export default function App() {
               const souvenir = extra.collectible || meta.souvenir;
 	              const claimed = !!prog.stories?.[story.id];
 	              const readable = isLecturaStoryOpen(STORIES, prog.stories, story.id);
-	              const lockedSuffix = readable ? "" : (uiLang === "en" ? " (blocked)" : " (bloqueado)");
+	              const lockedSuffix = readable ? "" : (uiLang === "en" ? " (locked)" : " (cerrado)");
 	              const shelfTitle = uiLang === "en" ? (story.titleEn || story.title) : story.title;
 	              const found = (prog.storyFinds?.[story.id] || []).length;
 	              const total = extra.keyWords?.length || 0;
@@ -8955,7 +8955,7 @@ export default function App() {
           </div>}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
-	              { icon: <IcFlame size={26} fill={STREAK_FLAME} />, v: prog.streak || 0, l: L.streakDays, ink: streakLabelColor(theme) },
+	              { icon: <IcFlame size={26} fill={STREAK_FLAME} />, v: prog.streak || 0, l: (prog.streak || 0) === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays, ink: streakLabelColor(theme) },
 	              { icon: <IcBolt size={26} />, v: prog.xp || 0, l: L.totalXp },
 	              { icon: <IcCrown size={26} />, v: totalCrowns, l: L.crowns },
 	              { icon: <IcGem size={24} />, v: prog.gems || 0, l: L.gems },
@@ -9145,7 +9145,7 @@ export default function App() {
               <CoachPortrait id="rafa" mood="party" size={88} />
               <h3 style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 4px", color: D.goldDark }}>{L.flashDone}</h3>
               <p style={{ color: D.sub, fontWeight: 800, margin: "0 0 16px" }}>
-                {L.flashDoneDesc} {flashRun.reviewed || 0} {L.flashCardsWord}.
+                {L.flashDoneDesc} {flashRun.reviewed || 0} {(flashRun.reviewed || 0) === 1 ? (uiLang === "es" ? "tarjeta" : "card") : L.flashCardsWord}.
               </p>
               <Btn color={D.green} dark={D.greenDark} data-testid="flash-again" onClick={startFlashRun}>{L.flashAgain}</Btn>
             </div>
@@ -9232,7 +9232,7 @@ export default function App() {
                   hasResume: !!(prog.resume && prog.resume.unitId === sheet.unit.id && Array.isArray(prog.resume.order)),
                 }) ? FIRST_SESSION_COUNT : sheet.unit.questions.length + 1)} {L.challenges}</span>
               <span>·</span>
-	              <span style={{ color: sheet.crowns > 0 ? D.goldDark : D.sub }}><IcCrown size={14} /> {sheet.crowns} {sheet.crowns === 1 && uiLang === "es" ? "corona" : L.crowns}</span>
+	              <span style={{ color: sheet.crowns > 0 ? D.goldDark : D.sub }}><IcCrown size={14} /> {sheet.crowns} {sheet.crowns === 1 ? (uiLang === "es" ? "corona" : "crown") : L.crowns}</span>
               <span>·</span>
 	              <span>{L.optionTypes}</span>
             </div>
@@ -11233,7 +11233,7 @@ export default function App() {
             {lecturaCliffhanger?.storyId === story.id && (
               <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, marginLeft: -16, marginRight: -16, background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 14, padding: "14px 10px 12px" }}>
                 <p data-testid="lectura-cliffhanger-line" style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700, lineHeight: 1.55, color: D.ink }}>
-                  {lecturaCliffhangerLine(story.id)}
+                  {lecturaCliffhangerLine(story.id, uiLang)}
                 </p>
                 <div data-testid="lectura-bird-handoff" style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM }}>
                   <button

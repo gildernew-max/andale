@@ -26,6 +26,7 @@ import { WAITLIST_STORE_KEY } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_PRIVACY_LINK, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
 import { COLLECTOR_DEVICE_KEY, setCollectorEndpointOverride } from "./collector.js";
 import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
+import * as flashDeck from "./flashDeck.js";
 import { PAYWALL_SOURCE } from "./paywallHeadline.js";
 import { FIRST_WIN_MINUTES, splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
 import { firstSessionWords } from "./firstSessionWords.js";
@@ -435,8 +436,8 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const honesty = screen.getByTestId("soft-paywall-honesty");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
   const copy = lang === "en"
-    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", annual: "One year", monthly: "One month", honesty: "Practice · no charge yet", dismiss: "Continue free" }
-    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", annual: "Un año", monthly: "Un mes", honesty: "Práctica · sin cobro todavía", dismiss: "Seguir gratis" };
+    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", annual: "One year", monthly: "One month", honesty: "Preview · you won\u2019t be charged yet", dismiss: "Continue free" }
+    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", annual: "Un año", monthly: "Un mes", honesty: "Vista previa · aún no se cobra", dismiss: "Seguir gratis" };
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
   expect(screen.getByTestId("soft-paywall-body").textContent).toBe(copy.benefit);
   expect(annual.textContent).toBe(copy.annual);
@@ -1650,7 +1651,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(rayo.textContent).not.toMatch(/SÍ|NO|ENCENDIDO|APAGADO/);
     expect(document.body.textContent).not.toMatch(/DIÁLOGO DUEL/);
     await user.click(screen.getByTestId("camino-more"));
-    expect(screen.getByTestId("hub-flashcards").textContent).toMatch(/Flashcards/);
+    expect(screen.getByTestId("hub-flashcards").textContent).toBe("Tarjetas");
+    expect(screen.getByTestId("hub-pins").textContent).toBe("Caza de pines");
 
     await user.click(screen.getByTestId("nav-misiones"));
     expect(screen.getByText("DUELO")).toBeTruthy();
@@ -2418,7 +2420,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     seedProgress({ xp: 50, done: { subj1: 1 }, weak: { Subjuntivo: 3 } });
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
-    expect(screen.getByTestId("atajos").textContent).toMatch(/Atajos: 1–4/);
+    expect(screen.getByTestId("atajos").textContent).toBe("Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter");
     await userEvent.setup().click(screen.getByTestId("nav-perfil"));
     expect(screen.getByTestId("level-theater").textContent).toMatch(/Intermedio/);
     expect(screen.getByTestId("level-theater").textContent).not.toMatch(/Principiante|beginner/i);
@@ -5719,7 +5721,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(events[0].productId).toBe("com.andale.app.premium.annual");
     expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Practice · no charge yet");
+    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Preview · you won\u2019t be charged yet");
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(stored.unlockedPrem).not.toBe(true);
     expect(stored.paywallPlan).toBeFalsy();
@@ -5749,7 +5751,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(events.at(-1).productId).toBe("com.andale.app.premium.monthly");
     expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
+    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Vista previa · aún no se cobra");
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(stored.unlockedPrem).not.toBe(true);
     expect(stored.paywallPlan).toBeFalsy();
@@ -5796,7 +5798,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     assertSoftPaywallAnnualPrimary("es");
-    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
+    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Vista previa · aún no se cobra");
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis");
   });
 
@@ -6991,7 +6993,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(true));
     expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Práctica · sin cobro todavía");
+    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Vista previa · aún no se cobra");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
     const names = window.__andaleFunnelLog.map((e) => e.event);
@@ -7151,7 +7153,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(done).toHaveLength(1);
     expect(done[0].storyId).toBe("story-0");
     expect(done[0].title).toBeUndefined();
-    expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe(lecturaCliffhangers["story-0"]);
+    expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe(lecturaCliffhangers["story-0"].es);
     expect(screen.getByTestId("lectura-bird-handoff-cta").textContent).toBe("Continuar");
     expect(screen.getByTestId("lectura-bird-handoff-cta").className).not.toMatch(/duo-btn/);
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
@@ -8093,7 +8095,7 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(screen.getByTestId("soft-paywall-restore").tagName).toBe("A");
     expect(document.body.textContent).not.toMatch(/Tell me when the store opens|Avísame cuando abramos la tienda/);
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Practice · no charge yet|Práctica · sin cobro todavía/);
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Preview · you won\u2019t be charged yet|Vista previa · aún no se cobra/);
     await waitFor(() => expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("€39.99 / year"));
     expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("€6.99 / month");
     expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).toBe("Ándale Premium is an auto-renewing subscription: one year at €39.99 or one month at €6.99.");
@@ -8540,5 +8542,214 @@ describe("short onboarding", () => {
     await user.click(screen.getByTestId("win-continue"));
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
+  }, 20000);
+});
+
+describe("words audit strings", () => {
+  const claimStory0 = async (user) => {
+    await user.click(screen.getByTestId("nav-lectura"));
+    await user.click(screen.getByTestId("story-shelf-story-0"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));
+    for (;;) {
+      const next = screen.queryByRole("button", { name: /^(Siguiente|Next) →$/ });
+      if (!next) break;
+      await user.click(next);
+    }
+    await user.click(screen.getByRole("button", { name: /^(Preguntas|Questions) →$/ }));
+    await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
+    await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
+    await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
+    await user.click(screen.getByRole("button", { name: /El olvido/ }));
+    await user.click(screen.getByRole("button", { name: /^(Reclamar|Claim)/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger-line")).toBeTruthy());
+  };
+
+  it("Lectura closing hook is EN or ES for story-0 and EN is not Spanish", async () => {
+    cleanup();
+    localStorage.removeItem(LIVE_KEY);
+    seedProgress({ uiLang: "es", onboardingDone: true, paywallSeen: true, firstSessionDone: true });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
+    await claimStory0(user);
+    const esLine = screen.getByTestId("lectura-cliffhanger-line");
+    const esCta = screen.getByTestId("lectura-bird-handoff-cta");
+    expect(esLine.textContent).toBe(lecturaCliffhangers["story-0"].es);
+    expect(esLine.textContent).not.toBe(lecturaCliffhangers["story-0"].en);
+    expect(esCta.textContent).toBe("Continuar");
+    expect(esLine.compareDocumentPosition(esCta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe(lecturaCliffhangers["story-0"].en));
+    const enLine = screen.getByTestId("lectura-cliffhanger-line");
+    expect(enLine.textContent).not.toBe(lecturaCliffhangers["story-0"].es);
+    expect(enLine.textContent).not.toMatch(/[¿¡]/);
+    expect(screen.getByTestId("lectura-bird-handoff-cta").textContent).toBe("Continue");
+    expect(enLine.compareDocumentPosition(screen.getByTestId("lectura-bird-handoff-cta")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  }, 30000);
+
+  it("story shelf and camino story use locked / cerrado; unit nodes stay blocked", async () => {
+    cleanup();
+    seedProgress({ uiLang: "es", onboardingDone: true });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("camino-story-story-1")).toBeTruthy());
+    expect(screen.getByTestId("camino-story-story-1").getAttribute("aria-label")).toBe("Cuento: La casa azul (cerrado)");
+    expect(screen.getByTestId("camino-story-story-0").getAttribute("aria-label")).toBe("Cuento: La noche en que vuelven");
+    expect(screen.getByRole("button", { name: "Pretérito vs. imperfecto (bloqueado)" })).toBeTruthy();
+    await user.click(screen.getByTestId("nav-lectura"));
+    expect(screen.getByTestId("story-shelf-story-1").getAttribute("aria-label")).toBe("La casa azul (cerrado)");
+    expect(screen.getByTestId("story-shelf-story-9").getAttribute("aria-label")).toBe("Las cerezas de don Adán (cerrado)");
+    expect(screen.getByTestId("story-shelf-story-0").getAttribute("aria-label")).toBe("La noche en que vuelven");
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("story-shelf-story-1").getAttribute("aria-label")).toBe("La casa azul (locked)"));
+    expect(screen.getByTestId("story-shelf-story-2").getAttribute("aria-label")).toBe("Beyond the beach (locked)");
+    expect(screen.getByTestId("story-shelf-story-0").getAttribute("aria-label")).toBe("La noche en que vuelven");
+    await user.click(screen.getByTestId("nav-camino"));
+    await waitFor(() => expect(screen.getByTestId("camino-story-story-1").getAttribute("aria-label")).toBe("Story: La casa azul (locked)"));
+    expect(screen.getByTestId("camino-story-story-0").getAttribute("aria-label")).toBe("Story: La noche en que vuelven");
+    expect(screen.getByRole("button", { name: "Pretérito vs. imperfecto (blocked)" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: / \(cerrado\)/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: / \(bloqueado\)/ })).toBeNull();
+  });
+
+  it("hub pin and flash labels follow uiLang", async () => {
+    cleanup();
+    seedProgress({ uiLang: "es", onboardingDone: true, paywallSeen: true });
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitHome();
+    await openCaminoMore(user);
+    expect(screen.getByTestId("hub-pins").textContent).toBe("Caza de pines");
+    expect(screen.getByTestId("hub-flashcards").textContent).toBe("Tarjetas");
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("hub-pins").textContent).toBe("Pin hunt"));
+    expect(screen.getByTestId("hub-flashcards").textContent).toBe("Flashcards");
+  });
+
+  it("adaptive review and shortcuts hint use the stamped ES lines", async () => {
+    cleanup();
+    seedProgress({
+      uiLang: "es",
+      onboardingDone: true,
+      xp: 50,
+      done: { subj1: 1 },
+      weak: { Subjuntivo: 3 },
+      srs: { "subj1|0": { ef: 2.5, reps: 0, interval: 1, due: Date.now() + 864e5 } },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("atajos")).toBeTruthy());
+    expect(screen.getByTestId("atajos").textContent).toBe("Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter");
+    await user.click(screen.getByTestId("nav-practica"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Repaso adaptativo" })).toBeTruthy());
+    expect(screen.queryByRole("button", { name: "Repaso adaptivo" })).toBeNull();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Adaptive review" })).toBeTruthy());
+  });
+
+  const openCrownSheet = async (user) => {
+    await waitFor(() => expect(screen.getByRole("button", { name: "Subjuntivo presente" })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: "Subjuntivo presente" }));
+    await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
+    return screen.getByTestId("path-sheet").textContent;
+  };
+
+  it("path sheet crown noun is singular only at 1, in ES and EN", async () => {
+    const cases = [
+      { n: 0, es: "0 coronas", en: "0 crowns" },
+      { n: 1, es: "1 corona", en: "1 crown" },
+      { n: 2, es: "2 coronas", en: "2 crowns" },
+    ];
+    for (const row of cases) {
+      cleanup();
+      seedProgress({ uiLang: "es", onboardingDone: true, firstSessionDone: true, done: { subj1: row.n } });
+      const user = userEvent.setup();
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+      const esText = await openCrownSheet(user);
+      expect(esText).toContain(row.es);
+      if (row.n === 1) expect(esText).not.toContain("1 coronas");
+      await user.click(screen.getByTestId("lang-en"));
+      await waitFor(() => expect(screen.getByTestId("path-sheet").textContent).toContain(row.en));
+      if (row.n === 1) expect(screen.getByTestId("path-sheet").textContent).not.toContain("1 crowns");
+    }
+  });
+
+  it("profile streak day noun is singular only at 1, in ES and EN", async () => {
+    const cases = [
+      { n: 0, es: "días de racha", en: "streak days", esOne: "día de racha", enOne: "streak day" },
+      { n: 1, es: "día de racha", en: "streak day", esMany: "días de racha", enMany: "streak days" },
+      { n: 2, es: "días de racha", en: "streak days", esOne: "día de racha", enOne: "streak day" },
+    ];
+    for (const row of cases) {
+      cleanup();
+      seedProgress({ uiLang: "es", onboardingDone: true, streak: row.n, xp: 10 });
+      const user = userEvent.setup();
+      render(<App />);
+      await user.click(screen.getByTestId("nav-perfil"));
+      await waitFor(() => expect(screen.getByText("Tu perfil")).toBeTruthy());
+      expect(screen.getByText(row.es)).toBeTruthy();
+      if (row.n === 1) expect(screen.queryByText(row.esMany)).toBeNull();
+      else expect(screen.queryByText(row.esOne)).toBeNull();
+      await user.click(screen.getByTestId("lang-en"));
+      await waitFor(() => expect(screen.getByText("Your profile")).toBeTruthy());
+      expect(screen.getByText(row.en)).toBeTruthy();
+      if (row.n === 1) expect(screen.queryByText(row.enMany)).toBeNull();
+      else expect(screen.queryByText(row.enOne)).toBeNull();
+    }
+  });
+
+  const flashLine = () => screen.getByTestId("flash-session-done").querySelector("p").textContent;
+
+  it("flashcard count noun is singular only at 1, in ES and EN", async () => {
+    const card = (word) => ({ word, en: "house", note: "", story: "Cuento", sentence: "Una casa.", due: 0 });
+    const spy = vi.spyOn(flashDeck, "buildFlashDeck");
+    try {
+      cleanup();
+      spy.mockReturnValue([]);
+      seedProgress({ uiLang: "es", onboardingDone: true, paywallSeen: true, firstSessionDone: true });
+      const user0 = userEvent.setup();
+      render(<App />);
+      await awaitHome();
+      await openCaminoMore(user0);
+      await user0.click(screen.getByTestId("hub-flashcards"));
+      await waitFor(() => expect(screen.getByTestId("flash-session-done")).toBeTruthy());
+      expect(flashLine()).toBe("Repasaste 0 tarjetas.");
+      await user0.click(screen.getByTestId("lang-en"));
+      await waitFor(() => expect(flashLine()).toBe("You reviewed 0 cards."));
+
+      cleanup();
+      spy.mockReturnValue([card("casa")]);
+      seedProgress({ uiLang: "es", onboardingDone: true, paywallSeen: true, firstSessionDone: true });
+      const user1 = userEvent.setup();
+      render(<App />);
+      await user1.click(screen.getByTestId("nav-practica"));
+      await waitFor(() => expect(screen.getByTestId("flash-reveal")).toBeTruthy());
+      await user1.click(screen.getByTestId("flash-reveal"));
+      await user1.click(screen.getByTestId("flash-easy"));
+      await waitFor(() => expect(flashLine()).toBe("Repasaste 1 tarjeta."));
+      expect(flashLine()).not.toContain("tarjetas");
+      await user1.click(screen.getByTestId("lang-en"));
+      await waitFor(() => expect(flashLine()).toBe("You reviewed 1 card."));
+      expect(flashLine()).not.toMatch(/\bcards\b/);
+
+      cleanup();
+      spy.mockReturnValue([card("casa"), card("mesa")]);
+      seedProgress({ uiLang: "es", onboardingDone: true, paywallSeen: true, firstSessionDone: true });
+      const user2 = userEvent.setup();
+      render(<App />);
+      await user2.click(screen.getByTestId("nav-practica"));
+      for (let i = 0; i < 2; i++) {
+        await waitFor(() => expect(screen.getByTestId("flash-reveal")).toBeTruthy());
+        await user2.click(screen.getByTestId("flash-reveal"));
+        await user2.click(screen.getByTestId("flash-easy"));
+      }
+      await waitFor(() => expect(flashLine()).toBe("Repasaste 2 tarjetas."));
+      await user2.click(screen.getByTestId("lang-en"));
+      await waitFor(() => expect(flashLine()).toBe("You reviewed 2 cards."));
+    } finally {
+      spy.mockRestore();
+    }
   }, 20000);
 });
