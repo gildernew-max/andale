@@ -36,7 +36,7 @@ function looksLikeMedia(response) {
   return true;
 }
 
-/** True only when the paragraph file itself loads. A 404 hides the player. */
+/** True when HEAD looks like media, or when HEAD is 405/501 and the follow-up GET does. A 404, an HTML body, or a failed fetch is false. */
 export async function probeAudioFile(url, fetchImpl = globalThis.fetch) {
   if (!url || typeof fetchImpl !== "function") return false;
   try {

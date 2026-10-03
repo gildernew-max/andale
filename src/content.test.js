@@ -1390,7 +1390,7 @@ assert(appSrc.includes("{L.hubFlash}"), "Flashcards label follows uiLang under I
 assert(appSrc.includes("title: L.hubSendero"), "Sendero tile label follows uiLang");
 assert(!appSrc.includes("title: L.hubSobremesa"), "Sobremesa wrap stamp is not a hub tile title");
 assert(UI.es.hubHoy === "Hoy" && UI.en.hubHoy === "Hoy", "Hoy label is Hoy");
-assert(UI.es.hubHoyQuiet === "Plan de hoy" && UI.en.hubHoyQuiet === "Today's plan", "Hoy quiet is the 10-min plan");
+assert(UI.es.hubHoyQuiet === "Plan de hoy" && UI.en.hubHoyQuiet === "Today's plan", "Hoy quiet is Plan de hoy / Today's plan");
 assert(UI.es.hoyPlanEyebrow === "HOY · 10 MIN" && UI.en.hoyPlanEyebrow === "TODAY · 10 MIN", "Hoy plan eyebrow is George stamp");
 assert(UI.es.hoyPlanSell === "Un plan corto para hoy. Diez minutos. Luego paras." && UI.en.hoyPlanSell === "A short plan for today. Ten minutes. Then you stop.", "Hoy plan sell is George stamp");
 assert(UI.es.hoyPlanCta === "Empezar el plan" && UI.en.hoyPlanCta === "Start the plan", "Hoy plan CTA is George stamp");
