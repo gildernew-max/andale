@@ -10739,7 +10739,7 @@ export default function App() {
                       <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{item.note[uiLang]}</div>
                     </div>
                     <CappedActions>
-                      <Btn data-testid="safe-risky-continue" color={D.red} dark={D.redDark} onClick={nextSafeRisky} style={{ width: "100%", marginTop: 12 }}>{safeGame.idx + 1 >= safeGame.items.length ? (uiLang === "en" ? "Finish" : "Terminar") : L.continue}</Btn>
+                      <Btn data-testid="safe-risky-continue" color={hit ? D.green : D.red} dark={hit ? D.greenDark : D.redDark} onClick={nextSafeRisky} style={{ width: "100%", marginTop: 12 }}>{safeGame.idx + 1 >= safeGame.items.length ? (uiLang === "en" ? "Finish" : "Terminar") : L.continue}</Btn>
                     </CappedActions>
                   </CappedFeedback>
                 )}
