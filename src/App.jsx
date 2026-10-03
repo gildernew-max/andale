@@ -25,10 +25,7 @@ import { gradeListedPhrase, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
-import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
-import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
-import { isWaitlistEmail } from "./waitlist.js";
-import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
+import { FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
 import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
@@ -4764,13 +4761,6 @@ export default function App() {
   const lecturaHandoffHold = useRef(false);
   const lecturaPaywallAfterWin = useRef(false);
   const chapterDoneRef = useRef(new Set());
-  const firstWinEmailHold = useRef(false);
-  const firstWinEmailSeenEmit = useRef(false);
-  const firstWinEmailBusy = useRef(false);
-  const [firstWinEmailDraft, setFirstWinEmailDraft] = useState("");
-  const [firstWinEmailError, setFirstWinEmailError] = useState(false);
-  const [firstWinEmailDone, setFirstWinEmailDone] = useState(false);
-  const [firstWinEmailGone, setFirstWinEmailGone] = useState(false);
   const [doctorHits, setDoctorHits] = useState(0);
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [wordOrderMiss, setWordOrderMiss] = useState("");
@@ -7004,14 +6994,6 @@ export default function App() {
   /* ---------------- RENDER ---------------- */
 
   const lecturaHandoffStory = lecturaHandoffTarget(STORIES, prog.stories);
-  const showFirstWinEmail = !!collectorEndpoint()
-    && screen === "done"
-    && !!session?.firstHoy
-    && !firstWinEmailGone
-    && (firstWinEmailHold.current || shouldShowFirstWinEmail({
-      firstHoy: true,
-      emailSeen: !!prog[FIRST_WIN_EMAIL_SEEN],
-    }));
   const showLecturaHandoff = screen === "done"
     && prog.contentVersion === CONTENT_VERSION
     && !!lecturaHandoffStory
@@ -7060,13 +7042,6 @@ export default function App() {
   useEffect(() => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.open });
   }, []);
-  useEffect(() => {
-    const onFunnel = (ev) => {
-      void shipFunnelEvent(ev?.detail, { lang: uiLang });
-    };
-    window.addEventListener(FUNNEL_EVENT, onFunnel);
-    return () => window.removeEventListener(FUNNEL_EVENT, onFunnel);
-  }, [uiLang]);
   useEffect(() => {
     if (showSoftPaywall) {
       setSoftPaywall(true);
@@ -7131,21 +7106,6 @@ export default function App() {
     // Stamp once when the win is on screen. save is stable enough: the seen flag stops a rewrite.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, session, prog.contentVersion, prog.lecturaHandoffSeen, prog.stories]);
-  useEffect(() => {
-    if (!collectorEndpoint() || screen !== "done" || !session?.firstHoy) {
-      firstWinEmailHold.current = false;
-      return;
-    }
-    if (prog[FIRST_WIN_EMAIL_SEEN] && !firstWinEmailHold.current) return;
-    firstWinEmailHold.current = true;
-    if (!firstWinEmailSeenEmit.current) {
-      firstWinEmailSeenEmit.current = true;
-      emitFunnelEvent({ event: FUNNEL_EVENTS.firstWinSeen });
-    }
-    if (!prog[FIRST_WIN_EMAIL_SEEN]) save({ [FIRST_WIN_EMAIL_SEEN]: true });
-    // Stamp once when the card is on the win. The seen flag stops a rewrite.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, session, prog.firstWinEmailSeen]);
   useEffect(() => {
     if (isBajioUnlockFlashLive() || isBajioUnlockFlashDue()) {
       setBajioUnlockFlash(true);
@@ -7470,37 +7430,6 @@ export default function App() {
     const story = lecturaHandoffTarget(STORIES, prog.stories);
     if (!story) return;
     openStory(story);
-  };
-
-  const skipFirstWinEmail = () => {
-    emitFunnelEvent({ event: FUNNEL_EVENTS.emailSkipped });
-    save({ [FIRST_WIN_EMAIL_SEEN]: true });
-    setFirstWinEmailGone(true);
-    openLecturaFromHandoff();
-  };
-
-  const submitFirstWinEmail = async (event) => {
-    event.preventDefault();
-    if (firstWinEmailDone) return;
-    if (!isWaitlistEmail(firstWinEmailDraft)) {
-      setFirstWinEmailError(true);
-      return;
-    }
-    if (firstWinEmailBusy.current) return;
-    firstWinEmailBusy.current = true;
-    try {
-      const result = await deliverFirstWinEmail(firstWinEmailDraft, { lang: uiLang });
-      if (!result.ok) {
-        setFirstWinEmailError(true);
-        return;
-      }
-      setFirstWinEmailError(false);
-      setFirstWinEmailDone(true);
-      emitFunnelEvent({ event: FUNNEL_EVENTS.emailSubmitted });
-      save({ [FIRST_WIN_EMAIL_SEEN]: true });
-    } finally {
-      firstWinEmailBusy.current = false;
-    }
   };
 
   const continueFromWin = () => {
@@ -11338,148 +11267,6 @@ export default function App() {
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
 	            <Btn data-testid={continueTestId || "win-continue"} onClick={continueFromWin}>{L.continue}</Btn>
           </div>
-          {showFirstWinEmail && (
-            <form
-              data-testid="first-win-email"
-              noValidate
-              onSubmit={submitFirstWinEmail}
-              style={{
-                marginTop: 18,
-                background: theme === "dark" ? FIRST_WIN_EMAIL_DARK.card : HUB_CREAM,
-                color: theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : D.ink,
-                border: `1px solid ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.sage : MARK_INK}`,
-                borderRadius: 14,
-                padding: "10px 12px 12px",
-                textAlign: "left",
-              }}
-            >
-              <style>{`
-                .first-win-email-input::placeholder {
-                  color: ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : "#3C3C3C"};
-                  opacity: 1;
-                }
-                .first-win-email-input:focus {
-                  outline: 2px solid ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.focus : MARK_INK};
-                  outline-offset: 2px;
-                }
-              `}</style>
-              <label htmlFor="first-win-email-input" data-testid="first-win-email-prompt" style={{ display: "block", margin: "0 0 8px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: "inherit" }}>
-                {firstWinEmailInvite(uiLang)}
-              </label>
-              <input
-                id="first-win-email-input"
-                data-testid="first-win-email-input"
-                className="first-win-email-input"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                maxLength={254}
-                value={firstWinEmailDraft}
-                placeholder={firstWinEmailPlaceholder(uiLang)}
-                onChange={(e) => { setFirstWinEmailDraft(e.target.value); if (firstWinEmailError) setFirstWinEmailError(false); }}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  boxSizing: "border-box",
-                  background: theme === "dark" ? FIRST_WIN_EMAIL_DARK.card : HUB_CREAM,
-                  color: theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : D.ink,
-                  border: `1px solid ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.inputBorder : MARK_INK}`,
-                  borderRadius: 12,
-                  padding: "10px 12px",
-                  minHeight: 44,
-                  fontFamily: "inherit",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  lineHeight: 1.35,
-                }}
-              />
-              <p data-testid="first-win-email-privacy" style={{ margin: "8px 0 0", fontSize: 12, fontWeight: 700, lineHeight: 1.35, color: "inherit" }}>
-                {firstWinEmailPrivacy(uiLang)}
-              </p>
-              <a
-                data-testid="first-win-email-privacy-link"
-                href={`${import.meta.env.BASE_URL}${FIRST_WIN_EMAIL_PRIVACY_HREF}`}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  minHeight: 44,
-                  minWidth: 44,
-                  marginTop: 2,
-                  padding: 0,
-                  background: "none",
-                  border: "none",
-                  borderRadius: 0,
-                  color: theme === "dark" ? FIRST_WIN_EMAIL_PRIVACY_INK.dark : FIRST_WIN_EMAIL_PRIVACY_INK.light,
-                  fontFamily: "inherit",
-                  fontWeight: 500,
-                  fontSize: 11,
-                  lineHeight: 1.35,
-                  textDecoration: "underline",
-                }}
-              >
-                {firstWinEmailPrivacyLink(uiLang)}
-              </a>
-              {firstWinEmailError && (
-                <p data-testid="first-win-email-error" style={{ margin: "8px 0 0", fontSize: 12, fontWeight: 700, lineHeight: 1.35, color: "inherit" }}>
-                  {firstWinEmailErrorLine(uiLang)}
-                </p>
-              )}
-              {firstWinEmailDone && (
-                <p data-testid="first-win-email-success" style={{ margin: "8px 0 0", fontSize: 12, fontWeight: 700, lineHeight: 1.35, color: "inherit" }}>
-                  {firstWinEmailSuccess(uiLang)}
-                </p>
-              )}
-              <button
-                type="submit"
-                data-testid="first-win-email-submit"
-                style={{
-                  display: "block",
-                  width: "100%",
-                  marginTop: 10,
-                  background: FIRST_WIN_EMAIL_FILL,
-                  color: FIRST_WIN_EMAIL_FILL_INK,
-                  border: "none",
-                  borderRadius: 12,
-                  padding: "10px 16px",
-                  minHeight: 44,
-                  fontFamily: "inherit",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  lineHeight: 1.35,
-                  cursor: "pointer",
-                }}
-              >
-                {firstWinEmailCta(uiLang)}
-              </button>
-              <button
-                type="button"
-                data-testid="first-win-email-skip"
-                onClick={skipFirstWinEmail}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  marginTop: 6,
-                  background: "transparent",
-                  color: theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : D.ink,
-                  border: "none",
-                  borderRadius: 12,
-                  padding: "10px 16px",
-                  minHeight: 44,
-                  fontFamily: "inherit",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  lineHeight: 1.35,
-                  textDecoration: "underline",
-                  cursor: "pointer",
-                }}
-              >
-                {firstWinEmailSkipLabel(uiLang)}
-              </button>
-            </form>
-          )}
           {showLecturaHandoff && (
             <div data-testid="lectura-handoff" style={{ marginTop: 18, background: HUB_CREAM, borderRadius: 14, padding: "10px 12px 12px" }}>
               <p data-testid="lectura-handoff-quiet" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: D.sub }}>

@@ -22,9 +22,6 @@ import { MEMORY_BANK, startMemoryRun } from "./memory.js";
 import { startJeopardyRun } from "./jeopardy.js";
 import { startMatchRun } from "./matchPairs.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
-import { WAITLIST_STORE_KEY } from "./waitlist.js";
-import { FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_PRIVACY_LINK, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
-import { COLLECTOR_DEVICE_KEY, setCollectorEndpointOverride } from "./collector.js";
 import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
 import { PAYWALL_SOURCE } from "./paywallHeadline.js";
 import { FIRST_WIN_MINUTES, splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
@@ -817,20 +814,9 @@ beforeEach(() => {
   seedProgress();
 });
 
-const originalSendBeacon = navigator.sendBeacon;
-
 afterEach(() => {
   cleanup();
   localStorage.clear();
-  setCollectorEndpointOverride(undefined);
-  vi.unstubAllGlobals();
-  if (navigator.sendBeacon !== originalSendBeacon) {
-    if (originalSendBeacon) {
-      Object.defineProperty(navigator, "sendBeacon", { configurable: true, writable: true, value: originalSendBeacon });
-    } else {
-      delete navigator.sendBeacon;
-    }
-  }
   delete window.__andaleIapEnv;
   delete window.__andaleNativePurchase;
   delete window.__andaleNativeRestore;
@@ -3759,167 +3745,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(reader.textContent).toMatch(/La noche en que vuelven/);
     expect(screen.queryByTestId("lectura-handoff")).toBeNull();
     expect(screen.queryByTestId("hoy-win")).toBeNull();
-  });
-
-  const FIRST_WIN_TEST_ENDPOINT = "https://example.test/collector";
-
-  const reachFirstHoyWin = async (user, extra = {}, { endpoint = "" } = {}) => {
-    cleanup();
-    setCollectorEndpointOverride(endpoint || undefined);
-    if (endpoint) {
-      vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, type: "opaque", status: 0 })));
-      Object.defineProperty(navigator, "sendBeacon", { configurable: true, writable: true, value: () => true });
-    }
-    const uiLang = extra.uiLang || "es";
-    seedProgress({ streak: 0, lastDay: null, uiLang: "es", ...extra });
-    const hoyMc = (prompt) => ({
-      type: "mc",
-      prompt,
-      choices: ["cilantro, cebolla, salsa y guarnición"],
-      answer: "cilantro, cebolla, salsa y guarnición",
-      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
-      _u: "_today",
-      _i: -1,
-    });
-    localStorage.setItem(LIVE_KEY, JSON.stringify({
-      screen: "lesson",
-      tab: "camino",
-      status: "idle",
-      qi: 0,
-      lessonStats: { right: 0, wrong: 0 },
-      session: {
-        title: "Noche de faroles",
-        unitId: "_today:taqueria",
-        todaySceneId: "taqueria",
-        firstHoy: true,
-        host: "luna",
-        questions: [hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:")],
-      },
-    }));
-    render(<App />);
-    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
-    await user.click(document.querySelector(".choice-card"));
-    await user.click(screen.getByTestId("lesson-check"));
-    await user.click(await screen.findByRole("button", { name: uiLang === "en" ? /^Continue$/i : /^Continuar$/i }));
-    await screen.findByTestId("hoy-win");
-    if (endpoint) await screen.findByTestId("first-win-email");
-    await screen.findByTestId("lectura-handoff-cta");
-  };
-
-  const styleHas = (el, hex) => {
-    const raw = (el.getAttribute("style") || "").toLowerCase().replace(/\s/g, "");
-    const n = hex.replace("#", "");
-    const r = parseInt(n.slice(0, 2), 16);
-    const g = parseInt(n.slice(2, 4), 16);
-    const b = parseInt(n.slice(4, 6), 16);
-    return raw.includes(hex.toLowerCase()) || raw.includes(`rgb(${r},${g},${b})`);
-  };
-
-  it("with both endpoints empty, the first-win email card is not rendered", async () => {
-    const user = userEvent.setup();
-    await reachFirstHoyWin(user);
-    expect(screen.queryByTestId("first-win-email")).toBeNull();
-    expect(screen.queryByTestId("first-win-email-input")).toBeNull();
-    expect(screen.queryByTestId("first-win-email-skip")).toBeNull();
-    expect(screen.queryByTestId("first-win-email-submit")).toBeNull();
-    expect(screen.getByTestId("lectura-handoff")).toBeTruthy();
-    expect(localStorage.getItem(WAITLIST_STORE_KEY)).toBeNull();
-  });
-
-  it("with both endpoints empty, first win sends no usage events and writes no device id", async () => {
-    const fetchSpy = vi.fn(async () => ({ ok: true }));
-    const beaconSpy = vi.fn(() => true);
-    vi.stubGlobal("fetch", fetchSpy);
-    Object.defineProperty(navigator, "sendBeacon", { configurable: true, writable: true, value: beaconSpy });
-    const user = userEvent.setup();
-    await reachFirstHoyWin(user);
-    expect(screen.queryByTestId("first-win-email")).toBeNull();
-    expect(fetchSpy).not.toHaveBeenCalled();
-    expect(beaconSpy).not.toHaveBeenCalled();
-    expect(localStorage.getItem(COLLECTOR_DEVICE_KEY)).toBeNull();
-    expect(localStorage.getItem(WAITLIST_STORE_KEY)).toBeNull();
-  });
-
-  it("first-win email skip still opens Lectura, and a bad address does not", async () => {
-    const user = userEvent.setup();
-    await reachFirstHoyWin(user, {}, { endpoint: FIRST_WIN_TEST_ENDPOINT });
-    expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("first-win-email-skip").textContent).toBe("Ahora no");
-    expect(screen.getByTestId("first-win-email-prompt").textContent).toBe("Déjanos tu correo y te avisamos cuando haya historias nuevas.");
-    expect(screen.getByTestId("first-win-email").textContent).not.toMatch(/Leave your email/);
-    const privacyEs = screen.getByTestId("first-win-email-privacy-link");
-    expect(privacyEs.textContent).toBe(FIRST_WIN_EMAIL_PRIVACY_LINK.es);
-    expect(privacyEs.tagName).toBe("A");
-    expect(privacyEs.getAttribute("href")).toMatch(/privacy\.html#correo-y-datos$/);
-    expect(styleHas(privacyEs, "#5E6650")).toBe(true);
-    expect(privacyEs.className).not.toMatch(/duo-btn/);
-    expect(screen.getByTestId("first-win-email-skip").className).not.toMatch(/duo-btn/);
-    await waitFor(() => expect(funnelOf("first-win-seen").length).toBeGreaterThan(0));
-    expect(funnelOf("email-submitted")).toHaveLength(0);
-    expect(funnelOf("email-skipped")).toHaveLength(0);
-
-    await user.click(screen.getByTestId("first-win-email-submit"));
-    expect(screen.getByTestId("first-win-email-error").textContent).toBe(FIRST_WIN_EMAIL_ERROR.es);
-    expect(screen.queryByTestId("story-reader")).toBeNull();
-    expect(screen.getByTestId("lectura-handoff-cta")).toBeTruthy();
-    expect(funnelOf("email-submitted")).toHaveLength(0);
-
-    await user.type(screen.getByTestId("first-win-email-input"), "not-an-email");
-    await user.click(screen.getByTestId("first-win-email-submit"));
-    expect(screen.getByTestId("first-win-email-error").textContent).toBe(FIRST_WIN_EMAIL_ERROR.es);
-    expect(screen.queryByTestId("story-reader")).toBeNull();
-    expect(screen.getByTestId("hoy-win")).toBeTruthy();
-    expect(localStorage.getItem(WAITLIST_STORE_KEY)).toBeNull();
-    expect(funnelOf("email-submitted")).toHaveLength(0);
-
-    await user.click(screen.getByTestId("first-win-email-skip"));
-    const reader = await screen.findByTestId("story-reader");
-    expect(reader.getAttribute("data-story-id")).toBe("story-0");
-    expect(reader.textContent).toMatch(/La noche en que vuelven/);
-    expect(funnelOf("email-skipped").length).toBeGreaterThan(0);
-    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
-    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/not-an-email|@/);
-    for (const step of funnelOf("email-skipped").concat(funnelOf("first-win-seen"))) {
-      expect(step.email).toBeUndefined();
-      expect(Object.keys(step).sort()).toEqual(["at", "event"]);
-    }
-  });
-
-  it("a valid first-win email does not block Lectura", async () => {
-    const user = userEvent.setup();
-    await reachFirstHoyWin(user, {}, { endpoint: FIRST_WIN_TEST_ENDPOINT });
-    await user.type(screen.getByTestId("first-win-email-input"), "  ada@example.com ");
-    await user.click(screen.getByTestId("first-win-email-submit"));
-    await waitFor(() => expect(screen.getByTestId("first-win-email-success").textContent).toBe(FIRST_WIN_EMAIL_SUCCESS.es));
-    expect(screen.queryByTestId("first-win-email-error")).toBeNull();
-    expect(JSON.parse(localStorage.getItem(WAITLIST_STORE_KEY)).email).toBe("ada@example.com");
-    await waitFor(() => expect(funnelOf("email-submitted").length).toBeGreaterThan(0));
-    expect(JSON.stringify(funnelOf("email-submitted"))).not.toMatch(/ada@example|@/);
-    expect(screen.getByTestId("lectura-handoff-cta")).toBeTruthy();
-    await user.click(screen.getByTestId("lectura-handoff-cta"));
-    const reader = await screen.findByTestId("story-reader");
-    expect(reader.getAttribute("data-story-id")).toBe("story-0");
-    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
-    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/ada@example/);
-  });
-
-  it("a set endpoint shows the dark email card, and the Lectura handoff stays the main cream card", async () => {
-    const user = userEvent.setup();
-    await reachFirstHoyWin(user, { theme: "dark", uiLang: "en" }, { endpoint: FIRST_WIN_TEST_ENDPOINT });
-    const box = screen.getByTestId("lectura-handoff");
-    const quiet = screen.getByTestId("lectura-handoff-quiet");
-    const cta = screen.getByTestId("lectura-handoff-cta");
-    expect(quiet.textContent).toBe(LECTURA_HANDOFF_QUIET.en);
-    expect(cta.textContent).toBe(LECTURA_HANDOFF_CTA.en);
-    expect(styleHas(box, "#F6EFE4")).toBe(true);
-    expect(styleHas(cta, "#5C7356")).toBe(true);
-    expect(cta.className).not.toMatch(/duo-btn/);
-    const privacyEn = screen.getByTestId("first-win-email-privacy-link");
-    expect(privacyEn.textContent).toBe(FIRST_WIN_EMAIL_PRIVACY_LINK.en);
-    expect(privacyEn.tagName).toBe("A");
-    expect(privacyEn.getAttribute("href")).toMatch(/privacy\.html#correo-y-datos$/);
-    expect(styleHas(privacyEn, "#CDBBA6")).toBe(true);
-    expect(screen.getByTestId("first-win-email").textContent).not.toMatch(/Privacidad/);
   });
 
   it("Lectura handoff once-gate stays down, and a claimed story-0 opens the next unread", async () => {

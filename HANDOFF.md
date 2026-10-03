@@ -2,19 +2,6 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
-## 2026-10-03 (First-win email hidden)
-
-**What changed**
-- The first-win email card and the collector stay hidden until `VITE_COLLECTOR_ENDPOINT` or `VITE_FIRST_WIN_EMAIL_ENDPOINT` is set at build time. With both empty, the card is not rendered, this card writes nothing to `andale-waitlist`, no usage events are sent, and no `andale-device-id` is created.
-- Privacy and support pages match main, including `Last updated: September 18, 2026`. The collection wording is parked in `docs/first-win-email-privacy-wording.md`.
-- `docs/first-win-email-collector.gs` is the Apps Script. It is not deployed.
-
-**Why**
-- Merge only the inert version. The card turns on with an endpoint.
-
-**Words / Brand left**
-- The parked wording returns in a later PR, together with the endpoint.
-
 ## 2026-10-02 (sage cleanup flow-test timeout)
 
 **What changed**
