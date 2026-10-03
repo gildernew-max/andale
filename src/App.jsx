@@ -6606,10 +6606,12 @@ export default function App() {
     };
     const audioUrl = storyAudioUrlRef.current;
     if (audioMode === "normal" && audioUrl) {
-      /* The cached-audio branch can fail FOUR ways: 404 (onerror), rejected play()
-         (catch), wrong MIME, or — the killer — a sandboxed/stalled media fetch that
-         never fires ANY callback. The watchdog covers the silent case; the `settled`
-         flag guarantees exactly one fallback so error+catch can't double-speak. */
+      /* Normal mode plays a probed paragraph file. If playback misses — an
+         element error (onerror), a rejected play() (catch), a throw from
+         new Audio, or a stalled fetch that never fires a callback — fall
+         back to device speech. The 1.2s watchdog covers the silent case.
+         `settled` runs that fallback once so onerror and play().catch
+         cannot double-speak. */
       let settled = false;
       const fallback = () => {
         if (settled) return;
