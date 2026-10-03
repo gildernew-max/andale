@@ -8640,16 +8640,16 @@ export default function App() {
 	              return (
 	                <button key={story.id} data-testid={`story-shelf-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable} onClick={() => openStory(story)} className="choice-card"
 	                  aria-label={`${shelfTitle}${lockedSuffix}`}
-	                  style={{ textAlign: "left", padding: 15, cursor: readable ? "pointer" : "default", fontFamily: "inherit", background: claimed ? "#F3FBEA" : "#fff", borderColor: claimed ? D.green : D.line, borderBottomColor: claimed ? D.green : D.line }}>
+	                  style={{ textAlign: "left", padding: 15, cursor: readable ? "pointer" : "default", fontFamily: "inherit", background: theme === "dark" ? (claimed ? D.greenBg : D.card) : (claimed ? "#F3FBEA" : "#fff"), borderColor: theme === "dark" ? D.line : (claimed ? D.green : D.line), borderBottomColor: theme === "dark" ? D.line : (claimed ? D.green : D.line) }}>
                   <div style={{ display: "flex", gap: 13, alignItems: "center" }}>
                     <div style={{ width: 52, height: 52, borderRadius: 15, background: sec.color, borderBottom: `5px solid ${sec.dark}`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <IcBook size={28} />
                     </div>
                     <div style={{ flex: 1 }}>
-	                      <div style={{ fontWeight: 900, fontSize: 18 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
+	                      <div style={{ fontWeight: 900, fontSize: 18, color: D.ink }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
 	                      <div style={{ fontSize: 13, color: D.sub, fontWeight: 800 }}>{meta.place ? `${meta.place} · ` : ""}{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
-		                      <div style={{ fontSize: 12, color: sec.color, fontWeight: 900, marginTop: 4 }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
-		                      {souvenir && <div style={{ fontSize: 11.5, color: claimed ? D.greenDark : D.sub, fontWeight: 900, marginTop: 4 }}>{claimed ? "✓ " : ""}{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
+		                      <div style={{ fontSize: 12, color: theme === "dark" ? D.sub : sec.color, fontWeight: 900, marginTop: 4 }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
+		                      {souvenir && <div style={{ fontSize: 11.5, color: theme === "dark" ? (claimed ? D.green : D.sub) : (claimed ? D.greenDark : D.sub), fontWeight: 900, marginTop: 4 }}>{claimed ? "✓ " : ""}{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
 	                    </div>
                     {claimed && <IcCrown size={26} />}
                   </div>
@@ -11259,7 +11259,7 @@ export default function App() {
                 { id: "challenge", l: uiLang === "en" ? "Challenge" : "Reto" },
               ].map((m) => (
                 <button key={m.id} onClick={() => { setStoryMode(m.id); setWordReveal(m.id !== "challenge"); }}
-                  style={{ border: `2px solid ${storyMode === m.id ? sec.color : D.line}`, borderBottom: `4px solid ${storyMode === m.id ? sec.dark : D.line}`, background: storyMode === m.id ? "#fff" : "#F7F7F7", color: storyMode === m.id ? sec.dark : D.sub, borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
+                  style={{ border: `2px solid ${storyMode === m.id ? sec.color : D.line}`, borderBottom: `4px solid ${storyMode === m.id ? sec.dark : D.line}`, background: storyMode === m.id ? "#fff" : (theme === "dark" ? D.subtle : "#F7F7F7"), color: storyMode === m.id ? sec.dark : D.sub, borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
                   {m.l}
                 </button>
               ))}
@@ -11267,10 +11267,10 @@ export default function App() {
             <div data-testid="lectura-progress" style={{ display: "flex", gap: 5, alignItems: "center", margin: "2px 0 14px" }}>
               {story.paragraphs.map((_, i) => (
                 <button key={i} onClick={() => { stopNarration(); setWordSel(null); setParaIdx(i); }} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
-                  style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : "#E8E8E8", outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
+                  style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : (theme === "dark" ? D.track : "#E8E8E8"), outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
               ))}
               <button onClick={() => { stopNarration(); setWordSel(null); setParaIdx(story.paragraphs.length); }} aria-label={uiLang === "en" ? "Questions" : "Preguntas"}
-                style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : "#E8E8E8", color: paraIdx >= story.paragraphs.length ? "#fff" : D.sub }}>?</button>
+                style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : (theme === "dark" ? D.track : "#E8E8E8"), color: paraIdx >= story.paragraphs.length ? "#fff" : (theme === "dark" ? D.ink : D.sub) }}>?</button>
             </div>
             {paraIdx < story.paragraphs.length && (
               <div style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>
@@ -11374,7 +11374,7 @@ export default function App() {
                   { id: "shadow", l: uiLang === "en" ? "Shadow" : "Sombra" },
                 ].map((m) => (
                   <button key={m.id} onClick={() => setAudioMode(m.id)}
-                    style={{ border: `2px solid ${audioMode === m.id ? D.blue : D.line}`, borderBottom: `4px solid ${audioMode === m.id ? D.blueDark : D.line}`, background: audioMode === m.id ? "#DDF4FF" : "#F7F7F7", color: audioMode === m.id ? D.blueDark : D.sub, borderRadius: 10, padding: "6px 10px", fontFamily: "inherit", fontWeight: 900, fontSize: 11.5, cursor: "pointer" }}>
+                    style={{ border: `2px solid ${audioMode === m.id ? D.blue : D.line}`, borderBottom: `4px solid ${audioMode === m.id ? D.blueDark : D.line}`, background: audioMode === m.id ? (theme === "dark" ? D.blueBg : "#DDF4FF") : (theme === "dark" ? D.subtle : "#F7F7F7"), color: theme === "dark" ? MEMORY_DARK_INK : (audioMode === m.id ? D.blueDark : D.sub), borderRadius: 10, padding: "6px 10px", fontFamily: "inherit", fontWeight: 900, fontSize: 11.5, cursor: "pointer" }}>
                     {m.l}
                   </button>
                 ))}
@@ -11400,7 +11400,7 @@ export default function App() {
               </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {keyWords.map((w) => (
-                  <span key={w} style={{ border: `1.5px solid ${foundWords.includes(w) ? sec.color : D.line}`, background: foundWords.includes(w) ? "#F3FBEA" : "#F7F7F7", color: foundWords.includes(w) ? sec.dark : D.sub, borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 900 }}>
+                  <span key={w} style={{ border: `1.5px solid ${foundWords.includes(w) ? sec.color : D.line}`, background: foundWords.includes(w) ? (theme === "dark" ? D.greenBg : "#F3FBEA") : (theme === "dark" ? D.subtle : "#F7F7F7"), color: theme === "dark" ? D.ink : (foundWords.includes(w) ? sec.dark : D.sub), borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 900 }}>
                     {foundWords.includes(w) ? "✓ " : ""}{w}
                   </span>
                 ))}

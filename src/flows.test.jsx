@@ -3371,6 +3371,150 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(lightRayo.style.color).toMatch(LIGHT_SUB);
   });
 
+  it("dark Lectura shelf and reader chips follow the theme; light keeps the original fills", async () => {
+    const CARD = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const GREEN_BG = /#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i;
+    const EDGE = /#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\)/i;
+    const INK = /#E8E8EA|rgb\(\s*232,\s*232,\s*234\s*\)/i;
+    const SUB = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
+    const GREEN = /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i;
+    const SUBTLE = /#252830|rgb\(\s*37,\s*40,\s*48\s*\)/i;
+    const BLUE_BG = /#0F2A3A|rgb\(\s*15,\s*42,\s*58\s*\)/i;
+    const CREAM = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const MINT = /#F3FBEA|rgb\(\s*243,\s*251,\s*234\s*\)/i;
+    const WHITE = /#fff\b|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\)/i;
+    const LIGHT_INK = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
+    const LIGHT_SUB = /#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i;
+    const LIGHT_BLUE = /#DDF4FF|rgb\(\s*221,\s*244,\s*255\s*\)/i;
+    const LIGHT_SUBTLE = /#F7F7F7|rgb\(\s*247,\s*247,\s*247\s*\)/i;
+    const TRACK = /#E8E8E8|rgb\(\s*232,\s*232,\s*232\s*\)/i;
+    const GREEN_DARK = /#46A302|rgb\(\s*70,\s*163,\s*2\s*\)/i;
+    const SAGE = /#5C7356|rgb\(\s*92,\s*115,\s*86\s*\)/i;
+    const shelfText = (card, size) => [...card.querySelectorAll("div")].find((el) => el.style.fontSize === size);
+    const huntChip = (root, word) => [...root.querySelectorAll("span")].find((el) => el.textContent.replace(/^✓\s*/, "") === word);
+
+    const openDarkReader = async () => {
+      cleanup();
+      mockBrowser({ voices: [{ lang: "es-MX", name: "Paulina" }] });
+      seedProgress({
+        uiLang: "es",
+        theme: "dark",
+        stories: claimStories("story-0"),
+        storyFinds: { "story-0": ["muerte"] },
+      });
+      const user = userEvent.setup();
+      render(<App />);
+      await awaitHome();
+      await user.click(screen.getByTestId("nav-lectura"));
+      await waitFor(() => expect(screen.getByTestId("story-shelf-story-0")).toBeTruthy());
+      return user;
+    };
+
+    const user = await openDarkReader();
+    const claimed = screen.getByTestId("story-shelf-story-0");
+    const unclaimed = screen.getByTestId("story-shelf-story-1");
+    expect(claimed.style.background).toMatch(GREEN_BG);
+    expect(claimed.style.background).not.toMatch(MINT);
+    expect(unclaimed.style.background).toMatch(CARD);
+    expect(unclaimed.style.background).not.toMatch(WHITE);
+    expect(claimed.style.borderTopColor || claimed.style.borderColor).toMatch(EDGE);
+    expect(unclaimed.style.borderColor).toMatch(EDGE);
+    expect(getComputedStyle(claimed).borderTopWidth).toBe("2px");
+    expect(getComputedStyle(claimed).borderBottomWidth).toBe("4px");
+    const darkTitle = shelfText(claimed, "18px");
+    const darkSub = shelfText(claimed, "13px");
+    const darkStatus = shelfText(claimed, "12px");
+    const darkSouvenir = shelfText(claimed, "11.5px");
+    expect(darkTitle.style.color).toMatch(INK);
+    expect(darkSub.style.color).toMatch(SUB);
+    expect(darkStatus.style.color).toMatch(SUB);
+    expect(darkSouvenir.style.color).toMatch(GREEN);
+    expect(darkSouvenir.style.color).not.toMatch(SAGE);
+    expect(darkSouvenir.style.color).not.toMatch(GREEN_DARK);
+    expect(contrastRatio(darkTitle.style.color, claimed.style.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(darkSub.style.color, claimed.style.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(darkStatus.style.color, claimed.style.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(darkSouvenir.style.color, claimed.style.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(shelfText(unclaimed, "18px").style.color, unclaimed.style.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(shelfText(unclaimed, "13px").style.color, unclaimed.style.background)).toBeGreaterThanOrEqual(4.5);
+
+    await user.click(claimed);
+    await waitFor(() => expect(screen.getByTestId("narration-card")).toBeTruthy());
+    const activeMode = screen.getByRole("button", { name: "Cuento" });
+    const idleMode = screen.getByRole("button", { name: "Bilingüe" });
+    expect(activeMode.style.background).toMatch(WHITE);
+    expect(idleMode.style.background).toMatch(SUBTLE);
+    expect(idleMode.style.background).not.toMatch(LIGHT_SUBTLE);
+    expect(contrastRatio(idleMode.style.color, idleMode.style.background)).toBeGreaterThanOrEqual(4.5);
+    const futureBar = screen.getByTestId("lectura-progress").querySelectorAll("button")[1];
+    const questionMark = screen.getByRole("button", { name: "Preguntas" });
+    expect(futureBar.style.background).toMatch(EDGE);
+    expect(futureBar.style.background).not.toMatch(TRACK);
+    expect(questionMark.style.background).toMatch(EDGE);
+    expect(questionMark.style.color).toMatch(INK);
+    expect(questionMark.textContent).toBe("?");
+    expect(contrastRatio(questionMark.style.color, questionMark.style.background)).toBeGreaterThanOrEqual(4.5);
+    const activeAudio = screen.getByRole("button", { name: "Normal" });
+    const idleAudio = screen.getByRole("button", { name: "Lento" });
+    expect(activeAudio.style.background).toMatch(BLUE_BG);
+    expect(activeAudio.style.background).not.toMatch(LIGHT_BLUE);
+    expect(idleAudio.style.background).toMatch(SUBTLE);
+    expect(activeAudio.style.color).toMatch(CREAM);
+    expect(idleAudio.style.color).toMatch(CREAM);
+    expect(contrastRatio(activeAudio.style.color, activeAudio.style.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(idleAudio.style.color, idleAudio.style.background)).toBeGreaterThanOrEqual(4.5);
+    const hunt = screen.getByTestId("word-hunt-card");
+    const foundChip = huntChip(hunt, "muerte");
+    const plainChip = huntChip(hunt, "ofrenda");
+    expect(foundChip.style.background).toMatch(GREEN_BG);
+    expect(foundChip.style.background).not.toMatch(MINT);
+    expect(plainChip.style.background).toMatch(SUBTLE);
+    expect(plainChip.style.background).not.toMatch(LIGHT_SUBTLE);
+    expect(foundChip.style.color).toMatch(INK);
+    expect(plainChip.style.color).toMatch(INK);
+    expect(contrastRatio(foundChip.style.color, foundChip.style.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(plainChip.style.color, plainChip.style.background)).toBeGreaterThanOrEqual(4.5);
+
+    cleanup();
+    localStorage.removeItem(LIVE_KEY);
+    mockBrowser({ voices: [{ lang: "es-MX", name: "Paulina" }] });
+    seedProgress({
+      uiLang: "es",
+      theme: "light",
+      stories: claimStories("story-0"),
+      storyFinds: { "story-0": ["muerte"] },
+    });
+    const lightUser = userEvent.setup();
+    render(<App />);
+    await awaitHome();
+    await lightUser.click(screen.getByTestId("nav-lectura"));
+    const lightClaimed = screen.getByTestId("story-shelf-story-0");
+    const lightOpen = screen.getByTestId("story-shelf-story-1");
+    expect(lightClaimed.style.background).toMatch(MINT);
+    expect(lightOpen.style.background).toMatch(WHITE);
+    expect(lightClaimed.style.borderColor).toMatch(GREEN);
+    expect(shelfText(lightClaimed, "18px").style.color).toMatch(LIGHT_INK);
+    expect(shelfText(lightClaimed, "13px").style.color).toMatch(LIGHT_SUB);
+    expect(shelfText(lightClaimed, "12px").style.color).toMatch(GREEN);
+    expect(shelfText(lightClaimed, "11.5px").style.color).toMatch(GREEN_DARK);
+    await lightUser.click(lightClaimed);
+    await waitFor(() => expect(screen.getByTestId("narration-card")).toBeTruthy());
+    expect(screen.getByRole("button", { name: "Cuento" }).style.background).toMatch(WHITE);
+    expect(screen.getByRole("button", { name: "Bilingüe" }).style.background).toMatch(LIGHT_SUBTLE);
+    expect(screen.getByTestId("lectura-progress").querySelectorAll("button")[1].style.background).toMatch(TRACK);
+    expect(screen.getByRole("button", { name: "Preguntas" }).style.background).toMatch(TRACK);
+    expect(screen.getByRole("button", { name: "Preguntas" }).style.color).toMatch(LIGHT_SUB);
+    expect(screen.getByRole("button", { name: "Normal" }).style.background).toMatch(LIGHT_BLUE);
+    expect(screen.getByRole("button", { name: "Normal" }).style.color).toMatch(/#1899D6|rgb\(\s*24,\s*153,\s*214\s*\)/i);
+    expect(screen.getByRole("button", { name: "Lento" }).style.background).toMatch(LIGHT_SUBTLE);
+    expect(screen.getByRole("button", { name: "Lento" }).style.color).toMatch(LIGHT_SUB);
+    const lightHunt = screen.getByTestId("word-hunt-card");
+    expect(huntChip(lightHunt, "muerte").style.background).toMatch(MINT);
+    expect(huntChip(lightHunt, "muerte").style.color).toMatch(GREEN_DARK);
+    expect(huntChip(lightHunt, "ofrenda").style.background).toMatch(LIGHT_SUBTLE);
+    expect(huntChip(lightHunt, "ofrenda").style.color).toMatch(LIGHT_SUB);
+  });
+
   it("Hoy + Doctora door buries EMPIEZA / Repasar / Rutina diaria under Intermedio", async () => {
     cleanup();
     seedProgress({
