@@ -7042,6 +7042,67 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: prevH });
     }
   });
+
+  it("Safe/Risky wrong answer keeps Continue in the capped footer", async () => {
+    const prevW = window.innerWidth;
+    const prevH = window.innerHeight;
+    Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
+    Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: 844 });
+    try {
+      cleanup();
+      seedProgress({ uiLang: "en", hearts: 5, onboardingDone: true, firstSessionDone: true, theme: "light" });
+      const item = {
+        phrase: "Quedo a sus órdenes.",
+        context: { es: "Cierras un correo con una clienta.", en: "You are closing an email to a client." },
+        answer: "formal",
+        answers: ["formal"],
+        literal: { es: "Quedo bajo sus órdenes.", en: "I remain under your orders." },
+        note: { es: "En tono suave: estoy a su disposición. Cierre profesional mexicano — amable, claro, seguro en correo con clientas.", en: "Soft English: I’m at your service. Mexican professional close — warm, clear, safe for a client email." },
+      };
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "safeRisky",
+        tab: "practica",
+        safeGame: {
+          items: [item],
+          idx: 0,
+          score: 0,
+          streak: 0,
+          bestStreak: 0,
+          selected: "safe",
+          tapped: [],
+          tappedWrong: ["safe"],
+          done: false,
+          awarded: false,
+        },
+      }));
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("safe-risky-continue")).toBeTruthy());
+      expect(screen.getByText(/Better answer: Formal/)).toBeTruthy();
+      expect(window.innerWidth).toBe(390);
+      expect(window.innerHeight).toBe(844);
+
+      const footer = screen.getByTestId("safe-risky-feedback");
+      expect(footer.className).toMatch(/lesson-footer-cap/);
+      expect(footer.style.display).toBe("flex");
+      expect(footer.style.flexDirection).toBe("column");
+      expect(footer.style.overflow).toBe("hidden");
+      expect(footer.style.maxHeight).toMatch(/60(d)?vh/);
+      expect(footer.style.position).toBe("fixed");
+      expect(footer.style.bottom).toBe("0px");
+      const css = [...document.querySelectorAll("style")].map((node) => node.textContent || "").join("\n");
+      expect(css).toMatch(/\.lesson-footer-cap\s*\{[^}]*max-height:\s*60vh;\s*max-height:\s*60dvh;/);
+      const scroll = screen.getByTestId("safe-risky-feedback-scroll");
+      expect(scroll.style.overflowY).toBe("auto");
+      const actions = screen.getByTestId("safe-risky-feedback-actions");
+      const cont = screen.getByTestId("safe-risky-continue");
+      expect(actions.contains(cont)).toBe(true);
+      expect(scroll.contains(cont)).toBe(false);
+      expect(scroll.contains(screen.getByTestId("safe-risky-why"))).toBe(true);
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: prevW });
+      Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: prevH });
+    }
+  });
 });
 
 const funnelOf = (name) => (window.__andaleFunnelLog || []).filter((e) => e.event === name);

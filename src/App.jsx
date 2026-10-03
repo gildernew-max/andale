@@ -1815,6 +1815,104 @@ const WORD_CHIP_PHRASE_STYLE = {
   overflowWrap: "anywhere",
 };
 
+/** Scroll copy inside a 60dvh cap and keep the action row on screen.
+ *  Short cards stay in flow. A card whose bottom would leave the viewport
+ *  pins to the bottom edge (jsdom has no layout, so it pins structurally). */
+function CappedActions({ children }) {
+  return children;
+}
+
+function CappedFeedback({ testId, className = "", style, children }) {
+  const ref = useRef(null);
+  const docTop = useRef(0);
+  const [pin, setPin] = useState(false);
+  const [box, setBox] = useState(null);
+  const items = React.Children.toArray(children);
+  const actionIdx = items.findIndex((child) => React.isValidElement(child) && child.type === CappedActions);
+  const actions = actionIdx >= 0 ? items[actionIdx] : null;
+  const body = actionIdx >= 0 ? items.filter((_, i) => i !== actionIdx) : items;
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+    const measure = () => {
+      node.style.setProperty("max-height", "60vh");
+      node.style.setProperty("max-height", "60dvh");
+      const r = node.getBoundingClientRect();
+      const vh = window.innerHeight || 0;
+      const noLayout = r.width === 0 && r.height === 0;
+      if (noLayout) {
+        setPin((prev) => (prev ? prev : true));
+        return;
+      }
+      if (!pin) docTop.current = r.top + window.scrollY;
+      const topInView = (pin ? docTop.current : r.top + window.scrollY) - window.scrollY;
+      const height = pin ? (box?.height || r.height) : r.height;
+      const cap = vh * 0.6;
+      const overflow = topInView + Math.min(height, cap || height) > vh + 0.5;
+      if (overflow && !pin) {
+        setBox({ left: r.left, width: r.width, height: r.height });
+        setPin(true);
+      } else if (!overflow && pin) {
+        setPin(false);
+      }
+    };
+    measure();
+    const onResize = () => {
+      docTop.current = 0;
+      setBox(null);
+      setPin(false);
+    };
+    window.addEventListener("resize", onResize);
+    let ro;
+    if (typeof ResizeObserver === "function") {
+      ro = new ResizeObserver(measure);
+      ro.observe(node);
+    }
+    return () => {
+      window.removeEventListener("resize", onResize);
+      ro?.disconnect();
+    };
+  }, [pin, box]);
+
+  return (
+    <>
+      {pin && box ? <div aria-hidden="true" style={{ height: box.height }} /> : null}
+      <div
+        ref={ref}
+        data-testid={testId}
+        data-pinned={pin ? "1" : "0"}
+        className={`lesson-footer-cap${className ? ` ${className}` : ""}`}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          boxSizing: "border-box",
+          minHeight: 0,
+          ...style,
+          ...(pin ? {
+            position: "fixed",
+            bottom: 0,
+            zIndex: 12,
+            marginTop: 0,
+            marginBottom: "env(safe-area-inset-bottom, 0px)",
+            ...(box ? { left: box.left, width: box.width, right: "auto" } : { left: 0, right: 0, width: "100%" }),
+          } : null),
+        }}
+      >
+        <div data-testid={testId ? `${testId}-scroll` : undefined} className="lesson-footer-scroll" style={{ flex: pin ? "1 1 auto" : "0 0 auto", minWidth: 0, minHeight: 0, overflowX: pin ? "hidden" : "visible", overflowY: pin ? "auto" : "visible", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+          {body}
+        </div>
+        {actions ? (
+          <div data-testid={testId ? `${testId}-actions` : undefined} style={{ flexShrink: 0, width: "100%" }}>
+            {actions}
+          </div>
+        ) : null}
+      </div>
+    </>
+  );
+}
+
 const cubetasBucketAt = (refs, x, y) => {
   for (const id of CUBETAS_BUCKETS) {
     const el = refs[id];
@@ -1856,7 +1954,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
   };
 
   return (
-    <div data-testid="cubetas-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
+    <div data-testid="cubetas-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px calc(240px + env(safe-area-inset-bottom, 0px))" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
         <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div data-testid="cubetas-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{cubetasTitle(uiLang)}</div>
@@ -2075,7 +2173,8 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
           )}
 
           {run.status === "reveal" && taught && (
-            <div className="pop" style={{ marginTop: 18, border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, textAlign: "left" }}>
+            <CappedFeedback testId="cubetas-reveal" className="pop" style={{ marginTop: 18, border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, textAlign: "left" }}>
+              <div>
               <div data-testid="cubetas-literal" style={{ marginTop: 2 }}>
                 <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.literalLabel}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasLiteral(taught, uiLang)}</div>
@@ -2087,8 +2186,11 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
                 <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.whyLabel}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{cubetasWhy(taught, uiLang)}</div>
               </div>
-              <Btn data-testid="cubetas-next" color={D.green} dark={D.greenDark} onClick={onNext} style={{ width: "100%", marginTop: 12 }}>{cubetasNextLabel(uiLang)}</Btn>
-            </div>
+              </div>
+              <CappedActions>
+                <Btn data-testid="cubetas-next" color={D.green} dark={D.greenDark} onClick={onNext} style={{ width: "100%", marginTop: 12 }}>{cubetasNextLabel(uiLang)}</Btn>
+              </CappedActions>
+            </CappedFeedback>
           )}
 
           {run.status === "clear" && (
@@ -2300,7 +2402,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
   };
 
   return (
-    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
+    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px calc(240px + env(safe-area-inset-bottom, 0px))`, boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
         <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: labelColor, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -2314,14 +2416,18 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
         <MemoryMark size={40} labeled onDark={darkBoard} />
       </div>
       {done ? (
-        <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
-          <div data-testid="memory-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{memoryWinLine(uiLang)}</div>
-          {teach && (
-            <MemoryTeach entry={teach} uiLang={uiLang} D={D} />
-          )}
-          <Btn color={D.green} dark={D.greenDark} data-testid="memory-again" onClick={onAgain} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New pairs" : "Otros pares"}</Btn>
-          <Btn outline data-testid="memory-back" onClick={onClose} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
-        </div>
+        <CappedFeedback testId="memory-end" className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
+          <div>
+            <div data-testid="memory-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{memoryWinLine(uiLang)}</div>
+            {teach && (
+              <MemoryTeach entry={teach} uiLang={uiLang} D={D} />
+            )}
+          </div>
+          <CappedActions>
+            <Btn color={D.green} dark={D.greenDark} data-testid="memory-again" onClick={onAgain} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New pairs" : "Otros pares"}</Btn>
+            <Btn outline data-testid="memory-back" onClick={onClose} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
+          </CappedActions>
+        </CappedFeedback>
       ) : (
         <>
           <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: labelColor, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
@@ -4758,6 +4864,7 @@ export default function App() {
   const [flashMode, setFlashMode] = useState("es-en");
   const [doctorIdx, setDoctorIdx] = useState(0);
   const [doctorReveal, setDoctorReveal] = useState(false);
+  const doctorInputRef = useRef(null);
   const [doctorOpen, setDoctorOpen] = useState(false);
   const [doctorGuess, setDoctorGuess] = useState("");
   const [doctorTip, setDoctorTip] = useState(false);
@@ -8511,7 +8618,8 @@ export default function App() {
             const readyDoctoraWin = shouldDoctoraEarlyWin({ firstDoctora, hits: doctorHits });
             if (!doctorOpen) return null;
             return (
-              <div data-testid="phrase-doctor-board" style={{ margin: "0 0 8px", border: `2px solid ${D.purple}`, borderBottom: `5px solid ${D.purpleDark}`, borderRadius: 18, background: D.card, textAlign: "left", overflow: "hidden" }}>
+              <CappedFeedback testId="phrase-doctor-board" style={{ margin: "0 0 8px", border: `2px solid ${D.purple}`, borderBottom: `5px solid ${D.purpleDark}`, borderRadius: 18, background: D.card, textAlign: "left" }}>
+                <div>
                 <div style={{ display: "flex", gap: 11, alignItems: "center", padding: "12px 14px", background: D.purpleBg }}>
                   <CoachPortrait id="valeria" mood={doctorReveal ? "party" : "focused"} size={58} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -8520,7 +8628,7 @@ export default function App() {
                     <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, lineHeight: 1.3 }}>{uiLang === "en" ? "Valeria fixes translation-shaped Spanish." : "Valeria corrige español con forma de traducción."}</div>
                   </div>
                 </div>
-                <div style={{ padding: "13px 14px 14px" }}>
+                <div style={{ padding: "13px 14px 0" }}>
                   <div style={{ fontSize: 11, fontWeight: 900, color: D.sub, letterSpacing: ".06em", marginBottom: 5 }}>{uiLang === "en" ? "STIFF VERSION" : "VERSIÓN RÍGIDA"}</div>
                   <div style={{ border: `2px solid ${D.line}`, borderRadius: 12, padding: "10px 12px", background: D.subtle, fontWeight: 900, fontSize: 16, color: D.ink }}>
                     {item.awkward}
@@ -8528,6 +8636,7 @@ export default function App() {
                   {(!doctorReveal || doctorGrade === "equivalent") && (
                     <div data-testid={doctorGrade === "equivalent" ? "phrase-doctor-miss" : undefined}>
                       <input
+                        ref={doctorInputRef}
                         data-testid="phrase-doctor-guess"
                         value={doctorGuess}
                         disabled={doctorReveal}
@@ -8586,8 +8695,12 @@ export default function App() {
                       {uiLang === "en" ? "Guess the more natural version before revealing." : "Adivina la versión más natural antes de revelar."}
                     </div>
                   )}
-                  <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                </div>
+                </div>
+                <CappedActions>
+                  <div style={{ display: "flex", gap: 8, marginTop: 12, padding: "0 14px 14px" }}>
                     <button data-testid="phrase-doctor-fix" onClick={() => {
+                      doctorInputRef.current?.blur();
                       if (doctorReveal) {
                         if (readyDoctoraWin) { finishDoctoraWin(); return; }
                         setDoctorReveal(false);
@@ -8638,8 +8751,8 @@ export default function App() {
                       {uiLang === "en" ? "New" : "Otra"}
                     </button>
                   </div>
-                </div>
-              </div>
+                </CappedActions>
+              </CappedFeedback>
             );
           })()}
           <button onClick={startSafeRisky} data-testid="safe-risky-start"
@@ -10335,7 +10448,7 @@ export default function App() {
         const tiles = Array.from({ length: 24 }, (_, i) => 24 - i);
         const trophyCount = Object.values(prog.missions?.gameTrophies || {}).filter(Boolean).length;
         return (
-          <div data-testid="snakes-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 14px 130px" }}>
+          <div data-testid="snakes-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 14px calc(240px + env(safe-area-inset-bottom, 0px))" }}>
             {burst > 0 && snakeGame.done && <Confetti key={burst} count={54} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
               <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.snake); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -10428,7 +10541,8 @@ export default function App() {
                   })}
                 </div>
                 {snakeGame.status !== "idle" && (
-                  <div className="pop" style={{ marginTop: 12, border: `2px solid ${snakeGame.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: snakeGame.status === "correct" ? D.greenBg : D.redBg }}>
+                  <CappedFeedback testId="snakes-feedback" className="pop" style={{ marginTop: 12, border: `2px solid ${snakeGame.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: snakeGame.status === "correct" ? D.greenBg : D.redBg }}>
+                    <div>
                     <div style={{ fontWeight: 900, color: snakeGame.status === "correct" ? D.greenDark : D.redDark }}>
                       {snakeGame.status === "correct"
                         ? `${uiLang === "en" ? "Roll" : "Tiro"} ${snakeGame.roll}: ${snakeGame.tile} → ${snakeGame.pendingTile}${snakeGame.link ? ` → ${snakeGame.finalTile}` : ""}`
@@ -10437,8 +10551,11 @@ export default function App() {
                     <div style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>
                       {snakeGame.link?.kind === "ladder" ? (uiLang === "en" ? "Shortcut unlocked." : "Atajo desbloqueado.") : snakeGame.link?.kind === "snake" ? (uiLang === "en" ? "A slide tile pulled you back." : "Una casilla de resbalón te bajó.") : explainText(qg, uiLang)}
                     </div>
-                    <Btn color={D.green} dark={D.greenDark} onClick={nextSnake} style={{ width: "100%", marginTop: 12 }}>{snakeGame.finalTile >= 24 ? (uiLang === "en" ? "Claim prize" : "Cobrar premio") : L.continue}</Btn>
-                  </div>
+                    </div>
+                    <CappedActions>
+                      <Btn color={D.green} dark={D.greenDark} onClick={nextSnake} style={{ width: "100%", marginTop: 12 }}>{snakeGame.finalTile >= 24 ? (uiLang === "en" ? "Claim prize" : "Cobrar premio") : L.continue}</Btn>
+                    </CappedActions>
+                  </CappedFeedback>
                 )}
               </div>
             )}
@@ -10465,7 +10582,7 @@ export default function App() {
         const correctKeys = safeRiskyCorrectKeys(item);
         const correctLeft = correctKeys.filter((key) => !tapped.includes(key)).length;
         return (
-          <div data-testid="safe-risky-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
+          <div data-testid="safe-risky-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px calc(240px + env(safe-area-inset-bottom, 0px))" }}>
             {burst > 0 && safeGame.done && <Confetti key={burst} count={36} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.safeRisky); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -10535,7 +10652,8 @@ export default function App() {
                   </div>
                 )}
                 {revealed && (
-                  <div className="pop" style={{ marginTop: 14, border: `2px solid ${hit ? D.green : D.red}`, borderRadius: 14, padding: "11px 13px", background: hit ? D.greenBg : D.redBg, textAlign: "left" }}>
+                  <CappedFeedback testId="safe-risky-feedback" className="pop" style={{ marginTop: 14, border: `2px solid ${hit ? D.green : D.red}`, borderRadius: 14, padding: "11px 13px", background: hit ? D.greenBg : D.redBg, textAlign: "left" }}>
+                    <div>
                     <div style={{ fontWeight: 900, color: hit ? D.greenDark : D.redDark, marginBottom: 4 }}>
                       {hit ? (safeGame.streak >= 3 ? (uiLang === "en" ? "Combo judgment." : "Juicio en combo.") : (uiLang === "en" ? "Good judgment." : "Buen juicio.")) : `${uiLang === "en" ? "Better answer" : "Mejor respuesta"}: ${safeRiskyAnswerLabel(item, labels)}`}
                     </div>
@@ -10547,8 +10665,11 @@ export default function App() {
                       <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{L.whyLabel}</div>
                       <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{item.note[uiLang]}</div>
                     </div>
-                    <Btn data-testid="safe-risky-continue" color={D.red} dark={D.redDark} onClick={nextSafeRisky} style={{ width: "100%", marginTop: 12 }}>{safeGame.idx + 1 >= safeGame.items.length ? (uiLang === "en" ? "Finish" : "Terminar") : L.continue}</Btn>
-                  </div>
+                    </div>
+                    <CappedActions>
+                      <Btn data-testid="safe-risky-continue" color={D.red} dark={D.redDark} onClick={nextSafeRisky} style={{ width: "100%", marginTop: 12 }}>{safeGame.idx + 1 >= safeGame.items.length ? (uiLang === "en" ? "Finish" : "Terminar") : L.continue}</Btn>
+                    </CappedActions>
+                  </CappedFeedback>
                 )}
               </>
             )}
@@ -10716,7 +10837,7 @@ export default function App() {
         const endLabel = theme === "dark" ? D.sub : lightEnd.quiet;
         const endBody = theme === "dark" ? D.ink : lightEnd.quiet;
         return (
-          <div data-testid="hangman-board" data-word={ahorcado.word} data-timer={ahorcado.timerOn ? "on" : "off"} style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
+          <div data-testid="hangman-board" data-word={ahorcado.word} data-timer={ahorcado.timerOn ? "on" : "off"} style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px calc(240px + env(safe-area-inset-bottom, 0px))" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -10730,7 +10851,8 @@ export default function App() {
               <HangmanMark size={56} />
             </div>
             {over ? (
-              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", borderRadius: 14, padding: "11px 13px", ...(theme === "dark" ? darkHangmanEndCardStyle() : { background: lightEnd.background, border: lightEnd.border, borderBottom: lightEnd.borderBottom }) }}>
+              <CappedFeedback testId="hangman-end" className="pop" style={{ textAlign: "left", borderRadius: 14, padding: "11px 13px", ...(theme === "dark" ? darkHangmanEndCardStyle() : { background: lightEnd.background, border: lightEnd.border, borderBottom: lightEnd.borderBottom }) }}>
+                <div>
                 {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: endTitle, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
                 <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: endTitle, margin: "0 0 12px" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
@@ -10749,9 +10871,12 @@ export default function App() {
                     )}
                   </div>
                 )}
-                <Btn color={D.green} dark={D.greenDark} data-testid="hangman-again" onClick={() => startAhorcado(gamesReturnRef.current)} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
-                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8, ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
-              </div>
+                </div>
+                <CappedActions>
+                  <Btn color={D.green} dark={D.greenDark} data-testid="hangman-again" onClick={() => startAhorcado(gamesReturnRef.current)} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
+                  <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8, ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
+                </CappedActions>
+              </CappedFeedback>
             ) : (
               <>
                 <p data-testid="hangman-howto" style={{ margin: "0 0 14px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{hangmanHowTo(uiLang)}</p>
@@ -10841,7 +10966,7 @@ export default function App() {
 
       {/* ---------- JEOPARDY ---------- */}
       {screen === "jeopardy" && jeopardy && (
-        <div data-testid="jeopardy-board" style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
+        <div data-testid="jeopardy-board" style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px calc(240px + env(safe-area-inset-bottom, 0px))" }}>
           {burst > 0 && jeopardy.complete && <Confetti key={burst} count={48} />}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
             <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -10882,13 +11007,17 @@ export default function App() {
                 })}
               </div>
               {jeopardy.status !== "idle" && (
-                <div data-testid="jeopardy-result" className="pop" style={{ marginTop: 13, border: `2px solid ${jeopardy.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: jeopardy.status === "correct" ? D.greenBg : D.redBg }}>
+                <CappedFeedback testId="jeopardy-result" className="pop" style={{ marginTop: 13, border: `2px solid ${jeopardy.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: jeopardy.status === "correct" ? D.greenBg : D.redBg }}>
+                  <div>
                   <div style={{ fontWeight: 900, color: jeopardy.status === "correct" ? D.greenDark : D.redDark }}>
                     {jeopardy.status === "correct" ? `+${jeopardy.active.stake || jeopardy.active.value}` : `${jeopardy.active.double ? `-${Math.floor((jeopardy.active.stake || jeopardy.active.value) / 2)} · ` : ""}${jeopardyAnswerLabel(uiLang)}: ${jeopardy.active.answer}`}
                   </div>
                   <div data-testid="jeopardy-why" style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>{explainText(jeopardy.active, uiLang) || uiText(jeopardy.active.focusDesc, uiLang)}</div>
-                  <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-continue" onClick={closeJeopardyPrompt} style={{ width: "100%", marginTop: 12 }}>{L.continue}</Btn>
-                </div>
+                  </div>
+                  <CappedActions>
+                    <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-continue" onClick={closeJeopardyPrompt} style={{ width: "100%", marginTop: 12 }}>{L.continue}</Btn>
+                  </CappedActions>
+                </CappedFeedback>
               )}
             </div>
           ) : (
