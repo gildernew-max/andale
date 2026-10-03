@@ -1,20 +1,19 @@
 /** Optional email on the first Hoy Cenzontle win. Skip never blocks Lectura.
  *  One uiLang face. Spanish is the fallback. The address never goes on the funnel bus.
  *
- *  COLLECTOR_ENDPOINT is empty unless VITE_COLLECTOR_ENDPOINT is set at build
- *  time. Empty means a submitted address is written only to localStorage key
- *  `andale-waitlist` on this device. No service receives it. No email is sent.
- *  Funnel events stay on the in-browser bus.
+ *  The card and the collector stay off unless collectorEndpoint() is non-empty
+ *  (VITE_COLLECTOR_ENDPOINT or VITE_FIRST_WIN_EMAIL_ENDPOINT at build time).
+ *  With both empty, the card is not shown, nothing is written to
+ *  `andale-waitlist`, and no request is sent.
  *
- *  To turn the collector on later: deploy docs/first-win-email-collector.gs
- *  by hand, then set VITE_COLLECTOR_ENDPOINT to that web app URL and rebuild.
- *  This repo does not deploy it.
+ *  To turn it on later: deploy docs/first-win-email-collector.gs by hand,
+ *  set one of those URLs, and rebuild. This repo does not deploy it.
  */
 
-import { postCollector, COLLECTOR_ENDPOINT } from "./collector.js";
+import { postCollector, COLLECTOR_ENDPOINT, collectorEndpoint } from "./collector.js";
 import { isWaitlistEmail, saveWaitlistNotice } from "./waitlist.js";
 
-export { COLLECTOR_ENDPOINT };
+export { COLLECTOR_ENDPOINT, collectorEndpoint };
 
 export const FIRST_WIN_EMAIL_SOURCE = "first-win";
 
@@ -110,8 +109,13 @@ export function firstWinEmailError(lang) {
   return face(FIRST_WIN_EMAIL_ERROR, lang);
 }
 
-/** Once, on the first Hoy Cenzontle win, until the learner submits or leaves. */
-export function shouldShowFirstWinEmail({ firstHoy = false, emailSeen = false } = {}) {
+/** Once, on the first Hoy Cenzontle win, until the learner submits or leaves.
+ *  Hidden when the shared endpoint helper is empty. */
+export function shouldShowFirstWinEmail({ firstHoy = false, emailSeen = false, endpoint } = {}) {
+  const url = endpoint === undefined
+    ? collectorEndpoint()
+    : (typeof endpoint === "string" ? endpoint.trim() : "");
+  if (!url) return false;
   if (emailSeen) return false;
   return !!firstHoy;
 }
@@ -123,12 +127,12 @@ function postedAt(now) {
 }
 
 /**
- * Validate and keep a local copy. When COLLECTOR_ENDPOINT is set, also send
- * { type:'email', email, lang, source, ts } as text/plain.
- * An empty endpoint does not send. The return value never includes the address.
+ * Validate, keep a local copy, and send { type:'email', email, lang, source, ts }
+ * as text/plain. An empty endpoint does not store and does not send.
+ * The return value never includes the address.
  */
 export async function deliverFirstWinEmail(email, {
-  endpoint = COLLECTOR_ENDPOINT,
+  endpoint = collectorEndpoint(),
   lang = "es",
   now,
   fetchImpl = globalThis.fetch,
@@ -137,10 +141,10 @@ export async function deliverFirstWinEmail(email, {
 } = {}) {
   const trimmed = typeof email === "string" ? email.trim() : "";
   if (!isWaitlistEmail(trimmed)) return { ok: false };
-  const saved = saveWaitlistNotice(trimmed, storage);
-  if (!saved.ok) return { ok: false };
   const url = typeof endpoint === "string" ? endpoint.trim() : "";
   if (!url) return { ok: true };
+  const saved = saveWaitlistNotice(trimmed, storage);
+  if (!saved.ok) return { ok: false };
   const sent = await postCollector({
     type: "email",
     email: trimmed,

@@ -1,20 +1,31 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
+import { playSound as playGameSound } from "./playSound.js";
 import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
 import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./schema.js";
 import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
+import { paywallStillPath } from "./paywallStill.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
+import { splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
+import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from "./hoyChoiceCard.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
-import { gradeListedPhrase } from "./wordOrder.js";
+import { streakChipLabel } from "./streakChip.js";
+import { winNumeralColor } from "./winNumeral.js";
+import { scoreCountClause } from "./scoreLine.js";
+import { probeAudioFile, storyAudioPath, storyAudioUrl } from "./storyAudio.js";
+import { watchWordSheetPlacement, wordSheetClose, wordSheetReveal } from "./wordSheet.js";
+import { isSenderoLesson } from "./senderoWin.js";
+import { gradeListedPhrase, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
-import { shipFunnelEvent } from "./collector.js";
+import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
 import { isWaitlistEmail } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
@@ -23,8 +34,12 @@ import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClu
 import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
+import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
+import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle, spanishKeyboardKeyStyle } from "./spanishKeyboard.js";
+import { bucketBodyColor, bucketTileStyle, gamesHubCardChrome, gamesHubFocusColor, hangmanLightEndChrome, letterSlotUnderline, letterSlotUnderlineWidth, memoryCardPaint, wordleActionKeyChrome } from "./sageChrome.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
+import { MemoryCardFace } from "./MemoryCardFace.jsx";
 import { subjFiveLines } from "./subjFive.js";
 import {
   sobremesaDeepen,
@@ -40,6 +55,12 @@ import {
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
+import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
+import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
+import Onboarding from "./Onboarding.jsx";
+import { beginnerFirstQuestions, beginnerWhyLine, beginnerWinLine, BEGINNER_SESSION_TITLE } from "./beginnerFirstSession.js";
+import { firstSessionWhyLine, firstSessionWinLine } from "./firstSessionWords.js";
 import { WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -102,6 +123,7 @@ import {
   hangmanSlotIndexForKey,
   hangmanSlotKey,
   hangmanTitle,
+  emphasisParts,
   hangmanWhy,
   hangmanWhyLabel,
   hangmanWinLine,
@@ -111,6 +133,28 @@ import {
   isHangmanSolved,
   startHangmanRun,
 } from "./hangman.js";
+import {
+  loadWordleRun,
+  saveWordleRun,
+  WORDLE_ABSENT,
+  WORDLE_CORRECT,
+  WORDLE_PRESENT,
+  wordleBackspace,
+  wordleChrome,
+  wordleCommit,
+  wordleDayKey,
+  wordleEnterLabel,
+  wordleGuessSet,
+  wordleHowTo,
+  wordleInvalidLine,
+  wordleKeyState,
+  wordleLetterFromKey,
+  wordleQuiet,
+  wordleRows,
+  wordleSentenceParts,
+  wordleTitle,
+  wordleTypeLetter,
+} from "./wordle.js";
 import {
   JEOPARDY_VALUES,
   chooseJeopardyChoice,
@@ -143,7 +187,9 @@ import {
   finishMemoryRun,
   hydrateMemory,
   isMemoryDone,
+  memoryCardLabel,
   memoryCardText,
+  memoryCardTranslation,
   memoryHowTo,
   memoryIsOpen,
   memoryLiteralWhyLabel,
@@ -156,6 +202,19 @@ import {
   memoryWinLine,
   startMemoryRun,
 } from "./memory.js";
+import { CrosswordMark, CrosswordPlayfield } from "./CrosswordPlayfield.jsx";
+import {
+  CROSSWORD_GRID,
+  backspaceCrossword,
+  crosswordQuiet,
+  crosswordTitle,
+  hydrateCrossword,
+  revealCrosswordWord,
+  selectCrosswordCell,
+  selectCrosswordClue,
+  startCrosswordRun,
+  typeCrosswordLetter,
+} from "./crossword.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -251,6 +310,7 @@ const snapshotLive = (s) => {
     ahorcado: s.ahorcado,
     cubetasGame: s.cubetasGame,
     memoryGame: s.memoryGame,
+    crosswordGame: s.crosswordGame,
   };
 };
 
@@ -731,21 +791,6 @@ const wordDiff = (correct, user) => {
 };
 
 const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-
-/* Audio note: .m4a (AAC) plays in Chrome, Edge, Firefox, and Safari; the previous
-   .aiff files were Safari-only. Convert the local prototypes with:
-   for f in audio/story-0-p*.aiff; do ffmpeg -i "$f" -c:a aac -b:a 96k "${f%.aiff}.m4a"; done
-   Missing/unsupported files still fall back to chunked TTS automatically. */
-const STORY_AUDIO = {
-  "story-0": [
-    "audio/story-0-p0.m4a",
-    "audio/story-0-p1.m4a",
-    "audio/story-0-p2.m4a",
-    "audio/story-0-p3.m4a",
-    "audio/story-0-p4.m4a",
-    "audio/story-0-p5.m4a",
-  ],
-};
 
 const splitSentences = (text) => text
   .replace(/[«»]/g, "")
@@ -1534,6 +1579,13 @@ const CoachPortrait = ({ id = "luna", mood = "happy", size = 92, badge }) => {
 
 const coachName = (id) => COACHES[id]?.name || COACHES.luna.name;
 
+/** Dark mode only, and only the Luna name tag. Light mode stays on .nametag. */
+const lunaNameTagChrome = (theme, name) => (
+  theme === "dark" && name === "Luna"
+    ? { background: "#1E2128", borderColor: "#2A2E36", color: "#CDBBA6" }
+    : undefined
+);
+
 /* ---------------- CONFETTI ---------------- */
 
 const CONF_COLORS = ["#58CC02", "#1CB0F6", "#FFC800", "#FF4B4B", "#CE82FF", "#FF9600", "#E4007C"];
@@ -2067,6 +2119,14 @@ const HubTileArt = ({ face }) => (
   />
 );
 
+/** Flat line-art bucket. Sage body, terracotta handle. No water, no gradient. */
+const BucketMark = ({ size = 44, body = "#6F7757" }) => (
+  <svg data-testid="cubetas-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
+    <path d="M15 15.2v-1.8a7 7 0 0 1 14 0v1.8" fill="none" stroke="#C46B3A" strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M11 17.2h22l-2.15 16.4a2.6 2.6 0 0 1-2.6 2.3H15.75a2.6 2.6 0 0 1-2.6-2.3L11 17.2z" fill={body} />
+  </svg>
+);
+
 /** Flat geometric gallows — cream / terracotta / sage. No body, no second mascot. */
 const HangmanMark = ({ size = 44 }) => (
   <svg data-testid="hangman-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
@@ -2078,9 +2138,9 @@ const HangmanMark = ({ size = 44 }) => (
 );
 
 /** Flat geometric board — cream / terracotta / sage. No second mascot. */
-const JeopardyMark = ({ size = 44 }) => (
+const JeopardyMark = ({ size = 44, tile = "#F6EFE4" }) => (
   <svg data-testid="jeopardy-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="5" y="5" width="34" height="34" rx="6" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="2" />
+    <rect x="5" y="5" width="34" height="34" rx="6" fill={tile} stroke="#C46B3A" strokeWidth="2" />
     <rect x="10" y="10" width="7" height="7" rx="1" fill="#5C7356" />
     <rect x="19" y="10" width="7" height="7" rx="1" fill="#5C7356" />
     <rect x="28" y="10" width="7" height="7" rx="1" fill="#5C7356" />
@@ -2093,11 +2153,47 @@ const JeopardyMark = ({ size = 44 }) => (
   </svg>
 );
 
-/** Flat geometric two-tile / flip-card mark — cream / terracotta / sage. No second mascot. */
-const MemoryMark = ({ size = 44, labeled = false }) => (
+/** Dark-game Memory board. Light mode keeps the cream / white / terracotta chrome. */
+const MEMORY_DARK_PAGE = "#15171C";
+const MEMORY_DARK_CARD = "#1E2128";
+/** Soft gray, one step lighter than the card (same step as D_DARK.subtle). */
+const MEMORY_DARK_EDGE = "#252830";
+const MEMORY_DARK_INK = "#F6EFE4";
+/** Muted gray. 6.44:1 on the card, including at 70% of the hero. */
+const MEMORY_DARK_GLOSS = "#A0A4AB";
+/** Matched fill. Cream on this sage is 4.58:1, so the small gloss clears 4.5. */
+const MEMORY_DARK_SAGE = "#677050";
+/** Header labels on the page. 7.17:1 against the page. */
+const MEMORY_DARK_LABEL = "#A0A4AB";
+/** Card-back sage tile, lightened so it stays visible on the dark card. */
+const MEMORY_DARK_MARK = "#B8C0A0";
+
+/** Flat five-tile mark — cream / terracotta / sage. No second mascot. */
+const WordleMark = ({ size = 44, tile = "#F6EFE4" }) => (
+  <svg data-testid="wordle-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
+    <rect x="3" y="16" width="6.4" height="6.4" rx="1.2" fill={tile} stroke="#C46B3A" strokeWidth="1.4" />
+    <rect x="11.2" y="16" width="6.4" height="6.4" rx="1.2" fill="#5C7356" />
+    <rect x="19.4" y="16" width="6.4" height="6.4" rx="1.2" fill="#C46B3A" />
+    <rect x="27.6" y="16" width="6.4" height="6.4" rx="1.2" fill="#5C7356" />
+    <rect x="35.2" y="16" width="6.4" height="6.4" rx="1.2" fill={tile} stroke="#C46B3A" strokeWidth="1.4" />
+  </svg>
+);
+
+/** Flat geometric two-tile / flip-card mark — cream / terracotta / sage. No second mascot.
+ *  `tile` is the left plate (Games hub passes the dark card). `onDark` lightens the sage half on the Memory board. */
+const MemoryMark = ({ size = 44, labeled = false, tile = "#F6EFE4", onDark = false }) => (
   <svg data-testid={labeled ? "memory-mark" : undefined} width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="5" y="9" width="16" height="26" rx="4" fill="#F6EFE4" stroke="#C46B3A" strokeWidth="2" />
-    <rect x="23" y="9" width="16" height="26" rx="4" fill="#5C7356" />
+    <rect x="5" y="9" width="16" height="26" rx="4" fill={tile} stroke="#C46B3A" strokeWidth="2" />
+    <rect
+      x="23"
+      y="9"
+      width="16"
+      height="26"
+      rx="4"
+      fill={onDark ? MEMORY_DARK_MARK : "#5C7356"}
+      stroke={onDark ? MEMORY_DARK_INK : undefined}
+      strokeWidth={onDark ? 2 : undefined}
+    />
   </svg>
 );
 
@@ -2152,17 +2248,19 @@ const MEMORY_CARD_FACE = {
   overflow: "visible",
   textOverflow: "unset",
   wordBreak: "normal",
-  overflowWrap: "break-word",
-  hyphens: "manual",
+  overflowWrap: "normal",
+  hyphens: "none",
 };
 
 /** One-screen Memory playfield. Tap two cards or drag a pair. Soft chrome parked. */
-const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, onLang }) => {
+const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, onClose, onAgain, onLang }) => {
   const [drag, setDrag] = useState(null);
   const dragRef = useRef(null);
   const cardsRef = useRef({});
   const done = isMemoryDone(run);
   const teach = memoryShowTeach(run) ? memoryEntryForRun(run) : null;
+  const darkBoard = D === D_DARK;
+  const labelColor = darkBoard ? MEMORY_DARK_LABEL : D.sub;
 
   const onCardPointerDown = (e, id) => {
     if (run.status !== "play" || run.miss) return;
@@ -2198,18 +2296,18 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
   };
 
   return (
-    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box" }}>
+    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: labelColor, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{memoryTitle(uiLang)}</div>
-          <div data-testid="memory-quiet" style={{ fontSize: 12, fontWeight: 700, color: D.sub }}>{memoryQuiet(uiLang)}</div>
+          <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: labelColor }}>{memoryTitle(uiLang)}</div>
+          <div data-testid="memory-quiet" style={{ fontSize: 12, fontWeight: 700, color: labelColor }}>{memoryQuiet(uiLang)}</div>
         </div>
-        <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
+        <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: labelColor }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
         <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
       </div>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-        <MemoryMark size={40} labeled />
+        <MemoryMark size={40} labeled onDark={darkBoard} />
       </div>
       {done ? (
         <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
@@ -2222,15 +2320,39 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
         </div>
       ) : (
         <>
-          <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
+          <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: labelColor, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
           <div data-testid="memory-grid" data-cols="3" className="memory-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gridAutoRows: `minmax(${MEMORY_CARD_MIN}px, auto)`, gap: 8, width: "100%", maxWidth: "none", justifyItems: "stretch", alignItems: "stretch" }}>
             {(run.cards || []).map((card) => {
               const open = memoryIsOpen(run, card);
               const dragging = drag?.fromId === card.id;
-              const hovered = drag?.hover === card.id;
               const wrong = run.miss && (run.lastWrong || []).includes(card.id);
               const showFace = open || dragging;
+              const matched = open && (run.matched || []).includes(card.pairId);
               const text = memoryCardText(card, uiLang, run);
+              const gloss = memoryCardTranslation(card, uiLang, run);
+              const paint = memoryCardPaint({
+                theme: darkBoard ? "dark" : "light",
+                matched,
+                wrong,
+                faceUp: showFace,
+                kind: card.kind,
+                wrongBorder: D.red,
+                wrongLip: D.redDark,
+                wrongFill: D.redBg,
+                wrongInk: D.redDark,
+                ink: darkBoard ? MEMORY_DARK_INK : D.ink,
+              });
+              const darkUnmatched = darkBoard && !matched && !wrong;
+              const lightUnmatched = !darkBoard && !matched && !wrong;
+              const border = darkUnmatched ? `2px solid ${MEMORY_DARK_EDGE}` : lightUnmatched ? "2px solid #C46B3A" : paint.border;
+              const borderBottom = darkUnmatched ? `4px solid ${MEMORY_DARK_EDGE}` : lightUnmatched ? "4px solid #C46B3A" : paint.borderBottom;
+              const background = darkUnmatched ? MEMORY_DARK_CARD : lightUnmatched ? (showFace ? "#fff" : HUB_CREAM) : (darkBoard && matched && !wrong ? MEMORY_DARK_SAGE : paint.background);
+              const ink = darkUnmatched ? MEMORY_DARK_INK : paint.color;
+              const glossColor = wrong
+                ? paint.color
+                : matched
+                  ? (darkBoard ? MEMORY_DARK_INK : "#5E6650")
+                  : (darkBoard ? MEMORY_DARK_GLOSS : D.sub);
               return (
                 <div key={card.id} className="memory-cell" style={{ minHeight: MEMORY_CARD_MIN, width: "100%", minWidth: 0, display: "flex", height: "100%" }}>
                   <button
@@ -2241,6 +2363,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                     data-pair={card.pairId}
                     data-kind={card.kind}
                     data-face={showFace ? "up" : "down"}
+                    aria-label={showFace ? memoryCardLabel(card, uiLang, run) : undefined}
                     data-open={open ? "yes" : "no"}
                     data-miss={wrong ? "yes" : "no"}
                     data-card-min={MEMORY_CARD_MIN}
@@ -2266,12 +2389,12 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       top: dragging ? drag.y - (drag.dy || 0) : undefined,
                       zIndex: dragging ? 20 : 1,
                       margin: 0,
-                      border: `2px solid ${wrong ? D.red : hovered ? "#C46B3A" : open ? D.green : "#C46B3A"}`,
-                      borderBottom: `4px solid ${wrong ? D.redDark : hovered ? "#C46B3A" : open ? D.greenDark : "#C46B3A"}`,
-                      background: showFace ? (wrong ? D.redBg : open && (run.matched || []).includes(card.pairId) ? D.greenBg : "#fff") : HUB_CREAM,
-                      color: wrong ? D.redDark : open && (run.matched || []).includes(card.pairId) ? D.greenDark : D.ink,
+                      border,
+                      borderBottom,
+                      background,
+                      color: ink,
                       borderRadius: 18,
-                      padding: "16px 8px",
+                      padding: showFace ? "14px 8px" : "16px 8px",
                       fontFamily: "inherit",
                       fontWeight: 900,
                       fontSize: MEMORY_CARD_TYPE,
@@ -2279,13 +2402,14 @@ const MemoryPlayfield = ({ run, uiLang, D, L, onTap, onPair, onClose, onAgain, o
                       letterSpacing: "-0.03em",
                       textAlign: "center",
                       whiteSpace: "normal",
-                      overflowWrap: "break-word",
+                      overflowWrap: "normal",
                       wordBreak: "normal",
+                      hyphens: "none",
                       cursor: (run.matched || []).includes(card.pairId) ? "default" : "grab",
                       touchAction: "none",
                     }}
                   >
-                    {showFace ? text : <MemoryMark size={MEMORY_CARD_MARK} />}
+                    {showFace ? <MemoryCardFace word={text} translation={gloss} color={glossColor} /> : <MemoryMark size={MEMORY_CARD_MARK} onDark={darkBoard} />}
                   </button>
                 </div>
               );
@@ -2397,14 +2521,14 @@ const VOICES = {
       { es: "Ese giro sí vive en la calle.", en: "That turn actually lives on the street." },
     ],
     wrong: [
-      { es: "Cerca. Vamos a afinarlo.", en: "Close. Let's sharpen it." },
+      { es: "Cerca. Mira la palabra antes del verbo. Casi siempre te lo dice.", en: "Close. Check the word before the verb. It usually tells you." },
       { es: "La idea está; falta precisión.", en: "The idea’s there; it needs precision." },
       { es: "Respira. Esta es justo la parte que se entrena.", en: "Breathe. This is exactly the part you train." },
       { es: "No está perdido, solo mal estacionado.", en: "Not lost — just parked in the wrong spot." },
     ],
     win: [
-      { es: "Buenísima sesión. Hoy hablaste más fino.", en: "Great session. You sounded sharper today." },
-      { es: "Eso ya se siente como español real.", en: "That already feels like real Spanish." },
+      { es: "Buenísima sesión. Fuiste afinando conforme avanzaste.", en: "Great session. You got more precise as you went." },
+      { es: "Ya suenas como alguien que lo usa.", en: "You sound like someone who actually uses it." },
       { es: "La racha tiene estilo.", en: "The streak has style." },
       { es: "Te estás volviendo peligroso en conversación.", en: "You're getting dangerous in conversation." },
     ],
@@ -2449,10 +2573,10 @@ const VOICES = {
       { es: "Buen control del registro.", en: "Good control of register." },
     ],
     wrong: [
-      { es: "No. El matiz importa.", en: "No. The nuance matters." },
+      { es: "Cerca, pero el matiz lo cambia. Mira otra vez.", en: "Close, but the nuance changes it. Look again." },
       { es: "Cuidado: suena menos formal de lo que crees.", en: "Careful: it sounds less formal than you think." },
-      { es: "La estructura no sostiene la idea.", en: "The structure doesn't hold the idea." },
-      { es: "Eso se entiende, pero no convence.", en: "That's understandable, but it doesn't persuade." },
+      { es: "A la estructura le falta un ajuste. Léela en voz alta.", en: "The structure needs one fix. Read it aloud." },
+      { es: "Te entenderían. Ahora hazla convencer.", en: "They'd understand you. Now make it persuade." },
       { es: "Vuelve a mirar el modo verbal.", en: "Look at the verb mood again." },
     ],
     win: [
@@ -2475,10 +2599,10 @@ const VOICES = {
       { es: "Ok, esa respuesta sí pega.", en: "Ok, that answer lands." },
     ],
     wrong: [
-      { es: "Demasiado lento.", en: "Too slow." },
-      { es: "Eso suena traducido.", en: "That sounds translated." },
-      { es: "Yo no respondería así.", en: "I wouldn't answer like that." },
-      { es: "Te faltó calle y timing.", en: "You lacked street and timing." },
+      { es: "Un segundo tarde. Otra vez.", en: "A beat late. Go again." },
+      { es: "Esa suena traducida. Tienes una mejor.", en: "That one sounds translated. You've got a better one." },
+      { es: "Yo lo diría de otra forma. Mira otra vez.", en: "I'd say it another way. Look again." },
+      { es: "La idea va; le falta calle todavía.", en: "Right idea, not enough street yet." },
     ],
     win: [
       { es: "Ganaste esta. No te acostumbres.", en: "You won this one. Don't get used to it." },
@@ -2498,14 +2622,14 @@ const GREETINGS = {
     "Luna ya tiene tu rutina de hoy.",
     "Don Rafa te guardó un cuento con palabras que valen.",
     "Valeria dice que la precisión es un gesto de cariño.",
-    "Cinco minutos. Español de verdad. Nada de turista.",
+    "Español de verdad. Nada de turista.",
   ],
   en: [
     "Build real Mexican Spanish through stories, challenges, and sharp feedback.",
     "Luna has your daily routine ready.",
     "Don Rafa saved you a story with words worth keeping.",
     "Valeria says precision is a kindness.",
-    "Five minutes. Real Spanish. No tourist mode.",
+    "Real Spanish. No tourist mode.",
   ],
 };
 
@@ -3961,14 +4085,15 @@ const UI = {
     focus: "Foco", time: "¡Tiempo!", spelling: "Ojo con la ortografía", matchInstruction: "Toca una pareja en cada columna.", enterCheck: "Enter para comprobar.",
     selfGrade: "¿QUÉ TAN BIEN LO SABÍAS?", storyTip: "Lee el párrafo. Toca una palabra solo si te frena.",
     wordOrderTip: "Orden distinto, mismo sentido. En formal, ambas valen.",
-    comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
+    comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", xpJustClaimed: "XP reclamados", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
     completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel! Ahora eres",
-    hits: "aciertos", misses: "fallos", impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
-    testFailed: "Examen no superado", testFailedDesc: "Tres errores — el límite era dos. Tus fallos ya están en Práctica; repásalos y vuelve a intentarlo.",
+    impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
+    testFailed: "Esta vez no", testFailedDesc: "Tres errores, y el límite es dos. Quedaron en Repaso. Reintenta cuando quieras.",
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
     comeBackTomorrow: "Vuelve mañana por la siguiente escena.",
-    paywallHeadline: "Sigue con tu racha",
-    paywallBody: "Escenas, Cubetas y la doctora — sin techo.",
+    paywallHeadline: "La historia sigue.",
+    paywallHeadlineFallback: "Hay mucho más por leer.",
+    paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
     paywallAnnual: "Un año",
     paywallMonthly: "Un mes",
     paywallHonesty: "Práctica · sin cobro todavía",
@@ -4006,7 +4131,7 @@ const UI = {
     literalLabel: "Traducción",
     whyLabel: "Por qué",
     narrationLabel: "NARRACIÓN",
-    splashLine: "Español mexicano real. Más allá de lo básico.",
+    splashLine: splashPromiseLine("es"),
     splashCta: "¡Empezar!",
     more: "Más",
     namePrompt: "¿Cómo te dicen?",
@@ -4048,14 +4173,15 @@ const UI = {
     focus: "Focus", time: "Time!", spelling: "Watch the spelling", matchInstruction: "Tap one pair from each column.", enterCheck: "Enter to check.",
     selfGrade: "HOW WELL DID YOU KNOW IT?", storyTip: "Read the paragraph. Tap a word only if it stops you.",
     wordOrderTip: "Different order, same meaning. Formally, both work.",
-    comprehension: "Comprehension", easyQuestions: "Three easy questions · up to", xpClaimed: "XP already claimed", claim: "Claim", saveCard: "Save flashcard", inDeck: "In your deck",
+    comprehension: "Comprehension", easyQuestions: "Three easy questions · up to", xpClaimed: "XP already claimed", xpJustClaimed: "XP claimed", claim: "Claim", saveCard: "Save flashcard", inDeck: "In your deck",
     completed: "Lesson complete!", sectionPassed: "Section passed!", levelUp: "Level up! You are now",
-    hits: "correct", misses: "misses", impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
-    testFailed: "Test not passed", testFailedDesc: "Three mistakes — the limit was two. Your misses are in Review; revisit them and try again.",
+    impeccable: "FLAWLESS!", unlockedSection: "The whole section was unlocked with crowns.", review: "Review",
+    testFailed: "Not this time", testFailedDesc: "Three mistakes, and the limit is two. They're saved in Review. Retry when you're ready.",
     retryTest: "Retry test", reviewErrors: "Review mistakes", outHearts: "Out of lives!", outHeartsDesc: "Review your mistakes to recover", practiceRecover: "Review and recover", toPath: "Back to Learn",
     comeBackTomorrow: "Come back tomorrow for the next scene.",
-    paywallHeadline: "Keep your streak",
-    paywallBody: "Stories, Cubetas, and Phrase Doctor — no ceiling.",
+    paywallHeadline: "The story goes on.",
+    paywallHeadlineFallback: "There's much\u00A0more to read.",
+    paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
     paywallAnnual: "One year",
     paywallMonthly: "One month",
     paywallHonesty: "Practice · no charge yet",
@@ -4093,10 +4219,10 @@ const UI = {
     literalLabel: "Literal",
     whyLabel: "Why",
     narrationLabel: "NARRATION",
-    splashLine: "Real Mexican Spanish. Past the basics.",
+    splashLine: splashPromiseLine("en"),
     splashCta: "Start!",
     more: "More",
-    namePrompt: "What do they call you?",
+    namePrompt: "What should we call you?",
     hoyWin: "That's it.",
     sessionClose: "Done",
     recuerdosTitle: "Souvenir trail",
@@ -4210,57 +4336,56 @@ const diegoReaction = (won, delta, lang) => {
 
 
 
-const LetterBoard = ({ D, layout, onLayoutChange, picked = [], inWord, disabled, onPick, extraRow }) => {
+const LetterBoard = ({ D, theme = "light", layout, onLayoutChange, picked = [], inWord, disabled, onPick, extraRow }) => {
   const mode = normalizeLetterLayout(layout);
   const rows = rowsForLayout(mode);
-  const chipStyle = (letter) => {
+  const keyLight = {
+    line: D.line,
+    green: D.green,
+    greenDark: D.greenDark,
+    red: D.red,
+    redDark: D.redDark,
+    okBg: D.okBg,
+    okText: D.okText,
+    badBg: D.badBg,
+    badText: D.badText,
+    card: D.card,
+    cream: HUB_CREAM,
+    muted: D.sub,
+    wordleCorrect: WORDLE_CORRECT,
+    wordleWrong: WORDLE_ABSENT,
+  };
+  const keyStatus = (letter) => {
     const wasPicked = picked.includes(letter);
-    const hit = wasPicked && inWord?.(letter);
-    return {
-      wasPicked,
-      hit,
-      style: {
-        flex: "1 1 0", maxWidth: 38, minWidth: 0, height: 38, borderRadius: 10,
-        border: `2px solid ${wasPicked ? (hit ? D.green : D.red) : D.line}`,
-        borderBottom: `4px solid ${wasPicked ? (hit ? D.greenDark : D.redDark) : D.line}`,
-        background: wasPicked ? (hit ? D.okBg : D.badBg) : "#fff",
-        color: wasPicked ? (hit ? D.okText : D.badText) : D.green,
-        fontWeight: 800, fontSize: 14, fontFamily: "inherit",
-        cursor: wasPicked || disabled ? "default" : "pointer",
-      },
-    };
+    const hit = wasPicked && !!inWord?.(letter);
+    return wasPicked ? (hit ? "correct" : "wrong") : "idle";
+  };
+  const renderKey = (letter, testId) => {
+    const status = keyStatus(letter);
+    return (
+      <SpanishKeyboardKey
+        key={letter}
+        letter={letter}
+        testId={testId}
+        theme={theme}
+        status={status}
+        disabled={disabled || status !== "idle"}
+        onPick={onPick}
+        light={keyLight}
+      />
+    );
   };
   return (
     <div data-testid="letter-board" data-layout={mode}>
       <div style={{ display: "grid", gap: 6 }}>
         {rows.map((row, ri) => (
           <div key={ri} data-testid="letter-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-            {row.map((letter) => {
-              const { wasPicked, style } = chipStyle(letter);
-              return (
-                <button key={letter} type="button" data-testid="letter-chip" data-letter={letter}
-                  disabled={disabled || wasPicked} onClick={() => onPick(letter)}
-                  aria-label={letter}
-                  style={style}>
-                  {letter}
-                </button>
-              );
-            })}
+            {row.map((letter) => renderKey(letter, "letter-chip"))}
           </div>
         ))}
         {extraRow?.length ? (
           <div data-testid="accent-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-            {extraRow.map((letter) => {
-              const { wasPicked, style } = chipStyle(letter);
-              return (
-                <button key={letter} type="button" data-testid="accent-chip" data-letter={letter}
-                  disabled={disabled || wasPicked} onClick={() => onPick(letter)}
-                  aria-label={letter}
-                  style={style}>
-                  {letter}
-                </button>
-              );
-            })}
+            {extraRow.map((letter) => renderKey(letter, "accent-chip"))}
           </div>
         ) : null}
       </div>
@@ -4308,13 +4433,196 @@ const LangToggle = ({ uiLang, D, onPick, style }) => (
   </div>
 );
 
+const wordleKeyStatus = (mark) => {
+  if (mark === "correct" || mark === "present") return mark;
+  if (mark === "absent") return "wrong";
+  return "unused";
+};
+
+/** Letter keys are SpanishKeyboardKey. Enter and delete use the same unused-key face. */
+const WordleKeys = ({ D, dark, layout, marks, disabled, onPick, onEnter, onBackspace, onLayoutChange, enterLabel, deleteLabel }) => {
+  const mode = normalizeLetterLayout(layout);
+  const theme = dark ? "dark" : "light";
+  const light = {
+    line: D.line,
+    green: D.green,
+    greenDark: D.greenDark,
+    red: D.red,
+    redDark: D.redDark,
+    okBg: D.okBg,
+    okText: D.okText,
+    badBg: D.badBg,
+    badText: D.badText,
+    card: D.card,
+    cream: "#F6EFE4",
+    muted: D.sub,
+    wordleCorrect: WORDLE_CORRECT,
+    wordlePresent: WORDLE_PRESENT,
+    wordleWrong: WORDLE_ABSENT,
+  };
+  const actionStyle = wordleActionKeyChrome(theme, {
+    ...spanishKeyboardKeyStyle({ theme, status: "unused", disabled, light }),
+    maxWidth: 112,
+  });
+  return (
+    <div data-testid="letter-board" data-layout={mode}>
+      <div style={{ display: "grid", gap: 6 }}>
+        {rowsForLayout(mode).map((row, ri) => (
+          <div key={ri} data-testid="letter-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+            {row.map((letter) => {
+              const status = wordleKeyStatus(marks[letter]);
+              return (
+                <SpanishKeyboardKey
+                  key={letter}
+                  letter={letter}
+                  theme={theme}
+                  status={status}
+                  disabled={disabled}
+                  onPick={onPick}
+                  light={light}
+                />
+              );
+            })}
+          </div>
+        ))}
+        <div data-testid="letter-board-actions" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
+          <button type="button" data-testid="letter-board-backspace" aria-label={deleteLabel || "Delete"} disabled={disabled} onClick={onBackspace} style={actionStyle}>⌫</button>
+          <button type="button" data-testid="letter-board-enter" disabled={disabled} onClick={onEnter} style={{ ...actionStyle, flex: "1.6 1 0", maxWidth: 160 }}>{enterLabel || "Enter"}</button>
+        </div>
+      </div>
+      <div data-testid="letter-layout-toggle" role="group" aria-label="ABC QWERTY"
+        style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 10 }}>
+        <button type="button" data-testid="letter-layout-abc" aria-pressed={mode === "abc"}
+          onClick={() => onLayoutChange("abc")}
+          style={{
+            border: "none", background: "none", fontFamily: "inherit", padding: "4px 2px", cursor: "pointer",
+            fontWeight: mode === "abc" ? 900 : 700, fontSize: 11, letterSpacing: ".04em", lineHeight: 1,
+            color: mode === "abc" ? D.ink : D.sub,
+          }}>ABC</button>
+        <span aria-hidden="true" style={{ color: D.sub, fontWeight: 700, fontSize: 11, lineHeight: 1 }}>·</span>
+        <button type="button" data-testid="letter-layout-qwerty" aria-pressed={mode === "qwerty"}
+          onClick={() => onLayoutChange("qwerty")}
+          style={{
+            border: "none", background: "none", fontFamily: "inherit", padding: "4px 2px", cursor: "pointer",
+            fontWeight: mode === "qwerty" ? 900 : 700, fontSize: 11, letterSpacing: ".04em", lineHeight: 1,
+            color: mode === "qwerty" ? D.ink : D.sub,
+          }}>QWERTY</button>
+      </div>
+    </div>
+  );
+};
+
+const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onType, onBackspace, onCommit, onLayoutChange, onClose, onLang }) => {
+  const rows = wordleRows(run);
+  const keyMarks = wordleKeyState(run.guesses, run.answer);
+  const over = run.status !== "play";
+  const reveal = wordleSentenceParts(run.es, run.display);
+  const chrome = wordleChrome(!!dark);
+  return (
+    <div
+      data-testid="wordle-board"
+      data-status={run.status}
+      data-day={run.day}
+      data-theme={dark ? "dark" : "light"}
+      className="wordle-screen"
+      style={{
+        "--wordle-square": chrome.square,
+        "--wordle-letter": chrome.letter,
+        "--wordle-line": chrome.line,
+        "--wordle-board": chrome.board,
+        "--wordle-quiet": chrome.quiet,
+        "--wordle-clue": chrome.clue,
+        "--wordle-gloss": chrome.gloss,
+        background: chrome.board,
+        color: chrome.letter,
+      }}
+    >
+      <div className="wordle-head">
+        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: chrome.quiet, padding: "8px 10px", margin: "-8px -10px", minWidth: 44, minHeight: 44 }}>✕</button>
+        <WordleMark size={28} tile={chrome.square} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div data-testid="wordle-title" style={{ fontWeight: 800, fontSize: 15, color: chrome.quiet }}>{wordleTitle(uiLang)}</div>
+          <div data-testid="wordle-howto" style={{ fontSize: 12, fontWeight: 700, color: chrome.quiet }}>{wordleHowTo(uiLang)}</div>
+        </div>
+        <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
+      </div>
+      <div className="wordle-board-slot">
+        <div
+          className="wordle-grid"
+          data-testid="wordle-grid"
+          style={dark ? {
+            "--wordle-correct": chrome.correct,
+            "--wordle-present": chrome.present,
+            "--wordle-absent": chrome.absent,
+            "--wordle-correct-ink": chrome.correctInk,
+            "--wordle-present-ink": chrome.presentInk,
+            "--wordle-absent-ink": chrome.absentInk,
+          } : undefined}
+        >
+          {rows.map((row, ri) => (
+            <div
+              key={`${ri}-${row.current ? shake : "set"}`}
+              data-testid="wordle-row"
+              className={row.current && shake ? "wordle-row wordle-shake" : "wordle-row"}
+            >
+              {row.letters.map((letter, ci) => {
+                const mark = row.marks[ci];
+                const flipping = flipRow === ri && !!mark;
+                return (
+                  <div
+                    key={ci}
+                    data-testid="wordle-tile"
+                    data-mark={mark || "empty"}
+                    data-letter={letter}
+                    className={flipping ? "wordle-tile wordle-flip" : "wordle-tile"}
+                    style={{
+                      "--flip-i": ci,
+                      "--tile-bg": mark ? `var(--wordle-${mark})` : chrome.square,
+                      "--tile-ink": mark ? `var(--wordle-${mark}-ink)` : chrome.letter,
+                      background: mark ? `var(--wordle-${mark})` : chrome.square,
+                      color: mark ? `var(--wordle-${mark}-ink)` : chrome.letter,
+                      borderColor: mark ? "transparent" : chrome.line,
+                    }}
+                  >{letter}</div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div data-testid="wordle-invalid" className="wordle-note">{invalid ? wordleInvalidLine(uiLang) : ""}</div>
+      {over && (
+        <div data-testid="wordle-reveal" className="wordle-reveal" data-display={run.display}>
+          <div data-testid="wordle-sentence">{reveal.before}{reveal.bold ? <span data-testid="wordle-answer">{reveal.bold}</span> : null}{reveal.after}</div>
+          <div data-testid="wordle-gloss">{run.en}</div>
+        </div>
+      )}
+      <div className="wordle-keys">
+        <WordleKeys
+          D={D}
+          dark={!!dark}
+          layout={layout}
+          marks={keyMarks}
+          disabled={over}
+          onPick={onType}
+          onEnter={onCommit}
+          onBackspace={onBackspace}
+          onLayoutChange={onLayoutChange}
+          enterLabel={wordleEnterLabel(uiLang)}
+          deleteLabel={uiLang === "en" ? "Delete" : "Borrar"}
+        />
+      </div>
+    </div>
+  );
+};
+
 const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, ...rest }) => (
   <button type="button" onClick={onClick} disabled={disabled} className="duo-btn"
     style={{
       fontFamily: "inherit", fontWeight: 800, fontSize: 15, letterSpacing: ".06em", textTransform: "uppercase",
       borderRadius: 14, padding: "13px 24px", cursor: disabled ? "default" : "pointer",
       background: outline ? "#fff" : disabled ? D.lockGray : color,
-      color: outline ? color : disabled ? D.lockIcon : "#fff",
+      color: outline ? color : disabled ? D.lockIcon : CONTINUE_LABEL,
       border: outline ? `2px solid ${D.line}` : "none",
       borderBottom: outline ? `4px solid ${D.line}` : `4px solid ${disabled ? "#CFCFCF" : dark}`,
       ...style,
@@ -4325,6 +4633,12 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
 );
 
 /* ---------------- APP ---------------- */
+
+function HangmanEmphasis({ text }) {
+  return emphasisParts(text).map((part, i) => (
+    part.em ? <em key={i}>{part.text}</em> : <span key={i}>{part.text}</span>
+  ));
+}
 
 export default function App() {
   /* Theme: persisted under prog.theme; memoized D shadows the file-level D
@@ -4360,7 +4674,20 @@ export default function App() {
   const [screenQuip, setScreenQuip] = useState(""); // host line on done/failed screens
   const greetingPick = React.useMemo(() => Math.floor(Math.random() * GREETINGS.es.length), []);
   const [storyView, setStoryView] = useState(null); // active story object
+  const [freshClaimId, setFreshClaimId] = useState(null); // story whose XP was claimed this visit
   const [wordSel, setWordSel] = useState(null); // {display, def, note, pi, ti}
+  const [wordSheetBox, setWordSheetBox] = useState(null);
+  const [wordSheetSpacer, setWordSheetSpacer] = useState(0);
+  const [storyAudioOk, setStoryAudioOk] = useState(false);
+  const checkpointAnswersRef = useRef(null);
+  const wordTapRef = useRef(null);
+  const wordSheetRef = useRef(null);
+  const wordSheetContentRef = useRef(null);
+  const wordSheetBoxRef = useRef(null);
+  const wordSheetLock = useRef(false);
+  const wordSheetCloseScrollRef = useRef(null);
+  wordSheetBoxRef.current = wordSheetBox;
+  const storyAudioUrlRef = useRef(null);
   const [wordReveal, setWordReveal] = useState(true);
   const [ansSel, setAnsSel] = useState({}); // story question selections (choice value, or legacy display index)
   const [storyShuffle, setStoryShuffle] = useState(null); // per-open Lectura choice order
@@ -4382,6 +4709,9 @@ export default function App() {
   }, []);
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
+  const [lecturaCliffhanger, setLecturaCliffhanger] = useState(null);
+  const [chapterBirdHandoff, setChapterBirdHandoff] = useState(false);
+  const [paywallSource, setPaywallSource] = useState(PAYWALL_SOURCE.boot);
   const [paywallArmed, setPaywallArmed] = useState(false);
   const paywallBusyRef = useRef(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
@@ -4432,6 +4762,8 @@ export default function App() {
   const storyPagesSeenRef = useRef({});
   const lecturaStartedRef = useRef(false);
   const lecturaHandoffHold = useRef(false);
+  const lecturaPaywallAfterWin = useRef(false);
+  const chapterDoneRef = useRef(new Set());
   const firstWinEmailHold = useRef(false);
   const firstWinEmailSeenEmit = useRef(false);
   const firstWinEmailBusy = useRef(false);
@@ -4447,13 +4779,23 @@ export default function App() {
   const [snakeGame, setSnakeGame] = useState(null);
   const [matchGame, setMatchGame] = useState(null);
   const [ahorcado, setAhorcado] = useState(null);
+  const [wordle, setWordle] = useState(null);
+  const [wordleInvalid, setWordleInvalid] = useState(false);
+  const [wordleShake, setWordleShake] = useState(0);
+  const [wordleFlip, setWordleFlip] = useState(null);
+  const wordleRef = useRef(null);
   const [cubetasGame, setCubetasGame] = useState(null);
   const [memoryGame, setMemoryGame] = useState(null);
+  const [crosswordGame, setCrosswordGame] = useState(null);
   const cubetasTimerRef = useRef(null);
   const memoryTimerRef = useRef(null);
   const gamesReturnRef = useRef("practica");
   const [burst, setBurst] = useState(0); // mini confetti trigger
-  const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {} });
+  const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {}, firstSessionDone: false });
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState("level");
+  const [onboardingLevel, setOnboardingLevel] = useState(null);
+  const [onboardingGoal, setOnboardingGoal] = useState(null);
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
      file-level D constant, so all `D.green` reads inside App pick this up. */
   const theme = prog.theme || "light";
@@ -4465,11 +4807,18 @@ export default function App() {
       document.body.style.transition = "background 200ms ease, color 200ms ease";
     }
   }, [theme, D.bg, D.ink]);
+  useEffect(() => {
+    if (!onboardingOpen || typeof document === "undefined") return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [onboardingOpen]);
   const inputRef = useRef(null);
   const audioCtx = useRef(null);
   const narrationRef = useRef(null);
   const liveReady = useRef(false);
   const liveRef = useRef(null);
+  const hydrated = useRef(false);
   const awardLockRef = useRef(new Set());
   const sessionXPRef = useRef(0);
   const itemXpLockRef = useRef(new Set());
@@ -4492,9 +4841,12 @@ export default function App() {
 	    let p = null;
 	    try { const r = await storage.get(STORAGE_KEY); if (r && r.value) p = JSON.parse(r.value); } catch (e) {}
 	    p = acceptProgress(p);
+	    if (p) p = migrateFirstSession(p);
+	    const needsOnboarding = shouldShowOnboarding(p);
 	    let loaded = null;
 	    setProg((base) => {
 	      let merged = { ...base, ...(p || {}), contentVersion: CONTENT_VERSION };
+	      if (needsOnboarding) merged = { ...merged, onboardingPending: true };
 	      // First visit keeps DEFAULT_UI_LANG (EN). Returning saves without uiLang stay ES.
 	      if (p && p.uiLang !== "en" && p.uiLang !== "es") merged = { ...merged, uiLang: "es" };
 	      if (merged.mistakes?.length && !Object.keys(merged.srs || {}).length) {
@@ -4502,10 +4854,20 @@ export default function App() {
 	        merged.mistakes.forEach((m) => { srs[`${m.u}|${m.i}`] = { ef: 2.5, reps: 0, interval: 0, due: Date.now() }; });
 	        merged = { ...merged, srs, mistakes: [] };
 	      }
-	      if (merged.voiceName) window.__andaleVoiceName = merged.voiceName;
-	      loaded = regen(merged);
-	      return loaded;
-	    });
+      if (merged.voiceName) window.__andaleVoiceName = merged.voiceName;
+      loaded = regen(merged);
+      hydrated.current = true;
+      return loaded;
+    });
+	    if (needsOnboarding) {
+	      const resume = onboardingResume(p);
+	      setOnboardingLevel(resume.level);
+	      setOnboardingGoal(resume.goal);
+	      setOnboardingStep(resume.step);
+	      setOnboardingOpen(true);
+	    } else {
+	      setOnboardingOpen(false);
+	    }
 	    try { window.speechSynthesis.getVoices(); } catch (e) {}
 	    // Streak gap check: if last activity was 2 days ago, the streak is "salvageable"
 	    const today = todayStr(); const y = yesterdayStr();
@@ -4569,113 +4931,14 @@ export default function App() {
   const save = (patch) =>
     setProg((prev) => (typeof patch === "function" ? patch(prev) : { ...prev, ...patch }));
 
-  const hydrated = useRef(false);
   useEffect(() => {
-    if (!hydrated.current) { hydrated.current = true; return; } // skip pre-hydration default state
+    // Skip the default state. Strict Mode replays this effect; flipping the
+    // flag inside the skip would write those defaults over a real save.
+    if (!hydrated.current) return;
     try { storage.set(STORAGE_KEY, JSON.stringify({ ...prog, contentVersion: CONTENT_VERSION })); } catch (e) {}
   }, [prog]);
 
-  /* ---- Sound design: proper game audio, no more beeps ----
-     Each event gets a carefully tuned multi-oscillator sound:
-     ok    → bright ascending chord (C5-E5-G5, piano-like attack)
-     wrong → low thud + descending tonal drop (clear "no" feel)
-     win   → 5-note fanfare with harmonics (victory cascade)
-     combo → shimmering sparkle (ascending arpeggiated thirds)
-     chest → coin-collect jingle (classic pickup sound)
-     The shapes, envelopes, and micro-timing are tuned so they feel
-     satisfying at low volume and don't fatigue on repeat. */
-
-  const playSound = (kind) => {
-    if (!prog.sound) return;
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      const ctx = audioCtx.current || (audioCtx.current = new Ctx());
-      if (ctx.state === "suspended") ctx.resume();
-      const now = ctx.currentTime;
-
-      const tone = (freq, start, dur, type = "sine", vol = 0.18, detune = 0) => {
-        const g = ctx.createGain();
-        const o = ctx.createOscillator();
-        g.connect(ctx.destination);
-        o.connect(g);
-        o.type = type;
-        o.frequency.setValueAtTime(freq, now + start);
-        if (detune) o.detune.setValueAtTime(detune, now + start);
-        // Piano-like envelope: sharp attack, short decay, fast release
-        g.gain.setValueAtTime(0, now + start);
-        g.gain.linearRampToValueAtTime(vol, now + start + 0.012);
-        g.gain.exponentialRampToValueAtTime(vol * 0.55, now + start + 0.06);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
-        o.start(now + start);
-        o.stop(now + start + dur + 0.05);
-      };
-
-      const noise = (start, dur, vol = 0.08) => {
-        const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
-        const d = buf.getChannelData(0);
-        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1);
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        const filt = ctx.createBiquadFilter();
-        filt.type = "lowpass"; filt.frequency.value = 300;
-        const g = ctx.createGain();
-        src.connect(filt); filt.connect(g); g.connect(ctx.destination);
-        g.gain.setValueAtTime(vol, now + start);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
-        src.start(now + start); src.stop(now + start + dur + 0.02);
-      };
-
-      if (kind === "ok") {
-        // Bright piano chord: C5-E5-G5 with slight stagger
-        tone(523.25, 0,    0.38, "triangle", 0.20);
-        tone(659.25, 0.02, 0.35, "triangle", 0.16);
-        tone(783.99, 0.04, 0.32, "triangle", 0.13);
-        // Harmonic shimmer
-        tone(1046.5, 0.03, 0.22, "sine",     0.06);
-
-      } else if (kind === "wrong") {
-        // Low thud
-        noise(0, 0.14, 0.12);
-        // Descending "doh" — two tones sliding down
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.type = "sine";
-        o.frequency.setValueAtTime(260, now);
-        o.frequency.exponentialRampToValueAtTime(160, now + 0.28);
-        g.gain.setValueAtTime(0.22, now);
-        g.gain.linearRampToValueAtTime(0.18, now + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
-        o.start(now); o.stop(now + 0.35);
-        // Sub-bass thump
-        tone(80, 0, 0.18, "sine", 0.15);
-
-      } else if (kind === "win") {
-        // 5-note victory fanfare: G4-C5-E5-G5-C6
-        const melody = [392, 523.25, 659.25, 783.99, 1046.5];
-        melody.forEach((f, i) => {
-          tone(f,      i * 0.1,       0.5 - i * 0.04, "triangle", 0.22 - i * 0.02);
-          tone(f * 2,  i * 0.1 + 0.01, 0.3,            "sine",     0.06);
-        });
-        // Final shimmer chord
-        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
-          tone(f, 0.52 + i * 0.02, 0.6, "sine", 0.12 - i * 0.02);
-        });
-
-      } else if (kind === "combo") {
-        // Sparkle arpeggio — ascending thirds
-        [659.25, 783.99, 987.77, 1174.66].forEach((f, i) => {
-          tone(f, i * 0.07, 0.25, "sine", 0.14, i * 8);
-        });
-
-      } else if (kind === "chest") {
-        // Classic coin collect: quick ascending blip pair
-        tone(1046.5, 0,    0.1, "square", 0.14);
-        tone(1318.5, 0.08, 0.18, "square", 0.14);
-        tone(1567.98, 0.16, 0.22, "triangle", 0.12);
-      }
-    } catch (e) {}
-  };
+  const playSound = (kind) => playGameSound(kind, { enabled: prog.sound, audioRef: audioCtx });
 
   // Alias so existing beep() calls keep working
   const beep = playSound;
@@ -4693,7 +4956,7 @@ export default function App() {
 
   const prepQuestion = (q) => {
     const p = normalizeQuestion(q);
-    if (p.type === "mc") p.shuffledChoices = shuffle(p.choices);
+    if (p.type === "mc") p.shuffledChoices = p.fixedChoices ? p.choices.slice() : shuffle(p.choices);
     if (p.type === "order") p.shuffledWords = shuffle((p.words || []).map((w, i) => ({ w, id: i })));
     if (p.type === "match") { p.left = shuffle((p.pairs || []).map((pr, i) => ({ t: pr[0], id: i }))); p.right = shuffle((p.pairs || []).map((pr, i) => ({ t: pr[1], id: i }))); }
     p.answerAid = answerAidFor(p);
@@ -4703,6 +4966,38 @@ export default function App() {
   const startUnit = (u, section) => {
     setSheet(null);
     if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
+    const firstSnap = !prog.firstSessionDone && prog.resume?.unitId === "_first" && Array.isArray(prog.resume.order) ? prog.resume : null;
+    if (firstSnap) {
+      const beginnerResume = firstSnap.order.some((o) => o.u === "_beginner");
+      const qs = firstSnap.order.map((o) => {
+        if (o.u === "_beginner") {
+          const src = beginnerFirstQuestions()[o.i];
+          return src ? { ...src } : null;
+        }
+        const src = UNITS.find((x) => x.id === o.u);
+        if (!src) return null;
+        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...src.questions[o.i], _u: o.u, _i: o.i };
+      }).filter(Boolean).map(prepQuestion);
+      if (qs.length) {
+        beginSession({
+          title: beginnerResume ? BEGINNER_SESSION_TITLE : (u?.title || UNITS[0].title),
+          color: section?.color || SECTIONS[0].color,
+          dark: section?.dark || SECTIONS[0].dark,
+          unitId: "_first",
+          firstSession: true,
+          beginnerFirst: beginnerResume,
+          review: false,
+          host: hostForUnit(u?.id || "subj1"),
+          questions: qs,
+        });
+        setQi(Math.min(firstSnap.qi || 0, qs.length - 1));
+        sessionXPRef.current = firstSnap.xp || 0;
+        setSessionXP(sessionXPRef.current);
+        setLessonStats({ right: firstSnap.right || 0, wrong: firstSnap.wrong || 0 });
+        save({ resume: null, firstSessionArmed: true });
+        return;
+      }
+    }
     const snap = prog.resume && prog.resume.unitId === u.id ? prog.resume : null;
     if (snap && Array.isArray(snap.order)) {
       // Resume a saved session: same question order, same position, same score.
@@ -4718,9 +5013,31 @@ export default function App() {
       save({ resume: null });
       return;
     }
+    if (shouldUseFirstSession({ done: prog.done, firstSessionDone: prog.firstSessionDone })) {
+      beginFirstSession(u, section, { beginner: prog.learnerLevel === "beginner" });
+      return;
+    }
     const qs = u.questions.map((q, i) => ({ ...q, _u: u.id, _i: i }));
     const withMatch = [...shuffle(qs), { type: "match", pairs: u.pairs, _u: u.id, _i: -1 }];
     beginSession({ title: u.title, color: section.color, dark: section.dark, unitId: u.id, review: false, host: hostForUnit(u.id), questions: withMatch.map(prepQuestion) });
+  };
+
+  const beginFirstSession = (u, section, { fromLectura = false, beginner = false } = {}) => {
+    const questions = (beginner ? beginnerFirstQuestions() : firstSessionQuestions(UNITS)).map(prepQuestion);
+    if (!questions.length) return;
+    save({ firstSessionArmed: true });
+    beginSession({
+      title: beginner ? BEGINNER_SESSION_TITLE : (u?.title || UNITS[0].title),
+      color: section?.color || SECTIONS[0].color,
+      dark: section?.dark || SECTIONS[0].dark,
+      unitId: "_first",
+      firstSession: true,
+      beginnerFirst: !!beginner,
+      review: false,
+      host: hostForUnit(u?.id || "subj1"),
+      questions,
+    });
+    if (fromLectura) lecturaPaywallAfterWin.current = true;
   };
 
   const startTestOut = (sec, si) => {
@@ -5009,6 +5326,13 @@ export default function App() {
   };
 
   const closeGamesSurface = () => {
+    const gameSource = {
+      cubetas: PAYWALL_SOURCE.cubetas,
+      ahorcado: PAYWALL_SOURCE.hangman,
+      memory: PAYWALL_SOURCE.memory,
+      jeopardy: PAYWALL_SOURCE.jeopardy,
+    }[screen];
+    if (gameSource) setPaywallSource(gameSource);
     if (gamesReturnRef.current === "games") {
       setScreen("games");
       return;
@@ -5086,6 +5410,52 @@ export default function App() {
       }
       return next;
     });
+  };
+
+  const startWordle = (from = "practica") => {
+    gamesReturnRef.current = from === "games" ? "games" : from === "practica" ? "practica" : "camino";
+    const run = loadWordleRun(window.localStorage, new Date());
+    wordleRef.current = run;
+    setWordle(run);
+    setWordleInvalid(false);
+    setWordleShake(0);
+    setWordleFlip(null);
+    setScreen("wordle");
+  };
+
+  const typeWordleLetter = (letter) => {
+    const cur = wordleRef.current;
+    if (!cur) return;
+    const next = wordleTypeLetter(cur, letter);
+    if (next === cur) return;
+    wordleRef.current = next;
+    setWordleInvalid(false);
+    setWordle(next);
+  };
+
+  const backspaceWordle = () => {
+    const cur = wordleRef.current;
+    if (!cur) return;
+    const next = wordleBackspace(cur);
+    if (next === cur) return;
+    wordleRef.current = next;
+    setWordleInvalid(false);
+    setWordle(next);
+  };
+
+  const commitWordleGuess = () => {
+    const cur = wordleRef.current;
+    if (!cur || cur.status !== "play") return;
+    const result = wordleCommit(cur, wordleGuessSet());
+    if (result.invalid || result.short) {
+      setWordleShake((n) => n + 1);
+      setWordleInvalid(!!result.invalid);
+      return;
+    }
+    wordleRef.current = result.run;
+    setWordleInvalid(false);
+    setWordleFlip(result.run.guesses.length - 1);
+    setWordle(result.run);
   };
 
   const startAhorcado = (from = "camino") => {
@@ -5423,6 +5793,12 @@ export default function App() {
     setScreen("memory");
   };
 
+  const startCrossword = (from = "practica") => {
+    gamesReturnRef.current = from === "games" ? "games" : "practica";
+    setCrosswordGame(startCrosswordRun(CROSSWORD_GRID));
+    setScreen("crossword");
+  };
+
   const scheduleMemory = (ms, fn) => {
     if (memoryTimerRef.current) clearTimeout(memoryTimerRef.current);
     memoryTimerRef.current = setTimeout(fn, ms);
@@ -5467,6 +5843,7 @@ export default function App() {
   const onMemoryPair = (fromId, toId) => applyMemoryMove(applyMemoryPair, fromId, toId);
 
   const beginSession = (s) => {
+    lecturaPaywallAfterWin.current = false;
     awardLockRef.current.delete("lesson");
     itemXpLockRef.current = new Set();
     sessionXPRef.current = 0;
@@ -5480,6 +5857,9 @@ export default function App() {
   };
 
   const q = session?.questions?.[qi] ?? null;
+  /** Light word-order is Learn cream. Dark word-order is the app dark page and card, with cream text. */
+  const orderCream = q?.type === "order" && theme !== "dark";
+  const orderDark = q?.type === "order" && theme === "dark";
 
   /* ---------- grading ---------- */
 
@@ -5623,13 +6003,19 @@ export default function App() {
 
   const next = () => {
     if (status === "wrong" && session.testOut != null && lessonStats.wrong >= 3) { setFailKind("test"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return; }
-    if (status === "wrong" && (prog.hearts ?? 0) <= 0 && !session.review && !session.rival) { setFailKind("hearts"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return; }
+    if (status === "wrong" && (prog.hearts ?? 0) <= 0 && !session.review && !session.rival) {
+      if (session.firstSession) {
+        lecturaPaywallAfterWin.current = false;
+        save({ paywallHold: true });
+      }
+      setFailKind("hearts"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return;
+    }
     if (status !== "wrong" && shouldHoyEarlyWin({ firstHoy: session.firstHoy, hits: lessonStats.right })) {
       finishLesson();
       return;
     }
     let queue = session.questions;
-    if (status === "wrong" && session.testOut == null && !session.rival) {
+    if (status === "wrong" && session.testOut == null && !session.rival && !session.firstSession) {
       // mastery loop: the miss comes back near the end of the lesson
       queue = [...queue, prepQuestion({ ...q, _requeued: true })];
       setSession({ ...session, questions: queue });
@@ -5652,6 +6038,8 @@ export default function App() {
   const finishLesson = () => {
     if (session?.awarded || !lockAward("lesson")) return;
     beep("win");
+    const lecturaHandoffWin = !!session.firstSession && lecturaPaywallAfterWin.current;
+    lecturaPaywallAfterWin.current = false;
     const t = todayStr();
     const xpNow = sessionXPRef.current;
 
@@ -5690,6 +6078,7 @@ export default function App() {
       earnedXP: earned,
       earnedGems: gemsEarned,
       perfectBonus,
+      ...(lecturaHandoffWin ? { lecturaPaywallAfterWin: true } : {}),
       ...(s.firstHoy || s.firstDoctora || s.todaySceneId ? { esoWin: true } : {}),
     } : s));
     const before = levelOf(prog.xp || 0).idx, after = levelOf((prog.xp || 0) + earned).idx;
@@ -5725,7 +6114,7 @@ export default function App() {
           });
           testOutSrs = srs;
         }
-      } else if (!session.review && !session.rival && !session.missionId && !session.daily) {
+      } else if (!session.review && !session.rival && !session.missionId && !session.daily && !session.firstSession) {
         done[session.unitId] = (done[session.unitId] || 0) + 1;
       }
       let rivalPatch = null;
@@ -5761,6 +6150,8 @@ export default function App() {
         perfects: (prev.perfects || 0) + (lessonStats.wrong === 0 ? 1 : 0),
         resume: null, coachStats, freezes,
         earnedFreeze: earnedFreeze ? t : prev.earnedFreeze, quickTipSeen: true,
+        ...(session.firstSession ? { firstSessionDone: true } : {}),
+        ...(prev.paywallHold ? { paywallHold: false } : {}),
       };
       // Review lessons refund one heart against fresh state. Normal lessons leave
       // hearts alone — they were already decremented per-miss against fresh state,
@@ -5793,6 +6184,7 @@ export default function App() {
     }
     const extra = STORY_EXTRAS[story?.id] || {};
     setStoryShuffle(shuffleStoryChoiceOrder(story, extra.checkpoints || []));
+    setFreshClaimId(null);
     setStoryView(story); setWordSel(null); setWordReveal(true); setAnsSel({}); setParaIdx(0); setScreen("story");
   };
 
@@ -5805,9 +6197,143 @@ export default function App() {
     storyPagesSeenRef.current = { ...storyPagesSeenRef.current, [storyView.id]: [...prev, idx] };
   }, [screen, storyView, paraIdx]);
 
+  useEffect(() => {
+    if (screen !== "story" || !storyView?.id) {
+      storyAudioUrlRef.current = null;
+      setStoryAudioOk(false);
+      return undefined;
+    }
+    const pi = paraIdx;
+    if (!Number.isInteger(pi) || pi < 0 || pi >= storyView.paragraphs.length) {
+      storyAudioUrlRef.current = null;
+      setStoryAudioOk(false);
+      return undefined;
+    }
+    let cancelled = false;
+    const url = storyAudioUrl(storyView.id, pi, import.meta.env.BASE_URL);
+    storyAudioUrlRef.current = null;
+    setStoryAudioOk(false);
+    if (!url) return undefined;
+    probeAudioFile(url).then((ok) => {
+      if (cancelled) return;
+      storyAudioUrlRef.current = ok ? url : null;
+      setStoryAudioOk(!!ok);
+    });
+    return () => { cancelled = true; };
+  }, [screen, storyView, paraIdx]);
+
+  useLayoutEffect(() => {
+    if (!wordSel || screen !== "story") {
+      wordTapRef.current = null;
+      if (wordSheetBoxRef.current) setWordSheetBox(null);
+      const held = wordSheetClose({
+        scrollY: wordSheetCloseScrollRef.current ?? window.scrollY,
+        spacer: wordSheetSpacer,
+      });
+      if (wordSheetSpacer) {
+        if (screen === "story") wordSheetCloseScrollRef.current = held.scrollY;
+        setWordSheetSpacer(held.spacer);
+        return undefined;
+      }
+      if (screen === "story" && wordSheetCloseScrollRef.current != null && Math.abs(window.scrollY - held.scrollY) > 0.5) {
+        window.scrollTo(0, held.scrollY);
+      }
+      wordSheetCloseScrollRef.current = null;
+      return undefined;
+    }
+    wordSheetCloseScrollRef.current = null;
+    const place = () => {
+      if (wordSheetLock.current) return;
+      const wordEl = wordTapRef.current;
+      const sheetEl = wordSheetRef.current;
+      if (!wordEl || !sheetEl) return;
+      const word = wordEl.getBoundingClientRect();
+      const cp = checkpointAnswersRef.current?.getBoundingClientRect();
+      const hasCp = !!(cp && cp.width > 0 && cp.height > 0);
+      const box = sheetEl.getBoundingClientRect();
+      const borderY = sheetEl.offsetHeight - sheetEl.clientHeight;
+      const contentHeight = Math.max(box.height, sheetEl.scrollHeight + borderY);
+      let topInset = 0;
+      let node = document.querySelector("[data-testid='brand-home']");
+      while (node) {
+        if (getComputedStyle(node).position === "sticky") {
+          topInset = node.getBoundingClientRect().bottom + 4;
+          break;
+        }
+        node = node.parentElement;
+      }
+      const plan = wordSheetReveal({
+        viewportHeight: window.innerHeight,
+        viewportWidth: window.innerWidth,
+        wordTop: word.top,
+        wordBottom: word.bottom,
+        checkpointTop: hasCp ? cp.top : null,
+        checkpointBottom: hasCp ? cp.bottom : null,
+        contentHeight,
+        currentSpacer: wordSheetSpacer,
+        topInset,
+      });
+      if (Math.abs(plan.spacer - wordSheetSpacer) > 0.5) {
+        setWordSheetSpacer(plan.spacer);
+        return;
+      }
+      wordSheetLock.current = true;
+      if (Math.abs(plan.scrollDelta) > 1) window.scrollBy(0, plan.scrollDelta);
+      wordSheetLock.current = false;
+      const anchorLeft = hasCp ? plan.frame.left - cp.left : plan.frame.left;
+      setWordSheetBox((prev) => {
+        const next = { ...plan.frame, anchored: hasCp, anchorLeft };
+        if (prev && prev.left === next.left && prev.width === next.width && prev.bottom === next.bottom && prev.maxHeight === next.maxHeight && prev.backdropBottom === next.backdropBottom && prev.anchored === next.anchored && prev.anchorLeft === next.anchorLeft) return prev;
+        return next;
+      });
+    };
+    place();
+    return watchWordSheetPlacement(window, {
+      place,
+      content: wordSheetContentRef.current,
+      readContentHeight: () => {
+        const sheetEl = wordSheetRef.current;
+        const inner = wordSheetContentRef.current;
+        if (!sheetEl) return 0;
+        return Math.max(sheetEl.scrollHeight, inner ? inner.offsetHeight : 0);
+      },
+    });
+  }, [wordSel, screen, wordSheetSpacer]);
+
+  const releaseLecturaWin = (beat) => {
+    if (!beat) return;
+    setLecturaCliffhanger(null);
+    setChapterBirdHandoff(false);
+    if (!(beat.playStory0 || beat.playLecturaWin)) return;
+    const story = STORIES.find((item) => item.id === beat.storyId);
+    if (!story) return;
+    const playStory0 = beat.playStory0;
+    const playLecturaWin = beat.playLecturaWin;
+    setSession({
+      firstStory0: playStory0,
+      lecturaWin: playLecturaWin,
+      storyId: story.id,
+      title: story.title,
+      host: "rafa",
+      questions: [{}],
+      awarded: true,
+      earnedXP: beat.earned,
+      earnedGems: 10,
+    });
+    setLessonStats({ right: beat.correct, wrong: story.questions.length - beat.correct });
+    setScreenQuip("");
+    if (playStory0) {
+        winBouncePlayed.current = true;
+        setWinBounce(true);
+    }
+    setScreen("done");
+  };
+
   const claimStory = (story, correct) => {
     if (prog.stories?.[story.id]) return;
-    emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaComplete, storyId: story.id });
+    if (chapterDoneRef.current.has(story.id)) return;
+    chapterDoneRef.current.add(story.id);
+    setFreshClaimId(story.id);
     const playStory0 = shouldArmStory0Beat({
       storyId: story.id,
       claimed: prog.stories?.[story.id],
@@ -5846,26 +6372,31 @@ export default function App() {
         storyCollectibles: { ...(prev.storyCollectibles || {}), [story.id]: true },
       };
     });
-    if (playStory0 || playLecturaWin) {
-      setSession({
-        firstStory0: playStory0,
-        lecturaWin: playLecturaWin,
-        storyId: story.id,
-        title: story.title,
-        host: "rafa",
-        questions: [{}],
-        awarded: true,
-        earnedXP: earned,
-        earnedGems: 10,
-      });
-      setLessonStats({ right: correct, wrong: story.questions.length - correct });
-      setScreenQuip("");
-      if (playStory0) {
-        winBouncePlayed.current = true;
-        setWinBounce(true);
-      }
-      setScreen("done");
+    emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaChapterDone, storyId: story.id });
+    setLecturaCliffhanger({
+      storyId: story.id,
+      correct,
+      earned,
+      playStory0,
+      playLecturaWin,
+    });
+  };
+
+  const handoffCliffhangerToBird = () => {
+    if (!lecturaCliffhanger) return;
+    if (prog.paywallSeen || prog.unlockedPrem) {
+      releaseLecturaWin(lecturaCliffhanger);
+      return;
     }
+    if (shouldUseFirstSession({ done: prog.done, firstSessionDone: prog.firstSessionDone })) {
+      if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
+      setLecturaCliffhanger(null);
+      setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
+      beginFirstSession(UNITS[0], SECTIONS[0], { fromLectura: true });
+      return;
+    }
+    setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
+    setChapterBirdHandoff(true);
   };
 
   const discoverStoryWord = (story, key) => {
@@ -5903,10 +6434,7 @@ export default function App() {
       if (audioMode === "shadow") speak(text, 0.82, { chunk: true, shadow: true });
       else speak(text, audioMode === "slow" ? 0.68 : 0.88, { chunk: true, pauseMs: audioMode === "slow" ? 420 : 220 });
     };
-    /* Flip to true once the /audio/*.m4a files exist (see ffmpeg note at STORY_AUDIO).
-       Until then every paragraph goes straight to TTS — no probe, no delay. */
-    const USE_CACHED_AUDIO = false;
-    const audioUrl = USE_CACHED_AUDIO ? STORY_AUDIO[story.id]?.[pi] : null;
+    const audioUrl = storyAudioUrlRef.current;
     if (audioMode === "normal" && audioUrl) {
       /* The cached-audio branch can fail FOUR ways: 404 (onerror), rejected play()
          (catch), wrong MIME, or — the killer — a sandboxed/stalled media fetch that
@@ -5976,6 +6504,7 @@ export default function App() {
     };
     beep(quality === "again" ? "bad" : "ok");
     const earned = quality === "again" ? 0 : 2;
+    if (earned) setPaywallSource(PAYWALL_SOURCE.flashcards);
     const t = todayStr();
     const y = yesterdayStr();
     save((prev) => {
@@ -6117,7 +6646,9 @@ export default function App() {
     matchSel, matched, sessionXP, itemXpLock: [...itemXpLockRef.current], combo, lessonStats, showWhy, failKind, quip,
     screenQuip, storyView, paraIdx, storyMode, ansSel, storyShuffle, wordReveal, dialogue,
     rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame,
+    crosswordGame,
   };
+  wordleRef.current = wordle;
 
   const applyLive = (live, claimedStories) => {
     const storyResumeBlocked = live?.screen === "story"
@@ -6195,6 +6726,12 @@ export default function App() {
       setAhorcado(restored);
       if (restored?.awarded || isHangmanOver(restored)) awardLockRef.current.add("ahorcado");
     }
+    if (live.screen === "wordle") {
+      setWordle(loadWordleRun(window.localStorage, new Date()));
+      setWordleInvalid(false);
+      setWordleShake(0);
+      setWordleFlip(null);
+    }
     if (live.cubetasGame) {
       setCubetasGame(live.cubetasGame);
       if (live.cubetasGame.awarded || live.cubetasGame.status === "done") awardLockRef.current.add("cubetas");
@@ -6203,6 +6740,9 @@ export default function App() {
       const restored = hydrateMemory(live.memoryGame);
       setMemoryGame(restored);
       if (restored?.awarded || isMemoryDone(restored)) awardLockRef.current.add("memory");
+    }
+    if (live.crosswordGame) {
+      setCrosswordGame(hydrateCrossword(CROSSWORD_GRID, live.crosswordGame) || startCrosswordRun(CROSSWORD_GRID));
     }
     setScreen(live.screen);
   };
@@ -6244,7 +6784,7 @@ export default function App() {
   useEffect(() => {
     if (!liveReady.current) return;
     writeLive(snapshotLive(liveRef.current));
-  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, storyShuffle, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame]);
+  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, storyShuffle, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame, crosswordGame]);
 
   useEffect(() => {
     const flush = () => {
@@ -6342,7 +6882,49 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, ahorcado]);
 
-  const pct = session ? Math.round((qi / session.questions.length) * 100) : 0;
+  useEffect(() => {
+    if (!wordle) return;
+    const today = wordleDayKey(new Date(now));
+    if (wordle.day !== today) {
+      const next = loadWordleRun(window.localStorage, new Date(now));
+      wordleRef.current = next;
+      setWordle(next);
+      setWordleInvalid(false);
+      setWordleShake(0);
+      setWordleFlip(null);
+      return;
+    }
+    saveWordleRun(window.localStorage, wordle);
+  }, [wordle, now]);
+
+  useEffect(() => {
+    if (screen !== "wordle") return;
+    const h = (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitWordleGuess();
+        return;
+      }
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        backspaceWordle();
+        return;
+      }
+      if (wordleLetterFromKey(e.key)) {
+        e.preventDefault();
+        typeWordleLetter(e.key);
+      }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [screen]);
+
+  const pct = session?.firstSession
+    ? firstSessionProgressPct(qi, status, session.questions.length)
+    : (session ? Math.round((qi / session.questions.length) * 100) : 0);
   const srsEntries = Object.entries(prog.srs || {});
   const dueCount = srsEntries.filter(([, it]) => it.due <= Date.now()).length;
   const trackedCount = srsEntries.length;
@@ -6370,6 +6952,10 @@ export default function App() {
   const flashDeck = flashRun?.deck || [];
   const activeCard = flashRun && !flashRun.done && flashRun.idx < flashDeck.length ? flashDeck[flashRun.idx] : null;
   const uiLang = prog.uiLang === "en" ? "en" : "es";
+  const firstSessionWhy = session?.firstSession
+    ? (session.beginnerFirst ? beginnerWhyLine(qi, uiLang) : firstSessionWhyLine(qi, uiLang))
+    : null;
+  const firstSessionWin = session?.beginnerFirst ? beginnerWinLine(uiLang) : firstSessionWinLine(uiLang);
   const L = UI[uiLang];
   const greetingPool = GREETINGS[uiLang] || GREETINGS.es;
   const greeting = greetingPool[greetingPick % greetingPool.length];
@@ -6418,7 +7004,8 @@ export default function App() {
   /* ---------------- RENDER ---------------- */
 
   const lecturaHandoffStory = lecturaHandoffTarget(STORIES, prog.stories);
-  const showFirstWinEmail = screen === "done"
+  const showFirstWinEmail = !!collectorEndpoint()
+    && screen === "done"
     && !!session?.firstHoy
     && !firstWinEmailGone
     && (firstWinEmailHold.current || shouldShowFirstWinEmail({
@@ -6437,7 +7024,10 @@ export default function App() {
       ready: true,
     }));
   const inLesson = screen !== "home";
-  const splashOpen = isFirstVisit(prog);
+  const splashOpen = isFirstVisit(prog) && !onboardingOpen;
+  const headerD = onboardingOpen
+    ? (theme === "dark" ? { ...D, ink: "#F6EFE4", sub: "#CDBBA6" } : { ...D, sub: "#6B6258" })
+    : D;
   const paywallGate = shouldShowSoftPaywall({
     paywallSeen: !!prog.paywallSeen,
     unlockedPrem: !!prog.unlockedPrem,
@@ -6447,15 +7037,26 @@ export default function App() {
     today: todayKey,
     screen,
     splash: splashOpen,
+    paywallHold: !!prog.paywallHold,
   });
   const canCharge = detectNativeIap();
   const [storePrices, setStorePrices] = useState({ annual: null, monthly: null });
+  const [paywallStillMiss, setPaywallStillMiss] = useState(false);
   const [restoreStatus, setRestoreStatus] = useState(null);
   const [restoreHold, setRestoreHold] = useState(false);
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
   // A successful Restore tap holds the wall so the status line stays readable.
-  const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
+  const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue() || chapterBirdHandoff;
+  const paywallHeadlineSource = chapterBirdHandoff ? PAYWALL_SOURCE.lecturaBirdHandoff : paywallSource;
+  const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource);
+  const paywallStillRel = paywallStillPath(storyView, paraIdx);
+  const paywallStillSrc = paywallStillRel && !paywallStillMiss
+    ? `${import.meta.env.BASE_URL}${paywallStillRel}`
+    : null;
+  useEffect(() => {
+    setPaywallStillMiss(false);
+  }, [paywallStillRel]);
   useEffect(() => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.open });
   }, []);
@@ -6531,7 +7132,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, session, prog.contentVersion, prog.lecturaHandoffSeen, prog.stories]);
   useEffect(() => {
-    if (screen !== "done" || !session?.firstHoy) {
+    if (!collectorEndpoint() || screen !== "done" || !session?.firstHoy) {
       firstWinEmailHold.current = false;
       return;
     }
@@ -6739,6 +7340,8 @@ export default function App() {
     if (!fromBackdrop) {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.continueFree });
     }
+    const beat = lecturaCliffhanger;
+    setChapterBirdHandoff(false);
     setRestoreHold(false);
     setSoftPaywall(false);
     setPaywallArmed(false);
@@ -6751,6 +7354,7 @@ export default function App() {
     });
     if (showA2hs) setA2hsSheet(true);
     save({ paywallSeen: true, ...(showA2hs ? { a2hsSeen: true } : {}) });
+    if (beat) releaseLecturaWin(beat);
   };
   const buySoftPaywall = async (plan) => {
     if (paywallBusyRef.current) return;
@@ -6759,6 +7363,8 @@ export default function App() {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: plan });
       const result = await requestPurchase(plan);
       if (result.status !== "success" || !result.charged) return;
+      const beat = lecturaCliffhanger;
+      setChapterBirdHandoff(false);
       save((prev) => progressAfterPurchaseSuccess(prev, {
         plan: result.plan,
         productId: result.productId,
@@ -6766,6 +7372,7 @@ export default function App() {
       setRestoreHold(false);
       setSoftPaywall(false);
       setPaywallArmed(false);
+      if (beat) releaseLecturaWin(beat);
     } finally {
       paywallBusyRef.current = false;
     }
@@ -6897,6 +7504,13 @@ export default function App() {
   };
 
   const continueFromWin = () => {
+    lecturaPaywallAfterWin.current = false;
+    if (session?.lecturaPaywallAfterWin) {
+      setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
+      if (!prog.paywallSeen && !prog.unlockedPrem) setChapterBirdHandoff(true);
+    } else {
+      setPaywallSource(PAYWALL_SOURCE.winContinue);
+    }
     const t = todayStr();
     const firstStreakEso = isFirstStreakEsoWin(session);
     const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
@@ -7022,6 +7636,7 @@ export default function App() {
 
   /** Brand CLEAR: one tap on the header lockup lands on Learn home (6-card hub + Sendero/path). Not Perfil, Lectura, last lesson, Camino-legacy-only, or splash. */
   const goLearnHome = () => {
+    setPaywallSource(PAYWALL_SOURCE.brandHome);
     stopSpeak();
     setConfirmExit(false);
     setSheet(null);
@@ -7036,6 +7651,7 @@ export default function App() {
   };
 
   const dismissSessionClose = () => {
+    setPaywallSource(PAYWALL_SOURCE.sessionClose);
     setScreen("home");
     setTab("camino");
     if (bajioFlashPending || isBajioUnlockFlashDue()) {
@@ -7065,6 +7681,34 @@ export default function App() {
     }
   };
 
+  const pickOnboardingLevel = (level) => {
+    setOnboardingLevel(level);
+    setOnboardingStep("goal");
+    save({ learnerLevel: level, onboardingPending: true });
+  };
+  const pickOnboardingGoal = (goal) => {
+    setOnboardingGoal(goal);
+    setOnboardingStep("plan");
+    save({ dailyGoalLessons: goal, onboardingPending: true });
+  };
+  const startOnboardingLesson = () => {
+    const level = onboardingLevel;
+    const goal = onboardingGoal;
+    if (!level || !goal) return;
+    const route = firstLessonForLevel(level);
+    setOnboardingOpen(false);
+    save({
+      onboardingDone: true,
+      onboardingPending: false,
+      learnerLevel: level,
+      dailyGoalLessons: goal,
+      welcomed: true,
+    });
+    const unit = UNITS.find((item) => item.id === route.unitId) || UNITS[0];
+    const section = SECTIONS.find((item) => item.unitIds.includes(unit.id)) || SECTIONS[0];
+    beginFirstSession(unit, section, { beginner: route.beginner === true });
+  };
+
   return (
     <div data-testid="app-shell" style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
       <style>{`
@@ -7073,12 +7717,93 @@ export default function App() {
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 800; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-800.woff2') format('woff2'); }
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 900; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-900.woff2') format('woff2'); }
         html, body, #root { margin: 0; padding: 0; width: 100%; max-width: 100%; }
+        :root {
+          /* Light tiles only. Dark fills and cream letters come from WORDLE_DARK. */
+          --wordle-correct: ${WORDLE_CORRECT};
+          --wordle-correct-ink: #fff;
+          --wordle-present: ${WORDLE_PRESENT};
+          --wordle-present-ink: #fff;
+          --wordle-absent: ${WORDLE_ABSENT};
+          --wordle-absent-ink: #fff;
+        }
+        .wordle-screen {
+          /* Sticky brand bar is 56px. The board fills what's left so the keyboard stays on screen. */
+          height: calc(100vh - 56px);
+          height: calc(100dvh - 56px);
+          max-height: calc(100dvh - 56px);
+          width: 100%;
+          max-width: 480px;
+          margin: 0 auto;
+          padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          background: var(--wordle-board, #F6EFE4);
+          color: var(--wordle-letter, #3C3C3C);
+        }
+        .wordle-head { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .wordle-board-slot { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .wordle-grid {
+          height: 100%;
+          width: auto;
+          max-width: 100%;
+          aspect-ratio: 5 / 6;
+          display: grid;
+          grid-template-rows: repeat(6, minmax(0, 1fr));
+          gap: 4px;
+        }
+        .wordle-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; min-height: 0; min-width: 0; perspective: 420px; }
+        .wordle-tile {
+          box-sizing: border-box;
+          width: 100%;
+          height: 100%;
+          min-width: 0;
+          min-height: 0;
+          border: 1px solid var(--wordle-line, #D9CFC3);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 900;
+          font-size: clamp(15px, 4.8vw, 26px);
+          line-height: 1;
+          text-transform: uppercase;
+          background: var(--wordle-square, #fff);
+          color: var(--wordle-letter, #3C3C3C);
+          transform-style: preserve-3d;
+        }
+        @keyframes wordleFlip {
+          0% { transform: rotateX(0); background: var(--wordle-square, #fff); color: var(--wordle-letter, #3C3C3C); border-color: var(--wordle-line, #D9CFC3); }
+          45% { transform: rotateX(-90deg); background: var(--wordle-square, #fff); color: var(--wordle-letter, #3C3C3C); border-color: var(--wordle-line, #D9CFC3); }
+          55% { transform: rotateX(-90deg); background: var(--tile-bg); color: var(--tile-ink); border-color: transparent; }
+          100% { transform: rotateX(0); background: var(--tile-bg); color: var(--tile-ink); border-color: transparent; }
+        }
+        .wordle-flip {
+          animation: wordleFlip 420ms ease both;
+          animation-delay: calc(var(--flip-i) * 80ms);
+        }
+        .wordle-note { flex: 0 0 auto; min-height: 18px; text-align: center; font-size: 13px; font-weight: 800; color: var(--wordle-quiet, #8A8175); line-height: 1.2; }
+        .wordle-reveal { flex: 0 0 auto; text-align: center; padding: 2px 8px 4px; font-size: 16px; }
+        .wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 600; line-height: 1.35; color: var(--wordle-clue, #3C3C3C); }
+        .wordle-reveal [data-testid="wordle-answer"] { font-weight: 900; }
+        .wordle-reveal [data-testid="wordle-gloss"] { font-size: 0.7em; font-weight: 700; line-height: 1.35; color: var(--wordle-gloss, #777777); margin-top: 2px; }
+        .wordle-keys { flex: 0 0 auto; width: 100%; max-width: 100%; }
+        @keyframes wordleShake {
+          0%, 100% { transform: translateX(0); }
+          18% { transform: translateX(-6px); }
+          36% { transform: translateX(6px); }
+          54% { transform: translateX(-4px); }
+          72% { transform: translateX(4px); }
+        }
+        .wordle-shake { animation: wordleShake .45s ease; }
         * { -webkit-tap-highlight-color: transparent; }
         button, input, select, textarea { touch-action: manipulation; }
         .duo-btn:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px !important; }
         .duo-btn { transition: transform .05s, filter .1s; }
         .duo-btn:hover:not(:disabled) { filter: brightness(1.05); }
         button:focus-visible, input:focus-visible { outline: 3px solid ${D.blue}; outline-offset: 2px; }
+        .games-hub-card:hover, .games-hub-card:focus-visible { outline: 2px solid ${gamesHubFocusColor(theme)}; outline-offset: 2px; }
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         .bounce { animation: bounce 1.1s ease-in-out infinite; }
         @keyframes pop { 0%{opacity:.35} 100%{opacity:1} }
@@ -7151,7 +7876,7 @@ export default function App() {
         @keyframes cubetasGemTick { 0%{transform:translateY(8px) scale(.6);opacity:0} 35%{transform:translateY(-4px) scale(1.1);opacity:1} 100%{transform:translateY(-18px) scale(1);opacity:0} }
         .cubetas-gem-tick { animation: cubetasGemTick 360ms ${CUBETAS_EASE_LIFT} ${CUBETAS_GRAB_MS}ms both; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
-        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track { animation:none !important; } }
+        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track,.wordle-flip { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
         .node-btn:active:not(:disabled) { transform: translateY(3px); }
@@ -7164,31 +7889,33 @@ export default function App() {
         .memory-board { width:100%; max-width:none; margin:0; padding-left:${MEMORY_BOARD_PAD}px; padding-right:${MEMORY_BOARD_PAD}px; box-sizing:border-box; }
         .memory-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:minmax(${MEMORY_CARD_MIN}px, auto); gap:8px; width:100%; max-width:none; justify-items:stretch; align-items:stretch; }
         .memory-cell { min-width:0; width:100%; display:flex; height:100%; }
-        .memory-card { width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:break-word; word-break:normal; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
-        .memory-board .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:break-word; word-break:normal; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
+        .memory-card { width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
+        .memory-board .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
-        .tile-bank { display:grid; grid-template-columns:repeat(auto-fill, minmax(4.6rem, max-content)); gap:8px; justify-content:center; align-items:start; }
-        .tile-slot { display:flex; min-width:4.6rem; min-height:2.55rem; }
-        .tile-slot .tile { flex:1; }
+        .tile-bank, .tile-row { display:flex; flex-wrap:wrap; align-content:flex-start; gap:8px; width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
+        .tile-bank { justify-content:flex-start; align-items:flex-start; }
+        .tile-row { justify-content:flex-start; align-items:center; }
+        .tile-slot { display:flex; flex:0 0 auto; width:max-content; max-width:100%; min-width:min-content; min-height:2.55rem; }
+        .tile-slot .tile, .tile-row > .tile { flex:0 0 auto; width:max-content; min-width:min-content; max-width:100%; white-space:nowrap; }
       `}</style>
 
       {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={completeCenzontleBeat} />}
 
       {/* ---------- TOP STAT BAR ---------- */}
-      <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 50, background: D.card, borderBottom: `2px solid ${D.line}` }}>
+      <div style={{ position: "sticky", top: 0, zIndex: splashOpen ? 70 : 50, background: (splashOpen || onboardingOpen) ? (theme === "dark" ? "#15171C" : "#F6EFE4") : D.card, borderBottom: (splashOpen || onboardingOpen) ? "none" : `2px solid ${D.line}` }}>
         <div style={{ padding: "10px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 600, margin: "0 auto" }}>
           <button type="button" data-testid="brand-home" onClick={goLearnHome}
             style={{ display: "flex", alignItems: "center", gap: 7, border: "none", background: "none", padding: "6px 8px", margin: "-6px -8px", cursor: "pointer", fontFamily: "inherit", minWidth: 44, minHeight: 44 }}>
             <LogoMark size={34} />
-            <span style={{ fontWeight: 900, fontSize: 23, color: MARK_INK, letterSpacing: "-0.02em" }}>ándale</span>
+            <span style={{ fontWeight: 900, fontSize: 23, color: onboardingOpen && theme === "dark" ? "#F6EFE4" : MARK_INK, letterSpacing: "-0.02em" }}>ándale</span>
           </button>
           {!inLesson && (
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
-              <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>
-              <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>
-              {(voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
+              {!onboardingOpen && <span data-testid="streak" style={{ color: "#FF9600", display: "inline-flex", alignItems: "center", gap: 3 }} title={L.streakDays}><IcFlame size={19} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>}
+              {!onboardingOpen && <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>}
+              {!onboardingOpen && (voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
                 <button onClick={() => { if (voiceDead || (voicesReady && !voices.length)) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label={uiLang === "en" ? "Sound" : "Sonido"}
                   title={(voicesReady && !voices.length) ? (uiLang === "en" ? "No Spanish voices — tap to fix" : "Sin voces en español — toca para arreglar") : (uiLang === "en" ? "Sound off" : "Sonido apagado")}
                   style={{ background: "none", border: "none", cursor: "pointer", padding: "12px 10px", margin: "-12px -10px", lineHeight: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minWidth: 44, minHeight: 44 }}>
@@ -7196,14 +7923,14 @@ export default function App() {
                   <span style={{ position: "absolute", top: -2, right: -3, width: 8, height: 8, borderRadius: 99, border: `1.5px solid ${D.card}`, background: voiceDead || (voicesReady && !voices.length) ? D.red : "#BBB" }} />
                 </button>
               )}
-              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+              <LangToggle uiLang={uiLang} D={headerD} onPick={(code) => save({ uiLang: code })} />
             </div>
           )}
         </div>
       </div>
 
       {/* voice-dead banner: silence should never be mysterious */}
-      {voiceDead && !inLesson && (
+      {voiceDead && !inLesson && !onboardingOpen && (
         <button onClick={() => setTab("perfil")}
           style={{ display: "block", width: "100%", maxWidth: 480, margin: "8px auto 0", border: `2px solid ${D.red}`, borderBottom: `4px solid ${D.redDark}`, background: D.redBg, color: D.badText, borderRadius: 14, padding: "10px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 12.5, cursor: "pointer", textAlign: "left", lineHeight: 1.4 }}>
           🔇 {uiLang === "en"
@@ -7940,6 +8667,17 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
+          <button onClick={() => startWordle("practica")} data-testid="wordle-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{wordleTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{wordleQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
           <button onClick={() => startMemory("practica")} data-testid="memory-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -7947,6 +8685,17 @@ export default function App() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{memoryTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{memoryQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={() => startCrossword("practica")} data-testid="crossword-start"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>
               </div>
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
@@ -8472,12 +9221,16 @@ export default function App() {
             <div style={{ display: "flex", gap: 10, alignItems: "center", margin: "10px 0 2px", background: D.subtle, borderRadius: 14, padding: "8px 12px" }}>
               <div style={{ flexShrink: 0, lineHeight: 0 }}><CoachPortrait id={hostForUnit(sheet.unit.id)} mood="happy" size={46} /></div>
               <div>
-                <span className="nametag" style={{ marginRight: 6 }}>{VOICES[hostForUnit(sheet.unit.id)].name}</span>
+                <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, VOICES[hostForUnit(sheet.unit.id)].name) }}>{VOICES[hostForUnit(sheet.unit.id)].name}</span>
                 <span style={{ fontSize: 13.5, fontWeight: 800, fontStyle: "italic" }}>«{UNIT_INTROS[sheet.unit.id] || "¡Vamos!"}»</span>
               </div>
             </div>
             <div style={{ display: "flex", gap: 14, margin: "14px 0 18px", fontSize: 12.5, fontWeight: 800, color: D.sub, flexWrap: "wrap" }}>
-	              <span>{sheet.unit.questions.length + 1} {L.challenges}</span>
+	              <span>{(shouldUseFirstSession({
+                  done: prog.done,
+                  firstSessionDone: prog.firstSessionDone,
+                  hasResume: !!(prog.resume && prog.resume.unitId === sheet.unit.id && Array.isArray(prog.resume.order)),
+                }) ? FIRST_SESSION_COUNT : sheet.unit.questions.length + 1)} {L.challenges}</span>
               <span>·</span>
 	              <span style={{ color: sheet.crowns > 0 ? D.goldDark : D.sub }}><IcCrown size={14} /> {sheet.crowns} {sheet.crowns === 1 && uiLang === "es" ? "corona" : L.crowns}</span>
               <span>·</span>
@@ -8498,20 +9251,34 @@ export default function App() {
         </div>
       )}
 
+      {onboardingOpen && (
+        <Onboarding
+          lang={uiLang}
+          theme={theme}
+          step={onboardingStep}
+          level={onboardingLevel}
+          goal={onboardingGoal}
+          onLevel={pickOnboardingLevel}
+          onGoal={pickOnboardingGoal}
+          onStart={startOnboardingLesson}
+        />
+      )}
+
       {/* ---------- FIRST-RUN WELCOME ---------- */}
       {splashOpen && (
-        <div data-testid="splash" style={{ position: "fixed", inset: 0, zIndex: 60, background: D.card, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div data-testid="splash" style={{ position: "fixed", inset: 0, zIndex: 60, background: theme === "dark" ? "#15171C" : "#F6EFE4", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <style>{`.splash-name::placeholder{color:${theme === "dark" ? "#A0A4AB" : "#6B6258"};opacity:1}`}</style>
           <div style={{ maxWidth: 380, width: "100%", textAlign: "center" }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
-              <LogoMark size={130} data-testid="splash-hero" />
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+              <LogoMark size={168} data-testid="splash-hero" />
             </div>
-            <div style={{ fontWeight: 900, fontSize: 30, color: MARK_INK, letterSpacing: "-0.02em", marginBottom: 4 }}>¡ándale!</div>
-            <div data-testid="splash-line" style={{ fontWeight: 800, fontSize: 14.5, color: D.sub, marginBottom: 22, lineHeight: 1.4 }}>
-              {L.splashLine}
+            <div data-testid="splash-wordmark" style={{ fontWeight: 900, fontSize: 30, color: theme === "dark" ? "#F6EFE4" : MARK_INK, letterSpacing: "-0.02em", marginBottom: 4 }}>¡ándale!</div>
+            <div data-testid="splash-line" style={{ fontWeight: 600, fontSize: 16, color: theme === "dark" ? "#CDBBA6" : "#6B6258", margin: "0 auto 22px", lineHeight: 1.35, maxWidth: "22em", textWrap: "balance", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              <span data-testid="splash-sentence" style={{ display: "block" }}>{splashPromiseSentences(uiLang)[0]}</span>{" "}<span data-testid="splash-sentence" style={{ display: "block" }}>{splashPromiseSentences(uiLang)[1]}</span>
             </div>
-            <input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={20}
+            <input className="splash-name" value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} maxLength={20}
               placeholder={L.namePrompt}
-              style={{ width: "100%", boxSizing: "border-box", border: `2px solid ${D.line}`, borderRadius: 14, padding: "13px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 15, marginBottom: 16, outline: "none", textAlign: "center" }} />
+              style={{ width: "100%", boxSizing: "border-box", border: `2px solid ${theme === "dark" ? "#2A2E36" : "#848A72"}`, borderRadius: 16, padding: "13px 16px", fontFamily: "inherit", fontWeight: 800, fontSize: 15, marginBottom: 16, outline: "none", textAlign: "center", background: theme === "dark" ? "#1E2128" : "#FFFFFF", color: theme === "dark" ? "#F6EFE4" : D.ink }} />
             <div data-testid="splash-actions" style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
               <Btn data-testid="splash-start" onClick={() => save({ name: nameDraft.trim(), welcomed: true })} style={{ display: "block", width: "100%", fontSize: 16, textTransform: "none", letterSpacing: "normal" }}>
                 {L.splashCta}
@@ -8533,14 +9300,15 @@ export default function App() {
             <div style={{ display: "grid", gap: 9 }}>
               <Btn onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmExit(false); }}>{uiLang === "en" ? "Keep going" : "Seguir"}</Btn>
               {!session.review && !session.rival && !session.testOut && !session.missionId && !session.daily && session.unitId !== "_test" && (
-                <Btn color={D.blue} dark={D.blueDark} onClick={(e) => {
+                <Btn color={D.blue} dark={D.blueDark} data-testid="save-and-quit" onClick={(e) => {
                   e.preventDefault(); e.stopPropagation();
+                  if (session.firstSession) lecturaPaywallAfterWin.current = false;
                   const order = session.questions.map((qq) => ({ u: qq._u, i: qq._i }));
                   save({ resume: { unitId: session.unitId, order, qi, xp: sessionXP, right: lessonStats.right, wrong: lessonStats.wrong } });
-                  stopSpeak(); setConfirmExit(false); setScreen("home");
+                  stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home");
                 }}>{uiLang === "en" ? "Save & quit" : "Guardar y salir"}</Btn>
               )}
-              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); stopSpeak(); setConfirmExit(false); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
+              <Btn outline data-testid="quit-without-save" onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (session.firstSession) lecturaPaywallAfterWin.current = false; stopSpeak(); setConfirmExit(false); setPaywallSource(PAYWALL_SOURCE.lessonQuit); setScreen("home"); }}>{uiLang === "en" ? "Quit without saving" : "Salir sin guardar"}</Btn>
             </div>
           </div>
         </div>
@@ -8548,7 +9316,7 @@ export default function App() {
 
       {/* ---------- NO-HEARTS MODAL ---------- */}
       {heartsModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setHeartsModal(false)}>
+        <div data-testid="hearts-modal" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setHeartsModal(false)}>
           <div className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", textAlign: "center" }}>
             <div style={{ fontSize: 0, display: "flex", justifyContent: "center", gap: 4, marginBottom: 10 }}>
               {[...Array(MAX_HEARTS)].map((_, i) => <IcHeart key={i} size={26} off />)}
@@ -8746,19 +9514,32 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Surface cream lock = Learn home HUB_CREAM. Soft chrome parked. 3.1.2 disclosure sits under the plans. */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is opaque #1E2128 (no pop fade). Soft chrome parked. Trimmed 3.1.2 fine print sits under the plans. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div data-testid="soft-paywall-card" className="pop" onClick={(e) => e.stopPropagation()} style={{ background: HUB_CREAM, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: `2px solid ${MARK_INK}` }}>
-            <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
-            <div data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, margin: "10px 0 6px", color: D.ink }}>{L.paywallHeadline}</div>
-            <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
+          <div data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
+            {paywallStillSrc ? (
+              <div data-testid="soft-paywall-still-frame" style={{ position: "relative", width: "calc(100% + 40px)", margin: "0 -20px 2px" }}>
+                <img
+                  data-testid="soft-paywall-still"
+                  src={paywallStillSrc}
+                  alt=""
+                  onError={() => setPaywallStillMiss(true)}
+                  style={{ display: "block", width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 16, border: "none" }}
+                />
+                <LogoMark size={48} data-testid="soft-paywall-cenzontle" style={{ position: "absolute", right: 8, bottom: -8, display: "block", width: 48, height: 48, objectFit: "contain" }} />
+              </div>
+            ) : (
+              <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
+            )}
+            <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
+            <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
               <Btn data-testid="soft-paywall-annual" onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
-              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
-              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: HUB_CREAM }}>{L.paywallMonthly}</Btn>
-              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
-              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: D.sub, lineHeight: 1.45 }}>
+              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
+              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, ...(theme === "dark" ? { color: "#F6EFE4", border: "2px solid #4A5160", borderBottom: "4px solid #4A5160" } : {}) }}>{L.paywallMonthly}</Btn>
+              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
+              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: theme === "dark" ? "#A0A4AB" : "#6B6258", lineHeight: 1.45 }}>
                 {disclosureLines(uiLang, storePrices).map((line, i) => (
                   <p key={i} data-testid={`soft-paywall-disclosure-${i}`} style={{ margin: i === 0 ? "2px 0 0" : "6px 0 0", fontSize: 11, fontWeight: 700, lineHeight: 1.45 }}>
                     {i === 0 && line.startsWith("Ándale Premium")
@@ -8767,25 +9548,25 @@ export default function App() {
                   </p>
                 ))}
               </div>
-              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>
-                <a data-testid="soft-paywall-terms" href={TERMS_OF_USE_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].terms}</a>
+              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#A0A4AB" : "#6B6258" }}>
+                <a data-testid="soft-paywall-terms" href={TERMS_OF_USE_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline" }}>{DISCLOSURE_LINKS[uiLang].terms}</a>
                 {" · "}
-                <a data-testid="soft-paywall-privacy" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].privacy}</a>
+                <a data-testid="soft-paywall-privacy" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline" }}>{DISCLOSURE_LINKS[uiLang].privacy}</a>
                 {" · "}
-                <a data-testid="soft-paywall-restore" href="#restore" onClick={(event) => { event.preventDefault(); restoreSoftPaywall(); }} style={{ color: "inherit" }}>{DISCLOSURE_LINKS[uiLang].restore}</a>
+                <a data-testid="soft-paywall-restore" href="#restore" onClick={(event) => { event.preventDefault(); restoreSoftPaywall(); }} style={{ color: "inherit", textDecoration: "underline" }}>{DISCLOSURE_LINKS[uiLang].restore}</a>
               </div>
               {restoreStatus && (
-                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: D.sub }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
+                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#A0A4AB" : "#6B6258" }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
               )}
+              <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
+                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : "#6B6258", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
+                {L.paywallDismiss}
+              </button>
               {!canCharge && (
-              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: D.sub, lineHeight: 1.35 }}>
+              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: theme === "dark" ? "#CDBBA6" : D.sub, lineHeight: 1.35 }}>
                 {L.paywallHonesty}
               </div>
               )}
-              <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
-                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", background: "none", border: "none", color: D.sub, fontFamily: "inherit", fontWeight: 700, fontSize: 12.5, lineHeight: 1.35, cursor: "pointer" }}>
-                {L.paywallDismiss}
-              </button>
             </div>
           </div>
         </div>
@@ -8988,7 +9769,7 @@ export default function App() {
       })()}
 
       {/* ---------- BOTTOM TABS ---------- */}
-      {!inLesson && (
+      {!inLesson && !onboardingOpen && (
         <nav aria-label={uiLang === "en" ? "Primary navigation" : "Navegación principal"} style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: D.card, borderTop: `2px solid ${D.line}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           <div style={{ maxWidth: 480, margin: "0 auto", display: "flex" }}>
 	            {[
@@ -9020,7 +9801,8 @@ export default function App() {
 
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
-        <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
+        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : orderDark ? { background: D.bg, color: HUB_CREAM, minHeight: "100vh" } : undefined}>
+        <div data-testid="lesson-body" style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 190px", position: "relative" }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
               <span style={{ fontWeight: 900, fontSize: 42, color: "#FF9600", textShadow: "0 3px 0 rgba(0,0,0,.12), 0 0 24px rgba(255,200,0,.5)", letterSpacing: ".02em" }}>{inter.text}</span>
@@ -9028,9 +9810,9 @@ export default function App() {
           )}
           {burst > 0 && status !== "idle" && status !== "wrong" && inter && <Confetti key={burst} count={28} />}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 26 }}>
-            <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
-            <div style={{ flex: 1, height: 16, background: D.line, borderRadius: 99, overflow: "hidden" }}>
-              <div style={{ width: `${pct}%`, height: "100%", background: D.green, borderRadius: 99, transition: "width .25s", position: "relative", overflow: "hidden" }}>
+            <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+            <div data-testid="lesson-progress" data-pct={pct} style={{ flex: 1, height: 16, background: D.line, borderRadius: 99, overflow: "hidden" }}>
+              <div data-testid="lesson-progress-fill" style={{ width: `${pct}%`, height: "100%", background: D.green, borderRadius: 99, transition: "width .25s", position: "relative", overflow: "hidden" }}>
                 <div className="shimmer" />
               </div>
             </div>
@@ -9152,15 +9934,15 @@ export default function App() {
                 <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
                     <div className="idle"><CoachPortrait id={session.host} mood="happy" size={86} /></div>
-                    <span className="nametag">{coachName(session.host)}</span>
+                    <span className="nametag" style={lunaNameTagChrome(theme, coachName(session.host))}>{coachName(session.host)}</span>
                   </div>
-                  <div style={{ position: "relative", border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", background: D.card, flex: 1, marginBottom: 14 }}>
-                    <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: D.card, borderLeft: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, transform: "rotate(45deg)" }} />
+                  <div data-testid={q.type === "order" ? "order-prompt" : undefined} style={{ position: "relative", border: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderRadius: 16, padding: "14px 16px", background: orderCream ? HUB_CREAM : D.card, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.ink, flex: 1, marginBottom: 14 }}>
+                    <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: orderCream ? HUB_CREAM : D.card, borderLeft: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderBottom: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, transform: "rotate(45deg)" }} />
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                       <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                       <div>
-                        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{q.prompt}</div>
-                        {q.note ? <div style={{ fontSize: 13, color: D.sub, fontWeight: 700, marginTop: 3 }}>{q.note}</div> : null}
+                        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{uiText(q.prompt, uiLang)}</div>
+                        {q.note ? <div style={{ fontSize: 13, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub, fontWeight: 700, marginTop: 3 }}>{uiText(q.note, uiLang)}</div> : null}
                       </div>
                     </div>
                   </div>
@@ -9179,10 +9961,14 @@ export default function App() {
                   if (showState && isAns) { bg = D.okBg; bd = D.green; col = D.okText; }
                   else if (showState && isSel && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
                   else if (isSel) { bg = "#DDF4FF"; bd = D.blue; col = D.blueDark; }
+                  let badgeCol = bd === D.line ? D.sub : col;
+                  const hoyDark = theme === "dark" && isHoyListenChoiceStep(session, q);
+                  const paint = hoyDark ? hoyListenChoicePaint(hoyListenChoiceTone({ showState, isSel, isAns }), D, HUB_CREAM) : null;
+                  if (paint) { bg = paint.fill; bd = paint.border; col = paint.text; badgeCol = paint.badge; }
                   return (
                     <button key={idx} type="button" className="choice-card" data-testid="choice-card" data-selected={isSel ? "true" : undefined} aria-pressed={isSel} disabled={showState} onClick={() => setSelected(idx)}
-                      style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd, boxShadow: isSel && !showState ? `0 0 0 3px ${D.blue}` : undefined }}>
-                      <span style={{ fontSize: 12, fontWeight: 900, border: `2px solid ${bd}`, borderRadius: 8, padding: "1px 7px", color: bd === D.line ? D.sub : col }}>{idx + 1}</span>
+                      style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd, borderWidth: paint?.edge, borderBottomWidth: paint?.edge, boxShadow: hoyDark ? "none" : (isSel && !showState ? `0 0 0 3px ${D.blue}` : undefined) }}>
+                      <span style={{ fontSize: 12, fontWeight: 900, border: `2px solid ${bd}`, borderRadius: 8, padding: "1px 7px", color: badgeCol }}>{idx + 1}</span>
                       {c}
                     </button>
                   );
@@ -9214,7 +10000,7 @@ export default function App() {
                     </div>
                     {q.answerAid.mode === "bank" && (
                       <div>
-                        <div style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", display: "flex", flexWrap: "wrap", gap: 7, alignItems: "center", marginBottom: 6 }}>
+                        <div className="tile-row" data-testid="answer-tile-row" style={{ minHeight: 88, borderRadius: 12, background: D.subtle, border: `1.5px dashed ${D.line}`, padding: "8px 9px", marginBottom: 6 }}>
                           {typedTileIds.length === 0 && <span style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>{uiLang === "en" ? "Tap words below instead of typing." : "Toca palabras abajo en vez de escribir."}</span>}
                           {typedTileIds.map((id) => {
                             const tile = q.answerAid.tiles.find((t) => t.id === id);
@@ -9262,7 +10048,6 @@ export default function App() {
                                 fontWeight: 800,
                                 padding: "8px 11px",
                                 fontSize: 14,
-                                width: "100%",
                               }}>
                               {tile.w}
                             </button>
@@ -9289,18 +10074,21 @@ export default function App() {
             )}
 
             {q.type === "order" && (
-              <div>
-                <div style={{ minHeight: 88, borderBottom: `2px solid ${D.line}`, borderTop: `2px solid ${D.line}`, padding: "10px 4px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 6 }}>
-	                  {placed.length === 0 && <span style={{ color: D.sub, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
-                  {placed.map((id) => {
+              <div style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : { color: HUB_CREAM }}>
+                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderTop: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, padding: "10px 4px", marginBottom: 6, background: orderCream ? HUB_CREAM : D.card }}>
+	                  {placed.length === 0 && <span style={{ color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
+                  {placed.map((id, index) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
+                    const label = orderTileLabel(t.w, { answer: q.answer, placedIndex: index });
                     return (
                       <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" className="tile" disabled={status !== "idle"}
                         title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
-                        aria-label={`${t.w}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
+                        aria-label={`${label}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                         onClick={() => unplaceOrderTile(id)}
-                        style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }}>
-                        {t.w}
+                        style={orderCream
+                          ? { background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }
+                          : { background: D.card, borderColor: D.line, borderBottomColor: D.line, color: HUB_CREAM }}>
+                        {label}
                         <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                       </button>
                     );
@@ -9308,17 +10096,18 @@ export default function App() {
                 </div>
                 {placed.length > 0 && status === "idle" && (
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 800, color: D.sub }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 800, color: orderCream ? D_LIGHT.ink : HUB_CREAM }}>
                       {uiLang === "en" ? "Tap a placed word to move it." : "Toca una ficha colocada para moverla."}
                     </div>
-                    <button type="button" onClick={() => { setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: D.sub, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
+                    <button type="button" onClick={() => { setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
                       {uiLang === "en" ? "Clear" : "Borrar"}
                     </button>
                   </div>
                 )}
-                <div className="tile-bank">
+                <div className="tile-bank" data-testid="order-tile-bank">
                   {q.shuffledWords.map((t) => {
                     const used = placed.includes(t.id);
+                    const label = orderTileLabel(t.w, { answer: q.answer });
                     return (
                       <div key={t.id} className="tile-slot" data-tile-slot={t.id}
                         onClick={() => { if (used) unplaceOrderTile(t.id); }}>
@@ -9327,8 +10116,14 @@ export default function App() {
                           aria-hidden={used}
                           tabIndex={used ? -1 : 0}
                           onClick={(e) => { e.stopPropagation(); if (!used) placeOrderTile(t.id); }}
-                          style={{ visibility: used ? "hidden" : "visible", pointerEvents: used ? "none" : "auto" }}>
-                          {t.w}
+                          style={{
+                            visibility: used ? "hidden" : "visible",
+                            pointerEvents: used ? "none" : "auto",
+                            ...(orderCream
+                              ? { background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }
+                              : { background: D.card, borderColor: D.line, borderBottomColor: D.line, color: HUB_CREAM }),
+                          }}>
+                          {label}
                         </button>
                       </div>
                     );
@@ -9360,14 +10155,14 @@ export default function App() {
           </div>
 
           {/* ---------- ACTION BAR with mascot ---------- */}
-          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? D.card : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
             <div style={{ maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
               {status !== "idle" && (
                 <div className={status === "wrong" ? "" : "jump"} style={{ flexShrink: 0 }}>
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? D.sub : D.okText }}>
+              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : D.okText }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
                     <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: 0.85 }}>
@@ -9409,6 +10204,9 @@ export default function App() {
 	                        {L.why} {showWhy ? "▴" : "▾"}
                       </button>
                       {showWhy && <div data-testid="practice-why" className="pop" style={{ marginTop: 4, color: D.ink, background: D.card, border: `2px solid ${D.line}`, borderRadius: 10, padding: "8px 11px", fontSize: 13.5 }}>{explainText(q, uiLang)}</div>}
+                      {firstSessionWhy && (
+                        <div data-testid="first-session-why" style={{ marginTop: 4, fontSize: 13, fontWeight: 800, lineHeight: 1.35, fontFamily: "inherit", color: theme === "dark" ? D.badText : D.ink }}>{firstSessionWhy}</div>
+                      )}
                     </div>
                   );
                 })()}
@@ -9433,6 +10231,7 @@ export default function App() {
             </div>
           </div>
         </div>
+        </div>
       )}
 
       {/* ---------- DIALOGUE DUEL ---------- */}
@@ -9441,10 +10240,10 @@ export default function App() {
         const maxScore = activeDuel.steps.length * 3;
         const stars = dialogue.score >= 8 ? 3 : dialogue.score >= 5 ? 2 : 1;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
+          <div data-testid="dialogue-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
             {burst > 0 && dialogue.done && <Confetti key={burst} count={42} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <button onClick={() => { setScreen("home"); setTab("misiones"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.dialogue); setScreen("home"); setTab("misiones"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, height: 14, background: D.line, borderRadius: 99, overflow: "hidden" }}>
                 <div style={{ width: `${Math.round((dialogue.done ? 1 : dialogue.idx / activeDuel.steps.length) * 100)}%`, height: "100%", background: activeDuel.color }} />
               </div>
@@ -9474,7 +10273,7 @@ export default function App() {
                   ))}
                 </div>
                 <Btn color={activeDuel.color} dark={activeDuel.dark} onClick={() => startDialogue(activeDuel)}>{uiLang === "en" ? "Rematch" : "Revancha"}</Btn>
-	                <Btn outline onClick={() => { setScreen("home"); setTab("misiones"); }} style={{ marginLeft: 10 }}>{L.missions}</Btn>
+	                <Btn outline onClick={() => { setPaywallSource(PAYWALL_SOURCE.dialogue); setScreen("home"); setTab("misiones"); }} style={{ marginLeft: 10 }}>{L.missions}</Btn>
               </div>
             ) : (
               <div style={{ display: "grid", gap: 10 }}>
@@ -9497,10 +10296,10 @@ export default function App() {
         const tiles = Array.from({ length: 24 }, (_, i) => 24 - i);
         const trophyCount = Object.values(prog.missions?.gameTrophies || {}).filter(Boolean).length;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 14px 130px" }}>
+          <div data-testid="snakes-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 14px 130px" }}>
             {burst > 0 && snakeGame.done && <Confetti key={burst} count={54} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-              <button onClick={() => { setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.snake); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".08em" }}>{uiLang === "en" ? "BOARD RUN" : "CARRERA DE TABLERO"}</div>
                 <div style={{ fontWeight: 900, fontSize: 21 }}>Serpientes y Escaleras</div>
@@ -9564,7 +10363,7 @@ export default function App() {
                   {snakeGame.wrong === 0 && <span style={{ border: `1.5px solid ${D.gold}`, borderRadius: 99, padding: "4px 9px", fontSize: 11, fontWeight: 900, color: D.goldDark, background: D.card }}>★ {uiLang === "en" ? "No slides" : "Sin resbalones"}</span>}
                 </div>
                 <Btn color={D.green} dark={D.greenDark} onClick={startSnakes}>{uiLang === "en" ? "Play again" : "Jugar otra vez"}</Btn>
-                <Btn outline onClick={() => { setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
+                <Btn outline onClick={() => { setPaywallSource(PAYWALL_SOURCE.snake); setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
               </div>
             ) : (
               <div className="pop" style={{ border: `2px solid ${D.line}`, borderBottom: `5px solid ${D.line}`, borderRadius: 16, padding: 15, background: D.card }}>
@@ -9625,10 +10424,10 @@ export default function App() {
         const revealed = safeRiskyIsRevealed(item, safeGame);
         const hit = revealed && tappedWrong.length === 0;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
+          <div data-testid="safe-risky-board" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 130px" }}>
             {burst > 0 && safeGame.done && <Confetti key={burst} count={36} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <button onClick={() => { setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+              <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.safeRisky); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, height: 14, background: D.line, borderRadius: 99, overflow: "hidden" }}>
                 <div style={{ width: `${safeGame.done ? 100 : Math.round((safeGame.idx / safeGame.items.length) * 100)}%`, height: "100%", background: D.red }} />
               </div>
@@ -9653,7 +10452,7 @@ export default function App() {
                 </div>
                 <p style={{ color: D.sub, fontWeight: 800, margin: "0 0 16px" }}><IcGem size={14} /> +{safeGame.gems || 0}</p>
                 <Btn color={D.red} dark={D.redDark} onClick={startSafeRisky}>{uiLang === "en" ? "Play again" : "Jugar otra vez"}</Btn>
-                <Btn outline onClick={() => { setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
+                <Btn outline onClick={() => { setPaywallSource(PAYWALL_SOURCE.safeRisky); setScreen("home"); setTab("practica"); }} style={{ marginLeft: 10 }}>{L.games}</Btn>
               </div>
             ) : (
               <>
@@ -9727,14 +10526,14 @@ export default function App() {
       {screen === "games" && (
         <div data-testid="games-hub" style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-            <button type="button" onClick={() => { setScreen("home"); setTab("camino"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+            <button type="button" onClick={() => { setPaywallSource(PAYWALL_SOURCE.gamesHub); setScreen("home"); setTab("camino"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div data-testid="games-hub-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{L.hubGames}</div>
             <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
           </div>
-          <button onClick={() => startCubetas("games")} data-testid="cubetas-start"
-            style={{ display: "block", width: "100%", margin: "0 0 10px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => startCubetas("games")} data-testid="cubetas-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 10px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.green, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.greenDark}` }}>🪣</span>
+              <span data-testid="cubetas-tile" style={bucketTileStyle(theme)}><BucketMark size={28} body={bucketBodyColor(theme)} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{cubetasTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "Sort the phrase. Subjunctive or indicative." : "Clasifica la frase. Subjuntivo o indicativo."}</div>
@@ -9742,10 +10541,10 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={() => startAhorcado("games")} data-testid="hangman-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => startAhorcado("games")} data-testid="hangman-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{hangmanTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{hangmanQuiet(uiLang)}</div>
@@ -9753,10 +10552,10 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={() => startJeopardy("games")} data-testid="jeopardy-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => startJeopardy("games")} data-testid="jeopardy-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{jeopardyTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{jeopardyQuiet(uiLang)}</div>
@@ -9764,13 +10563,35 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={() => startMemory("games")} data-testid="memory-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => startWordle("games")} data-testid="wordle-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{wordleTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{wordleQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={() => startMemory("games")} data-testid="memory-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{memoryTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{memoryQuiet(uiLang)}</div>
+              </div>
+              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
+            </div>
+          </button>
+          <button onClick={() => startCrossword("games")} data-testid="crossword-start" className="games-hub-card"
+            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>
               </div>
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
@@ -9780,11 +10601,11 @@ export default function App() {
 
       {/* ---------- MATCH PAIRS (Práctica) ---------- */}
       {screen === "matchPairs" && matchGame && (() => {
-        const goPractica = () => { setScreen("home"); setTab("practica"); };
+        const goPractica = () => { setPaywallSource(PAYWALL_SOURCE.matchPairs); setScreen("home"); setTab("practica"); };
         const n = matchGame.pairs?.length || 0;
         const got = matchGame.matched?.length || 0;
         return (
-          <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
+          <div data-testid="match-pairs-screen" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
             {burst > 0 && matchGame.done && <Confetti key={burst} count={36} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <button onClick={goPractica} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -9842,6 +10663,10 @@ export default function App() {
         const misses = hangmanMisses(ahorcado);
         const letterLayout = normalizeLetterLayout(prog.letterLayout);
         const letters = ahorcado.letters || [];
+        const lightEnd = hangmanLightEndChrome();
+        const endTitle = theme === "dark" ? D.ink : lightEnd.title;
+        const endLabel = theme === "dark" ? D.sub : lightEnd.quiet;
+        const endBody = theme === "dark" ? D.ink : lightEnd.quiet;
         return (
           <div data-testid="hangman-board" data-word={ahorcado.word} data-timer={ahorcado.timerOn ? "on" : "off"} style={{ maxWidth: 480, margin: "0 auto", padding: "22px 20px 40px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
@@ -9857,27 +10682,27 @@ export default function App() {
               <HangmanMark size={56} />
             </div>
             {over ? (
-              <div className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
-                {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
-                <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: D.ink, margin: "0 0 12px" }}>{ahorcado.word}</div>
+              <div data-testid="hangman-end" className="pop" style={{ textAlign: "left", borderRadius: 14, padding: "11px 13px", ...(theme === "dark" ? darkHangmanEndCardStyle() : { background: lightEnd.background, border: lightEnd.border, borderBottom: lightEnd.borderBottom }) }}>
+                {won && <div data-testid="hangman-win" style={{ fontWeight: 900, fontSize: 22, color: endTitle, marginBottom: 8 }}>{hangmanWinLine(uiLang)}</div>}
+                <div data-testid="hangman-word" className="word-chip" style={{ ...WORD_CHIP_STYLE, fontWeight: 900, fontSize: 22, letterSpacing: ".12em", color: endTitle, margin: "0 0 12px" }}>{ahorcado.word}</div>
                 <div data-testid="hangman-literal" style={{ marginTop: 2 }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanLiteralLabel(uiLang)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanLiteral(ahorcado, uiLang)}</div>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: endLabel, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanLiteralLabel(uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: endBody }}>{hangmanLiteral(ahorcado, uiLang)}</div>
                 </div>
                 <div data-testid="hangman-why" style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: endLabel, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: endBody }}><HangmanEmphasis text={hangmanWhy(ahorcado, uiLang)} /></div>
                 </div>
                 {hangmanRegionChip(ahorcado) && (
                   <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
-                    <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
+                    <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: endLabel, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                     {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
-                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                      <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: endLabel, lineHeight: 1.35, marginTop: 4 }}><HangmanEmphasis text={hangmanRegionNote(ahorcado, uiLang)} /></div>
                     )}
                   </div>
                 )}
                 <Btn color={D.green} dark={D.greenDark} data-testid="hangman-again" onClick={() => startAhorcado(gamesReturnRef.current)} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New word" : "Nueva palabra"}</Btn>
-                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
+                <Btn outline data-testid="hangman-back" onClick={closeGamesSurface} style={{ width: "100%", marginTop: 8, ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
               </div>
             ) : (
               <>
@@ -9907,7 +10732,7 @@ export default function App() {
                           height: "auto",
                           padding: "4px 8px 2px",
                           border: "none",
-                          borderBottom: `3px solid ${focused ? D.green : D.ink}`,
+                          borderBottom: `${letterSlotUnderlineWidth(theme, focused)}px solid ${letterSlotUnderline(theme, focused, D.ink, !filled)}`,
                           borderRadius: 0,
                           background: "transparent",
                           color: D.ink,
@@ -9937,13 +10762,13 @@ export default function App() {
                     </div>
                     <div data-testid="hangman-why" style={{ marginTop: 8 }}>
                       <div style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{hangmanWhyLabel(uiLang)}</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{hangmanWhy(ahorcado, uiLang)}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}><HangmanEmphasis text={hangmanWhy(ahorcado, uiLang)} /></div>
                     </div>
                     {hangmanRegionChip(ahorcado) && (
                       <div data-testid="hangman-region" data-weird={hangmanSoundsWeirdOutside(ahorcado) ? "yes" : "no"} style={{ marginTop: 8 }}>
                         <span data-testid="hangman-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{hangmanRegionChip(ahorcado)}</span>
                         {hangmanSoundsWeirdOutside(ahorcado) && hangmanRegionNote(ahorcado, uiLang) && (
-                          <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}>{hangmanRegionNote(ahorcado, uiLang)}</div>
+                          <div data-testid="hangman-region-note" style={{ fontSize: 12, fontWeight: 700, color: D.sub, lineHeight: 1.35, marginTop: 4 }}><HangmanEmphasis text={hangmanRegionNote(ahorcado, uiLang)} /></div>
                         )}
                       </div>
                     )}
@@ -9951,6 +10776,7 @@ export default function App() {
                 )}
                 <LetterBoard
                   D={D}
+                  theme={theme}
                   layout={letterLayout}
                   extraRow={HANGMAN_ACCENTS}
                   onLayoutChange={(next) => save({ letterLayout: normalizeLetterLayout(next) })}
@@ -10031,7 +10857,7 @@ export default function App() {
               <div data-testid="jeopardy-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(min-content, 1fr))`, gap: 5, overflow: "visible", paddingBottom: 4 }}>
                 {jeopardyCategories.map((cat) => (
                   <div key={cat.id} style={{ display: "grid", gap: 5, minWidth: "min-content", justifyItems: "center" }}>
-                    <div data-testid={`jeopardy-cat-${cat.id}`} className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, minHeight: 44, width: "max-content", maxWidth: "100%", border: `2px solid #C46B3A`, borderRadius: 10, background: HUB_CREAM, color: MARK_INK, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center", padding: "5px 6px", lineHeight: 1.15 }}>
+                    <div data-testid={`jeopardy-cat-${cat.id}`} className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, minHeight: 44, width: "max-content", maxWidth: "100%", borderRadius: 10, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center", padding: "5px 6px", lineHeight: 1.15, ...boardTilePaint({ theme, role: "category", light: { cream: HUB_CREAM, mark: MARK_INK, line: D.line, card: D.card, muted: D.sub } }) }}>
                       {jeopardyCatLabel(cat.id, uiLang)}
                     </div>
                     {JEOPARDY_VALUES.map((value) => {
@@ -10039,7 +10865,7 @@ export default function App() {
                       const used = !!jeopardy.used?.[key];
                       return (
                         <button key={key} data-testid={`jeopardy-tile-${key}`} disabled={used} onClick={() => openJeopardyTile(cat, value)}
-                          style={{ height: 58, border: `2px solid ${used ? D.line : "#C46B3A"}`, borderBottom: `5px solid ${used ? D.line : "#C46B3A"}`, borderRadius: 12, background: used ? D.subtle : HUB_CREAM, color: used ? D.sub : "#C46B3A", fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer" }}>
+                          style={{ height: 58, borderRadius: 12, fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer", ...boardTilePaint({ theme, role: "value", used, light: { cream: HUB_CREAM, line: D.line, subtle: D.subtle, sub: D.sub, card: D.card, muted: D.sub } }) }}>
                           {used ? "✓" : value}
                         </button>
                       );
@@ -10049,11 +10875,31 @@ export default function App() {
               </div>
               <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
                 <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-again" onClick={() => startJeopardy(gamesReturnRef.current)} style={{ width: "100%" }}>{jeopardyResetLabel(uiLang)}</Btn>
-                <Btn outline data-testid="jeopardy-back" onClick={closeGamesSurface} style={{ width: "100%" }}>{L.games}</Btn>
+                <Btn outline data-testid="jeopardy-back" onClick={closeGamesSurface} style={{ width: "100%", ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
               </div>
             </>
           )}
         </div>
+      )}
+
+      {/* ---------- WORDLE ---------- */}
+      {screen === "wordle" && wordle && (
+        <WordlePlay
+          run={wordle}
+          uiLang={uiLang}
+          invalid={wordleInvalid}
+          shake={wordleShake}
+          flipRow={wordleFlip}
+          dark={theme === "dark"}
+          D={D}
+          layout={normalizeLetterLayout(prog.letterLayout)}
+          onType={typeWordleLetter}
+          onBackspace={backspaceWordle}
+          onCommit={commitWordleGuess}
+          onLayoutChange={(next) => save({ letterLayout: normalizeLetterLayout(next) })}
+          onClose={closeGamesSurface}
+          onLang={(code) => save({ uiLang: code })}
+        />
       )}
 
       {/* ---------- MEMORY ---------- */}
@@ -10063,11 +10909,28 @@ export default function App() {
           uiLang={uiLang}
           D={D}
           L={L}
+          theme={theme}
           onTap={onMemoryTap}
           onPair={onMemoryPair}
           onClose={closeGamesSurface}
           onAgain={() => startMemory(gamesReturnRef.current)}
           onLang={(code) => save({ uiLang: code })}
+        />
+      )}
+
+      {screen === "crossword" && crosswordGame && (
+        <CrosswordPlayfield
+          run={crosswordGame}
+          grid={CROSSWORD_GRID}
+          uiLang={uiLang}
+          onType={(letter) => setCrosswordGame((cur) => typeCrosswordLetter(CROSSWORD_GRID, cur, letter))}
+          onBackspace={() => setCrosswordGame((cur) => backspaceCrossword(CROSSWORD_GRID, cur))}
+          onSelectCell={(row, col) => setCrosswordGame((cur) => selectCrosswordCell(CROSSWORD_GRID, cur, row, col))}
+          onSelectClue={(wordId) => setCrosswordGame((cur) => selectCrosswordClue(CROSSWORD_GRID, cur, wordId))}
+          onReveal={() => setCrosswordGame((cur) => revealCrosswordWord(CROSSWORD_GRID, cur))}
+          onClose={closeGamesSurface}
+          langControl={<LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />}
+          dark={theme === "dark"}
         />
       )}
 
@@ -10086,10 +10949,51 @@ export default function App() {
         const qOrder = storyShuffle?.storyId === story.id ? storyShuffle.questions : null;
         const cpOrder = storyShuffle?.storyId === story.id ? storyShuffle.checkpoints : null;
         const correct = story.questions.reduce((n, qq, i) => n + (isStoryChoiceCorrect(qq, ansSel[i], qOrder?.[i]) ? 1 : 0), 0);
+        const renderWordSheet = (anchored) => (
+          <div ref={wordSheetRef} data-testid="word-sheet" className="pop" style={{ visibility: wordSheetBox ? "visible" : "hidden", position: anchored ? "absolute" : "fixed", left: anchored ? (wordSheetBox ? wordSheetBox.anchorLeft : 0) : (wordSheetBox ? wordSheetBox.left : 8), width: wordSheetBox ? wordSheetBox.width : 320, bottom: anchored ? "calc(100% + 10px)" : (wordSheetBox ? wordSheetBox.bottom : 8), zIndex: 30, boxSizing: "border-box", background: D.card, border: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: wordSheetBox ? wordSheetBox.maxHeight : "none", overflowY: "auto" }}>
+            <div ref={wordSheetContentRef} style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <button onClick={() => speak(wordSel.display)} aria-label={uiLang === "en" ? "Listen to word" : "Escuchar palabra"}
+                style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "7px 9px", flexShrink: 0, lineHeight: 0 }}>
+                <IcSpeaker size={18} color={"#1CB0F6"} />
+              </button>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontWeight: 900, fontSize: 18 }}>{wordSel.display}</span>
+                {wordSel.en && (storyMode !== "challenge" || wordReveal) ? (
+                  <span style={{ fontWeight: 700, fontSize: 15, color: D.sub }}> — {wordSel.en}</span>
+                ) : wordSel.en ? (
+                  <span style={{ fontWeight: 700, fontSize: 14, color: D.sub, fontStyle: "italic" }}> — {uiLang === "en" ? "guess from context first" : "adivina por contexto"}</span>
+                ) : null}
+                {storyMode === "challenge" && wordSel.en && !wordReveal && (
+                  <button onClick={() => setWordReveal(true)} className="duo-btn"
+                    style={{ marginTop: 8, background: sec.color, border: "none", borderBottom: `4px solid ${sec.dark}`, color: "#fff", borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
+                    {uiLang === "en" ? "Reveal meaning" : "Revelar significado"}
+                  </button>
+                )}
+                {wordSel.note && (storyMode !== "challenge" || wordReveal) && <div style={{ fontSize: 13, fontWeight: 700, color: D.ink, marginTop: 3, background: D.goldBg, border: `1.5px solid ${D.gold}`, borderRadius: 8, padding: "5px 9px" }}>{wordSel.note}</div>}
+                {wordSel.key && <div style={{ marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5, background: D.greenBg, border: `1.5px solid ${D.green}`, color: D.greenDark, borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 900 }}>{uiLang === "en" ? "KEY WORD FOUND" : "PALABRA CLAVE"} · {wordSel.key}</div>}
+                {wordSel.source && wordSel.source !== wordSel.clean && (storyMode !== "challenge" || wordReveal) && (
+                  <div style={{ fontSize: 12, fontWeight: 800, color: D.sub, marginTop: 5 }}>{uiLang === "en" ? "Related form" : "Forma relacionada"}: <b>{wordSel.source}</b></div>
+                )}
+                {wordSel.en && (storyMode !== "challenge" || wordReveal) && (
+                  <div style={{ marginTop: 7, fontSize: 12.5, color: D.sub, fontWeight: 800, lineHeight: 1.35 }}>
+                    <b style={{ color: D.ink }}>{uiLang === "en" ? "Context" : "Contexto"}:</b> «{wordSel.sentence.length > 160 ? `${wordSel.sentence.slice(0, 160)}...` : wordSel.sentence}»
+                  </div>
+                )}
+                {wordSel.en && (storyMode !== "challenge" || wordReveal) && (
+                  <button onClick={() => addFlashcard(story, wordSel, wordSel.sentence)} className="duo-btn"
+                    style={{ marginTop: 8, background: prog.flashcards?.[strip(wordSel.display)] ? D.green : D.blue, border: "none", borderBottom: `4px solid ${prog.flashcards?.[strip(wordSel.display)] ? D.greenDark : D.blueDark}`, color: "#fff", borderRadius: 11, padding: "8px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
+                    <IcCards size={14} color="#fff" /> {prog.flashcards?.[strip(wordSel.display)] ? L.inDeck : L.saveCard}
+                  </button>
+                )}
+              </div>
+              <button onClick={() => setWordSel(null)} aria-label={L.close} style={{ border: "none", background: "none", fontSize: 18, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", lineHeight: 1, minWidth: 44, minHeight: 44 }}>✕</button>
+            </div>
+          </div>
+        );
         return (
           <div data-testid="story-reader" data-story-id={story.id} style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 150px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-	              <button type="button" onClick={() => { setWordSel(null); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
+	              <button type="button" onClick={() => { setWordSel(null); setPaywallSource(PAYWALL_SOURCE.storyClose); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: sec.color }}>{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
@@ -10111,12 +11015,98 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <div style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 10, background: D.card, marginBottom: 14 }}>
+            <div data-testid="lectura-progress" style={{ display: "flex", gap: 5, alignItems: "center", margin: "2px 0 14px" }}>
+              {story.paragraphs.map((_, i) => (
+                <button key={i} onClick={() => { stopNarration(); setWordSel(null); setParaIdx(i); }} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
+                  style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : "#E8E8E8", outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
+              ))}
+              <button onClick={() => { stopNarration(); setWordSel(null); setParaIdx(story.paragraphs.length); }} aria-label={uiLang === "en" ? "Questions" : "Preguntas"}
+                style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : "#E8E8E8", color: paraIdx >= story.paragraphs.length ? "#fff" : D.sub }}>?</button>
+            </div>
+            {paraIdx < story.paragraphs.length && (
+              <div style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>
+                {uiLang === "en" ? "Paragraph" : "Párrafo"} {paraIdx + 1} / {story.paragraphs.length}
+              </div>
+            )}
+
+            {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
+              <div key={pi} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
+                <img
+                  src={`${import.meta.env.BASE_URL}lectura/${story.id}/p${pi}.png`}
+                  alt=""
+                  aria-hidden="true"
+                  data-testid={`lectura-still-${pi}`}
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  style={{ display: "block", width: "auto", height: "auto", maxWidth: "100%", maxHeight: 148, margin: "0 auto 12px", borderRadius: 10 }}
+                />
+                <div style={{ display: "flex", gap: storyAudioOk ? 10 : 0 }}>
+                {storyAudioOk && (
+                <button onClick={() => playStoryParagraph(story, pi, para)} aria-label={uiLang === "en" ? "Listen to paragraph" : "Escuchar párrafo"}
+                  style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "4px 7px", flexShrink: 0, alignSelf: "flex-start", lineHeight: 0, marginTop: 3 }}>
+                  <IcSpeaker size={15} color={"#1CB0F6"} />
+                </button>
+                )}
+                <p style={{ margin: 0, fontSize: 17, lineHeight: 1.75, fontWeight: 600 }}>
+                  {segmentGlossText(para).map((seg, ti) => {
+                    if (/^\s+$/.test(seg.raw) || !seg.raw) return seg.raw;
+                    const tok = seg.raw;
+                    const def = lookupStoryWord(story, tok);
+                    const clean = cleanStoryToken(tok);
+                    const hitKey = keyWords.includes(def?.source) ? def.source : keyWords.includes(clean) ? clean : null;
+                    const isSel = wordSel && wordSel.pi === pi && wordSel.ti === ti;
+                    const known = !!def?.en;
+                    if (seg.key || lookupGloss(tok, uiLang)) {
+                      return (
+                        <GlossWord
+                          key={ti}
+                          token={tok}
+                          uiLang={uiLang}
+                          D={D}
+                          accent={sec.color}
+                          onActivate={() => { if (hitKey) discoverStoryWord(story, hitKey); }}
+                        />
+                      );
+                    }
+                    return (
+	                      <span key={ti} onClick={(e) => { wordTapRef.current = e.currentTarget; if (hitKey) discoverStoryWord(story, hitKey); setWordReveal(storyMode !== "challenge"); setWordSel({ display: tok.replace(/[«»".,;:¡!¿?—()]/g, ""), clean, key: hitKey, ...def, sentence: para, pi, ti, x: e.clientX, y: e.clientY }); }}
+                        style={{ cursor: "pointer", borderRadius: 4, padding: "0 1px", background: isSel ? "#FFE9A8" : "transparent", borderBottom: known ? `2px dotted ${sec.color}66` : "none" }}>
+                        {tok}
+                      </span>
+                    );
+                  })}
+                </p>
+                </div>
+                {storyMode === "bilingual" && extra.en?.[pi] && (
+                  <div className="pop" style={{ margin: storyAudioOk ? "8px 0 0 48px" : "8px 0 0", borderLeft: `4px solid ${sec.color}`, background: D.subtle, borderRadius: 10, padding: "8px 11px", color: D.sub, fontSize: 13, fontWeight: 800, lineHeight: 1.45 }}>
+                    {extra.en[pi]}
+                  </div>
+                )}
+                {checkpoints[pi] && (
+                  <div data-testid="lectura-checkpoint" style={{ position: "relative", zIndex: wordSel && wordSel.pi === pi ? 31 : "auto", marginTop: 10 + wordSheetSpacer, marginLeft: storyAudioOk ? 48 : 0, border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
+                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
+                      {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
+                    </div>
+                    <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => (
+                        <button key={choice} disabled={!!checkState[pi]} onClick={() => answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a)}
+                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: checkState[pi] === choice ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
+                          {choice}
+                        </button>
+                      ))}
+                      {wordSel && wordSel.pi === pi && renderWordSheet(true)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ); })}
+
+            {storyAudioOk && (
+            <div data-testid="narration-card" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 10, background: D.card, marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 8 }}>
                 <div>
                   <div data-testid="narration-label" style={{ fontSize: 11, fontWeight: 900, color: sec.dark, letterSpacing: ".06em" }}>{L.narrationLabel}</div>
                   <div style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>
-                    {STORY_AUDIO[story.id] ? (uiLang === "en" ? "Story 1 uses cached paragraph audio in Normal mode." : "El cuento 1 usa audio cacheado en modo Normal.") : (uiLang === "en" ? "Sentence-chunked browser audio." : "Audio del navegador por frases.")}
+                    {storyAudioPath(story.id, paraIdx) ? (uiLang === "en" ? "Story 1 uses cached paragraph audio in Normal mode." : "El cuento 1 usa audio cacheado en modo Normal.") : (uiLang === "en" ? "Sentence-chunked browser audio." : "Audio del navegador por frases.")}
                   </div>
                 </div>
                 <button onClick={stopNarration} style={{ border: `2px solid ${D.line}`, background: D.subtle, borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", color: D.sub }}>
@@ -10137,7 +11127,8 @@ export default function App() {
                 {renderVoiceSelect()}
               </div>
             </div>
-            <div className="pop" style={{ border: `2px solid ${sec.color}`, borderBottom: `5px solid ${sec.dark}`, borderRadius: 16, padding: 13, background: D.card, marginBottom: 18 }}>
+            )}
+            <div data-testid="word-hunt-card" className="pop" style={{ border: `2px solid ${sec.color}`, borderBottom: `5px solid ${sec.dark}`, borderRadius: 16, padding: 13, background: D.card, marginBottom: 18 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 9 }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 900, color: sec.dark, letterSpacing: ".06em" }}>{uiLang === "en" ? "WORD HUNT" : "CACERÍA DE PALABRAS"}</div>
@@ -10161,89 +11152,6 @@ export default function App() {
                 ))}
               </div>
             </div>
-
-            {/* chunk progress — segments per paragraph + final questions step */}
-            <div style={{ display: "flex", gap: 5, alignItems: "center", margin: "2px 0 14px" }}>
-              {story.paragraphs.map((_, i) => (
-                <button key={i} onClick={() => { stopNarration(); setWordSel(null); setParaIdx(i); }} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
-                  style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : "#E8E8E8", outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
-              ))}
-              <button onClick={() => { stopNarration(); setWordSel(null); setParaIdx(story.paragraphs.length); }} aria-label={uiLang === "en" ? "Questions" : "Preguntas"}
-                style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : "#E8E8E8", color: paraIdx >= story.paragraphs.length ? "#fff" : D.sub }}>?</button>
-            </div>
-            {paraIdx < story.paragraphs.length && (
-              <div style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>
-                {uiLang === "en" ? "Paragraph" : "Párrafo"} {paraIdx + 1} / {story.paragraphs.length}
-              </div>
-            )}
-
-            {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
-              <div key={pi} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
-                <img
-                  src={`${import.meta.env.BASE_URL}lectura/${story.id}/p${pi}.png`}
-                  alt=""
-                  aria-hidden="true"
-                  data-testid={`lectura-still-${pi}`}
-                  onError={(e) => { e.currentTarget.style.display = "none"; }}
-                  style={{ display: "block", width: "100%", borderRadius: 10, marginBottom: 12, objectFit: "cover" }}
-                />
-                <div style={{ display: "flex", gap: 10 }}>
-                <button onClick={() => playStoryParagraph(story, pi, para)} aria-label={uiLang === "en" ? "Listen to paragraph" : "Escuchar párrafo"}
-                  style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "4px 7px", flexShrink: 0, alignSelf: "flex-start", lineHeight: 0, marginTop: 3 }}>
-                  <IcSpeaker size={15} color={"#1CB0F6"} />
-                </button>
-                <p style={{ margin: 0, fontSize: 17, lineHeight: 1.75, fontWeight: 600 }}>
-                  {segmentGlossText(para).map((seg, ti) => {
-                    if (/^\s+$/.test(seg.raw) || !seg.raw) return seg.raw;
-                    const tok = seg.raw;
-                    const def = lookupStoryWord(story, tok);
-                    const clean = cleanStoryToken(tok);
-                    const hitKey = keyWords.includes(def?.source) ? def.source : keyWords.includes(clean) ? clean : null;
-                    const isSel = wordSel && wordSel.pi === pi && wordSel.ti === ti;
-                    const known = !!def?.en;
-                    if (seg.key || lookupGloss(tok, uiLang)) {
-                      return (
-                        <GlossWord
-                          key={ti}
-                          token={tok}
-                          uiLang={uiLang}
-                          D={D}
-                          accent={sec.color}
-                          onActivate={() => { if (hitKey) discoverStoryWord(story, hitKey); }}
-                        />
-                      );
-                    }
-                    return (
-	                      <span key={ti} onClick={(e) => { if (hitKey) discoverStoryWord(story, hitKey); setWordReveal(storyMode !== "challenge"); setWordSel({ display: tok.replace(/[«»".,;:¡!¿?—()]/g, ""), clean, key: hitKey, ...def, sentence: para, pi, ti, x: e.clientX, y: e.clientY }); }}
-                        style={{ cursor: "pointer", borderRadius: 4, padding: "0 1px", background: isSel ? "#FFE9A8" : "transparent", borderBottom: known ? `2px dotted ${sec.color}66` : "none" }}>
-                        {tok}
-                      </span>
-                    );
-                  })}
-                </p>
-                </div>
-                {storyMode === "bilingual" && extra.en?.[pi] && (
-                  <div className="pop" style={{ margin: "8px 0 0 48px", borderLeft: `4px solid ${sec.color}`, background: D.subtle, borderRadius: 10, padding: "8px 11px", color: D.sub, fontSize: 13, fontWeight: 800, lineHeight: 1.45 }}>
-                    {extra.en[pi]}
-                  </div>
-                )}
-                {checkpoints[pi] && (
-                  <div style={{ margin: "10px 0 0 48px", border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : D.line}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : "#fff" }}>
-                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : D.sub, marginBottom: 6 }}>
-                      {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
-                    </div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => (
-                        <button key={choice} disabled={!!checkState[pi]} onClick={() => answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a)}
-                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : D.line}`, background: checkState[pi] === choice ? "#fff" : "#F7F7F7", borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : D.ink }}>
-                          {choice}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ); })}
 
             {/* chunk navigation */}
             {paraIdx < story.paragraphs.length && (
@@ -10313,7 +11221,7 @@ export default function App() {
 	                    {correct}/{story.questions.length} {uiLang === "en" ? "correct" : "correctas"} {correct === 3 ? "— ¡qué padre!" : ""}
                   </div>
                   {claimed ? (
-	                    <Btn outline disabled>{L.xpClaimed}</Btn>
+	                    <Btn outline disabled>{freshClaimId === story.id ? L.xpJustClaimed : L.xpClaimed}</Btn>
                   ) : (
 	                    <Btn onClick={() => claimStory(story, correct)}>{L.claim} +{5 + correct * 10} XP · <IcGem size={14} /> 10</Btn>
                   )}
@@ -10322,59 +11230,41 @@ export default function App() {
             </div>
             </>)}
 
-            {/* sticky definition card */}
-            {wordSel && (() => {
-              const vw = typeof window !== "undefined" ? window.innerWidth : 400;
-              const vh = typeof window !== "undefined" ? window.innerHeight : 700;
-              const cw = Math.min(320, vw - 16);
-              const left = Math.min(Math.max((wordSel.x || vw / 2) - cw / 2, 8), vw - cw - 8);
-              const below = (wordSel.y || 0) < vh * 0.45;
-              const pos = below ? { top: (wordSel.y || 0) + 16 } : { bottom: vh - (wordSel.y || 0) + 14 };
-              return (
-              <>
-              <div onClick={() => setWordSel(null)} style={{ position: "fixed", inset: 0, zIndex: 29 }} />
-              <div className="pop" style={{ position: "fixed", left, width: cw, ...pos, zIndex: 30, background: D.card, border: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: "46vh", overflowY: "auto" }}>
-                <div style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <button onClick={() => speak(wordSel.display)} aria-label={uiLang === "en" ? "Listen to word" : "Escuchar palabra"}
-                    style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "7px 9px", flexShrink: 0, lineHeight: 0 }}>
-                    <IcSpeaker size={18} color={"#1CB0F6"} />
+            {lecturaCliffhanger?.storyId === story.id && (
+              <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, marginLeft: -16, marginRight: -16, background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 14, padding: "14px 10px 12px" }}>
+                <p data-testid="lectura-cliffhanger-line" style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700, lineHeight: 1.55, color: D.ink }}>
+                  {lecturaCliffhangerLine(story.id)}
+                </p>
+                <div data-testid="lectura-bird-handoff" style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM }}>
+                  <button
+                    type="button"
+                    data-testid="lectura-bird-handoff-cta"
+                    onClick={handoffCliffhangerToBird}
+                    style={{
+                      background: theme === "dark" ? "transparent" : HUB_CREAM,
+                      color: theme === "dark" ? "#B8C0A0" : MARK_INK,
+                      border: theme === "dark" ? "1px solid #B8C0A0" : `1px solid ${MARK_INK}`,
+                      borderRadius: 12,
+                      padding: "10px 16px",
+                      minHeight: 44,
+                      fontFamily: "inherit",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      lineHeight: 1.35,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {L.continue}
                   </button>
-	                  <div style={{ flex: 1 }}>
-	                    <span style={{ fontWeight: 900, fontSize: 18 }}>{wordSel.display}</span>
-	                    {wordSel.en && (storyMode !== "challenge" || wordReveal) ? (
-	                      <span style={{ fontWeight: 700, fontSize: 15, color: D.sub }}> — {wordSel.en}</span>
-                    ) : wordSel.en ? (
-	                      <span style={{ fontWeight: 700, fontSize: 14, color: D.sub, fontStyle: "italic" }}> — {uiLang === "en" ? "guess from context first" : "adivina por contexto"}</span>
-                    ) : null}
-	                    {storyMode === "challenge" && wordSel.en && !wordReveal && (
-	                      <button onClick={() => setWordReveal(true)} className="duo-btn"
-	                        style={{ marginTop: 8, background: sec.color, border: "none", borderBottom: `4px solid ${sec.dark}`, color: "#fff", borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
-	                        {uiLang === "en" ? "Reveal meaning" : "Revelar significado"}
-	                      </button>
-	                    )}
-	                    {wordSel.note && (storyMode !== "challenge" || wordReveal) && <div style={{ fontSize: 13, fontWeight: 700, color: D.ink, marginTop: 3, background: D.goldBg, border: `1.5px solid ${D.gold}`, borderRadius: 8, padding: "5px 9px" }}>{wordSel.note}</div>}
-	                    {wordSel.key && <div style={{ marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5, background: D.greenBg, border: `1.5px solid ${D.green}`, color: D.greenDark, borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 900 }}>{uiLang === "en" ? "KEY WORD FOUND" : "PALABRA CLAVE"} · {wordSel.key}</div>}
-	                    {wordSel.source && wordSel.source !== wordSel.clean && (storyMode !== "challenge" || wordReveal) && (
-	                      <div style={{ fontSize: 12, fontWeight: 800, color: D.sub, marginTop: 5 }}>{uiLang === "en" ? "Related form" : "Forma relacionada"}: <b>{wordSel.source}</b></div>
-	                    )}
-	                    {wordSel.en && (storyMode !== "challenge" || wordReveal) && (
-	                      <div style={{ marginTop: 7, fontSize: 12.5, color: D.sub, fontWeight: 800, lineHeight: 1.35 }}>
-	                        <b style={{ color: D.ink }}>{uiLang === "en" ? "Context" : "Contexto"}:</b> «{wordSel.sentence.length > 160 ? `${wordSel.sentence.slice(0, 160)}...` : wordSel.sentence}»
-	                      </div>
-	                    )}
-	                    {wordSel.en && (storyMode !== "challenge" || wordReveal) && (
-	                      <button onClick={() => addFlashcard(story, wordSel, wordSel.sentence)} className="duo-btn"
-	                        style={{ marginTop: 8, background: prog.flashcards?.[strip(wordSel.display)] ? D.green : D.blue, border: "none", borderBottom: `4px solid ${prog.flashcards?.[strip(wordSel.display)] ? D.greenDark : D.blueDark}`, color: "#fff", borderRadius: 11, padding: "8px 12px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
-		                        <IcCards size={14} color="#fff" /> {prog.flashcards?.[strip(wordSel.display)] ? L.inDeck : L.saveCard}
-	                      </button>
-	                    )}
-	                  </div>
-	                  <button onClick={() => setWordSel(null)} aria-label={L.close} style={{ border: "none", background: "none", fontSize: 18, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", lineHeight: 1, minWidth: 44, minHeight: 44 }}>✕</button>
                 </div>
               </div>
-              </>
-              );
-            })()}
+            )}
+
+            {/* definition card — placed on open; a later scroll does not move the page back */}
+            {wordSel && (
+              <div onClick={() => setWordSel(null)} style={{ display: wordSheetBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: wordSheetBox ? wordSheetBox.backdropBottom : 0, zIndex: 29 }} />
+            )}
+            {wordSel && !checkpoints[wordSel.pi] && renderWordSheet(false)}
           </div>
         );
       })()}
@@ -10385,12 +11275,20 @@ export default function App() {
         const milestones = [3, 7, 14, 30, 50, 100, 365];
         const hitMilestone = milestones.includes(prog.streak);
         const quietWin = session.firstHoy || session.firstDoctora || session.firstStory0 || session.lecturaWin;
+        const firstWin = !!session.firstSession;
+        const perchCard = firstWin || isSenderoLesson(session);
         const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : session.lecturaWin ? "lectura-win" : undefined;
         const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : session.lecturaWin ? "lectura-win-continue" : undefined;
+        const streakChip = streakChipLabel(prog.streak, uiLang);
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
-          {!quietWin && <Confetti count={perfect ? 160 : 70} />}
-          {!quietWin && (
+          {!quietWin && !perchCard && <Confetti count={perfect ? 160 : 70} />}
+          {perchCard && (
+            <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
+              <WinPerch theme={theme} />
+            </div>
+          )}
+          {!quietWin && !perchCard && (
           <div style={{ display: "flex", justifyContent: "center", gap: 0, alignItems: "flex-end" }}>
             {[session.host, "luna", "rafa"].filter((id, i, arr) => arr.indexOf(id) === i).slice(0, 3).map((id, i) => (
               <div key={id} className="jump" style={{ marginLeft: i ? -18 : 0, zIndex: 3 - i }}>
@@ -10403,13 +11301,13 @@ export default function App() {
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
               {shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session)
                 ? <CenzontleFlyAway surface="win" onComplete={completeCenzontleBeat} />
-                : <WinPerch />}
+                : <WinPerch theme={theme} />}
             </div>
           )}
-          {screenQuip && !quietWin && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
-            <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
+          {screenQuip && !quietWin && !perchCard && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
+            <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, coachName(session.host)) }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
-          <h2 data-testid={winTestId} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: D.gold }}>
+          <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: perchCard && theme !== "dark" ? "#85672C" : D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
           {levelUp && !session.firstDoctora && (
@@ -10418,24 +11316,27 @@ export default function App() {
             </div>
           )}
           <p style={{ color: D.sub, fontWeight: 700 }}>
-	            «{session.title}» · {lessonStats.right} {L.hits}, {lessonStats.wrong} {L.misses}{!quietWin && lessonStats.wrong === 0 ? ` · ${L.impeccable}` : ""}
+	            «{uiText(session.title, uiLang)}» · {scoreCountClause(lessonStats.right, lessonStats.wrong, uiLang)}{!quietWin && lessonStats.wrong === 0 ? ` · ${L.impeccable}` : ""}
 	            {session.testOut != null && <span><br />{L.unlockedSection}</span>}
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", margin: "24px 0", flexWrap: "wrap" }}>
             {[
-              { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, testid: "win-earned-xp" },
-	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, testid: "win-earned-gems" },
-	              { v: <span><IcFlame size={20} className="flame" /> {prog.streak}</span>, l: L.streakDays, c: "#FF9600", testid: "win-earned-streak" },
+              { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, ink: winNumeralColor(theme, "xp", D), testid: "win-earned-xp" },
+	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, ink: winNumeralColor(theme, "gems", D), testid: "win-earned-gems" },
+	              ...(streakChip ? [{ v: <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}><IcFlame size={20} className="flame" />{streakChip}</span>, l: null, c: "#FF9600", testid: "win-earned-streak" }] : []),
             ].filter((s) => !session.firstDoctora || s.testid === "win-earned-streak").map((s, i) => (
               <div key={i} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
-                <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: 22, color: s.c }}>{s.v}</div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>
+                <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: s.testid === "win-earned-streak" ? 16 : 22, color: s.ink || s.c, lineHeight: 1.25, whiteSpace: s.testid === "win-earned-streak" ? "nowrap" : undefined }}>{s.v}</div>
+                {s.l != null && <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>}
               </div>
             ))}
           </div>
+          {firstWin && firstSessionWin && (
+            <p data-testid="first-session-win-line" style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 700, lineHeight: 1.35, color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}>{firstSessionWin}</p>
+          )}
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
-	            <Btn data-testid={continueTestId} onClick={continueFromWin}>{L.continue}</Btn>
+	            <Btn data-testid={continueTestId || "win-continue"} onClick={continueFromWin}>{L.continue}</Btn>
           </div>
           {showFirstWinEmail && (
             <form
@@ -10580,17 +11481,8 @@ export default function App() {
             </form>
           )}
           {showLecturaHandoff && (
-            <div
-              data-testid="lectura-handoff"
-              style={{
-                marginTop: 18,
-                background: theme === "dark" ? FIRST_WIN_EMAIL_DARK.card : HUB_CREAM,
-                border: theme === "dark" ? `1px solid ${FIRST_WIN_EMAIL_DARK.inputBorder}` : "none",
-                borderRadius: 14,
-                padding: "10px 12px 12px",
-              }}
-            >
-              <p data-testid="lectura-handoff-quiet" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : D.sub }}>
+            <div data-testid="lectura-handoff" style={{ marginTop: 18, background: HUB_CREAM, borderRadius: 14, padding: "10px 12px 12px" }}>
+              <p data-testid="lectura-handoff-quiet" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: D.sub }}>
                 {lecturaHandoffQuiet(uiLang)}
               </p>
               <button
@@ -10599,9 +11491,9 @@ export default function App() {
                 data-story-id={lecturaHandoffStory.id}
                 onClick={openLecturaFromHandoff}
                 style={{
-                  background: theme === "dark" ? FIRST_WIN_EMAIL_DARK.card : HUB_CREAM,
-                  color: theme === "dark" ? FIRST_WIN_EMAIL_DARK.ink : MARK_INK,
-                  border: `1px solid ${theme === "dark" ? FIRST_WIN_EMAIL_DARK.focus : MARK_INK}`,
+                  background: HUB_CREAM,
+                  color: MARK_INK,
+                  border: `1px solid ${MARK_INK}`,
                   borderRadius: 12,
                   padding: "10px 16px",
                   minHeight: 44,
@@ -10630,9 +11522,15 @@ export default function App() {
 
           {/* perfect-lesson banner */}
           {perfect && !quietWin && (session.perfectBonus || 0) > 0 && (
-            <div data-testid="perfect-lesson" className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
-              ★ {L.perfectLesson}
-            </div>
+            firstWin ? (
+              <p data-testid="perfect-lesson" style={{ margin: "14px 0 0", padding: 0, border: "none", background: "none", fontWeight: 700, fontSize: 13, lineHeight: 1.35, color: theme === "dark" ? D.gold : "#85672C" }}>
+                {L.perfectLesson}
+              </p>
+            ) : (
+              <div data-testid="perfect-lesson" className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", marginTop: 14, fontWeight: 900, color: D.goldDark, fontSize: 13 }}>
+                ★ {L.perfectLesson}
+              </div>
+            )
           )}
 
           {/* streak milestone badge */}
@@ -10672,7 +11570,7 @@ export default function App() {
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "70px 20px", textAlign: "center" }}>
           <CoachPortrait id={session.host} mood="sad" size={120} />
           {screenQuip && <div style={{ fontWeight: 800, fontStyle: "italic", margin: "6px 0 0", fontSize: 15 }}>
-            <span className="nametag" style={{ marginRight: 6 }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
+            <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, coachName(session.host)) }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
           {failKind === "test" ? (
             <>
@@ -10687,21 +11585,21 @@ export default function App() {
                   </Btn>
                 )}
 	                {trackedCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview(true)}>{L.reviewErrors}</Btn>}
-	                <Btn outline onClick={() => { setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
+	                <Btn outline data-testid="hearts-to-path" onClick={() => { setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
               </div>
             </>
           ) : (
             <>
-	              <h2 style={{ fontWeight: 900, fontSize: 24, margin: "12px 0 4px", color: D.red }}>{L.outHearts}</h2>
+	              <h2 data-testid="out-of-lives" style={{ fontWeight: 900, fontSize: 24, margin: "12px 0 4px", color: D.red }}>{L.outHearts}</h2>
               <p style={{ color: D.sub, fontWeight: 700 }}>
 	                {L.outHeartsDesc} <IcHeart size={15} /> +1, {uiLang === "en" ? "wait" : "espera"} ~{nextHeartMin} min.
               </p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22, flexWrap: "wrap" }}>
-	                {trackedCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview(true)}>{L.practiceRecover} <IcHeart size={15} /></Btn>}
-                <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < REFILL_COST} onClick={() => { refillHearts(); setScreen("home"); setTab("camino"); }}>
+	                {trackedCount > 0 && <Btn color={D.blue} dark={D.blueDark} data-testid="review-and-recover" onClick={() => startReview(true)}>{L.practiceRecover} <IcHeart size={15} /></Btn>}
+                <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < REFILL_COST} onClick={() => { refillHearts(); setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>
 	                  {L.refill} · <IcGem size={15} /> {REFILL_COST}
                 </Btn>
-	                <Btn outline onClick={() => { setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
+	                <Btn outline data-testid="hearts-to-path" onClick={() => { setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
               </div>
             </>
           )}
@@ -10740,7 +11638,7 @@ export default function App() {
               <Btn color={COACHES.diego.color} dark={COACHES.diego.dark} onClick={() => startRivalDuel()}>
                 {uiLang === "en" ? "Accept the challenge" : "Aceptar el reto"}
               </Btn>
-              <Btn outline onClick={() => { setScreen("home"); setTab("misiones"); }}>
+              <Btn outline data-testid="rival-back" onClick={() => { setPaywallSource(PAYWALL_SOURCE.rival); setScreen("home"); setTab("misiones"); }}>
                 {uiLang === "en" ? "Not now" : "Ahora no"}
               </Btn>
             </div>
@@ -10779,7 +11677,7 @@ export default function App() {
               <Btn color={COACHES.diego.color} dark={COACHES.diego.dark} onClick={() => startRivalDuel()}>
                 {uiLang === "en" ? "Rematch" : "Revancha"}
               </Btn>
-              <Btn outline onClick={() => { setScreen("home"); setTab("misiones"); }}>
+              <Btn outline data-testid="rival-done-back" onClick={() => { setPaywallSource(PAYWALL_SOURCE.rival); setScreen("home"); setTab("misiones"); }}>
                 {uiLang === "en" ? "Done" : "Listo"}
               </Btn>
             </div>

@@ -2,66 +2,28 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
-## 2026-09-28 (Writer privacy and support text)
+## 2026-10-03 (First-win email hidden)
 
 **What changed**
-- `#correo-y-datos` is filled with the writer’s Spanish and English, on `privacy.md` and `public/privacy.html`. Date is September 28, 2026 on privacy and support. The no-account line stays.
-- The collector is still off. This build does not write to Google Sheets.
+- The first-win email card and the collector stay hidden until `VITE_COLLECTOR_ENDPOINT` or `VITE_FIRST_WIN_EMAIL_ENDPOINT` is set at build time. With both empty, the card is not rendered, this card writes nothing to `andale-waitlist`, no usage events are sent, and no `andale-device-id` is created.
+- Privacy and support pages match main, including `Last updated: September 18, 2026`. The collection wording is parked in `docs/first-win-email-privacy-wording.md`.
+- `docs/first-win-email-collector.gs` is the Apps Script. It is not deployed.
 
 **Why**
-- George sent the section. The words are copied, not rewritten.
+- Merge only the inert version. The card turns on with an endpoint.
 
 **Words / Brand left**
-- None on this page. The Sheets sentence describes the collector once `VITE_COLLECTOR_ENDPOINT` is set.
+- The parked wording returns in a later PR, together with the endpoint.
 
-## 2026-09-28 (Privacy link on the email card)
+## 2026-10-02 (sage cleanup flow-test timeout)
 
 **What changed**
-- Under the privacy line: `Privacidad` / `Privacy`, underlined muted ink (`#5E6650` on cream, `#CDBBA6` on `#1E2128`), 11px, 44px tap, not a button. Href is `privacy.html#correo-y-datos` (Pages serves `public/privacy.html` at `/andale/privacy.html`).
-- `public/privacy.html` and `privacy.md` have an empty `<h2 id="correo-y-datos"></h2>`. No new policy text.
+- `sageCleanup.test.jsx` describe timeout is 15s, same as the long flows suite.
+- The Games / Memory / Hangman / Wordle walk boots the app many times. Default 5s was already tight; splash sentence blocks on #197 pushed CI over.
+- No product change. Lime stays off those surfaces. Primary Btn still skipped.
 
 **Why**
-- The card needed a quiet way to the existing privacy page. The writer fills that section.
-
-**Words / Brand left**
-- Writer writes the `#correo-y-datos` section. This build still sends no email.
-
-## 2026-09-28 (Collector events)
-
-**What changed**
-- `COLLECTOR_ENDPOINT` (`VITE_COLLECTOR_ENDPOINT`) is still empty. Empty sends nothing. A set URL ships bus events as `{type:'event', name, lang, deviceId, ts}` and emails as `{type:'email', email, lang, source, ts}`. Event rows have no address. `lectura_complete` joins the bus on story claim.
-- The Apps Script writes tabs `emails` and `events`, creating them if missing. It is not deployed.
-
-**Why**
-- The same prepared endpoint has to be able to count the funnel, not only hold an address.
-
-**Words / Brand left**
-- Writer confirms the privacy line. This build still sends no email and no events.
-
-## 2026-09-28 (Dark Lectura handoff + collector prepared)
-
-**What changed**
-- Dark Lectura handoff is a `#1E2128` card, `#2A2E36` border, cream `#F6EFE4` text, `#B8C0A0` outline on Read the story. Light stays cream.
-- `VITE_FIRST_WIN_EMAIL_ENDPOINT` can turn on a form POST (`email`, `lang`, `source`, `ts`, `no-cors`). Unset, the address stays in `localStorage` `andale-waitlist`. `docs/first-win-email-collector.gs` is the Apps Script. It is not deployed.
-
-**Why**
-- The handoff box under the email card was still cream in dark mode. The collector stays off until someone deploys it by hand.
-
-**Words / Brand left**
-- Writer confirms the privacy line. This build still sends no email.
-
-## 2026-09-28 (First-win email words)
-
-**What changed**
-- Card copy is the locked face: invite, `tu@correo.com` / `you@email.com`, filled `Avísame` / `Notify me`, text link `Ahora no` / `Not now`, privacy, success, bad address. One language per face. No unsubscribe line.
-- Dark input: fill `#1E2128`, border `#2A2E36`, cream `#F6EFE4`, focus `#B8C0A0`. No new bird or motion.
-- A submitted address still lands only in `localStorage` `andale-waitlist`. `FIRST_WIN_EMAIL_ENDPOINT` is empty, so no service receives it and no email is sent.
-
-**Why**
-- George and Brand cleared the words and the filled / quiet pair.
-
-**Words / Brand left**
-- Writer confirms the privacy line against localStorage-only storage. `privacy.md` still says nothing leaves the device.
+- `main` CI `test` failed on `8a95e75`: that one `it` timed out at 5000ms (5366ms). Not a lime regression.
 
 ## 2026-09-24 (Funnel purchase on StoreKit success)
 

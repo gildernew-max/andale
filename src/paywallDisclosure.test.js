@@ -23,12 +23,17 @@ assert(PLAN_PRICE_LINE.en.monthly === "$6.99 / month", "EN monthly subline");
 assert(PLAN_PRICE_LINE.es.annual === "$39.99 al año", "ES annual subline");
 assert(PLAN_PRICE_LINE.es.monthly === "$6.99 al mes", "ES monthly subline");
 
-assert(DISCLOSURE.en[0] === "Ándale Premium is an auto-renewing subscription.", "EN disclosure title line");
-assert(DISCLOSURE.en[1] === "One year: $39.99 per year (about $3.33 a month). One month: $6.99 per month.", "EN disclosure price line");
-assert(DISCLOSURE.en[2] === "Payment is charged to your Apple ID when you confirm your purchase. Your subscription renews automatically unless you cancel at least 24 hours before the current period ends. Your account is charged for the renewal within the 24 hours before the period ends. You can manage or cancel anytime in Settings > Apple ID > Subscriptions.", "EN disclosure renew line");
-assert(DISCLOSURE.es[0] === "Ándale Premium es una suscripción con renovación automática.", "ES disclosure title line");
-assert(DISCLOSURE.es[1] === "Un año: $39.99 al año (unos $3.33 al mes). Un mes: $6.99 al mes.", "ES disclosure price line");
-assert(DISCLOSURE.es[2] === "El pago se carga a tu ID de Apple al confirmar la compra. La suscripción se renueva sola a menos que la canceles al menos 24 horas antes de que termine el periodo actual. El cargo de la renovación se hace dentro de las 24 horas previas al fin del periodo. Puedes administrarla o cancelarla cuando quieras en Ajustes > ID de Apple > Suscripciones.", "ES disclosure renew line");
+const EN_LEAD = "Ándale Premium is an auto-renewing subscription: one year at $39.99 or one month at $6.99.";
+const EN_RENEW = "Payment is charged to your Apple ID when you confirm. It renews automatically at the same price unless you cancel at least 24 hours before the period ends; the renewal is charged within those 24 hours. Manage or cancel in Settings > Apple ID > Subscriptions.";
+const ES_LEAD = "Ándale Premium es una suscripción con renovación automática: un año por $39.99 o un mes por $6.99.";
+const ES_RENEW = "El pago se carga a tu ID de Apple al confirmar. Se renueva sola al mismo precio, a menos que la canceles al menos 24 horas antes de que termine el periodo; la renovación se cobra dentro de esas 24 horas. Administra o cancela en Ajustes > ID de Apple > Suscripciones.";
+assert(DISCLOSURE.en[0] === EN_LEAD, "EN fine print line 1");
+assert(DISCLOSURE.en[1] === EN_RENEW, "EN fine print line 2");
+assert(DISCLOSURE.en.length === 2, "EN fine print is two lines");
+assert(DISCLOSURE.es[0] === ES_LEAD, "ES fine print line 1");
+assert(DISCLOSURE.es[1] === ES_RENEW, "ES fine print line 2");
+assert(DISCLOSURE.es.length === 2, "ES fine print is two lines");
+assert(!DISCLOSURE.en.join(" ").includes("$3.33") && !DISCLOSURE.es.join(" ").includes("$3.33"), "the monthly breakdown is cut");
 
 assert(DISCLOSURE_LINKS.en.terms === "Terms of Use" && DISCLOSURE_LINKS.en.privacy === "Privacy Policy" && DISCLOSURE_LINKS.en.restore === "Restore Purchases", "EN legal labels");
 assert(DISCLOSURE_LINKS.es.terms === "Términos de uso" && DISCLOSURE_LINKS.es.privacy === "Política de privacidad" && DISCLOSURE_LINKS.es.restore === "Restaurar compras", "ES legal labels");
@@ -40,16 +45,30 @@ assert(planPriceLine("annual", "en", null) === "$39.99 / year", "null displayPri
 assert(planPriceLine("monthly", "es", "") === "$6.99 al mes", "blank displayPrice uses the ES monthly lock");
 assert(planPriceLine("annual", "en", "$39.99") === "$39.99 / year", "same displayPrice keeps the locked subline");
 
+const buttonAmount = (line) => line.split(" ")[0];
+for (const lang of ["en", "es"]) {
+  const lines = disclosureLines(lang);
+  const annual = buttonAmount(planPriceLine("annual", lang));
+  const monthly = buttonAmount(planPriceLine("monthly", lang));
+  assert(lines[0].includes(annual) && lines[0].includes(monthly), `${lang} fine print prices equal the button prices`);
+  assert(annual === LOCKED_DISPLAY_PRICE.annual && monthly === LOCKED_DISPLAY_PRICE.monthly, `${lang} locked button amount is the fine-print amount`);
+}
+assert(disclosureLines("en")[0] === EN_LEAD && disclosureLines("en")[1] === EN_RENEW, "EN rendered fine print matches George");
+assert(disclosureLines("es")[0] === ES_LEAD && disclosureLines("es")[1] === ES_RENEW, "ES rendered fine print matches George");
+
 const swapped = disclosureLines("en", { annual: "€39.99", monthly: "€6.99" });
-assert(swapped[0] === DISCLOSURE.en[0], "title line stays when the price changes");
-assert(swapped[1] === "One year: €39.99 per year. One month: €6.99 per month.", "annual displayPrice replaces the billed amount and drops the equivalent");
-assert(!swapped[1].includes("$3.33"), "equivalent stays out when the annual price changed");
-assert(swapped[2] === DISCLOSURE.en[2], "renew line stays when the price changes");
+assert(swapped[0] === "Ándale Premium is an auto-renewing subscription: one year at €39.99 or one month at €6.99.", "StoreKit amounts replace both fine-print prices");
+assert(swapped[0].includes(buttonAmount(planPriceLine("annual", "en", "€39.99"))), "EN fine print annual equals the button amount");
+assert(swapped[0].includes(buttonAmount(planPriceLine("monthly", "en", "€6.99"))), "EN fine print monthly equals the button amount");
+assert(!swapped.join(" ").includes("$3.33"), "equivalent stays out");
+assert(swapped[1] === DISCLOSURE.en[1], "renew line stays when the price changes");
 assert(planPriceLine("annual", "en", "€39.99") === "€39.99 / year", "EN subline uses displayPrice");
 assert(planPriceLine("monthly", "es", "€6.99") === "€6.99 al mes", "ES subline uses displayPrice");
 
 const esSwapped = disclosureLines("es", { annual: "€39.99" });
-assert(esSwapped[1] === "Un año: €39.99 al año. Un mes: $6.99 al mes.", "ES drops the equivalent and keeps the locked monthly amount");
+assert(esSwapped[0] === "Ándale Premium es una suscripción con renovación automática: un año por €39.99 o un mes por $6.99.", "ES swaps the annual amount and keeps the locked monthly amount");
+assert(esSwapped[0].includes(buttonAmount(planPriceLine("annual", "es", "€39.99"))), "ES fine print annual equals the button amount");
+assert(esSwapped[0].includes(buttonAmount(planPriceLine("monthly", "es"))), "ES fine print monthly equals the locked button amount");
 assert(disclosureLines("en").every((line) => !DISCLOSURE.es.some((es) => es === line)), "EN lines are not the ES lines");
 
 assert(RESTORE_STATUS.en.success === "Purchases restored.", "EN restore success");

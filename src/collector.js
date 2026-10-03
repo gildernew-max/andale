@@ -1,6 +1,7 @@
-/** Optional collector. Empty URL sends nothing.
- *  Set VITE_COLLECTOR_ENDPOINT at build time to the Apps Script web app.
- *  This repo does not deploy that script.
+/** Optional collector. Empty URL sends nothing and mints no device id.
+ *  Set VITE_COLLECTOR_ENDPOINT or VITE_FIRST_WIN_EMAIL_ENDPOINT at build
+ *  time to the Apps Script web app. Both empty keeps the card and this
+ *  collector off. This repo does not deploy that script.
  *
  *  Events already on the in-browser funnel bus go out as
  *  { type:'event', name, lang, deviceId, ts }. The address is never on that row.
@@ -9,14 +10,30 @@
 
 import { FUNNEL_EVENTS } from "./funnel.js";
 
-function endpointFromEnv() {
-  const env = import.meta.env;
-  const value = env && env.VITE_COLLECTOR_ENDPOINT;
+function readEndpoint(env, name) {
+  const value = env && env[name];
   return typeof value === "string" ? value.trim() : "";
 }
 
-/** Build-time web app URL. Empty = local bus and localStorage only. */
-export const COLLECTOR_ENDPOINT = endpointFromEnv();
+/** One gate for the card and the collector. A string override is for tests. */
+let endpointOverride;
+
+export function collectorEndpoint(env) {
+  if (env === undefined && endpointOverride !== undefined) return endpointOverride;
+  const source = env === undefined ? (import.meta.env || {}) : env;
+  return readEndpoint(source, "VITE_COLLECTOR_ENDPOINT")
+    || readEndpoint(source, "VITE_FIRST_WIN_EMAIL_ENDPOINT");
+}
+
+/** Tests pass a URL to turn the gate on, "" to force it off, or undefined to read the build env. */
+export function setCollectorEndpointOverride(value) {
+  endpointOverride = value === undefined
+    ? undefined
+    : (typeof value === "string" ? value.trim() : "");
+}
+
+/** Build-time web app URL snapshot. Empty unless an endpoint was set when this module loaded. */
+export const COLLECTOR_ENDPOINT = collectorEndpoint();
 
 export const COLLECTOR_DEVICE_KEY = "andale-device-id";
 
@@ -62,7 +79,7 @@ export function collectorDeviceId(storage, random = defaultRandom) {
  * An empty endpoint does not call either.
  */
 export async function postCollector(record, {
-  endpoint = COLLECTOR_ENDPOINT,
+  endpoint = collectorEndpoint(),
   fetchImpl = globalThis.fetch,
   beaconImpl,
 } = {}) {
@@ -97,7 +114,7 @@ export async function postCollector(record, {
 
 /** Forward one bus event. Empty endpoint sends nothing and does not mint a device id. */
 export async function shipFunnelEvent(detail, {
-  endpoint = COLLECTOR_ENDPOINT,
+  endpoint = collectorEndpoint(),
   lang = "es",
   now,
   storage,

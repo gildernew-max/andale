@@ -12,16 +12,24 @@ import { IPHONE_SAFARI_UA, MAC_SAFARI_UA } from "./a2hs.js";
 import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isNorteUnlockFlashDue, isOaxacaUnlockFlashDue, isYucatanUnlockFlashDue, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED } from "./recuerdos.js";
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { lettersForLayout } from "./letterBoard.js";
+import { isWhiteOrCreamFill } from "./spanishKeyboard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaName, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
-import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
-import { OJALA_QUE_PACK } from "./cubetas.js";
-import { hangmanLetters } from "./hangman.js";
-import { MEMORY_BANK } from "./memory.js";
+import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride, startSafeRiskyRun } from "./safeRisky.js";
+import { OJALA_QUE_PACK, startCubetasRun } from "./cubetas.js";
+import { HANGMAN_BANK, hangmanLetters, startHangmanRun } from "./hangman.js";
+import { MEMORY_BANK, startMemoryRun } from "./memory.js";
+import { startJeopardyRun } from "./jeopardy.js";
+import { startMatchRun } from "./matchPairs.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
 import { WAITLIST_STORE_KEY } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_PRIVACY_LINK, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
-
+import { COLLECTOR_DEVICE_KEY, setCollectorEndpointOverride } from "./collector.js";
+import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
+import { PAYWALL_SOURCE } from "./paywallHeadline.js";
+import { FIRST_WIN_MINUTES, splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
+import { firstSessionWords } from "./firstSessionWords.js";
+import { onboardingCopy, onboardingLine } from "./onboardingCopy.js";
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
 
@@ -34,6 +42,15 @@ const seedProgress = (extra = {}) => {
     contentVersion: 2,
     hearts: 5,
     done: {},
+    ...extra,
+  }));
+};
+
+/** First visit that already has a first-session marker: splash as today, no onboarding. */
+const seedColdFirstVisit = (extra = {}) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    firstSessionDone: false,
+    uiLang: "en",
     ...extra,
   }));
 };
@@ -118,6 +135,29 @@ const awaitHome = async () => {
 };
 
 const CREAM_FILL = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+
+const channelLum = (v) => {
+  const c = v / 255;
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+};
+
+const parseCssColor = (value) => {
+  const hex = String(value).trim().match(/^#([0-9a-f]{6})$/i);
+  if (hex) {
+    const n = Number.parseInt(hex[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const rgb = String(value).match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (!rgb) throw new Error(`unparsed color ${value}`);
+  return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
+};
+
+const contrastRatio = (fg, bg) => {
+  const lum = (channels) => 0.2126 * channelLum(channels[0]) + 0.7152 * channelLum(channels[1]) + 0.0722 * channelLum(channels[2]);
+  const lighter = Math.max(lum(parseCssColor(fg)), lum(parseCssColor(bg)));
+  const darker = Math.min(lum(parseCssColor(fg)), lum(parseCssColor(bg)));
+  return (lighter + 0.05) / (darker + 0.05);
+};
 const PAGE_WHITE = /^(#fff|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\))$/i;
 
 const ELLIPSIS_RE = /…|\.\.\.$/;
@@ -135,8 +175,22 @@ const assertFullWordChip = (el, text) => {
 
 const assertMemoryBoardCard = (el, text) => {
   if (text != null) {
-    expect(el.textContent).toBe(text);
-    expect(el.textContent).not.toMatch(ELLIPSIS_RE);
+    const wordEl = el.querySelector("[data-testid='memory-card-word']");
+    const glossEl = el.querySelector("[data-testid='memory-card-gloss']");
+    expect(wordEl).toBeTruthy();
+    expect(wordEl.textContent).toBe(text);
+    expect(wordEl.textContent).not.toMatch(ELLIPSIS_RE);
+    expect(glossEl).toBeTruthy();
+    expect(glossEl.textContent.startsWith("(")).toBe(true);
+    expect(glossEl.textContent.endsWith(")")).toBe(true);
+    expect(glossEl.textContent).not.toMatch(ELLIPSIS_RE);
+    expect(glossEl.style.fontSize).toBe("0.7em");
+    expect(glossEl.style.fontFamily).toBe("inherit");
+    expect(glossEl.style.fontWeight).toBe("inherit");
+    expect(glossEl.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
+    expect(el.textContent).toContain(text);
+    expect(el.textContent).toContain(glossEl.textContent);
+    expect(el.getAttribute("aria-label")).toBe(`${text} ${glossEl.textContent}`);
   }
   expect(el.className).toMatch(/word-chip/);
   expect(el.className).toMatch(/memory-card/);
@@ -255,6 +309,59 @@ const startHoyFromHub = async (user) => {
 
 const continueBtn = () => screen.getByRole("button", { name: /^Continuar$/i });
 
+const firstSessionRoot = () => document.querySelector("[data-first-session]");
+
+const answerFirstSessionBeat = async (user) => {
+  await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
+  const type = firstSessionRoot().getAttribute("data-qtype");
+  const body = document.body.textContent;
+  let taps = 0;
+  const tap = async (el) => { taps += 1; await user.click(el); };
+  if (type === "mc") {
+    const want = body.includes("Es obvio") ? "tiene" : "vengas";
+    const card = [...document.querySelectorAll(".choice-card")].find((el) => el.textContent.includes(want));
+    expect(card, want).toBeTruthy();
+    await tap(card);
+  } else if (type === "type") {
+    const want = body.includes("Ojalá") ? "llueva" : "salga";
+    const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() === want);
+    expect(tile, want).toBeTruthy();
+    await tap(tile);
+  } else if (type === "order") {
+    for (const word of ["dudo", "que", "sea", "verdad"]) {
+      const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim().toLowerCase() === word);
+      expect(tile, word).toBeTruthy();
+      await tap(tile);
+    }
+  } else {
+    throw new Error(`unexpected first-session type ${type}`);
+  }
+  await tap(screen.getByTestId("lesson-check"));
+  await tap(screen.getByRole("button", { name: /^(Continuar|Continue)$/ }));
+  return taps;
+};
+
+const missFirstSessionBeat = async (user) => {
+  await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
+  const type = firstSessionRoot().getAttribute("data-qtype");
+  const body = document.body.textContent;
+  if (type === "mc") {
+    const avoid = body.includes("Es obvio") ? "tiene" : "vengas";
+    const card = [...document.querySelectorAll(".choice-card")].find((el) => !el.textContent.includes(avoid));
+    expect(card).toBeTruthy();
+    await user.click(card);
+  } else if (type === "type") {
+    const avoid = body.includes("Ojalá") ? "llueva" : "salga";
+    const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() !== avoid);
+    expect(tile).toBeTruthy();
+    await user.click(tile);
+  } else {
+    await user.click(screen.getAllByTestId("bank-tile")[0]);
+  }
+  await user.click(screen.getByTestId("lesson-check"));
+  await user.click(screen.getByRole("button", { name: /^(Continuar|Continue)$/ }));
+};
+
 /** First short-Hoy beat is the scene MC. Read the live answer — do not hardcode a day-hash list. */
 const clickHoySceneMc = async (user) => {
   const live = JSON.parse(localStorage.getItem(LIVE_KEY) || "null");
@@ -298,8 +405,9 @@ const assertFreeWinFlyAway = () => {
   expect(css).toMatch(/position: fixed;/);
   expect(css).toMatch(/overflow: hidden;/);
   expect(css).toMatch(/translate\(calc\(-50% \+ 100vw \+ 168px\)/);
-  expect(css).toMatch(/78% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 1; \}/);
-  expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -40px\) rotate\(-10deg\); opacity: 0; \}/);
+  expect(css).toMatch(/78% \{ transform: translate\(calc\(-50% \+ 40vw\), -\d+px\) rotate\(-10deg\); opacity: 1; \}/);
+  expect(css).toMatch(/100% \{ transform: translate\(calc\(-50% \+ 100vw \+ 168px\), -\d+px\) rotate\(-10deg\); opacity: 0; \}/);
+  expect(css).not.toMatch(/-40px/);
   expect(css).not.toMatch(/260px/);
   expect(css).not.toMatch(/780ms|cenzontle-courier|story0Courier/);
   if (bird) {
@@ -327,8 +435,8 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const honesty = screen.getByTestId("soft-paywall-honesty");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
   const copy = lang === "en"
-    ? { title: "Keep your streak", benefit: "Stories, Cubetas, and Phrase Doctor — no ceiling.", annual: "One year", monthly: "One month", honesty: "Practice · no charge yet", dismiss: "Continue free" }
-    : { title: "Sigue con tu racha", benefit: "Escenas, Cubetas y la doctora — sin techo.", annual: "Un año", monthly: "Un mes", honesty: "Práctica · sin cobro todavía", dismiss: "Seguir gratis" };
+    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", annual: "One year", monthly: "One month", honesty: "Practice · no charge yet", dismiss: "Continue free" }
+    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", annual: "Un año", monthly: "Un mes", honesty: "Práctica · sin cobro todavía", dismiss: "Seguir gratis" };
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
   expect(screen.getByTestId("soft-paywall-body").textContent).toBe(copy.benefit);
   expect(annual.textContent).toBe(copy.annual);
@@ -339,7 +447,19 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(monthly.textContent).not.toMatch(/\$39\.99|\$6\.99/);
   expect(bird.tagName).toBe("IMG");
   expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
-  expect(bird.getAttribute("width")).toBe("44");
+  const still = screen.queryByTestId("soft-paywall-still");
+  if (still) {
+    expect(bird.getAttribute("width")).toBe("48");
+    expect(still.getAttribute("src")).toMatch(/lectura\/story-/);
+    expect(still.style.aspectRatio).toMatch(/16\s*\/\s*9/);
+    expect(still.style.borderRadius).toBe("16px");
+    expect(still.style.objectFit).toBe("cover");
+    expect(still.style.borderStyle || "none").toBe("none");
+    expect(wall.querySelectorAll("[data-testid='soft-paywall-cenzontle']")).toHaveLength(1);
+  } else {
+    expect(bird.getAttribute("width")).toBe("44");
+    expect(screen.queryByTestId("soft-paywall-still")).toBeNull();
+  }
   expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)|animation/);
   expect(screen.queryByTestId("soft-paywall-cenzontle-stage")).toBeNull();
   expect(screen.queryByTestId("soft-paywall-cenzontle-wing")).toBeNull();
@@ -366,8 +486,17 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(dismiss.className).not.toMatch(/duo-btn/);
   expect(dismiss.style.background).toBe("none");
   expect(dismiss.style.padding).toBe("11px 0px");
+  expect(dismiss.style.minHeight).toBe("44px");
+  expect(dismiss.style.fontSize).toBe("15px");
+  expect(dismiss.style.fontWeight).toBe("700");
   expect(dismiss.style.borderBottom).not.toMatch(/4px/);
-  expect(dismiss.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
+  expect(dismiss.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+  const fine = screen.getByTestId("soft-paywall-disclosure");
+  expect(fine.style.fontSize).toBe("11px");
+  expect(fine.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+  expect(screen.getByTestId("soft-paywall-terms").style.textDecoration).toMatch(/underline/);
+  expect(fine.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(dismiss.compareDocumentPosition(honesty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   const filled = [...wall.querySelectorAll("button.duo-btn")]
     .filter((el) => /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i.test(el.style.background));
   expect(filled).toHaveLength(1);
@@ -688,9 +817,20 @@ beforeEach(() => {
   seedProgress();
 });
 
+const originalSendBeacon = navigator.sendBeacon;
+
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  setCollectorEndpointOverride(undefined);
+  vi.unstubAllGlobals();
+  if (navigator.sendBeacon !== originalSendBeacon) {
+    if (originalSendBeacon) {
+      Object.defineProperty(navigator, "sendBeacon", { configurable: true, writable: true, value: originalSendBeacon });
+    } else {
+      delete navigator.sendBeacon;
+    }
+  }
   delete window.__andaleIapEnv;
   delete window.__andaleNativePurchase;
   delete window.__andaleNativeRestore;
@@ -1132,6 +1272,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
     await user.click(screen.getByRole("button", { name: /El olvido/ }));
     await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe("Hay casas que no olvidan. ¿Conoces una que todavía espere a su dueña?"));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
     await waitFor(() => {
       expect(screen.getByTestId("story-0-win")).toBeTruthy();
       expect(screen.getByTestId("win-fly-away")).toBeTruthy();
@@ -1177,6 +1320,15 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /El tranvía y Diego/ }));
     await user.click(screen.getByRole("button", { name: /Viva la vida/ }));
     await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
+    expect(screen.getByRole("button", { name: /^XP reclamados$/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^XP ya reclamado$/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-en"));
+    expect(screen.getByRole("button", { name: /^XP claimed$/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^XP already claimed$/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
     await waitFor(() => {
       expect(screen.getByTestId("lectura-win")).toBeTruthy();
       expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
@@ -1207,7 +1359,11 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /Porque era a quien mejor conocía/ }));
     await user.click(screen.getByRole("button", { name: /El tranvía y Diego/ }));
     await user.click(screen.getByRole("button", { name: /Viva la vida/ }));
-    expect(screen.getByRole("button", { name: /XP ya reclamado|XP already claimed/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^XP already claimed$/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^XP claimed$/ })).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    expect(screen.getByRole("button", { name: /^XP ya reclamado$/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^XP reclamados$/ })).toBeNull();
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
     expect(screen.queryByTestId("lectura-win")).toBeNull();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
@@ -1607,6 +1763,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("splash has only header ES|EN — no Español/English dump", async () => {
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
@@ -1619,7 +1776,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       b.textContent === "Español" || b.textContent === "English")).toHaveLength(0);
     await waitFor(() => expect(localStorage.getItem(STORAGE_KEY)).toBeTruthy());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
-    expect(screen.getByPlaceholderText("What do they call you?")).toBeTruthy();
+    expect(screen.getByPlaceholderText("What should we call you?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Start!" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
     await user.click(screen.getByTestId("lang-es"));
@@ -1632,11 +1789,39 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("splash locks exact line + one primary CTA, no equal Saltar, cenzontle hero", async () => {
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
-    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
+    expect(FIRST_WIN_MINUTES).toBeNull();
+    expect(screen.getByTestId("splash-line").textContent).toBe(splashPromiseLine("en"));
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Your first win starts here.");
+    expect(splashPromiseLine("en", 5)).toBe("Real Mexican Spanish. Your first win takes 5 minutes.");
+    expect(splashPromiseLine("es", 1)).toBe("Español mexicano real. Tu primer logro toma 1 minuto.");
+    const line = screen.getByTestId("splash-line");
+    const blocks = () => [...line.querySelectorAll("[data-testid='splash-sentence']")];
+    expect(blocks()).toHaveLength(2);
+    expect(blocks().every((el) => el.style.display === "block")).toBe(true);
+    expect(blocks()[0].textContent).toBe(splashPromiseSentences("en")[0]);
+    expect(blocks()[1].textContent).toBe(splashPromiseSentences("en")[1]);
+    expect(line.textContent).toBe(`${blocks()[0].textContent} ${blocks()[1].textContent}`);
+    expect(line.style.fontSize).toBe("16px");
+    expect(line.style.fontWeight).toBe("600");
+    expect(line.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+    expect(line.style.textWrap).toBe("balance");
+    expect(line.style.webkitLineClamp).toBe("2");
+    expect(screen.getByTestId("splash").style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(screen.getByTestId("splash-hero").getAttribute("width")).toBe("168");
+    expect(screen.getByTestId("splash-wordmark").style.fontWeight).toBe("900");
+    expect(screen.getByTestId("splash-wordmark").style.color).toMatch(/#5C7356|rgb\(\s*92,\s*115,\s*86\s*\)/i);
+    const name = screen.getByPlaceholderText("What should we call you?");
+    expect(name.style.background).toMatch(/#FFFFFF|#fff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    expect(name.style.borderRadius).toBe("16px");
+    expect(name.style.border).toMatch(/2px solid (#848A72|rgb\(\s*132,\s*138,\s*114\s*\))/i);
+    const header = screen.getByTestId("brand-home").parentElement.parentElement;
+    expect(header.style.background).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(header.style.borderBottomStyle).toBe("none");
     expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
     expect(screen.queryByTestId("splash-skip")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
@@ -1652,7 +1837,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByRole("button", { name: /Let's go!/ })).toBeNull();
 
     await user.click(screen.getByTestId("lang-es"));
-    await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Más allá de lo básico."));
+    await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe("Español mexicano real. Tu primer logro empieza aquí."));
+    expect(blocks()[0].textContent).toBe("Español mexicano real.");
+    expect(blocks()[1].textContent).toBe("Tu primer logro empieza aquí.");
+    expect(blocks().every((el) => el.style.display === "block")).toBe(true);
     expect(screen.getByTestId("splash-start").textContent).toBe("¡Empezar!");
     expect(screen.queryByTestId("splash-skip")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
@@ -1666,35 +1854,53 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("word-order-tip")).toBeNull();
   });
 
-  it("first boot with empty storage always shows splash Start after hydrate", async () => {
+  it("dark first-open uses the Lectura page, wordmark, promise, and name field", async () => {
+    localStorage.clear();
+    mockBrowser();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme: "dark", uiLang: "en" }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("splash-line").textContent).toBe(splashPromiseLine("en")));
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    expect(screen.getByTestId("splash").style.background).toMatch(/#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i);
+    expect(screen.getByTestId("splash-wordmark").style.color).toMatch(cream);
+    expect(screen.getByTestId("splash-line").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
+    const name = screen.getByPlaceholderText("What should we call you?");
+    expect(name.style.background).toMatch(/#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i);
+    expect(name.style.border).toMatch(/2px solid (#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\))/i);
+    expect(name.style.color).toMatch(cream);
+    const header = screen.getByTestId("brand-home").parentElement.parentElement;
+    expect(header.style.background).toMatch(/#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i);
+    expect(header.style.borderBottomStyle).toBe("none");
+    expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
+  });
+
+  it("first boot with empty storage shows onboarding, not the subjunctive question", async () => {
     localStorage.clear();
     mockBrowser();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
-    await waitFor(() => expect(screen.getByTestId("splash-start").textContent).toBe("Start!"));
-    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
-    expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
-    expect(screen.getByTestId("splash-actions").querySelectorAll("button")).toHaveLength(1);
-    // Async load + persist must not dismiss splash on a true first visit.
+    await waitFor(() => {
+      expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level");
+      expect(screen.queryByTestId("splash")).toBeNull();
+    });
+    expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.levelTitle, "en"));
+    expect(document.body.textContent).not.toMatch(/Es obvio que Marisol/);
     await waitFor(() => {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        expect(saved.welcomed).toBeFalsy();
-        expect(saved.xp > 0).toBeFalsy();
-        expect(saved.uiLang).toBe("en");
-      }
-      expect(screen.getByTestId("splash")).toBeTruthy();
-      expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
+      expect(raw).toBeTruthy();
+      const saved = JSON.parse(raw);
+      expect(saved.welcomed).toBeFalsy();
+      expect(saved.xp > 0).toBeFalsy();
+      expect(saved.uiLang).toBe("en");
+      expect(saved.onboardingPending).toBe(true);
     });
-    expect(screen.queryByTestId("nav-camino")).toBeTruthy();
-    expect(screen.queryByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("splash")).toBeTruthy();
+    expect(screen.getByTestId("onboarding")).toBeTruthy();
+    expect(screen.queryByTestId("splash-start")).toBeNull();
   });
 
   it("leftover LIVE lesson does not skip first-visit splash", async () => {
     localStorage.clear();
     mockBrowser();
+    seedColdFirstVisit();
     localStorage.setItem(LIVE_KEY, JSON.stringify({
       screen: "lesson",
       tab: "camino",
@@ -1709,7 +1915,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     }));
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
-    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Your first win starts here.");
     expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
     expect(screen.queryByTestId("lesson-exit")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Saltar$|^Skip$/ })).toBeNull();
@@ -1930,6 +2136,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hangman-literal")).toBeTruthy());
     expect(screen.getByTestId("hangman-win").textContent).toBe("That's it.");
     expect(screen.getByTestId("hangman-word").textContent).toBe(word);
+    expect(screen.getByTestId("hangman-end").style.background).toMatch(/#EEF0E6|rgb\(\s*238,\s*240,\s*230\s*\)/i);
+    expect(screen.getByTestId("hangman-end").style.borderTopWidth).toBe("2px");
+    expect(screen.getByTestId("hangman-end").style.borderBottomWidth).toBe("4px");
+    expect(screen.getByTestId("hangman-end").style.borderTopColor).toMatch(/#6F7757|rgb\(\s*111,\s*119,\s*87\s*\)/i);
+    expect(screen.getByTestId("hangman-end").style.borderBottomColor).toMatch(/#6F7757|rgb\(\s*111,\s*119,\s*87\s*\)/i);
+    expect(screen.getByTestId("hangman-again").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     const literal = screen.getByTestId("hangman-literal");
     const why = screen.getByTestId("hangman-why");
     expect(literal.textContent).toMatch(/^Literal/);
@@ -1940,6 +2152,47 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hangman-win").textContent).toBe("¡Eso!"));
     expect(screen.getByTestId("hangman-literal").textContent).toMatch(/^Literal/);
     expect(screen.getByTestId("hangman-why").textContent).toMatch(/^Por qué/);
+  });
+
+  it("Hangman Why and region lines italicize starred words and drop the asterisks", async () => {
+    const show = async (word, theme, uiLang = "en") => {
+      cleanup();
+      localStorage.clear();
+      seedProgress({ uiLang, theme });
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "ahorcado",
+        tab: "practica",
+        ahorcado: {
+          word,
+          letters: hangmanLetters(word),
+          guessed: hangmanLetters(word),
+          status: "win",
+        },
+      }));
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("hangman-why")).toBeTruthy());
+    };
+    await show("morra", "light");
+    const why = screen.getByTestId("hangman-why");
+    expect(why.textContent).toContain("Pair morro for guys");
+    expect(why.textContent).not.toMatch(/\*/);
+    expect(why.querySelector("em")?.textContent).toBe("morro");
+    await show("cruda", "dark");
+    const note = screen.getByTestId("hangman-region-note");
+    expect(note.textContent).toBe("ES/AR/CO resaca");
+    expect(note.textContent).not.toMatch(/\*/);
+    expect(note.querySelector("em")?.textContent).toBe("resaca");
+    expect(screen.getByTestId("hangman-why").textContent).not.toMatch(/\*/);
+    for (const row of HANGMAN_BANK) {
+      for (const uiLang of ["en", "es"]) {
+        await show(row.word, "light", uiLang);
+        for (const id of ["hangman-literal", "hangman-why"]) {
+          expect(screen.getByTestId(id).textContent, `${row.word} ${uiLang} ${id}`).not.toMatch(/\*/);
+        }
+        const region = screen.queryByTestId("hangman-region-note");
+        if (region) expect(region.textContent, `${row.word} ${uiLang} region`).not.toMatch(/\*/);
+      }
+    }
   });
 
   it("Jeopardy round: pick a tile, answer, return to the board", async () => {
@@ -1956,6 +2209,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("jeopardy-answered").textContent).toBe("0/18");
     expect(screen.getByTestId("jeopardy-grid")).toBeTruthy();
     expect(screen.getByTestId("jeopardy-tile-subj-100")).toBeTruthy();
+    const lightFill = (el) => `${el.style.backgroundColor} ${el.style.background}`;
+    expect(lightFill(screen.getByTestId("jeopardy-cat-reg"))).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(lightFill(screen.getByTestId("jeopardy-tile-subj-100"))).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(lightFill(screen.getByTestId("jeopardy-back"))).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
     expect(screen.getByTestId("jeopardy-cat-reg").textContent).toBe("Registro");
     expect(screen.getByTestId("jeopardy-cat-subj").textContent).toBe("Subjuntivo");
     expect(screen.getByTestId("jeopardy-cat-mex").textContent).toBe("México");
@@ -2043,6 +2300,14 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(tapMate).toBeTruthy();
     await user.click(tapCard);
     await waitFor(() => expect(tapCard.getAttribute("data-face")).toBe("up"));
+    const tapEntry = MEMORY_BANK.find((row) => row.word === tapPair);
+    const tapWord = tapKind === "word" ? tapEntry.word : tapEntry.meaning.es;
+    const tapGloss = tapKind === "word" ? tapEntry.meaning.es : tapEntry.word;
+    expect(tapCard.querySelector("[data-testid='memory-card-word']").textContent).toBe(tapWord);
+    expect(tapCard.querySelector("[data-testid='memory-card-gloss']").textContent).toBe(`(${tapGloss})`);
+    expect(tapCard.getAttribute("aria-label")).toBe(`${tapWord} (${tapGloss})`);
+    const stillDown = cards.find((el) => el !== tapCard && el.getAttribute("data-face") === "down");
+    expect(stillDown.querySelector("[data-testid='memory-card-gloss']")).toBeNull();
     await user.click(tapMate);
     await waitFor(() => expect(screen.getByTestId("memory-teach")).toBeTruthy());
     expect(tapCard.getAttribute("data-face")).toBe("up");
@@ -2108,8 +2373,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     render(<App />);
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await userEvent.setup().click(screen.getByRole("button", { name: /^Continuar$/i }));
-    await waitFor(() => expect(screen.getByRole("heading", { name: /Examen no superado|Test not passed/ })).toBeTruthy());
-    expect(screen.getByText(/Tres errores|Three mistakes/)).toBeTruthy();
+    await waitFor(() => expect(screen.getByRole("heading", { name: /Esta vez no|Not this time/ })).toBeTruthy());
+    expect(screen.getByText(/Tres errores, y el límite es dos\. Quedaron en Repaso\. Reintenta cuando quieras\.|Three mistakes, and the limit is two\. They're saved in Review\. Retry when you're ready\./)).toBeTruthy();
   });
 
   it("Hoy still matches city/title or the still is dropped", async () => {
@@ -2121,6 +2386,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("buries empty level theater, weakness map, and Atajos until earned", async () => {
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
@@ -2176,13 +2442,14 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("cold-open defaults uiLang EN; user can flip ES; skill chips stay Spanish", async () => {
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
     expect(screen.getByTestId("lang-en").getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByTestId("lang-es").getAttribute("aria-pressed")).toBe("false");
-    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Past the basics.");
+    expect(screen.getByTestId("splash-line").textContent).toBe("Real Mexican Spanish. Your first win starts here.");
     expect(screen.getByTestId("splash-start").textContent).toBe("Start!");
     await waitFor(() => {
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}").uiLang).toBe("en");
@@ -2434,11 +2701,32 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const byId = (id) => cards.find((el) => el.getAttribute("data-card") === id);
     expect(byId("apapacho-word").getAttribute("data-face")).toBe("up");
     assertMemoryBoardCard(byId("apapacho-word"), "apapacho");
-    assertMemoryBoardCard(byId("apapacho-meaning"), "warm hug / comfort");
+    expect(byId("apapacho-word").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(warm hug)");
+    assertMemoryBoardCard(byId("apapacho-meaning"), "warm hug");
+    expect(byId("apapacho-meaning").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(apapacho)");
     assertMemoryBoardCard(byId("tianguis-word"), "tianguis");
-    assertMemoryBoardCard(byId("morra-meaning"), "young woman (casual)");
+    expect(byId("tianguis-word").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(street market)");
+    assertMemoryBoardCard(byId("morra-meaning"), "girl, young woman");
+    expect(byId("morra-meaning").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(morra)");
+    expect(byId("tianguis-meaning").getAttribute("data-face")).toBe("down");
+    expect(byId("tianguis-meaning").querySelector("[data-testid='memory-card-gloss']")).toBeNull();
+    expect(byId("morra-word").getAttribute("data-face")).toBe("down");
+    expect(byId("morra-word").querySelector("[data-testid='memory-card-gloss']")).toBeNull();
     expect(byId("apapacho-meaning").className).toMatch(/word-chip--phrase/);
     expect(byId("apapacho-word").style.fontSize).toBe(byId("apapacho-meaning").style.fontSize);
+    const creamFace = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const whiteFace = /#fff|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\)/i;
+    const terracotta = /#C46B3A|rgb\(\s*196,\s*107,\s*58\s*\)/i;
+    const lightInk = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
+    expect(byId("tianguis-meaning").style.background).toMatch(creamFace);
+    expect(byId("tianguis-meaning").style.borderTopColor).toMatch(terracotta);
+    expect(byId("tianguis-meaning").style.borderBottomColor).toMatch(terracotta);
+    expect(byId("apapacho-word").style.background).toMatch(whiteFace);
+    expect(byId("apapacho-word").style.color).toMatch(lightInk);
+    expect(byId("apapacho-word").style.borderTopColor).toMatch(terracotta);
+    expect(screen.getByTestId("memory-title").style.color).toMatch(/#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i);
+    expect(screen.getByTestId("memory-mark").querySelectorAll("rect")[1].getAttribute("fill")).toBe("#5C7356");
+    expect(screen.getByTestId("app-shell").style.background).toMatch(creamFace);
 
     cleanup();
     seedProgress({ uiLang: "en" });
@@ -2503,6 +2791,80 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     });
   });
 
+  it("Memory dark theme follows the dark-game board and keeps light chrome off it", async () => {
+    cleanup();
+    seedProgress({ uiLang: "es", theme: "dark" });
+    const combi = MEMORY_BANK.find((r) => r.word === "combi");
+    const tian = MEMORY_BANK.find((r) => r.word === "tianguis");
+    const elote = MEMORY_BANK.find((r) => r.word === "elote");
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "memory",
+      tab: "practica",
+      memoryGame: {
+        packId: "mexicanismos-v1",
+        hub: "games",
+        pairs: [combi, tian, elote],
+        cards: [
+          { id: "combi-word", pairId: "combi", kind: "word" },
+          { id: "combi-meaning", pairId: "combi", kind: "meaning" },
+          { id: "tianguis-word", pairId: "tianguis", kind: "word" },
+          { id: "tianguis-meaning", pairId: "tianguis", kind: "meaning" },
+          { id: "elote-word", pairId: "elote", kind: "word" },
+          { id: "elote-meaning", pairId: "elote", kind: "meaning" },
+        ],
+        faceUp: ["combi-word", "combi-meaning", "tianguis-word"],
+        matched: ["combi"],
+        lastMatch: "combi",
+        miss: false,
+        lastWrong: [],
+        status: "play",
+      },
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("memory-board")).toBeTruthy());
+    const page = /#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i;
+    const card = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const edge = /#252830|rgb\(\s*37,\s*40,\s*48\s*\)/i;
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const gloss = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
+    const sage = /#677050|rgb\(\s*103,\s*112,\s*80\s*\)/i;
+    const label = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
+    expect(screen.getByTestId("app-shell").style.background).toMatch(page);
+    expect(document.body.style.background).toMatch(page);
+    expect(screen.getByTestId("memory-board").style.background).toMatch(page);
+    expect(screen.getByTestId("memory-title").style.color).toMatch(label);
+    expect(screen.getByTestId("memory-quiet").style.color).toMatch(label);
+    expect(screen.getByTestId("memory-matched").style.color).toMatch(label);
+    expect(screen.getByTestId("memory-howto").style.color).toMatch(label);
+    const cards = screen.getAllByTestId("memory-card");
+    const byId = (id) => cards.find((el) => el.getAttribute("data-card") === id);
+    const down = byId("elote-meaning");
+    expect(down.getAttribute("data-face")).toBe("down");
+    expect(down.style.background).toMatch(card);
+    expect(down.style.borderTopColor).toMatch(edge);
+    expect(down.style.borderBottomColor).toMatch(edge);
+    expect(down.style.background).not.toMatch(cream);
+    const downMark = down.querySelectorAll("rect");
+    expect(downMark[0].getAttribute("fill")).toBe("#F6EFE4");
+    expect(downMark[1].getAttribute("fill")).toBe("#B8C0A0");
+    expect(downMark[1].getAttribute("stroke")).toBe("#F6EFE4");
+    const openCard = byId("tianguis-word");
+    expect(openCard.getAttribute("data-face")).toBe("up");
+    expect(openCard.style.background).toMatch(card);
+    expect(openCard.style.color).toMatch(cream);
+    expect(openCard.querySelector("[data-testid='memory-card-gloss']").style.color).toMatch(gloss);
+    expect(openCard.querySelector("[data-testid='memory-card-gloss']").style.fontSize).toBe("0.7em");
+    const matchedCard = byId("combi-meaning");
+    expect(matchedCard.style.background).toMatch(sage);
+    expect(matchedCard.style.color).toMatch(cream);
+    expect(matchedCard.querySelector("[data-testid='memory-card-word']").textContent).toBe("camioneta colectiva");
+    const matchedGloss = matchedCard.querySelector("[data-testid='memory-card-gloss']");
+    expect(matchedGloss.style.color).toMatch(cream);
+    expect(matchedGloss.style.fontSize).toBe("0.7em");
+    expect(contrastRatio(matchedGloss.style.color, matchedCard.style.background)).toBeGreaterThanOrEqual(4.5);
+    expect(screen.getByTestId("memory-mark").querySelectorAll("rect")[1].getAttribute("fill")).toBe("#B8C0A0");
+  });
+
   it("Safe/Risky hub reward is extra por racha / streak extra, not bonus", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-practica"));
@@ -2514,19 +2876,24 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("safe-risky-reward").textContent).not.toMatch(/bonus/i);
   });
 
-  it("Lectura narration chrome is NARRACIÓN / NARRATION, not LAB", async () => {
+  it("Lectura hides the narration card when the paragraph file is missing", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
     const openers = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
     await user.click(openers[openers.length - 1]);
-    await waitFor(() => expect(screen.getByTestId("narration-label")).toBeTruthy());
-    expect(screen.getByTestId("narration-label").textContent).toBe("NARRACIÓN");
-    expect(screen.getByTestId("narration-label").textContent).not.toMatch(/LAB/);
-    expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB/);
+    await waitFor(() => expect(screen.getByTestId("lectura-paragraph-first")).toBeTruthy());
+    expect(screen.queryByTestId("narration-card")).toBeNull();
+    expect(screen.queryByTestId("narration-label")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB|cached paragraph audio|audio cacheado/);
+    const paragraph = screen.getByTestId("lectura-paragraph-first");
+    const hunt = screen.getByTestId("word-hunt-card");
+    expect(paragraph.compareDocumentPosition(hunt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(hunt.textContent).toMatch(/CACERÍA DE PALABRAS/);
+    expect(hunt.textContent).toMatch(/0\/8/);
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("narration-label").textContent).toBe("NARRATION"));
-    expect(screen.getByTestId("narration-label").textContent).not.toMatch(/LAB/);
-    expect(document.body.textContent).not.toMatch(/LAB DE NARRACIÓN|NARRATION LAB/);
+    await waitFor(() => expect(screen.getByTestId("word-hunt-card").textContent).toMatch(/WORD HUNT/));
+    expect(screen.queryByTestId("narration-card")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/cached paragraph audio|audio cacheado/);
   });
 
   it("unread Lectura does not lift cerezas / story comprehension into later Hoy", async () => {
@@ -2639,6 +3006,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("cold open / streak 0 hides Meta, Rayo OFF, and the four-coach strip", async () => {
     cleanup();
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
@@ -2695,7 +3063,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByText("Rival")).toBeTruthy();
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByTestId("home-pitch")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/Español mexicano real\. Más allá de lo básico/);
+    expect(document.body.textContent).not.toMatch(/Español mexicano real\. Tu primer logro empieza aquí/);
     assertEqualHub();
     expect(screen.getByTestId("camino-more")).toBeTruthy();
   });
@@ -2770,14 +3138,16 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("camino-daily-workout").textContent).toMatch(/Rutina diaria/);
   });
 
-  it("name field warm line is ¿Cómo te dicen? / What do they call you?", async () => {
+  it("name field warm line is ¿Cómo te dicen? / What should we call you?", async () => {
     localStorage.clear();
+    seedColdFirstVisit();
     mockBrowser();
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
-    expect(screen.getByPlaceholderText("What do they call you?")).toBeTruthy();
-    expect(screen.queryByPlaceholderText("What should we call you?")).toBeNull();
+    expect(screen.getByPlaceholderText("What should we call you?")).toBeTruthy();
+    expect(screen.queryByPlaceholderText("What do they call you?")).toBeNull();
+    expect(screen.queryByPlaceholderText("¿Cómo te llamamos?")).toBeNull();
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByPlaceholderText("¿Cómo te dicen?")).toBeTruthy());
     expect(screen.queryByPlaceholderText("¿Cómo te llamamos?")).toBeNull();
@@ -2871,14 +3241,14 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("hub-hoy").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Arreglar una frase|Fix a phrase/);
     expect(promised.title).toBeTruthy();
     expect(screen.queryByTestId("home-pitch")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/Español mexicano real\. Más allá de lo básico/);
-    expect(document.body.textContent).not.toMatch(/Real Mexican Spanish\. Past the basics/);
+    expect(document.body.textContent).not.toMatch(/Español mexicano real\. Tu primer logro empieza aquí/);
+    expect(document.body.textContent).not.toMatch(/Real Mexican Spanish\. Your first win starts here/);
     expect(screen.queryByTestId("first-door-title")).toBeNull();
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Continuar$/i })).toBeNull();
-    expect(document.body.textContent).not.toMatch(/Sigue con tu racha|Keep your streak/);
+    expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\.|Hay mucho más por leer\.|There's much\u00A0more to read\./);
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
     await openCaminoMore(userEvent.setup());
     expect(screen.queryByTestId("camino-more-full-hoy")).toBeNull();
@@ -2983,7 +3353,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
       expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
       expect(screen.queryByTestId("first-door-title")).toBeNull();
-      expect(document.body.textContent).not.toMatch(/Sigue con tu racha|Keep your streak/);
+      expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\.|Hay mucho más por leer\.|There's much\u00A0more to read\./);
     } finally {
       vi.useRealTimers();
     }
@@ -2997,7 +3367,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await awaitHome();
     expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/Sigue con tu racha|Keep your streak/);
+    expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\.|Hay mucho más por leer\.|There's much\u00A0more to read\./);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
@@ -3273,7 +3643,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
     expect(screen.getByTestId("come-back-tomorrow").textContent).toMatch(/^Vuelve mañana por «.+»\.$/);
     expect(screen.getByTestId("come-back-tomorrow").textContent).not.toBe("Vuelve mañana por la siguiente escena.");
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-hoy-done")).toBe("1");
     expect(screen.getByTestId("hub-hoy-done")).toBeTruthy();
@@ -3391,8 +3761,15 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("hoy-win")).toBeNull();
   });
 
-  const reachFirstHoyWin = async (user, extra = {}) => {
+  const FIRST_WIN_TEST_ENDPOINT = "https://example.test/collector";
+
+  const reachFirstHoyWin = async (user, extra = {}, { endpoint = "" } = {}) => {
     cleanup();
+    setCollectorEndpointOverride(endpoint || undefined);
+    if (endpoint) {
+      vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, type: "opaque", status: 0 })));
+      Object.defineProperty(navigator, "sendBeacon", { configurable: true, writable: true, value: () => true });
+    }
     const uiLang = extra.uiLang || "es";
     seedProgress({ streak: 0, lastDay: null, uiLang: "es", ...extra });
     const hoyMc = (prompt) => ({
@@ -3424,7 +3801,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(document.querySelector(".choice-card"));
     await user.click(screen.getByTestId("lesson-check"));
     await user.click(await screen.findByRole("button", { name: uiLang === "en" ? /^Continue$/i : /^Continuar$/i }));
-    await screen.findByTestId("first-win-email");
+    await screen.findByTestId("hoy-win");
+    if (endpoint) await screen.findByTestId("first-win-email");
     await screen.findByTestId("lectura-handoff-cta");
   };
 
@@ -3437,9 +3815,34 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     return raw.includes(hex.toLowerCase()) || raw.includes(`rgb(${r},${g},${b})`);
   };
 
-  it("first-win email skip still opens Lectura, and a bad address does not", async () => {
+  it("with both endpoints empty, the first-win email card is not rendered", async () => {
     const user = userEvent.setup();
     await reachFirstHoyWin(user);
+    expect(screen.queryByTestId("first-win-email")).toBeNull();
+    expect(screen.queryByTestId("first-win-email-input")).toBeNull();
+    expect(screen.queryByTestId("first-win-email-skip")).toBeNull();
+    expect(screen.queryByTestId("first-win-email-submit")).toBeNull();
+    expect(screen.getByTestId("lectura-handoff")).toBeTruthy();
+    expect(localStorage.getItem(WAITLIST_STORE_KEY)).toBeNull();
+  });
+
+  it("with both endpoints empty, first win sends no usage events and writes no device id", async () => {
+    const fetchSpy = vi.fn(async () => ({ ok: true }));
+    const beaconSpy = vi.fn(() => true);
+    vi.stubGlobal("fetch", fetchSpy);
+    Object.defineProperty(navigator, "sendBeacon", { configurable: true, writable: true, value: beaconSpy });
+    const user = userEvent.setup();
+    await reachFirstHoyWin(user);
+    expect(screen.queryByTestId("first-win-email")).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(beaconSpy).not.toHaveBeenCalled();
+    expect(localStorage.getItem(COLLECTOR_DEVICE_KEY)).toBeNull();
+    expect(localStorage.getItem(WAITLIST_STORE_KEY)).toBeNull();
+  });
+
+  it("first-win email skip still opens Lectura, and a bad address does not", async () => {
+    const user = userEvent.setup();
+    await reachFirstHoyWin(user, {}, { endpoint: FIRST_WIN_TEST_ENDPOINT });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
     expect(screen.getByTestId("first-win-email-skip").textContent).toBe("Ahora no");
     expect(screen.getByTestId("first-win-email-prompt").textContent).toBe("Déjanos tu correo y te avisamos cuando haya historias nuevas.");
@@ -3484,7 +3887,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("a valid first-win email does not block Lectura", async () => {
     const user = userEvent.setup();
-    await reachFirstHoyWin(user);
+    await reachFirstHoyWin(user, {}, { endpoint: FIRST_WIN_TEST_ENDPOINT });
     await user.type(screen.getByTestId("first-win-email-input"), "  ada@example.com ");
     await user.click(screen.getByTestId("first-win-email-submit"));
     await waitFor(() => expect(screen.getByTestId("first-win-email-success").textContent).toBe(FIRST_WIN_EMAIL_SUCCESS.es));
@@ -3500,20 +3903,16 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/ada@example/);
   });
 
-  it("dark Lectura handoff under the email card uses the dark card spec", async () => {
+  it("a set endpoint shows the dark email card, and the Lectura handoff stays the main cream card", async () => {
     const user = userEvent.setup();
-    await reachFirstHoyWin(user, { theme: "dark", uiLang: "en" });
+    await reachFirstHoyWin(user, { theme: "dark", uiLang: "en" }, { endpoint: FIRST_WIN_TEST_ENDPOINT });
     const box = screen.getByTestId("lectura-handoff");
     const quiet = screen.getByTestId("lectura-handoff-quiet");
     const cta = screen.getByTestId("lectura-handoff-cta");
     expect(quiet.textContent).toBe(LECTURA_HANDOFF_QUIET.en);
     expect(cta.textContent).toBe(LECTURA_HANDOFF_CTA.en);
-    expect(styleHas(box, "#1E2128")).toBe(true);
-    expect(styleHas(box, "#2A2E36")).toBe(true);
-    expect(styleHas(quiet, "#F6EFE4")).toBe(true);
-    expect(styleHas(cta, "#F6EFE4")).toBe(true);
-    expect(styleHas(cta, "#B8C0A0")).toBe(true);
-    expect(styleHas(box, "#F6EFE4")).toBe(false);
+    expect(styleHas(box, "#F6EFE4")).toBe(true);
+    expect(styleHas(cta, "#5C7356")).toBe(true);
     expect(cta.className).not.toMatch(/duo-btn/);
     const privacyEn = screen.getByTestId("first-win-email-privacy-link");
     expect(privacyEn.textContent).toBe(FIRST_WIN_EMAIL_PRIVACY_LINK.en);
@@ -3627,9 +4026,40 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
   });
 
+  it("dark soft paywall title and prices are cream on #1E2128, not near-white on cream", async () => {
+    cleanup();
+    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false });
+    await boot();
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-card")).toBeTruthy());
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const nearWhite = /#E8E8EA|#FFFFFF|rgb\(\s*232,\s*232,\s*234\s*\)|rgb\(\s*255,\s*255,\s*255\s*\)/i;
+    const darkCard = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const card = screen.getByTestId("soft-paywall-card");
+    const headline = screen.getByTestId("soft-paywall-headline");
+    const annualPrice = screen.getByTestId("soft-paywall-annual-price");
+    const monthlyPrice = screen.getByTestId("soft-paywall-monthly-price");
+    expect(card.style.background).toMatch(darkCard);
+    expect(card.style.background).not.toMatch(/rgba|hsla|\/\s*0?\.\d/);
+    expect(card.style.opacity).toBe("1");
+    expect(card.style.backdropFilter).toBe("none");
+    expect(card.className).not.toMatch(/\bpop\b/);
+    expect(card.style.background).not.toMatch(cream);
+    expect(headline.style.color).toMatch(cream);
+    expect(headline.style.color).not.toMatch(nearWhite);
+    expect(annualPrice.style.color).toMatch(cream);
+    expect(annualPrice.style.color).not.toMatch(nearWhite);
+    expect(monthlyPrice.style.color).toMatch(cream);
+    expect(monthlyPrice.style.color).not.toMatch(nearWhite);
+    expect(screen.getByTestId("soft-paywall-monthly").style.background).toMatch(darkCard);
+    expect(screen.getByTestId("soft-paywall-monthly").style.color).toMatch(cream);
+    expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
+  });
+
   it("cold first Hoy CONTINUE shows soft paywall once before idle home", async () => {
     cleanup();
     localStorage.clear();
+    seedColdFirstVisit();
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
@@ -3649,7 +4079,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByTestId("hoy-win-continue"));
     await lecturaThenBajioWall(user);
     expect(screen.getByTestId("come-back-tomorrow").textContent).toBe(expectedComeBack("es"));
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     assertSoftPaywallAnnualPrimary("es");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
@@ -3729,7 +4159,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy(), { timeout: 3000 });
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     assertSoftPaywallAnnualPrimary("es");
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
 
     cleanup();
     seedProgress({ streak: 0, lastDay: null, bajioUnlockSeen: true, paywallSeen: false });
@@ -3755,6 +4185,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     try {
       cleanup();
       localStorage.clear();
+      seedColdFirstVisit();
       markBajioUnlockFlashDue(false);
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
       render(
@@ -3782,7 +4213,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(screen.queryByTestId("soft-paywall")).toBeNull();
       await user.click(screen.getByTestId("hoy-win-continue"));
       await lecturaThenBajioWall(user);
-      expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+      expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
       assertSoftPaywallAnnualPrimary("es");
     } finally {
       vi.useRealTimers();
@@ -3832,7 +4263,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("hoy-win-continue"));
     await lecturaThenBajioWall(user);
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     assertSoftPaywallAnnualPrimary("es");
   });
 
@@ -4019,6 +4450,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     try {
       cleanup();
       localStorage.clear();
+      seedColdFirstVisit();
       markBajioUnlockFlashDue(false);
       markCdmxUnlockFlashDue(false);
       markOaxacaUnlockFlashDue(false);
@@ -4805,7 +5237,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
     await user.click(screen.getByTestId("hoy-win-continue"));
     await lecturaThenBajioWall(user);
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     assertSoftPaywallAnnualPrimary("es");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).bajioUnlockSeen).toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).cdmxUnlockSeen).not.toBe(true);
@@ -5013,15 +5445,20 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     expect(screen.queryByTestId("win-earned-xp")).toBeNull();
     expect(screen.queryByTestId("win-earned-gems")).toBeNull();
-    expect(screen.getByTestId("win-earned-streak")).toBeTruthy();
+    expect(screen.getByTestId("win-earned-streak").textContent.replace(/\s+/g, " ").trim()).toBe("Racha de 1 día");
+    expect(screen.getByTestId("win-earned-streak").textContent).not.toMatch(/streak days/);
     const doctoraWinScreen = screen.getByTestId("doctora-win").parentElement;
     expect(doctoraWinScreen.textContent).not.toMatch(/\+\d+/);
     expect(doctoraWinScreen.textContent).not.toMatch(/\bXP\b/);
     expect(doctoraWinScreen.textContent).not.toMatch(/gemas|\bgems\b/i);
+    expect(doctoraWinScreen.textContent).not.toMatch(/streak days/);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(42);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(9);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("doctora-win").textContent).toBe("That's it."));
+    expect(screen.getByTestId("win-earned-streak").textContent.replace(/\s+/g, " ").trim()).toBe("1-day streak");
+    expect(screen.getByTestId("win-earned-streak").textContent).not.toMatch(/streak days/);
+    expect(screen.getByTestId("doctora-win").parentElement.textContent).not.toMatch(/streak days/);
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /You won!|¡Ganaste!|Lesson complete/ })).toBeNull();
     assertFreeWinFlyAway();
@@ -5047,7 +5484,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByText(/Vuelve mañana|Come back tomorrow/)).toBeNull();
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     const handoff = screen.getByTestId("post-dismiss-handoff");
@@ -5084,8 +5521,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     expect(screen.queryByTestId("win-earned-xp")).toBeNull();
     expect(screen.queryByTestId("win-earned-gems")).toBeNull();
-    expect(screen.getByTestId("win-earned-streak")).toBeTruthy();
+    expect(screen.getByTestId("win-earned-streak").textContent.replace(/\s+/g, " ").trim()).toBe("Racha de 1 día");
+    expect(screen.getByTestId("win-earned-streak").textContent).not.toMatch(/streak days/);
     expect(screen.getByTestId("doctora-win").parentElement.textContent).not.toMatch(/\+\d+|\bXP\b|gemas|\bgems\b/i);
+    expect(screen.getByTestId("doctora-win").parentElement.textContent).not.toMatch(/streak days/);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(42);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(9);
     await user.click(screen.getByTestId("doctora-win-continue"));
@@ -5172,11 +5611,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("soft paywall does not render on splash or boot before a win", async () => {
     cleanup();
     localStorage.clear();
+    seedColdFirstVisit();
     render(<App />);
     await waitFor(() => expect(screen.getByRole("button", { name: /¡Empezar!|Start!/ })).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByTestId("word-order-tip")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/Sigue con tu racha|Keep your streak/);
+    expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\.|Hay mucho más por leer\.|There's much\u00A0more to read\./);
     expect(document.body.textContent).not.toMatch(/Orden distinto, mismo sentido|Different order, same meaning/);
 
     cleanup();
@@ -5220,8 +5660,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(prog.streak).toBe(1);
       expect(prog.lastDay).toBe(today);
     });
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
-    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Escenas, Cubetas y la doctora — sin techo.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
+    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.");
     assertSoftPaywallAnnualPrimary("es");
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Orden distinto, mismo sentido|Different order, same meaning/);
     expect(screen.getByTestId("soft-paywall").querySelector("[data-testid=\"word-order-tip\"]")).toBeNull();
@@ -5266,8 +5706,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     await awaitSoftPaywallAfterFirstWin();
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Keep your streak");
-    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Stories, Cubetas, and Phrase Doctor — no ceiling.");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("There's much\u00A0more to read.");
+    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.");
     assertSoftPaywallAnnualPrimary("en");
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
@@ -5396,7 +5836,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
-    expect(screen.getByTestId("learn-hub").textContent).not.toMatch(/Sigue con tu racha|Un año|Seguir gratis/);
+    expect(screen.getByTestId("learn-hub").textContent).not.toMatch(/La historia sigue\.|Hay mucho más por leer\.|Un año|Seguir gratis/);
   });
 
   it("armed soft-paywall backdrop free-dismiss lands on post-dismiss-handoff", async () => {
@@ -5435,7 +5875,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).a2hsSeen).toBe(true);
-    expect(document.body.textContent).not.toMatch(/Sigue con tu racha/);
+    expect(document.body.textContent).not.toMatch(/La historia sigue\.|Hay mucho más por leer\./);
     expect(screen.getByTestId("a2hs-sheet").textContent).not.toMatch(/\$39\.99|\$6\.99/);
 
     await user.click(screen.getByTestId("lang-en"));
@@ -5616,7 +6056,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("story-tip")).toBeTruthy());
     expect(screen.getByRole("button", { name: "Párrafo 1" }).getAttribute("aria-label")).toBe("Párrafo 1");
     expect(screen.getByRole("button", { name: "Preguntas" }).getAttribute("aria-label")).toBe("Preguntas");
-    expect(screen.getByRole("button", { name: "Escuchar párrafo" }).getAttribute("aria-label")).toBe("Escuchar párrafo");
+    expect(screen.queryByRole("button", { name: "Escuchar párrafo" })).toBeNull();
     const storyWord = [...document.querySelectorAll("span")].find((el) =>
       el.textContent === "cempasúchil" && el.style.cursor === "pointer");
     expect(storyWord).toBeTruthy();
@@ -5627,7 +6067,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Paragraph 1" })).toBeTruthy());
     expect(screen.getByRole("button", { name: "Paragraph 1" }).getAttribute("aria-label")).toBe("Paragraph 1");
     expect(screen.getByRole("button", { name: "Questions" }).getAttribute("aria-label")).toBe("Questions");
-    expect(screen.getByRole("button", { name: "Listen to paragraph" }).getAttribute("aria-label")).toBe("Listen to paragraph");
+    expect(screen.queryByRole("button", { name: "Listen to paragraph" })).toBeNull();
     expect(screen.getByRole("button", { name: "Listen to word" }).getAttribute("aria-label")).toBe("Listen to word");
     expect(screen.queryByRole("button", { name: "Párrafo 1" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Escuchar párrafo" })).toBeNull();
@@ -5826,6 +6266,113 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(tiles.some((tile) => /llegues|temprano|reunión/i.test(tile.textContent))).toBe(true);
   });
 
+  const cssHex = (value) => {
+    const s = String(value || "").trim().toLowerCase();
+    const hex = s.match(/#([0-9a-f]{3,8})/);
+    if (hex) {
+      let h = hex[1];
+      if (h.length === 3) h = h.split("").map((ch) => ch + ch).join("");
+      return `#${h.slice(0, 6)}`;
+    }
+    const rgb = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (!rgb) return "";
+    return `#${[rgb[1], rgb[2], rgb[3]].map((n) => Number(n).toString(16).padStart(2, "0")).join("")}`;
+  };
+  const paintOf = (el) => ({
+    fill: cssHex(el.style.backgroundColor) || cssHex(el.style.background),
+    ink: cssHex(el.style.color),
+  });
+  const assertDarkControl = (el, label) => {
+    const { fill, ink } = paintOf(el);
+    expect(fill, `${label} fill`).toBeTruthy();
+    expect(ink, `${label} ink`).toBeTruthy();
+    expect(isWhiteOrCreamFill(fill), `${label} rendered a white or cream fill ${fill}`).toBe(false);
+    expect(contrastRatio(ink, fill), `${label} ${ink} on ${fill}`).toBeGreaterThanOrEqual(4.5);
+  };
+
+  it("dark Jeopardy tiles, keyboard keys, and Games buttons stay off white and cream at 4.5:1", async () => {
+    cleanup();
+    seedProgress({ theme: "dark", uiLang: "en" });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(cssHex(screen.getByTestId("app-shell").style.background)).toBe("#15171c");
+    await user.click(screen.getByTestId("hub-games"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-start")).toBeTruthy());
+    await user.click(screen.getByTestId("jeopardy-start"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-grid")).toBeTruthy());
+    ["subj", "past", "porpara", "mex", "pron", "reg"].forEach((id) => {
+      assertDarkControl(screen.getByTestId(`jeopardy-cat-${id}`), `jeopardy-cat-${id}`);
+    });
+    screen.getAllByTestId(/^jeopardy-tile-/).forEach((tile) => {
+      assertDarkControl(tile, tile.getAttribute("data-testid"));
+    });
+    assertDarkControl(screen.getByTestId("jeopardy-back"), "jeopardy games");
+    await user.click(screen.getByTestId("jeopardy-tile-mex-100"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-choice-0")).toBeTruthy());
+    await user.click(screen.getByTestId("jeopardy-choice-0"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-continue")).toBeTruthy());
+    await user.click(screen.getByTestId("jeopardy-continue"));
+    await waitFor(() => expect(screen.getByTestId("jeopardy-tile-mex-100").disabled).toBe(true));
+    assertDarkControl(screen.getByTestId("jeopardy-tile-mex-100"), "used jeopardy tile");
+    assertDarkControl(screen.getByTestId("jeopardy-tile-mex-200"), "open jeopardy tile");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-200")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).ink).toBe("#f6efe4");
+    expect(paintOf(screen.getByTestId("jeopardy-cat-mex")).ink).toBe("#f6efe4");
+    expect(paintOf(screen.getByTestId("jeopardy-back")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("jeopardy-back")).ink).toBe("#f6efe4");
+
+    await user.click(screen.getByTestId("jeopardy-back"));
+    await waitFor(() => expect(screen.getByTestId("hangman-start")).toBeTruthy());
+    await user.click(screen.getByTestId("hangman-start"));
+    await waitFor(() => expect(screen.getByTestId("letter-board")).toBeTruthy());
+    const keys = [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")];
+    expect(keys.some((el) => el.getAttribute("data-letter") === "Ñ")).toBe(true);
+    expect(paintOf(keys.find((el) => el.getAttribute("data-letter") === "Ñ")).fill).toBe("#1e2128");
+    expect(paintOf(keys.find((el) => el.getAttribute("data-letter") === "Ñ")).ink).toBe("#f6efe4");
+    expect(keys.filter((el) => el.getAttribute("data-testid") === "accent-chip").map((el) => el.textContent).join("")).toBe("ÁÉÍÓÚÜ");
+    expect(paintOf(screen.getAllByTestId("accent-chip")[0]).fill).toBe("#1e2128");
+    expect(paintOf(screen.getAllByTestId("accent-chip")[0]).ink).toBe("#f6efe4");
+    keys.forEach((el) => assertDarkControl(el, `key ${el.getAttribute("data-letter")}`));
+    const word = screen.getByTestId("hangman-board").getAttribute("data-word");
+    const letters = [...new Set([...word.normalize("NFC")].map((ch) => ch.toLocaleUpperCase("es")))];
+    const chipFor = (ch) => [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")]
+      .find((el) => el.getAttribute("data-letter") === ch);
+    expect(chipFor("W")).toBeTruthy();
+    await user.click(chipFor("W"));
+    await user.click(chipFor(letters[0]));
+    await waitFor(() => expect(chipFor("W").getAttribute("data-state")).toBe("wrong"));
+    expect(chipFor(letters[0]).getAttribute("data-state")).toBe("correct");
+    expect(Number.parseInt(chipFor(letters[0]).style.fontWeight, 10)).toBeGreaterThanOrEqual(900);
+    [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")].forEach((el) => {
+      assertDarkControl(el, `played key ${el.getAttribute("data-letter")}`);
+    });
+    expect(paintOf(chipFor("W")).fill).toBe("#2a2e36");
+    expect(paintOf(chipFor("W")).ink).toBe("#a0a4ab");
+    expect(paintOf(chipFor(letters[0])).fill).toBe("#677050");
+    expect(paintOf(chipFor(letters[0])).ink).toBe("#f6efe4");
+    expect(contrastRatio("#A0A4AB", "#2A2E36")).toBeGreaterThanOrEqual(5.4);
+    for (const ch of letters) {
+      if (screen.queryAllByTestId("letter-chip").length + screen.queryAllByTestId("accent-chip").length === 0) break;
+      const chip = chipFor(ch);
+      if (chip && !chip.disabled) await user.click(chip);
+    }
+    await waitFor(() => expect(screen.getByTestId("hangman-back")).toBeTruthy());
+    assertDarkControl(screen.getByTestId("hangman-back"), "hangman games");
+    expect(paintOf(screen.getByTestId("hangman-back")).fill).toBe("#1e2128");
+    expect(paintOf(screen.getByTestId("hangman-back")).ink).toBe("#f6efe4");
+    const end = screen.getByTestId("hangman-end");
+    expect(cssHex(end.style.background)).toBe("#1e2128");
+    expect(end.style.border).toMatch(/2px solid/i);
+    expect(cssHex(end.style.borderColor) || cssHex(end.style.border)).toBe("#677050");
+    expect(cssHex(screen.getByTestId("hangman-win").style.color)).toBe("#e8e8ea");
+    expect(cssHex(screen.getByTestId("hangman-word").style.color)).toBe("#e8e8ea");
+    expect(cssHex(screen.getByTestId("hangman-literal").firstElementChild.style.color)).toBe("#a0a4ab");
+    expect(cssHex(screen.getByTestId("hangman-again").style.background)).toBe("#58cc02");
+    expect(screen.queryAllByTestId("letter-chip")).toHaveLength(0);
+  });
+
   it("letter boards default to QWERTY with Ñ after L; ABC toggle persists", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("ahorcado-section-start"));
@@ -5839,9 +6386,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("letter-layout-qwerty").getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByTestId("letter-layout-abc").getAttribute("aria-pressed")).toBe("false");
     expect(document.body.textContent).not.toMatch(/switch to ABC|keyboard layout|elige el teclado|press QWERTY/i);
-    const lime = /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i;
+    const sageInk = /#4F5A36|rgb\(\s*79,\s*90,\s*54\s*\)/i;
     qwertyChips.forEach((chip) => {
-      expect(chip.style.color).toMatch(lime);
+      expect(chip.style.color).toMatch(sageInk);
+      expect(chip.style.color).not.toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
       expect(chip.style.background).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
       expect(Number.parseInt(chip.style.fontWeight, 10)).toBeGreaterThanOrEqual(800);
     });
@@ -6177,7 +6725,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     localStorage.clear();
     mockBrowser();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("splash")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("onboarding")).toBeTruthy());
     await waitFor(() => expect(funnelOf("open").length).toBeGreaterThan(0));
     const open = funnelOf("open")[0];
     expect(open.event).toBe("open");
@@ -6253,7 +6801,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("paywall_seen")[0].name).toBeUndefined();
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
@@ -6367,7 +6915,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     localStorage.removeItem(LIVE_KEY);
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
     await user.click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect(funnelOf("purchase")).toHaveLength(1));
@@ -6433,7 +6981,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await user.click(screen.getByTestId("brand-home"));
     await awaitBajioFlashThenPaywall();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
     expect(funnelOf("purchase")).toHaveLength(0);
 
@@ -6512,7 +7060,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await user.click(screen.getByTestId("brand-home"));
     await awaitBajioFlashThenPaywall();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Sigue con tu racha");
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
     expect(funnelOf("purchase")).toHaveLength(0);
 
@@ -6532,18 +7080,893 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(at("purchase")).toBe(-1);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
   }, 15000);
+
+  it("Hoy win, then lectura_start, then the chapter cliffhanger hands off to the paywall bird", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    delete window.__andaleIapEnv;
+    delete window.__andaleNativePurchase;
+    const hoyMc = (prompt) => ({
+      type: "mc",
+      prompt,
+      choices: ["cilantro, cebolla, salsa y guarnición"],
+      answer: "cilantro, cebolla, salsa y guarnición",
+      shuffledChoices: ["cilantro, cebolla, salsa y guarnición"],
+      _u: "_today",
+      _i: -1,
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      status: "idle",
+      qi: 0,
+      lessonStats: { right: 0, wrong: 0 },
+      session: {
+        title: "Noche de faroles",
+        unitId: "_today:taqueria",
+        todaySceneId: "taqueria",
+        firstHoy: true,
+        host: "luna",
+        questions: [hoyMc("Si el taquero pregunta «¿con todo?», normalmente habla de:")],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(funnelOf("open").length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    await user.click(document.querySelector(".choice-card"));
+    await user.click(screen.getByTestId("lesson-check"));
+    await user.click(await screen.findByRole("button", { name: /^Continuar$/i }));
+    await waitFor(() => expect(screen.getByTestId("lectura-handoff-cta")).toBeTruthy());
+    await waitFor(() => expect(funnelOf("cenzontle_complete").some((e) => e.beat === "hoy")).toBe(true), { timeout: 1500 });
+    assertNoWallBeforeLectura();
+    expect(funnelOf("lectura_start")).toHaveLength(0);
+    expect(funnelOf("lectura_chapter_done")).toHaveLength(0);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(funnelOf("purchase")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("lectura-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));
+    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-0")).toBe(true);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("lectura-cliffhanger")).toBeNull();
+
+    for (;;) {
+      const next = screen.queryByRole("button", { name: /^(Siguiente|Next) →$/ });
+      if (!next) break;
+      await user.click(next);
+    }
+    await user.click(screen.getByRole("button", { name: /^(Preguntas|Questions) →$/ }));
+    await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
+    expect(funnelOf("lectura_chapter_done")).toHaveLength(0);
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
+    await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
+    await user.click(screen.getByRole("button", { name: /El olvido/ }));
+    await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
+    const done = funnelOf("lectura_chapter_done");
+    expect(done).toHaveLength(1);
+    expect(done[0].storyId).toBe("story-0");
+    expect(done[0].title).toBeUndefined();
+    expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe(lecturaCliffhangers["story-0"]);
+    expect(screen.getByTestId("lectura-bird-handoff-cta").textContent).toBe("Continuar");
+    expect(screen.getByTestId("lectura-bird-handoff-cta").className).not.toMatch(/duo-btn/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
+
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall-cenzontle")).toBeTruthy());
+    expect(firstSessionRoot()).toBeNull();
+    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
+    expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).toBe("lectura-bird-handoff");
+    expect(screen.getByTestId("soft-paywall-headline").style.fontWeight).toBe("900");
+    expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");
+    expect(screen.getByTestId("soft-paywall-headline").style.textWrap).toBe("balance");
+    expect(screen.getByTestId("soft-paywall-headline").style.letterSpacing).toBe("");
+    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.");
+    expect(funnelOf("paywall_seen")).toHaveLength(1);
+    expect(funnelOf("lectura_chapter_done")).toHaveLength(1);
+    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("Un año");
+    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis");
+    expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-dismiss").style.background).toBe("none");
+    expect(funnelOf("purchase")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
+    expect(funnelOf("paywall_tap").filter((e) => e.choice === "annual")).toHaveLength(1);
+    expect(funnelOf("purchase")).toHaveLength(0);
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
+    const names = window.__andaleFunnelLog.map((e) => e.event);
+    const at = (name) => names.indexOf(name);
+    expect(at("open")).toBeGreaterThanOrEqual(0);
+    expect(at("cenzontle_complete")).toBeGreaterThan(at("open"));
+    expect(at("lectura_start")).toBeGreaterThan(at("cenzontle_complete"));
+    expect(at("lectura_chapter_done")).toBeGreaterThan(at("lectura_start"));
+    expect(at("paywall_seen")).toBeGreaterThan(at("lectura_chapter_done"));
+    expect(at("paywall_tap")).toBeGreaterThan(at("paywall_seen"));
+    expect(at("purchase")).toBe(-1);
+    expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
+  }, 30000);
+});
+
+describe("first session before the paywall", () => {
+  it("a learner with no completed lessons gets 5 exercises, then a win, then the paywall", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, hearts: 5, uiLang: "es", bajioUnlockSeen: true, firstSessionDone: false });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    let taps = 0;
+    const tap = async (el) => { taps += 1; await user.click(el); };
+    await tap(screen.getByTestId("hub-sendero"));
+    await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
+    expect(screen.getByTestId("path-sheet").textContent).toMatch(/5 retos/);
+    expect(screen.getByTestId("path-sheet").textContent).not.toMatch(/12 retos/);
+    await tap(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
+    expect(Number(firstSessionRoot().getAttribute("data-count"))).toBe(5);
+    expect(screen.getByTestId("lesson-progress").getAttribute("data-pct")).toBe("0");
+    const seen = [];
+    for (let i = 0; i < 5; i++) {
+      await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBeTruthy());
+      seen.push(firstSessionRoot().getAttribute("data-qtype"));
+      if (i === 2) expect(screen.getByTestId("lesson-progress").getAttribute("data-pct")).toBe("40");
+      if (i === 4) {
+        const type = firstSessionRoot().getAttribute("data-qtype");
+        const body = document.body.textContent;
+        if (type === "type") {
+          const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() === "salga");
+          await tap(tile);
+        } else {
+          throw new Error(`expected the last beat to be type, got ${type}`);
+        }
+        expect(body).toMatch(/Te llamo cuando/);
+        await tap(screen.getByTestId("lesson-check"));
+        await waitFor(() => expect(screen.getByTestId("lesson-progress").getAttribute("data-pct")).toBe("100"));
+        expect(screen.queryByTestId("soft-paywall")).toBeNull();
+        await tap(screen.getByRole("button", { name: /^Continuar$/ }));
+      } else {
+        taps += await answerFirstSessionBeat(user);
+      }
+    }
+    expect(seen).toEqual(["mc", "type", "order", "mc", "type"]);
+    await waitFor(() => expect(screen.getByTestId("win-continue")).toBeTruthy());
+    expect(screen.getByRole("heading", { name: /¡Lección completada!/ })).toBeTruthy();
+    expect(screen.getByTestId("win-earned-xp")).toBeTruthy();
+    expect(screen.getByTestId("win-earned-streak").textContent).toMatch(/Racha de 1 día/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("out-of-lives")).toBeNull();
+    await tap(screen.getByTestId("win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(taps).toBe(21);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).done?._first).toBeUndefined();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).done?.subj1 || 0).toBe(0);
+  }, 20000);
+
+  it("after the first session, Sendero is the full 12-challenge unit", async () => {
+    cleanup();
+    seedProgress({ firstSessionDone: true, hearts: 5, paywallSeen: true, streak: 1, lastDay: localToday() });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    await user.click(screen.getByTestId("hub-sendero"));
+    await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
+    expect(screen.getByTestId("path-sheet").textContent).toMatch(/12 retos/);
+    await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+    await waitFor(() => expect(document.querySelector("[data-count]")).toBeTruthy());
+    expect(document.querySelector("[data-first-session]").getAttribute("data-first-session")).toBe("0");
+    expect(Number(document.querySelector("[data-count]").getAttribute("data-count"))).toBe(12);
+  });
+
+  it("five wrong answers in the first session show Review and recover and no paywall", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, hearts: 5, uiLang: "es", bajioUnlockSeen: true, firstSessionDone: false });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    await user.click(screen.getByTestId("hub-sendero"));
+    await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+    for (let i = 0; i < 5; i++) await missFirstSessionBeat(user);
+    await waitFor(() => expect(screen.getByTestId("out-of-lives")).toBeTruthy());
+    expect(screen.getByTestId("out-of-lives").textContent).toBe("¡Te quedaste sin vidas!");
+    expect(screen.getByTestId("review-and-recover").textContent).toMatch(/Practicar y recuperar/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).hearts).toBe(0);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallHold).toBe(true);
+    await user.click(screen.getByTestId("hearts-to-path"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("out-of-lives")).toBeNull();
+  }, 20000);
+
+  it("a held first-session hearts fail does not open the paywall on an existing streak", async () => {
+    cleanup();
+    markBajioUnlockFlashDue(false);
+    seedProgress({
+      streak: 1,
+      lastDay: localToday(),
+      paywallSeen: false,
+      bajioUnlockSeen: true,
+      paywallHold: true,
+      hearts: 0,
+      uiLang: "en",
+    });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "failed",
+      failKind: "hearts",
+      tab: "camino",
+      lessonStats: { right: 0, wrong: 5 },
+      session: {
+        title: "Subjuntivo presente",
+        host: "luna",
+        unitId: "_first",
+        firstSession: true,
+        questions: [{ type: "mc", prompt: "Hola", choices: ["no"], answer: "sí", shuffledChoices: ["no"] }],
+      },
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("out-of-lives")).toBeTruthy());
+    expect(screen.getByTestId("out-of-lives").textContent).toBe("Out of lives!");
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("hearts-to-path"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+  });
+
+  const freshEligible = (extra = {}) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      welcomed: true,
+      xp: 0,
+      gems: 0,
+      streak: 0,
+      lastDay: null,
+      hearts: 5,
+      heartT: Date.now(),
+      done: {},
+      firstSessionDone: false,
+      uiLang: "es",
+      bajioUnlockSeen: true,
+      contentVersion: 2,
+      name: "Ana",
+      ...extra,
+    }));
+  };
+
+  const claimStory0 = async (user) => {
+    await openStory0(user);
+    for (;;) {
+      const next = screen.queryByRole("button", { name: /^(Siguiente|Next) →$/ });
+      if (!next) break;
+      await user.click(next);
+    }
+    await user.click(screen.getByRole("button", { name: /^(Preguntas|Questions) →$/ }));
+    await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
+    await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
+    await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
+    await user.click(screen.getByRole("button", { name: /El olvido/ }));
+    await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
+  };
+
+  it("a pre-release save with xp, streak, Hoy, or games keeps the 12-challenge unit", async () => {
+    const openSheet = async () => {
+      const user = userEvent.setup();
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+      await user.click(screen.getByTestId("hub-sendero"));
+      await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
+      expect(screen.getByTestId("path-sheet").textContent).toMatch(/12 retos/);
+      expect(screen.getByTestId("path-sheet").textContent).not.toMatch(/5 retos/);
+      expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
+      cleanup();
+    };
+    seedProgress({ xp: 40, streak: 4, lastDay: localToday(), hearts: 5 });
+    await openSheet();
+    seedProgress({ streak: 2, lastDay: localToday(), hearts: 5, done: { "_today:taqueria": 1 } });
+    await openSheet();
+    seedProgress({ xp: 12, gems: 5, hearts: 5, missions: { safeRiskyBest: 3 } });
+    await openSheet();
+  });
+
+  it("empty storage is eligible for the 5-exercise session", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding-level-some")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-level-some"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-1")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-goal-1"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
+    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(false);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionArmed).toBe(true);
+    expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
+  });
+
+  it("Save & quit resumes the first session at the saved beat", async () => {
+    cleanup();
+    freshEligible();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    await user.click(screen.getByTestId("hub-sendero"));
+    await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+    await answerFirstSessionBeat(user);
+    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBe("type"));
+    await user.click(screen.getByTestId("lesson-exit"));
+    await user.click(screen.getByTestId("save-and-quit"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(saved.resume.unitId).toBe("_first");
+    expect(saved.resume.qi).toBe(1);
+    expect(saved.firstSessionDone).not.toBe(true);
+    await user.click(screen.getByTestId("hub-sendero"));
+    await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBe("type"));
+    expect(document.body.textContent).toMatch(/Ojalá que no/);
+    expect(document.body.textContent).not.toMatch(/Es obvio que Marisol/);
+    expect(firstSessionRoot().getAttribute("data-first-session")).toBe("1");
+  }, 20000);
+
+  it("quitting a Lectura-started first session does not bird-handoff a later Sendero win", async () => {
+    cleanup();
+    freshEligible();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
+    await claimStory0(user);
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("lesson-exit"));
+    await user.click(screen.getByTestId("quit-without-save"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall") || screen.queryByTestId("nav-camino")).toBeTruthy());
+    if (screen.queryByTestId("soft-paywall")) {
+      expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).not.toBe("lectura-bird-handoff");
+      await user.click(screen.getByTestId("soft-paywall-dismiss"));
+      await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    }
+    await user.click(screen.getByTestId("nav-camino"));
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    await user.click(screen.getByTestId("hub-sendero"));
+    await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+    for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
+    await waitFor(() => expect(screen.getByTestId("win-continue")).toBeTruthy());
+    expect(screen.getByRole("heading", { name: /¡Lección completada!/ }).getAttribute("data-lectura-paywall")).toBe("0");
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+  }, 60000);
+
+  it("Lectura with no hearts shows the hearts modal and does not start the first session", async () => {
+    cleanup();
+    freshEligible({ hearts: 0 });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
+    await claimStory0(user);
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("hearts-modal")).toBeTruthy());
+    expect(screen.getByTestId("hearts-modal").textContent).toMatch(/Sin corazones/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(document.querySelector("[data-first-session]")).toBeNull();
+    expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy();
+  }, 30000);
+
+  it("records xp, gems, and a single streak at the paywall for Sendero and Lectura", async () => {
+    cleanup();
+    freshEligible();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    await user.click(screen.getByTestId("hub-sendero"));
+    await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+    for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
+    await user.click(await screen.findByTestId("win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    const sendero = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(sendero.xp).toBe(62);
+    expect(sendero.gems).toBe(15);
+    expect(sendero.streak).toBe(1);
+    cleanup();
+    freshEligible();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
+    await claimStory0(user);
+    const afterChapter = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(afterChapter.xp).toBe(35);
+    expect(afterChapter.gems).toBe(10);
+    expect(afterChapter.streak).toBe(1);
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
+    await user.click(await screen.findByTestId("win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    const lectura = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(lectura.xp).toBe(97);
+    expect(lectura.gems).toBe(25);
+    expect(lectura.streak).toBe(1);
+    expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).toBe("lectura-bird-handoff");
+  }, 60000);
+
+  it("first-session win uses the ochre heading, one bird, and a plain perfect line", async () => {
+    cleanup();
+    freshEligible({ uiLang: "es", theme: "light", quickTipSeen: true });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "done",
+      qi: 4,
+      status: "correct",
+      lessonStats: { right: 5, wrong: 0 },
+      session: {
+        title: "Subjuntivo presente",
+        host: "luna",
+        unitId: "_first",
+        firstSession: true,
+        perfectBonus: 5,
+        earnedXP: 62,
+        earnedGems: 15,
+        questions: [{ type: "type", prompt: "Te llamo", answers: ["salga"] }],
+      },
+    }));
+    render(<App />);
+    const heading = await screen.findByRole("heading", { name: /¡Lección completada!/ });
+    expect(heading.style.color).toBe("rgb(133, 103, 44)");
+    expect(document.querySelector(".confetti-bit")).toBeNull();
+    expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/cenzontle\.png/);
+    const xp = screen.getByTestId("win-earned-xp");
+    const gems = screen.getByTestId("win-earned-gems");
+    expect(xp.style.color).toBe("rgb(133, 103, 44)");
+    expect(gems.style.color).toBe("rgb(15, 111, 166)");
+    expect(xp.querySelector("span").style.color).toBe("");
+    expect(gems.querySelector("span").style.color).toBe("");
+    expect(xp.parentElement.style.borderTopColor).toBe("rgb(255, 200, 0)");
+    expect(gems.parentElement.style.borderTopColor).toBe("rgb(28, 176, 246)");
+    const perfect = screen.getByTestId("perfect-lesson");
+    expect(perfect.tagName).toBe("P");
+    expect(perfect.textContent).toBe("Lección perfecta — +5 XP");
+    expect(perfect.style.borderStyle).toBe("none");
+    expect(perfect.style.backgroundColor).toBe("transparent");
+    cleanup();
+
+    freshEligible({ uiLang: "en", theme: "dark", quickTipSeen: true });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "done",
+      qi: 4,
+      status: "correct",
+      lessonStats: { right: 5, wrong: 0 },
+      session: {
+        title: "Subjuntivo presente",
+        host: "luna",
+        unitId: "_first",
+        firstSession: true,
+        perfectBonus: 5,
+        earnedXP: 62,
+        earnedGems: 15,
+        questions: [{ type: "type", prompt: "Te llamo", answers: ["salga"] }],
+      },
+    }));
+    render(<App />);
+    const darkHeading = await screen.findByRole("heading", { name: /Lesson complete!/ });
+    expect(darkHeading.style.color).toBe("rgb(255, 212, 59)");
+    expect(screen.getByTestId("win-earned-xp").style.color).toBe("rgb(255, 212, 59)");
+    expect(screen.getByTestId("win-earned-gems").style.color).toBe("rgb(28, 176, 246)");
+    expect(document.querySelector(".confetti-bit")).toBeNull();
+    cleanup();
+
+    freshEligible({ uiLang: "es", theme: "light", quickTipSeen: true, firstSessionDone: true });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "done",
+      qi: 11,
+      status: "correct",
+      lessonStats: { right: 12, wrong: 0 },
+      session: {
+        title: "Subjuntivo presente",
+        host: "luna",
+        unitId: "subj1",
+        perfectBonus: 5,
+        earnedXP: 80,
+        earnedGems: 15,
+        questions: [{ type: "mc", prompt: "Hola", choices: ["no"], answer: "sí" }],
+      },
+    }));
+    render(<App />);
+    const later = await screen.findByRole("heading", { name: /¡Lección completada!/ });
+    expect(later.style.color).toBe("rgb(133, 103, 44)");
+    expect(screen.getByTestId("win-earned-xp").style.color).toBe("rgb(133, 103, 44)");
+    expect(screen.getByTestId("win-earned-gems").style.color).toBe("rgb(15, 111, 166)");
+    expect(document.querySelector(".confetti-bit")).toBeNull();
+    expect(screen.getByTestId("win-perch-bird")).toBeTruthy();
+    expect(document.querySelectorAll(".jump").length).toBe(0);
+    expect(screen.getByTestId("win-perch-chip").style.color).toBe("rgb(133, 103, 44)");
+    const laterPerfect = screen.getByTestId("perfect-lesson");
+    expect(laterPerfect.tagName).toBe("DIV");
+    expect(laterPerfect.style.borderTopWidth).toBe("2px");
+    expect(laterPerfect.style.backgroundColor).not.toBe("transparent");
+  });
+
+  it("George's why and win lines render only for a first session, and nothing when null", async () => {
+    const why = firstSessionWords[0].why;
+    const win = firstSessionWords.win;
+    const prev = { en: why.en, es: why.es, winEn: win.en, winEs: win.es };
+    why.en = "«Es obvio que» stays indicative.";
+    why.es = "«Es obvio que» se queda en indicativo.";
+    win.en = "First session done.";
+    win.es = "Primera sesión lista.";
+    try {
+      cleanup();
+      freshEligible({ uiLang: "es" });
+      const user = userEvent.setup();
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+      await user.click(screen.getByTestId("hub-sendero"));
+      await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+      const wrong = [...document.querySelectorAll(".choice-card")].find((el) => !el.textContent.includes("tiene"));
+      await user.click(wrong);
+      await user.click(screen.getByTestId("lesson-check"));
+      await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe("«Es obvio que» se queda en indicativo."));
+      const whyLine = screen.getByTestId("first-session-why");
+      expect(whyLine.textContent).toMatch(/«Es obvio que»/);
+      expect(whyLine.style.fontSize).toBe("13px");
+      expect(whyLine.style.fontWeight).toBe("800");
+      expect(whyLine.style.color).toBe("rgb(60, 60, 60)");
+      await user.click(screen.getByTestId("lang-en"));
+      await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe("«Es obvio que» stays indicative."));
+      cleanup();
+
+      freshEligible({ firstSessionDone: true, uiLang: "en" });
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "lesson",
+        qi: 0,
+        status: "wrong",
+        lessonStats: { right: 0, wrong: 1 },
+        session: {
+          title: "Subjuntivo presente",
+          host: "luna",
+          unitId: "subj1",
+          questions: [{ type: "mc", prompt: "Hola", choices: ["no"], answer: "sí", shuffledChoices: ["no"], explain: "Nota." }],
+        },
+      }));
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("practice-quip")).toBeTruthy());
+      expect(screen.queryByTestId("first-session-why")).toBeNull();
+      cleanup();
+
+      freshEligible({ uiLang: "es" });
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "done",
+        qi: 4,
+        status: "correct",
+        lessonStats: { right: 5, wrong: 0 },
+        session: {
+          title: "Subjuntivo presente",
+          host: "luna",
+          unitId: "_first",
+          firstSession: true,
+          lecturaPaywallAfterWin: false,
+          earnedXP: 62,
+          earnedGems: 15,
+          questions: [{ type: "type", prompt: "Te llamo", answers: ["salga"] }],
+        },
+      }));
+      render(<App />);
+      const winLine = await screen.findByTestId("first-session-win-line");
+      expect(winLine.textContent).toBe("Primera sesión lista.");
+      expect(winLine.style.fontSize).toBe("15px");
+      expect(winLine.style.fontWeight).toBe("700");
+      expect(winLine.style.color).toBe("rgb(107, 98, 88)");
+      const continueBtn = screen.getByTestId("win-continue");
+      expect(winLine.compareDocumentPosition(continueBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      await user.click(screen.getByTestId("lang-en"));
+      await waitFor(() => expect(screen.getByTestId("first-session-win-line").textContent).toBe("First session done."));
+      cleanup();
+
+      why.en = null;
+      why.es = null;
+      win.en = null;
+      win.es = null;
+      localStorage.removeItem(LIVE_KEY);
+      freshEligible({ uiLang: "es" });
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+      await user.click(screen.getByTestId("hub-sendero"));
+      await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
+      const wrongAgain = [...document.querySelectorAll(".choice-card")].find((el) => !el.textContent.includes("tiene"));
+      await user.click(wrongAgain);
+      await user.click(screen.getByTestId("lesson-check"));
+      await waitFor(() => expect(screen.getByTestId("practice-quip")).toBeTruthy());
+      expect(screen.queryByTestId("first-session-why")).toBeNull();
+    } finally {
+      why.en = prev.en;
+      why.es = prev.es;
+      win.en = prev.winEn;
+      win.es = prev.winEs;
+    }
+  }, 20000);
+});
+
+const FALLBACK_HEADLINE = {
+  es: "Hay mucho más por leer.",
+  en: "There's much\u00A0more to read.",
+};
+const HOOK_BODY = {
+  es: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
+  en: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
+};
+
+const assertPaywallHeadline = (source, lang = "es") => {
+  const headline = screen.getByTestId("soft-paywall-headline");
+  const expected = source === PAYWALL_SOURCE.lecturaBirdHandoff ? (lang === "en" ? "The story goes on." : "La historia sigue.") : FALLBACK_HEADLINE[lang];
+  expect(headline.textContent).toBe(expected);
+  expect(headline.getAttribute("data-paywall-source")).toBe(source);
+  expect(headline.style.fontWeight).toBe("900");
+  expect(headline.style.fontSize).toBe("22px");
+  expect(headline.style.textWrap).toBe("balance");
+  expect(headline.style.letterSpacing).toBe("");
+  expect(screen.getByTestId("soft-paywall-body").textContent).toBe(HOOK_BODY[lang]);
+};
+
+const lessonLive = (screenName, extra = {}) => ({
+  screen: screenName,
+  qi: 0,
+  status: "idle",
+  lessonStats: { right: 1, wrong: 0 },
+  session: {
+    title: "Hola",
+    host: "luna",
+    unitId: "greetings",
+    questions: [{ type: "mc", prompt: "Hola", choices: ["sí"], answer: "sí", shuffledChoices: ["sí"] }],
+  },
+  ...extra,
+});
+
+const openPaywallFrom = async (live, { streak = 1 } = {}) => {
+  cleanup();
+  markBajioUnlockFlashDue(false);
+  localStorage.removeItem(LIVE_KEY);
+  seedProgress({
+    streak,
+    lastDay: streak ? localToday() : null,
+    paywallSeen: false,
+    bajioUnlockSeen: true,
+    uiLang: "es",
+  });
+  if (live) localStorage.setItem(LIVE_KEY, JSON.stringify(live));
+  const user = userEvent.setup();
+  render(<App />);
+  return user;
+};
+
+const waitSurfaceClear = async (testid) => {
+  await waitFor(() => expect(screen.getByTestId(testid)).toBeTruthy());
+  await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+};
+
+const clickClose = async (user, rootTestId) => {
+  const root = screen.getByTestId(rootTestId);
+  const btn = [...root.querySelectorAll("button")].find((el) => /^(Cerrar|Close)$/.test(el.getAttribute("aria-label") || ""));
+  expect(btn).toBeTruthy();
+  await user.click(btn);
+};
+
+describe("paywall headline follows the open source", () => {
+  it("boot on the hub uses the fallback headline", async () => {
+    await openPaywallFrom(null);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.boot);
+  });
+
+  it("boot in English uses the English fallback headline", async () => {
+    cleanup();
+    markBajioUnlockFlashDue(false);
+    seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: false, bajioUnlockSeen: true, uiLang: "en" });
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.boot, "en");
+  });
+
+  it("brand-home uses the fallback headline", async () => {
+    const user = await openPaywallFrom(lessonLive("lesson"));
+    await waitSurfaceClear("lesson-exit");
+    await user.click(screen.getByTestId("brand-home"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.brandHome);
+  });
+
+  it("win continue uses the fallback headline", async () => {
+    const user = await openPaywallFrom(lessonLive("done"), { streak: 0 });
+    await waitSurfaceClear("win-continue");
+    await user.click(screen.getByTestId("win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.winContinue);
+  });
+
+  it("session close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "sessionClose" });
+    await waitSurfaceClear("session-close-dismiss");
+    await user.click(screen.getByTestId("session-close-dismiss"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.sessionClose);
+  });
+
+  it("cubetas close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "cubetas", cubetasGame: startCubetasRun() });
+    await waitSurfaceClear("cubetas-board");
+    await clickClose(user, "cubetas-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.cubetas);
+  });
+
+  it("hangman close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "ahorcado", ahorcado: startHangmanRun() });
+    await waitSurfaceClear("hangman-board");
+    await clickClose(user, "hangman-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.hangman);
+  });
+
+  it("match pairs close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "matchPairs", matchGame: startMatchRun([["hola", "hi"], ["adiós", "bye"]]) });
+    await waitSurfaceClear("match-pairs-screen");
+    await clickClose(user, "match-pairs-screen");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.matchPairs);
+  });
+
+  it("memory close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "memory", memoryGame: startMemoryRun() });
+    await waitSurfaceClear("memory-board");
+    await clickClose(user, "memory-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.memory);
+  });
+
+  it("dialogue close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "dialogue" });
+    await waitSurfaceClear("dialogue-board");
+    await clickClose(user, "dialogue-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.dialogue);
+  });
+
+  it("flashcard grade uses the fallback headline", async () => {
+    cleanup();
+    markBajioUnlockFlashDue(false);
+    seedProgress({
+      streak: 0,
+      lastDay: null,
+      paywallSeen: false,
+      bajioUnlockSeen: true,
+      uiLang: "es",
+      flashcards: {
+        hola: { word: "hola", en: "hi", note: "", story: "Hola", sentence: "Hola.", added: 1, due: 0, interval: 0, reps: 0, lapses: 0 },
+      },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("camino-more")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("camino-more"));
+    await user.click(screen.getByTestId("hub-flashcards"));
+    await waitFor(() => expect(screen.getByTestId("flash-reveal")).toBeTruthy());
+    await user.click(screen.getByTestId("flash-reveal"));
+    await user.click(screen.getByTestId("flash-hard"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.flashcards);
+  });
+
+  it("games hub close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "games" });
+    await waitSurfaceClear("games-hub");
+    await clickClose(user, "games-hub");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.gamesHub);
+  });
+
+  it("snake close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({
+      screen: "snakes",
+      snakeGame: {
+        tile: 1, turn: 0, status: "idle", done: false, correct: 0, wrong: 0, ladders: 0, slides: 0,
+        focus: { host: "luna", title: { es: "Vocab", en: "Vocab" } },
+        question: { prompt: "Hola", answer: "Hi", choices: ["Hi", "Bye"], explain: "", skill: "vocab" },
+      },
+    });
+    await waitSurfaceClear("snakes-board");
+    await clickClose(user, "snakes-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.snake);
+  });
+
+  it("safe-or-risky close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "safeRisky", safeGame: startSafeRiskyRun([SAFE_RISKY_MULTI_FIXTURE]) });
+    await waitSurfaceClear("safe-risky-board");
+    await clickClose(user, "safe-risky-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.safeRisky);
+  });
+
+  it("jeopardy close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "jeopardy", jeopardy: startJeopardyRun() });
+    await waitSurfaceClear("jeopardy-board");
+    await clickClose(user, "jeopardy-board");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.jeopardy);
+  });
+
+  it("story close uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "story", storyId: "story-0", paraIdx: 0 });
+    await waitSurfaceClear("story-reader");
+    await clickClose(user, "story-reader");
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.storyClose);
+  });
+
+  it("lesson quit uses the fallback headline", async () => {
+    const user = await openPaywallFrom(lessonLive("lesson"));
+    await waitSurfaceClear("lesson-exit");
+    await user.click(screen.getByTestId("lesson-exit"));
+    await user.click(screen.getByTestId("quit-without-save"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.lessonQuit);
+  });
+
+  it("out of hearts uses the fallback headline", async () => {
+    const user = await openPaywallFrom(lessonLive("failed"));
+    await waitSurfaceClear("hearts-to-path");
+    await user.click(screen.getByTestId("hearts-to-path"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.hearts);
+  });
+
+  it("rival back uses the fallback headline", async () => {
+    const user = await openPaywallFrom({ screen: "rivalIntro" });
+    await waitSurfaceClear("rival-back");
+    await user.click(screen.getByTestId("rival-back"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.rival);
+  });
+
+  it("rival done uses the fallback headline", async () => {
+    const user = await openPaywallFrom({
+      screen: "rivalDone",
+      rivalOutcome: { won: true, you: 3, diego: 1, delta: 1, rankName: "Novato", reaction: "Otra.", record: "1–0" },
+    });
+    await waitSurfaceClear("rival-done-back");
+    await user.click(screen.getByTestId("rival-done-back"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    assertPaywallHeadline(PAYWALL_SOURCE.rival);
+  });
 });
 
 const EN_DISCLOSURE = [
-  "Ándale Premium is an auto-renewing subscription.",
-  "One year: $39.99 per year (about $3.33 a month). One month: $6.99 per month.",
-  "Payment is charged to your Apple ID when you confirm your purchase. Your subscription renews automatically unless you cancel at least 24 hours before the current period ends. Your account is charged for the renewal within the 24 hours before the period ends. You can manage or cancel anytime in Settings > Apple ID > Subscriptions.",
+  "Ándale Premium is an auto-renewing subscription: one year at $39.99 or one month at $6.99.",
+  "Payment is charged to your Apple ID when you confirm. It renews automatically at the same price unless you cancel at least 24 hours before the period ends; the renewal is charged within those 24 hours. Manage or cancel in Settings > Apple ID > Subscriptions.",
 ];
 const ES_DISCLOSURE = [
-  "Ándale Premium es una suscripción con renovación automática.",
-  "Un año: $39.99 al año (unos $3.33 al mes). Un mes: $6.99 al mes.",
-  "El pago se carga a tu ID de Apple al confirmar la compra. La suscripción se renueva sola a menos que la canceles al menos 24 horas antes de que termine el periodo actual. El cargo de la renovación se hace dentro de las 24 horas previas al fin del periodo. Puedes administrarla o cancelarla cuando quieras en Ajustes > ID de Apple > Suscripciones.",
+  "Ándale Premium es una suscripción con renovación automática: un año por $39.99 o un mes por $6.99.",
+  "El pago se carga a tu ID de Apple al confirmar. Se renueva sola al mismo precio, a menos que la canceles al menos 24 horas antes de que termine el periodo; la renovación se cobra dentro de esas 24 horas. Administra o cancela en Ajustes > ID de Apple > Suscripciones.",
 ];
+
+const assertFinePrintMatchesButtons = (lang) => {
+  const annual = screen.getByTestId("soft-paywall-annual-price").textContent.split(" ")[0];
+  const monthly = screen.getByTestId("soft-paywall-monthly-price").textContent.split(" ")[0];
+  const lead = screen.getByTestId("soft-paywall-disclosure-0").textContent;
+  expect(lead).toContain(annual);
+  expect(lead).toContain(monthly);
+  const expected = lang === "en"
+    ? `Ándale Premium is an auto-renewing subscription: one year at ${annual} or one month at ${monthly}.`
+    : `Ándale Premium es una suscripción con renovación automática: un año por ${annual} o un mes por ${monthly}.`;
+  expect(lead).toBe(expected);
+  expect(screen.queryByTestId("soft-paywall-disclosure-2")).toBeNull();
+};
 
 describe("paywall 3.1.2 disclosure", () => {
   it("renders EN prices, fine print, restore, and legal links without a purchase", async () => {
@@ -6568,6 +7991,7 @@ describe("paywall 3.1.2 disclosure", () => {
     EN_DISCLOSURE.forEach((line, i) => {
       expect(screen.getByTestId(`soft-paywall-disclosure-${i}`).textContent).toBe(line);
     });
+    assertFinePrintMatchesButtons("en");
     expect(screen.queryByText(ES_DISCLOSURE[0])).toBeNull();
     const fine = screen.getByTestId("soft-paywall-disclosure");
     expect(parseFloat(fine.style.fontSize)).toBeLessThan(parseFloat(annual.style.fontSize));
@@ -6591,7 +8015,7 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(fine.compareDocumentPosition(screen.getByTestId("soft-paywall-dismiss")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
 
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
     await user.click(restore);
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
@@ -6623,6 +8047,7 @@ describe("paywall 3.1.2 disclosure", () => {
     ES_DISCLOSURE.forEach((line, i) => {
       expect(screen.getByTestId(`soft-paywall-disclosure-${i}`).textContent).toBe(line);
     });
+    assertFinePrintMatchesButtons("es");
     expect(screen.queryByText(EN_DISCLOSURE[0])).toBeNull();
     expect(screen.getByTestId("soft-paywall-legal").textContent).toBe("Términos de uso · Política de privacidad · Restaurar compras");
     expect(screen.getByTestId("soft-paywall-terms").getAttribute("href")).toBe("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/");
@@ -6671,14 +8096,14 @@ describe("paywall 3.1.2 disclosure", () => {
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Practice · no charge yet|Práctica · sin cobro todavía/);
     await waitFor(() => expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("€39.99 / year"));
     expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("€6.99 / month");
-    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).toBe(EN_DISCLOSURE[0]);
-    expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).toBe("One year: €39.99 per year. One month: €6.99 per month.");
-    expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).not.toMatch(/\$3\.33/);
-    expect(screen.getByTestId("soft-paywall-disclosure-2").textContent).toBe(EN_DISCLOSURE[2]);
+    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).toBe("Ándale Premium is an auto-renewing subscription: one year at €39.99 or one month at €6.99.");
+    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).not.toMatch(/\$3\.33/);
+    expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).toBe(EN_DISCLOSURE[1]);
+    assertFinePrintMatchesButtons("en");
     expect(screen.getByTestId("soft-paywall-annual").className).toMatch(/duo-btn/);
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Continue free");
     expect(screen.getByTestId("soft-paywall-dismiss").style.background).toBe("none");
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
 
     expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
@@ -6842,8 +8267,278 @@ describe("paywall 3.1.2 disclosure", () => {
     await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("$39.99 / year");
     expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("$6.99 / month");
+    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).toBe(EN_DISCLOSURE[0]);
     expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).toBe(EN_DISCLOSURE[1]);
+    assertFinePrintMatchesButtons("en");
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/€/);
     expect(funnelOf("purchase")).toHaveLength(0);
   }, 15000);
+});
+
+describe("short onboarding", () => {
+  const onboardingText = (lang) => screen.getByTestId("onboarding").textContent;
+
+  it("a fresh save shows onboarding and reaches a non-beginner lesson in 3 taps", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level"));
+    expect(screen.queryByTestId("splash")).toBeNull();
+    expect(screen.getByTestId("onboarding").style.overflow).toBe("hidden");
+    expect(screen.getByTestId("onboarding-level-beginner").textContent).toBe(
+      `${onboardingLine(onboardingCopy.levels.beginner.name, "en")}${onboardingLine(onboardingCopy.levels.beginner.desc, "en")}`,
+    );
+    expect(screen.getByTestId("onboarding-level-some").textContent).toContain(onboardingLine(onboardingCopy.levels.some.name, "en"));
+    expect(screen.getByTestId("onboarding-level-conversation").textContent).toContain(onboardingLine(onboardingCopy.levels.conversation.name, "en"));
+    let taps = 0;
+    const tap = async (el) => { taps += 1; await user.click(el); };
+    await tap(screen.getByTestId("onboarding-level-conversation"));
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("goal"));
+    expect(screen.getByTestId("onboarding-goal-1").textContent).toBe(onboardingLine(onboardingCopy.goals[1], "en"));
+    expect(screen.getByTestId("onboarding-goal-2").textContent).toBe(onboardingLine(onboardingCopy.goals[2], "en"));
+    expect(screen.getByTestId("onboarding-goal-3").textContent).toBe(onboardingLine(onboardingCopy.goals[3], "en"));
+    await tap(screen.getByTestId("onboarding-goal-3"));
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("plan"));
+    expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.planTitle, "en"));
+    expect(screen.getByTestId("onboarding-plan-level").textContent).toBe(
+      `${onboardingLine(onboardingCopy.planLevel, "en")}: ${onboardingLine(onboardingCopy.levels.conversation.name, "en")}`,
+    );
+    expect(screen.getByTestId("onboarding-plan-goal").textContent).toBe(
+      `${onboardingLine(onboardingCopy.planGoal, "en")}: ${onboardingLine(onboardingCopy.goals[3], "en")}`,
+    );
+    expect(screen.getByTestId("onboarding").querySelectorAll("button")).toHaveLength(1);
+    expect(screen.getByTestId("onboarding-start").textContent).toBe(onboardingLine(onboardingCopy.planStart, "en"));
+    expect(screen.getByTestId("onboarding-start").style.color).toMatch(/#fff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    expect(screen.getByTestId("onboarding-plan-level").style.border).toMatch(/2px solid (#6F7757|rgb\(\s*111,\s*119,\s*87\s*\))/i);
+    await tap(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
+    expect(taps).toBeLessThanOrEqual(3);
+    expect(taps).toBe(3);
+    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
+    expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(saved.learnerLevel).toBe("conversation");
+    expect(saved.dailyGoalLessons).toBe(3);
+    expect(saved.onboardingDone).toBe(true);
+    expect(saved.onboardingPending).toBe(false);
+    expect(saved.welcomed).toBe(true);
+  });
+
+  it("a beginner fresh save opens the zero-start session in 3 taps", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding-level-beginner")).toBeTruthy());
+    let taps = 0;
+    const tap = async (el) => { taps += 1; await user.click(el); };
+    await tap(screen.getByTestId("onboarding-level-beginner"));
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("goal"));
+    await tap(screen.getByTestId("onboarding-goal-1"));
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("plan"));
+    expect(screen.getByTestId("onboarding-plan-level").textContent).toBe("Your level: Starting from zero");
+    expect(screen.getByTestId("onboarding-plan-goal").textContent).toBe("Your goal: 1 lesson a day");
+    await tap(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-beginner-first")).toBe("1"));
+    expect(taps).toBe(3);
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+    expect(document.body.textContent).toContain(`Which one means "good morning"?`);
+    const cards = screen.getAllByTestId("choice-card").map((el) => el.textContent.replace(/^\d+/, ""));
+    expect(cards).toEqual(["Buenas noches", "Buenos días", "Hasta luego", "Con permiso"]);
+    expect(document.body.textContent).not.toMatch(/Es obvio que Marisol/);
+    expect(document.body.textContent).not.toMatch(/story-0/);
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(saved.learnerLevel).toBe("beginner");
+    expect(saved.dailyGoalLessons).toBe(1);
+    expect(saved.onboardingDone).toBe(true);
+    expect(saved.firstSessionDone).not.toBe(true);
+  });
+
+  it("some Spanish keeps the existing first session", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding-level-some")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-level-some"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-2")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-goal-2"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-beginner-first")).toBe("0"));
+    expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
+    expect(document.body.textContent).not.toMatch(/good morning/);
+  });
+
+  it("EN and ES onboarding strings come from onboardingCopy.js", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.levelTitle, "en")));
+    expect(onboardingText("en")).toContain(onboardingLine(onboardingCopy.levels.some.desc, "en"));
+    expect(onboardingText("en")).not.toMatch(/stripe|paypal|revenuecat|minute|audio/i);
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.levelTitle, "es")));
+    expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.beginner.name, "es"));
+    expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.beginner.desc, "es"));
+    expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.conversation.desc, "es"));
+    await user.click(screen.getByTestId("onboarding-level-some"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-2").textContent).toBe(onboardingLine(onboardingCopy.goals[2], "es")));
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-2").textContent).toBe(onboardingLine(onboardingCopy.goals[2], "en")));
+    await user.click(screen.getByTestId("onboarding-goal-2"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.planTitle, "en")));
+    expect(screen.getByTestId("onboarding-plan-level").textContent).toBe(
+      `${onboardingLine(onboardingCopy.planLevel, "en")}: ${onboardingLine(onboardingCopy.levels.some.name, "en")}`,
+    );
+    expect(screen.getByTestId("onboarding-start").textContent).toBe(onboardingLine(onboardingCopy.planStart, "en"));
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-start").textContent).toBe(onboardingLine(onboardingCopy.planStart, "es")));
+    expect(screen.getByTestId("onboarding-plan-level").textContent).toBe(
+      `${onboardingLine(onboardingCopy.planLevel, "es")}: ${onboardingLine(onboardingCopy.levels.some.name, "es")}`,
+    );
+    expect(screen.getByTestId("onboarding-plan-goal").textContent).toBe(
+      `${onboardingLine(onboardingCopy.planGoal, "es")}: ${onboardingLine(onboardingCopy.goals[2], "es")}`,
+    );
+  });
+
+  it("a held level card shows the check and does not advance", async () => {
+    localStorage.clear();
+    window.__andaleHoldOnboardingSelection = true;
+    try {
+      const user = userEvent.setup();
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("onboarding-level-beginner")).toBeTruthy());
+      await user.click(screen.getByTestId("onboarding-level-beginner"));
+      const card = screen.getByTestId("onboarding-level-beginner");
+      expect(card.getAttribute("data-selected")).toBe("true");
+      expect(screen.getByTestId("onboarding-check")).toBeTruthy();
+      expect(card.style.border).toMatch(/2px solid (#6F7757|rgb\(\s*111,\s*119,\s*87\s*\))/i);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level");
+    } finally {
+      window.__andaleHoldOnboardingSelection = false;
+    }
+  });
+
+  it("existing saves with a marker, a resume, or a finished lesson skip onboarding", async () => {
+    const expectHub = async (extra) => {
+      cleanup();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        welcomed: true,
+        xp: 10,
+        hearts: 5,
+        contentVersion: 2,
+        uiLang: "en",
+        done: {},
+        ...extra,
+      }));
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+      expect(screen.queryByTestId("onboarding")).toBeNull();
+      expect(screen.queryByTestId("splash")).toBeNull();
+    };
+    await expectHub({ firstSessionDone: false });
+    await expectHub({ firstSessionDone: true });
+    await expectHub({ firstSessionArmed: true });
+    await expectHub({ resume: { unitId: "_first", order: [{ u: "subj1", i: 3 }], qi: 1 } });
+    await expectHub({ done: { subj1: 1 } });
+    await expectHub({ stories: { "story-0": true }, firstSessionDone: true });
+    await expectHub({ xp: 40, streak: 3, lastDay: "2026-01-02" });
+  });
+
+  it("an existing first-session save opens the lesson with no onboarding tap", async () => {
+    cleanup();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      welcomed: true,
+      xp: 0,
+      hearts: 5,
+      contentVersion: 2,
+      uiLang: "en",
+      done: {},
+      firstSessionDone: false,
+    }));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
+    expect(screen.queryByTestId("onboarding")).toBeNull();
+    await user.click(screen.getByTestId("hub-sendero"));
+    await user.click(screen.getByRole("button", { name: /Start · \+XP/ }));
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
+    expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
+  });
+
+  it("a pending dark save stays on onboarding and keeps the stored level", async () => {
+    cleanup();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      onboardingPending: true,
+      firstSessionDone: false,
+      learnerLevel: "beginner",
+      theme: "dark",
+      uiLang: "es",
+      contentVersion: 2,
+    }));
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("goal"));
+    expect(screen.getByTestId("onboarding").getAttribute("data-theme")).toBe("dark");
+    expect(screen.getByTestId("onboarding").style.background).toMatch(/#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i);
+    expect(screen.getByTestId("onboarding").style.color).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+    expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.goalTitle, "es"));
+    expect(screen.queryByTestId("splash")).toBeNull();
+  });
+
+  it("a wrong beginner answer is rejected and the right ones finish on the beginner win, then the paywall", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding-level-beginner")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-level-beginner"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-1")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-goal-1"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(document.querySelector("[data-beginner-first]")?.getAttribute("data-beginner-first")).toBe("1"));
+    const wrong = screen.getAllByTestId("choice-card").find((el) => el.textContent.includes("Buenas noches"));
+    await user.click(wrong);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe(
+      `"Buenos días" is what you say in the morning, until about midday. "Buenas noches" is for the night.`,
+    ));
+    await user.click(screen.getByRole("button", { name: /^Continue$/ }));
+    const beats = [
+      { type: "type", tile: "gusto", prompt: "Mucho ___." },
+      { type: "order", tiles: ["un", "café,", "por", "favor"], prompt: `Build: "A coffee, please."` },
+      { type: "mc", choice: "¿Cuánto cuesta?", prompt: `How do you ask "How much is it?"` },
+      { type: "type", tile: "llamas", prompt: "¿Cómo te ___?" },
+    ];
+    for (const beat of beats) {
+      await waitFor(() => expect(document.querySelector("[data-qtype]")?.getAttribute("data-qtype")).toBe(beat.type));
+      expect(document.body.textContent).toContain(beat.prompt);
+      if (beat.choice) {
+        const cards = screen.getAllByTestId("choice-card").map((el) => el.textContent.replace(/^\d+/, ""));
+        expect(cards).toEqual(["¿Dónde está?", "¿Cómo estás?", "¿Qué hora es?", "¿Cuánto cuesta?"]);
+        await user.click(screen.getAllByTestId("choice-card").find((el) => el.textContent.includes(beat.choice)));
+      } else if (beat.tile) {
+        await user.click(screen.getAllByTestId("bank-tile").find((el) => el.textContent.trim() === beat.tile));
+      } else {
+        for (const word of beat.tiles) {
+          const tile = screen.getAllByTestId("bank-tile").find((el) => el.textContent.trim().toLowerCase() === word);
+          expect(tile, word).toBeTruthy();
+          await user.click(tile);
+        }
+      }
+      await user.click(screen.getByTestId("lesson-check"));
+      await user.click(screen.getByRole("button", { name: /^Continue$/ }));
+    }
+    await waitFor(() => expect(screen.getByTestId("first-session-win-line").textContent).toBe(
+      "First lesson done. You have your first words to say hello, order a coffee and ask the price. Come back tomorrow for the next one.",
+    ));
+    expect(document.body.textContent).not.toMatch(/[Ss]ubjuntiv/);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("first-session-win-line").textContent).toBe(
+      "Primera lección lista. Ya tienes tus primeras palabras para saludar, pedir un café y preguntar el precio. Mañana seguimos con la siguiente.",
+    ));
+    await user.click(screen.getByTestId("win-continue"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
+  }, 20000);
 });

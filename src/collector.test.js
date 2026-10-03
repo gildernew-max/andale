@@ -1,12 +1,21 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { COLLECTOR_DEVICE_KEY, COLLECTOR_ENDPOINT, shipFunnelEvent } from "./collector.js";
+import { COLLECTOR_DEVICE_KEY, COLLECTOR_ENDPOINT, collectorEndpoint, setCollectorEndpointOverride, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENTS } from "./funnel.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
-assert(COLLECTOR_ENDPOINT === "", "collector stays off until VITE_COLLECTOR_ENDPOINT is set");
+assert(COLLECTOR_ENDPOINT === "", "collector stays off until a build endpoint is set");
+assert(collectorEndpoint() === "", "shared helper is empty when both build endpoints are empty");
+assert(collectorEndpoint({ VITE_COLLECTOR_ENDPOINT: "", VITE_FIRST_WIN_EMAIL_ENDPOINT: "" }) === "", "both empty strings stay off");
+assert(collectorEndpoint({ VITE_COLLECTOR_ENDPOINT: "  ", VITE_FIRST_WIN_EMAIL_ENDPOINT: "  " }) === "", "blank endpoints stay off");
+assert(collectorEndpoint({ VITE_COLLECTOR_ENDPOINT: " https://collector.example/exec " }) === "https://collector.example/exec", "VITE_COLLECTOR_ENDPOINT turns the helper on");
+assert(collectorEndpoint({ VITE_FIRST_WIN_EMAIL_ENDPOINT: "https://email.example/exec" }) === "https://email.example/exec", "VITE_FIRST_WIN_EMAIL_ENDPOINT turns the helper on");
+setCollectorEndpointOverride("https://override.example/exec");
+assert(collectorEndpoint() === "https://override.example/exec", "a test endpoint overrides the empty build env");
+setCollectorEndpointOverride(undefined);
+assert(collectorEndpoint() === "", "clearing the test endpoint reads the empty build env again");
 
 function memoryStorage() {
   const data = {};
@@ -22,7 +31,7 @@ const required = [
   FUNNEL_EVENTS.emailSubmitted,
   FUNNEL_EVENTS.emailSkipped,
   FUNNEL_EVENTS.lecturaStart,
-  FUNNEL_EVENTS.lecturaComplete,
+  FUNNEL_EVENTS.lecturaChapterDone,
   FUNNEL_EVENTS.paywallSeen,
   FUNNEL_EVENTS.paywallTap,
 ];
@@ -88,7 +97,7 @@ for (const row of sent) {
   assert(Object.keys(body).sort().join(",") === "deviceId,lang,name,ts,type", "event row is type, name, lang, device id, ts");
 }
 assert(sent.some((row) => JSON.parse(row.body).name === "lectura_start"), "Lectura open is sent");
-assert(sent.some((row) => JSON.parse(row.body).name === "lectura_complete"), "Lectura complete is sent");
+assert(sent.some((row) => JSON.parse(row.body).name === "lectura_chapter_done"), "Lectura chapter done is sent");
 assert(sent.some((row) => JSON.parse(row.body).name === "paywall_tap"), "paywall tap is sent");
 assert(sent.find((row) => JSON.parse(row.body).name === "paywall_seen") && JSON.parse(sent.find((row) => JSON.parse(row.body).name === "paywall_seen").body).lang === "en", "paywall_seen keeps the English face");
 

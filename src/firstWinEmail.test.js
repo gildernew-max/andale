@@ -94,9 +94,11 @@ assert(firstWinEmailError("en") === FIRST_WIN_EMAIL_ERROR.en, "error follows uiL
 assert(!firstWinEmailInvite("en").includes(FIRST_WIN_EMAIL_INVITE.es), "EN face has no Spanish invite");
 assert(!firstWinEmailInvite("es").includes("Leave your email"), "ES face has no English invite");
 
-assert(shouldShowFirstWinEmail({ firstHoy: true, emailSeen: false }) === true, "first Hoy win shows the field");
-assert(shouldShowFirstWinEmail({ firstHoy: true, emailSeen: true }) === false, "seen flag hides it");
-assert(shouldShowFirstWinEmail({ firstHoy: false, emailSeen: false }) === false, "later wins do not ask");
+assert(shouldShowFirstWinEmail({ firstHoy: true, emailSeen: false }) === false, "empty build endpoint hides the card");
+assert(shouldShowFirstWinEmail({ firstHoy: true, emailSeen: false, endpoint: "" }) === false, "blank endpoint hides the card");
+assert(shouldShowFirstWinEmail({ firstHoy: true, emailSeen: false, endpoint: "https://example.test/collector" }) === true, "a set endpoint shows the field on the first Hoy win");
+assert(shouldShowFirstWinEmail({ firstHoy: true, emailSeen: true, endpoint: "https://example.test/collector" }) === false, "seen flag hides it");
+assert(shouldShowFirstWinEmail({ firstHoy: false, emailSeen: false, endpoint: "https://example.test/collector" }) === false, "later wins do not ask");
 assert(shouldShowFirstWinEmail() === false, "missing gate stays off");
 
 const storage = {
@@ -121,10 +123,10 @@ const empty = await deliverFirstWinEmail("  dave@example.com ", {
   storage,
   fetchImpl: async () => { fetches += 1; return { ok: true }; },
 });
-assert(empty.ok === true && empty.email == null, "empty endpoint still accepts a real address");
+assert(empty.ok === true && empty.email == null, "empty endpoint does not treat a real address as a failure");
 assert(!/@/.test(JSON.stringify(empty)), "accept result has no address");
 assert(fetches === 0, "empty endpoint does not POST");
-assert(JSON.parse(storage.getItem(WAITLIST_STORE_KEY)).email === "dave@example.com", "local store keeps the trimmed address");
+assert(storage.data[WAITLIST_STORE_KEY] == null, "empty endpoint does not write andale-waitlist");
 
 let posted = null;
 const sent = await deliverFirstWinEmail("ada@example.com", {
@@ -191,4 +193,4 @@ assert(blank.ok === false, "blank is not an email");
 const missingDot = await deliverFirstWinEmail("dave@example", { storage });
 assert(missingDot.ok === false, "missing dot is not an email");
 
-console.log("ok: first-win email — validation, skip label, empty endpoint stays on device.");
+console.log("ok: first-win email — validation, skip label, empty endpoint stores nothing.");
