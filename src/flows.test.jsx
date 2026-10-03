@@ -3315,6 +3315,62 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("camino-more")).toBeTruthy();
   });
 
+  it("dark Intermedio lane and Rayo OFF follow the theme; light keeps mint, ink, and the white pill", async () => {
+    const crowned = {
+      uiLang: "es",
+      onboardingDone: true,
+      firstSessionDone: true,
+      streak: 1,
+      lastDay: localToday(),
+      paywallSeen: true,
+      rayo: false,
+      done: { subj1: 1 },
+    };
+    const MINT = /#F3FBEA|rgb\(\s*243,\s*251,\s*234\s*\)/i;
+    const CARD = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const CREAM_INK = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
+    const LIGHT_INK = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
+    const LOCK_INK = /#AFAFAF|rgb\(\s*175,\s*175,\s*175\s*\)/i;
+    const LIGHT_SUB = /#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i;
+    const WHITE = /#fff\b|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\)/i;
+
+    cleanup();
+    seedProgress({ ...crowned, theme: "dark" });
+    render(<App />);
+    await awaitHome();
+    const darkLane = screen.getAllByTestId("section-lane")[0];
+    expect(darkLane.getAttribute("data-section")).toBe("0");
+    expect(darkLane.style.background).toMatch(CARD);
+    expect(darkLane.style.background).not.toMatch(MINT);
+    const darkLabels = [...darkLane.querySelectorAll("[data-testid='section-lane-label']")];
+    expect(darkLabels.map((el) => el.textContent)).toEqual(expect.arrayContaining(["Subjuntivo presente", "Pretérito vs. imperfecto"]));
+    darkLabels.forEach((el) => expect(el.style.color).toMatch(CREAM_INK));
+    const darkRayo = screen.getByTestId("rayo-toggle");
+    expect(darkRayo.textContent).toMatch(/Rayo\s*OFF/);
+    expect(darkRayo.style.background).toMatch(CARD);
+    expect(darkRayo.style.background).not.toMatch(WHITE);
+    expect(darkRayo.style.color).toMatch(CREAM_INK);
+    expect(contrastRatio(darkLabels[0].style.color, darkLane.style.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(darkRayo.style.color, darkRayo.style.background)).toBeGreaterThanOrEqual(4.5);
+
+    cleanup();
+    seedProgress({ ...crowned, theme: "light" });
+    render(<App />);
+    await awaitHome();
+    const lightLane = screen.getAllByTestId("section-lane")[0];
+    expect(lightLane.style.background).toMatch(MINT);
+    const lightLabels = [...lightLane.querySelectorAll("[data-testid='section-lane-label']")];
+    expect(lightLabels[0].textContent).toBe("Subjuntivo presente");
+    expect(lightLabels[1].textContent).toBe("Pretérito vs. imperfecto");
+    expect(lightLabels[0].style.color).toMatch(LIGHT_INK);
+    expect(lightLabels[1].style.color).toMatch(LIGHT_INK);
+    expect(lightLabels[2].style.color).toMatch(LOCK_INK);
+    const lightRayo = screen.getByTestId("rayo-toggle");
+    expect(lightRayo.textContent).toMatch(/Rayo\s*OFF/);
+    expect(lightRayo.style.background).toMatch(WHITE);
+    expect(lightRayo.style.color).toMatch(LIGHT_SUB);
+  });
+
   it("Hoy + Doctora door buries EMPIEZA / Repasar / Rutina diaria under Intermedio", async () => {
     cleanup();
     seedProgress({
@@ -4160,6 +4216,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(cta.textContent).toBe(LECTURA_HANDOFF_CTA.en);
     expect(styleHas(box, "#F6EFE4")).toBe(true);
     expect(styleHas(cta, "#5C7356")).toBe(true);
+    expect(quiet.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+    expect(quiet.style.fontSize).toBe("13px");
+    expect(quiet.style.fontWeight).toBe("700");
     expect(cta.className).not.toMatch(/duo-btn/);
     const privacyEn = screen.getByTestId("first-win-email-privacy-link");
     expect(privacyEn.textContent).toBe(FIRST_WIN_EMAIL_PRIVACY_LINK.en);
@@ -4167,6 +4226,28 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(privacyEn.getAttribute("href")).toMatch(/privacy\.html#correo-y-datos$/);
     expect(styleHas(privacyEn, "#CDBBA6")).toBe(true);
     expect(screen.getByTestId("first-win-email").textContent).not.toMatch(/Privacidad/);
+  });
+
+  it("Lectura handoff quiet line is #6B6258 on the cream strip in dark and stays #777777 in light", async () => {
+    const user = userEvent.setup();
+    await reachFirstHoyWin(user, { theme: "dark", uiLang: "es" });
+    const darkQuiet = screen.getByTestId("lectura-handoff-quiet");
+    const darkStrip = screen.getByTestId("lectura-handoff");
+    const darkCta = screen.getByTestId("lectura-handoff-cta");
+    expect(darkQuiet.textContent).toBe(LECTURA_HANDOFF_QUIET.es);
+    expect(darkQuiet.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+    expect(darkQuiet.style.fontSize).toBe("13px");
+    expect(darkQuiet.style.fontWeight).toBe("700");
+    expect(styleHas(darkStrip, "#F6EFE4")).toBe(true);
+    expect(styleHas(darkCta, "#5C7356")).toBe(true);
+    expect(contrastRatio("#6B6258", "#F6EFE4")).toBeGreaterThanOrEqual(4.5);
+
+    await reachFirstHoyWin(user, { theme: "light", uiLang: "es" });
+    const lightQuiet = screen.getByTestId("lectura-handoff-quiet");
+    expect(lightQuiet.textContent).toBe(LECTURA_HANDOFF_QUIET.es);
+    expect(lightQuiet.style.color).toMatch(/#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i);
+    expect(styleHas(screen.getByTestId("lectura-handoff"), "#F6EFE4")).toBe(true);
+    expect(styleHas(screen.getByTestId("lectura-handoff-cta"), "#5C7356")).toBe(true);
   });
 
   it("Lectura handoff once-gate stays down, and a claimed story-0 opens the next unread", async () => {
