@@ -8,7 +8,7 @@ export const firstSessionWords = {
   2: { why: { en: `"Dudo que" means you aren't sure, so the verb changes form: sea.`, es: `«Dudo que» expresa duda, así que el verbo cambia: sea.` } },
   3: { why: { en: `"Espero que" is a hope, so the verb changes form, and with tú it ends in -as: vengas.`, es: `«Espero que» expresa esperanza, así que el verbo cambia; con tú termina en -as: vengas.` } },
   4: { why: { en: `"Cuando" about something that hasn't happened yet changes the verb: salga, not salgo.`, es: `Con «cuando» y algo que aún no pasa, el verbo cambia: salga, no salgo.` } },
-  win: { en: `First session done. You know where to listen now: the word before the verb. Come back tomorrow for the next one.`, es: `Primera sesión lista. Ya sabes dónde escuchar: la palabra antes del verbo. Mañana sigue la siguiente.` },
+  win: { en: `First session done. You know where to listen now: the word before the verb. Come back tomorrow for the next one.`, es: `Primera sesión lista. Ya sabes dónde escuchar: la palabra antes del verbo. Mañana seguimos con la siguiente.` },
 };
 
 function filled(value) {
