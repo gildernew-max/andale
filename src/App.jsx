@@ -1822,18 +1822,38 @@ function CappedActions({ children }) {
   return children;
 }
 
+const PINNED_BOARD_BOTTOM = "calc(240px + env(safe-area-inset-bottom, 0px))";
+
+/** Bottom padding is its own longhand. A shorthand calc() is dropped by jsdom, so the extra space never shows up in tests. */
+function boardPadding(top, x, bottom, pinned) {
+  return {
+    paddingTop: top,
+    paddingRight: x,
+    paddingBottom: pinned ? PINNED_BOARD_BOTTOM : bottom,
+    paddingLeft: x,
+  };
+}
+
 function CappedFeedback({ testId, className = "", style, onPin, children }) {
   const ref = useRef(null);
   const [pin, setPin] = useState(false);
   const [box, setBox] = useState(null);
+  const onPinRef = useRef(onPin);
+  onPinRef.current = onPin;
   const items = React.Children.toArray(children);
   const actionIdx = items.findIndex((child) => React.isValidElement(child) && child.type === CappedActions);
   const actions = actionIdx >= 0 ? items[actionIdx] : null;
   const body = actionIdx >= 0 ? items.filter((_, i) => i !== actionIdx) : items;
 
   useLayoutEffect(() => {
-    onPin?.(pin);
-  }, [pin, onPin]);
+    onPinRef.current?.(pin);
+  }, [pin]);
+  // Clear only when this card leaves the tree. A cleanup on the effect that
+  // publishes `pin` also runs when that publish re-renders the parent, and
+  // that pass does not set the flag back.
+  useLayoutEffect(() => () => {
+    onPinRef.current?.(false);
+  }, []);
 
   useLayoutEffect(() => {
     const node = ref.current;
@@ -1872,9 +1892,25 @@ function CappedFeedback({ testId, className = "", style, onPin, children }) {
       }
     };
     measure();
+    // Re-measure against the new viewport. Stay mounted while the pin
+    // decision holds, so the scroll position and the pop animation survive.
     const onResize = () => {
-      setBox(null);
-      setPin(false);
+      const vh = window.innerHeight || 0;
+      if (pin && box) {
+        const taller = box.height > vh + 0.5;
+        const actionOff = (box.actionTop ?? box.top) > vh + 0.5;
+        if (taller || actionOff) {
+          node.style.setProperty("max-height", "60vh");
+          node.style.setProperty("max-height", "60dvh");
+          const ph = node.previousElementSibling;
+          const pr = ph?.getBoundingClientRect();
+          if (pr && pr.width > 0 && (Math.abs(pr.left - box.left) > 0.5 || Math.abs(pr.width - box.width) > 0.5)) {
+            setBox((prev) => (prev ? { ...prev, left: pr.left, width: pr.width } : prev));
+          }
+          return;
+        }
+      }
+      measure();
     };
     window.addEventListener("resize", onResize);
     let ro;
@@ -1975,7 +2011,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
   };
 
   return (
-    <div data-testid="cubetas-board" style={{ maxWidth: 560, margin: "0 auto", padding: revealPinned ? "22px 20px calc(240px + env(safe-area-inset-bottom, 0px))" : "22px 20px 40px" }}>
+    <div data-testid="cubetas-board" style={{ maxWidth: 560, margin: "0 auto", ...boardPadding(22, 20, 40, revealPinned) }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
         <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div data-testid="cubetas-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{cubetasTitle(uiLang)}</div>
@@ -2422,7 +2458,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
   };
 
   return (
-    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, padding: endPinned ? `12px ${MEMORY_BOARD_PAD}px calc(240px + env(safe-area-inset-bottom, 0px))` : `12px ${MEMORY_BOARD_PAD}px 28px`, boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
+    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, ...boardPadding(12, MEMORY_BOARD_PAD, 28, endPinned), boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
         <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: labelColor, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -4882,7 +4918,6 @@ export default function App() {
   const [flashMode, setFlashMode] = useState("es-en");
   const [doctorIdx, setDoctorIdx] = useState(0);
   const [doctorReveal, setDoctorReveal] = useState(false);
-  const doctorInputRef = useRef(null);
   const [doctorOpen, setDoctorOpen] = useState(false);
   const [doctorGuess, setDoctorGuess] = useState("");
   const [doctorTip, setDoctorTip] = useState(false);
@@ -6042,7 +6077,6 @@ export default function App() {
     if (itemXpLockRef.current.has(awardKey)) return;
     itemXpLockRef.current.add(awardKey);
     setStatus(r);
-    if (r === "wrong" || r === "correct" || r === "almost") inputRef.current?.blur();
     const thisKey = `${q._u}|${q._i}`;
     setQuip(pickQuip(session.host, r === "wrong" ? "wrong" : "correct"));
     if (r === "wrong") {
@@ -6792,6 +6826,11 @@ export default function App() {
     if (row.offsetHeight > vh * 0.6 + 0.5) setFooterCapped(true);
     return undefined;
   }, [footerCapped, footerCapKey]);
+
+  // Blur only after the footer actually caps. A short answer keeps main's focus.
+  useEffect(() => {
+    if (footerCapped && status !== "idle") inputRef.current?.blur();
+  }, [footerCapped, status]);
 
   // Drop leftover overlays when the view swaps so the first tap hits the new screen.
   useEffect(() => {
@@ -8661,7 +8700,6 @@ export default function App() {
                   {(!doctorReveal || doctorGrade === "equivalent") && (
                     <div data-testid={doctorGrade === "equivalent" ? "phrase-doctor-miss" : undefined}>
                       <input
-                        ref={doctorInputRef}
                         data-testid="phrase-doctor-guess"
                         value={doctorGuess}
                         disabled={doctorReveal}
@@ -8722,7 +8760,6 @@ export default function App() {
                   )}
                   <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                     <button data-testid="phrase-doctor-fix" onClick={() => {
-                      doctorInputRef.current?.blur();
                       if (doctorReveal) {
                         if (readyDoctoraWin) { finishDoctoraWin(); return; }
                         setDoctorReveal(false);
@@ -10487,7 +10524,7 @@ export default function App() {
         const tiles = Array.from({ length: 24 }, (_, i) => 24 - i);
         const trophyCount = Object.values(prog.missions?.gameTrophies || {}).filter(Boolean).length;
         return (
-          <div data-testid="snakes-board" style={{ maxWidth: 560, margin: "0 auto", padding: snakesPinned ? "22px 14px calc(240px + env(safe-area-inset-bottom, 0px))" : "22px 14px 130px" }}>
+          <div data-testid="snakes-board" style={{ maxWidth: 560, margin: "0 auto", ...boardPadding(22, 14, 130, snakesPinned) }}>
             {burst > 0 && snakeGame.done && <Confetti key={burst} count={54} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
               <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.snake); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -10619,7 +10656,7 @@ export default function App() {
         const correctKeys = safeRiskyCorrectKeys(item);
         const correctLeft = correctKeys.filter((key) => !tapped.includes(key)).length;
         return (
-          <div data-testid="safe-risky-board" style={{ maxWidth: 560, margin: "0 auto", padding: safePinned ? "22px 20px calc(240px + env(safe-area-inset-bottom, 0px))" : "22px 20px 130px" }}>
+          <div data-testid="safe-risky-board" style={{ maxWidth: 560, margin: "0 auto", ...boardPadding(22, 20, 130, safePinned) }}>
             {burst > 0 && safeGame.done && <Confetti key={burst} count={36} />}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.safeRisky); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
@@ -10872,7 +10909,7 @@ export default function App() {
         const endLabel = theme === "dark" ? D.sub : lightEnd.quiet;
         const endBody = theme === "dark" ? D.ink : lightEnd.quiet;
         return (
-          <div data-testid="hangman-board" data-word={ahorcado.word} data-timer={ahorcado.timerOn ? "on" : "off"} style={{ maxWidth: 480, margin: "0 auto", padding: hangmanPinned ? "22px 20px calc(240px + env(safe-area-inset-bottom, 0px))" : "22px 20px 40px" }}>
+          <div data-testid="hangman-board" data-word={ahorcado.word} data-timer={ahorcado.timerOn ? "on" : "off"} style={{ maxWidth: 480, margin: "0 auto", ...boardPadding(22, 20, 40, hangmanPinned) }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
               <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -10999,7 +11036,7 @@ export default function App() {
 
       {/* ---------- JEOPARDY ---------- */}
       {screen === "jeopardy" && jeopardy && (
-        <div data-testid="jeopardy-board" style={{ maxWidth: 480, margin: "0 auto", padding: jeopardyPinned ? "22px 20px calc(240px + env(safe-area-inset-bottom, 0px))" : "22px 20px 40px" }}>
+        <div data-testid="jeopardy-board" style={{ maxWidth: 480, margin: "0 auto", ...boardPadding(22, 20, 40, jeopardyPinned) }}>
           {burst > 0 && jeopardy.complete && <Confetti key={burst} count={48} />}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
             <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>

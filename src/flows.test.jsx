@@ -6970,7 +6970,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("rayo-clock").innerHTML).not.toMatch(/#FF4B4B|#FF6B6B|#EA2B2B/i);
   });
 
-  it("long wrong listening answer caps the footer and blurs the field", async () => {
+  it("long wrong listening answer stays on the at-rest footer in jsdom", async () => {
     const sentence = "El mesero nos trajo los platos calientes y después pidió la cuenta de la mesa.";
     expect(sentence.trim().split(/\s+/).length).toBeGreaterThanOrEqual(12);
     const prevW = window.innerWidth;
@@ -7018,7 +7018,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(document.activeElement).toBe(input);
       await user.keyboard("{Enter}");
       await waitFor(() => expect(screen.getByTestId("practice-quip")).toBeTruthy());
-      expect(document.activeElement).not.toBe(input);
 
       const footer = screen.getByTestId("lesson-footer");
       expect(window.innerWidth).toBe(390);
@@ -7044,6 +7043,53 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     } finally {
       Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: prevW });
       Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: prevH });
+    }
+  });
+
+  it("caps the lesson footer and blurs the field when the row is taller than 60vh", async () => {
+    const proto = HTMLElement.prototype;
+    const prev = Object.getOwnPropertyDescriptor(proto, "offsetHeight");
+    Object.defineProperty(proto, "offsetHeight", { configurable: true, get() { return 900; } });
+    const inputProto = HTMLInputElement.prototype;
+    const prevBlur = inputProto.blur;
+    const blurWhen = [];
+    inputProto.blur = function blurSpy(...args) {
+      blurWhen.push(document.querySelector("[data-testid='lesson-footer']")?.getAttribute("data-capped"));
+      return prevBlur.apply(this, args);
+    };
+    try {
+      cleanup();
+      seedProgress({ uiLang: "en", hearts: 5, onboardingDone: true, firstSessionDone: true, theme: "light" });
+      const sentence = "El mesero nos trajo los platos calientes y después pidió la cuenta de la mesa.";
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "lesson",
+        tab: "camino",
+        status: "idle",
+        qi: 0,
+        typed: "",
+        lessonStats: { right: 0, wrong: 0 },
+        session: {
+          title: "Sprint",
+          unitId: "mex",
+          host: "luna",
+          questions: [{ type: "listen", text: sentence, answers: [sentence], _u: "mex", _i: 0 }],
+        },
+      }));
+      const user = userEvent.setup();
+      render(<App />);
+      const input = await screen.findByPlaceholderText("Write the full sentence…");
+      input.focus();
+      await user.type(input, "La mesera trajo platos frios");
+      await user.keyboard("{Enter}");
+      const footer = await screen.findByTestId("lesson-footer");
+      await waitFor(() => expect(footer.getAttribute("data-capped")).toBe("1"));
+      expect(footer.className).toMatch(/lesson-footer-cap/);
+      expect(screen.getByTestId("lesson-footer-scroll").contains(screen.getByTestId("practice-quip"))).toBe(true);
+      expect(screen.getByTestId("lesson-footer-actions").contains(screen.getByRole("button", { name: "Continue" }))).toBe(true);
+      expect(blurWhen).toContain("1");
+    } finally {
+      inputProto.blur = prevBlur;
+      if (prev) Object.defineProperty(proto, "offsetHeight", prev);
     }
   });
 
@@ -7108,6 +7154,172 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: prevW });
       Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: prevH });
     }
+  });
+
+  it("drops the extra bottom padding when a pinned feedback card unmounts", async () => {
+    const user = userEvent.setup();
+    const chip = {
+      id: "ojala-que", phrase: "Ojalá que", bucket: "subjunctive",
+      literal: { es: "Ojalá que", en: "Ojalá que" },
+      why: { es: "Deseo", en: "Wish" },
+      exception: false,
+    };
+    const formal = {
+      phrase: "Quedo a sus órdenes.",
+      context: { es: "Cierras un correo con una clienta.", en: "You are closing an email to a client." },
+      answer: "formal", answers: ["formal"],
+      literal: { es: "Quedo bajo sus órdenes.", en: "I remain under your orders." },
+      note: { es: "Cierre profesional.", en: "A professional close." },
+    };
+    const nextPhrase = {
+      phrase: "Buenos días.",
+      context: { es: "Saludas.", en: "You greet someone." },
+      answer: "safe", answers: ["safe"],
+      literal: { es: "Buenos días.", en: "Good morning." },
+      note: { es: "Saludo.", en: "A greeting." },
+    };
+    const cases = [
+      {
+        board: "safe-risky-board",
+        card: "safe-risky-feedback",
+        dismiss: "safe-risky-continue",
+        rest: "22px 20px 130px",
+        live: {
+          screen: "safeRisky", tab: "practica",
+          safeGame: {
+            items: [formal, nextPhrase], idx: 0, score: 0, streak: 0, bestStreak: 0,
+            selected: "safe", tapped: [], tappedWrong: ["safe"], done: false, awarded: false,
+          },
+        },
+      },
+      {
+        board: "snakes-board",
+        card: "snakes-feedback",
+        dismissText: /^continue$/i,
+        rest: "22px 14px 130px",
+        live: {
+          screen: "snakes", tab: "practica",
+          snakeGame: {
+            tile: 3, pendingTile: 5, finalTile: 5, roll: 2, turn: 1,
+            status: "correct", done: false, awarded: false, correct: 1, wrong: 0, ladders: 0, slides: 0,
+            selected: "Hola", link: null,
+            focus: { host: "luna", title: { es: "Vocab", en: "Vocab" } },
+            questions: [{ type: "mc", prompt: "Hi", answer: "Hola", choices: ["Hola", "Adiós"], explain: "Hi." }],
+            question: { prompt: "Hi", answer: "Hola", choices: ["Hola", "Adiós"], explain: "Hi.", skill: "vocab" },
+          },
+        },
+      },
+      {
+        board: "cubetas-board",
+        card: "cubetas-reveal",
+        dismiss: "cubetas-next",
+        rest: "22px 20px 40px",
+        live: {
+          screen: "cubetas", tab: "practica",
+          cubetasGame: {
+            packId: "ojala-que", status: "reveal", hint: false, lastBucket: "subjunctive",
+            gems: 1, xp: 0, awarded: false,
+            queue: [{ ...chip, id: "cuando", phrase: "Cuando", bucket: "indicative" }],
+            scored: [chip],
+          },
+        },
+      },
+      {
+        board: "hangman-board",
+        card: "hangman-end",
+        dismiss: "hangman-again",
+        rest: "22px 20px 40px",
+        live: {
+          screen: "ahorcado", tab: "practica",
+          ahorcado: { word: "gacho", status: "win", guessed: ["g", "a", "c", "h", "o"], awarded: true },
+        },
+      },
+      {
+        board: "jeopardy-board",
+        card: "jeopardy-result",
+        dismiss: "jeopardy-continue",
+        rest: "22px 20px 40px",
+        live: {
+          screen: "jeopardy", tab: "practica",
+          jeopardy: {
+            score: 100, status: "correct", selected: "Hola", complete: false, awarded: false,
+            active: {
+              prompt: "Hi", answer: "Hola", choices: ["Hola", "Adiós"], value: 100, stake: 100,
+              explain: "Hi.", double: false,
+              focus: { title: { es: "Vocab", en: "Vocab" }, desc: { es: "Vocab", en: "Vocab" } },
+            },
+          },
+        },
+      },
+      {
+        board: "memory-board",
+        card: "memory-end",
+        dismiss: "memory-again",
+        rest: "12px 4px 28px",
+        live: {
+          screen: "memory", tab: "practica",
+          memoryGame: {
+            pairs: [{ word: "gacho" }],
+            cards: [
+              { id: "gacho-word", pairId: "gacho", kind: "word" },
+              { id: "gacho-meaning", pairId: "gacho", kind: "meaning" },
+            ],
+            matched: ["gacho"], status: "done", faceUp: [], awarded: true,
+          },
+        },
+      },
+    ];
+    for (const spec of cases) {
+      cleanup();
+      seedProgress({ uiLang: "en", hearts: 5, onboardingDone: true, firstSessionDone: true, theme: "light", paywallSeen: true });
+      localStorage.setItem(LIVE_KEY, JSON.stringify(spec.live));
+      render(<App />);
+      const board = await screen.findByTestId(spec.board);
+      await waitFor(() => expect(screen.getByTestId(spec.card).getAttribute("data-pinned")).toBe("1"));
+      await waitFor(() => expect(board.style.paddingBottom).toMatch(/240px/));
+      const button = spec.dismiss
+        ? screen.getByTestId(spec.dismiss)
+        : screen.getByRole("button", { name: spec.dismissText });
+      await user.click(button);
+      await waitFor(() => expect(screen.queryByTestId(spec.card)).toBeNull());
+      expect(screen.getByTestId(spec.board).style.padding).toBe(spec.rest);
+    }
+  });
+
+  it("keeps Safe/Risky pinned padding under StrictMode until the card unmounts", async () => {
+    cleanup();
+    seedProgress({ uiLang: "en", hearts: 5, onboardingDone: true, firstSessionDone: true, theme: "light", paywallSeen: true });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "safeRisky", tab: "practica",
+      safeGame: {
+        items: [
+          {
+            phrase: "Quedo a sus órdenes.",
+            context: { es: "Cierras un correo.", en: "You close an email." },
+            answer: "formal", answers: ["formal"],
+            literal: { es: "Quedo bajo sus órdenes.", en: "I remain under your orders." },
+            note: { es: "Cierre.", en: "A close." },
+          },
+          {
+            phrase: "Buenos días.",
+            context: { es: "Saludas.", en: "You greet someone." },
+            answer: "safe", answers: ["safe"],
+            literal: { es: "Buenos días.", en: "Good morning." },
+            note: { es: "Saludo.", en: "A greeting." },
+          },
+        ],
+        idx: 0, score: 0, streak: 0, bestStreak: 0,
+        selected: "safe", tapped: [], tappedWrong: ["safe"], done: false, awarded: false,
+      },
+    }));
+    const user = userEvent.setup();
+    render(<StrictMode><App /></StrictMode>);
+    const board = await screen.findByTestId("safe-risky-board");
+    await waitFor(() => expect(screen.getByTestId("safe-risky-feedback").getAttribute("data-pinned")).toBe("1"));
+    await waitFor(() => expect(board.style.paddingBottom).toMatch(/240px/));
+    await user.click(screen.getByTestId("safe-risky-continue"));
+    await waitFor(() => expect(screen.queryByTestId("safe-risky-feedback")).toBeNull());
+    expect(screen.getByTestId("safe-risky-board").style.padding).toBe("22px 20px 130px");
   });
 });
 
