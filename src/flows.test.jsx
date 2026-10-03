@@ -6717,7 +6717,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("practice-why").textContent).toBe("«Cuando» + future action → subjunctive. Habit would be indicative: «cuando salgo».");
   });
 
-  it("BUILD WITH WORDS unused chip labels use CHECK lime on a white chip, including dark theme", async () => {
+  it("BUILD WITH WORDS unused chip labels stay CHECK lime; dark chips use the idle fill", async () => {
     cleanup();
     seedProgress({
       uiLang: "en",
@@ -6743,7 +6743,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     tiles.forEach((tile) => {
       expect(tile.style.color).toMatch(lime);
       expect(tile.style.color).toBe(check.style.background);
-      expect(tile.style.background).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+      expect(tile.style.background).toMatch(/#252830|rgb\(\s*37,\s*40,\s*48\s*\)/i);
+      expect(tile.style.background).not.toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
       expect(Number.parseInt(tile.style.fontWeight, 10)).toBeGreaterThanOrEqual(800);
     });
     expect(tiles.some((tile) => /llegues|temprano|reunión/i.test(tile.textContent))).toBe(true);
