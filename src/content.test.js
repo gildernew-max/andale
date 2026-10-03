@@ -1292,6 +1292,7 @@ assert(appSrc.includes('const MARK_INK = "#5C7356"'), "lockup wordmark uses adul
 assert(appSrc.includes("color: MARK_INK"), "header/splash wordmark reads MARK_INK");
 assert(appSrc.includes('const HUB_CREAM = "#F6EFE4"'), "Learn cream token is #F6EFE4");
 const dLight = appSrc.slice(appSrc.indexOf("const D_LIGHT"), appSrc.indexOf("const D_DARK"));
+assert(/sub:\s*"#777777"/.test(dLight), "D_LIGHT.sub stays #777777");
 assert(/bg:\s*HUB_CREAM/.test(dLight), "light page token is the Learn cream");
 assert(!/bg:\s*"#FFFFFF"/.test(dLight), "light page token is not pure white");
 assert(!/bg:\s*"#fff"/.test(dLight), "light page token is not shorthand white");
