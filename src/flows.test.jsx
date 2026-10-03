@@ -1136,6 +1136,59 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("safe-risky-continue").textContent).toMatch(/Continue|Finish/);
   });
 
+  it("Safe/Risky multi-correct names how many answers are left without naming tags", async () => {
+    setSafeRiskyPackOverride([SAFE_RISKY_MULTI_FIXTURE]);
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-practica"));
+    await user.click(screen.getByTestId("safe-risky-start"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-choice-safe")).toBeTruthy());
+
+    const line = () => screen.getByTestId("safe-risky-remaining");
+    expect(line().textContent).toBe("2 respuestas correctas · 2 por tocar");
+    expect(line().style.fontSize).toBe("12px");
+    expect(line().style.fontWeight).toBe("700");
+    expect(line().style.textAlign).toBe("center");
+    expect(line().style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+    expect(line().style.background).toBe("");
+    expect(line().style.border).toBe("");
+
+    await user.click(screen.getByTestId("lang-en"));
+    expect(line().textContent).toBe("2 right answers · 2 left to tap");
+    await user.click(screen.getByTestId("lang-es"));
+    expect(line().textContent).toBe("2 respuestas correctas · 2 por tocar");
+
+    await user.click(screen.getByTestId("safe-risky-choice-safe"));
+    expect(line().textContent).toBe("2 respuestas correctas · 1 por tocar");
+    await user.click(screen.getByTestId("safe-risky-choice-risky"));
+    expect(screen.getByTestId("safe-risky-choice-risky").getAttribute("data-safe-risky-state")).toBe("wrong");
+    expect(line().textContent).toBe("2 respuestas correctas · 1 por tocar");
+
+    await user.click(screen.getByTestId("lang-en"));
+    expect(line().textContent).toBe("2 right answers · 1 left to tap");
+    await user.click(screen.getByTestId("lang-es"));
+
+    await user.click(screen.getByTestId("safe-risky-choice-casual"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-continue")).toBeTruthy());
+    expect(screen.queryByTestId("safe-risky-remaining")).toBeNull();
+
+    setSafeRiskyPackOverride([{
+      phrase: "SINGLE_CORRECT_FIXTURE",
+      context: { es: "Fixture de una sola respuesta.", en: "Single-answer fixture." },
+      answer: "safe",
+      answers: ["safe"],
+      literal: { es: "Una.", en: "One." },
+      note: { es: "Por qué una.", en: "Why one." },
+    }]);
+    await user.click(screen.getByRole("button", { name: "Cerrar" }));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-start")).toBeTruthy());
+    await user.click(screen.getByTestId("safe-risky-start"));
+    await waitFor(() => expect(screen.getByText("SINGLE_CORRECT_FIXTURE")).toBeTruthy());
+    expect(screen.queryByTestId("safe-risky-remaining")).toBeNull();
+    await user.click(screen.getByTestId("safe-risky-choice-safe"));
+    await waitFor(() => expect(screen.getByTestId("safe-risky-continue")).toBeTruthy());
+    expect(screen.queryByTestId("safe-risky-remaining")).toBeNull();
+  });
+
   it("Safe/Risky multi-correct clean tap-all unlocks CONTINUE with Literal then Why", async () => {
     setSafeRiskyPackOverride([SAFE_RISKY_MULTI_FIXTURE]);
     const user = await boot();
