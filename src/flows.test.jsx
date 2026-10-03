@@ -7156,6 +7156,89 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     }
   });
 
+  it("Safe/Risky Continue is CHECK green after a right answer and today's red after a wrong one", async () => {
+    const normColor = (value) => {
+      const s = String(value || "").trim().toLowerCase();
+      const hex = s.match(/#([0-9a-f]{3,8})/);
+      if (hex) {
+        let h = hex[1];
+        if (h.length === 3) h = h.split("").map((ch) => ch + ch).join("");
+        return `#${h.slice(0, 6)}`;
+      }
+      const rgb = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+      if (!rgb) return "";
+      return `#${[rgb[1], rgb[2], rgb[3]].map((n) => Number(n).toString(16).padStart(2, "0")).join("")}`;
+    };
+    const continuePaint = (el) => {
+      const computed = getComputedStyle(el);
+      return {
+        fill: normColor(el.style.background) || normColor(el.style.backgroundColor) || normColor(computed.backgroundColor),
+        ink: normColor(el.style.color) || normColor(computed.color),
+        lip: normColor(el.style.borderBottom) || normColor(computed.borderBottomColor),
+        computedFill: normColor(computed.backgroundColor),
+        computedInk: normColor(computed.color),
+      };
+    };
+    const item = {
+      phrase: "Quedo a sus órdenes.",
+      context: { es: "Cierras un correo con una clienta.", en: "You are closing an email to a client." },
+      answer: "formal",
+      answers: ["formal"],
+      literal: { es: "Quedo bajo sus órdenes.", en: "I remain under your orders." },
+      note: { es: "Cierre profesional.", en: "A professional close." },
+    };
+    const show = async (theme, game) => {
+      cleanup();
+      seedProgress({ uiLang: "en", hearts: 5, onboardingDone: true, firstSessionDone: true, theme, paywallSeen: true });
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        screen: "safeRisky",
+        tab: "practica",
+        safeGame: {
+          items: [item],
+          idx: 0,
+          score: 0,
+          streak: 0,
+          bestStreak: 0,
+          done: false,
+          awarded: false,
+          ...game,
+        },
+      }));
+      render(<App />);
+      const shellBg = theme === "dark" ? "#15171c" : "#f6efe4";
+      await waitFor(() => expect(normColor(screen.getByTestId("app-shell").style.background)).toBe(shellBg));
+      return screen.findByTestId("safe-risky-continue");
+    };
+    const GREEN = "#58cc02";
+    const GREEN_DARK = "#46a302";
+    const WHITE = "#ffffff";
+    const RED_LIGHT = "#ff4b4b";
+    const RED_DARK = "#ff6b6b";
+    const RED_LIP = "#ea2b2b";
+    const right = { selected: "formal", tapped: ["formal"], tappedWrong: [] };
+    const wrong = { selected: "safe", tapped: [], tappedWrong: ["safe"] };
+
+    for (const theme of ["light", "dark"]) {
+      const hit = await show(theme, right);
+      expect(document.body.textContent).toMatch(/Good judgment/);
+      const hitPaint = continuePaint(hit);
+      expect(hitPaint.fill, `${theme} right fill`).toBe(GREEN);
+      expect(hitPaint.ink, `${theme} right ink`).toBe(WHITE);
+      expect(hitPaint.lip, `${theme} right lip`).toBe(GREEN_DARK);
+      if (hitPaint.computedFill) expect(hitPaint.computedFill, `${theme} right computed fill`).toBe(GREEN);
+      if (hitPaint.computedInk) expect(hitPaint.computedInk, `${theme} right computed ink`).toBe(WHITE);
+
+      const miss = await show(theme, wrong);
+      expect(document.body.textContent).toMatch(/Better answer/);
+      const missPaint = continuePaint(miss);
+      expect(missPaint.fill, `${theme} wrong fill`).toBe(theme === "dark" ? RED_DARK : RED_LIGHT);
+      expect(missPaint.ink, `${theme} wrong ink`).toBe(WHITE);
+      expect(missPaint.lip, `${theme} wrong lip`).toBe(RED_LIP);
+      if (missPaint.computedFill) expect(missPaint.computedFill, `${theme} wrong computed fill`).toBe(theme === "dark" ? RED_DARK : RED_LIGHT);
+      if (missPaint.computedInk) expect(missPaint.computedInk, `${theme} wrong computed ink`).toBe(WHITE);
+    }
+  });
+
   it("drops the extra bottom padding when a pinned feedback card unmounts", async () => {
     const user = userEvent.setup();
     const chip = {
