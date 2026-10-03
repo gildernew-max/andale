@@ -1066,8 +1066,8 @@ assert(UI.es.playScene === "Jugar la escena", "UI.es.playScene");
 assert(UI.en.playScene === "Play the scene", "UI.en.playScene");
 assert(UI.es.phraseDoctor === "Doctora de frases", "UI.es.phraseDoctor is not Phrase Doctor");
 assert(UI.en.phraseDoctor === "Phrase Doctor", "UI.en.phraseDoctor");
-assert(UI.es.phraseDoctorTag === "GANA EN 60 SEGUNDOS", "UI.es.phraseDoctorTag");
-assert(UI.en.phraseDoctorTag === "WIN IN 60 SECONDS", "UI.en.phraseDoctorTag");
+assert(UI.es.phraseDoctorTag === "UNA FRASE A LA VEZ", "UI.es.phraseDoctorTag");
+assert(UI.en.phraseDoctorTag === "ONE PHRASE AT A TIME", "UI.en.phraseDoctorTag");
 assert(UI.es.phraseDoctorCta === "Arreglar una frase", "UI.es.phraseDoctorCta");
 assert(UI.en.phraseDoctorCta === "Fix a phrase", "UI.en.phraseDoctorCta");
 assert(!/Phrase Doctor/.test(UI.es.phraseDoctor + UI.es.phraseDoctorTag + UI.es.phraseDoctorCta), "ES first-door PD copy is not Phrase Doctor");
@@ -1075,7 +1075,7 @@ const handoffChunk = appSrc.slice(appSrc.indexOf("post-dismiss-handoff"), appSrc
 assert(handoffChunk.includes("{L.phraseDoctorTag}"), "handoff badge reuses L.phraseDoctorTag");
 assert(handoffChunk.includes("{L.phraseDoctor}"), "handoff title reuses L.phraseDoctor");
 assert(!Object.keys(UI.es).concat(Object.keys(UI.en)).some((k) => /handoff|secondBeat|postDismiss/i.test(k)), "no new handoff UI keys");
-assert(!/Arreglar una frase|Fix a phrase|GANA EN 60|WIN IN 60/.test(handoffChunk), "handoff has no new hardcoded CTA stamps");
+assert(!/Arreglar una frase|Fix a phrase|UNA FRASE A LA VEZ|ONE PHRASE AT A TIME/.test(handoffChunk), "handoff has no new hardcoded CTA stamps");
 assert(UI.es.safeRiskyReward === "5 rondas · extra por racha · gemas", "UI.es.safeRiskyReward");
 assert(UI.en.safeRiskyReward === "5 rounds · streak extra · gems", "UI.en.safeRiskyReward");
 assert(!/bonus/i.test(UI.es.safeRiskyReward), "ES Safe/Risky reward has no bonus");
@@ -1389,7 +1389,7 @@ assert(appSrc.includes("{L.hubFlash}"), "Flashcards label follows uiLang under I
 assert(appSrc.includes("title: L.hubSendero"), "Sendero tile label follows uiLang");
 assert(!appSrc.includes("title: L.hubSobremesa"), "Sobremesa wrap stamp is not a hub tile title");
 assert(UI.es.hubHoy === "Hoy" && UI.en.hubHoy === "Hoy", "Hoy label is Hoy");
-assert(UI.es.hubHoyQuiet === "Plan de 10 minutos" && UI.en.hubHoyQuiet === "10-minute plan", "Hoy quiet is the 10-min plan");
+assert(UI.es.hubHoyQuiet === "Plan de hoy" && UI.en.hubHoyQuiet === "Today's plan", "Hoy quiet is the 10-min plan");
 assert(UI.es.hoyPlanEyebrow === "HOY · 10 MIN" && UI.en.hoyPlanEyebrow === "TODAY · 10 MIN", "Hoy plan eyebrow is George stamp");
 assert(UI.es.hoyPlanSell === "Un plan corto para hoy. Diez minutos. Luego paras." && UI.en.hoyPlanSell === "A short plan for today. Ten minutes. Then you stop.", "Hoy plan sell is George stamp");
 assert(UI.es.hoyPlanCta === "Empezar el plan" && UI.en.hoyPlanCta === "Start the plan", "Hoy plan CTA is George stamp");
