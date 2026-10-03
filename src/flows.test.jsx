@@ -228,7 +228,7 @@ const assertCreamShell = () => {
 const HUB_FACE = {
   es: {
     hoy: "Hoy",
-    hoyQuiet: "Plan de 10 minutos",
+    hoyQuiet: "Plan de hoy",
     stories: "Cuentos",
     games: "Juegos",
     doctor: "Doctora de frases",
@@ -239,7 +239,7 @@ const HUB_FACE = {
   },
   en: {
     hoy: "Hoy",
-    hoyQuiet: "10-minute plan",
+    hoyQuiet: "Today's plan",
     stories: "Stories",
     games: "Games",
     doctor: "Phrase Doctor",
@@ -269,8 +269,8 @@ const assertHubFace = (lang = hubUiLang()) => {
   expect(screen.getByTestId("hub-sendero-label").textContent).toBe(face.sendero);
   expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe(face.senderoQuiet);
   const salad = lang === "es"
-    ? /Stories|Games|Phrase Doctor|10-minute plan|Subjunctive rules|Your path/
-    : /Cuentos|Juegos|Doctora de frases|Plan de 10 minutos|Reglas del subjuntivo|Tu camino/;
+    ? /Stories|Games|Phrase Doctor|Today's plan|Subjunctive rules|Your path/
+    : /Cuentos|Juegos|Doctora de frases|Plan de hoy|Reglas del subjuntivo|Tu camino/;
   expect(tiles.textContent).not.toMatch(salad);
 };
 
@@ -6008,7 +6008,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       tiles: screen.getByTestId("learn-hub-tiles").childElementCount,
     };
     expect(hubSnap.hoy).toMatch(/Hoy/);
-    expect(hubSnap.hoy).toMatch(/Plan de 10 minutos/);
+    expect(hubSnap.hoy).toMatch(/Plan de hoy/);
     expect(hubSnap.sendero).toMatch(/Tu camino/);
     expect(hubSnap.hoy + hubSnap.stories + hubSnap.games).not.toMatch(/Un año|Seguir gratis|Mexicanismos|Lección perfecta/);
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
@@ -6619,7 +6619,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByTestId("lang-es"));
     assertEqualHub();
     assertHubFace("es");
-    expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe("Plan de 10 minutos");
+    expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe("Plan de hoy");
     expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("Tu camino");
     expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Reglas del subjuntivo");
     expect(screen.getByTestId("eighty-twenty-cta")).toBeTruthy();
@@ -6648,7 +6648,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByTestId("hoy-plan-close"));
     await waitFor(() => expect(screen.queryByTestId("hoy-plan")).toBeNull());
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe("10-minute plan"));
+    await waitFor(() => expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe("Today's plan"));
     assertHubFace("en");
     expect(screen.getByTestId("hub-sendero-quiet").textContent).toBe("Your path");
     expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Subjunctive rules");
