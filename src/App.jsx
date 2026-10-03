@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useContext, createContext } from "react";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
 import { playSound as playGameSound } from "./playSound.js";
 import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
@@ -4784,21 +4784,32 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
   );
 };
 
-const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, ...rest }) => (
-  <button type="button" onClick={onClick} disabled={disabled} className="duo-btn"
-    style={{
-      fontFamily: "inherit", fontWeight: 800, fontSize: 15, letterSpacing: ".06em", textTransform: "uppercase",
-      borderRadius: 14, padding: "13px 24px", cursor: disabled ? "default" : "pointer",
-      background: outline ? "#fff" : disabled ? D.lockGray : color,
-      color: outline ? color : disabled ? D.lockIcon : CONTINUE_LABEL,
-      border: outline ? `2px solid ${D.line}` : "none",
-      borderBottom: outline ? `4px solid ${D.line}` : `4px solid ${disabled ? "#CFCFCF" : dark}`,
-      ...style,
-    }}
-    {...rest}>
-    {children}
-  </button>
-);
+/* Btn is declared outside App, so it cannot see App's `theme` binding.
+   App writes btnTheme during render and also publishes it on context.
+   Context is the subscription: a theme switch re-renders every Btn. */
+let btnTheme = "light";
+const BtnThemeContext = createContext("light");
+
+const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, theme: themeProp, ...rest }) => {
+  const ctxTheme = useContext(BtnThemeContext);
+  const theme = themeProp || ctxTheme || btnTheme;
+  const outlineDark = outline && theme === "dark";
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} className="duo-btn"
+      style={{
+        fontFamily: "inherit", fontWeight: 800, fontSize: 15, letterSpacing: ".06em", textTransform: "uppercase",
+        borderRadius: 14, padding: "13px 24px", cursor: disabled ? "default" : "pointer",
+        background: outlineDark ? D_DARK.card : outline ? "#fff" : disabled ? D.lockGray : color,
+        color: outlineDark ? D_DARK.ink : outline ? color : disabled ? D.lockIcon : CONTINUE_LABEL,
+        border: outlineDark ? `2px solid ${D_DARK.line}` : outline ? `2px solid ${D.line}` : "none",
+        borderBottom: outlineDark ? `4px solid ${D_DARK.line}` : outline ? `4px solid ${D.line}` : `4px solid ${disabled ? "#CFCFCF" : dark}`,
+        ...style,
+      }}
+      {...rest}>
+      {children}
+    </button>
+  );
+};
 
 /* ---------------- APP ---------------- */
 
@@ -4966,6 +4977,7 @@ export default function App() {
   /* Theme — derived from persisted prog.theme. The local `D` shadows the
      file-level D constant, so all `D.green` reads inside App pick this up. */
   const theme = prog.theme || "light";
+  btnTheme = theme;
   const D = theme === "dark" ? D_DARK : D_LIGHT;
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -7914,6 +7926,7 @@ export default function App() {
   };
 
   return (
+    <BtnThemeContext.Provider value={theme}>
     <div data-testid="app-shell" style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
       <style>{`
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 600; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-600.woff2') format('woff2'); }
@@ -11939,5 +11952,6 @@ export default function App() {
         );
       })()}
     </div>
+    </BtnThemeContext.Provider>
   );
 }
