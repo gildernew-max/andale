@@ -443,6 +443,10 @@ const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(annual.textContent).toBe(copy.annual);
   expect(monthly.textContent).toBe(copy.monthly);
   expect(honesty.textContent).toBe(copy.honesty);
+  expect(honesty.style.fontSize).toBe("11px");
+  expect(honesty.style.fontWeight).toBe("700");
+  expect(honesty.style.lineHeight).toBe("1.45");
+  expect(honesty.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
   expect(dismiss.textContent).toBe(copy.dismiss);
   expect(annual.textContent).not.toMatch(/\$39\.99|\$6\.99/);
   expect(monthly.textContent).not.toMatch(/\$39\.99|\$6\.99/);
@@ -4056,6 +4060,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("soft-paywall-monthly").style.color).toMatch(cream);
     expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
+    const honesty = screen.getByTestId("soft-paywall-honesty");
+    expect(honesty.style.fontSize).toBe("11px");
+    expect(honesty.style.fontWeight).toBe("700");
+    expect(honesty.style.lineHeight).toBe("1.45");
+    expect(honesty.style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-disclosure").style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
   });
 
   it("cold first Hoy CONTINUE shows soft paywall once before idle home", async () => {

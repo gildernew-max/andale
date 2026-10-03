@@ -9563,7 +9563,7 @@ export default function App() {
                 {L.paywallDismiss}
               </button>
               {!canCharge && (
-              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 12, color: theme === "dark" ? "#CDBBA6" : D.sub, lineHeight: 1.35 }}>
+              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 11, color: theme === "dark" ? "#A0A4AB" : "#6B6258", lineHeight: 1.45 }}>
                 {L.paywallHonesty}
               </div>
               )}

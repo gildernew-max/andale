@@ -655,6 +655,8 @@ assert(/<LogoMark size=\{48\} data-testid="soft-paywall-cenzontle"/.test(paywall
 assert(/aspectRatio: "16 \/ 9"/.test(paywallLayout), "paywall still is a 16:9 crop");
 assert(/borderRadius: 16, border: "none"/.test(paywallLayout), "paywall still radius is 16 with no border");
 assert(/soft-paywall-disclosure[\s\S]{0,240}theme === "dark" \? "#A0A4AB" : "#6B6258"/.test(paywallLayout), "fine print is #6B6258 light and #A0A4AB dark");
+assert(/soft-paywall-honesty[\s\S]{0,220}fontWeight: 700, fontSize: 11, color: theme === "dark" \? "#A0A4AB" : "#6B6258", lineHeight: 1\.45/.test(paywallLayout), "preview line uses the 11px fine-print style");
+assert(!/data-testid="soft-paywall-honesty"[\s\S]{0,240}(?:D\.sub|#CDBBA6|#777777|fontSize: 12)/.test(paywallLayout), "preview line does not use D.sub or the old 12px muted color");
 assert(/textDecoration: "underline"/.test(paywallLayout), "fine-print links are underlined");
 assert(/soft-paywall-dismiss[\s\S]{0,520}fontSize: 15/.test(paywallLayout), "continue free is 15px");
 assert(/soft-paywall-dismiss[\s\S]{0,520}minHeight: 44/.test(paywallLayout), "continue free tap height is at least 44px");
