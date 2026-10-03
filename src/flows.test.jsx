@@ -7634,6 +7634,145 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.queryByTestId("safe-risky-feedback")).toBeNull());
     expect(screen.getByTestId("safe-risky-board").style.padding).toBe("22px 20px 130px");
   });
+
+  const outlinePaint = (el) => ({
+    fill: cssHex(el.style.backgroundColor) || cssHex(el.style.background),
+    ink: cssHex(el.style.color),
+    edge: cssHex(el.style.borderTopColor) || cssHex(el.style.borderColor) || cssHex(el.style.border),
+    lip: cssHex(el.style.borderBottomColor) || cssHex(el.style.borderBottom),
+  });
+
+  const mountThemed = (theme, live) => {
+    cleanup();
+    localStorage.removeItem(LIVE_KEY);
+    seedProgress({
+      theme,
+      uiLang: "es",
+      paywallSeen: true,
+      bajioUnlockSeen: true,
+      onboardingDone: true,
+      firstSessionDone: true,
+      streak: 1,
+      lastDay: localToday(),
+    });
+    if (live) localStorage.setItem(LIVE_KEY, JSON.stringify(live));
+    render(<App />);
+  };
+
+  it("dark outline Btn uses the card chip; light outline stays the white chip; cream overrides stay", async () => {
+    const darkFill = "#1e2128";
+    const darkLine = "#2a2e36";
+    const darkInk = "#e8e8ea";
+    const cream = "#f6efe4";
+    const green = "#58cc02";
+
+    mountThemed("dark", { screen: "story", storyId: "story-0", paraIdx: 0, tab: "lectura" });
+    const disabledAnterior = await screen.findByRole("button", { name: /Anterior/ });
+    expect(disabledAnterior.disabled).toBe(true);
+    expect(outlinePaint(disabledAnterior)).toEqual({ fill: darkFill, ink: darkInk, edge: darkLine, lip: darkLine });
+    expect(disabledAnterior.style.borderTopWidth).toBe("2px");
+    expect(disabledAnterior.style.borderBottomWidth).toBe("4px");
+    expect(disabledAnterior.style.padding).toBe("13px 24px");
+    expect(disabledAnterior.style.fontSize).toBe("15px");
+    expect(disabledAnterior.style.fontWeight).toBe("800");
+    expect(disabledAnterior.style.opacity).toBe("");
+    expect(contrastRatio("#E8E8EA", "#1E2128")).toBeGreaterThanOrEqual(3);
+    const siguiente = screen.getByRole("button", { name: /Siguiente/ });
+    expect(outlinePaint(siguiente).fill).toBe(green);
+    expect(outlinePaint(siguiente).ink).toBe("#ffffff");
+
+    mountThemed("dark", { screen: "story", storyId: "story-0", paraIdx: 1, tab: "lectura" });
+    const anterior = await screen.findByRole("button", { name: /Anterior/ });
+    expect(anterior.disabled).toBe(false);
+    expect(outlinePaint(anterior)).toEqual({ fill: darkFill, ink: darkInk, edge: darkLine, lip: darkLine });
+
+    mountThemed("light", { screen: "story", storyId: "story-0", paraIdx: 1, tab: "lectura" });
+    const lightAnterior = await screen.findByRole("button", { name: /Anterior/ });
+    expect(lightAnterior.style.background).toMatch(/#fff\b|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    expect(outlinePaint(lightAnterior)).toMatchObject({ fill: "#ffffff", ink: green, edge: "#e5e5e5", lip: "#e5e5e5" });
+    expect(lightAnterior.style.borderTopWidth).toBe("2px");
+    expect(lightAnterior.style.borderBottomWidth).toBe("4px");
+    expect(lightAnterior.style.padding).toBe("13px 24px");
+    expect(lightAnterior.style.fontSize).toBe("15px");
+
+    mountThemed("dark", {
+      screen: "cubetas",
+      tab: "practica",
+      cubetasGame: { ...startCubetasRun(undefined, () => 0), status: "done" },
+    });
+    const cubetasBack = await screen.findByTestId("cubetas-back");
+    expect(outlinePaint(cubetasBack)).toEqual({ fill: darkFill, ink: darkInk, edge: darkLine, lip: darkLine });
+
+    mountThemed("light", {
+      screen: "cubetas",
+      tab: "practica",
+      cubetasGame: { ...startCubetasRun(undefined, () => 0), status: "done" },
+    });
+    const lightBack = await screen.findByTestId("cubetas-back");
+    expect(lightBack.style.background).toMatch(/#fff\b|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    expect(outlinePaint(lightBack)).toMatchObject({ fill: "#ffffff", ink: green, edge: "#e5e5e5", lip: "#e5e5e5" });
+
+    mountThemed("dark", {
+      screen: "ahorcado",
+      tab: "practica",
+      ahorcado: { ...startHangmanRun(HANGMAN_BANK, () => 0), status: "win" },
+    });
+    const hangmanBack = await screen.findByTestId("hangman-back");
+    expect(outlinePaint(hangmanBack).fill).toBe(darkFill);
+    expect(outlinePaint(hangmanBack).ink).toBe(cream);
+
+    mountThemed("dark", { screen: "jeopardy", tab: "practica", jeopardy: startJeopardyRun() });
+    const jeopardyBack = await screen.findByTestId("jeopardy-back");
+    expect(outlinePaint(jeopardyBack).fill).toBe(darkFill);
+    expect(outlinePaint(jeopardyBack).ink).toBe(cream);
+
+    cleanup();
+    localStorage.removeItem(LIVE_KEY);
+    markBajioUnlockFlashDue(false);
+    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false, bajioUnlockSeen: true });
+    render(<App />);
+    const monthly = await screen.findByTestId("soft-paywall-monthly");
+    expect(outlinePaint(monthly)).toMatchObject({ fill: darkFill, ink: cream, edge: "#4a5160", lip: "#4a5160" });
+    expect(monthly.style.borderTopWidth).toBe("2px");
+    expect(monthly.style.borderBottomWidth).toBe("4px");
+  });
+
+  it("an outline Btn follows a theme switch in the same visit", async () => {
+    cleanup();
+    localStorage.removeItem(LIVE_KEY);
+    seedProgress({
+      theme: "light",
+      uiLang: "es",
+      paywallSeen: true,
+      bajioUnlockSeen: true,
+      onboardingDone: true,
+      firstSessionDone: true,
+      streak: 1,
+      lastDay: localToday(),
+    });
+    const user = userEvent.setup();
+    render(<StrictMode><App /></StrictMode>);
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    await user.click(screen.getByTestId("nav-perfil"));
+    await user.click(screen.getByRole("button", { name: /Oscuro/ }));
+    await user.click(screen.getByTestId("nav-lectura"));
+    const openers = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
+    await user.click(openers[openers.length - 1]);
+    const darkAnterior = await screen.findByRole("button", { name: /Anterior/ });
+    expect(outlinePaint(darkAnterior)).toEqual({ fill: "#1e2128", ink: "#e8e8ea", edge: "#2a2e36", lip: "#2a2e36" });
+
+    await user.click(screen.getByRole("button", { name: "Cerrar" }));
+    await waitFor(() => expect(screen.getByTestId("nav-perfil")).toBeTruthy());
+    await user.click(screen.getByTestId("nav-perfil"));
+    await user.click(screen.getByRole("button", { name: /Claro/ }));
+    await user.click(screen.getByTestId("nav-lectura"));
+    const again = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
+    await user.click(again[again.length - 1]);
+    const lightAnterior = await screen.findByRole("button", { name: /Anterior/ });
+    expect(lightAnterior.style.background).toMatch(/#fff\b|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    expect(outlinePaint(lightAnterior).ink).toBe("#58cc02");
+    expect(outlinePaint(lightAnterior).edge).toBe("#e5e5e5");
+  });
 });
 
 const funnelOf = (name) => (window.__andaleFunnelLog || []).filter((e) => e.event === name);
