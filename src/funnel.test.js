@@ -4,6 +4,7 @@ import {
   FUNNEL_LOG,
   PAYWALL_TAP,
   cenzontleBeatFromSession,
+  daysSinceLastVisit,
   emitFunnelEvent,
 } from "./funnel.js";
 import { IAP_PRODUCTS } from "./purchase.js";
@@ -61,9 +62,51 @@ const open = emitFunnelEvent({
 assert(open.event === "open", "open payload names the event");
 assert(typeof open.at === "string" && open.at.includes("T"), "open carries an ISO timestamp");
 assert(open.name == null && open.email == null && open.deviceId == null, "open drops PII extras");
-assert(JSON.stringify(open) === JSON.stringify({ event: "open", at: open.at }), "open payload is event + at only");
+assert(!("daysSinceLast" in open), "open without a prior visit omits daysSinceLast");
+assert(JSON.stringify(open) === JSON.stringify({ event: "open", at: open.at }), "open without daysSinceLast is event + at only");
 assert(bus.events[0].type === FUNNEL_EVENT, "dispatches andale-funnel");
 assert(bus.log.length === 1 && bus.log[0].event === "open", "app log stores open");
+
+assert(daysSinceLastVisit("2026-10-04", "2026-10-04") === 0, "same local day is 0");
+assert(daysSinceLastVisit("2026-10-03", "2026-10-04") === 1, "yesterday is 1");
+assert(daysSinceLastVisit("2026-09-29", "2026-10-04") === 5, "five local days ago is 5");
+assert(daysSinceLastVisit(null, "2026-10-04") == null, "first visit has no lastDay");
+assert(daysSinceLastVisit(undefined, "2026-10-04") == null, "missing lastDay is not 0");
+assert(daysSinceLastVisit("", "2026-10-04") == null, "blank lastDay is not 0");
+assert(daysSinceLastVisit("2026-02-31", "2026-10-04") == null, "impossible calendar day is omitted");
+assert(daysSinceLastVisit("2026-10-06", "2026-10-04") === 0, "a future lastDay clamps to 0");
+assert(daysSinceLastVisit("2025-10-03", "2026-10-04") === 365, "a longer gap caps at 365");
+assert(daysSinceLastVisit("2024-02-29", "2024-03-01") === 1, "leap day counts one local calendar day");
+
+for (const [lastDay, today, days] of [
+  ["2026-10-04", "2026-10-04", 0],
+  ["2026-10-03", "2026-10-04", 1],
+  ["2026-09-29", "2026-10-04", 5],
+]) {
+  const step = emitFunnelEvent({
+    event: FUNNEL_EVENTS.open,
+    daysSinceLast: daysSinceLastVisit(lastDay, today),
+    email: "dave@example.com",
+    streak: 4,
+    xp: 40,
+    storyId: "story-0",
+  }, bus);
+  assert(step.daysSinceLast === days, `open carries daysSinceLast ${days}`);
+  assert(step.email == null && step.streak == null && step.xp == null && step.storyId == null, "open still drops extras");
+  assert(Object.keys(step).sort().join(",") === "at,daysSinceLast,event", "open with a prior visit is event + at + daysSinceLast");
+}
+const firstOpen = emitFunnelEvent({
+  event: FUNNEL_EVENTS.open,
+  daysSinceLast: daysSinceLastVisit(null, "2026-10-04"),
+}, bus);
+assert(!("daysSinceLast" in firstOpen), "first visit open omits daysSinceLast");
+assert(JSON.stringify(firstOpen) === JSON.stringify({ event: "open", at: firstOpen.at }), "first visit open is event + at only");
+for (const junk of [-1, 366, 1.5, "5", null]) {
+  const dropped = emitFunnelEvent({ event: FUNNEL_EVENTS.open, daysSinceLast: junk }, bus);
+  assert(!("daysSinceLast" in dropped), `open drops daysSinceLast ${junk}`);
+}
+const notOpen = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, daysSinceLast: 5 }, bus);
+assert(!("daysSinceLast" in notOpen), "daysSinceLast is allowlisted on open only");
 
 const bird = emitFunnelEvent({
   event: FUNNEL_EVENTS.cenzontleComplete,

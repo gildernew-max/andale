@@ -760,7 +760,7 @@ assert(FUNNEL_EVENTS.emailSubmitted === "email-submitted", "funnel email-submitt
 assert(FUNNEL_EVENTS.emailSkipped === "email-skipped", "funnel email-skipped name");
 assert(PAYWALL_TAP.continueFree === "continue_free", "continue-free tap is continue_free");
 assert(appSrc.includes("from \"./funnel.js\""), "App imports the funnel module");
-assert(appSrc.includes("emitFunnelEvent({ event: FUNNEL_EVENTS.open })"), "open fires on App mount");
+assert(/const daysSinceLast = daysSinceLastVisit\(readStoredLastDay\(\)\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.open, daysSinceLast \}\);/.test(appSrc), "open reads stored lastDay then fires on App mount");
 assert(appSrc.includes("completeCenzontleBeat"), "bird beat finish is a named handler");
 assert(appSrc.includes("onComplete={completeCenzontleBeat}"), "fly-away / WinBounce finish emit cenzontle_complete");
 assert(appSrc.includes("FUNNEL_EVENTS.cenzontleComplete"), "cenzontle_complete is wired");
@@ -2612,8 +2612,13 @@ for (const page of ["privacy", "support", "disclaimer"]) {
   assert(html.includes("gildernew@gmail.com"), `${page}.html contact is gildernew@gmail.com`);
   assert(md.includes("gildernew@gmail.com"), `${page}.md contact is gildernew@gmail.com`);
   assert(!html.includes("We are not publishing an inbox yet"), `${page}.html is not the August inbox-later copy`);
-  assert(html.includes("September 18, 2026"), `${page}.html date is George 2026-09-18`);
-  assert(md.includes("September 18, 2026"), `${page}.md date is George 2026-09-18`);
+  if (page === "privacy") {
+    assert(html.includes("October 4, 2026"), "privacy.html date is October 4, 2026");
+    assert(md.includes("October 4, 2026"), "privacy.md date is October 4, 2026");
+  } else {
+    assert(html.includes("September 18, 2026"), `${page}.html date is George 2026-09-18`);
+    assert(md.includes("September 18, 2026"), `${page}.md date is George 2026-09-18`);
+  }
 }
 const privacyHtml = readFileSync(join(repoRoot, "public", "privacy.html"), "utf8");
 const privacyMd = readFileSync(join(repoRoot, "privacy.md"), "utf8");
@@ -2623,6 +2628,10 @@ assert(privacyHtml.includes("There is no Ándale account and no email gate to us
 assert(privacyHtml.includes("We do not keep a copy on our servers.") && privacyMd.includes("We do not keep a copy on our servers."), "privacy keeps the on-device sentence");
 assert(privacyHtml.includes("<h2>What we do not collect</h2>") && privacyMd.includes("## What we do not collect"), "privacy heading is the main line");
 assert(privacyHtml.includes("We do not use third-party analytics in the app.") && privacyMd.includes("We do not use third-party analytics in the app."), "analytics sentence is the main line");
+assert(privacyHtml.includes("<h2>Anonymous usage events</h2>"), "privacy.html has the anonymous usage events heading");
+assert(privacyHtml.includes("In builds where this is switched on, the app sends a small event when something happens, such as opening the app or reaching the paywall. Each event holds the event name, your language (Español or English), a random ID stored on your device, and a timestamp. When you open the app, that event also holds one more number: how many whole days it has been since you last practiced in the app, counted on your device’s calendar, up to 365. On your first visit there is no number. An event holds no name, no email, no location and no payment information. We do not record IP addresses ourselves; Google, which runs the spreadsheet that receives the events, may keep ordinary access logs under its own terms. The random ID is not linked to who you are, and clearing your site data or deleting the app gives you a new one. We use the events to see where learners stop and whether they come back, and for nothing else."), "privacy.html anonymous usage paragraph is George's text");
+assert(privacyMd.includes("## Anonymous usage events") && privacyMd.includes("In builds where this is switched on, the app sends a small event when something happens, such as opening the app or reaching the paywall. Each event holds the event name, your language (Español or English), a random ID stored on your device, and a timestamp. When you open the app, that event also holds one more number: how many whole days it has been since you last practiced in the app, counted on your device’s calendar, up to 365. On your first visit there is no number. An event holds no name, no email, no location and no payment information. We do not record IP addresses ourselves; Google, which runs the spreadsheet that receives the events, may keep ordinary access logs under its own terms. The random ID is not linked to who you are, and clearing your site data or deleting the app gives you a new one. We use the events to see where learners stop and whether they come back, and for nothing else."), "privacy.md anonymous usage paragraph is George's text");
+assert(privacyHtml.indexOf("<h2>What we do not collect</h2>") < privacyHtml.indexOf("<h2>Anonymous usage events</h2>") && privacyHtml.indexOf("<h2>Anonymous usage events</h2>") < privacyHtml.indexOf("<h2>Who else might see something</h2>"), "anonymous usage events sits after what we do not collect");
 assert(!privacyHtml.includes("Tu correo y tus datos") && !privacyMd.includes("Tu correo y tus datos"), "email collection section is not on the privacy page");
 assert(!privacyHtml.includes("Your email and your data") && !privacyMd.includes("Your email and your data"), "email collection heading is not on the privacy page");
 assert(!privacyHtml.includes("What we collect and what we don't") && !privacyMd.includes("What we collect and what we don't"), "renamed collect heading is not on the privacy page");
