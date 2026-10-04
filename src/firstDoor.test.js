@@ -91,6 +91,8 @@ assert(streakAfterWin({ streak: 0, lastDay: null }, "2026-09-04", "2026-09-03") 
 assert(streakAfterWin({}, "2026-09-04", "2026-09-03") === 1, "empty progress first win is streak 1");
 assert(streakAfterWin({ streak: 1, lastDay: "2026-09-04" }, "2026-09-04", "2026-09-03") === 1, "same-day win keeps streak 1");
 assert(streakAfterWin({ streak: 1, lastDay: "2026-09-03" }, "2026-09-04", "2026-09-03") === 2, "yesterday continues the streak");
+assert(streakAfterWin({ streak: 6, lastDay: "2026-09-30" }, "2026-10-04", "2026-10-03") === 1, "a 3-day gap starts the next win at 1, not 7");
+assert(streakAfterWin({ streak: 6, lastDay: "2026-10-02" }, "2026-10-04", "2026-10-03") === 1, "a 2-day gap that was not repaired starts the next win at 1, not 7");
 
 assert(showComeBackTomorrow({ todaySceneDone: true, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "cleared scene shows home line");
 assert(showComeBackTomorrow({ todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04" }), "first win today shows home line");

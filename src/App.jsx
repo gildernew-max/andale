@@ -17,6 +17,7 @@ import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { STREAK_FLAME, shouldPopFirstStreak, streakChipLabel, streakLabelColor } from "./streakChip.js";
+import { streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
 import { winNumeralColor } from "./winNumeral.js";
 import { scoreCountClause } from "./scoreLine.js";
 import { probeAudioFile, storyAudioUrl } from "./storyAudio.js";
@@ -55,7 +56,7 @@ import {
   sobremesaTipsLabel,
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
-import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
@@ -4263,7 +4264,7 @@ const UI = {
     goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina hecha", workoutToday: "Rutina de hoy", dailyWorkout: "Rutina diaria",
     workoutDesc: "5 retos: escucha, trampa gramatical, mexicanismo, repaso y lectura.", play: "Jugar", repeat: "Repetir",
     sectionSkills: "habilidades + cofre", skip: "SALTAR", start: "EMPIEZA", claimed: "Reclamado", chest: "Cofre", openMe: "¡Ábreme!",
-    storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
+    storyPrefix: "Cuento", nextStory: "Siguiente cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
     missionsTitle: "Misiones", missionsDesc: "Situaciones reales con mezcla de gramática, oído y tono.", enter: "Entrar",
     dialogueDuel: "DUELO", best: "mejor marca", duel: "Duelo",
     library: "Biblioteca", storiesClaimed: "cuentos reclamados · lectura sin vidas", paragraphs: "párrafos · toca palabras · escucha por párrafo",
@@ -4354,7 +4355,7 @@ const UI = {
     goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Routine done", workoutToday: "Today's routine", dailyWorkout: "Daily routine",
     workoutDesc: "5 challenges: listening, grammar trap, Mexicanism, review, and reading.", play: "Play", repeat: "Repeat",
     sectionSkills: "skills + chest", skip: "SKIP", start: "START", claimed: "Claimed", chest: "Chest", openMe: "Open me!",
-    storyPrefix: "Story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
+    storyPrefix: "Story", nextStory: "Next story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
     missionsTitle: "Challenges", missionsDesc: "Real situations mixing grammar, listening, and tone.", enter: "Enter",
     dialogueDuel: "DIALOGUE DUEL", best: "best score", duel: "Duel",
     library: "Library", storiesClaimed: "stories claimed · reading costs no lives", paragraphs: "paragraphs · tap words · listen by paragraph",
@@ -5099,7 +5100,6 @@ export default function App() {
 	    p = acceptProgress(p);
 	    if (p) p = migrateFirstSession(p);
 	    const needsOnboarding = shouldShowOnboarding(p);
-	    let loaded = null;
 	    setProg((base) => {
 	      let merged = { ...base, ...(p || {}), contentVersion: CONTENT_VERSION };
 	      if (needsOnboarding) merged = { ...merged, onboardingPending: true };
@@ -5111,9 +5111,8 @@ export default function App() {
 	        merged = { ...merged, srs, mistakes: [] };
 	      }
       if (merged.voiceName) window.__andaleVoiceName = merged.voiceName;
-      loaded = regen(merged);
       hydrated.current = true;
-      return loaded;
+      return regen(merged);
     });
 	    if (needsOnboarding) {
 	      const resume = onboardingResume(p);
@@ -5125,12 +5124,13 @@ export default function App() {
 	      setOnboardingOpen(false);
 	    }
 	    try { window.speechSynthesis.getVoices(); } catch (e) {}
-	    // Streak gap check: if last activity was 2 days ago, the streak is "salvageable"
+	    // Streak gap check: if last activity was 2 days ago, the streak is salvageable.
+	    // Uses the save just read. The setProg updater above has not run yet.
 	    const today = todayStr(); const y = yesterdayStr();
-	    if (loaded?.lastDay && loaded.lastDay !== today && loaded.lastDay !== y && (loaded.streak || 0) >= 2 && !loaded.repairChecked) {
+	    if (p?.lastDay && p.lastDay !== today && p.lastDay !== y && (p.streak || 0) >= 2 && !p.repairChecked) {
 	      const dayBefore = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);
-	      if (loaded.lastDay === dayBefore) {
-	        setStreakRepair((loaded.freezes || 0) > 0 ? "freeze" : "repair");
+	      if (p.lastDay === dayBefore) {
+	        setStreakRepair((p.freezes || 0) > 0 ? "freeze" : "repair");
 	      }
 	    }
 	  })();
@@ -7251,11 +7251,18 @@ export default function App() {
   const todaySceneDone = !!prog.missions?.[`scene-${todayKey}`];
   const dailyDone = !!prog.missions?.[`daily-${todayKey}`];
   const storyCount = STORIES.filter((st) => prog.stories?.[st.id]).length;
+  const surfacedLectura = nextOffPathStory(STORIES, prog.stories, SECTIONS.length);
   const flashcards = Object.values(prog.flashcards || {}).sort((a, b) => (a.due || 0) - (b.due || 0));
   const dueFlashcards = flashcards.filter((c) => (c.due || 0) <= Date.now());
   const flashDeck = flashRun?.deck || [];
   const activeCard = flashRun && !flashRun.done && flashRun.idx < flashDeck.length ? flashDeck[flashRun.idx] : null;
   const uiLang = prog.uiLang === "en" ? "en" : "es";
+  const streakView = streakDisplay({
+    prog,
+    today: todayKey,
+    repairModal: !!streakRepair,
+    lang: uiLang,
+  });
   const firstSessionWhy = session?.firstSession
     ? (session.beginnerFirst ? beginnerWhyLine(qi, uiLang) : firstSessionWhyLine(qi, uiLang))
     : null;
@@ -8231,7 +8238,7 @@ export default function App() {
           </button>
           {!inLesson && (
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
-              {!onboardingOpen && <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3 }} title={streakChipLabel(prog.streak, uiLang) || L.streakDays}><IcFlame size={19} fill={STREAK_FLAME} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>}
+              {!onboardingOpen && <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3 }} title={streakChipLabel(streakView.displayStreak, uiLang) || L.streakDays}><IcFlame size={19} fill={STREAK_FLAME} className={streakView.displayStreak > 0 ? "flame" : ""} /> {streakView.displayStreak}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>}
               {!onboardingOpen && <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>}
               {!onboardingOpen && (voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
                 <button onClick={() => { if (voiceDead || (voicesReady && !voices.length)) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label={uiLang === "en" ? "Sound" : "Sonido"}
@@ -8336,6 +8343,11 @@ export default function App() {
                     </button>
                   ))}
                 </div>
+                {streakView.line ? (
+                  <p data-testid="streak-home-note" data-streak-status={streakView.status} style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, overflowWrap: "break-word", maxWidth: "100%" }}>
+                    {streakView.line}
+                  </p>
+                ) : null}
                 {showLine && (
                   <p data-testid="come-back-tomorrow" style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
                     {comeBackTomorrowLine({
@@ -8409,6 +8421,43 @@ export default function App() {
                   </div>
                 )}
                 </div>
+              </div>
+            );
+          })()}
+          {surfacedLectura && (() => {
+            const story = surfacedLectura;
+            const sec = SECTIONS[story.section] || SECTIONS[0];
+            const extra = STORY_EXTRAS[story.id] || {};
+            const meta = STORY_META[story.id] || {};
+            const souvenir = extra.collectible || meta.souvenir;
+            const shelfTitle = uiLang === "en" ? (story.titleEn || story.title) : story.title;
+            const found = (prog.storyFinds?.[story.id] || []).length;
+            const total = extra.keyWords?.length || 0;
+            return (
+              <div data-testid="lectura-next" style={{ margin: "8px 0 12px", maxWidth: "100%" }}>
+                <button
+                  type="button"
+                  data-testid="lectura-next-story"
+                  data-story-id={story.id}
+                  data-locked="false"
+                  onClick={() => openStory(story)}
+                  className="choice-card"
+                  aria-label={shelfTitle}
+                  style={{ display: "block", width: "100%", maxWidth: "100%", boxSizing: "border-box", textAlign: "left", padding: 15, cursor: "pointer", fontFamily: "inherit", background: theme === "dark" ? D.card : "#fff", borderColor: D.line, borderBottomColor: D.line }}
+                >
+                  <div style={{ display: "flex", gap: 13, alignItems: "center", minWidth: 0 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 15, background: sec.color, borderBottom: `5px solid ${sec.dark}`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <IcBook size={28} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-testid="lectura-next-eyebrow" style={{ fontSize: 11.5, fontWeight: 900, color: D.sub, lineHeight: 1.2, marginBottom: 2, overflowWrap: "break-word" }}>{L.nextStory}</div>
+                      <div style={{ fontWeight: 900, fontSize: 18, color: D.ink, overflowWrap: "break-word" }}>{shelfTitle}</div>
+                      <div style={{ fontSize: 13, color: D.sub, fontWeight: 800, overflowWrap: "break-word" }}>{meta.place ? `${meta.place} · ` : ""}{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
+                      <div style={{ fontSize: 12, color: theme === "dark" ? D.sub : limeText(sec.color, D), fontWeight: 900, marginTop: 4, overflowWrap: "break-word" }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
+                      {souvenir && <div style={{ fontSize: 11.5, color: D.sub, fontWeight: 900, marginTop: 4, overflowWrap: "break-word" }}>{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
+                    </div>
+                  </div>
+                </button>
               </div>
             );
           })()}
@@ -9275,14 +9324,14 @@ export default function App() {
           </div>}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
-	              { icon: <IcFlame size={26} fill={STREAK_FLAME} />, v: prog.streak || 0, l: (prog.streak || 0) === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays, ink: streakLabelColor(theme) },
+	              { icon: <IcFlame size={26} fill={STREAK_FLAME} />, v: streakView.displayStreak, l: streakView.displayStreak === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays, ink: streakLabelColor(theme), testid: "perfil-streak" },
 	              { icon: <IcBolt size={26} />, v: prog.xp || 0, l: L.totalXp },
 	              { icon: <IcCrown size={26} />, v: totalCrowns, l: L.crowns },
 	              { icon: <IcGem size={24} />, v: prog.gems || 0, l: L.gems },
 	              { icon: <IcBarbell size={24} color={D.blue} />, v: `${dueCount}/${trackedCount}`, l: L.reviewsStat },
 	              { icon: <IcMedal size={24} />, v: prog.perfects || 0, l: L.perfectLessons },
             ].map((s, i) => (
-              <div key={i} style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>
+              <div key={i} data-testid={s.testid} style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>
                 <span style={{ lineHeight: 0 }}>{s.icon}</span>
                 <div><div style={{ fontWeight: 900, fontSize: 18, color: s.ink }}>{s.v}</div><div style={{ fontSize: 11, color: D.sub, fontWeight: 800 }}>{s.l}</div></div>
               </div>
@@ -9920,12 +9969,8 @@ export default function App() {
             </div>
             <div style={{ fontWeight: 800, fontSize: 13.5, color: D.sub, marginBottom: 16, lineHeight: 1.45 }}>
               {streakRepair === "freeze"
-                ? (uiLang === "en"
-                  ? `A freeze auto-protected your ${prog.streak}-day streak yesterday. ${prog.freezes - 1 || 0} ${(prog.freezes - 1) === 1 ? "freeze" : "freezes"} remaining.`
-                  : `Un congelamiento protegió tu racha de ${prog.streak} días ayer. Te quedan ${prog.freezes - 1 || 0}.`)
-                : (uiLang === "en"
-                  ? `Your ${prog.streak}-day streak is in danger. Repair it with gems before today ends.`
-                  : `Tu racha de ${prog.streak} días está en peligro. Repárala con gemas antes de que termine el día.`)}
+                ? streakFreezeBody(prog.streak, Math.max(0, (Number(prog.freezes) || 0) - 1), uiLang)
+                : streakRepairBody(prog.streak, uiLang)}
             </div>
             <div style={{ display: "grid", gap: 9 }}>
               {streakRepair === "freeze" ? (
@@ -9934,7 +9979,7 @@ export default function App() {
                   const y = yesterdayStr();
                   save({ freezes: Math.max(0, (prog.freezes || 1) - 1), lastDay: y, repairChecked: true });
                   setStreakRepair(null);
-                }}>{uiLang === "en" ? "Use freeze (auto)" : "Usar congelamiento"}</Btn>
+                }}>{streakFreezeButton(uiLang)}</Btn>
               ) : (
                 <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < 200} onClick={() => {
                   const y = yesterdayStr();
@@ -11955,7 +12000,7 @@ export default function App() {
       {screen === "sessionClose" && (
         <div data-testid="session-close" style={{ maxWidth: 480, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
           <div style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 20, padding: "28px 22px 22px" }}>
-            <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 900, fontSize: 18 }} title={streakChipLabel(prog.streak, uiLang) || L.streakDays}><IcFlame size={22} fill={STREAK_FLAME} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}</span>
+            <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 900, fontSize: 18 }} title={streakChipLabel(streakView.displayStreak, uiLang) || L.streakDays}><IcFlame size={22} fill={STREAK_FLAME} className={streakView.displayStreak > 0 ? "flame" : ""} /> {streakView.displayStreak}</span>
             <p data-testid="session-close-next" style={{ margin: "16px 0 22px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
               {L.playScene}
             </p>
