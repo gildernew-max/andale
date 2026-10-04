@@ -172,6 +172,17 @@ export const PRACTICE_EXPLAIN = [
   { es: "Un antecedente negativo («no hay nadie que») no existe, así que va en subjuntivo: sepa.", en: "A negative antecedent («no hay nadie que») doesn’t exist, so it takes the subjunctive: sepa." },
   { es: "«Hasta que» + acción futura pide subjuntivo: regrese. «Regreso / regresaré» son señuelos en indicativo.", en: "«Hasta que» + a future action takes the subjunctive: regrese. «Regreso / regresaré» are indicative decoys." },
   { es: "«Sin que» siempre pide subjuntivo y cambia de sujeto: ve → vea.", en: "«Sin que» always takes the subjunctive and switches subject: ve → vea." },
+  { es: "«Querer que» en pasado pide imperfecto de subjuntivo: estudiara; el presente (estudie) no concuerda con «quería».", en: "«Querer que» in the past takes the imperfect subjunctive: estudiara; the present (estudie) doesn’t agree with «quería»." },
+  { es: "«Como si» pide imperfecto de subjuntivo: conociera; las otras opciones presentan la comparación como un hecho.", en: "«Como si» takes the imperfect subjunctive: conociera; the other choices present the comparison as a fact." },
+  { es: "Antecedente negativo («no había nadie que») en pasado → imperfecto de subjuntivo: supiera.", en: "Negative antecedent («no había nadie que») in the past → imperfect subjunctive: supiera." },
+  { es: "«Antes de que» siempre pide subjuntivo; con «se fue» (pasado) va en imperfecto: pudiera.", en: "«Antes de que» always takes the subjunctive; with «se fue» (past) it goes in the imperfect: pudiera." },
+  { es: "Trampa: «saber que» expresa certeza → indicativo: estaba. El subjuntivo (estuviera) aparece al negar: «No creía que estuviera».", en: "Trap: «saber que» expresses certainty → indicative: estaba. The subjunctive (estuviera) appears when you negate: «No creía que estuviera»." },
+  { es: "Si + imperfecto de subjuntivo para lo irreal: manejara; llegaríamos es la consecuencia.", en: "Si + imperfect subjunctive for the unreal: manejara; llegaríamos is the result." },
+  { es: "«Era importante que» (pasado) pide imperfecto de subjuntivo: dijeras, que sale de «dijeron».", en: "«Era importante que» (past) takes the imperfect subjunctive: dijeras, which comes from «dijeron»." },
+  { es: "«¿Te molestó que…?» habla del pasado y pide imperfecto de subjuntivo: abriera.", en: "«¿Te molestó que…?» is about the past and takes the imperfect subjunctive: abriera." },
+  { es: "Viviera (subjuntivo) + iría (condicional). «Vivía / iré» son señuelos.", en: "Viviera (subjunctive) + iría (conditional). «Vivía / iré» are decoys." },
+  { es: "«Para que» en pasado pide imperfecto de subjuntivo: descansaras. «Descansas / descansarás» son señuelos en indicativo.", en: "«Para que» in the past takes the imperfect subjunctive: descansaras. «Descansas / descansarás» are indicative decoys." },
+  { es: "Si el verbo principal pasa a imperfecto, el subjuntivo también: vengas → vinieras.", en: "If the main verb moves to the imperfect, the subjunctive does too: vengas → vinieras." },
 ];
 
 const EXPLAIN_BY_ES = new Map(PRACTICE_EXPLAIN.map((row) => [row.es, row]));

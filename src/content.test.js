@@ -1858,6 +1858,100 @@ subj1Bank.bank.forEach((q, i) => {
     assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === q.answers.join("|"), `subj1 bank ${i} answers stay authored`);
   }
 });
+const subj2Bank = UNITS.find((u) => u.id === "subj2");
+assert(subj2Bank.questions.length === 11, "subj2 authored questions stay 11");
+assert(subj2Bank.questions[0].prompt === "Si yo ___ rico, viajaría por todo México.", "subj2 question order is unchanged");
+assert(subj2Bank.questions[1].answer === "supiera" && subj2Bank.questions[1].choices.join("|") === "sabe|supiera|sabría|sepa", "subj2 Q2 replaces the duplicated sabe with sepa");
+assert(new Set(subj2Bank.questions[1].choices).size === 4, "subj2 Q2 choices are distinct");
+assert(Array.isArray(subj2Bank.bank) && subj2Bank.bank.length === 11, "subj2 replay bank is 11 questions");
+assert(subj2Bank.bank[0].type === "mc" && subj2Bank.bank[0].prompt === "Mi mamá quería que yo ___ medicina." && subj2Bank.bank[0].answer === "estudiara", "subj2 bank MC is George's");
+assert(subj2Bank.bank[0].choices.join("|") === "estudio|estudie|estudiara|estudiaría", "subj2 bank MC choices");
+assert(subj2Bank.bank[0].explain === "«Querer que» en pasado pide imperfecto de subjuntivo: estudiara; el presente (estudie) no concuerda con «quería».", "subj2 bank MC explain is George's");
+assert(subj2Bank.bank[5].type === "type" && subj2Bank.bank[5].prompt === "Si Memo ___ más rápido, llegaríamos a tiempo." && subj2Bank.bank[5].note === "(manejar)", "subj2 bank type is George's");
+assert(subj2Bank.bank[5].answers.join("|") === "manejara|manejase" && subj2Bank.bank[5].explain === "Si + imperfecto de subjuntivo para lo irreal: manejara; llegaríamos es la consecuencia.", "subj2 bank type answer and explain");
+assert(subj2Bank.bank[8].type === "order" && subj2Bank.bank[8].answer === "Si viviera cerca, iría caminando", "subj2 bank order answer");
+assert(subj2Bank.bank[8].words.join("|") === "Si|viviera|cerca,|iría|caminando|vivía|iré", "subj2 bank order words include the decoys");
+assert(subj2Bank.bank[8].explain === "Viviera (subjuntivo) + iría (condicional). «Vivía / iré» son señuelos.", "subj2 bank order explain is George's");
+assert(subj2Bank.bank[8].prompt === "Construye: “If I lived nearby, I would walk.”", "subj2 bank order uses the existing English Construye cue");
+const subj2New = [
+  ["mc", "Me saludó como si no me ___.", "conociera"],
+  ["mc", "En la fiesta no había nadie que ___ bailar salsa.", "supiera"],
+  ["mc", "Se fue antes de que yo ___ despedirme.", "pudiera"],
+  ["mc", "Yo sabía que Pedro ___ en la oficina a esa hora.", "estaba"],
+  ["type", "Si Memo ___ más rápido, llegaríamos a tiempo.", "manejara|manejase"],
+  ["type", "Era importante que nos ___ la verdad.", "dijeras|dijeses"],
+  ["type", "¿Te molestó que ___ la ventana?", "abriera|abriese"],
+  ["order", "Construye: “If I lived nearby, I would walk.”", "Si viviera cerca, iría caminando"],
+  ["order", "Construye: “I left early so you could rest.”", "Me fui temprano para que descansaras"],
+  ["transform", "Transforma la oración", "Era una lástima que no vinieras|Era una lástima que no vinieses"],
+];
+subj2New.forEach(([type, prompt, answer], n) => {
+  const q = subj2Bank.bank[n + 1];
+  const got = q.type === "type" || q.type === "transform" ? q.answers.join("|") : q.answer;
+  assert(q.type === type && q.prompt === prompt && got === answer, `subj2 bank item ${n + 2} is George's`);
+});
+assert(subj2Bank.bank[4].note === "¡Ojo!", "subj2 bank trap keeps the ¡Ojo! note");
+assert(subj2Bank.bank[9].words.join("|") === "Me|fui|temprano|para|que|descansaras|descansas|descansarás", "subj2 bank order words include the decoys");
+assert(subj2Bank.bank[10].base === "Es una lástima que no vengas." && subj2Bank.bank[10].instruction === "Ponlo en pasado (empieza con «Era una lástima…»)", "subj2 bank transform base and instruction");
+const subj2PromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((q, i) => {
+      if (u.id === "subj2" && kind === "bank") return;
+      if (q.type === "transform") {
+        const base = q.base || q.source;
+        if (base) subj2PromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (q.prompt) subj2PromptOwners.set(q.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+subj2Bank.bank.forEach((q, i) => {
+  if (q.type === "transform") {
+    assert(!subj2PromptOwners.has(q.base), `subj2 bank ${i} transform base repeats a prompt`);
+    assert(!subj2PromptOwners.has(`base:${q.base}`), `subj2 bank ${i} transform base repeats ${subj2PromptOwners.get(`base:${q.base}`) || "another item"}`);
+    return;
+  }
+  assert(!subj2PromptOwners.has(q.prompt), `subj2 bank ${i} prompt duplicates ${subj2PromptOwners.get(q.prompt) || "another item"}`);
+  subj2PromptOwners.set(q.prompt, `subj2 bank ${i}`);
+});
+const subj2BankEn = [
+  "«Querer que» in the past takes the imperfect subjunctive: estudiara; the present (estudie) doesn’t agree with «quería».",
+  "«Como si» takes the imperfect subjunctive: conociera; the other choices present the comparison as a fact.",
+  "Negative antecedent («no había nadie que») in the past → imperfect subjunctive: supiera.",
+  "«Antes de que» always takes the subjunctive; with «se fue» (past) it goes in the imperfect: pudiera.",
+  "Trap: «saber que» expresses certainty → indicative: estaba. The subjunctive (estuviera) appears when you negate: «No creía que estuviera».",
+  "Si + imperfect subjunctive for the unreal: manejara; llegaríamos is the result.",
+  "«Era importante que» (past) takes the imperfect subjunctive: dijeras, which comes from «dijeron».",
+  "«¿Te molestó que…?» is about the past and takes the imperfect subjunctive: abriera.",
+  "Viviera (subjunctive) + iría (conditional). «Vivía / iré» are decoys.",
+  "«Para que» in the past takes the imperfect subjunctive: descansaras. «Descansas / descansarás» are indicative decoys.",
+  "If the main verb moves to the imperfect, the subjunctive does too: vengas → vinieras.",
+];
+subj2Bank.bank.forEach((q, i) => {
+  const row = explainByEs.get(q.explain);
+  assert(row && row.es === q.explain, "bank Why ES matches the authored explain");
+  assert(row.en === subj2BankEn[i], `subj2 bank ${i} EN is George's`);
+  assert(explainText(q, "es") === q.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(q, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(q);
+  assertPreppedQuestion(prepped, `subj2 bank ${i}`);
+  if (q.type === "mc") {
+    assert(q.choices.length === 4 && new Set(q.choices).size === 4 && q.choices.includes(q.answer), `subj2 bank ${i} mc choices`);
+  }
+  if (q.type === "order") {
+    assert(prepped.words.join("|") === q.words.join("|"), `subj2 bank ${i} order tiles stay authored`);
+    assert(prepped.answer === q.answer, `subj2 bank ${i} order answer stays authored`);
+  }
+  if (q.type === "type" || q.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === q.answers.join("|"), `subj2 bank ${i} answers stay authored`);
+    const seAt = q.answers.findIndex((a) => /(?:se|ses)$/.test(String(a).split(" ").pop()));
+    if (seAt >= 0) assert(seAt > 0, `subj2 bank ${i} -se form stays an accepted answer but not first`);
+  }
+});
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;

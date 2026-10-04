@@ -522,7 +522,7 @@ const UNITS = [
     blurb: "Contrafactuales, cortesía y comparaciones con «como si».",
     questions: [
       { type: "mc", prompt: "Si yo ___ rico, viajaría por todo México.", choices: ["fuera", "soy", "era", "sería"], answer: "fuera", note: "Si + imperfect subjunctive + conditional → counterfactual present. «Si soy» would make it a real condition, not a hypothetical." },
-      { type: "mc", prompt: "Habla como si lo ___ todo.", choices: ["sabe", "supiera", "sabría", "sabe"], answer: "supiera", note: "«Como si» (as if) is always followed by imperfect subjunctive, no exceptions." },
+      { type: "mc", prompt: "Habla como si lo ___ todo.", choices: ["sabe", "supiera", "sabría", "sepa"], answer: "supiera", note: "«Como si» (as if) is always followed by imperfect subjunctive, no exceptions." },
       { type: "type", prompt: "Translate: «If I had time, I would help you.»", answer: "Si tuviera tiempo, te ayudaría.", note: "Si + imperfect subj + conditional. The classic structure." },
       { type: "mc", prompt: "Me dijo que ___ a la junta a las nueve.", choices: ["llegara", "llegue", "llego", "llegaba"], answer: "llegara", note: "Reported subjunctive: «Llega a las nueve» → «Me dijo que llegara». Past trigger → imperfect subjunctive." },
       { type: "transform", prompt: "Soften this command into a request.", source: "¿Puedes traerme el menú?", answer: "¿Pudieras traerme el menú?", note: "Imperfect subjunctive of poder/querer/deber softens requests dramatically — the polite move in Mexican Spanish: «Quisiera un café», «Pudieras ayudarme»." },
@@ -532,6 +532,19 @@ const UNITS = [
       { type: "mc", prompt: "Buscaba un departamento que ___ cerca del metro.", choices: ["está", "estuviera", "esté", "fue"], answer: "estuviera", note: "Antecedent that may not exist + past tense → imperfect subjunctive." },
       { type: "mc", prompt: "Quisiera que tú ___ con nosotros.", choices: ["vienes", "vengas", "vinieras", "vendrías"], answer: "vinieras", note: "Quisiera (already imperfect subj) + que → imperfect subj. Sequence of tenses." },
       { type: "type", prompt: "Translate: «He left without my noticing.»", answer: "Se fue sin que yo me diera cuenta.", note: "«Sin que» always takes subjunctive. Past context → imperfect subjunctive." },
+    ],
+    bank: [
+      { type: "mc", prompt: "Mi mamá quería que yo ___ medicina.", note: "", choices: ["estudio", "estudie", "estudiara", "estudiaría"], answer: "estudiara", explain: "«Querer que» en pasado pide imperfecto de subjuntivo: estudiara; el presente (estudie) no concuerda con «quería»." },
+      { type: "mc", prompt: "Me saludó como si no me ___.", note: "", choices: ["conoce", "conociera", "conoció", "conocería"], answer: "conociera", explain: "«Como si» pide imperfecto de subjuntivo: conociera; las otras opciones presentan la comparación como un hecho." },
+      { type: "mc", prompt: "En la fiesta no había nadie que ___ bailar salsa.", note: "", choices: ["sabe", "sepa", "supiera", "sabría"], answer: "supiera", explain: "Antecedente negativo («no había nadie que») en pasado → imperfecto de subjuntivo: supiera." },
+      { type: "mc", prompt: "Se fue antes de que yo ___ despedirme.", note: "", choices: ["puedo", "pueda", "pudiera", "podría"], answer: "pudiera", explain: "«Antes de que» siempre pide subjuntivo; con «se fue» (pasado) va en imperfecto: pudiera." },
+      { type: "mc", prompt: "Yo sabía que Pedro ___ en la oficina a esa hora.", note: "¡Ojo!", choices: ["esté", "estuviera", "estaba", "estará"], answer: "estaba", explain: "Trampa: «saber que» expresa certeza → indicativo: estaba. El subjuntivo (estuviera) aparece al negar: «No creía que estuviera»." },
+      { type: "type", prompt: "Si Memo ___ más rápido, llegaríamos a tiempo.", note: "(manejar)", answers: ["manejara", "manejase"], explain: "Si + imperfecto de subjuntivo para lo irreal: manejara; llegaríamos es la consecuencia." },
+      { type: "type", prompt: "Era importante que nos ___ la verdad.", note: "(decir, tú)", answers: ["dijeras", "dijeses"], explain: "«Era importante que» (pasado) pide imperfecto de subjuntivo: dijeras, que sale de «dijeron»." },
+      { type: "type", prompt: "¿Te molestó que ___ la ventana?", note: "(abrir, yo)", answers: ["abriera", "abriese"], explain: "«¿Te molestó que…?» habla del pasado y pide imperfecto de subjuntivo: abriera." },
+      { type: "order", prompt: "Construye: “If I lived nearby, I would walk.”", words: ["Si", "viviera", "cerca,", "iría", "caminando", "vivía", "iré"], answer: "Si viviera cerca, iría caminando", explain: "Viviera (subjuntivo) + iría (condicional). «Vivía / iré» son señuelos." },
+      { type: "order", prompt: "Construye: “I left early so you could rest.”", words: ["Me", "fui", "temprano", "para", "que", "descansaras", "descansas", "descansarás"], answer: "Me fui temprano para que descansaras", explain: "«Para que» en pasado pide imperfecto de subjuntivo: descansaras. «Descansas / descansarás» son señuelos en indicativo." },
+      { type: "transform", base: "Es una lástima que no vengas.", instruction: "Ponlo en pasado (empieza con «Era una lástima…»)", prompt: "Transforma la oración", answers: ["Era una lástima que no vinieras", "Era una lástima que no vinieses"], explain: "Si el verbo principal pasa a imperfecto, el subjuntivo también: vengas → vinieras." },
     ],
     pairs: [
       { es: "fuera", en: "(I/he/she) were (subj.)" },
