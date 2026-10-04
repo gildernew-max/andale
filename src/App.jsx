@@ -1570,21 +1570,27 @@ const Diego = ({ mood }) => {
   );
 };
 
-const CoachPortrait = ({ id = "luna", mood = "happy", size = 92, badge }) => {
+const CoachPortrait = ({ id = "luna", mood = "happy", size = 92, badge, fit = false }) => {
   const Char = { luna: Luna, rafa: Rafa, valeria: Valeria, diego: Diego }[id] || Luna;
   const c = COACHES[id] || COACHES.luna;
   const coachId = { luna: "luna", rafa: "rafa", valeria: "valeria", diego: "diego" }[id] || "luna";
   const usePng = mood !== "sad" && mood !== "party" && mood !== "focused";
   if (usePng) {
+    const frame = fit
+      ? { display: "block", position: "relative", width: "100%", maxWidth: size, aspectRatio: "1", minWidth: 0, overflow: "hidden", lineHeight: 0 }
+      : { display: "block", position: "relative", width: size, height: size, overflow: "visible", lineHeight: 0 };
+    const face = fit
+      ? { display: "block", width: "100%", height: "100%", objectFit: "contain", position: "absolute", inset: 0 }
+      : { display: "block", width: size, height: size, objectFit: "contain" };
     return (
-      <span style={{ display: "block", position: "relative", width: size, height: size, overflow: "visible", lineHeight: 0 }}>
+      <span style={frame}>
         <img
           src={`${import.meta.env.BASE_URL}coaches/${coachId}-happy.png`}
           alt=""
           width={size}
           height={size}
           aria-hidden="true"
-          style={{ display: "block", width: size, height: size, objectFit: "contain" }}
+          style={face}
         />
         {badge && (
           <svg width={size} height={size} viewBox="0 0 200 240" aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none" }}>
@@ -8509,8 +8515,8 @@ export default function App() {
 	          {showDoorMeta && (
 	          <div data-testid="coach-strip" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 30 }}>
 	            {["luna", "rafa", "valeria", "diego"].map((id) => (
-	              <div key={id} className="pop" style={{ border: `2px solid ${COACHES[id].color}`, borderBottom: `4px solid ${COACHES[id].dark}`, borderRadius: 14, padding: "9px 6px", textAlign: "center", background: D.card }}>
-	                <CoachPortrait id={id} mood="happy" size={64} />
+	              <div key={id} className="pop" style={{ minWidth: 0, boxSizing: "border-box", border: `2px solid ${COACHES[id].color}`, borderBottom: `4px solid ${COACHES[id].dark}`, borderRadius: 14, padding: "9px 6px", textAlign: "center", background: D.card }}>
+	                <CoachPortrait id={id} mood="happy" size={64} fit />
 	                <div style={{ fontWeight: 900, fontSize: 12 }}>{COACHES[id].name}</div>
 	                <div style={{ fontWeight: 800, fontSize: 10.5, color: D.sub }}>{COACHES[id].role}</div>
 	              </div>
