@@ -1862,10 +1862,10 @@ assert(appSrc.includes("e.target !== inputRef.current"), "chip keys do not steal
 assert(appSrc.includes('q?.answerAid?.mode !== "choices"'), "chip keys only bind TAP AN ANSWER / choices");
 assert(appSrc.includes("choiceChipKeyForIndex"), "quiet chip digits use the same key map");
 assert(appSrc.includes("data-testid=\"choice-chip-key\""), "quiet chip digits are testable");
-assert(appSrc.includes("color: used ? D.greenDark : D.greenText"), "BUILD WITH WORDS unused chip label is the light greenText token");
+assert(appSrc.includes("color: used ? limeText(D.greenDark, D) : D.greenText"), "BUILD WITH WORDS used chip label is light greenText; unused stays greenText");
 assert(!appSrc.includes("color: used ? D.greenDark : D.ink"), "BUILD WITH WORDS unused chip label is not theme ink");
 assert(appSrc.includes('green: "#58CC02"'), "CHECK / chip lime stays the stamped D.green token");
-assert(/color: used \? D\.greenDark : D\.greenText,\s*fontWeight: 800,/.test(appSrc), "BUILD WITH WORDS unused chip label is No Face stamp weight 800+");
+assert(/color: used \? limeText\(D\.greenDark, D\) : D\.greenText,\s*fontWeight: 800,/.test(appSrc), "BUILD WITH WORDS unused chip label is No Face stamp weight 800+");
 assert(!/press 1|Press 1|pulsa 1|Pulsa 1/.test(appSrc), "no press-1 banner chrome");
 assert(DEFAULT_LETTER_LAYOUT === "qwerty", "letter boards default to QWERTY");
 assert(lettersForLayout("qwerty").join("") === "QWERTYUIOPASDFGHJKLÑZXCVBNM", "QWERTY has Ñ after L");

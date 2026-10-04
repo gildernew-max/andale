@@ -586,11 +586,11 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(shelfText(lightClaimed, "18px").style.color).toMatch(LIGHT_INK);
     expect(shelfText(lightClaimed, "13px").style.color).toMatch(LIGHT_SUB);
     expect(shelfText(lightClaimed, "12px").style.color).toMatch(/#2E7500|rgb\(\s*46,\s*117,\s*0\s*\)/i);
-    expect(shelfText(lightClaimed, "11.5px").style.color).toMatch(GREEN_DARK);
+    expect(shelfText(lightClaimed, "11.5px").style.color).toMatch(/#2E7500|rgb\(\s*46,\s*117,\s*0\s*\)/i);
     await lightUser.click(lightClaimed);
     await waitFor(() => expect(screen.getByTestId("narration-card")).toBeTruthy());
     expect(screen.getByRole("button", { name: "Cuento" }).style.background).toMatch(WHITE);
-    expect(screen.getByRole("button", { name: "Cuento" }).style.color).toMatch(GREEN_DARK);
+    expect(screen.getByRole("button", { name: "Cuento" }).style.color).toMatch(/#2E7500|rgb\(\s*46,\s*117,\s*0\s*\)/i);
     expect(screen.getByRole("button", { name: "Bilingüe" }).style.background).toMatch(LIGHT_SUBTLE);
     expect(screen.getByTestId("lectura-progress").querySelectorAll("button")[1].style.background).toMatch(TRACK);
     expect(screen.getByRole("button", { name: "Preguntas" }).style.background).toMatch(TRACK);
@@ -601,7 +601,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByRole("button", { name: "Lento" }).style.color).toMatch(LIGHT_SUB);
     const lightHunt = screen.getByTestId("word-hunt-card");
     expect(huntChip(lightHunt, "muerte").style.background).toMatch(MINT);
-    expect(huntChip(lightHunt, "muerte").style.color).toMatch(GREEN_DARK);
+    expect(huntChip(lightHunt, "muerte").style.color).toMatch(/#2E7500|rgb\(\s*46,\s*117,\s*0\s*\)/i);
     expect(huntChip(lightHunt, "ofrenda").style.background).toMatch(LIGHT_SUBTLE);
     expect(huntChip(lightHunt, "ofrenda").style.color).toMatch(LIGHT_SUB);
   });
