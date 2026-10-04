@@ -1561,7 +1561,8 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await awaitBajioFlashThenPaywall();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    // The wall is in this commit. paywall_seen is emitted in the effect after it.
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
