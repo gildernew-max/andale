@@ -9,6 +9,7 @@ import {
   CROSSWORD_CREAM,
   CROSSWORD_INK_DARK,
   CROSSWORD_LINE_DARK,
+  CROSSWORD_LOCKED_DARK,
   CROSSWORD_PAGE_DARK,
   CROSSWORD_QUIET_DARK,
   CROSSWORD_SAGE,
@@ -137,7 +138,8 @@ const hydratedLock = hydrateCrossword(CROSSWORD_GRID, { fills: solved, wordId: "
 assert(hydratedLock.locked.includes("HAYA"), "hydrate locks a word that is already correct");
 
 const playSrc = readFileSync(new URL("./CrosswordPlayfield.jsx", import.meta.url), "utf8");
-assert(playSrc.includes("CROSSWORD_SAGE"), "locked squares use the sage token");
+assert(playSrc.includes("if (locked) background = C.locked"), "locked squares take the palette fill");
+assert(playSrc.includes("CROSSWORD_SAGE"), "hub mark and active ring keep the sage token");
 assert(!playSrc.includes("#58CC02"), "crossword does not use bright green");
 assert(!/cenzontle|Confetti|penguin/i.test(playSrc), "crossword keeps the bird off");
 assert(playSrc.includes('data-testid="crossword-input"'), "phone keyboard uses a hidden input");
@@ -152,13 +154,15 @@ assert(light.square === "#FFFFFF" && light.letter === "#3C3C3C", "light squares 
 assert(light.line === "#D9CFC3" && light.lockedLetter === "#FFFFFF", "light lines and locked letters stay put");
 assert(light.quiet === "#8A8175" && light.number === "#8A8175", "light chrome stays the warm gray");
 assert(light.tint === `color-mix(in srgb, ${CROSSWORD_SAGE} 18%, #ffffff)`, "light active clue stays the white sage wash");
+assert(light.locked === CROSSWORD_SAGE && light.locked === "#6f7757", "light locked squares stay #6F7757");
 
 const dark = crosswordColors(true);
 assert(dark.page === CROSSWORD_PAGE_DARK && dark.page === "#15171C", "dark page is #15171C");
 assert(dark.board === CROSSWORD_BOARD_DARK && dark.square === "#1E2128", "dark board and squares are #1E2128");
 assert(dark.line === CROSSWORD_LINE_DARK && dark.line === "#2A2E36", "dark lines are the app soft gray");
 assert(dark.letter === CROSSWORD_CREAM && dark.lockedLetter === CROSSWORD_CREAM, "dark letters are cream");
-assert(dark.locked === CROSSWORD_SAGE, "locked squares stay sage");
+assert(CROSSWORD_LOCKED_DARK === "#5C7356" && dark.locked === CROSSWORD_LOCKED_DARK, "dark locked squares are #5C7356");
+assert(dark.locked !== light.locked, "dark locked fill is not the light sage");
 assert(dark.tint === CROSSWORD_SAGE_TINT_DARK, "dark active clue is sage mixed into the board");
 assert(dark.quiet === CROSSWORD_QUIET_DARK && dark.activeLang === CROSSWORD_INK_DARK, "dark quiet and active language use the app inks");
 assert(dark.sageText === CROSSWORD_SAGE_TEXT_DARK, "dark sage text is the lifted sage");
@@ -188,7 +192,8 @@ assert(ratio(quiet, board) >= 4.5, "Reveal word and inactive language clear 4.5"
 assert(ratio(active, board) >= 4.5, "active language clears 4.5");
 assert(rel(active) > rel(quiet), "active language is brighter than the inactive one");
 assert(ratio(sageText, board) >= 4.5, "Across/Down and locked clues clear 4.5");
-assert(ratio(cream, sage) > 4, "cream on sage locked squares stays readable");
+assert(ratio(cream, hexRgb(dark.locked)) >= 4.5, "cream on the dark locked square clears 4.5");
+assert(Number(ratio(cream, hexRgb("#5C7356")).toFixed(2)) === 4.55, "cream on #5C7356 is 4.55:1");
 
 const appSrc = readFileSync(new URL("./App.jsx", import.meta.url), "utf8");
 const gamesAt = appSrc.indexOf('screen === "games"');

@@ -24,8 +24,10 @@ export const CROSSWORD_LINE_DARK = "#2A2E36";
 export const CROSSWORD_QUIET_DARK = "#A0A4AB";
 /** Active language on the dark board. App ink. Brighter than the quiet label. */
 export const CROSSWORD_INK_DARK = "#E8E8EA";
-/** Sage for dark-mode text (Across/Down, locked clues). The square fill stays CROSSWORD_SAGE. */
+/** Sage for dark-mode text (Across/Down, locked clues). */
 export const CROSSWORD_SAGE_TEXT_DARK = "#878D70";
+/** Dark locked square only. Cream #F6EFE4 on #5C7356 is 4.55:1. Light locked fill stays CROSSWORD_SAGE. */
+export const CROSSWORD_LOCKED_DARK = "#5C7356";
 /** Active-clue wash on the dark square. Same 18% sage, mixed into the board. */
 export const CROSSWORD_SAGE_TINT_DARK = `color-mix(in srgb, ${CROSSWORD_SAGE} 18%, ${CROSSWORD_BOARD_DARK})`;
 
@@ -63,7 +65,7 @@ export function crosswordColors(dark) {
     clue: CROSSWORD_CREAM,
     sageText: CROSSWORD_SAGE_TEXT_DARK,
     tint: CROSSWORD_SAGE_TINT_DARK,
-    locked: CROSSWORD_SAGE,
+    locked: CROSSWORD_LOCKED_DARK,
     activeLang: CROSSWORD_INK_DARK,
     inactiveLang: CROSSWORD_QUIET_DARK,
   };
