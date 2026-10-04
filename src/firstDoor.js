@@ -165,9 +165,36 @@ export function streakAfterWin(prev = {}, today, yesterday) {
 }
 
 /**
+ * Distinct lesson-win days. A missing counter is 1 when lastDay is set and streak ≥ 1.
+ * Streak ≥ 2 counts as 2 — a streak is consecutive days, so it is at least two win days.
+ */
+export function effectiveWinDays({ winDays, lastDay, streak } = {}) {
+  const stored = Number(winDays);
+  if (winDays != null && winDays !== "" && Number.isFinite(stored)) return stored;
+  const n = Number(streak) || 0;
+  if (lastDay && n >= 1) return n >= 2 ? 2 : 1;
+  return 0;
+}
+
+/** Next stored winDays after a lesson finish. Null when today was already counted — never decremented. */
+export function incrementedWinDays(prev = {}, today) {
+  if (prev.lastDay === today) return null;
+  return effectiveWinDays(prev) + 1;
+}
+
+/** Persisted Lectura start: lecturaStartedAt, or any started/claimed entry in prog.stories. */
+export function lecturaStartedFromProgress({ lecturaStartedAt, stories } = {}) {
+  if (lecturaStartedAt) return true;
+  const map = stories && typeof stories === "object" && !Array.isArray(stories) ? stories : null;
+  if (!map) return false;
+  return Object.values(map).some((value) => !!value);
+}
+
+/**
  * Soft paywall once after first win: showComeBackTomorrow && !paywallSeen && !unlockedPrem && !splash.
  * Hook waits for home so Hoy celebration is first; Phrase Doctor Curarla has no done screen.
  * paywallHold: first-session hearts fail. The wall stays down until a later win clears it.
+ * Allowed when a story start is stored, or winDays ≥ 2. One win day with no story stays held.
  */
 export function shouldShowSoftPaywall({
   paywallSeen,
@@ -179,11 +206,14 @@ export function shouldShowSoftPaywall({
   screen = "home",
   splash = false,
   paywallHold = false,
+  lecturaStartedStored = false,
+  winDays,
 } = {}) {
   if (paywallHold) return false;
   if (paywallSeen) return false;
   if (unlockedPrem) return false;
   if (splash) return false;
   if (screen !== "home") return false;
-  return showComeBackTomorrow({ todaySceneDone, streak, lastDay, today });
+  if (!showComeBackTomorrow({ todaySceneDone, streak, lastDay, today })) return false;
+  return !!lecturaStartedStored || effectiveWinDays({ winDays, lastDay, streak }) >= 2;
 }

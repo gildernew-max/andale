@@ -6,7 +6,7 @@ import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./sch
 import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, isDay2Return, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { paywallStillPath } from "./paywallStill.js";
 import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
@@ -6272,6 +6272,7 @@ export default function App() {
     setScreenQuip(session.firstHoy ? "" : pickQuip(session.host, "win"));
     save((prev) => {
       const streak = streakAfterWin(prev, t, yesterdayStr());
+      const winDays = incrementedWinDays(prev, t);
       let xpToday = prev.lastDay === t ? prev.xpToday || 0 : 0;
       let earnedFreeze = 0;
       if (prev.lastDay !== t) {
@@ -6338,6 +6339,7 @@ export default function App() {
         earnedFreeze: earnedFreeze ? t : prev.earnedFreeze, quickTipSeen: true,
         ...(session.firstSession ? { firstSessionDone: true } : {}),
         ...(prev.paywallHold ? { paywallHold: false } : {}),
+        ...(winDays != null ? { winDays } : {}),
       };
       // Review lessons refund one heart against fresh state. Normal lessons leave
       // hearts alone — they were already decremented per-miss against fresh state,
@@ -6367,6 +6369,7 @@ export default function App() {
     if (story?.id) {
       lecturaStartedRef.current = true;
       emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaStart, storyId: story.id });
+      save((prev) => (prev.lecturaStartedAt ? prev : { ...prev, lecturaStartedAt: Date.now() }));
     }
     const extra = STORY_EXTRAS[story?.id] || {};
     setStoryShuffle(shuffleStoryChoiceOrder(story, extra.checkpoints || []));
@@ -7254,6 +7257,8 @@ export default function App() {
     screen,
     splash: splashOpen,
     paywallHold: !!prog.paywallHold,
+    lecturaStartedStored: lecturaStartedFromProgress(prog),
+    winDays: prog.winDays,
   });
   const canCharge = detectNativeIap();
   const [storePrices, setStorePrices] = useState({ annual: null, monthly: null });
