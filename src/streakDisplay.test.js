@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { streakAfterWin } from "./firstDoor.js";
 import { calendarGap, streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
 import { contrastRatio } from "./spanishKeyboard.js";
 
@@ -99,5 +100,19 @@ assert(appSrc.includes("streakFreezeBody(prog.streak, Math.max(0, (Number(prog.f
 assert(appSrc.includes("streakFreezeButton(uiLang)"), "freeze button comes from George's helper");
 assert(!appSrc.includes("Use freeze (auto)"), "EN freeze button no longer says (auto)");
 assert(!/setProg\(\(base\) => \{[\s\S]{0,900}streak:\s*0/.test(appSrc), "load does not zero the stored streak");
+assert(appSrc.includes("const streak = streakAfterWin(prev, t, yesterdayStr());"), "the lesson award writes streakAfterWin");
+
+const goneStored = { streak: 6, lastDay: gap3 };
+assert(view(goneStored).displayStreak === 0 && view(goneStored).status === "gone", "a stored 6 with a 3-day gap displays 0 before the win");
+const afterGone = streakAfterWin(goneStored, today, yesterday);
+assert(afterGone === 1, "a win after that gap writes 1, not 7");
+const afterGoneView = view({ streak: afterGone, lastDay: today });
+assert(afterGoneView.displayStreak === 1 && afterGoneView.line === "" && afterGoneView.status === "same", "the flame after that win is 1");
+
+const unusedRepair = { streak: 6, lastDay: gap2 };
+assert(view(unusedRepair).displayStreak === 0 && view(unusedRepair).status === "gone", "a 2-day gap with repair unused displays 0");
+const afterUnused = streakAfterWin(unusedRepair, today, yesterday);
+assert(afterUnused === 1, "a win after an unused 2-day repair writes 1, not 7");
+assert(view({ streak: afterUnused, lastDay: today }).displayStreak === 1, "the flame after that 2-day win is 1");
 
 console.log("ok: streak display");

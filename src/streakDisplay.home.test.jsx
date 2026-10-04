@@ -2,12 +2,13 @@
  * Learn home streak note. Display only — andale-v3 streak stays stored.
  */
 import { describe, expect, it } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { prevDayKey } from "./firstDoor.js";
 import { contrastRatio } from "./spanishKeyboard.js";
 import {
+  LIVE_KEY,
   STORAGE_KEY,
   installFlowHooks,
   localToday,
@@ -140,5 +141,127 @@ describe("Learn home streak note", () => {
       expect(screen.getByText(row.es)).toBeTruthy();
       expect(screen.getByRole("button", { name: "Usar congelamiento" })).toBeTruthy();
     }
+  });
+});
+
+const oneBeat = (prompt) => ({
+  type: "mc",
+  prompt,
+  choices: ["sí"],
+  answer: "sí",
+  shuffledChoices: ["sí"],
+  _u: "subj1",
+  _i: 0,
+});
+
+const parkLesson = (prompt) => {
+  localStorage.setItem(LIVE_KEY, JSON.stringify({
+    screen: "lesson",
+    tab: "camino",
+    status: "idle",
+    qi: 0,
+    lessonStats: { right: 0, wrong: 0 },
+    session: {
+      title: "Subjuntivo presente",
+      unitId: "subj1",
+      host: "luna",
+      review: false,
+      questions: [oneBeat(prompt)],
+    },
+  }));
+};
+
+const finishBeat = async (user) => {
+  await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+  const choices = document.querySelectorAll(".choice-card");
+  expect(choices.length).toBeGreaterThan(0);
+  await user.click(choices[0]);
+  await user.click(screen.getByTestId("lesson-check"));
+  await waitFor(() => expect(screen.getByRole("button", { name: /^Continue$/ })).toBeTruthy());
+  await user.click(screen.getByRole("button", { name: /^Continue$/ }));
+  await waitFor(() => expect(screen.getByTestId("win-earned-streak")).toBeTruthy());
+};
+
+const flameText = () => screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim();
+
+const saved = () => JSON.parse(localStorage.getItem(STORAGE_KEY));
+
+const gapSeed = (extra) => {
+  cleanup();
+  localStorage.removeItem(LIVE_KEY);
+  seedProgress({
+    welcomed: true,
+    onboardingDone: true,
+    firstSessionDone: true,
+    paywallSeen: true,
+    bajioUnlockSeen: true,
+    cdmxUnlockSeen: true,
+    oaxacaUnlockSeen: true,
+    yucatanUnlockSeen: true,
+    norteUnlockSeen: true,
+    xp: 40,
+    hearts: 5,
+    gems: 400,
+    uiLang: "en",
+    streak: 6,
+    freezes: 0,
+    ...extra,
+  });
+};
+
+const awardAndReturnHome = async () => {
+  cleanup();
+  parkLesson("Gap win");
+  const user = userEvent.setup();
+  render(<App />);
+  await finishBeat(user);
+  const pill = screen.getByTestId("win-earned-streak");
+  expect(pill.textContent.replace(/\s+/g, " ").trim()).toBe("1-day streak");
+  expect(pill.textContent).not.toMatch(/7/);
+  expect(saved().streak).toBe(1);
+  expect(saved().lastDay).toBe(localToday());
+  await user.click(screen.getByTestId("win-continue"));
+  await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+  expect(flameText()).toMatch(/^1(\s|$)/);
+  expect(flameText()).not.toMatch(/^7/);
+  expect(screen.queryByTestId("streak-home-note")).toBeNull();
+  expect(saved().streak).toBe(1);
+  expect(saved().lastDay).toBe(localToday());
+};
+
+describe("win after a dead streak", () => {
+  it("shows 0, then a lesson win makes the flame and the save read 1, not 7", async () => {
+    const lastDay = shift(-3);
+    gapSeed({ lastDay });
+    await openHome();
+    expect(note().textContent).toBe("Your streak is back to 0. Today starts a new one.");
+    expect(note().getAttribute("data-streak-status")).toBe("gone");
+    expect(flameText()).toMatch(/^0/);
+    expect(saved().streak).toBe(6);
+    expect(saved().lastDay).toBe(lastDay);
+
+    await awardAndReturnHome();
+  });
+
+  it("starts at 1 after a 2-day gap when repair and freeze are not used", async () => {
+    const lastDay = shift(-2);
+    gapSeed({ lastDay, freezes: 0, gems: 400, repairChecked: false });
+    await openHome();
+    await waitFor(() => expect(screen.getByText("You missed a day")).toBeTruthy());
+    expect(screen.getByRole("button", { name: "Repair streak ( 200)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Let it go" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Use freeze" })).toBeNull();
+    const card = screen.getByText("You missed a day").closest(".pop");
+    fireEvent.click(card.parentElement);
+    await waitFor(() => expect(screen.queryByText("You missed a day")).toBeNull());
+    expect(note().textContent).toBe("Your streak is back to 0. Today starts a new one.");
+    expect(flameText()).toMatch(/^0/);
+    await waitFor(() => expect(saved().repairChecked).toBe(true));
+    expect(saved().streak).toBe(6);
+    expect(saved().lastDay).toBe(lastDay);
+    expect(saved().freezes || 0).toBe(0);
+    expect(saved().gems).toBe(400);
+
+    await awardAndReturnHome();
   });
 });
