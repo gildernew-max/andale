@@ -1994,7 +1994,7 @@ const cubetasBucketAt = (refs, x, y) => {
 };
 
 /** One-screen Cubetas playfield. Same Cenzontle PNG as the mark. Win motion ON. */
-const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, onClose, onAgain, onLang }) => {
+const CubetasPlayfield = ({ run, uiLang, D, L, theme = "light", onDrop, onHintDismiss, onNext, onClose, onAgain, onLang }) => {
   const [drag, setDrag] = useState(null);
   const [revealPinned, setRevealPinned] = useState(false);
   const bucketsRef = useRef({ subjunctive: null, indicative: null });
@@ -2263,7 +2263,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, onDrop, onHintDismiss, onNext, on
           )}
 
           {run.status === "clear" && (
-            <div data-testid="cubetas-eso" className="pop" style={{ marginTop: 18, textAlign: "center", fontWeight: 900, fontSize: 26, color: D.gold }}>{L.hoyWin}</div>
+            <div data-testid="cubetas-eso" className="pop" style={{ marginTop: 18, textAlign: "center", fontWeight: 900, fontSize: 26, color: theme === "dark" ? D.gold : "#85672C" }}>{L.hoyWin}</div>
           )}
         </>
       )}
@@ -8129,7 +8129,7 @@ export default function App() {
         }
         @keyframes cubetasGemTick { 0%{transform:translateY(8px) scale(.6);opacity:0} 35%{transform:translateY(-4px) scale(1.1);opacity:1} 100%{transform:translateY(-18px) scale(1);opacity:0} }
         .cubetas-gem-tick { animation: cubetasGemTick 360ms ${CUBETAS_EASE_LIFT} ${CUBETAS_GRAB_MS}ms both; }
-        .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
+        .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#6B6258; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
         @media (prefers-reduced-motion: reduce) { .bounce,.pop,.streak-pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track,.wordle-flip { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
@@ -8379,7 +8379,7 @@ export default function App() {
                   <div data-testid="hub-section-banner" data-section={si} style={{ background: theme === "dark" ? D.card : HUB_CREAM, color: D.sub, borderRadius: 12, padding: "8px 12px", margin: "22px 0 0", border: `1px solid ${D.line}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                     <div>
                       <div style={{ fontWeight: 800, fontSize: 13, color: D.ink }}>{sectionTitleForLang(sec, uiLang)}</div>
-	                      <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.7 }}>{sec.unitIds.length} {L.sectionSkills}</div>
+	                      <div style={{ fontSize: 11, fontWeight: 700, color: theme === "dark" ? "#A0A4AB" : "#6B6258" }}>{sec.unitIds.length} {L.sectionSkills}</div>
                     </div>
                     {!sectionDone && (
                       <button onClick={() => startTestOut(sec, si)}
@@ -10804,7 +10804,7 @@ export default function App() {
                 )}
                 {revealed && (
                   <CappedFeedback testId="safe-risky-feedback" onPin={setSafePinned} className="pop" style={{ marginTop: 14, border: `2px solid ${hit ? D.green : D.red}`, borderRadius: 14, padding: "11px 13px", background: hit ? D.greenBg : D.redBg, textAlign: "left" }}>
-                    <div style={{ fontWeight: 900, color: hit ? D.greenDark : (theme === "dark" ? D.red : D.redDark), marginBottom: 4 }}>
+                    <div style={{ fontWeight: 900, color: hit ? (theme === "dark" ? "#58CC02" : D.greenDark) : (theme === "dark" ? D.red : D.redDark), marginBottom: 4 }}>
                       {hit ? (safeGame.streak >= 3 ? (uiLang === "en" ? "Combo judgment." : "Juicio en combo.") : (uiLang === "en" ? "Good judgment." : "Buen juicio.")) : `${uiLang === "en" ? "Better answer" : "Mejor respuesta"}: ${safeRiskyAnswerLabel(item, labels)}`}
                     </div>
                     <div data-testid="safe-risky-literal" style={{ marginTop: 8 }}>
@@ -10832,6 +10832,7 @@ export default function App() {
           uiLang={uiLang}
           D={D}
           L={L}
+          theme={theme}
           onDrop={onCubetasDrop}
           onHintDismiss={() => setCubetasGame((g) => dismissCubetasHint(g))}
           onNext={onCubetasNext}
@@ -11637,7 +11638,7 @@ export default function App() {
           {screenQuip && !quietWin && !perchCard && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
             <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, coachName(session.host)) }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
-          <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: perchCard && theme !== "dark" ? "#85672C" : D.gold }}>
+          <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: (quietWin || perchCard) && theme !== "dark" ? "#85672C" : D.gold }}>
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
           {levelUp && !session.firstDoctora && (

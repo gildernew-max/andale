@@ -143,7 +143,7 @@ describe("dark lesson surfaces", () => {
       'theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")',
       "theme === \"dark\" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)",
       "showWrong ? (theme === \"dark\" ? D.red : D.redDark)",
-      "hit ? D.greenDark : (theme === \"dark\" ? D.red : D.redDark)",
+      "hit ? (theme === \"dark\" ? \"#58CC02\" : D.greenDark) : (theme === \"dark\" ? D.red : D.redDark)",
       ".lesson-blank::placeholder{color:${D.sub};opacity:1}",
     ]) expect(appSrc).toContain(needle);
     expect((appSrc.match(/theme === "dark" \? D\.subtle : \(isSel \? "#DDF4FF" : "#fff"\)/g) || []).length).toBe(1);
@@ -329,10 +329,16 @@ describe("dark lesson surfaces", () => {
     expect(paint(wrongBtn)).toMatchObject({ fill: "#3a1a1a", ink: "#ff6b6b" });
     expect(norm(wrongBtn.style.borderBottomColor)).toBe("#ff6b6b");
     await show("dark", { selected: "formal", tapped: ["formal"], tappedWrong: [] });
-    expect(norm(screen.getByText(/Buen juicio/).style.color)).toBe("#46a302");
+    const rightHead = screen.getByText(/Buen juicio/);
+    expect(norm(rightHead.style.color)).toBe("#58cc02");
+    expect(norm(screen.getByTestId("safe-risky-feedback").style.background)).toBe("#1f3a1a");
+    expect(contrastRatio("#58CC02", "#1F3A1A")).toBeGreaterThanOrEqual(4.5);
+    expect(Number(contrastRatio("#58CC02", "#1F3A1A").toFixed(2))).toBe(5.99);
     const rightBtn = screen.getByTestId("safe-risky-choice-formal");
     expect(paint(rightBtn).fill).toBe("#1f3a1a");
     expect(norm(rightBtn.style.borderTopColor) || paint(rightBtn).line).toBe("#58cc02");
+    await show("light", { selected: "formal", tapped: ["formal"], tappedWrong: [] });
+    expect(norm(screen.getByText(/Buen juicio/).style.color)).toBe("#46a302");
     await show("light", { selected: "safe", tapped: [], tappedWrong: ["safe"] });
     expect(norm(screen.getByText(/Mejor respuesta/).style.color)).toBe("#ea2b2b");
     const lightWrong = screen.getByTestId("safe-risky-choice-safe");
