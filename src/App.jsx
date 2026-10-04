@@ -2315,12 +2315,12 @@ const HUB_FACES = {
   sendero: "hub/sendero.png",
 };
 
-const HubTileArt = ({ face }) => (
+const HubTileArt = ({ face, height = 96 }) => (
   <img
     src={`${import.meta.env.BASE_URL}${HUB_FACES[face]}`}
     alt=""
     aria-hidden="true"
-    style={{ display: "block", width: "100%", height: 96, objectFit: "contain" }}
+    style={{ display: "block", width: "100%", height, objectFit: "contain" }}
   />
 );
 
@@ -4317,6 +4317,7 @@ const UI = {
     playScene: "Jugar la escena",
     hubHoy: "Hoy",
     hubHoyQuiet: "Plan de hoy",
+    hubGoalDone: "Meta de hoy cumplida",
     hoyPlanEyebrow: "HOY · ~10 MIN",
     hoyPlanSell: "Un plan corto para hoy. Unos diez minutos. Luego paras.",
     hoyPlanCta: "Empezar el plan",
@@ -4408,6 +4409,7 @@ const UI = {
     playScene: "Play the scene",
     hubHoy: "Hoy",
     hubHoyQuiet: "Today's plan",
+    hubGoalDone: "Today\u2019s goal done",
     hoyPlanEyebrow: "TODAY · ~10 MIN",
     hoyPlanSell: "A short plan for today. About ten minutes. Then you stop.",
     hoyPlanCta: "Start the plan",
@@ -8303,8 +8305,9 @@ export default function App() {
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
             const hoyLoud = hoyHubLoud({ todayScene });
             const hoyDone = hoyHubDone({ todaySceneDone });
+            const goalReached = (prog.xpToday || 0) >= DAILY_GOAL;
             const hubTiles = [
-              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
+              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" height={goalReached ? 80 : 96} />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
               { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => openGamesHub() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
@@ -8337,16 +8340,19 @@ export default function App() {
                         textAlign: "center",
                         color: D.ink,
                       }}>
-                      {tile.id === "hoy" && hoyDone && (
+                      {tile.id === "hoy" && (hoyDone || goalReached) && (
                         <span data-testid="hub-hoy-done" aria-hidden="true" style={{
                           position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: 99,
                           background: D.greenBg, color: limeText(D.okText, D), fontSize: 12, fontWeight: 900, lineHeight: "20px",
                         }}>✓</span>
                       )}
                       <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
-                      <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
+                      <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", ...(tile.id === "hoy" && goalReached ? { minHeight: 0 } : null) }}>{tile.art}</div>
                       <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
                       {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{tile.quiet}</div>}
+                      {tile.id === "hoy" && goalReached && (
+                        <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}: {DAILY_GOAL} XP.</div>
+                      )}
                       </span>
                     </button>
                   ))}
