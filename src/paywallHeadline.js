@@ -21,8 +21,13 @@ export const PAYWALL_SOURCE = {
   rival: "rival",
 };
 
-/** Story headline only when the sheet opens from the Lectura hook Continuar. Every other source uses the fallback line. */
-export function paywallHeadlineFor(copy, source) {
+/**
+ * Story headline only when the sheet opens from the Lectura hook Continuar.
+ * Every other source uses the cleared fallback once a story start is stored,
+ * and the shorter line when lecturaStartedFromProgress is false.
+ * lecturaStarted is that same boolean the wall gate passes as lecturaStartedStored.
+ */
+export function paywallHeadlineFor(copy, source, lecturaStarted = false) {
   if (source === PAYWALL_SOURCE.lecturaBirdHandoff) return copy?.paywallHeadline;
-  return copy?.paywallHeadlineFallback;
+  return lecturaStarted ? copy?.paywallHeadlineFallback : copy?.paywallHeadlineNoStory;
 }

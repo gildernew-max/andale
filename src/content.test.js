@@ -575,6 +575,10 @@ assert(UI.es.paywallHeadline === "La historia sigue.", "UI.es.paywallHeadline Ge
 assert(UI.es.paywallHeadlineFallback === "Hay mucho más por leer.", "UI.es.paywallHeadlineFallback");
 assert(UI.en.paywallHeadlineFallback === "There's much\u00A0more to read.", "UI.en.paywallHeadlineFallback");
 assert(UI.en.paywallHeadlineFallback.charCodeAt(UI.en.paywallHeadlineFallback.indexOf("more") - 1) === 0x00A0, "EN fallback keeps much and more together with a non-breaking space");
+assert(UI.es.paywallHeadlineNoStory === "Hay mucho por leer.", "UI.es.paywallHeadlineNoStory");
+assert(UI.en.paywallHeadlineNoStory === "There's a lot to read.", "UI.en.paywallHeadlineNoStory");
+assert(UI.en.paywallHeadlineNoStory.endsWith("."), "EN no-story headline keeps the period");
+assert(UI.en.paywallHeadlineNoStory.charCodeAt("There".length) === 0x27, "EN no-story headline keeps the straight apostrophe");
 assert(UI.es.paywallBody === "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", "UI.es.paywallBody George lock");
 assert(UI.es.paywallAnnual === "Un año", "UI.es.paywallAnnual George lock — no price in the label");
 assert(UI.es.paywallMonthly === "Un mes", "UI.es.paywallMonthly George lock");
@@ -685,7 +689,9 @@ assert(/soft-paywall-headline[\s\S]{0,200}textWrap: "balance"/.test(paywallLayou
 assert(!/soft-paywall-headline[\s\S]{0,220}letterSpacing/.test(paywallLayout), "paywall headline letter spacing is unchanged");
 assert(/data-paywall-source=\{paywallHeadlineSource\}/.test(paywallLayout), "headline choice is passed from the open source");
 assert(/paywallHeadlineSource = chapterBirdHandoff \? PAYWALL_SOURCE\.lecturaBirdHandoff : paywallSource/.test(appSrc), "Lectura hook source wins the story headline");
-assert(/paywallHeadlineText = paywallHeadlineFor\(L, paywallHeadlineSource\)/.test(appSrc), "headline text comes from the open source");
+assert(/const lecturaStartedStored = lecturaStartedFromProgress\(prog\)/.test(appSrc), "headline reuses lecturaStartedFromProgress");
+assert(/lecturaStartedStored,/.test(appSrc), "wall gate receives that stored story start");
+assert(/paywallHeadlineText = paywallHeadlineFor\(L, paywallHeadlineSource, lecturaStartedStored\)/.test(appSrc), "headline uses the same stored story start");
 assert(/\{paywallHeadlineText\}/.test(paywallLayout), "one headline node renders the chosen line");
 assert(/soft-paywall-annual-price[\s\S]{0,180}theme === "dark" \? "#F6EFE4" : D\.ink/.test(paywallLayout), "dark annual price is cream");
 assert(/soft-paywall-monthly-price[\s\S]{0,180}theme === "dark" \? "#F6EFE4" : D\.ink/.test(paywallLayout), "dark monthly price is cream");
