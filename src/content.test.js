@@ -2591,10 +2591,11 @@ for (const page of ["privacy", "support", "disclaimer"]) {
   assert(!html.includes("We are not publishing an inbox yet"), `${page}.html is not the August inbox-later copy`);
   if (page === "privacy") {
     assert(html.includes("October 4, 2026"), "privacy.html date is October 4, 2026");
+    assert(md.includes("October 4, 2026"), "privacy.md date is October 4, 2026");
   } else {
     assert(html.includes("September 18, 2026"), `${page}.html date is George 2026-09-18`);
+    assert(md.includes("September 18, 2026"), `${page}.md date is George 2026-09-18`);
   }
-  assert(md.includes("September 18, 2026"), `${page}.md date is George 2026-09-18`);
 }
 const privacyHtml = readFileSync(join(repoRoot, "public", "privacy.html"), "utf8");
 const privacyMd = readFileSync(join(repoRoot, "privacy.md"), "utf8");
