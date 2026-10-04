@@ -390,7 +390,7 @@ const UNITS = [
       { type: "mc", prompt: "Es posible que Lupita no ___ ir el jueves.", note: "", choices: ["puede", "pueda", "podrá", "pudo"], answer: "pueda", explain: "«Es posible que» plantea una posibilidad sin afirmarla → subjuntivo: pueda; las otras opciones la dan por hecha." },
       { type: "mc", prompt: "Dile a Rosa que me ___ hoy sin falta.", note: "", choices: ["llama", "llame", "llamará", "llamaba"], answer: "llame", explain: "Aquí «decir que» es una petición, no una noticia → subjuntivo: llame; como noticia sería «Dice que me llama»." },
       { type: "mc", prompt: "Llévate un suéter en caso de que ___ frío.", note: "", choices: ["hace", "haga", "hará", "hacía"], answer: "haga", explain: "«En caso de que» habla de algo que quizá no pase → subjuntivo: haga; las otras opciones lo tratan como un hecho." },
-      { type: "mc", prompt: "Estoy seguro de que Paco ya ___ en camino.", note: "¡Ojo!", choices: ["esté", "está", "estuviera", "estaría"], answer: "está", explain: "Trampa: «estoy seguro de que» expresa certeza → indicativo: está. Con «no estoy seguro de que» sí iría subjuntivo: esté." },
+      { type: "mc", prompt: "Estoy seguro de que Paco ya ___ en camino.", note: "¡Ojo!", choices: ["esté", "está", "estuviera", "estás"], answer: "está", explain: "Trampa: «estoy seguro de que» expresa certeza → indicativo: está. Con «no estoy seguro de que» sí iría subjuntivo: esté." },
       { type: "type", prompt: "Te recomiendo que ___ el mole poblano.", note: "(probar, tú)", answers: ["pruebes"], explain: "«Recomendar que» (consejo) pide subjuntivo; probar cambia la vocal: pruebes." },
       { type: "type", prompt: "Aquí no hay nadie que ___ arreglar esto.", note: "(saber)", answers: ["sepa"], explain: "Un antecedente negativo («no hay nadie que») no existe, así que va en subjuntivo: sepa." },
       { type: "order", prompt: "Construye: “Stay here until I get back.”", words: ["Quédate", "aquí", "hasta", "que", "regrese", "regreso", "regresaré"], answer: "Quédate aquí hasta que regrese", explain: "«Hasta que» + acción futura pide subjuntivo: regrese. «Regreso / regresaré» son señuelos en indicativo." },
@@ -4913,7 +4913,7 @@ function problemReportMailto(uiLang, theme, tab) {
   const mode = theme === "dark" ? (en ? "dark" : "oscuro") : (en ? "light" : "claro");
   const screen = tab;
   const device = problemReportDevice();
-  const deviceTail = device ? ` · device ${device}` : "";
+  const deviceTail = device ? (en ? ` · device ${device}` : ` · dispositivo ${device}`) : "";
   const subject = en ? "Ándale: problem report" : "Ándale: reporte de problema";
   const body = en
     ? `What were you doing?\n\nWhat did you expect to happen?\n\nWhat happened?\n\nIf you can, attach a screenshot.\n\n—\nDetails to help us (please keep them): version ${ANDALE_BUILD} · language ${lang} · mode ${mode} · screen ${screen}${deviceTail}`

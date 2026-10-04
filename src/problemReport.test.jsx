@@ -59,7 +59,7 @@ const readableDevice = () => {
 };
 
 const georgeBody = (uiLang, theme, screenKey, build, device) => {
-  const tail = device ? ` · device ${device}` : "";
+  const tail = device ? (uiLang === "en" ? ` · device ${device}` : ` · dispositivo ${device}`) : "";
   if (uiLang === "en") {
     const mode = theme === "dark" ? "dark" : "light";
     return `What were you doing?\n\nWhat did you expect to happen?\n\nWhat happened?\n\nIf you can, attach a screenshot.\n\n—\nDetails to help us (please keep them): version ${build} · language en · mode ${mode} · screen ${screenKey}${tail}`;
@@ -156,7 +156,7 @@ describe("perfil problem report", () => {
       ? (theme === "dark" ? "dark" : "light")
       : (theme === "dark" ? "oscuro" : "claro");
     const device = readableDevice();
-    const deviceTail = device ? ` · device ${device}` : "";
+    const deviceTail = device ? (uiLang === "en" ? ` · device ${device}` : ` · dispositivo ${device}`) : "";
     const factsLead = uiLang === "en"
       ? `Details to help us (please keep them): version ${ANDALE_BUILD} · language en · mode ${mode} · screen perfil`
       : `Datos para ayudarnos (por favor no los borres): versión ${ANDALE_BUILD} · idioma es · modo ${mode} · pantalla perfil`;
