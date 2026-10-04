@@ -161,6 +161,9 @@ export const PRACTICE_EXPLAIN = [
   { es: "Lectura rápida: contexto, no traducción palabra por palabra.", en: "Quick reading: context, not word-for-word translation." },
   { es: "Farmacia de barrio: corto, claro, «sin receta» antes de que te manden al doctor.", en: "Neighborhood pharmacy: short, clear, «sin receta» before they send you to a doctor." },
   { es: "WhatsApp casero: corto, claro, sin correo formal.", en: "Landlord WhatsApp: short, clear, no formal email." },
+  { es: "«Me da gusto que» (emoción) dispara el subjuntivo. Tú → sientas.", en: "«Me da gusto que» (emotion) triggers the subjunctive. Tú → sientas." },
+  { es: "«Para que» (finalidad) siempre pide subjuntivo: vayas.", en: "«Para que» (purpose) always takes the subjunctive: vayas." },
+  { es: "«Antes de que» siempre pide subjuntivo: salgas. «Sales / saldrás» son señuelos en indicativo.", en: "«Antes de que» always takes the subjunctive: salgas. «Sales / saldrás» are indicative decoys." },
 ];
 
 const EXPLAIN_BY_ES = new Map(PRACTICE_EXPLAIN.map((row) => [row.es, row]));
