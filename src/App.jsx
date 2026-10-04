@@ -8112,6 +8112,7 @@ export default function App() {
         .memory-card { width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
         .memory-board .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
+        ${theme === "dark" ? `.lesson-blank::placeholder{color:${HUB_CREAM};opacity:1}` : ""}
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
         .tile-bank, .tile-row { display:flex; flex-wrap:wrap; align-content:flex-start; gap:8px; width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
@@ -10181,9 +10182,11 @@ export default function App() {
                   const isAns = c === q.answer;
                   let bg = "#fff", bd = D.line, col = D.ink;
                   if (showState && isAns) { bg = D.okBg; bd = D.green; col = D.okText; }
-                  else if (showState && isSel && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
+                  else if (showState && isSel && !isAns) { bg = D.badBg; bd = D.red; col = theme === "dark" ? D.red : D.badText; }
                   else if (isSel) { bg = "#DDF4FF"; bd = D.blue; col = D.blueDark; }
-                  let badgeCol = bd === D.line ? D.sub : col;
+                  else if (theme === "dark") { bg = D.subtle; col = HUB_CREAM; }
+                  if (theme === "dark" && isSel && !showState) { bg = D.subtle; col = HUB_CREAM; }
+                  let badgeCol = bd === D.line ? (theme === "dark" ? HUB_CREAM : D.sub) : col;
                   const hoyDark = theme === "dark" && isHoyListenChoiceStep(session, q);
                   const paint = hoyDark ? hoyListenChoicePaint(hoyListenChoiceTone({ showState, isSel, isAns }), D, HUB_CREAM) : null;
                   if (paint) { bg = paint.fill; bd = paint.border; col = paint.text; badgeCol = paint.badge; }
@@ -10200,12 +10203,12 @@ export default function App() {
 
             {(q.type === "type" || q.type === "listen" || q.type === "transform") && (
               <div>
-                <input ref={inputRef} value={typed} disabled={status !== "idle"}
+                <input ref={inputRef} className="lesson-blank" value={typed} disabled={status !== "idle"}
                   onChange={(e) => { setTypedTileIds([]); setPlaceAt(null); setTyped(e.target.value); }}
                   onKeyDown={(e) => { if (insertChoiceChipFromKey(e)) return; if (e.key === "Enter") { e.preventDefault(); status === "idle" ? check() : next(); } }}
 	                  placeholder={q.type === "listen" ? (uiLang === "en" ? "Write the full sentence…" : "Escribe la oración completa…") : q.type === "transform" ? (uiLang === "en" ? "Write the transformed sentence…" : "Escribe la oración transformada…") : (uiLang === "en" ? "Write the missing word…" : "Escribe la palabra que falta…")}
                   autoCapitalize="off" autoCorrect="off" spellCheck={false}
-                  style={{ width: "100%", boxSizing: "border-box", padding: "15px 16px", fontSize: 17, fontWeight: 700, fontFamily: "inherit", borderRadius: 14, border: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, background: status === "idle" ? "#F7F7F7" : status === "wrong" ? D.badBg : D.okBg }} />
+                  style={{ width: "100%", boxSizing: "border-box", padding: "15px 16px", fontSize: 17, fontWeight: 700, fontFamily: "inherit", borderRadius: 14, border: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, background: status === "idle" ? (theme === "dark" ? D.subtle : "#F7F7F7") : status === "wrong" ? D.badBg : D.okBg, color: theme === "dark" ? HUB_CREAM : undefined }} />
                 {q.answerAid && (
                   <div style={{ marginTop: 12, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 11, background: D.card }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 9 }}>
@@ -10263,7 +10266,7 @@ export default function App() {
                               style={{
                                 visibility: hide ? "hidden" : "visible",
                                 pointerEvents: hide ? "none" : "auto",
-                                background: used ? D.greenBg : "#fff",
+                                background: used ? D.greenBg : (theme === "dark" ? D.subtle : "#fff"),
                                 borderColor: used ? D.green : D.line,
                                 borderBottomColor: used ? D.green : D.line,
                                 color: used ? D.greenDark : D.green,
@@ -10365,7 +10368,7 @@ export default function App() {
                       return (
                         <button key={idx} className="choice-card" disabled={isMatched}
                           onClick={() => { if (side === 0) speak(item.t); onMatchTap(side, idx, item.id); }}
-                          style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : isSel ? "#DDF4FF" : "#fff", borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? D.okText : isWrong ? D.badText : isSel ? D.blueDark : D.ink, opacity: isMatched ? 0.55 : 1 }}>
+                          style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : (theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")), borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? D.okText : isWrong ? D.badText : (theme === "dark" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)), opacity: isMatched ? 0.55 : 1 }}>
                           {item.t}
                         </button>
                       );
@@ -10729,7 +10732,7 @@ export default function App() {
                     const color = palette[key];
                     return (
                       <button key={key} data-testid={`safe-risky-choice-${key}`} data-safe-risky-state={showCorrect ? "correct" : showWrong ? "wrong" : "idle"} disabled={revealed || chosen} onClick={() => chooseSafeRisky(key)}
-                        style={{ border: `2px solid ${showCorrect ? D.green : showWrong ? D.red : color}`, borderBottom: `5px solid ${showCorrect ? D.greenDark : showWrong ? D.redDark : color}`, background: showCorrect ? D.greenBg : showWrong ? D.redBg : D.card, color: showCorrect ? D.greenDark : showWrong ? D.red : D.ink, borderRadius: 14, padding: "12px 10px", fontFamily: "inherit", fontWeight: 900, fontSize: 14, cursor: revealed || chosen ? "default" : "pointer" }}>
+                        style={{ border: `2px solid ${showCorrect ? D.green : showWrong ? D.red : color}`, borderBottom: `5px solid ${showCorrect ? D.greenDark : showWrong ? (theme === "dark" ? D.red : D.redDark) : color}`, background: showCorrect ? D.greenBg : showWrong ? D.redBg : D.card, color: showCorrect ? D.greenDark : showWrong ? D.red : D.ink, borderRadius: 14, padding: "12px 10px", fontFamily: "inherit", fontWeight: 900, fontSize: 14, cursor: revealed || chosen ? "default" : "pointer" }}>
                         {labels[key]}
                       </button>
                     );
@@ -10744,7 +10747,7 @@ export default function App() {
                 )}
                 {revealed && (
                   <CappedFeedback testId="safe-risky-feedback" onPin={setSafePinned} className="pop" style={{ marginTop: 14, border: `2px solid ${hit ? D.green : D.red}`, borderRadius: 14, padding: "11px 13px", background: hit ? D.greenBg : D.redBg, textAlign: "left" }}>
-                    <div style={{ fontWeight: 900, color: hit ? D.greenDark : D.redDark, marginBottom: 4 }}>
+                    <div style={{ fontWeight: 900, color: hit ? D.greenDark : (theme === "dark" ? D.red : D.redDark), marginBottom: 4 }}>
                       {hit ? (safeGame.streak >= 3 ? (uiLang === "en" ? "Combo judgment." : "Juicio en combo.") : (uiLang === "en" ? "Good judgment." : "Buen juicio.")) : `${uiLang === "en" ? "Better answer" : "Mejor respuesta"}: ${safeRiskyAnswerLabel(item, labels)}`}
                     </div>
                     <div data-testid="safe-risky-literal" style={{ marginTop: 8 }}>
@@ -10900,7 +10903,7 @@ export default function App() {
                             data-testid={side === 0 ? `match-tile-left-${item.id}` : `match-tile-right-${item.id}`}
                             disabled={isMatched || matchGame.done}
                             onClick={() => onMatchPracticeTap(side, item.id)}
-                            style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : isSel ? "#DDF4FF" : "#fff", borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? D.okText : isWrong ? D.badText : isSel ? D.blueDark : D.ink, opacity: isMatched ? 0.55 : 1 }}>
+                            style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : (theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")), borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? D.okText : isWrong ? D.badText : (theme === "dark" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)), opacity: isMatched ? 0.55 : 1 }}>
                             {item.t}
                           </button>
                         );
@@ -11464,6 +11467,7 @@ export default function App() {
                         let bg = "#fff", bd = D.line, col = D.ink;
                         if (done && isAns) { bg = D.okBg; bd = D.green; col = D.okText; }
                         else if (done && sel === c && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
+                        else if (theme === "dark") { bg = D.subtle; col = HUB_CREAM; }
                         return (
                           <button key={c} className="choice-card" disabled={done}
                             onClick={() => { setAnsSel({ ...ansSel, [i]: c }); beep(isAns ? "ok" : "bad"); }}
