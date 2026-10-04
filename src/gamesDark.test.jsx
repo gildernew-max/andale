@@ -108,6 +108,13 @@ describe("dark games hub mark and ordena tags", () => {
     const games = appSrc.slice(gamesAt, appSrc.indexOf("MATCH PAIRS", gamesAt));
     expect(games).toContain('paper={theme === "dark" ? D.subtle : "#FFFFFF"}');
     expect(appSrc).toContain(".nametag { display:inline-block; background:#fff;");
+    const nameRule = appSrc.match(/\.nametag \{[^}]+\}/)[0];
+    expect(nameRule).toContain("color:#6B6258");
+    expect(nameRule).not.toContain("color:#777");
+    expect(contrastRatio("#6B6258", "#FFFFFF")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio("#6B6258", "#F6EFE4")).toBeGreaterThanOrEqual(4.5);
+    expect(Number(contrastRatio("#6B6258", "#FFFFFF").toFixed(2))).toBe(5.98);
+    expect(Number(contrastRatio("#6B6258", "#F6EFE4").toFixed(2))).toBe(5.23);
     expect(appSrc).not.toContain('theme === "dark" && name === "Luna"');
   });
 
@@ -132,6 +139,8 @@ describe("dark games hub mark and ordena tags", () => {
     const lightTag = document.querySelector(".nametag");
     expect(lightTag.style.background).toBe("");
     expect(lightTag.style.color).toBe("");
+    expect(norm(getComputedStyle(lightTag).color)).toBe("#6b6258");
+    expect(norm(getComputedStyle(lightTag).backgroundColor)).toBe("#ffffff");
     screen.getAllByTestId("bank-tile").forEach((el) => {
       expect(norm(el.style.background)).toBe("#f6efe4");
       expect(norm(el.style.color)).toBe("#3c3c3c");

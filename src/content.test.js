@@ -1291,7 +1291,7 @@ assert(appSrc.includes("story-0-win"), "story-0 ¡Eso! heading is testable");
 assert(appSrc.includes("lectura-win"), "later Lectura ¡Eso! heading is testable");
 assert(appSrc.includes("{!quietWin && !perchCard && <Confetti"), "first-session and Sendero mute confetti");
 assert(appSrc.includes("{!quietWin && !perchCard && ("), "first-session and Sendero hide the party-coach row");
-assert(appSrc.includes("perchCard && theme !== \"dark\" ? \"#85672C\" : D.gold"), "first-session and Sendero light heading is ochre");
+assert(appSrc.includes("(quietWin || perchCard) && theme !== \"dark\" ? \"#85672C\" : D.gold"), "light Hoy ¡Eso!, first-session, and Sendero headings are ochre; dark stays D.gold");
 assert(appSrc.includes("isSenderoLesson(session)"), "Sendero lesson-end reuses the first-session perch card");
 assert(appSrc.includes("data-testid={winTestId}"), "¡Eso! heading stays the existing win test id");
 assert(appSrc.includes("className={quietWin ? \"eso-rise\" : undefined}"), "¡Eso! copy is opacity / 3px rise only");
