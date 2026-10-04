@@ -2397,7 +2397,7 @@ const porparaBankEn = [
   "Heading toward a destination → para: se va para Puebla. «Por Puebla» would mean passing through or around it, not the destination. «Fue» is past tense and clashes with «mañana».",
   "Para + infinitive expresses purpose (the «what for»): hago ejercicio para bajar de peso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
 porparaBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2583,7 +2583,7 @@ const sereflexBankEn = [
   "Reflexive passive: «los tacos» is plural → se comen. «Come» doesn't agree with «los tacos»; «me / le» are decoys.",
   "Se + me marks an unintentional accident, and the verb agrees with the thing: rompí un vaso → se me rompió un vaso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
 sereflexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2725,7 +2725,7 @@ const compsupBankEn = [
   "Irregular superlative: la + mejor + noun + de + group → la mejor alumna del salón. «Peor» would say the opposite, and «más» is not added to «mejor». In ordinary speech the superlative goes before the noun (not «la alumna mejor»).",
   "Quantity with a noun → tantos + noun + como: she has ten pairs and I have ten → tantos pares de tenis como yo. «Pares» is masculine plural, which is why it's tantos.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
 compsupBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2822,6 +2822,157 @@ for (const phrase of ["contenta", "muy contenta"]) {
   assert(gradeListedPhrase(phrase, compsupIsima).status === "wrong", `contentísima type is rejected: ${phrase}`);
 }
 assert(gradeListedPhrase("más malo", compsupPeor).status === "wrong", "peor type is rejected: más malo");
+const mexBank = UNITS.find((u) => u.id === "mex");
+assert(mexBank.questions.length === 11, "mex authored questions stay 11");
+assert(mexBank.questions[0].prompt === "En México, «ahorita» puede significar:", "mex question order is unchanged");
+assert(Array.isArray(mexBank.bank) && mexBank.bank.length === 11, "mex replay bank is 11 questions");
+assert(mexBank.bank.map((q) => q.type).join(",") === "mc,mc,mc,mc,mc,type,type,type,order,order,transform", "mex bank types are mc/type/order/transform");
+assert(mexBank.bank[0].prompt === "Mi abuela me habla desde la cocina y no alcancé a oír lo que dijo. Para contestarle con respeto, le digo:" && mexBank.bank[0].answer === "¿Mande?", "mex bank item 1");
+assert(mexBank.bank[0].choices.join("|") === "¡Sale!|¿Mande?|¡No manches!|¡Qué padre!", "mex bank MC choices");
+assert(mexBank.bank[1].prompt === "—¡Hola, Memo! ¿Qué ___? Hacía mucho que no te veía." && mexBank.bank[1].choices.join("|") === "padre|mande|onda|al rato" && mexBank.bank[1].answer === "onda", "mex bank item 2 keeps the greeting frame");
+assert(mexBank.bank[2].choices.join("|") === "¡Con permiso!|¡Buen provecho!|¡Al rato!|¡No manches!" && mexBank.bank[2].answer === "¡No manches!", "mex bank item 3 decoys differ from item 1");
+assert(mexBank.bank[4].note === "¡Ojo!" && mexBank.bank[4].explain.startsWith("Trampa:") && mexBank.bank[4].answer === "Vergüenza", "mex bank trap keeps the ¡Ojo! note");
+assert(mexBank.bank[4].choices.join("|") === "Tristeza|Lástima por su jefa|Enojo|Vergüenza", "mex bank trap choices");
+assert(mexBank.bank[5].note === "(una palabra: padre + -ísimo)" && mexBank.bank[5].answers.join("|") === "padrísimo", "mex bank type padrísimo lists the accented form only (the grader ignores accents)");
+assert(mexBank.bank[6].note === "(chambear, presente, él)" && mexBank.bank[6].answers.join("|") === "chambea", "mex bank type chambea");
+assert(mexBank.bank[7].note === "(una palabra: dinero, coloquial mexicano; empieza con l-)" && mexBank.bank[7].answers.join("|") === "lana", "mex bank type lana");
+assert(mexBank.bank[8].prompt === "Construye: “We’ll meet at the plaza at five, okay?” (termina con «sale»)" && mexBank.bank[8].words.join("|") === "nos|vemos|en|la|plaza|a|las|cinco|sale|salgo|mande", "mex plaza order words include the decoys");
+assert(mexBank.bank[9].prompt === "Construye: “See you later at the taquería.”" && mexBank.bank[9].words.join("|") === "nos|vemos|al|rato|en|la|taquería|ratos|el", "mex taquería order words include the decoys");
+assert(mexBank.bank[8].words.every((w) => w === w.toLowerCase() && !w.includes(",")) && mexBank.bank[9].words.every((w) => w === w.toLowerCase() && !w.includes(",")), "mex order tiles are lowercase with no comma");
+assert(mexBank.bank[10].base === "Hay mucha gente en el mercado." && mexBank.bank[10].instruction === "Cámbialo con «un chorro de» en lugar de «mucha», empieza con «Hay…» y conserva el resto igual", "mex bank transform base and instruction");
+const mexPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((item, i) => {
+      if (u.id === "mex" && kind === "bank") return;
+      if (item.type === "transform") {
+        const base = item.base || item.source;
+        if (base) mexPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (item.prompt) mexPromptOwners.set(item.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+mexBank.bank.forEach((item, i) => {
+  if (item.type === "transform") {
+    assert(!mexPromptOwners.has(item.base), `mex bank ${i} transform base repeats a prompt`);
+    assert(!mexPromptOwners.has(`base:${item.base}`), `mex bank ${i} transform base repeats ${mexPromptOwners.get(`base:${item.base}`) || "another item"}`);
+    return;
+  }
+  assert(!mexPromptOwners.has(item.prompt), `mex bank ${i} prompt duplicates ${mexPromptOwners.get(item.prompt) || "another item"}`);
+  mexPromptOwners.set(item.prompt, `mex bank ${i}`);
+});
+const mexBankEn = [
+  "«¿Mande?» is the polite «¿cómo?» when you didn’t hear well or someone calls you. «Sale» (accepting a plan) and «no manches» (disbelief) don’t ask anyone to repeat.",
+  "«¿Qué onda?» is the informal Mexican greeting, similar to «¿qué tal?». «Qué padre» is an exclamation (cool), not a greeting question.",
+  "«No manches» expresses surprise or disbelief (≈ no way!). «Con permiso» asks to pass, «buen provecho» is said before eating and «al rato» says goodbye: none of them reacts to news.",
+  "In Mexico, «antro» is a nightclub: ir al antro = going out dancing. A cinema, a museum and a bank are not places where people dance until the small hours.",
+  "Trap: «pena» sounds like sadness, but in Mexico «me da pena» + your own action = embarrassment: me da pena preguntarle = me da vergüenza preguntarle.",
+  "«Padre» means great. Add -ísimo (very, very great) and the -e drops: padr + ísimo = padrísimo. Masculine to agree with «el paseo» (a party would be «padrísima»). Plain «estuvo padre» is also natural, but this item asks for the -ísimo form.",
+  "«Chamba» is work and its verb is «chambear»: mi papá chambea (present tense, third-person singular).",
+  "«Lana» is colloquial Mexican for money and is feminine: mucha lana. «Feria» (mostly change or coins) and «plata» (more South American) aren’t this unit’s word; «varo» and «billete» are masculine and don’t agree with «mucha».",
+  "«Sale» at the end of a proposal asks for the other person’s agreement (= okay?): we’ll meet at the plaza at five, okay? At the start («Sale, nos vemos…») it is your answer accepting a plan, which is why this item asks for it last. «Mande» and «salgo» are decoys: neither closes a plan.",
+  "«Al rato» = later, with no fixed time, and it is a set phrase: nos vemos al rato en la taquería, not «al ratos» or «el rato».",
+  "«Un chorro de» = a ton of, and it replaces «mucha»: hay mucha gente → hay un chorro de gente. Unlike «mucha», it doesn’t agree with the noun.",
+];
+assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
+mexBank.bank.forEach((item, i) => {
+  const row = explainByEs.get(item.explain);
+  assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === mexBankEn[i], `mex bank ${i} EN row equals the English row`);
+  assert(explainText(item, "es") === item.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(item, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(item);
+  assertPreppedQuestion(prepped, `mex bank ${i}`);
+  if (item.type === "mc") {
+    assert(item.choices.length === 4 && new Set(item.choices).size === 4 && item.choices.includes(item.answer), `mex bank ${i} mc choices include the answer`);
+    assert(item.note === (i === 4 ? "¡Ojo!" : ""), `mex bank ${i} mc note`);
+  }
+  if (item.type === "type") {
+    assert(item.note === ["(una palabra: padre + -ísimo)", "(chambear, presente, él)", "(una palabra: dinero, coloquial mexicano; empieza con l-)"][i - 5], `mex bank ${i} type note`);
+  }
+  if (item.type === "order") {
+    assert(prepped.words.join("|") === item.words.join("|"), `mex bank ${i} order tiles stay authored`);
+    assert(prepped.answer === item.answer, `mex bank ${i} order answer stays authored`);
+    assert(Array.isArray(item.answers) && item.answers[0] === item.answer, `mex bank ${i} answers start with the authored answer`);
+    assert(item.words.every((w) => !String(w).includes(",")), `mex bank ${i} tiles carry no comma`);
+    assert(item.words.every((w) => w === w.toLowerCase()), `mex bank ${i} tiles stay lowercase`);
+    item.answers.forEach((phrase) => {
+      const answerTokens = stripPhrase(phrase).split(" ").filter(Boolean);
+      const tilePool = item.words.map((w) => stripPhrase(w));
+      answerTokens.forEach((tok) => {
+        const at = tilePool.indexOf(tok);
+        assert(at >= 0, `mex bank ${i} answer word ${tok} is a tile`);
+        tilePool.splice(at, 1);
+      });
+      const built = builtFromOrderTiles(item.words, phrase);
+      assert(built, `mex bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(phrase, item).status !== "wrong", `mex bank ${i} listed order is accepted: ${phrase}`);
+      assert(gradeListedPhrase(built, item).status !== "wrong", `mex bank ${i} tile-built order is accepted: ${built}`);
+    });
+    const builtPrimary = builtFromOrderTiles(item.words, item.answer);
+    assert(builtPrimary && builtPrimary.toLowerCase() === item.answer.toLowerCase(), `mex bank ${i} primary order is the authored tile text`);
+  }
+  if (item.type === "type" || item.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === item.answers.join("|"), `mex bank ${i} answers stay authored`);
+  }
+});
+const mexPlaza = mexBank.bank[8];
+const mexTaque = mexBank.bank[9];
+const mexChorro = mexBank.bank[10];
+const mexPadre = mexBank.bank[5];
+const mexChambea = mexBank.bank[6];
+const mexLana = mexBank.bank[7];
+assert(mexPlaza.answers.join("|") === "Nos vemos en la plaza a las cinco sale|Nos vemos a las cinco en la plaza sale|A las cinco nos vemos en la plaza sale|En la plaza nos vemos a las cinco sale|A las cinco en la plaza nos vemos sale|En la plaza a las cinco nos vemos sale", "mex plaza order lists the accepted alternates");
+assert(mexTaque.answers.join("|") === "Nos vemos al rato en la taquería|Al rato nos vemos en la taquería|Nos vemos en la taquería al rato|En la taquería nos vemos al rato|Al rato en la taquería nos vemos|En la taquería al rato nos vemos", "mex taquería order lists the accepted alternates");
+assert(mexChorro.answers.join("|") === "Hay un chorro de gente en el mercado", "mex transform lists the accepted answer");
+for (const phrase of mexPlaza.answers) {
+  assert(gradeListedPhrase(phrase, mexPlaza).status !== "wrong", `plaza order accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("A las cinco nos vemos en la plaza sale", mexPlaza).status !== "wrong", "plaza accepted alternate grades ok");
+for (const phrase of [
+  "Sale nos vemos en la plaza a las cinco",
+  "Nos vemos en la plaza a las cinco salgo",
+  "Nos vemos en la plaza a las cinco mande",
+  "Nos vemos en la plaza sale a las cinco",
+]) {
+  assert(gradeListedPhrase(phrase, mexPlaza).status === "wrong", `plaza order is rejected: ${phrase}`);
+}
+for (const phrase of mexTaque.answers) {
+  assert(gradeListedPhrase(phrase, mexTaque).status !== "wrong", `taquería order accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("En la taquería al rato nos vemos", mexTaque).status !== "wrong", "taquería accepted alternate grades ok");
+for (const phrase of [
+  "Nos vemos al ratos en la taquería",
+  "Nos vemos el rato en la taquería",
+  "Nos vemos al rato la taquería en",
+  "Nos vemos en al rato la taquería",
+]) {
+  assert(gradeListedPhrase(phrase, mexTaque).status === "wrong", `taquería order is rejected: ${phrase}`);
+}
+for (const phrase of mexChorro.answers) {
+  assert(gradeListedPhrase(phrase, mexChorro).status !== "wrong", `chorro transform accepted: ${phrase}`);
+}
+for (const phrase of [
+  "En el mercado hay un chorro de gente",
+  "Había un chorro de gente en el mercado",
+  "Hay muchísima gente en el mercado",
+  "Hay un chorro gente en el mercado",
+  "Hay una chorro de gente en el mercado",
+  "Hay un chorro de gentes en el mercado",
+]) {
+  assert(gradeListedPhrase(phrase, mexChorro).status === "wrong", `chorro transform is rejected: ${phrase}`);
+}
+for (const phrase of ["padre", "padrísima"]) {
+  assert(gradeListedPhrase(phrase, mexPadre).status === "wrong", `padrísimo type is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("trabaja", mexChambea).status === "wrong", "chambea type is rejected: trabaja");
+for (const phrase of ["dinero", "pasta", "varo", "billete", "feria", "plata"]) {
+  assert(gradeListedPhrase(phrase, mexLana).status === "wrong", `lana type is rejected: ${phrase}`);
+}
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;
