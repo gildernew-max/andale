@@ -2225,7 +2225,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, theme = "light", onDrop, onHintDi
                   margin: 0,
                   border: `2px solid ${D.green}`,
                   borderBottom: `4px solid ${D.greenDark}`,
-                  background: "#fff",
+                  background: theme === "dark" ? D.card : "#fff",
                   color: D.greenText,
                   borderRadius: 99,
                   padding: "10px 18px",
@@ -8148,6 +8148,7 @@ export default function App() {
         @keyframes cubetasGemTick { 0%{transform:translateY(8px) scale(.6);opacity:0} 35%{transform:translateY(-4px) scale(1.1);opacity:1} 100%{transform:translateY(-18px) scale(1);opacity:0} }
         .cubetas-gem-tick { animation: cubetasGemTick 360ms ${CUBETAS_EASE_LIFT} ${CUBETAS_GRAB_MS}ms both; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#6B6258; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
+        ${theme === "dark" ? ".nametag { background:#1E2128; border-color:#2A2E36; color:#F6EFE4; }" : ""}
         @media (prefers-reduced-motion: reduce) { .bounce,.pop,.streak-pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track,.wordle-flip { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
@@ -8388,7 +8389,7 @@ export default function App() {
             return SECTIONS.map((sec, si) => {
               const pathPastel = ["#F3FBEA", "#F8F0FF", "#EAF7FE"][si % 3];
               const laneDark = theme === "dark" && pathPastel === "#F3FBEA";
-              const bg = laneDark ? D.card : pathPastel;
+              const bg = theme === "dark" ? D.card : pathPastel;
               const sectionDone = sec.unitIds.every((id) => (prog.done?.[id] || 0) > 0);
               const chestId = `chest-${si}`;
               const chestClaimed = !!prog.chests?.[chestId];
@@ -8419,7 +8420,7 @@ export default function App() {
                       const isCurrent = idx === unlockedCount - 1 && crowns === 0;
                       const off = [0, 70, 105, 70, 0, -70, -105, -70][idx % 8];
                       const nodeColor = crowns > 0 ? D.gold : unlocked ? sec.color : D.lockGray;
-                      const nodeDark = crowns > 0 ? D.goldDark : unlocked ? sec.dark : "#CFCFCF";
+                      const nodeDark = crowns > 0 ? D.goldDark : unlocked ? sec.dark : (theme === "dark" ? D.line : "#CFCFCF");
                       return (
                         <div key={uid} style={{ position: "relative", margin: "14px 0", transform: `translateX(${off}px)`, zIndex: 1 }}>
                           {isCurrent && (
@@ -8440,7 +8441,7 @@ export default function App() {
                           {crowns > 1 && (
                             <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", background: D.card, border: `2px solid ${D.gold}`, borderRadius: 99, fontSize: 11, fontWeight: 900, color: D.goldDark, padding: "0 8px" }}>×{crowns}</div>
                           )}
-                          <div data-testid="section-lane-label" style={{ textAlign: "center", fontSize: 12, fontWeight: 800, color: laneDark ? MEMORY_DARK_INK : (unlocked ? D.ink : D.lockIcon), marginTop: 10, width: 116, marginLeft: -19 }}>
+                          <div data-testid="section-lane-label" style={{ textAlign: "center", fontSize: 12, fontWeight: 800, color: laneDark ? MEMORY_DARK_INK : (unlocked || theme === "dark" ? D.ink : D.lockIcon), marginTop: 10, width: 116, marginLeft: -19 }}>
                             {u.title}
                           </div>
                         </div>
@@ -8456,7 +8457,7 @@ export default function App() {
                         style={{ background: "none", border: "none", cursor: sectionDone && !chestClaimed ? "pointer" : "default", lineHeight: 0, padding: 4 }}>
                         <IcChest size={58} claimed={chestClaimed} locked={!sectionDone} />
                       </button>
-                      <div style={{ fontSize: 11, fontWeight: 900, color: chestClaimed ? D.sub : sectionDone ? D.goldDark : D.lockIcon, display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
+                      <div style={{ fontSize: 11, fontWeight: 900, color: chestClaimed ? D.sub : sectionDone ? D.goldDark : (theme === "dark" ? D.ink : D.lockIcon), display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
 	                        {chestClaimed ? L.claimed : sectionDone ? <>{L.openMe} <IcGem size={12} style={{ verticalAlign: "-1px" }} /> 25</> : L.chest}
                       </div>
                     </div>
@@ -8472,7 +8473,7 @@ export default function App() {
                           <button className="node-btn" data-testid={`camino-story-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable} onClick={() => openStory(story)}
 	                            aria-label={`${L.storyPrefix}: ${story.title}${lockedSuffix}`}
 	                            title={readable ? `${story.title} — ${L.storyTip}` : `${story.title}${lockedSuffix}`}
-                            style={{ width: 72, height: 72, borderRadius: 20, border: "none", cursor: readable ? "pointer" : "default", background: readable ? sec.color : D.lockGray, borderBottom: `7px solid ${readable ? sec.dark : "#CFCFCF"}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: readable ? "0 4px 10px rgba(0,0,0,.12)" : "none" }}>
+                            style={{ width: 72, height: 72, borderRadius: 20, border: "none", cursor: readable ? "pointer" : "default", background: readable ? sec.color : D.lockGray, borderBottom: `7px solid ${readable ? sec.dark : (theme === "dark" ? D.line : "#CFCFCF")}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: readable ? "0 4px 10px rgba(0,0,0,.12)" : "none" }}>
                             {readable ? <IcBook size={34} /> : <IcLock size={30} />}
                           </button>
                           {readDone && (
@@ -8488,7 +8489,7 @@ export default function App() {
                     {(() => {
                       const gameDefs = [
                         { testid: "ahorcado-section-start", act: () => startAhorcado("camino"), color: D.green, dark: D.greenDark, icon: <HangmanMark size={28} />, labelEs: hangmanTitle("es"), labelEn: hangmanTitle("en"), subEs: hangmanQuiet("es"), subEn: hangmanQuiet("en") },
-                        { testid: "jeopardy-section-start", act: () => startJeopardy("camino"), color: D.green, dark: D.greenDark, icon: <JeopardyMark size={28} />, labelEs: jeopardyTitle("es"), labelEn: jeopardyTitle("en"), subEs: jeopardyQuiet("es"), subEn: jeopardyQuiet("en") },
+                        { testid: "jeopardy-section-start", act: () => startJeopardy("camino"), color: D.green, dark: D.greenDark, icon: <JeopardyMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} />, labelEs: jeopardyTitle("es"), labelEn: jeopardyTitle("en"), subEs: jeopardyQuiet("es"), subEn: jeopardyQuiet("en") },
                         { testid: "emparejar-section-start", act: startMatchPairs, color: D.blue, dark: D.blueDark, icon: "🔗", labelEs: "Emparejar / Match", labelEn: "Emparejar / Match", subEs: "Una ronda de parejas español–inglés.", subEn: "One round of Spanish–English pair tiles." },
                       ][si];
                       if (!gameDefs) return null;
@@ -8923,7 +8924,7 @@ export default function App() {
           <button onClick={() => startAhorcado("practica")} data-testid="hangman-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><HangmanMark size={28} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{hangmanTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{hangmanQuiet(uiLang)}</div>
@@ -8934,7 +8935,7 @@ export default function App() {
           <button onClick={() => startJeopardy("practica")} data-testid="jeopardy-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{jeopardyTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{jeopardyQuiet(uiLang)}</div>
@@ -8945,7 +8946,7 @@ export default function App() {
           <button onClick={() => startWordle("practica")} data-testid="wordle-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{wordleTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{wordleQuiet(uiLang)}</div>
@@ -8956,7 +8957,7 @@ export default function App() {
           <button onClick={() => startMemory("practica")} data-testid="memory-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{memoryTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{memoryQuiet(uiLang)}</div>
@@ -8967,7 +8968,7 @@ export default function App() {
           <button onClick={() => startCrossword("practica")} data-testid="crossword-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} paper={theme === "dark" ? D.card : "#FFFFFF"} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>
@@ -9278,7 +9279,7 @@ export default function App() {
                     minWidth: 0,
                   }}
                 >
-                  <span style={{ width: 28, height: 28, borderRadius: 99, display: "inline-flex", alignItems: "center", justifyContent: "center", background: uiLang === opt.id ? "#fff" : D.bg, border: `1.5px solid ${uiLang === opt.id ? D.green : D.line}`, flexShrink: 0 }}>{opt.mark}</span>
+                  <span style={{ width: 28, height: 28, borderRadius: 99, display: "inline-flex", alignItems: "center", justifyContent: "center", background: uiLang === opt.id ? (theme === "dark" ? D.card : "#fff") : D.bg, border: `1.5px solid ${uiLang === opt.id ? D.green : D.line}`, flexShrink: 0 }}>{opt.mark}</span>
                   <span style={{ minWidth: 0 }}>
                     <span style={{ display: "block", fontSize: 14, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{opt.label}</span>
                     <span style={{ display: "block", fontSize: 10.5, fontWeight: 800, color: D.sub, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{opt.detail}</span>
@@ -10127,7 +10128,7 @@ export default function App() {
                 <button type="button" data-testid="run-timer-toggle" aria-pressed={!session.runTimerOff}
                   onClick={() => setSession((prev) => prev ? { ...prev, runTimerOff: !prev.runTimerOff } : prev)}
                   style={{
-                    border: `1.5px solid ${D.line}`, background: HUB_CREAM, color: D.ink, borderRadius: 99,
+                    border: `1.5px solid ${D.line}`, background: theme === "dark" ? D.card : HUB_CREAM, color: D.ink, borderRadius: 99,
                     padding: "4px 10px", fontWeight: 800, fontSize: 11, lineHeight: 1.2, cursor: "pointer",
                     fontFamily: "inherit",
                   }}>
@@ -10136,7 +10137,7 @@ export default function App() {
               )}
               {prog.rayo && session.runTimerOff && (
                 <span data-testid="run-timer-off-chip" style={{
-                  background: HUB_CREAM, color: D.sub, fontSize: 11, fontWeight: 700, lineHeight: 1.3,
+                  background: theme === "dark" ? D.card : HUB_CREAM, color: D.sub, fontSize: 11, fontWeight: 700, lineHeight: 1.3,
                   padding: "3px 10px", borderRadius: 99,
                 }}>{L.timerOffChip}</span>
               )}
@@ -10171,7 +10172,7 @@ export default function App() {
                   <div style={{ margin: "10px auto 0" }}>
                     <button type="button" data-testid="lesson-listen-skip" onClick={skipAudioGate}
                       style={{
-                        border: "none", background: HUB_CREAM, color: D.sub, borderRadius: 99,
+                        border: "none", background: theme === "dark" ? D.card : HUB_CREAM, color: D.sub, borderRadius: 99,
                         padding: "3px 10px", fontWeight: 700, fontSize: 11, lineHeight: 1.3, cursor: "pointer",
                         fontFamily: "inherit",
                       }}>
@@ -10907,7 +10908,7 @@ export default function App() {
           <button onClick={() => startWordle("games")} data-testid="wordle-start" className="games-hub-card"
             style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{wordleTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{wordleQuiet(uiLang)}</div>
@@ -11155,7 +11156,7 @@ export default function App() {
           {jeopardy.active ? (
             <div data-testid="jeopardy-prompt" className="pop" style={{ border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, borderRadius: 18, padding: 16, background: D.card }}>
               {jeopardy.active.double && (
-                <div data-testid="jeopardy-double" className="pop" style={{ border: `2px solid #C46B3A`, borderBottom: `5px solid #C46B3A`, borderRadius: 14, background: HUB_CREAM, color: "#C46B3A", padding: "9px 12px", marginBottom: 12, fontWeight: 900, textAlign: "center" }}>
+                <div data-testid="jeopardy-double" className="pop" style={{ border: `2px solid #C46B3A`, borderBottom: `5px solid #C46B3A`, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: theme === "dark" ? D.ink : "#C46B3A", padding: "9px 12px", marginBottom: 12, fontWeight: 900, textAlign: "center" }}>
                   {jeopardyDoubleLabel(uiLang)} · {jeopardyDoubleLine(uiLang)} {jeopardy.active.stake}
                 </div>
               )}
@@ -11834,8 +11835,8 @@ export default function App() {
             </form>
           )}
           {showLecturaHandoff && (
-            <div data-testid="lectura-handoff" style={{ marginTop: 18, background: HUB_CREAM, borderRadius: 14, padding: "10px 12px 12px" }}>
-              <p data-testid="lectura-handoff-quiet" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: theme === "dark" ? "#6B6258" : D.sub }}>
+            <div data-testid="lectura-handoff" style={{ marginTop: 18, background: theme === "dark" ? D.card : HUB_CREAM, borderRadius: 14, padding: "10px 12px 12px" }}>
+              <p data-testid="lectura-handoff-quiet" style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, lineHeight: 1.35, color: D.sub }}>
                 {lecturaHandoffQuiet(uiLang)}
               </p>
               <button
@@ -11844,8 +11845,8 @@ export default function App() {
                 data-story-id={lecturaHandoffStory.id}
                 onClick={openLecturaFromHandoff}
                 style={{
-                  background: HUB_CREAM,
-                  color: MARK_INK,
+                  background: theme === "dark" ? D.card : HUB_CREAM,
+                  color: theme === "dark" ? D.ink : MARK_INK,
                   border: `1px solid ${MARK_INK}`,
                   borderRadius: 12,
                   padding: "10px 16px",
@@ -11891,7 +11892,7 @@ export default function App() {
             <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: D.orangeBg, border: `2px solid #FF9600`, borderBottom: `4px solid #D97F00`, borderRadius: 14, padding: "10px 20px", marginTop: 12, fontWeight: 900, color: streakLabelColor(theme), fontSize: 14 }}>
               <IcFlame size={22} fill={STREAK_FLAME} className="flame" />
               {uiLang === "en" ? `${prog.streak}-day streak!` : `¡Racha de ${prog.streak} días!`}
-              <span style={{ fontSize: 11, fontWeight: 800, color: "#B97500" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: theme === "dark" ? "#FE9F17" : "#B97500" }}>
                 {prog.streak === 3 ? (uiLang === "en" ? "warming up" : "calentando") :
                  prog.streak === 7 ? (uiLang === "en" ? "one full week" : "una semana entera") :
                  prog.streak === 14 ? (uiLang === "en" ? "two-week veteran" : "veterano de dos semanas") :

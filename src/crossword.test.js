@@ -198,16 +198,20 @@ assert(Number(ratio(cream, hexRgb("#5C7356")).toFixed(2)) === 4.55, "cream on #5
 const appSrc = readFileSync(new URL("./App.jsx", import.meta.url), "utf8");
 const gamesAt = appSrc.indexOf('screen === "games"');
 const games = appSrc.slice(gamesAt, appSrc.indexOf("MATCH PAIRS", gamesAt));
-for (const id of ["hangman-start", "jeopardy-start", "memory-start", "crossword-start"]) {
+for (const id of ["hangman-start", "jeopardy-start", "wordle-start", "memory-start", "crossword-start"]) {
   const at = games.indexOf(`data-testid="${id}"`);
   const chunk = games.slice(at, at + 900);
   assert(chunk.includes('theme === "dark" ? D.card : HUB_CREAM'), `${id} tile uses the dark card`);
 }
 assert(games.includes("<JeopardyMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} />"), "Jeopardy plate follows the tile");
+assert(games.includes("<WordleMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} />"), "Wordle plate follows the tile");
 assert(games.includes("<MemoryMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} />"), "Memory plate follows the tile");
 assert(games.includes("<CrosswordMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} paper={theme === \"dark\" ? D.subtle : \"#FFFFFF\"} />"), "Crossword plate follows the tile and dark cells are slate, not white");
 const practicaAt = appSrc.indexOf('startAhorcado("practica")');
-const practica = appSrc.slice(practicaAt, appSrc.indexOf('startCrossword("practica")', practicaAt));
-assert(!practica.includes('theme === "dark" ? D.card : HUB_CREAM'), "Práctica tiles stay on the light cream path");
+const practicaEnd = appSrc.indexOf('startCrossword("practica")', practicaAt);
+const practica = appSrc.slice(practicaAt, practicaEnd);
+assert(practica.includes('theme === "dark" ? D.card : HUB_CREAM'), "Práctica tiles use the dark card");
+const practicaCross = appSrc.slice(practicaEnd, practicaEnd + 900);
+assert(practicaCross.includes('paper={theme === "dark" ? D.card : "#FFFFFF"}'), "Práctica crossword cells use the dark card");
 
 console.log("ok: crossword — 10-word grid, lock, reveal, sage");

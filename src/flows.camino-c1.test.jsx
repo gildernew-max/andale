@@ -192,7 +192,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/ada@example/);
   });
 
-  it("a set endpoint shows the dark email card, and the Lectura handoff stays the main cream card", async () => {
+  it("a set endpoint shows the dark email card, and the Lectura handoff uses the dark card", async () => {
     const user = userEvent.setup();
     await reachFirstHoyWin(user, { theme: "dark", uiLang: "en" }, { endpoint: FIRST_WIN_TEST_ENDPOINT });
     const box = screen.getByTestId("lectura-handoff");
@@ -200,9 +200,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const cta = screen.getByTestId("lectura-handoff-cta");
     expect(quiet.textContent).toBe(LECTURA_HANDOFF_QUIET.en);
     expect(cta.textContent).toBe(LECTURA_HANDOFF_CTA.en);
-    expect(styleHas(box, "#F6EFE4")).toBe(true);
+    expect(styleHas(box, "#1E2128")).toBe(true);
     expect(styleHas(cta, "#5C7356")).toBe(true);
-    expect(quiet.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+    expect(quiet.style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
     expect(quiet.style.fontSize).toBe("13px");
     expect(quiet.style.fontWeight).toBe("700");
     expect(cta.className).not.toMatch(/duo-btn/);
@@ -214,19 +214,19 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("first-win-email").textContent).not.toMatch(/Privacidad/);
   });
 
-  it("Lectura handoff quiet line is #6B6258 on the cream strip in dark and in light", async () => {
+  it("Lectura handoff quiet line is #A0A4AB on the dark card and #6B6258 on the cream strip in light", async () => {
     const user = userEvent.setup();
     await reachFirstHoyWin(user, { theme: "dark", uiLang: "es" });
     const darkQuiet = screen.getByTestId("lectura-handoff-quiet");
     const darkStrip = screen.getByTestId("lectura-handoff");
     const darkCta = screen.getByTestId("lectura-handoff-cta");
     expect(darkQuiet.textContent).toBe(LECTURA_HANDOFF_QUIET.es);
-    expect(darkQuiet.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+    expect(darkQuiet.style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
     expect(darkQuiet.style.fontSize).toBe("13px");
     expect(darkQuiet.style.fontWeight).toBe("700");
-    expect(styleHas(darkStrip, "#F6EFE4")).toBe(true);
+    expect(styleHas(darkStrip, "#1E2128")).toBe(true);
     expect(styleHas(darkCta, "#5C7356")).toBe(true);
-    expect(contrastRatio("#6B6258", "#F6EFE4")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio("#A0A4AB", "#1E2128")).toBeGreaterThanOrEqual(4.5);
 
     await reachFirstHoyWin(user, { theme: "light", uiLang: "es" });
     const lightQuiet = screen.getByTestId("lectura-handoff-quiet");
