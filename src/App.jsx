@@ -16,7 +16,7 @@ import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { STREAK_FLAME, shouldPopFirstStreak, streakChipLabel, streakLabelColor } from "./streakChip.js";
-import { streakDisplay } from "./streakDisplay.js";
+import { streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
 import { winNumeralColor } from "./winNumeral.js";
 import { scoreCountClause } from "./scoreLine.js";
 import { probeAudioFile, storyAudioUrl } from "./storyAudio.js";
@@ -9886,12 +9886,8 @@ export default function App() {
             </div>
             <div style={{ fontWeight: 800, fontSize: 13.5, color: D.sub, marginBottom: 16, lineHeight: 1.45 }}>
               {streakRepair === "freeze"
-                ? (uiLang === "en"
-                  ? `A freeze auto-protected your ${prog.streak}-day streak yesterday. ${prog.freezes - 1 || 0} ${(prog.freezes - 1) === 1 ? "freeze" : "freezes"} remaining.`
-                  : `Un congelamiento protegió tu racha de ${prog.streak} días ayer. Te quedan ${prog.freezes - 1 || 0}.`)
-                : (uiLang === "en"
-                  ? `Your ${prog.streak}-day streak is in danger. Repair it with gems before today ends.`
-                  : `Tu racha de ${prog.streak} días está en peligro. Repárala con gemas antes de que termine el día.`)}
+                ? streakFreezeBody(prog.streak, Math.max(0, (Number(prog.freezes) || 0) - 1), uiLang)
+                : streakRepairBody(prog.streak, uiLang)}
             </div>
             <div style={{ display: "grid", gap: 9 }}>
               {streakRepair === "freeze" ? (
@@ -9900,7 +9896,7 @@ export default function App() {
                   const y = yesterdayStr();
                   save({ freezes: Math.max(0, (prog.freezes || 1) - 1), lastDay: y, repairChecked: true });
                   setStreakRepair(null);
-                }}>{uiLang === "en" ? "Use freeze (auto)" : "Usar congelamiento"}</Btn>
+                }}>{streakFreezeButton(uiLang)}</Btn>
               ) : (
                 <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < 200} onClick={() => {
                   const y = yesterdayStr();

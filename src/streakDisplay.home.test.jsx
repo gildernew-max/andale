@@ -76,11 +76,11 @@ describe("Learn home streak note", () => {
   it("uses the singular at-risk sentence at n=1 in ES and EN", async () => {
     homeSeed({ uiLang: "es", streak: 1, lastDay: prevDayKey(localToday()) });
     await openHome();
-    expect(note().textContent).toBe("Tu racha de 1 día termina hoy.");
+    expect(note().textContent).toBe("Tu racha de 1 día termina hoy. Haz una lección para mantenerla.");
     expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^1/);
     const user = userEvent.setup();
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(note().textContent).toBe("Your 1-day streak ends tonight."));
+    await waitFor(() => expect(note().textContent).toBe("Your 1-day streak ends tonight. Do one lesson to keep it."));
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(1);
   });
 
@@ -111,9 +111,34 @@ describe("Learn home streak note", () => {
     homeSeed({ uiLang: "en", streak: 5, lastDay: gap2, repairChecked: false });
     await openHome();
     await waitFor(() => expect(screen.getByText("You missed a day")).toBeTruthy());
+    expect(screen.getByText("Your 5-day streak is in danger. Repair it with gems before today ends.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Repair streak ( 200)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Let it go" })).toBeTruthy();
     expect(screen.queryByTestId("streak-home-note")).toBeNull();
     expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^5/);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(5);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lastDay).toBe(gap2);
+  });
+
+  it("freeze modal uses George's button and the k=0, k=1, and k=2 bodies", async () => {
+    const gap2 = shift(-2);
+    const cases = [
+      { freezes: 1, en: "You have a freeze for your 5-day streak. Use it to keep going. 0 left after this.", es: "Tienes un congelamiento para tu racha de 5 días. Úsalo para seguir. No te quedarán más." },
+      { freezes: 2, en: "You have a freeze for your 5-day streak. Use it to keep going. 1 left after this.", es: "Tienes un congelamiento para tu racha de 5 días. Úsalo para seguir. Te quedará 1." },
+      { freezes: 3, en: "You have a freeze for your 5-day streak. Use it to keep going. 2 left after this.", es: "Tienes un congelamiento para tu racha de 5 días. Úsalo para seguir. Te quedarán 2." },
+    ];
+    for (const row of cases) {
+      homeSeed({ uiLang: "en", streak: 5, lastDay: gap2, repairChecked: false, freezes: row.freezes });
+      await openHome();
+      await waitFor(() => expect(screen.getByText("Your streak is frozen!")).toBeTruthy());
+      expect(screen.getByText(row.en)).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Use freeze" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: /auto/i })).toBeNull();
+      const user = userEvent.setup();
+      await user.click(screen.getByTestId("lang-es"));
+      await waitFor(() => expect(screen.getByText("¡Tu racha está congelada!")).toBeTruthy());
+      expect(screen.getByText(row.es)).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Usar congelamiento" })).toBeTruthy();
+    }
   });
 });

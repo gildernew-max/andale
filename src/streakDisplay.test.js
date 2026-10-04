@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { calendarGap, streakDisplay } from "./streakDisplay.js";
+import { calendarGap, streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
 import { contrastRatio } from "./spanishKeyboard.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
@@ -25,9 +25,25 @@ assert(riskEn.displayStreak === 4 && riskEn.status === "at-risk", "EN yesterday 
 assert(riskEn.line === "Your 4-day streak ends tonight. Do one lesson to keep it.", "EN at-risk plural is George's sentence");
 
 const oneEs = view({ streak: 1, lastDay: yesterday });
-assert(oneEs.displayStreak === 1 && oneEs.line === "Tu racha de 1 día termina hoy.", "ES n=1 is the shorter singular sentence");
+assert(oneEs.displayStreak === 1 && oneEs.line === "Tu racha de 1 día termina hoy. Haz una lección para mantenerla.", "ES n=1 keeps the lesson sentence");
 const oneEn = view({ streak: 1, lastDay: yesterday }, { lang: "en" });
-assert(oneEn.displayStreak === 1 && oneEn.line === "Your 1-day streak ends tonight.", "EN n=1 is the shorter singular sentence");
+assert(oneEn.displayStreak === 1 && oneEn.line === "Your 1-day streak ends tonight. Do one lesson to keep it.", "EN n=1 keeps the lesson sentence");
+
+assert(streakRepairBody(1, "es") === "Tu racha de 1 día está en peligro. Repárala con gemas antes de que termine el día.", "ES repair n=1 is 1 día");
+assert(streakRepairBody(5, "es") === "Tu racha de 5 días está en peligro. Repárala con gemas antes de que termine el día.", "ES repair n>=2 stays días");
+assert(streakRepairBody(1, "en") === "Your 1-day streak is in danger. Repair it with gems before today ends.", "EN repair sentence stays");
+assert(streakRepairBody(5, "en") === "Your 5-day streak is in danger. Repair it with gems before today ends.", "EN repair n>=2 stays");
+
+assert(streakFreezeButton("es") === "Usar congelamiento", "ES freeze button stays Usar congelamiento");
+assert(streakFreezeButton("en") === "Use freeze", "EN freeze button drops (auto)");
+
+assert(streakFreezeBody(5, 0, "en") === "You have a freeze for your 5-day streak. Use it to keep going. 0 left after this.", "EN freeze k=0");
+assert(streakFreezeBody(5, 1, "en") === "You have a freeze for your 5-day streak. Use it to keep going. 1 left after this.", "EN freeze k=1");
+assert(streakFreezeBody(1, 2, "en") === "You have a freeze for your 1-day streak. Use it to keep going. 2 left after this.", "EN freeze k=2 and n=1");
+assert(streakFreezeBody(1, 1, "es") === "Tienes un congelamiento para tu racha de 1 día. Úsalo para seguir. Te quedará 1.", "ES freeze n=1 k=1");
+assert(streakFreezeBody(5, 0, "es") === "Tienes un congelamiento para tu racha de 5 días. Úsalo para seguir. No te quedarán más.", "ES freeze k=0");
+assert(streakFreezeBody(5, 1, "es") === "Tienes un congelamiento para tu racha de 5 días. Úsalo para seguir. Te quedará 1.", "ES freeze k=1");
+assert(streakFreezeBody(5, 2, "es") === "Tienes un congelamiento para tu racha de 5 días. Úsalo para seguir. Te quedarán 2.", "ES freeze k=2");
 
 const held = view({ streak: 5, lastDay: gap2 }, { repairModal: true, lang: "en" });
 assert(held.displayStreak === 5 && held.line === "" && held.status === "modal", "2-day gap with the repair modal shows neither line and keeps the number");
@@ -73,11 +89,15 @@ assert(contrastRatio("#A0A4AB", "#15171C") >= 4.5, "dark secondary ink clears 4.
 assert(contrastRatio("#A0A4AB", "#1E2128") >= 4.5, "dark secondary ink clears 4.5:1 on the card");
 
 const appSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "App.jsx"), "utf8");
-assert(appSrc.includes('import { streakDisplay } from "./streakDisplay.js";'), "App derives the streak through the helper");
+assert(appSrc.includes('import { streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";'), "App derives the streak through the helper");
 assert(appSrc.includes("repairModal: !!streakRepair"), "the repair modal flag is passed through");
 assert(appSrc.includes('data-testid="streak-home-note"'), "Learn home renders the note");
 assert(/data-testid="streak-home-note"[\s\S]{0,500}color: D\.sub/.test(appSrc), "the note uses the neighbouring secondary ink");
 assert(appSrc.includes("streakView.displayStreak"), "the flame reads the display number");
+assert(appSrc.includes("streakRepairBody(prog.streak, uiLang)"), "repair body comes from George's helper");
+assert(appSrc.includes("streakFreezeBody(prog.streak, Math.max(0, (Number(prog.freezes) || 0) - 1), uiLang)"), "freeze body uses freezes left after this use");
+assert(appSrc.includes("streakFreezeButton(uiLang)"), "freeze button comes from George's helper");
+assert(!appSrc.includes("Use freeze (auto)"), "EN freeze button no longer says (auto)");
 assert(!/setProg\(\(base\) => \{[\s\S]{0,900}streak:\s*0/.test(appSrc), "load does not zero the stored streak");
 
 console.log("ok: streak display");

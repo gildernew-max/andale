@@ -23,16 +23,51 @@ export function calendarGap(lastDay, today) {
   return Math.round((to - from) / DAY_MS);
 }
 
-/** George lock. n = 1 is the shorter singular sentence. */
+/** George lock. n = 1 uses día / 1-day and still asks for one lesson. */
 export function streakAtRiskLine(count, lang) {
   const n = Number(count);
   if (!Number.isFinite(n) || n < 1) return "";
   if (lang === "en") {
-    if (n === 1) return "Your 1-day streak ends tonight.";
+    if (n === 1) return "Your 1-day streak ends tonight. Do one lesson to keep it.";
     return `Your ${n}-day streak ends tonight. Do one lesson to keep it.`;
   }
-  if (n === 1) return "Tu racha de 1 día termina hoy.";
+  if (n === 1) return "Tu racha de 1 día termina hoy. Haz una lección para mantenerla.";
   return `Tu racha de ${n} días termina hoy. Haz una lección para mantenerla.`;
+}
+
+function streakCount(count) {
+  const n = Math.floor(Number(count));
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function diaPhrase(n) {
+  return n === 1 ? "1 día" : `${n} días`;
+}
+
+/** Repair modal body. EN stays the live sentence. ES is "1 día" only at n = 1. */
+export function streakRepairBody(count, lang) {
+  const n = streakCount(count);
+  if (lang === "en") return `Your ${n}-day streak is in danger. Repair it with gems before today ends.`;
+  return `Tu racha de ${diaPhrase(n)} está en peligro. Repárala con gemas antes de que termine el día.`;
+}
+
+/** Freeze button. EN drops the parenthetical. */
+export function streakFreezeButton(lang) {
+  return lang === "en" ? "Use freeze" : "Usar congelamiento";
+}
+
+/**
+ * Freeze modal body. k is freezes left after this use.
+ * ES tail is "Te quedará 1." / "Te quedarán {k}." / "No te quedarán más."
+ */
+export function streakFreezeBody(count, left, lang) {
+  const n = streakCount(count);
+  const k = Math.max(0, Math.floor(Number(left)) || 0);
+  if (lang === "en") {
+    return `You have a freeze for your ${n}-day streak. Use it to keep going. ${k} left after this.`;
+  }
+  const tail = k === 0 ? "No te quedarán más." : k === 1 ? "Te quedará 1." : `Te quedarán ${k}.`;
+  return `Tienes un congelamiento para tu racha de ${diaPhrase(n)}. Úsalo para seguir. ${tail}`;
 }
 
 export function streakGoneLine(lang) {
