@@ -15,7 +15,7 @@ import { splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
 import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from "./hoyChoiceCard.js";
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
-import { STREAK_FLAME, streakChipLabel, streakLabelColor } from "./streakChip.js";
+import { STREAK_FLAME, shouldPopFirstStreak, streakChipLabel, streakLabelColor } from "./streakChip.js";
 import { winNumeralColor } from "./winNumeral.js";
 import { scoreCountClause } from "./scoreLine.js";
 import { probeAudioFile, storyAudioUrl } from "./storyAudio.js";
@@ -6052,7 +6052,8 @@ export default function App() {
     awardLockRef.current.delete("lesson");
     itemXpLockRef.current = new Set();
     sessionXPRef.current = 0;
-    setSession(s); setQi(0); setStatus("idle"); setSelected(null); setTyped(""); setTypedTileIds([]); setPlaced([]); setPlaceAt(null);
+    const streakBefore = s.streakBefore != null ? s.streakBefore : (Number(prog.streak) || 0);
+    setSession({ ...s, streakBefore }); setQi(0); setStatus("idle"); setSelected(null); setTyped(""); setTypedTileIds([]); setPlaced([]); setPlaceAt(null);
     setMatchSel(null); setMatched([]); setMatchWrong(null);
     setSessionXP(0); setCombo(0); setLessonStats({ right: 0, wrong: 0 });
     setShowWhy(false); setFailKind("hearts");
@@ -6280,6 +6281,7 @@ export default function App() {
     setSession((s) => (s ? {
       ...s,
       awarded: true,
+      streakBefore: s.streakBefore != null ? s.streakBefore : (Number(prog.streak) || 0),
       earnedXP: earned,
       earnedGems: gemsEarned,
       perfectBonus,
@@ -6523,6 +6525,7 @@ export default function App() {
       awarded: true,
       earnedXP: beat.earned,
       earnedGems: 10,
+      ...(beat.streakBefore != null ? { streakBefore: beat.streakBefore } : {}),
     });
     setLessonStats({ right: beat.correct, wrong: story.questions.length - beat.correct });
     setScreenQuip("");
@@ -6551,6 +6554,7 @@ export default function App() {
     beep("win");
     if (!playStory0 && !playLecturaWin) setBurst(Date.now());
     const earned = 5 + correct * 10;
+    const streakBefore = Number(prog.streak) || 0;
     const t = todayStr();
     save((prev) => {
       if (prev.stories?.[story.id]) return prev;
@@ -6583,6 +6587,7 @@ export default function App() {
       earned,
       playStory0,
       playLecturaWin,
+      streakBefore,
     });
   };
 
@@ -7668,6 +7673,7 @@ export default function App() {
   };
 
   const finishDoctoraWin = () => {
+    const streakBefore = Number(prog.streak) || 0;
     awardDoctoraStreak();
     setSession({
       firstDoctora: true,
@@ -7678,6 +7684,7 @@ export default function App() {
       awarded: true,
       earnedXP: 0,
       earnedGems: 0,
+      streakBefore,
     });
     setLessonStats({ right: Math.max(doctorHits, 1), wrong: 0 });
     setScreenQuip("");
@@ -8053,6 +8060,8 @@ export default function App() {
         .bounce { animation: bounce 1.1s ease-in-out infinite; }
         @keyframes pop { 0%{opacity:.35} 100%{opacity:1} }
         .pop { animation: pop .15s ease; }
+        @keyframes streakPop { 0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)} }
+        .pop.streak-pop { transform-origin:center; animation-name:pop, streakPop; animation-duration:.15s, 400ms; animation-timing-function:ease, ease-out; animation-delay:0ms, 200ms; animation-iteration-count:1, 1; animation-fill-mode:none, none; }
         @keyframes wiggle { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
         .wiggle { animation: wiggle .25s ease; }
         @keyframes idleBob { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-5px) rotate(1deg)} }
@@ -8121,7 +8130,7 @@ export default function App() {
         @keyframes cubetasGemTick { 0%{transform:translateY(8px) scale(.6);opacity:0} 35%{transform:translateY(-4px) scale(1.1);opacity:1} 100%{transform:translateY(-18px) scale(1);opacity:0} }
         .cubetas-gem-tick { animation: cubetasGemTick 360ms ${CUBETAS_EASE_LIFT} ${CUBETAS_GRAB_MS}ms both; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#777; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
-        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track,.wordle-flip { animation:none !important; } }
+        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.streak-pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track,.wordle-flip { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
         .node-btn:active:not(:disabled) { transform: translateY(3px); }
@@ -11600,6 +11609,7 @@ export default function App() {
         const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : session.lecturaWin ? "lectura-win" : undefined;
         const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : session.lecturaWin ? "lectura-win-continue" : undefined;
         const streakChip = streakChipLabel(prog.streak, uiLang);
+        const popFirstStreak = shouldPopFirstStreak({ before: session.streakBefore, after: prog.streak });
         return (
         <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
           {!quietWin && !perchCard && <Confetti count={perfect ? 160 : 70} />}
@@ -11645,7 +11655,7 @@ export default function App() {
 	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, ink: winNumeralColor(theme, "gems", D), testid: "win-earned-gems" },
 	              ...(streakChip ? [{ v: <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}><IcFlame size={20} fill={STREAK_FLAME} className="flame" />{streakChip}</span>, l: null, c: "#FF9600", ink: streakLabelColor(theme), testid: "win-earned-streak" }] : []),
             ].filter((s) => !session.firstDoctora || s.testid === "win-earned-streak").map((s, i) => (
-              <div key={i} className="pop" style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
+              <div key={i} className={s.testid === "win-earned-streak" && popFirstStreak ? "pop streak-pop" : "pop"} style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
                 <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: s.testid === "win-earned-streak" ? 16 : 22, color: s.ink || s.c, lineHeight: 1.25, whiteSpace: s.testid === "win-earned-streak" ? "nowrap" : undefined }}>{s.v}</div>
                 {s.l != null && <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>}
               </div>

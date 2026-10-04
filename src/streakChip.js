@@ -12,6 +12,16 @@ export function streakChipLabel(n, lang) {
   return lang === "en" ? `${count}-day streak` : `Racha de ${count} días`;
 }
 
+/**
+ * Win-pill scale. True only when this session's streak steps from 0 to 1.
+ * Later days, a same-day repeat, and missing values stay false.
+ */
+export function shouldPopFirstStreak(input) {
+  const before = input?.before;
+  const after = input?.after;
+  return before === 0 && after === 1;
+}
+
 /** Light-mode streak count and label. 5.36:1 on white, 4.69:1 on cream #F6EFE4. */
 export const STREAK_LABEL_LIGHT = "#A35700";
 
