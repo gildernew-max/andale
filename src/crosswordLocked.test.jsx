@@ -83,3 +83,32 @@ describe("dark locked crossword cell", () => {
     expect(lightPaint.fill).not.toBe(darkPaint.fill);
   });
 });
+
+describe("locked clue number", () => {
+  it("paints the light number white on #6F7757 at 4.5:1 and leaves the dark number cream on #5C7356", () => {
+    const lightCell = lockedCell(false);
+    const lightNumber = lightCell.querySelector("span");
+    const lightFill = paint(lightCell).fill;
+    const lightInk = norm(lightNumber.style.color);
+    expect(lightCell.getAttribute("data-testid")).toBe("crossword-cell");
+    expect(lightCell.getAttribute("data-state")).toBe("locked");
+    expect(lightNumber.textContent).toBeTruthy();
+    expect(lightFill).toBe("#6f7757");
+    expect(lightFill).toBe(CROSSWORD_SAGE);
+    expect(lightInk).toBe("#ffffff");
+    expect(contrastRatio("#FFFFFF", "#6F7757")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(lightInk, lightFill)).toBeGreaterThanOrEqual(4.5);
+    cleanup();
+
+    const darkCell = lockedCell(true);
+    const darkNumber = darkCell.querySelector("span");
+    const darkFill = paint(darkCell).fill;
+    const darkInk = norm(darkNumber.style.color);
+    expect(darkCell.getAttribute("data-state")).toBe("locked");
+    expect(darkFill).toBe("#5c7356");
+    expect(darkInk).toBe("#f6efe4");
+    expect(darkInk).toBe(norm(CROSSWORD_CREAM));
+    expect(darkFill).not.toBe(lightFill);
+    expect(darkInk).not.toBe(lightInk);
+  });
+});
