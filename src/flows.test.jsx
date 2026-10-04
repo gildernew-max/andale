@@ -9026,6 +9026,110 @@ const clickClose = async (user, rootTestId) => {
   await user.click(btn);
 };
 
+const NO_STORY_HEADLINE = {
+  es: "Hay mucho por leer.",
+  en: "There's a lot to read.",
+};
+const STARTED_HEADLINE = {
+  es: "Hay mucho más por leer.",
+  en: "There's much\u00A0more to read.",
+};
+const WALL_STRING_IDS = [
+  "soft-paywall-headline",
+  "soft-paywall-body",
+  "soft-paywall-annual",
+  "soft-paywall-annual-price",
+  "soft-paywall-monthly",
+  "soft-paywall-monthly-price",
+  "soft-paywall-disclosure",
+  "soft-paywall-terms",
+  "soft-paywall-privacy",
+  "soft-paywall-restore",
+  "soft-paywall-dismiss",
+  "soft-paywall-honesty",
+];
+
+const wallStrings = () => {
+  const card = screen.getByTestId("soft-paywall-card").textContent;
+  const parts = Object.fromEntries(WALL_STRING_IDS.map((id) => [id, screen.getByTestId(id).textContent]));
+  return { card, parts };
+};
+
+const bootStoryStartWall = async (extra = {}) => {
+  cleanup();
+  localStorage.clear();
+  markBajioUnlockFlashDue(false);
+  seedProgress({
+    streak: 1,
+    lastDay: localToday(),
+    paywallSeen: false,
+    bajioUnlockSeen: true,
+    uiLang: "es",
+    ...extra,
+  });
+  render(<App />);
+  await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+  return wallStrings();
+};
+
+describe("paywall headline depends on a stored story start", () => {
+  it("winDays 2 with no story shows the shorter line and not the cleared line", async () => {
+    const es = await bootStoryStartWall({ winDays: 2, uiLang: "es" });
+    expect(es.parts["soft-paywall-headline"]).toBe(NO_STORY_HEADLINE.es);
+    expect(es.parts["soft-paywall-headline"]).not.toBe(STARTED_HEADLINE.es);
+    expect(es.card).not.toContain(STARTED_HEADLINE.es);
+    expect(es.card).not.toContain("La historia sigue.");
+    expect(es.parts["soft-paywall-honesty"]).toBe("Vista previa · aún no se cobra");
+    expect(es.parts["soft-paywall-annual-price"]).toMatch(/\$39\.99/);
+    expect(es.parts["soft-paywall-monthly-price"]).toMatch(/\$6\.99/);
+    expect(es.parts["soft-paywall-dismiss"]).toBe("Seguir gratis");
+
+    const en = await bootStoryStartWall({ winDays: 2, uiLang: "en" });
+    expect(en.parts["soft-paywall-headline"]).toBe(NO_STORY_HEADLINE.en);
+    expect(en.parts["soft-paywall-headline"]).not.toBe(STARTED_HEADLINE.en);
+    expect(en.card).not.toContain(STARTED_HEADLINE.en);
+    expect(en.card).not.toContain("The story goes on.");
+    expect(en.parts["soft-paywall-honesty"]).toBe("Preview · you won\u2019t be charged yet");
+    expect(en.parts["soft-paywall-annual-price"]).toMatch(/\$39\.99/);
+    expect(en.parts["soft-paywall-monthly-price"]).toMatch(/\$6\.99/);
+    expect(en.parts["soft-paywall-dismiss"]).toBe("Continue free");
+  });
+
+  it("lecturaStartedAt or a claimed story keeps the cleared line", async () => {
+    for (const lang of ["es", "en"]) {
+      const byAt = await bootStoryStartWall({ uiLang: lang, lecturaStartedAt: 1 });
+      expect(byAt.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE[lang]);
+      expect(byAt.parts["soft-paywall-headline"]).not.toBe(NO_STORY_HEADLINE[lang]);
+
+      const byStory = await bootStoryStartWall({ uiLang: lang, stories: { "story-0": true } });
+      expect(byStory.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE[lang]);
+      expect(byStory.parts["soft-paywall-headline"]).not.toBe(NO_STORY_HEADLINE[lang]);
+    }
+  });
+
+  it("the headline is the only wall string that differs", async () => {
+    for (const lang of ["es", "en"]) {
+      const none = await bootStoryStartWall({ uiLang: lang, winDays: 2 });
+      const started = await bootStoryStartWall({ uiLang: lang, lecturaStartedAt: 1 });
+      const claimed = await bootStoryStartWall({ uiLang: lang, stories: { "story-0": true } });
+      for (const id of WALL_STRING_IDS) {
+        if (id === "soft-paywall-headline") {
+          expect(none.parts[id]).toBe(NO_STORY_HEADLINE[lang]);
+          expect(started.parts[id]).toBe(STARTED_HEADLINE[lang]);
+          expect(claimed.parts[id]).toBe(STARTED_HEADLINE[lang]);
+          expect(none.parts[id]).not.toBe(started.parts[id]);
+          continue;
+        }
+        expect(none.parts[id]).toBe(started.parts[id]);
+        expect(none.parts[id]).toBe(claimed.parts[id]);
+      }
+      const swap = (text, headline) => text.split(headline).join("HEADLINE");
+      expect(swap(none.card, NO_STORY_HEADLINE[lang])).toBe(swap(started.card, STARTED_HEADLINE[lang]));
+      expect(swap(none.card, NO_STORY_HEADLINE[lang])).toBe(swap(claimed.card, STARTED_HEADLINE[lang]));
+    }
+  });
+});
+
 describe("paywall headline follows the open source", () => {
   it("boot on the hub uses the fallback headline", async () => {
     await openPaywallFrom(null);

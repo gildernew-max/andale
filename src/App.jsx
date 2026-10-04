@@ -4270,6 +4270,7 @@ const UI = {
     comeBackTomorrow: "Vuelve mañana por la siguiente escena.",
     paywallHeadline: "La historia sigue.",
     paywallHeadlineFallback: "Hay mucho más por leer.",
+    paywallHeadlineNoStory: "Hay mucho por leer.",
     paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
     paywallAnnual: "Un año",
     paywallMonthly: "Un mes",
@@ -4360,6 +4361,7 @@ const UI = {
     comeBackTomorrow: "Come back tomorrow for the next scene.",
     paywallHeadline: "The story goes on.",
     paywallHeadlineFallback: "There's much\u00A0more to read.",
+    paywallHeadlineNoStory: "There's a lot to read.",
     paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
     paywallAnnual: "One year",
     paywallMonthly: "One month",
@@ -7260,6 +7262,7 @@ export default function App() {
   const headerD = onboardingOpen
     ? (theme === "dark" ? { ...D, ink: "#F6EFE4", sub: "#CDBBA6" } : { ...D, sub: "#6B6258" })
     : D;
+  const lecturaStartedStored = lecturaStartedFromProgress(prog);
   const paywallGate = shouldShowSoftPaywall({
     paywallSeen: !!prog.paywallSeen,
     unlockedPrem: !!prog.unlockedPrem,
@@ -7270,7 +7273,7 @@ export default function App() {
     screen,
     splash: splashOpen,
     paywallHold: !!prog.paywallHold,
-    lecturaStartedStored: lecturaStartedFromProgress(prog),
+    lecturaStartedStored,
     winDays: prog.winDays,
   });
   const canCharge = detectNativeIap();
@@ -7283,7 +7286,7 @@ export default function App() {
   // A successful Restore tap holds the wall so the status line stays readable.
   const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue() || chapterBirdHandoff;
   const paywallHeadlineSource = chapterBirdHandoff ? PAYWALL_SOURCE.lecturaBirdHandoff : paywallSource;
-  const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource);
+  const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource, lecturaStartedStored);
   const paywallStillRel = paywallStillPath(storyView, paraIdx);
   const paywallStillSrc = paywallStillRel && !paywallStillMiss
     ? `${import.meta.env.BASE_URL}${paywallStillRel}`
