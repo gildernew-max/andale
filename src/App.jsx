@@ -18,6 +18,7 @@ import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { STREAK_FLAME, shouldPopFirstStreak, streakChipLabel, streakLabelColor } from "./streakChip.js";
 import { streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
+import { shouldShowWelcomeBack, welcomeBackLine } from "./welcomeBack.js";
 import { winNumeralColor } from "./winNumeral.js";
 import { scoreCountClause } from "./scoreLine.js";
 import { probeAudioFile, storyAudioUrl } from "./storyAudio.js";
@@ -8323,6 +8324,15 @@ export default function App() {
             const pathSection = resumeU
               ? (FLAT.find((x) => x.unit.id === resumeU.id)?.section || SECTIONS[0])
               : nextF?.section;
+            const beginnerResume = prog.resume?.unitId === "_first"
+              && Array.isArray(prog.resume.order)
+              && prog.resume.order.some((step) => step?.u === "_beginner");
+            const resumeLesson = beginnerResume
+              ? uiText(BEGINNER_SESSION_TITLE, uiLang)
+              : (pathUnit?.title || "");
+            const welcomeLine = shouldShowWelcomeBack({ prog, today: todayKey })
+              ? welcomeBackLine({ lang: uiLang, streak: streakView.displayStreak, lesson: resumeLesson })
+              : "";
             const openPath = () => {
               if (!pathUnit) return;
               setSheet({ unit: pathUnit, section: pathSection || SECTIONS[0], crowns: prog.done?.[pathUnit.id] || 0 });
@@ -8333,7 +8343,7 @@ export default function App() {
             const hoyDone = hoyHubDone({ todaySceneDone });
             const goalReached = (prog.xpToday || 0) >= DAILY_GOAL;
             const hubTiles = [
-              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
+              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: welcomeLine || L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
               { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => openGamesHub() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
@@ -8353,7 +8363,7 @@ export default function App() {
                         alignItems: "center",
                         justifyContent: "space-between",
                         width: "100%",
-                        height: 168,
+                        ...(welcomeLine ? { height: "auto", minHeight: 168 } : { height: 168 }),
                         boxSizing: "border-box",
                         position: "relative",
                         background: theme === "dark" ? D.card : HUB_CREAM,
@@ -8375,9 +8385,9 @@ export default function App() {
                       <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
                       <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
                       <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
-                      {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{tile.quiet}</div>}
+                      {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, overflowWrap: "break-word", maxWidth: "100%" }}>{tile.quiet}</div>}
                       {tile.id === "hoy" && goalReached && (
-                        <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}: {DAILY_GOAL} XP.</div>
+                        <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}: {DAILY_GOAL}{"\u00a0"}XP.</div>
                       )}
                       </span>
                     </button>

@@ -18,8 +18,8 @@ import {
 installFlowHooks();
 
 const GOAL = 40;
-const ES = `Meta de hoy cumplida: ${GOAL} XP.`;
-const EN = `Today\u2019s goal done: ${GOAL} XP.`;
+const ES = `Meta de hoy cumplida: ${GOAL}\u00a0XP.`;
+const EN = `Today\u2019s goal done: ${GOAL}\u00a0XP.`;
 
 const home = async (extra = {}) => {
   cleanup();
