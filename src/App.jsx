@@ -275,8 +275,13 @@ function darkLessonChipPaint({ used = false, wrong = false, D, cream }) {
   }
   return { background: D.subtle, borderColor: D.line, borderBottomColor: D.line, color: cream, opacity: 1 };
 }
-/** Body-size ink when `color` is brand lime. Other section colors pass through. */
-const limeText = (color, palette) => (color === palette.green ? palette.greenText : color);
+/** Light body-size ink for brand lime, greenDark, and okText.
+ *  Dark lime still maps to greenText (#58CC02). Dark greenDark and okText stay put. */
+const limeText = (color, palette) => {
+  if (color === palette.green) return palette.greenText;
+  if (palette === D_LIGHT && (color === palette.greenDark || color === palette.okText)) return palette.greenText;
+  return color;
+};
 
 // Legacy alias — anything OUTSIDE the App function that reads D still works (icons, etc.).
 const D = D_LIGHT;
@@ -8266,7 +8271,7 @@ export default function App() {
                       {tile.id === "hoy" && hoyDone && (
                         <span data-testid="hub-hoy-done" aria-hidden="true" style={{
                           position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: 99,
-                          background: D.greenBg, color: D.okText, fontSize: 12, fontWeight: 900, lineHeight: "20px",
+                          background: D.greenBg, color: limeText(D.okText, D), fontSize: 12, fontWeight: 900, lineHeight: "20px",
                         }}>✓</span>
                       )}
                       <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
@@ -8701,7 +8706,7 @@ export default function App() {
 	                      <div style={{ fontWeight: 900, fontSize: 18, color: D.ink }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
 	                      <div style={{ fontSize: 13, color: D.sub, fontWeight: 800 }}>{meta.place ? `${meta.place} · ` : ""}{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
 		                      <div style={{ fontSize: 12, color: theme === "dark" ? D.sub : limeText(sec.color, D), fontWeight: 900, marginTop: 4 }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
-		                      {souvenir && <div style={{ fontSize: 11.5, color: theme === "dark" ? (claimed ? D.green : D.sub) : (claimed ? D.greenDark : D.sub), fontWeight: 900, marginTop: 4 }}>{claimed ? "✓ " : ""}{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
+		                      {souvenir && <div style={{ fontSize: 11.5, color: theme === "dark" ? (claimed ? D.green : D.sub) : (claimed ? limeText(D.greenDark, D) : D.sub), fontWeight: 900, marginTop: 4 }}>{claimed ? "✓ " : ""}{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
 	                    </div>
                     {claimed && <IcCrown size={26} />}
                   </div>
@@ -9012,7 +9017,7 @@ export default function App() {
             <>
               <p style={{ color: D.sub, fontWeight: 700, marginBottom: 20 }}>
 	                <b style={{ color: D.red, fontSize: 18 }}>{dueCount}</b> {L.dueToday} <span style={{ opacity: .7 }}>({trackedCount} {L.tracked})</span>.
-	                {L.practiceFree} <b style={{ color: D.green }}><IcHeart size={15} /> +1</b>.
+	                {L.practiceFree} <b style={{ color: limeText(D.green, D) }}><IcHeart size={15} /> +1</b>.
               </p>
 	              <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.reviewToday} ({dueCount})</Btn>
               <p data-testid="memory-window" style={{ fontSize: 12, color: theme === "dark" ? D.sub : "#6B6258", fontWeight: 700, marginTop: 14 }}>
@@ -9255,7 +9260,7 @@ export default function App() {
                     border: `2px solid ${uiLang === opt.id ? D.green : D.line}`,
                     borderBottom: `4px solid ${uiLang === opt.id ? D.greenDark : D.line}`,
                     background: uiLang === opt.id ? D.greenBg : D.card,
-                    color: uiLang === opt.id ? D.greenDark : D.ink,
+                    color: uiLang === opt.id ? limeText(D.greenDark, D) : D.ink,
                     borderRadius: 14,
                     padding: "10px 11px",
                     fontFamily: "inherit",
@@ -9342,7 +9347,7 @@ export default function App() {
                 <CoachPortrait id={cc.id} mood="happy" size={56} />
                 <div style={{ fontWeight: 900, fontSize: 13 }}>{COACHES[cc.id].name}</div>
                 <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{cc.n} {uiLang === "en" ? (cc.n === 1 ? "session" : "sessions") : (cc.n === 1 ? "sesión" : "sesiones")}</div>
-                <div data-testid={`coach-cta-${cc.id}`} style={{ fontSize: 11.5, fontWeight: 900, color: D.greenDark, background: D.greenBg, border: `1.5px solid ${D.green}`, borderRadius: 99, padding: "2px 10px", marginTop: 2 }}>{cc.cta} →</div>
+                <div data-testid={`coach-cta-${cc.id}`} style={{ fontSize: 11.5, fontWeight: 900, color: limeText(D.greenDark, D), background: D.greenBg, border: `1.5px solid ${D.green}`, borderRadius: 99, padding: "2px 10px", marginTop: 2 }}>{cc.cta} →</div>
               </button>
             ))}
           </div>
@@ -9421,7 +9426,7 @@ export default function App() {
               </div>
               <div onClick={() => setFlashFlipped((f) => !f)} className="pop" data-testid="flash-card"
                 style={{ minHeight: 230, border: `2px solid ${flashFlipped ? D.green : D.blue}`, borderBottom: `6px solid ${flashFlipped ? D.greenDark : D.blueDark}`, borderRadius: 18, padding: 22, background: D.card, display: "flex", flexDirection: "column", justifyContent: "center", textAlign: "center", cursor: "pointer" }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: flashFlipped ? D.greenDark : D.blueDark, letterSpacing: ".06em", marginBottom: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: flashFlipped ? limeText(D.greenDark, D) : D.blueDark, letterSpacing: ".06em", marginBottom: 10 }}>
 	                  {dueFlashcards.length ? L.dueReview : L.ahead} · {flashMode === "es-en" ? "ES → EN" : "EN → ES"}
                 </div>
                 {!flashFlipped ? (
@@ -9451,12 +9456,12 @@ export default function App() {
               </div>
               <div style={{ marginTop: 18, display: "grid", gap: 8 }} data-testid="flash-deck-list">
                 {flashDeck.map((c, i) => (
-                  <div key={`${strip(c.word)}-${i}`} style={{ border: `2px solid ${i === flashRun.idx ? D.blue : D.line}`, borderRadius: 12, padding: "8px 11px", display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", background: D.card, opacity: i < flashRun.idx ? 0.55 : 1 }}>
+                  <div key={`${strip(c.word)}-${i}`} data-testid={i < flashRun.idx ? "flash-deck-reviewed" : "flash-deck-row"} style={{ border: `2px solid ${i === flashRun.idx ? D.blue : D.line}`, borderRadius: 12, padding: "8px 11px", display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", background: theme !== "dark" && i < flashRun.idx ? D.greenBg : D.card, opacity: theme === "dark" && i < flashRun.idx ? 0.55 : 1 }}>
                     <div>
                       <div style={{ fontWeight: 900, fontSize: 14 }}>{c.word} <span style={{ color: D.sub, fontWeight: 800 }}>— {c.en}</span></div>
                       <div style={{ fontSize: 11.5, color: D.sub, fontWeight: 800 }}>{c.story}</div>
                     </div>
-	                    <div style={{ fontSize: 11, fontWeight: 900, color: i < flashRun.idx ? D.green : D.sub }}>{i < flashRun.idx ? "✓" : `${i + 1}`}</div>
+	                    <div data-testid={i < flashRun.idx ? "flash-deck-check" : "flash-deck-index"} style={{ fontSize: 11, fontWeight: 900, color: i < flashRun.idx ? limeText(D.green, D) : D.sub }}>{i < flashRun.idx ? "✓" : `${i + 1}`}</div>
                   </div>
                 ))}
               </div>
@@ -10103,7 +10108,7 @@ export default function App() {
 	                {L.reviewErrors}
               </span>
             ) : session.testOut != null ? (
-              <span style={{ fontSize: 11.5, fontWeight: 900, color: session.color, letterSpacing: ".05em" }}>
+              <span style={{ fontSize: 11.5, fontWeight: 900, color: limeText(session.color, D), letterSpacing: ".05em" }}>
 	                {L.test} · {coachName(session.host)}: {lessonStats.wrong}/2 {L.errors}
               </span>
             ) : <span />}
@@ -10180,7 +10185,7 @@ export default function App() {
                   <span style={{ fontSize: 18, fontWeight: 800 }}>{q.base}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0 0" }}>
-                  <span style={{ fontSize: 20, fontWeight: 900, color: session.color }}>↓</span>
+                  <span style={{ fontSize: 20, fontWeight: 900, color: limeText(session.color, D) }}>↓</span>
                   <span style={{ fontSize: 13, fontWeight: 900, color: "#fff", background: session.color, borderRadius: 99, padding: "4px 13px", borderBottom: `3px solid ${session.dark}` }}>{q.instruction}</span>
                 </div>
               </div>
@@ -10223,7 +10228,7 @@ export default function App() {
                   const showState = status !== "idle";
                   const isAns = c === q.answer;
                   let bg = "#fff", bd = D.line, col = D.ink;
-                  if (showState && isAns) { bg = D.okBg; bd = D.green; col = D.okText; }
+                  if (showState && isAns) { bg = D.okBg; bd = D.green; col = limeText(D.okText, D); }
                   else if (showState && isSel && !isAns) { bg = D.badBg; bd = D.red; col = theme === "dark" ? D.red : D.badText; }
                   else if (isSel) { bg = "#DDF4FF"; bd = D.blue; col = D.blueDark; }
                   else if (theme === "dark") { bg = D.subtle; col = HUB_CREAM; }
@@ -10319,7 +10324,7 @@ export default function App() {
                                       background: used ? D.greenBg : "#fff",
                                       borderColor: used ? D.green : D.line,
                                       borderBottomColor: used ? D.green : D.line,
-                                      color: used ? D.greenDark : D.greenText,
+                                      color: used ? limeText(D.greenDark, D) : D.greenText,
                                       fontWeight: 800,
                                     }),
                               }}>
@@ -10428,10 +10433,10 @@ export default function App() {
                                 : darkLessonChipPaint({ used: !!(isMatched || isWrong), wrong: !!isWrong, D, cream: HUB_CREAM }))
                               : {
                                   background: isMatched ? D.okBg : isWrong ? D.badBg : (isSel ? "#DDF4FF" : "#fff"),
-                                  borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line,
-                                  borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line,
-                                  color: isMatched ? D.okText : isWrong ? D.badText : (isSel ? D.blueDark : D.ink),
-                                  opacity: isMatched ? 0.55 : 1,
+                                  borderColor: isMatched ? D.line : isWrong ? D.red : isSel ? D.blue : D.line,
+                                  borderBottomColor: isMatched ? D.line : isWrong ? D.red : isSel ? D.blue : D.line,
+                                  color: isMatched ? limeText(D.okText, D) : isWrong ? D.badText : (isSel ? D.blueDark : D.ink),
+                                  opacity: 1,
                                 }),
                           }}>
                           {item.t}
@@ -10454,10 +10459,10 @@ export default function App() {
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div style={{ flex: 1, ...(footerCapped ? { minWidth: 0 } : null), fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : D.okText }}>
+              <div style={{ flex: 1, ...(footerCapped ? { minWidth: 0 } : null), fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : limeText(D.okText, D) }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
-                    <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: 0.85 }}>
+                    <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: theme === "dark" ? 0.85 : 1 }}>
                       {L.yourAnswer}: {wordOrderMiss}
                     </div>
                     <div data-testid="word-order-tip" className="pop" style={{ marginBottom: 8, border: `1.5px solid ${D.gold}`, borderRadius: 11, padding: "8px 10px", background: D.goldBg, fontSize: 12.5, fontWeight: 800, lineHeight: 1.35, color: D.ink }}>
@@ -10483,7 +10488,7 @@ export default function App() {
                           <div style={{ fontSize: 15.5, marginTop: 2 }}>
 	                            <span style={{ opacity: 0.8, fontSize: 12.5 }}>{L.correct}: </span>
                             {marks.map((m, i) => (
-                              <b key={i} style={{ color: m.k === "ok" ? D.okText : m.k === "accent" ? "#E08600" : D.badText, borderBottom: m.k === "ok" ? "none" : "2.5px solid currentColor", marginRight: 5 }}>{m.w}</b>
+                              <b key={i} style={{ color: m.k === "ok" ? limeText(D.okText, D) : m.k === "accent" ? "#E08600" : D.badText, borderBottom: m.k === "ok" ? "none" : "2.5px solid currentColor", marginRight: 5 }}>{m.w}</b>
                             ))}
                           </div>
 	                          {hasAccent && <div style={{ fontSize: 11.5, color: D.accent, marginTop: 2 }}>{uiLang === "en" ? "orange = only the accent is missing" : "naranja = solo falta el acento"}</div>}
@@ -10513,7 +10518,7 @@ export default function App() {
 	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} onClick={check} style={{ width: "100%", flexShrink: 0 }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
-	                    <div style={{ fontSize: 11, fontWeight: 900, color: D.okText, marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
+	                    <div style={{ fontSize: 11, fontWeight: 900, color: limeText(D.okText, D), marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
                     <div style={{ display: "flex", gap: 7 }}>
 	                      <Btn color={"#FF9600"} dark={"#D97F00"} onClick={() => gradeAndNext(3)} style={{ padding: "10px 13px", fontSize: 12 }}>{L.hard}</Btn>
 	                      <Btn color={D.blue} dark={D.blueDark} onClick={() => gradeAndNext(4)} style={{ padding: "10px 13px", fontSize: 12 }}>{L.good}</Btn>
@@ -10529,7 +10534,7 @@ export default function App() {
 	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} onClick={check} style={{ flexShrink: 0 }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
-	                    <div style={{ fontSize: 11, fontWeight: 900, color: D.okText, marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
+	                    <div style={{ fontSize: 11, fontWeight: 900, color: limeText(D.okText, D), marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
                     <div style={{ display: "flex", gap: 7 }}>
 	                      <Btn color={"#FF9600"} dark={"#D97F00"} onClick={() => gradeAndNext(3)} style={{ padding: "10px 13px", fontSize: 12 }}>{L.hard}</Btn>
 	                      <Btn color={D.blue} dark={D.blueDark} onClick={() => gradeAndNext(4)} style={{ padding: "10px 13px", fontSize: 12 }}>{L.good}</Btn>
@@ -10560,7 +10565,7 @@ export default function App() {
               <div style={{ flex: 1, height: 14, background: D.line, borderRadius: 99, overflow: "hidden" }}>
                 <div style={{ width: `${Math.round((dialogue.done ? 1 : dialogue.idx / activeDuel.steps.length) * 100)}%`, height: "100%", background: activeDuel.color }} />
               </div>
-              <span style={{ fontSize: 12, fontWeight: 900, color: activeDuel.dark }}>{dialogue.score}/{maxScore}</span>
+              <span style={{ fontSize: 12, fontWeight: 900, color: limeText(activeDuel.dark, D) }}>{dialogue.score}/{maxScore}</span>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 12, marginBottom: 16 }}>
@@ -10581,7 +10586,7 @@ export default function App() {
                     <div key={i} style={{ background: D.card, border: `2px solid ${D.line}`, borderRadius: 12, padding: "8px 10px" }}>
                       <div style={{ fontSize: 12, fontWeight: 900, color: D.sub }}>{uiLang === "en" ? "Turn" : "Turno"} {i + 1}</div>
                       <div style={{ fontSize: 13.5, fontWeight: 800 }}>{row.choice.text}</div>
-                      <div style={{ fontSize: 12.5, fontWeight: 800, color: row.choice.score >= 2 ? D.okText : D.badText, marginTop: 3 }}>{row.choice.note}</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 800, color: row.choice.score >= 2 ? limeText(D.okText, D) : D.badText, marginTop: 3 }}>{row.choice.note}</div>
                     </div>
                   ))}
                 </div>
@@ -10593,7 +10598,7 @@ export default function App() {
                 {step.choices.map((choice, i) => (
                   <button key={i} onClick={() => chooseDialogue(choice)} className="choice-card"
                     style={{ textAlign: "left", padding: "13px 15px", fontSize: 15.5, fontWeight: 800, fontFamily: "inherit", cursor: "pointer", background: D.card }}>
-                    <span style={{ display: "inline-block", fontSize: 12, fontWeight: 900, border: `2px solid ${activeDuel.color}`, color: activeDuel.dark, borderRadius: 8, padding: "1px 7px", marginRight: 9 }}>{i + 1}</span>
+                    <span style={{ display: "inline-block", fontSize: 12, fontWeight: 900, border: `2px solid ${activeDuel.color}`, color: limeText(activeDuel.dark, D), borderRadius: 8, padding: "1px 7px", marginRight: 9 }}>{i + 1}</span>
                     {choice.text}
                   </button>
                 ))}
@@ -10614,10 +10619,10 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
               <button onClick={() => { setPaywallSource(PAYWALL_SOURCE.snake); setScreen("home"); setTab("practica"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".08em" }}>{uiLang === "en" ? "BOARD RUN" : "CARRERA DE TABLERO"}</div>
+                <div style={{ fontSize: 11, fontWeight: 900, color: limeText(D.greenDark, D), letterSpacing: ".08em" }}>{uiLang === "en" ? "BOARD RUN" : "CARRERA DE TABLERO"}</div>
                 <div style={{ fontWeight: 900, fontSize: 21 }}>Serpientes y Escaleras</div>
               </div>
-              <div style={{ border: `2px solid ${D.green}`, borderBottom: `4px solid ${D.greenDark}`, borderRadius: 12, padding: "7px 10px", background: D.greenBg, fontWeight: 900, color: D.greenDark }}>{snakeGame.tile}/24</div>
+              <div style={{ border: `2px solid ${D.green}`, borderBottom: `4px solid ${D.greenDark}`, borderRadius: 12, padding: "7px 10px", background: D.greenBg, fontWeight: 900, color: limeText(D.greenDark, D) }}>{snakeGame.tile}/24</div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
 
@@ -10630,7 +10635,7 @@ export default function App() {
               ].map(([label, value]) => (
                 <div key={label} style={{ border: `2px solid ${D.line}`, borderRadius: 12, padding: "7px 5px", textAlign: "center", background: D.card }}>
                   <div style={{ fontSize: 9.5, fontWeight: 900, color: D.sub }}>{label}</div>
-                  <div style={{ fontSize: 16, fontWeight: 900, color: D.greenDark }}>{value}</div>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: limeText(D.greenDark, D) }}>{value}</div>
                 </div>
               ))}
             </div>
@@ -10656,9 +10661,9 @@ export default function App() {
                   const bg = n === 24 ? D.goldBg : isHere ? D.card : isPending ? D.blueBg : D.subtle;
                   const bd = n === 24 ? D.gold : isHere ? D.green : isPending ? D.blue : D.line;
                   return (
-                    <div key={n} data-testid={`snake-tile-${n}`} style={{ aspectRatio: "1 / 1", minHeight: 42, border: `2px solid ${bd}`, borderBottom: `4px solid ${bd}`, borderRadius: 10, background: bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", color: isHere ? D.greenDark : D.ink, fontWeight: 900 }}>
+                    <div key={n} data-testid={`snake-tile-${n}`} style={{ aspectRatio: "1 / 1", minHeight: 42, border: `2px solid ${bd}`, borderBottom: `4px solid ${bd}`, borderRadius: 10, background: bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", color: isHere ? limeText(D.greenDark, D) : D.ink, fontWeight: 900 }}>
                       <span style={{ fontSize: 13 }}>{n}</span>
-                      {link && <span style={{ fontSize: 10, color: link.kind === "ladder" ? D.greenDark : D.redDark }}>{link.kind === "ladder" ? `↗${link.to}` : `↓${link.to}`}</span>}
+                      {link && <span style={{ fontSize: 10, color: link.kind === "ladder" ? limeText(D.greenDark, D) : D.redDark }}>{link.kind === "ladder" ? `↗${link.to}` : `↓${link.to}`}</span>}
                       {isHere && <span style={{ position: "absolute", right: 4, top: 3, width: 13, height: 13, borderRadius: "50%", background: D.green, border: `2px solid ${D.greenDark}` }} />}
                     </div>
                   );
@@ -10683,7 +10688,7 @@ export default function App() {
                 <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
                   <CoachPortrait id={snakeGame.focus.host || "luna"} mood={snakeGame.status === "wrong" ? "sad" : "happy"} size={60} />
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 900, color: D.greenDark, letterSpacing: ".06em" }}>{snakeGame.focus.title[uiLang]} · {focusLabel(qg.skill, uiLang)}</div>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: limeText(D.greenDark, D), letterSpacing: ".06em" }}>{snakeGame.focus.title[uiLang]} · {focusLabel(qg.skill, uiLang)}</div>
                     <div style={{ fontSize: 17, fontWeight: 900, lineHeight: 1.25 }}>{qg.prompt}</div>
                   </div>
                 </div>
@@ -10694,8 +10699,8 @@ export default function App() {
                     const chosen = strip(choice) === strip(snakeGame.selected || "");
                     return (
                       <button key={`${choice}-${i}`} data-testid={`snake-choice-${i}`} disabled={revealed} onClick={() => chooseSnake(choice)}
-                        style={{ textAlign: "left", border: `2px solid ${revealed && correct ? D.green : revealed && chosen ? D.red : D.line}`, borderBottom: `4px solid ${revealed && correct ? D.greenDark : revealed && chosen ? D.redDark : D.line}`, background: revealed && correct ? D.greenBg : revealed && chosen ? D.redBg : D.card, color: revealed && correct ? D.greenDark : revealed && chosen ? D.redDark : D.ink, borderRadius: 13, padding: "11px 12px", fontFamily: "inherit", fontWeight: 850, fontSize: 14.5, cursor: revealed ? "default" : "pointer" }}>
-                        <span style={{ display: "inline-block", fontSize: 12, fontWeight: 900, border: `2px solid ${D.green}`, color: D.greenDark, borderRadius: 8, padding: "1px 7px", marginRight: 9 }}>{i + 1}</span>
+                        style={{ textAlign: "left", border: `2px solid ${revealed && correct ? D.green : revealed && chosen ? D.red : D.line}`, borderBottom: `4px solid ${revealed && correct ? D.greenDark : revealed && chosen ? D.redDark : D.line}`, background: revealed && correct ? D.greenBg : revealed && chosen ? D.redBg : D.card, color: revealed && correct ? limeText(D.greenDark, D) : revealed && chosen ? D.redDark : D.ink, borderRadius: 13, padding: "11px 12px", fontFamily: "inherit", fontWeight: 850, fontSize: 14.5, cursor: revealed ? "default" : "pointer" }}>
+                        <span style={{ display: "inline-block", fontSize: 12, fontWeight: 900, border: `2px solid ${D.green}`, color: limeText(D.greenDark, D), borderRadius: 8, padding: "1px 7px", marginRight: 9 }}>{i + 1}</span>
                         {choice}
                       </button>
                     );
@@ -10703,7 +10708,7 @@ export default function App() {
                 </div>
                 {snakeGame.status !== "idle" && (
                   <CappedFeedback testId="snakes-feedback" onPin={setSnakesPinned} className="pop" style={{ marginTop: 12, border: `2px solid ${snakeGame.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: snakeGame.status === "correct" ? D.greenBg : D.redBg }}>
-                    <div style={{ fontWeight: 900, color: snakeGame.status === "correct" ? D.greenDark : D.redDark }}>
+                    <div data-testid="snake-roll-heading" style={{ fontWeight: 900, color: snakeGame.status === "correct" ? limeText(D.greenDark, D) : D.redDark }}>
                       {snakeGame.status === "correct"
                         ? `${uiLang === "en" ? "Roll" : "Tiro"} ${snakeGame.roll}: ${snakeGame.tile} → ${snakeGame.pendingTile}${snakeGame.link ? ` → ${snakeGame.finalTile}` : ""}`
                         : `${uiLang === "en" ? "Slide back" : "Retrocede"} ${snakeGame.roll}: ${snakeGame.tile} → ${snakeGame.finalTile}`}
@@ -10797,7 +10802,7 @@ export default function App() {
                     const color = palette[key];
                     return (
                       <button key={key} data-testid={`safe-risky-choice-${key}`} data-safe-risky-state={showCorrect ? "correct" : showWrong ? "wrong" : "idle"} disabled={revealed || chosen} onClick={() => chooseSafeRisky(key)}
-                        style={{ border: `2px solid ${showCorrect ? D.green : showWrong ? D.red : color}`, borderBottom: `5px solid ${showCorrect ? D.greenDark : showWrong ? (theme === "dark" ? D.red : D.redDark) : color}`, background: showCorrect ? D.greenBg : showWrong ? D.redBg : D.card, color: showCorrect ? D.greenDark : showWrong ? D.red : D.ink, borderRadius: 14, padding: "12px 10px", fontFamily: "inherit", fontWeight: 900, fontSize: 14, cursor: revealed || chosen ? "default" : "pointer" }}>
+                        style={{ border: `2px solid ${showCorrect ? D.green : showWrong ? D.red : color}`, borderBottom: `5px solid ${showCorrect ? D.greenDark : showWrong ? (theme === "dark" ? D.red : D.redDark) : color}`, background: showCorrect ? D.greenBg : showWrong ? D.redBg : D.card, color: showCorrect ? limeText(D.greenDark, D) : showWrong ? D.red : D.ink, borderRadius: 14, padding: "12px 10px", fontFamily: "inherit", fontWeight: 900, fontSize: 14, cursor: revealed || chosen ? "default" : "pointer" }}>
                         {labels[key]}
                       </button>
                     );
@@ -10812,7 +10817,7 @@ export default function App() {
                 )}
                 {revealed && (
                   <CappedFeedback testId="safe-risky-feedback" onPin={setSafePinned} className="pop" style={{ marginTop: 14, border: `2px solid ${hit ? D.green : D.red}`, borderRadius: 14, padding: "11px 13px", background: hit ? D.greenBg : D.redBg, textAlign: "left" }}>
-                    <div style={{ fontWeight: 900, color: hit ? (theme === "dark" ? "#58CC02" : D.greenDark) : (theme === "dark" ? D.red : D.redDark), marginBottom: 4 }}>
+                    <div style={{ fontWeight: 900, color: hit ? (theme === "dark" ? "#58CC02" : limeText(D.greenDark, D)) : (theme === "dark" ? D.red : D.redDark), marginBottom: 4 }}>
                       {hit ? (safeGame.streak >= 3 ? (uiLang === "en" ? "Combo judgment." : "Juicio en combo.") : (uiLang === "en" ? "Good judgment." : "Buen juicio.")) : `${uiLang === "en" ? "Better answer" : "Mejor respuesta"}: ${safeRiskyAnswerLabel(item, labels)}`}
                     </div>
                     <div data-testid="safe-risky-literal" style={{ marginTop: 8 }}>
@@ -10970,7 +10975,7 @@ export default function App() {
                             data-state={isMatched ? "matched" : isWrong ? "wrong" : isSel ? "selected" : "idle"}
                             disabled={isMatched || matchGame.done}
                             onClick={() => onMatchPracticeTap(side, item.id)}
-                            style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : (theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")), borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? D.okText : isWrong ? D.badText : (theme === "dark" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)), opacity: isMatched ? 0.55 : 1 }}>
+                            style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : (theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")), borderColor: isMatched ? (theme === "dark" ? D.green : D.line) : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? (theme === "dark" ? D.green : D.line) : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? limeText(D.okText, D) : isWrong ? D.badText : (theme === "dark" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)), opacity: isMatched && theme === "dark" ? 0.55 : 1 }}>
                             {item.t}
                           </button>
                         );
@@ -11156,7 +11161,7 @@ export default function App() {
                   const chosen = jeopardyChoiceMatch(choice, jeopardy.selected || "");
                   return (
                     <button key={`${choice}-${i}`} data-testid={`jeopardy-choice-${i}`} disabled={revealed} onClick={() => chooseJeopardy(choice)}
-                      style={{ textAlign: "left", border: `2px solid ${revealed && correct ? D.green : revealed && chosen ? D.red : D.line}`, borderBottom: `4px solid ${revealed && correct ? D.greenDark : revealed && chosen ? D.redDark : D.line}`, background: revealed && correct ? D.greenBg : revealed && chosen ? D.redBg : D.card, color: revealed && correct ? D.greenDark : revealed && chosen ? D.redDark : D.ink, borderRadius: 13, padding: "12px 13px", fontFamily: "inherit", fontWeight: 850, fontSize: 15, cursor: revealed ? "default" : "pointer" }}>
+                      style={{ textAlign: "left", border: `2px solid ${revealed && correct ? D.green : revealed && chosen ? D.red : D.line}`, borderBottom: `4px solid ${revealed && correct ? D.greenDark : revealed && chosen ? D.redDark : D.line}`, background: revealed && correct ? D.greenBg : revealed && chosen ? D.redBg : D.card, color: revealed && correct ? limeText(D.greenDark, D) : revealed && chosen ? D.redDark : D.ink, borderRadius: 13, padding: "12px 13px", fontFamily: "inherit", fontWeight: 850, fontSize: 15, cursor: revealed ? "default" : "pointer" }}>
                       <span style={{ display: "inline-block", fontSize: 12, fontWeight: 900, border: `2px solid #C46B3A`, color: "#C46B3A", borderRadius: 8, padding: "1px 7px", marginRight: 9 }}>{i + 1}</span>
                       {choice}
                     </button>
@@ -11165,7 +11170,7 @@ export default function App() {
               </div>
               {jeopardy.status !== "idle" && (
                 <CappedFeedback testId="jeopardy-result" onPin={setJeopardyPinned} className="pop" style={{ marginTop: 13, border: `2px solid ${jeopardy.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: jeopardy.status === "correct" ? D.greenBg : D.redBg }}>
-                  <div style={{ fontWeight: 900, color: jeopardy.status === "correct" ? D.greenDark : D.redDark }}>
+                  <div data-testid="jeopardy-score-heading" style={{ fontWeight: 900, color: jeopardy.status === "correct" ? limeText(D.greenDark, D) : D.redDark }}>
                     {jeopardy.status === "correct" ? `+${jeopardy.active.stake || jeopardy.active.value}` : `${jeopardy.active.double ? `-${Math.floor((jeopardy.active.stake || jeopardy.active.value) / 2)} · ` : ""}${jeopardyAnswerLabel(uiLang)}: ${jeopardy.active.answer}`}
                   </div>
                   <div data-testid="jeopardy-why" style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>{explainText(jeopardy.active, uiLang) || uiText(jeopardy.active.focusDesc, uiLang)}</div>
@@ -11302,7 +11307,7 @@ export default function App() {
                   </button>
                 )}
                 {wordSel.note && (storyMode !== "challenge" || wordReveal) && <div style={{ fontSize: 13, fontWeight: 700, color: D.ink, marginTop: 3, background: D.goldBg, border: `1.5px solid ${D.gold}`, borderRadius: 8, padding: "5px 9px" }}>{wordSel.note}</div>}
-                {wordSel.key && <div style={{ marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5, background: D.greenBg, border: `1.5px solid ${D.green}`, color: D.greenDark, borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 900 }}>{uiLang === "en" ? "KEY WORD FOUND" : "PALABRA CLAVE"} · {wordSel.key}</div>}
+                {wordSel.key && <div style={{ marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5, background: D.greenBg, border: `1.5px solid ${D.green}`, color: limeText(D.greenDark, D), borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 900 }}>{uiLang === "en" ? "KEY WORD FOUND" : "PALABRA CLAVE"} · {wordSel.key}</div>}
                 {wordSel.source && wordSel.source !== wordSel.clean && (storyMode !== "challenge" || wordReveal) && (
                   <div style={{ fontSize: 12, fontWeight: 800, color: D.sub, marginTop: 5 }}>{uiLang === "en" ? "Related form" : "Forma relacionada"}: <b>{wordSel.source}</b></div>
                 )}
@@ -11328,7 +11333,7 @@ export default function App() {
 	              <button type="button" onClick={() => { setWordSel(null); setPaywallSource(PAYWALL_SOURCE.storyClose); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: sec.color }}>{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: limeText(sec.color, D) }}>{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
               </div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
@@ -11342,7 +11347,7 @@ export default function App() {
                 { id: "challenge", l: uiLang === "en" ? "Challenge" : "Reto" },
               ].map((m) => (
                 <button key={m.id} onClick={() => { setStoryMode(m.id); setWordReveal(m.id !== "challenge"); }}
-                  style={{ border: `2px solid ${storyMode === m.id ? sec.color : D.line}`, borderBottom: `4px solid ${storyMode === m.id ? sec.dark : D.line}`, background: storyMode === m.id ? (theme === "dark" ? D.greenBg : "#fff") : (theme === "dark" ? D.subtle : "#F7F7F7"), color: storyMode === m.id ? (theme === "dark" ? D.green : sec.dark) : D.sub, borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
+                  style={{ border: `2px solid ${storyMode === m.id ? sec.color : D.line}`, borderBottom: `4px solid ${storyMode === m.id ? sec.dark : D.line}`, background: storyMode === m.id ? (theme === "dark" ? D.greenBg : "#fff") : (theme === "dark" ? D.subtle : "#F7F7F7"), color: storyMode === m.id ? (theme === "dark" ? D.green : limeText(sec.dark, D)) : D.sub, borderRadius: 11, padding: "7px 11px", fontFamily: "inherit", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>
                   {m.l}
                 </button>
               ))}
@@ -11415,7 +11420,7 @@ export default function App() {
                 )}
                 {checkpoints[pi] && (
                   <div data-testid="lectura-checkpoint" style={{ position: "relative", zIndex: wordSel && wordSel.pi === pi ? 31 : "auto", marginTop: 10 + wordSheetSpacer, marginLeft: latamNarration ? 48 : 0, border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
-                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okText : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
+                    <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? limeText(D.okText, D) : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
                     <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -11436,7 +11441,7 @@ export default function App() {
             <div data-testid="narration-card" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 10, background: D.card, marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 8 }}>
                 <div>
-                  <div data-testid="narration-label" style={{ fontSize: 11, fontWeight: 900, color: sec.dark, letterSpacing: ".06em" }}>{L.narrationLabel}</div>
+                  <div data-testid="narration-label" style={{ fontSize: 11, fontWeight: 900, color: limeText(sec.dark, D), letterSpacing: ".06em" }}>{L.narrationLabel}</div>
                   <div data-testid="narration-sub" style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>
                     {L.narrationSub}
                   </div>
@@ -11468,7 +11473,7 @@ export default function App() {
             <div data-testid="word-hunt-card" className="pop" style={{ border: `2px solid ${sec.color}`, borderBottom: `5px solid ${sec.dark}`, borderRadius: 16, padding: 13, background: D.card, marginBottom: 18 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 9 }}>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 900, color: sec.dark, letterSpacing: ".06em" }}>{uiLang === "en" ? "WORD HUNT" : "CACERÍA DE PALABRAS"}</div>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: limeText(sec.dark, D), letterSpacing: ".06em" }}>{uiLang === "en" ? "WORD HUNT" : "CACERÍA DE PALABRAS"}</div>
                   <div style={{ fontWeight: 900, fontSize: 15 }}>{foundWords.length}/{keyWords.length} {uiLang === "en" ? "key words found" : "palabras clave encontradas"}</div>
                 </div>
                 {extra.collectible && (
@@ -11483,7 +11488,7 @@ export default function App() {
               </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {keyWords.map((w) => (
-                  <span key={w} style={{ border: `1.5px solid ${foundWords.includes(w) ? sec.color : D.line}`, background: foundWords.includes(w) ? (theme === "dark" ? D.greenBg : "#F3FBEA") : (theme === "dark" ? D.subtle : "#F7F7F7"), color: theme === "dark" ? D.ink : (foundWords.includes(w) ? sec.dark : D.sub), borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 900 }}>
+                  <span key={w} style={{ border: `1.5px solid ${foundWords.includes(w) ? sec.color : D.line}`, background: foundWords.includes(w) ? (theme === "dark" ? D.greenBg : "#F3FBEA") : (theme === "dark" ? D.subtle : "#F7F7F7"), color: theme === "dark" ? D.ink : (foundWords.includes(w) ? limeText(sec.dark, D) : D.sub), borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 900 }}>
                     {foundWords.includes(w) ? "✓ " : ""}{w}
                   </span>
                 ))}
@@ -11510,7 +11515,7 @@ export default function App() {
             <div style={{ borderTop: `2px solid ${D.line}`, marginTop: 12, paddingTop: 20 }}>
 	              <h3 style={{ fontWeight: 900, fontSize: 19, margin: "0 0 4px" }}>{L.comprehension}</h3>
               <p style={{ fontSize: 13, fontWeight: 800, color: D.sub, margin: "0 0 16px" }}>
-	                {L.easyQuestions} <IcBolt size={13} /> 35 XP · {checkDone}/{checkpoints.length} {uiLang === "en" ? "checkpoints" : "pausas"} {claimed && <span style={{ color: D.okText }}>— {uiLang === "en" ? "collectible unlocked" : "coleccionable desbloqueado"}</span>}
+	                {L.easyQuestions} <IcBolt size={13} /> 35 XP · {checkDone}/{checkpoints.length} {uiLang === "en" ? "checkpoints" : "pausas"} {claimed && <span style={{ color: limeText(D.okText, D) }}>— {uiLang === "en" ? "collectible unlocked" : "coleccionable desbloqueado"}</span>}
               </p>
               {story.questions.map((qq, i) => {
                 const shown = storyQuestionChoices(qq, qOrder?.[i]);
@@ -11532,7 +11537,7 @@ export default function App() {
                       {shown.map((c) => {
                         const isAns = c === qq.answer;
                         let bg = "#fff", bd = D.line, col = D.ink;
-                        if (done && isAns) { bg = D.okBg; bd = D.green; col = D.okText; }
+                        if (done && isAns) { bg = D.okBg; bd = D.green; col = limeText(D.okText, D); }
                         else if (done && sel === c && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
                         else if (theme === "dark") { bg = D.subtle; col = HUB_CREAM; }
                         return (

@@ -132,18 +132,18 @@ describe("dark lesson surfaces", () => {
     expect(mc.indexOf('"#fff"')).toBeLessThan(mc.indexOf("hoyListenChoicePaint"));
     const story = sliceBetween("story.questions.map", "answered === story.questions.length");
     expect(story).toContain('let bg = "#fff", bd = D.line, col = D.ink;');
-    expect(story).toContain("if (done && isAns) { bg = D.okBg; bd = D.green; col = D.okText; }");
+    expect(story).toContain("if (done && isAns) { bg = D.okBg; bd = D.green; col = limeText(D.okText, D); }");
     expect(story).toContain('else if (theme === "dark") { bg = D.subtle; col = HUB_CREAM; }');
     for (const needle of [
       'background: status === "idle" ? (theme === "dark" ? D.subtle : "#F7F7F7")',
       'background: used ? D.greenBg : "#fff"',
-      "color: used ? D.greenDark : D.greenText",
+      "color: used ? limeText(D.greenDark, D) : D.greenText",
       "function darkLessonChipPaint",
       "background: D.subtle, borderColor: D.line, borderBottomColor: D.line, color: cream",
       'theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")',
       "theme === \"dark\" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)",
       "showWrong ? (theme === \"dark\" ? D.red : D.redDark)",
-      "hit ? (theme === \"dark\" ? \"#58CC02\" : D.greenDark) : (theme === \"dark\" ? D.red : D.redDark)",
+      "hit ? (theme === \"dark\" ? \"#58CC02\" : limeText(D.greenDark, D)) : (theme === \"dark\" ? D.red : D.redDark)",
       ".lesson-blank::placeholder{color:${D.sub};opacity:1}",
     ]) expect(appSrc).toContain(needle);
     expect((appSrc.match(/theme === "dark" \? D\.subtle : \(isSel \? "#DDF4FF" : "#fff"\)/g) || []).length).toBe(1);
@@ -172,7 +172,7 @@ describe("dark lesson surfaces", () => {
     await waitFor(() => expect(screen.getByTestId("story-reader")).toBeTruthy());
     expect(paint(card("Dormidos en casa"))).toMatchObject({ fill: "#ffffff", ink: "#3c3c3c", line: "#e5e5e5" });
     await user.click(card("En el panteón de la isla de Janitzio"));
-    expect(paint(card("En el panteón de la isla de Janitzio"))).toMatchObject({ fill: "#d7ffb8", line: "#58cc02", ink: "#58a700" });
+    expect(paint(card("En el panteón de la isla de Janitzio"))).toMatchObject({ fill: "#d7ffb8", line: "#58cc02", ink: "#2e7500" });
   });
 
   it("paints lesson choices, the idle input, the word bank, and match tiles", async () => {
@@ -297,8 +297,8 @@ describe("dark lesson surfaces", () => {
     await boot("light", live({ matched: [0] }));
     await screen.findByTestId("match-tile-2");
     expect(screen.getByTestId("match-tile-0").getAttribute("data-state")).toBe("matched");
-    expect(paint(screen.getByTestId("match-tile-0"))).toMatchObject({ fill: "#d7ffb8", ink: "#58a700", line: "#58cc02" });
-    expect(screen.getByTestId("match-tile-0").style.opacity).toBe("0.55");
+    expect(paint(screen.getByTestId("match-tile-0"))).toMatchObject({ fill: "#d7ffb8", ink: "#2e7500", line: "#e5e5e5" });
+    expect(screen.getByTestId("match-tile-0").style.opacity).toBe("1");
     expect(paint(screen.getByTestId("match-tile-1"))).toMatchObject({ fill: "#ffffff", ink: "#3c3c3c" });
     expect(Number(contrastRatio("#58A700", "#D7FFB8").toFixed(2))).toBe(2.72);
 
@@ -338,7 +338,7 @@ describe("dark lesson surfaces", () => {
     expect(paint(rightBtn).fill).toBe("#1f3a1a");
     expect(norm(rightBtn.style.borderTopColor) || paint(rightBtn).line).toBe("#58cc02");
     await show("light", { selected: "formal", tapped: ["formal"], tappedWrong: [] });
-    expect(norm(screen.getByText(/Buen juicio/).style.color)).toBe("#46a302");
+    expect(norm(screen.getByText(/Buen juicio/).style.color)).toBe("#2e7500");
     await show("light", { selected: "safe", tapped: [], tappedWrong: ["safe"] });
     expect(norm(screen.getByText(/Mejor respuesta/).style.color)).toBe("#ea2b2b");
     const lightWrong = screen.getByTestId("safe-risky-choice-safe");
