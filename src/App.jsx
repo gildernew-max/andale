@@ -215,6 +215,7 @@ import {
   startCrosswordRun,
   typeCrosswordLetter,
 } from "./crossword.js";
+import { version as ANDALE_BUILD } from "../package.json";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -4850,6 +4851,32 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
 
 /* ---------------- APP ---------------- */
 
+/** Address already published on public/support.html. The link only opens the mail app. */
+const PROBLEM_REPORT_MAIL = "gildernew@gmail.com";
+
+function problemReportDevice() {
+  try {
+    const ua = typeof navigator === "undefined" ? "" : navigator.userAgent;
+    return typeof ua === "string" ? ua : "";
+  } catch {
+    return "";
+  }
+}
+
+function problemReportMailto(uiLang, theme, tab) {
+  const en = uiLang === "en";
+  const lang = en ? "en" : "es";
+  const mode = theme === "dark" ? (en ? "dark" : "oscuro") : (en ? "light" : "claro");
+  const screen = tab;
+  const device = problemReportDevice();
+  const deviceTail = device ? ` · device ${device}` : "";
+  const subject = en ? "Ándale: problem report" : "Ándale: reporte de problema";
+  const body = en
+    ? `What were you doing?\n\nWhat did you expect to happen?\n\nWhat happened?\n\nIf you can, attach a screenshot.\n\n—\nDetails to help us (please keep them): version ${ANDALE_BUILD} · language ${lang} · mode ${mode} · screen ${screen}${deviceTail}`
+    : `¿Qué estabas haciendo?\n\n¿Qué esperabas que pasara?\n\n¿Qué pasó?\n\nSi puedes, adjunta una captura de pantalla.\n\n—\nDatos para ayudarnos (por favor no los borres): versión ${ANDALE_BUILD} · idioma ${lang} · modo ${mode} · pantalla ${screen}${deviceTail}`;
+  return `mailto:${PROBLEM_REPORT_MAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function HangmanEmphasis({ text }) {
   return emphasisParts(text).map((part, i) => (
     part.em ? <em key={i}>{part.text}</em> : <span key={i}>{part.text}</span>
@@ -9395,9 +9422,10 @@ export default function App() {
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 28, display: "flex", gap: 20, justifyContent: "center" }}>
+          <div data-testid="perfil-footer" style={{ marginTop: 28, display: "flex", flexWrap: "wrap", gap: 20, justifyContent: "center", maxWidth: "100%" }}>
             <a href={`${import.meta.env.BASE_URL}privacy.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Privacidad</a>
             <a href={`${import.meta.env.BASE_URL}support.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Soporte</a>
+            <a data-testid="report-problem" href={problemReportMailto(uiLang, theme, tab)} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>{uiLang === "en" ? "Report a problem" : "Reportar un problema"}</a>
           </div>
         </div>
       )}
