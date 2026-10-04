@@ -2397,7 +2397,7 @@ const porparaBankEn = [
   "Heading toward a destination → para: se va para Puebla. «Por Puebla» would mean passing through or around it, not the destination. «Fue» is past tense and clashes with «mañana».",
   "Para + infinitive expresses purpose (the «what for»): hago ejercicio para bajar de peso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
 porparaBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2583,7 +2583,7 @@ const sereflexBankEn = [
   "Reflexive passive: «los tacos» is plural → se comen. «Come» doesn't agree with «los tacos»; «me / le» are decoys.",
   "Se + me marks an unintentional accident, and the verb agrees with the thing: rompí un vaso → se me rompió un vaso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
 sereflexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2725,7 +2725,7 @@ const compsupBankEn = [
   "Irregular superlative: la + mejor + noun + de + group → la mejor alumna del salón. «Peor» would say the opposite, and «más» is not added to «mejor». In ordinary speech the superlative goes before the noun (not «la alumna mejor»).",
   "Quantity with a noun → tantos + noun + como: she has ten pairs and I have ten → tantos pares de tenis como yo. «Pares» is masculine plural, which is why it's tantos.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
 compsupBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2878,7 +2878,7 @@ const mexBankEn = [
   "«Al rato» = later, with no fixed time, and it is a set phrase: nos vemos al rato en la taquería, not «al ratos» or «el rato».",
   "«Un chorro de» = a ton of, and it replaces «mucha»: hay mucha gente → hay un chorro de gente. Unlike «mucha», it doesn’t agree with the noun.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
 mexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2973,6 +2973,161 @@ assert(gradeListedPhrase("trabaja", mexChambea).status === "wrong", "chambea typ
 for (const phrase of ["dinero", "pasta", "varo", "billete", "feria", "plata"]) {
   assert(gradeListedPhrase(phrase, mexLana).status === "wrong", `lana type is rejected: ${phrase}`);
 }
+const pronBank = UNITS.find((u) => u.id === "pronombres");
+assert(pronBank.questions.length === 11, "pronombres authored questions stay 11");
+assert(pronBank.questions[0].prompt === "¿Cuál es la forma correcta para “I forgot my keys (accidentally)”?", "pronombres question order is unchanged");
+assert(Array.isArray(pronBank.bank) && pronBank.bank.length === 11, "pronombres replay bank is 11 questions");
+assert(pronBank.bank.map((q) => q.type).join(",") === "mc,mc,type,order,mc,type,transform,mc,order,type,mc", "pronombres bank types interleave mc/type/order/transform");
+assert(pronBank.bank[0].prompt === "Ay, no encuentro mis llaves; creo que ___ en el camión." && pronBank.bank[0].choices.join("|") === "se me perdió|me perdieron|se me perdieron|me se perdieron" && pronBank.bank[0].answer === "se me perdieron", "pronombres bank item 1");
+assert(pronBank.bank[1].prompt === "—¿Viste a Lupita en la fiesta? —Sí, ___ saludé en la entrada." && pronBank.bank[1].choices.join("|") === "lo|la|los|las" && pronBank.bank[1].answer === "la", "pronombres bank item 2 keeps leísmo out of the options");
+assert(pronBank.bank[2].note === "(pronombre de objeto indirecto, singular)" && pronBank.bank[2].answers.join("|") === "le", "pronombres bank type nadie");
+assert(pronBank.bank[3].prompt === "Construye: “Can you lend it to me tomorrow?” (it = la mochila)" && pronBank.bank[3].words.join("|") === "me|la|prestas|mañana|lo", "pronombres lend order words include the decoy");
+assert(pronBank.bank[4].choices.join("|") === "le lo|se lo|lo se|se le" && pronBank.bank[4].answer === "se lo", "pronombres bank item 5 se lo");
+assert(pronBank.bank[5].note === "(pasiva refleja; una palabra)" && pronBank.bank[5].answers.join("|") === "se", "pronombres bank type pasiva refleja");
+assert(pronBank.bank[6].base === "Presté mi bici a mi vecino." && pronBank.bank[6].instruction === "Sustituye «mi bici» y «a mi vecino» con pronombres átonos (me, te, se, la, lo…) y conserva el tiempo" && pronBank.bank[6].answers.join("|") === "Se la presté|Yo se la presté|Se la presté yo", "pronombres bank transform");
+assert(pronBank.bank[7].prompt === "Son las doce de la noche en una fiesta y mañana madrugas. Le dices a tu amigo: «Se me hace tarde». ¿Qué quieres decir?" && pronBank.bank[7].choices.join("|") === "Que olvidé algo en casa|Que llegué demasiado temprano|Que ya me tengo que ir|Que la fiesta empezó muy tarde" && pronBank.bank[7].answer === "Que ya me tengo que ir", "pronombres bank item 8");
+assert(pronBank.bank[8].prompt === "Construye: “We forgot the tickets.” (accidental: se + nos)" && pronBank.bank[8].words.join("|") === "se|nos|olvidaron|los|boletos|me|las", "pronombres tickets order words include the decoys");
+assert(pronBank.bank[3].words.every((w) => w === w.toLowerCase() && !w.includes(",")) && pronBank.bank[8].words.every((w) => w === w.toLowerCase() && !w.includes(",")), "pronombres order tiles are lowercase with no comma");
+assert(pronBank.bank[9].note === "(marcar, presente, yo; una palabra)" && pronBank.bank[9].answers.join("|") === "marco", "pronombres bank type marco");
+assert(pronBank.bank[10].choices.join("|") === "se|nos|me|los" && pronBank.bank[10].answer === "nos", "pronombres bank item 11");
+assert(pronBank.bank.every((q) => q.type !== "mc" || q.note === ""), "pronombres has no trap item, so no mc carries ¡Ojo!");
+const pronPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((item, i) => {
+      if (u.id === "pronombres" && kind === "bank") return;
+      if (item.type === "transform") {
+        const base = item.base || item.source;
+        if (base) pronPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (item.prompt) pronPromptOwners.set(item.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+pronBank.bank.forEach((item, i) => {
+  if (item.type === "transform") {
+    assert(!pronPromptOwners.has(item.base), `pronombres bank ${i} transform base repeats a prompt`);
+    assert(!pronPromptOwners.has(`base:${item.base}`), `pronombres bank ${i} transform base repeats ${pronPromptOwners.get(`base:${item.base}`) || "another item"}`);
+    return;
+  }
+  assert(!pronPromptOwners.has(item.prompt), `pronombres bank ${i} prompt duplicates ${pronPromptOwners.get(item.prompt) || "another item"}`);
+  pronPromptOwners.set(item.prompt, `pronombres bank ${i}`);
+});
+const pronBankEn = [
+  "An accident that happened to me: se + me + a verb that agrees with the lost thing; «llaves» is plural → se me perdieron. «Se me perdió» would only go with a singular thing.",
+  "Feminine singular direct object → la: a Lupita → la saludé. «Lo» and «los» are masculine and «las» is plural, so none of them agrees with Lupita.",
+  "«Nadie» is singular, so the indirect-object pronoun is «le»: no le avises a nadie.",
+  "With two pronouns the indirect one (me) comes first and the direct one (la) second: me la prestas. «La» replaces la mochila (feminine); «lo» would be masculine.",
+  "Before lo, la, los or las, «le» and «les» become «se»: el recado (lo) se lo di a tu jefe. That is why «le lo» isn’t said.",
+  "Reflexive passive: se + a third-person verb that agrees with the thing sold; «pan de muerto» is singular → se vende, with no seller named. «Me» or «le» would require a specific seller.",
+  "The indirect object (a mi vecino) is «le», which becomes «se» before «la»; the direct object (mi bici) is «la» because it is feminine: se la presté.",
+  "«Se me hace tarde» = it’s already late for me, I’m racing the clock: I have to go (or I’ll be late somewhere else). «Se me» frames it as something that happens to me, like «se me olvidó».",
+  "Unintentional forgetting: se + nos + a verb that agrees with the forgotten thing: los boletos (plural) → se nos olvidaron. «Me» would mean only me, not us.",
+  "In Mexico, «marcar» also means to phone someone: luego te marco = luego te llamo. This item asks for the first-person present: marco.",
+  "«Encantar» works like gustar: it takes an indirect-object pronoun, and for «mi hermana y yo» that is «nos»: nos encantan los tamales. «Lo» and «los» are direct-object pronouns and are not used with encantar.",
+];
+assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
+pronBank.bank.forEach((item, i) => {
+  const row = explainByEs.get(item.explain);
+  assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === pronBankEn[i], `pronombres bank ${i} EN row equals the English row`);
+  assert(explainText(item, "es") === item.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(item, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(item);
+  assertPreppedQuestion(prepped, `pronombres bank ${i}`);
+  if (item.type === "mc") {
+    assert(item.choices.length === 4 && new Set(item.choices).size === 4 && item.choices.includes(item.answer), `pronombres bank ${i} mc choices include the answer`);
+    assert(item.note === "", `pronombres bank ${i} mc note`);
+  }
+  if (item.type === "type") {
+    assert(item.note === { 2: "(pronombre de objeto indirecto, singular)", 5: "(pasiva refleja; una palabra)", 9: "(marcar, presente, yo; una palabra)" }[i], `pronombres bank ${i} type note`);
+  }
+  if (item.type === "order") {
+    assert(prepped.words.join("|") === item.words.join("|"), `pronombres bank ${i} order tiles stay authored`);
+    assert(prepped.answer === item.answer, `pronombres bank ${i} order answer stays authored`);
+    assert(Array.isArray(item.answers) && item.answers[0] === item.answer, `pronombres bank ${i} answers start with the authored answer`);
+    assert(item.words.every((w) => !String(w).includes(",")), `pronombres bank ${i} tiles carry no comma`);
+    assert(item.words.every((w) => w === w.toLowerCase()), `pronombres bank ${i} tiles stay lowercase`);
+    item.answers.forEach((phrase) => {
+      const answerTokens = stripPhrase(phrase).split(" ").filter(Boolean);
+      const tilePool = item.words.map((w) => stripPhrase(w));
+      answerTokens.forEach((tok) => {
+        const at = tilePool.indexOf(tok);
+        assert(at >= 0, `pronombres bank ${i} answer word ${tok} is a tile`);
+        tilePool.splice(at, 1);
+      });
+      const built = builtFromOrderTiles(item.words, phrase);
+      assert(built, `pronombres bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(phrase, item).status !== "wrong", `pronombres bank ${i} listed order is accepted: ${phrase}`);
+      assert(gradeListedPhrase(built, item).status !== "wrong", `pronombres bank ${i} tile-built order is accepted: ${built}`);
+    });
+    const builtPrimary = builtFromOrderTiles(item.words, item.answer);
+    assert(builtPrimary && stripPhrase(builtPrimary) === stripPhrase(item.answer), `pronombres bank ${i} primary order is the authored tile text`);
+  }
+  if (item.type === "type" || item.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === item.answers.join("|"), `pronombres bank ${i} answers stay authored`);
+  }
+});
+const pronLend = pronBank.bank[3];
+const pronTickets = pronBank.bank[8];
+const pronBici = pronBank.bank[6];
+const pronLe = pronBank.bank[2];
+const pronSe = pronBank.bank[5];
+const pronMarco = pronBank.bank[9];
+assert(pronLend.answers.join("|") === "¿Me la prestas mañana?|¿Mañana me la prestas?", "pronombres lend order lists the accepted alternates");
+assert(pronTickets.answers.join("|") === "Se nos olvidaron los boletos|Los boletos se nos olvidaron", "pronombres tickets order lists the accepted alternates");
+assert(pronBici.answers.join("|") === "Se la presté|Yo se la presté|Se la presté yo", "pronombres transform lists the accepted alternates");
+for (const phrase of pronLend.answers) {
+  assert(gradeListedPhrase(phrase, pronLend).status !== "wrong", `lend order accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("¿Mañana me la prestas?", pronLend).status !== "wrong", "lend accepted alternate grades ok");
+for (const phrase of [
+  "¿Me lo prestas mañana?",
+  "¿La me prestas mañana?",
+  "¿Lo me prestas mañana?",
+  "¿Lo prestas mañana?",
+]) {
+  assert(gradeListedPhrase(phrase, pronLend).status === "wrong", `lend order is rejected: ${phrase}`);
+}
+for (const phrase of pronTickets.answers) {
+  assert(gradeListedPhrase(phrase, pronTickets).status !== "wrong", `tickets order accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("Los boletos se nos olvidaron", pronTickets).status !== "wrong", "tickets accepted alternate grades ok");
+for (const phrase of [
+  "Se me olvidaron los boletos",
+  "Nos se olvidaron los boletos",
+  "Se nos olvidaron las boletos",
+  "Se olvidaron los boletos",
+]) {
+  assert(gradeListedPhrase(phrase, pronTickets).status === "wrong", `tickets order is rejected: ${phrase}`);
+}
+for (const phrase of pronBici.answers) {
+  assert(gradeListedPhrase(phrase, pronBici).status !== "wrong", `bici transform accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("Yo se la presté", pronBici).status !== "wrong", "transform accepted alternate grades ok");
+assert(gradeListedPhrase("Se la presté yo", pronBici).status !== "wrong", "transform accepted alternate grades ok");
+for (const phrase of [
+  "Le la presté",
+  "Se lo presté",
+  "La le presté",
+  "Se la he prestado",
+  "La presté",
+  "A mi vecino se la presté",
+  "Se la presté a él",
+  "Yo se la presté a él",
+]) {
+  assert(gradeListedPhrase(phrase, pronBici).status === "wrong", `bici transform is rejected: ${phrase}`);
+}
+for (const phrase of ["les", "lo"]) {
+  assert(gradeListedPhrase(phrase, pronLe).status === "wrong", `le type is rejected: ${phrase}`);
+}
+for (const phrase of ["me", "le"]) {
+  assert(gradeListedPhrase(phrase, pronSe).status === "wrong", `se type is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("llamo", pronMarco).status === "wrong", "marco type is rejected: llamo");
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;
