@@ -234,7 +234,7 @@ import {
 /** Cenzontle house cream. One page/shell fill — not a second brown wash. */
 const HUB_CREAM = "#F6EFE4";
 const D_LIGHT = {
-  green: "#58CC02", greenDark: "#46A302",
+  green: "#58CC02", greenDark: "#46A302", greenText: "#2E7500",
   blue: "#1CB0F6", blueDark: "#1899D6",
   purple: "#CE82FF", purpleDark: "#A567CC",
   red: "#FF4B4B", redDark: "#EA2B2B",
@@ -249,7 +249,7 @@ const D_LIGHT = {
 };
 
 const D_DARK = {
-  green: "#58CC02", greenDark: "#46A302",
+  green: "#58CC02", greenDark: "#46A302", greenText: "#58CC02",
   blue: "#1CB0F6", blueDark: "#1899D6",
   purple: "#CE82FF", purpleDark: "#A567CC",
   red: "#FF6B6B", redDark: "#EA2B2B",
@@ -275,6 +275,9 @@ function darkLessonChipPaint({ used = false, wrong = false, D, cream }) {
   }
   return { background: D.subtle, borderColor: D.line, borderBottomColor: D.line, color: cream, opacity: 1 };
 }
+/** Body-size ink when `color` is brand lime. Other section colors pass through. */
+const limeText = (color, palette) => (color === palette.green ? palette.greenText : color);
+
 // Legacy alias — anything OUTSIDE the App function that reads D still works (icons, etc.).
 const D = D_LIGHT;
 
@@ -2212,7 +2215,7 @@ const CubetasPlayfield = ({ run, uiLang, D, L, theme = "light", onDrop, onHintDi
                   border: `2px solid ${D.green}`,
                   borderBottom: `4px solid ${D.greenDark}`,
                   background: "#fff",
-                  color: D.green,
+                  color: D.greenText,
                   borderRadius: 99,
                   padding: "10px 18px",
                   fontFamily: "inherit",
@@ -4813,13 +4816,14 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
   const ctxTheme = useContext(BtnThemeContext);
   const theme = themeProp || ctxTheme || btnTheme;
   const outlineDark = outline && theme === "dark";
+  const outlineInk = color === D_LIGHT.green ? D_LIGHT.greenText : color;
   return (
     <button type="button" onClick={onClick} disabled={disabled} className="duo-btn"
       style={{
         fontFamily: "inherit", fontWeight: 800, fontSize: 15, letterSpacing: ".06em", textTransform: "uppercase",
         borderRadius: 14, padding: "13px 24px", cursor: disabled ? "default" : "pointer",
         background: outlineDark ? D_DARK.card : outline ? "#fff" : disabled ? D.lockGray : color,
-        color: outlineDark ? D_DARK.ink : outline ? color : disabled ? D.lockIcon : (ink || CONTINUE_LABEL),
+        color: outlineDark ? D_DARK.ink : outline ? outlineInk : disabled ? D.lockIcon : (ink || CONTINUE_LABEL),
         border: outlineDark ? `2px solid ${D_DARK.line}` : outline ? `2px solid ${D.line}` : "none",
         borderBottom: outlineDark ? `4px solid ${D_DARK.line}` : outline ? `4px solid ${D.line}` : `4px solid ${disabled ? "#CFCFCF" : dark}`,
         ...style,
@@ -8526,7 +8530,7 @@ export default function App() {
                 <div key={m.id} style={{ border: `2px solid ${m.color}`, borderBottom: `5px solid ${m.dark}`, borderRadius: 16, padding: 15, background: D.card }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
                     <div>
-	                      <div style={{ fontSize: 11, fontWeight: 900, color: m.color, letterSpacing: ".06em" }}>{uiLang === "en" ? m.tagEn : m.tag}</div>
+	                      <div style={{ fontSize: 11, fontWeight: 900, color: limeText(m.color, D), letterSpacing: ".06em" }}>{uiLang === "en" ? m.tagEn : m.tag}</div>
 	                      <div style={{ fontWeight: 900, fontSize: 19 }}>{m.title}</div>
 	                      <div style={{ fontSize: 13, fontWeight: 700, color: D.sub, marginTop: 3 }}>{uiLang === "en" ? m.descEn : m.desc}</div>
                     </div>
@@ -8696,7 +8700,7 @@ export default function App() {
                     <div style={{ flex: 1 }}>
 	                      <div style={{ fontWeight: 900, fontSize: 18, color: D.ink }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
 	                      <div style={{ fontSize: 13, color: D.sub, fontWeight: 800 }}>{meta.place ? `${meta.place} · ` : ""}{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
-		                      <div style={{ fontSize: 12, color: theme === "dark" ? D.sub : sec.color, fontWeight: 900, marginTop: 4 }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
+		                      <div style={{ fontSize: 12, color: theme === "dark" ? D.sub : limeText(sec.color, D), fontWeight: 900, marginTop: 4 }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
 		                      {souvenir && <div style={{ fontSize: 11.5, color: theme === "dark" ? (claimed ? D.green : D.sub) : (claimed ? D.greenDark : D.sub), fontWeight: 900, marginTop: 4 }}>{claimed ? "✓ " : ""}{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
 	                    </div>
                     {claimed && <IcCrown size={26} />}
@@ -8797,7 +8801,7 @@ export default function App() {
                         [uiLang === "en" ? "TEXT" : "MENSAJE", item.text, "#FF9600", D.orangeBg],
                       ].map(([label, value, color, bg]) => (
                         <div key={label} style={{ border: `1.5px solid ${color}`, borderRadius: 11, padding: "8px 10px", background: bg }}>
-                          <div style={{ fontSize: 10, fontWeight: 900, color, letterSpacing: ".08em", marginBottom: 2 }}>{label}</div>
+                          <div style={{ fontSize: 10, fontWeight: 900, color: limeText(color, D), letterSpacing: ".08em", marginBottom: 2 }}>{label}</div>
                           <div style={{ fontWeight: 900, fontSize: 15.5 }}>{value}</div>
                         </div>
                       ))}
@@ -9277,7 +9281,7 @@ export default function App() {
               { id: "dark",  label: uiLang === "en" ? "Dark"  : "Oscuro", icon: "🌙" },
             ].map((opt) => (
               <button key={opt.id} aria-pressed={theme === opt.id} onClick={() => save({ theme: opt.id })}
-                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, border: `2px solid ${theme === opt.id ? D.green : D.line}`, borderBottom: `4px solid ${theme === opt.id ? D.greenDark : D.line}`, background: theme === opt.id ? D.greenBg : D.card, color: theme === opt.id ? D.green : D.sub, borderRadius: 14, padding: "11px 0", fontFamily: "inherit", fontWeight: 900, fontSize: 14, cursor: "pointer" }}>
+                style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, border: `2px solid ${theme === opt.id ? D.green : D.line}`, borderBottom: `4px solid ${theme === opt.id ? D.greenDark : D.line}`, background: theme === opt.id ? D.greenBg : D.card, color: theme === opt.id ? D.greenText : D.sub, borderRadius: 14, padding: "11px 0", fontFamily: "inherit", fontWeight: 900, fontSize: 14, cursor: "pointer" }}>
                 <span style={{ fontSize: 18 }}>{opt.icon}</span>{opt.label}
               </button>
             ))}
@@ -9355,7 +9359,7 @@ export default function App() {
                   <div style={{ fontWeight: 900, fontSize: 14, color: u.ok ? (theme === "dark" ? "#E8E8EA" : undefined) : lockedInk }}>{u.title}</div>
                   <div style={{ fontSize: 12, color: u.ok ? D.sub : lockedInk, fontWeight: 800 }}>{u.desc}</div>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 900, color: u.ok ? D.green : lockedInk }}>{u.ok ? (uiLang === "en" ? "UNLOCKED" : "LISTO") : (uiLang === "en" ? "LOCKED" : "BLOQ.")}</span>
+                <span style={{ fontSize: 11, fontWeight: 900, color: u.ok ? D.greenText : lockedInk }}>{u.ok ? (uiLang === "en" ? "UNLOCKED" : "LISTO") : (uiLang === "en" ? "LOCKED" : "BLOQ.")}</span>
               </div>
               );
             })}
@@ -9998,7 +10002,7 @@ export default function App() {
           <div className="pop" onClick={(e) => e.stopPropagation()} style={{ background: D.card, borderRadius: 20, padding: "20px 22px", maxWidth: 420, width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: sec.color, letterSpacing: ".06em", marginBottom: 2 }}>{guideUnit.title.toUpperCase()}</div>
+                <div style={{ fontSize: 11, fontWeight: 900, color: limeText(sec.color, D), letterSpacing: ".06em", marginBottom: 2 }}>{guideUnit.title.toUpperCase()}</div>
                 <div style={{ fontWeight: 900, fontSize: 21, lineHeight: 1.1 }}>{g.title}</div>
               </div>
               <button onClick={() => setGuideUnit(null)} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", lineHeight: 1, minWidth: 44, minHeight: 44 }} aria-label={uiLang === "en" ? "Close" : "Cerrar"}>✕</button>
@@ -10046,7 +10050,7 @@ export default function App() {
               }} aria-current={tab === t.id ? "page" : undefined}
                 style={{ flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: "10px 0 12px", position: "relative", borderTop: tab === t.id ? `3px solid ${D.green}` : "3px solid transparent", minHeight: 56 }}>
                 <div style={{ lineHeight: 0, marginBottom: 2 }}><t.Icon size={22} color={tab === t.id ? D.green : D.lockIcon} /></div>
-                <div style={{ fontSize: 9.5, fontWeight: 900, color: tab === t.id ? D.green : D.sub, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.l}</div>
+                <div style={{ fontSize: 9.5, fontWeight: 900, color: tab === t.id ? D.greenText : D.sub, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.l}</div>
                 {!!t.badge && <span style={{ position: "absolute", top: 4, right: t.badge === "NEW" ? 6 : "24%", background: t.badge === "NEW" ? D.gold : D.red, color: t.badge === "NEW" ? D.goldDark : "#fff", border: `1px solid ${t.badge === "NEW" ? D.goldDark : D.red}`, borderRadius: 99, fontSize: t.badge === "NEW" ? 8 : 10, fontWeight: 900, padding: t.badge === "NEW" ? "1px 4px" : "1px 6px" }}>{t.badge}</span>}
               </button>
             ))}
@@ -10252,7 +10256,7 @@ export default function App() {
                 {q.answerAid && (
                   <div style={{ marginTop: 12, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 11, background: D.card }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 9 }}>
-                      <div style={{ fontSize: 11, fontWeight: 900, color: session.color, letterSpacing: ".06em" }}>
+                      <div style={{ fontSize: 11, fontWeight: 900, color: limeText(session.color, D), letterSpacing: ".06em" }}>
                         {q.answerAid.mode === "choices"
                           ? (uiLang === "en" ? "TAP AN ANSWER" : "TOCA UNA RESPUESTA")
                           : (uiLang === "en" ? "BUILD WITH WORDS" : "ARMA CON PALABRAS")}
@@ -10315,7 +10319,7 @@ export default function App() {
                                       background: used ? D.greenBg : "#fff",
                                       borderColor: used ? D.green : D.line,
                                       borderBottomColor: used ? D.green : D.line,
-                                      color: used ? D.greenDark : D.green,
+                                      color: used ? D.greenDark : D.greenText,
                                       fontWeight: 800,
                                     }),
                               }}>
@@ -10637,7 +10641,7 @@ export default function App() {
                 [uiLang === "en" ? "Avoid" : "Evita", uiLang === "en" ? "↓ tiles slide back" : "↓ te baja", D.red],
               ].map(([label, desc, color]) => (
                 <div key={label} style={{ border: `1.5px solid ${color}`, background: color === D.green ? D.greenBg : color === D.red ? D.redBg : D.blueBg, borderRadius: 12, padding: "7px 6px", textAlign: "center" }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color }}>{label}</div>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: limeText(color, D) }}>{label}</div>
                   <div style={{ fontSize: 10.5, fontWeight: 850, color: D.ink, lineHeight: 1.15 }}>{desc}</div>
                 </div>
               ))}
@@ -11468,7 +11472,7 @@ export default function App() {
                   <div style={{ fontWeight: 900, fontSize: 15 }}>{foundWords.length}/{keyWords.length} {uiLang === "en" ? "key words found" : "palabras clave encontradas"}</div>
                 </div>
                 {extra.collectible && (
-                  <div style={{ textAlign: "right", fontSize: 11.5, fontWeight: 900, color: claimed ? D.green : D.sub }}>
+                  <div style={{ textAlign: "right", fontSize: 11.5, fontWeight: 900, color: claimed ? D.greenText : D.sub }}>
                     {claimed ? (uiLang === "en" ? "UNLOCKED" : "DESBLOQ.") : (uiLang === "en" ? "COLLECTIBLE" : "COLECCIONABLE")}<br />
                     <span style={{ color: D.ink }}>{extra.collectible[uiLang]}</span>
                   </div>

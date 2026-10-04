@@ -118,7 +118,7 @@ describe("coach postcard colors", () => {
     expect(openParts.title.style.color).toBe("");
     expect(inheritedInk(openParts.title)).toBe("#3c3c3c");
     expect(norm(openParts.caption.style.color)).toBe("#6b6258");
-    expect(norm(openParts.label.style.color)).toBe("#58cc02");
+    expect(norm(openParts.label.style.color)).toBe("#2e7500");
     assertNoTextOpacity(open, openParts);
     expect(opacityOf(open)).toBeGreaterThanOrEqual(1);
     expect(open.firstElementChild.tagName).toBe("svg");

@@ -152,7 +152,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(document.querySelector("input.lesson-blank").style.color).toBe("");
     expect([...document.querySelectorAll("style")].some((el) => el.textContent.includes(".lesson-blank::placeholder"))).toBe(false);
     screen.getAllByTestId("bank-tile").forEach((tile) => {
-      expect(paintOf(tile)).toMatchObject({ fill: "#ffffff", ink: "#58cc02" });
+      expect(paintOf(tile)).toMatchObject({ fill: "#ffffff", ink: "#2e7500" });
     });
     expect(cssHex(screen.getByTestId("lesson-note").style.color)).toBe("#6b6258");
 
@@ -1134,7 +1134,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     mountThemed("light", { screen: "story", storyId: "story-0", paraIdx: 1, tab: "lectura" });
     const lightAnterior = await screen.findByRole("button", { name: /Anterior/ });
     expect(lightAnterior.style.background).toMatch(/#fff\b|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
-    expect(outlinePaint(lightAnterior)).toMatchObject({ fill: "#ffffff", ink: green, edge: "#e5e5e5", lip: "#e5e5e5" });
+    expect(outlinePaint(lightAnterior)).toMatchObject({ fill: "#ffffff", ink: "#2e7500", edge: "#e5e5e5", lip: "#e5e5e5" });
     expect(lightAnterior.style.borderTopWidth).toBe("2px");
     expect(lightAnterior.style.borderBottomWidth).toBe("4px");
     expect(lightAnterior.style.padding).toBe("13px 24px");
@@ -1155,7 +1155,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     });
     const lightBack = await screen.findByTestId("cubetas-back");
     expect(lightBack.style.background).toMatch(/#fff\b|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
-    expect(outlinePaint(lightBack)).toMatchObject({ fill: "#ffffff", ink: green, edge: "#e5e5e5", lip: "#e5e5e5" });
+    expect(outlinePaint(lightBack)).toMatchObject({ fill: "#ffffff", ink: "#2e7500", edge: "#e5e5e5", lip: "#e5e5e5" });
 
     mountThemed("dark", {
       screen: "ahorcado",
@@ -1215,7 +1215,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(again[again.length - 1]);
     const lightAnterior = await screen.findByRole("button", { name: /Anterior/ });
     expect(lightAnterior.style.background).toMatch(/#fff\b|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
-    expect(outlinePaint(lightAnterior).ink).toBe("#58cc02");
+    expect(outlinePaint(lightAnterior).ink).toBe("#2e7500");
     expect(outlinePaint(lightAnterior).edge).toBe("#e5e5e5");
   });
 });

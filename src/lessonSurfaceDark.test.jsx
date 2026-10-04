@@ -137,7 +137,7 @@ describe("dark lesson surfaces", () => {
     for (const needle of [
       'background: status === "idle" ? (theme === "dark" ? D.subtle : "#F7F7F7")',
       'background: used ? D.greenBg : "#fff"',
-      "color: used ? D.greenDark : D.green",
+      "color: used ? D.greenDark : D.greenText",
       "function darkLessonChipPaint",
       "background: D.subtle, borderColor: D.line, borderBottomColor: D.line, color: cream",
       'theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")',
@@ -204,7 +204,7 @@ describe("dark lesson surfaces", () => {
     expect(norm(lightInput.style.background)).toBe("#f7f7f7");
     expect(lightInput.style.color).toBe("");
     expect([...document.querySelectorAll("style")].some((el) => el.textContent.includes(".lesson-blank::placeholder"))).toBe(false);
-    expect(paint(screen.getAllByTestId("bank-tile")[0])).toMatchObject({ fill: "#ffffff", ink: "#58cc02" });
+    expect(paint(screen.getAllByTestId("bank-tile")[0])).toMatchObject({ fill: "#ffffff", ink: "#2e7500" });
 
     const pairs = {
       screen: "matchPairs", tab: "practica",
