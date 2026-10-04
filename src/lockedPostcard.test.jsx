@@ -58,32 +58,37 @@ const opacityOf = (node) => Number(node.style.opacity || "1");
 describe("locked coach postcard ink", () => {
   afterEach(() => { cleanup(); localStorage.clear(); });
 
-  it("locked postcard text has no opacity below 1 inside the card and paints #6B6258 in light", async () => {
-    await bootPerfil("light");
-    const labels = screen.getAllByText("BLOQ.");
-    expect(labels).toHaveLength(3);
-    for (const label of labels) {
-      const card = label.parentElement;
-      const column = label.previousElementSibling;
-      const title = column.children[0];
-      const caption = column.children[1];
-      for (const el of [title, caption, label]) {
-        expect(el.style.color).toMatch(LIGHT_INK);
-        let node = el;
-        while (node) {
-          expect(opacityOf(node)).toBeGreaterThanOrEqual(1);
-          if (node === card) break;
-          node = node.parentElement;
+  it("locked postcard text has no opacity below 1 inside the card and paints #6B6258 in light and dark", async () => {
+    const assertLocked = () => {
+      const labels = screen.getAllByText("BLOQ.");
+      expect(labels).toHaveLength(3);
+      for (const label of labels) {
+        const card = label.parentElement;
+        const column = label.previousElementSibling;
+        const title = column.children[0];
+        const caption = column.children[1];
+        for (const el of [title, caption, label]) {
+          expect(el.style.color).toMatch(LIGHT_INK);
+          let node = el;
+          while (node) {
+            expect(opacityOf(node)).toBeGreaterThanOrEqual(1);
+            if (node === card) break;
+            node = node.parentElement;
+          }
+          expect(node).toBe(card);
         }
-        expect(node).toBe(card);
+        const art = card.firstElementChild;
+        expect(art.style.opacity).toBe("0.62");
+        expect(art.contains(title)).toBe(false);
       }
-      const art = card.firstElementChild;
-      expect(art.style.opacity).toBe("0.62");
-      expect(art.contains(title)).toBe(false);
-    }
-    const open = screen.getByText("LISTO").parentElement;
-    expect(opacityOf(open)).toBeGreaterThanOrEqual(1);
-    expect(open.firstElementChild.tagName).toBe("svg");
-    expect(open.children[1].children[0].style.color).toBe("");
+      const open = screen.getByText("LISTO").parentElement;
+      expect(opacityOf(open)).toBeGreaterThanOrEqual(1);
+      expect(open.firstElementChild.tagName).toBe("svg");
+      expect(open.children[1].children[0].style.color).toBe("");
+    };
+    await bootPerfil("light");
+    assertLocked();
+    await bootPerfil("dark");
+    assertLocked();
   });
 });
