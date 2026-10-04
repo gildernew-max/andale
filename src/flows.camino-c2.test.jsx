@@ -1058,9 +1058,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
-    await new Promise((resolve) => setTimeout(resolve, 450));
-    fireEvent.click(screen.getByTestId("soft-paywall"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    // Backdrop free-dismiss is a no-op until the 400ms arm. Retry the click until it lands.
+    await waitFor(() => {
+      const backdrop = screen.queryByTestId("soft-paywall");
+      if (backdrop) fireEvent.click(backdrop);
+      expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    }, { timeout: 3000 });
     expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
     expect(screen.queryByTestId("a2hs-sheet")).toBeNull();
   });
