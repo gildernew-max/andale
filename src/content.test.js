@@ -1797,13 +1797,18 @@ assert(subj1Bank.bank[2].type === "order" && subj1Bank.bank[2].answer === "Escr�
 assert(subj1Bank.bank[2].words.join("|") === "Escríbeme|antes|de|que|salgas|sales|saldrás", "subj1 bank order words include the decoys");
 assert(subj1Bank.bank[2].explain === "«Antes de que» siempre pide subjuntivo: salgas. «Sales / saldrás» son señuelos en indicativo.", "subj1 bank order explain is George's");
 assert(subj1Bank.bank[2].prompt === "Construye: “Write to me before you leave.”", "subj1 bank order uses the existing English Construye cue");
-for (const q of subj1Bank.bank) {
+const subj1BankEn = [
+  "«Me da gusto que» (emotion) triggers the subjunctive. Tú → sientas.",
+  "«Para que» (purpose) always takes the subjunctive: vayas.",
+  "«Antes de que» always takes the subjunctive: salgas. «Sales / saldrás» are indicative decoys.",
+];
+subj1Bank.bank.forEach((q, i) => {
   const row = explainByEs.get(q.explain);
-  assert(row && row.es === q.explain, "bank Why has an ES row");
-  assert(!row.en, "bank Why EN is not invented");
-  assert(explainText(q, "es") === q.explain, "bank Why ES is the authored explain");
-  assert(explainText(q, "en") === q.explain, "missing EN falls back to the Spanish explain, not a raw key");
-}
+  assert(row && row.es === q.explain, "bank Why ES matches the authored explain");
+  assert(row.en === subj1BankEn[i], `subj1 bank ${i} EN is George's`);
+  assert(explainText(q, "es") === q.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(q, "en") === row.en, "bank Why EN resolves in English");
+});
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;

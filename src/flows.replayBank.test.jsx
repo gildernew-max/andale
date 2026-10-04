@@ -14,7 +14,7 @@ import {
 installFlowHooks();
 
 const BANK_MC = "Me da gusto que ya te ___ mejor.";
-const BANK_WHY = "«Me da gusto que» (emoción) dispara el subjuntivo. Tú → sientas.";
+const BANK_WHY_EN = "«Me da gusto que» (emotion) triggers the subjunctive. Tú → sientas.";
 const ORIGINAL_MC = "Espero que ___ a la fiesta el sábado.";
 
 const startSubj1 = async (user, label) => {
@@ -147,7 +147,7 @@ describe("replay bank", { timeout: 20000 }, () => {
     expect(prog.streak).toBe(3);
     expect(prog.hearts).toBe(4);
     await user.click(screen.getByRole("button", { name: /Why\?/ }));
-    expect(screen.getByTestId("practice-why").textContent).toBe(BANK_WHY);
+    expect(screen.getByTestId("practice-why").textContent).toBe(BANK_WHY_EN);
     expect(screen.getByTestId("practice-why").textContent).not.toMatch(/^[a-z0-9_.]+$/);
 
     cleanup();
