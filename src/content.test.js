@@ -1079,30 +1079,46 @@ assert(doctoraWinSrc.includes("Eso tiene sentido."), "first-Doctora keep stamps 
 assert(doctoraWinSrc.includes("Te estoy esperando."), "first-Doctora keep stamps esperando");
 assert(doctoraWinSrc.includes("Necesito tomar una decisión."), "decisión is parked, not deleted");
 assert(doctoraWinSrc.includes("Voy a postularme al trabajo."), "postularse is parked, not deleted");
-assert(DOCTORA_FULL_BEAT_CAP === 8, "later Doctora cap is 8");
+assert(DOCTORA_FULL_BEAT_CAP === 11, "later Doctora cap is 11");
 assert(FIRST_DOCTORA_BEAT_CAP === 4, "first Doctora cap stays 4");
 const PHRASE_DOCTOR = Function(`"use strict"; return (${extractConst(appSrc, "PHRASE_DOCTOR")});`)();
-assert(PHRASE_DOCTOR.length === 8, "Phrase Doctor list is 8 items");
+assert(PHRASE_DOCTOR.length === 11, "Phrase Doctor list is 11 items");
 const laterDoctor = trimDoctoraBeats(PHRASE_DOCTOR, { firstDoctora: false });
-assert(laterDoctor.length === 8, "later session serves 8");
-assert(laterDoctor.map((x) => x.awkward).join("|") === PHRASE_DOCTOR.map((x) => x.awkward).join("|"), "later session serves items 1 to 8 in list order");
+assert(laterDoctor.length === 11, "later session serves 11");
+assert(laterDoctor.map((x) => x.awkward).join("|") === PHRASE_DOCTOR.map((x) => x.awkward).join("|"), "later session serves items 1 to 11 in list order");
 assert(laterDoctor[6].awkward === "Necesito obtener medicina para mi garganta.", "later session serves item 7");
 assert(laterDoctor[7].awkward === "Necesito obtener un plomero para mi lavabo.", "later session serves item 8");
-assert(trimDoctoraBeats(PHRASE_DOCTOR, { streak: 1 }).length === 8, "streak 1 serves items 1 to 8");
+assert(laterDoctor[8].awkward === "El domingo no puedo atender tu comida.", "later session serves item 9");
+assert(laterDoctor[9].awkward === "Disculpe, ¿dónde es el mercado?", "later session serves item 10");
+assert(laterDoctor[10].awkward === "Necesito aplicar para una cuenta.", "later session serves item 11");
+assert(trimDoctoraBeats(PHRASE_DOCTOR, { streak: 1 }).map((x) => x.awkward).join("|") === PHRASE_DOCTOR.map((x) => x.awkward).join("|"), "streak 1 serves items 1 to 11 in list order");
+assert(trimDoctoraBeats(PHRASE_DOCTOR, { streak: 4 }).length === 11, "streak 4 serves all 11");
+const twelveDoctor = PHRASE_DOCTOR.concat([{ awkward: "twelfth-beat", natural: "twelfth-beat" }]);
+assert(trimDoctoraBeats(twelveDoctor, { firstDoctora: false }).length === 11, "a 12th beat is not served");
+assert(!trimDoctoraBeats(twelveDoctor, { firstDoctora: false }).some((x) => x.awkward === "twelfth-beat" || x.natural === "twelfth-beat"), "a 12th beat stays off the later path");
+assert(trimDoctoraBeats(twelveDoctor, { streak: 1 }).length === 11, "streak 1 does not serve a 12th beat");
+const oldEnglish = ["arribo", "arrive to the market", "attend your comida", "open an account"];
+const doctorBlob = PHRASE_DOCTOR.map((x) => [x.awkward, x.natural, x.formal, x.text, x.diagnosis, x.skill, ...(Array.isArray(x.answers) ? x.answers : [])].join("\n")).join("\n");
+for (const line of oldEnglish) {
+  assert(!doctorBlob.toLowerCase().includes(line.toLowerCase()), `old English-mixed string is not in PHRASE_DOCTOR: ${line}`);
+}
 const removedDoctor = [
   "No puedo attend your comida on Sunday.",
   "Can you tell me how to arrive to the market please?",
   "I need to make an appointment for open an account.",
 ];
 for (const line of removedDoctor) {
-  assert(!PHRASE_DOCTOR.some((x) => x.awkward === line || x.natural === line || x.formal === line || x.text === line), `items 9 to 11 are gone: ${line}`);
+  assert(!PHRASE_DOCTOR.some((x) => x.awkward === line || x.natural === line || x.formal === line || x.text === line), `old English-mixed line is not in PHRASE_DOCTOR: ${line}`);
   assert(!appSrc.includes(line), `removed line is not in App.jsx: ${line}`);
 }
 const firstDoctor = trimDoctoraBeats(PHRASE_DOCTOR, { firstDoctora: true });
 assert(firstDoctor.length === 4, "first session still serves 4");
 assert(firstDoctor.map((x) => x.natural).join("|") === FIRST_DOCTORA_KEEP_NATURALS.join("|"), "first session is still the same four");
 assert(trimDoctoraBeats(PHRASE_DOCTOR, { streak: 0 }).map((x) => x.natural).join("|") === FIRST_DOCTORA_KEEP_NATURALS.join("|"), "streak 0 still serves the same four");
-assert(!firstDoctor.some((x) => /garganta|plomero/.test(x.awkward || "")), "items 7 and 8 stay off the first session");
+const laterOnlyNaturals = new Set(PHRASE_DOCTOR.slice(6).map((x) => x.natural));
+assert(laterOnlyNaturals.size === 5, "items 7 to 11 are the later-only beats");
+assert(!firstDoctor.some((x) => laterOnlyNaturals.has(x.natural)), "items 7 to 11 stay off the first session");
+assert(!trimDoctoraBeats(PHRASE_DOCTOR, { streak: 0 }).some((x) => laterOnlyNaturals.has(x.natural)), "streak 0 excludes items 7 to 11");
 const plomeroItem = PHRASE_DOCTOR[7];
 const plomeroHit = gradeListedPhrase("conseguir un plomero", plomeroItem);
 assert(plomeroHit.status !== "wrong" && plomeroHit.status !== "empty", "item 8 accepts conseguir un plomero");
@@ -1110,6 +1126,13 @@ assert(gradeListedPhrase(plomeroItem.natural, plomeroItem).status === "correct",
 assert(gradeListedPhrase(plomeroItem.formal, plomeroItem).status !== "wrong", "item 8 formal stays accepted");
 for (const other of PHRASE_DOCTOR.slice(0, 7)) {
   assert(gradeListedPhrase("conseguir un plomero", other).status === "wrong", `conseguir un plomero does not loosen: ${other.awkward}`);
+}
+for (const [offset, item] of PHRASE_DOCTOR.slice(8).entries()) {
+  const n = offset + 9;
+  assert(!item.answers, `item ${n} has no answers array`);
+  assert(gradeListedPhrase(item.natural, item).status === "correct", `item ${n} natural is accepted`);
+  const formalHit = gradeListedPhrase(item.formal, item);
+  assert(formalHit.status !== "wrong" && formalHit.status !== "empty", `item ${n} formal is accepted`);
 }
 assert(UI.es.playScene === "Jugar la escena", "UI.es.playScene");
 assert(UI.en.playScene === "Play the scene", "UI.en.playScene");

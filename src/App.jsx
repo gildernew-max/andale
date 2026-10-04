@@ -3980,6 +3980,30 @@ const PHRASE_DOCTOR = [
     diagnosis: "«Obtener un plomero» sounds like paperwork. At home, «¿me puedes mandar…?» is natural.",
     skill: "Vida diaria",
   },
+  {
+    awkward: "El domingo no puedo atender tu comida.",
+    natural: "El domingo no puedo ir a tu comida. ¿Nos vemos otro día?",
+    formal: "Lamentablemente el domingo no podré asistir a la comida. ¿Podríamos vernos otro día?",
+    text: "El domingo no puedo, ¿otro día?",
+    diagnosis: "«Atender» means to serve or deal with someone, not to attend; for an event, use «ir a».",
+    skill: "Vida diaria",
+  },
+  {
+    awkward: "Disculpe, ¿dónde es el mercado?",
+    natural: "Disculpe, ¿dónde está el mercado?",
+    formal: "¿Podría decirme dónde está el mercado?",
+    text: "¿Dónde queda el mercado?",
+    diagnosis: "A place takes «estar»; «ser» is for where an event happens.",
+    skill: "Vida diaria",
+  },
+  {
+    awkward: "Necesito aplicar para una cuenta.",
+    natural: "Quiero abrir una cuenta. ¿Puedo agendar una cita?",
+    formal: "Quisiera abrir una cuenta. ¿Podría agendar una cita, por favor?",
+    text: "¿Agendan citas para abrir cuenta?",
+    diagnosis: "«Aplicar para» copies English; you «abres» an account and «agendas» the appointment.",
+    skill: "Vida diaria",
+  },
 ];
 
 const SAFE_RISKY_ITEMS = [

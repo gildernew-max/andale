@@ -3,7 +3,7 @@
 import { HOY_WIN_EN, HOY_WIN_ES } from "./hoyWin.js";
 
 export const FIRST_DOCTORA_BEAT_CAP = 4;
-export const DOCTORA_FULL_BEAT_CAP = 8;
+export const DOCTORA_FULL_BEAT_CAP = 11;
 export const DOCTORA_WIN_ES = HOY_WIN_ES;
 export const DOCTORA_WIN_EN = HOY_WIN_EN;
 
