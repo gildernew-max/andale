@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-10-04 (light greenText part 2 flow-test timeout)
+
+**What changed**
+- `lightGreenText2.test.jsx` describe timeout is 15s, same as sage cleanup.
+- The last `it` boots flash / type / match eight times and was dying at the default 5s. Assertions unchanged. No product change.
+
+**Why**
+- `main` CI `test` failed on `88a4969`: `drops opacity below 1 on the four faded rows…` timed out at 5000ms.
+
 ## 2026-10-04 (beginner onboarding flow-test timeout)
 
 **What changed**

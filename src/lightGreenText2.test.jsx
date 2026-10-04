@@ -114,7 +114,7 @@ const matchQuestion = {
   right: [{ t: "hopefully", id: 0 }, { t: "to doubt", id: 1 }],
 };
 
-describe("light greenText part 2", () => {
+describe("light greenText part 2", { timeout: 15000 }, () => {
   afterEach(() => { cleanup(); localStorage.clear(); });
 
   it("keeps a single #2E7500 and clears the measured fills", () => {
