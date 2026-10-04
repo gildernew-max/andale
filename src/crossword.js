@@ -49,7 +49,7 @@ export function crosswordColors(dark) {
       tint: CROSSWORD_SAGE_TINT,
       locked: CROSSWORD_SAGE,
       activeLang: CROSSWORD_INK,
-      inactiveLang: "#777777",
+      inactiveLang: "#6B6258",
     };
   }
   return {

@@ -43,12 +43,12 @@ describe("MemoryCardFace", () => {
     expect(screen.getByTestId("memory-card").getAttribute("aria-label")).toBe("chamba (job, work)");
     const gloss = screen.getByTestId("memory-card-gloss");
     const word = screen.getByTestId("memory-card-word");
-    expect(MEMORY_CARD_GLOSS_COLOR).toBe("#777777");
+    expect(MEMORY_CARD_GLOSS_COLOR).toBe("#6B6258");
     expect(MEMORY_CARD_GLOSS_SCALE).toBeCloseTo(0.7);
     expect(gloss.style.fontSize).toBe(`${MEMORY_CARD_GLOSS_SCALE}em`);
     expect(gloss.style.fontFamily).toBe("inherit");
     expect(gloss.style.fontWeight).toBe("inherit");
-    expect(gloss.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
+    expect(gloss.style.color).toMatch(/#6B6258|rgb\(107,\s*98,\s*88\)/i);
     expect(word.style.fontSize).toBe("");
     expect(screen.getByTestId("memory-card-face").style.fontSize).toBe(`${MEMORY_CARD_HERO_MAX}px`);
     expect(word.getAttribute("data-hero-px")).toBe(String(MEMORY_CARD_HERO_MAX));
@@ -68,7 +68,7 @@ describe("MemoryCardFace", () => {
     expect(screen.getByTestId("memory-card-word").textContent).toBe("job, work");
     expect(screen.getByTestId("memory-card-gloss").textContent).toBe("(chamba)");
     expect(screen.getByTestId("memory-card-gloss").style.fontSize).toBe("0.7em");
-    expect(screen.getByTestId("memory-card-gloss").style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
+    expect(screen.getByTestId("memory-card-gloss").style.color).toMatch(/#6B6258|rgb\(107,\s*98,\s*88\)/i);
     expect(screen.getByTestId("memory-card").getAttribute("aria-label")).toBe("job, work (chamba)");
   });
 
@@ -145,7 +145,7 @@ describe("MemoryCardFace", () => {
       expect(word.style.fontSize).toBe("");
       expect(gloss.style.fontSize).toBe("0.7em");
       expect(memoryGlossPx(22)).toBeCloseTo(15.4);
-      expect(gloss.style.color).toMatch(/#777777|rgb\(119,\s*119,\s*119\)/i);
+      expect(gloss.style.color).toMatch(/#6B6258|rgb\(107,\s*98,\s*88\)/i);
     } finally {
       HTMLElement.prototype.getBoundingClientRect = rect;
       if (client) Object.defineProperty(HTMLElement.prototype, "clientWidth", client);

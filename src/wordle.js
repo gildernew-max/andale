@@ -39,7 +39,7 @@ export const WORDLE_LIGHT = {
   letter: "#3C3C3C",
   quiet: "#6F6560",
   clue: "#3C3C3C",
-  gloss: "#777777",
+  gloss: "#6B6258",
 };
 
 /** Dark tiles. Brand lock. The keyboard does not read these. */

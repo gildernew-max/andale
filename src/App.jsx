@@ -2344,6 +2344,9 @@ const MEMORY_DARK_EDGE = "#252830";
 const MEMORY_DARK_INK = "#F6EFE4";
 /** Muted gray. 6.44:1 on the card, including at 70% of the hero. */
 const MEMORY_DARK_GLOSS = "#A0A4AB";
+/** Wrong-pair flash text only. Not D.redDark. Light 5.11:1 on #FFF1F1. Dark 5.64:1 on #3A1A1A. */
+const MEMORY_WRONG_INK_LIGHT = "#C62828";
+const MEMORY_WRONG_INK_DARK = "#FF6B6B";
 /** Matched fill. Cream on this sage is 4.58:1, so the small gloss clears 4.5. */
 const MEMORY_DARK_SAGE = "#677050";
 /** Header labels on the page. 7.17:1 against the page. */
@@ -2525,7 +2528,7 @@ const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, on
                 wrongBorder: D.red,
                 wrongLip: D.redDark,
                 wrongFill: D.redBg,
-                wrongInk: D.redDark,
+                wrongInk: darkBoard ? MEMORY_WRONG_INK_DARK : MEMORY_WRONG_INK_LIGHT,
                 ink: darkBoard ? MEMORY_DARK_INK : D.ink,
               });
               const darkUnmatched = darkBoard && !matched && !wrong;
@@ -8045,7 +8048,7 @@ export default function App() {
         .wordle-reveal { flex: 0 0 auto; text-align: center; padding: 2px 8px 4px; font-size: 16px; }
         .wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 600; line-height: 1.35; color: var(--wordle-clue, #3C3C3C); }
         .wordle-reveal [data-testid="wordle-answer"] { font-weight: 900; }
-        .wordle-reveal [data-testid="wordle-gloss"] { font-size: 0.7em; font-weight: 700; line-height: 1.35; color: var(--wordle-gloss, #777777); margin-top: 2px; }
+        .wordle-reveal [data-testid="wordle-gloss"] { font-size: 0.7em; font-weight: 700; line-height: 1.35; color: var(--wordle-gloss, #6B6258); margin-top: 2px; }
         .wordle-keys { flex: 0 0 auto; width: 100%; max-width: 100%; }
         @keyframes wordleShake {
           0%, 100% { transform: translateX(0); }

@@ -132,7 +132,7 @@ assert(wordleChrome(false) === WORDLE_LIGHT, "light chrome is the brief palette"
 assert(WORDLE_LIGHT.board === "#F6EFE4" && WORDLE_LIGHT.page === "#F6EFE4", "light board stays cream");
 assert(WORDLE_LIGHT.square === "#FFFFFF" && WORDLE_LIGHT.letter === "#3C3C3C", "light squares stay white with ink letters");
 assert(WORDLE_LIGHT.line === "#C9BBA8", "light empty tiles use a thin warm-gray border");
-assert(WORDLE_LIGHT.gloss === "#777777", "light gloss stays the memory gray");
+assert(WORDLE_LIGHT.gloss === "#6B6258", "light gloss is #6B6258");
 assert(wordleChrome(true) === WORDLE_DARK, "dark chrome is one isolated object");
 assert(WORDLE_DARK.page === "#15171C", "dark page is the app background");
 assert(WORDLE_DARK.board === "#1E2128" && WORDLE_DARK.square === "#1E2128", "dark board and empty tiles are the app card");
