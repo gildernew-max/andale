@@ -196,8 +196,11 @@ describe("word-order tile layout", () => {
   it("uses the app dark page and card with cream text", async () => {
     const page = /#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i;
     const card = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
+    const subtle = /#252830|rgb\(\s*37,\s*40,\s*48\s*\)/i;
     const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
     const line = /#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\)/i;
+    const selectedFill = /#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i;
+    const selectedInk = /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i;
     const user = userEvent.setup();
     await openOrder(orderQuestion(
       AGRADEZCO_WORDS,
@@ -220,16 +223,16 @@ describe("word-order tile layout", () => {
 
     const bank = screen.getAllByTestId("bank-tile");
     bank.forEach((tile) => {
-      expect(tile.style.background).toMatch(card);
+      expect(tile.style.background).toMatch(subtle);
       expect(tile.style.color).toMatch(cream);
       expect(tile.style.borderTopColor).toMatch(line);
     });
 
     await user.click(screen.getByRole("button", { name: "le" }));
     const placed = screen.getByTestId("placed-tile");
-    expect(placed.style.background).toMatch(card);
-    expect(placed.style.color).toMatch(cream);
-    expect(placed.style.borderTopColor).toMatch(line);
+    expect(placed.style.background).toMatch(selectedFill);
+    expect(placed.style.color).toMatch(selectedInk);
+    expect(placed.style.borderTopColor).toMatch(selectedInk);
     expect(screen.getByText("Toca una ficha colocada para moverla.").style.color).toMatch(cream);
     expect(screen.getByRole("button", { name: "Borrar" }).style.color).toMatch(cream);
     expect(screen.getByTestId("lang-en").style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);

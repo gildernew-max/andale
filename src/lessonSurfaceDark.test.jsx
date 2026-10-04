@@ -136,13 +136,15 @@ describe("dark lesson surfaces", () => {
     expect(story).toContain('else if (theme === "dark") { bg = D.subtle; col = HUB_CREAM; }');
     for (const needle of [
       'background: status === "idle" ? (theme === "dark" ? D.subtle : "#F7F7F7")',
-      'background: used ? D.greenBg : (theme === "dark" ? D.subtle : "#fff")',
+      'background: used ? D.greenBg : "#fff"',
       "color: used ? D.greenDark : D.green",
+      "function darkLessonChipPaint",
+      "background: D.subtle, borderColor: D.line, borderBottomColor: D.line, color: cream",
       'theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")',
       "theme === \"dark\" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)",
       "showWrong ? (theme === \"dark\" ? D.red : D.redDark)",
       "hit ? D.greenDark : (theme === \"dark\" ? D.red : D.redDark)",
-      ".lesson-blank::placeholder{color:${HUB_CREAM};opacity:1}",
+      ".lesson-blank::placeholder{color:${D.sub};opacity:1}",
     ]) expect(appSrc).toContain(needle);
     expect((appSrc.match(/theme === "dark" \? D\.subtle : \(isSel \? "#DDF4FF" : "#fff"\)/g) || []).length).toBe(2);
     const light = appSrc.slice(appSrc.indexOf("const D_LIGHT"), appSrc.indexOf("const D_DARK"));
@@ -190,8 +192,8 @@ describe("dark lesson surfaces", () => {
     const input = await screen.findByPlaceholderText("Escribe la palabra que falta…");
     expect(norm(input.style.background)).toBe("#252830");
     expect(norm(input.style.color)).toBe("#f6efe4");
-    expect([...document.querySelectorAll("style")].some((el) => el.textContent.includes(".lesson-blank::placeholder{color:#F6EFE4;opacity:1}"))).toBe(true);
-    expect(paint(screen.getAllByTestId("bank-tile")[0])).toMatchObject({ fill: "#252830", ink: "#58cc02", line: "#2a2e36" });
+    expect([...document.querySelectorAll("style")].some((el) => el.textContent.includes(".lesson-blank::placeholder{color:#A0A4AB;opacity:1}"))).toBe(true);
+    expect(paint(screen.getAllByTestId("bank-tile")[0])).toMatchObject({ fill: "#252830", ink: "#f6efe4", line: "#2a2e36" });
     await boot("light", lessonLive({ session: typeSession }));
     const lightInput = await screen.findByPlaceholderText("Escribe la palabra que falta…");
     expect(norm(lightInput.style.background)).toBe("#f7f7f7");

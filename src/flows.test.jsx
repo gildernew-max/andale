@@ -6768,7 +6768,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("practice-why").textContent).toBe("«Cuando» + future action → subjunctive. Habit would be indicative: «cuando salgo».");
   });
 
-  it("BUILD WITH WORDS unused chip labels stay CHECK lime; dark chips use the idle fill", async () => {
+  it("BUILD WITH WORDS unused chips use the dark idle plate and cream labels", async () => {
     cleanup();
     seedProgress({
       uiLang: "en",
@@ -6790,10 +6790,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(tiles.length).toBeGreaterThan(3);
     const check = screen.getByTestId("lesson-check");
     const lime = /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i;
+    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
     expect(check.style.background).toMatch(lime);
     tiles.forEach((tile) => {
-      expect(tile.style.color).toMatch(lime);
-      expect(tile.style.color).toBe(check.style.background);
+      expect(tile.style.color).toMatch(cream);
       expect(tile.style.background).toMatch(/#252830|rgb\(\s*37,\s*40,\s*48\s*\)/i);
       expect(tile.style.background).not.toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
       expect(Number.parseInt(tile.style.fontWeight, 10)).toBeGreaterThanOrEqual(800);
@@ -6824,6 +6824,160 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(isWhiteOrCreamFill(fill), `${label} rendered a white or cream fill ${fill}`).toBe(false);
     expect(contrastRatio(ink, fill), `${label} ${ink} on ${fill}`).toBeGreaterThanOrEqual(4.5);
   };
+
+  it("dark Completa la oración uses the brand chip plate, and lesson hooks stay findable", async () => {
+    const typeQuestion = {
+      type: "type",
+      prompt: "Ojalá que no ___ mañana.",
+      note: "(llover)",
+      answers: ["llueva"],
+      explain: "«Ojalá» siempre va con subjuntivo: llueva.",
+      answerAid: {
+        mode: "choices",
+        tiles: [
+          { id: "c0", w: "llueva" },
+          { id: "c1", w: "llueve" },
+          { id: "c2", w: "llover" },
+        ],
+      },
+    };
+    const lesson = (theme, extra = {}) => ({
+      screen: "lesson",
+      tab: "camino",
+      qi: 0,
+      status: "idle",
+      selected: null,
+      typed: "",
+      typedTileIds: [],
+      session: {
+        title: "Subjuntivo presente",
+        host: "luna",
+        unitId: "subj1",
+        color: "#58CC02",
+        dark: "#46A302",
+        questions: [typeQuestion],
+      },
+      ...extra,
+    });
+    const bootLesson = async (theme, extra) => {
+      cleanup();
+      localStorage.clear();
+      mockBrowser();
+      seedProgress({ theme, uiLang: "es", hearts: 5, welcomed: true, onboardingDone: true, firstSessionDone: true, paywallSeen: true });
+      localStorage.setItem(LIVE_KEY, JSON.stringify(lesson(theme, extra)));
+      render(<App />);
+      await screen.findByText("Completa la oración");
+    };
+    const pair = (fg, bg) => contrastRatio(fg, bg);
+
+    await bootLesson("dark");
+    const card = screen.getByTestId("type-prompt");
+    expect(cssHex(card.style.background)).toBe("#1e2128");
+    expect(cssHex(card.style.color)).toBe("#f6efe4");
+    expect(pair("#F6EFE4", "#1E2128")).toBeGreaterThanOrEqual(4.5);
+    const note = screen.getByTestId("lesson-note");
+    expect(note.textContent).toBe("(llover)");
+    expect(cssHex(note.style.color)).toBe("#a0a4ab");
+    expect(pair("#A0A4AB", "#1E2128")).toBeGreaterThanOrEqual(4.5);
+    expect(Number(pair("#A0A4AB", "#1E2128").toFixed(2))).toBe(6.44);
+    const input = document.querySelector("input.lesson-blank");
+    expect(cssHex(input.style.background)).toBe("#252830");
+    expect([...document.querySelectorAll("style")].some((el) => el.textContent.includes(".lesson-blank::placeholder{color:#A0A4AB;opacity:1}"))).toBe(true);
+    expect(pair("#A0A4AB", "#252830")).toBeGreaterThanOrEqual(4.5);
+    expect(Number(pair("#A0A4AB", "#252830").toFixed(2))).toBe(5.89);
+    screen.getAllByTestId("bank-tile").forEach((tile) => {
+      expect(paintOf(tile)).toMatchObject({ fill: "#252830", ink: "#f6efe4" });
+      expect(cssHex(tile.style.borderTopColor)).toBe("#2a2e36");
+    });
+    expect(pair("#F6EFE4", "#252830")).toBeGreaterThanOrEqual(4.5);
+
+    await bootLesson("dark", { typed: "llueve", typedTileIds: ["c1"] });
+    const selected = screen.getAllByTestId("bank-tile").find((el) => el.textContent.trim() === "llueve");
+    expect(paintOf(selected)).toMatchObject({ fill: "#1f3a1a", ink: "#58cc02" });
+    expect(cssHex(selected.style.borderTopColor)).toBe("#58cc02");
+    expect(pair("#58CC02", "#1F3A1A")).toBeGreaterThanOrEqual(4.5);
+    expect(Number(pair("#58CC02", "#1F3A1A").toFixed(2))).toBe(5.99);
+    const stillIdle = screen.getAllByTestId("bank-tile").find((el) => el.textContent.trim() === "llover");
+    expect(paintOf(stillIdle)).toMatchObject({ fill: "#252830", ink: "#f6efe4" });
+
+    await bootLesson("dark", { status: "wrong", typed: "llueve", typedTileIds: ["c1"], quip: { es: "Cerca.", en: "Close." } });
+    const wrongChip = screen.getAllByTestId("bank-tile").find((el) => el.textContent.trim() === "llueve");
+    expect(paintOf(wrongChip)).toMatchObject({ fill: "#3a1a1a", ink: "#ff6b6b" });
+    expect(pair("#FF6B6B", "#3A1A1A")).toBeGreaterThanOrEqual(4.5);
+    expect(Number(pair("#FF6B6B", "#3A1A1A").toFixed(2))).toBe(5.64);
+
+    await bootLesson("light");
+    expect(cssHex(screen.getByTestId("type-prompt").style.background)).toBe("#ffffff");
+    expect(cssHex(screen.getByTestId("type-prompt").style.color)).toBe("#3c3c3c");
+    expect(cssHex(document.querySelector("input.lesson-blank").style.background)).toBe("#f7f7f7");
+    expect(document.querySelector("input.lesson-blank").style.color).toBe("");
+    expect([...document.querySelectorAll("style")].some((el) => el.textContent.includes(".lesson-blank::placeholder"))).toBe(false);
+    screen.getAllByTestId("bank-tile").forEach((tile) => {
+      expect(paintOf(tile)).toMatchObject({ fill: "#ffffff", ink: "#58cc02" });
+    });
+    expect(cssHex(screen.getByTestId("lesson-note").style.color)).toBe("#777777");
+
+    cleanup();
+    localStorage.clear();
+    mockBrowser();
+    seedProgress({ theme: "dark", uiLang: "es", hearts: 5, welcomed: true });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      qi: 0,
+      status: "wrong",
+      selected: 0,
+      session: {
+        title: "Subjuntivo presente",
+        host: "luna",
+        unitId: "subj1",
+        color: "#58CC02",
+        dark: "#46A302",
+        questions: [{
+          type: "mc",
+          prompt: "Espero que ___ a la fiesta.",
+          choices: ["vienes", "vengas"],
+          shuffledChoices: ["vienes", "vengas"],
+          answer: "vengas",
+          fixedChoices: true,
+        }],
+      },
+    }));
+    render(<App />);
+    await screen.findByText("Elige la opción correcta");
+    expect(screen.getByTestId("mc-option-0")).toBeTruthy();
+    expect(screen.getByTestId("mc-option-1")).toBeTruthy();
+    expect(screen.getByTestId("mc-option-wrong")).toBeTruthy();
+    expect(screen.getAllByTestId("choice-card").length).toBe(2);
+
+    cleanup();
+    localStorage.clear();
+    mockBrowser();
+    seedProgress({ theme: "light", uiLang: "es", hearts: 5, welcomed: true });
+    localStorage.setItem(LIVE_KEY, JSON.stringify({
+      screen: "lesson",
+      tab: "camino",
+      qi: 0,
+      status: "idle",
+      session: {
+        title: "Parejas",
+        host: "luna",
+        unitId: "subj1",
+        color: "#58CC02",
+        dark: "#46A302",
+        questions: [{
+          type: "match",
+          pairs: [["ojalá", "hopefully"]],
+          left: [{ t: "ojalá", id: 0 }],
+          right: [{ t: "hopefully", id: 0 }],
+        }],
+      },
+    }));
+    render(<App />);
+    await screen.findByText("Une las parejas");
+    expect(screen.getByTestId("match-tile-0").getAttribute("data-state")).toBe("idle");
+    expect(screen.getByTestId("match-tile-1").getAttribute("data-state")).toBe("idle");
+  });
 
   it("dark Jeopardy tiles, keyboard keys, and Games buttons stay off white and cream at 4.5:1", async () => {
     cleanup();
