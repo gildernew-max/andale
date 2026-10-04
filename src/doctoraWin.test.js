@@ -29,12 +29,12 @@ assert(!isFirstDoctoraSession({ streak: 1 }), "streak 1 is not first Doctora");
 assert(!isFirstDoctoraSession({ streak: 4 }), "later streak keeps full Doctora");
 
 assert(FIRST_DOCTORA_BEAT_CAP === 4, "first Doctora cap is 4");
-assert(DOCTORA_FULL_BEAT_CAP === 6, "later Doctora keeps 6 beats");
+assert(DOCTORA_FULL_BEAT_CAP === 8, "later Doctora keeps 8 beats");
 assert(doctoraBeatCap({ firstDoctora: true }) === 4, "firstDoctora flag caps at 4");
 assert(doctoraBeatCap({ streak: 0 }) === 4, "streak 0 caps at 4");
-assert(doctoraBeatCap({ firstDoctora: false, streak: 0 }) === 6, "explicit later path keeps 6");
-assert(doctoraBeatCap({ streak: 1 }) === 6, "streak 1 keeps full depth");
-assert(doctoraBeatCap({ firstDoctora: false }) === 6, "returning Doctora keeps full depth");
+assert(doctoraBeatCap({ firstDoctora: false, streak: 0 }) === 8, "explicit later path keeps 8");
+assert(doctoraBeatCap({ streak: 1 }) === 8, "streak 1 keeps full depth");
+assert(doctoraBeatCap({ firstDoctora: false }) === 8, "returning Doctora keeps full depth");
 
 assert(FIRST_DOCTORA_KEEP_NATURALS.join("|") === [
   "¿Me da un café, por favor?",
@@ -55,16 +55,25 @@ const deck = [
   { natural: "Te estoy esperando." },
   { natural: "Eso tiene sentido." },
   { natural: "Voy a postularme al trabajo." },
+  { natural: "¿Me da algo para la garganta, por favor?" },
+  { natural: "¿Me puedes mandar un plomero? Se tapó el lavabo." },
 ];
 const first = trimDoctoraBeats(deck, { firstDoctora: true });
 assert(first.length === 4, "first session trims to 4");
 assert(first.map((x) => x.natural).join("|") === FIRST_DOCTORA_KEEP_NATURALS.join("|"), "first session is café → ganas → sentido → esperando");
 assert(!first.some((x) => FIRST_DOCTORA_PARK_NATURALS.includes(x.natural)), "parked beats are not in first session");
 assert(pickFirstDoctoraBeats(deck).map((x) => x.natural).join("|") === FIRST_DOCTORA_KEEP_NATURALS.join("|"), "pickFirstDoctoraBeats is the keep stamp");
-assert(trimDoctoraBeats(deck, { firstDoctora: false }).length === 6, "later Doctora keeps all 6");
-assert(trimDoctoraBeats(deck, { firstDoctora: false }).some((x) => x.natural === "Necesito tomar una decisión."), "later keeps decisión");
-assert(trimDoctoraBeats(deck, { firstDoctora: false }).some((x) => x.natural === "Voy a postularme al trabajo."), "later keeps postularse");
-assert(trimDoctoraBeats(deck, { streak: 1 }).length === 6, "streak 1 trim is full depth");
+const later = trimDoctoraBeats(deck, { firstDoctora: false });
+assert(later.length === 8, "later Doctora keeps all 8");
+assert(later[6].natural === "¿Me da algo para la garganta, por favor?", "later serves item 7");
+assert(later[7].natural === "¿Me puedes mandar un plomero? Se tapó el lavabo.", "later serves item 8");
+assert(later.some((x) => x.natural === "Necesito tomar una decisión."), "later keeps decisión");
+assert(later.some((x) => x.natural === "Voy a postularme al trabajo."), "later keeps postularse");
+assert(trimDoctoraBeats(deck, { streak: 1 }).length === 8, "streak 1 trim is full depth");
+const nine = deck.concat([{ natural: "ninth-beat" }]);
+assert(trimDoctoraBeats(nine, { firstDoctora: false }).length === 8, "later Doctora does not serve a ninth beat");
+assert(!trimDoctoraBeats(nine, { firstDoctora: false }).some((x) => x.natural === "ninth-beat"), "a ninth beat stays off the later path");
+assert(trimDoctoraBeats(nine, { firstDoctora: true }).map((x) => x.natural).join("|") === FIRST_DOCTORA_KEEP_NATURALS.join("|"), "first session stays the same four when the deck is longer");
 assert(trimDoctoraBeats([], { firstDoctora: true }).length === 0, "empty queue stays empty");
 
 const six = [1, 2, 3, 4, 5, 6];
