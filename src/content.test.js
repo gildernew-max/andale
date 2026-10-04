@@ -27,6 +27,8 @@ import { FIRST_WIN_EMAIL_CTA, FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_ERROR, FIRST
 import { isAudioGatedStep, LISTEN_SKIP, LISTEN_SKIP_HINT, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { WAITLIST_CTA, WAITLIST_ERROR, WAITLIST_PLACEHOLDER, WAITLIST_PRIVACY, WAITLIST_PRIVACY_URL, WAITLIST_PROMPT, WAITLIST_SUCCESS, waitlistCta, waitlistError, waitlistPlaceholder, waitlistPrivacy, waitlistPrompt, waitlistSuccess } from "./waitlist.js";
 import { FIRST_WIN_MINUTES, splashPromiseLine } from "./splashCopy.js";
+import { DOCTORA_FULL_BEAT_CAP, FIRST_DOCTORA_BEAT_CAP, FIRST_DOCTORA_KEEP_NATURALS, trimDoctoraBeats } from "./doctoraWin.js";
+import { gradeListedPhrase } from "./wordOrder.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -181,7 +183,15 @@ for (const u of UNITS) {
   assert(!unitIds.has(u.id), `duplicate unit id ${u.id}`);
   unitIds.add(u.id);
   assert(Array.isArray(u.pairs) && u.pairs.length > 0 && u.pairs.every(pairReady), `unit ${u.id} missing pairs`);
-  assert(Array.isArray(u.questions) && u.questions.length > 0, `unit ${u.id} missing questions`);
+  assert(Array.isArray(u.questions) && u.questions.length === 11, `unit ${u.id} questions stay 11; a replay bank is separate`);
+  if (u.bank != null) {
+    assert(Array.isArray(u.bank) && u.bank.length > 0, `unit ${u.id} bank is a separate non-empty list`);
+    assert(u.bank.map((q) => q.prompt).join("\n") !== u.questions.map((q) => q.prompt).join("\n"), `unit ${u.id} bank is not a copy of the authored questions`);
+    u.bank.forEach((raw, i) => {
+      assert(!u.questions.includes(raw), `${u.id} bank ${i} is not an authored question`);
+      assertPreppedQuestion(prepQuestion(raw), `${u.id} bank ${i} (${raw.type || "?"})`);
+    });
+  }
 
   const matchQ = prepQuestion({ type: "match", pairs: u.pairs });
   assertPreppedQuestion(matchQ, `${u.id} generated match`);
@@ -1069,6 +1079,38 @@ assert(doctoraWinSrc.includes("Eso tiene sentido."), "first-Doctora keep stamps 
 assert(doctoraWinSrc.includes("Te estoy esperando."), "first-Doctora keep stamps esperando");
 assert(doctoraWinSrc.includes("Necesito tomar una decisión."), "decisión is parked, not deleted");
 assert(doctoraWinSrc.includes("Voy a postularme al trabajo."), "postularse is parked, not deleted");
+assert(DOCTORA_FULL_BEAT_CAP === 8, "later Doctora cap is 8");
+assert(FIRST_DOCTORA_BEAT_CAP === 4, "first Doctora cap stays 4");
+const PHRASE_DOCTOR = Function(`"use strict"; return (${extractConst(appSrc, "PHRASE_DOCTOR")});`)();
+assert(PHRASE_DOCTOR.length === 8, "Phrase Doctor list is 8 items");
+const laterDoctor = trimDoctoraBeats(PHRASE_DOCTOR, { firstDoctora: false });
+assert(laterDoctor.length === 8, "later session serves 8");
+assert(laterDoctor.map((x) => x.awkward).join("|") === PHRASE_DOCTOR.map((x) => x.awkward).join("|"), "later session serves items 1 to 8 in list order");
+assert(laterDoctor[6].awkward === "Necesito obtener medicina para mi garganta.", "later session serves item 7");
+assert(laterDoctor[7].awkward === "Necesito obtener un plomero para mi lavabo.", "later session serves item 8");
+assert(trimDoctoraBeats(PHRASE_DOCTOR, { streak: 1 }).length === 8, "streak 1 serves items 1 to 8");
+const removedDoctor = [
+  "No puedo attend your comida on Sunday.",
+  "Can you tell me how to arrive to the market please?",
+  "I need to make an appointment for open an account.",
+];
+for (const line of removedDoctor) {
+  assert(!PHRASE_DOCTOR.some((x) => x.awkward === line || x.natural === line || x.formal === line || x.text === line), `items 9 to 11 are gone: ${line}`);
+  assert(!appSrc.includes(line), `removed line is not in App.jsx: ${line}`);
+}
+const firstDoctor = trimDoctoraBeats(PHRASE_DOCTOR, { firstDoctora: true });
+assert(firstDoctor.length === 4, "first session still serves 4");
+assert(firstDoctor.map((x) => x.natural).join("|") === FIRST_DOCTORA_KEEP_NATURALS.join("|"), "first session is still the same four");
+assert(trimDoctoraBeats(PHRASE_DOCTOR, { streak: 0 }).map((x) => x.natural).join("|") === FIRST_DOCTORA_KEEP_NATURALS.join("|"), "streak 0 still serves the same four");
+assert(!firstDoctor.some((x) => /garganta|plomero/.test(x.awkward || "")), "items 7 and 8 stay off the first session");
+const plomeroItem = PHRASE_DOCTOR[7];
+const plomeroHit = gradeListedPhrase("conseguir un plomero", plomeroItem);
+assert(plomeroHit.status !== "wrong" && plomeroHit.status !== "empty", "item 8 accepts conseguir un plomero");
+assert(gradeListedPhrase(plomeroItem.natural, plomeroItem).status === "correct", "item 8 natural stays the primary accept");
+assert(gradeListedPhrase(plomeroItem.formal, plomeroItem).status !== "wrong", "item 8 formal stays accepted");
+for (const other of PHRASE_DOCTOR.slice(0, 7)) {
+  assert(gradeListedPhrase("conseguir un plomero", other).status === "wrong", `conseguir un plomero does not loosen: ${other.awkward}`);
+}
 assert(UI.es.playScene === "Jugar la escena", "UI.es.playScene");
 assert(UI.en.playScene === "Play the scene", "UI.en.playScene");
 assert(UI.es.phraseDoctor === "Doctora de frases", "UI.es.phraseDoctor is not Phrase Doctor");
@@ -1759,7 +1801,7 @@ assert((appSrc.match(/" \(locked\)"/g) || []).length === 2, "camino story and sh
 assert((appSrc.match(/" \(cerrado\)"/g) || []).length === 2, "camino story and shelf use ES cerrado");
 assert(appSrc.includes('sheet.crowns === 1 ? (uiLang === "es" ? "corona" : "crown") : L.crowns'), "one crown is singular in ES and EN");
 assert(appSrc.includes('(flashRun.reviewed || 0) === 1 ? (uiLang === "es" ? "tarjeta" : "card") : L.flashCardsWord'), "one flashcard is singular in ES and EN");
-assert(appSrc.includes('(prog.streak || 0) === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays'), "one streak day is singular in ES and EN");
+assert(appSrc.includes('streakView.displayStreak === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays'), "one streak day is singular in ES and EN");
 assert(appSrc.includes("Idioma de contexto: inglés") && appSrc.includes("Idioma de contexto: español"), "perfil lang aria follows uiLang");
 assert(appSrc.includes("English context language") && appSrc.includes("Spanish context language"), "EN perfil lang aria kept");
 assert(!/aria-label=\{opt\.id === "en" \? "English context language" : "Spanish context language"\}/.test(appSrc), "perfil lang aria is not hardcoded English");
@@ -1777,6 +1819,265 @@ assert(appSrc.includes("`Paragraph ${i + 1}`") && appSrc.includes("`Párrafo ${i
 assert(!/aria-label=\{`Párrafo \$\{i \+ 1\}`\}/.test(appSrc), "story paragraph nav aria is not hardcoded Párrafo");
 
 const explainByEs = new Map(PRACTICE_EXPLAIN.map((row) => [row.es, row]));
+const subj1Bank = UNITS.find((u) => u.id === "subj1");
+assert(subj1Bank.questions.length === 11, "subj1 authored questions stay 11");
+assert(subj1Bank.questions[0].prompt === "Espero que ___ a la fiesta el sábado.", "subj1 question order is unchanged");
+assert(Array.isArray(subj1Bank.bank) && subj1Bank.bank.length === 11, "subj1 replay bank is 11 questions");
+assert(subj1Bank.bank[0].type === "mc" && subj1Bank.bank[0].prompt === "Me da gusto que ya te ___ mejor." && subj1Bank.bank[0].answer === "sientas", "subj1 bank MC is George's");
+assert(subj1Bank.bank[0].choices.join("|") === "sientes|sientas|sentirás|sentías", "subj1 bank MC choices");
+assert(subj1Bank.bank[0].explain === "«Me da gusto que» (emoción) dispara el subjuntivo. Tú → sientas.", "subj1 bank MC explain is George's");
+assert(subj1Bank.bank[1].type === "type" && subj1Bank.bank[1].prompt === "Te presto mi coche para que ___ al aeropuerto." && subj1Bank.bank[1].note === "(ir, tú)", "subj1 bank type is George's");
+assert(subj1Bank.bank[1].answers.join("|") === "vayas" && subj1Bank.bank[1].explain === "«Para que» (finalidad) siempre pide subjuntivo: vayas.", "subj1 bank type answer and explain");
+assert(subj1Bank.bank[2].type === "order" && subj1Bank.bank[2].answer === "Escríbeme antes de que salgas", "subj1 bank order answer");
+assert(subj1Bank.bank[2].words.join("|") === "Escríbeme|antes|de|que|salgas|sales|saldrás", "subj1 bank order words include the decoys");
+assert(subj1Bank.bank[2].explain === "«Antes de que» siempre pide subjuntivo: salgas. «Sales / saldrás» son señuelos en indicativo.", "subj1 bank order explain is George's");
+assert(subj1Bank.bank[2].prompt === "Construye: “Write to me before you leave.”", "subj1 bank order uses the existing English Construye cue");
+const subj1New = [
+  ["mc", "Es posible que Lupita no ___ ir el jueves.", "pueda"],
+  ["mc", "Dile a Rosa que me ___ hoy sin falta.", "llame"],
+  ["mc", "Llévate un suéter en caso de que ___ frío.", "haga"],
+  ["mc", "Estoy seguro de que Paco ya ___ en camino.", "está"],
+  ["type", "Te recomiendo que ___ el mole poblano.", "pruebes"],
+  ["type", "Aquí no hay nadie que ___ arreglar esto.", "sepa"],
+  ["order", "Construye: “Stay here until I get back.”", "Quédate aquí hasta que regrese"],
+  ["transform", "Transforma la oración", "Quiero entrar sin que nadie me vea|Quiero entrar sin que me vea nadie"],
+];
+subj1New.forEach(([type, prompt, answer], n) => {
+  const q = subj1Bank.bank[n + 3];
+  const got = q.type === "type" || q.type === "transform" ? q.answers.join("|") : q.answer;
+  assert(q.type === type && q.prompt === prompt && got === answer, `subj1 bank item ${n + 4} is George's`);
+});
+assert(subj1Bank.bank[6].note === "¡Ojo!", "subj1 bank trap keeps the ¡Ojo! note");
+assert(subj1Bank.bank[9].words.join("|") === "Quédate|aquí|hasta|que|regrese|regreso|regresaré", "subj1 bank order words include the decoys");
+assert(subj1Bank.bank[10].base === "Quiero entrar. Nadie me ve." && subj1Bank.bank[10].instruction === "Únelas con «sin que»", "subj1 bank transform base and instruction");
+const subj1PromptOwners = new Map();
+subj1Bank.questions.forEach((q, i) => {
+  if (q.type === "transform") return;
+  subj1PromptOwners.set(q.prompt, `question ${i}`);
+});
+subj1Bank.bank.forEach((q, i) => {
+  if (q.type === "transform") {
+    assert(!subj1Bank.questions.some((qq) => qq.base === q.base), `subj1 bank ${i} transform base is new`);
+    return;
+  }
+  assert(!subj1PromptOwners.has(q.prompt), `subj1 bank ${i} prompt duplicates ${subj1PromptOwners.get(q.prompt) || "another item"}`);
+  subj1PromptOwners.set(q.prompt, `bank ${i}`);
+});
+const subj1BankEn = [
+  "«Me da gusto que» (emotion) triggers the subjunctive. Tú → sientas.",
+  "«Para que» (purpose) always takes the subjunctive: vayas.",
+  "«Antes de que» always takes the subjunctive: salgas. «Sales / saldrás» are indicative decoys.",
+  "«Es posible que» raises a possibility without stating it → subjunctive: pueda; the other choices treat it as fact.",
+  "Here «decir que» is a request, not news → subjunctive: llame; as news it would be «Dice que me llama».",
+  "«En caso de que» talks about something that may not happen → subjunctive: haga; the other choices treat it as a fact.",
+  "Trap: «estoy seguro de que» expresses certainty → indicative: está. With «no estoy seguro de que» it would be subjunctive: esté.",
+  "«Recomendar que» (advice) takes the subjunctive; probar changes its vowel: pruebes.",
+  "A negative antecedent («no hay nadie que») doesn’t exist, so it takes the subjunctive: sepa.",
+  "«Hasta que» + a future action takes the subjunctive: regrese. «Regreso / regresaré» are indicative decoys.",
+  "«Sin que» always takes the subjunctive and switches subject: ve → vea.",
+];
+subj1Bank.bank.forEach((q, i) => {
+  const row = explainByEs.get(q.explain);
+  assert(row && row.es === q.explain, "bank Why ES matches the authored explain");
+  assert(row.en === subj1BankEn[i], `subj1 bank ${i} EN is George's`);
+  assert(explainText(q, "es") === q.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(q, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(q);
+  assertPreppedQuestion(prepped, `subj1 bank ${i}`);
+  if (q.type === "order") {
+    assert(prepped.words.join("|") === q.words.join("|"), `subj1 bank ${i} order tiles stay authored`);
+    assert(prepped.answer === q.answer, `subj1 bank ${i} order answer stays authored`);
+  }
+  if (q.type === "type" || q.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === q.answers.join("|"), `subj1 bank ${i} answers stay authored`);
+  }
+});
+const subj2Bank = UNITS.find((u) => u.id === "subj2");
+assert(subj2Bank.questions.length === 11, "subj2 authored questions stay 11");
+assert(subj2Bank.questions[0].prompt === "Si yo ___ rico, viajaría por todo México.", "subj2 question order is unchanged");
+assert(subj2Bank.questions[1].answer === "supiera" && subj2Bank.questions[1].choices.join("|") === "sabe|supiera|sabría|sepa", "subj2 Q2 replaces the duplicated sabe with sepa");
+assert(new Set(subj2Bank.questions[1].choices).size === 4, "subj2 Q2 choices are distinct");
+assert(Array.isArray(subj2Bank.bank) && subj2Bank.bank.length === 11, "subj2 replay bank is 11 questions");
+assert(subj2Bank.bank[0].type === "mc" && subj2Bank.bank[0].prompt === "Mi mamá quería que yo ___ medicina." && subj2Bank.bank[0].answer === "estudiara", "subj2 bank MC is George's");
+assert(subj2Bank.bank[0].choices.join("|") === "estudio|estudie|estudiara|estudiaría", "subj2 bank MC choices");
+assert(subj2Bank.bank[0].explain === "«Querer que» en pasado pide imperfecto de subjuntivo: estudiara; el presente (estudie) no concuerda con «quería».", "subj2 bank MC explain is George's");
+assert(subj2Bank.bank[5].type === "type" && subj2Bank.bank[5].prompt === "Si Memo ___ más rápido, llegaríamos a tiempo." && subj2Bank.bank[5].note === "(manejar)", "subj2 bank type is George's");
+assert(subj2Bank.bank[5].answers.join("|") === "manejara|manejase" && subj2Bank.bank[5].explain === "Si + imperfecto de subjuntivo para lo irreal: manejara; llegaríamos es la consecuencia.", "subj2 bank type answer and explain");
+assert(subj2Bank.bank[8].type === "order" && subj2Bank.bank[8].answer === "Si viviera cerca, iría caminando", "subj2 bank order answer");
+assert(subj2Bank.bank[8].words.join("|") === "Si|viviera|cerca,|iría|caminando|vivía|iré", "subj2 bank order words include the decoys");
+assert(subj2Bank.bank[8].explain === "Viviera (subjuntivo) + iría (condicional). «Vivía / iré» son señuelos.", "subj2 bank order explain is George's");
+assert(subj2Bank.bank[8].prompt === "Construye: “If I lived nearby, I would walk.”", "subj2 bank order uses the existing English Construye cue");
+const subj2New = [
+  ["mc", "Me saludó como si no me ___.", "conociera"],
+  ["mc", "En la fiesta no había nadie que ___ bailar salsa.", "supiera"],
+  ["mc", "Se fue antes de que yo ___ despedirme.", "pudiera"],
+  ["mc", "Yo sabía que Pedro ___ en la oficina a esa hora.", "estaba"],
+  ["type", "Si Memo ___ más rápido, llegaríamos a tiempo.", "manejara|manejase"],
+  ["type", "Era importante que nos ___ la verdad.", "dijeras|dijeses"],
+  ["type", "¿Te molestó que ___ la ventana?", "abriera|abriese"],
+  ["order", "Construye: “If I lived nearby, I would walk.”", "Si viviera cerca, iría caminando"],
+  ["order", "Construye: “I left early so you could rest.”", "Me fui temprano para que descansaras"],
+  ["transform", "Transforma la oración", "Era una lástima que no vinieras|Era una lástima que no vinieses"],
+];
+subj2New.forEach(([type, prompt, answer], n) => {
+  const q = subj2Bank.bank[n + 1];
+  const got = q.type === "type" || q.type === "transform" ? q.answers.join("|") : q.answer;
+  assert(q.type === type && q.prompt === prompt && got === answer, `subj2 bank item ${n + 2} is George's`);
+});
+assert(subj2Bank.bank[4].note === "¡Ojo!", "subj2 bank trap keeps the ¡Ojo! note");
+assert(subj2Bank.bank[9].words.join("|") === "Me|fui|temprano|para|que|descansaras|descansas|descansarás", "subj2 bank order words include the decoys");
+assert(subj2Bank.bank[10].base === "Es una lástima que no vengas." && subj2Bank.bank[10].instruction === "Ponlo en pasado (empieza con «Era una lástima…»)", "subj2 bank transform base and instruction");
+const subj2PromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((q, i) => {
+      if (u.id === "subj2" && kind === "bank") return;
+      if (q.type === "transform") {
+        const base = q.base || q.source;
+        if (base) subj2PromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (q.prompt) subj2PromptOwners.set(q.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+subj2Bank.bank.forEach((q, i) => {
+  if (q.type === "transform") {
+    assert(!subj2PromptOwners.has(q.base), `subj2 bank ${i} transform base repeats a prompt`);
+    assert(!subj2PromptOwners.has(`base:${q.base}`), `subj2 bank ${i} transform base repeats ${subj2PromptOwners.get(`base:${q.base}`) || "another item"}`);
+    return;
+  }
+  assert(!subj2PromptOwners.has(q.prompt), `subj2 bank ${i} prompt duplicates ${subj2PromptOwners.get(q.prompt) || "another item"}`);
+  subj2PromptOwners.set(q.prompt, `subj2 bank ${i}`);
+});
+const subj2BankEn = [
+  "«Querer que» in the past takes the imperfect subjunctive: estudiara; the present (estudie) doesn’t agree with «quería».",
+  "«Como si» takes the imperfect subjunctive: conociera; the other choices present the comparison as a fact.",
+  "Negative antecedent («no había nadie que») in the past → imperfect subjunctive: supiera.",
+  "«Antes de que» always takes the subjunctive; with «se fue» (past) it goes in the imperfect: pudiera.",
+  "Trap: «saber que» expresses certainty → indicative: estaba. The subjunctive (estuviera) appears when you negate: «No creía que estuviera».",
+  "Si + imperfect subjunctive for the unreal: manejara; llegaríamos is the result.",
+  "«Era importante que» (past) takes the imperfect subjunctive: dijeras, which comes from «dijeron».",
+  "«¿Te molestó que…?» is about the past and takes the imperfect subjunctive: abriera.",
+  "Viviera (subjunctive) + iría (conditional). «Vivía / iré» are decoys.",
+  "«Para que» in the past takes the imperfect subjunctive: descansaras. «Descansas / descansarás» are indicative decoys.",
+  "If the main verb moves to the imperfect, the subjunctive does too: vengas → vinieras.",
+];
+subj2Bank.bank.forEach((q, i) => {
+  const row = explainByEs.get(q.explain);
+  assert(row && row.es === q.explain, "bank Why ES matches the authored explain");
+  assert(row.en === subj2BankEn[i], `subj2 bank ${i} EN is George's`);
+  assert(explainText(q, "es") === q.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(q, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(q);
+  assertPreppedQuestion(prepped, `subj2 bank ${i}`);
+  if (q.type === "mc") {
+    assert(q.choices.length === 4 && new Set(q.choices).size === 4 && q.choices.includes(q.answer), `subj2 bank ${i} mc choices`);
+  }
+  if (q.type === "order") {
+    assert(prepped.words.join("|") === q.words.join("|"), `subj2 bank ${i} order tiles stay authored`);
+    assert(prepped.answer === q.answer, `subj2 bank ${i} order answer stays authored`);
+  }
+  if (q.type === "type" || q.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === q.answers.join("|"), `subj2 bank ${i} answers stay authored`);
+    const seAt = q.answers.findIndex((a) => /(?:se|ses)$/.test(String(a).split(" ").pop()));
+    if (seAt >= 0) assert(seAt > 0, `subj2 bank ${i} -se form stays an accepted answer but not first`);
+  }
+});
+const siclausesBank = UNITS.find((u) => u.id === "siclauses");
+assert(siclausesBank.questions.length === 11, "siclauses authored questions stay 11");
+assert(siclausesBank.questions[0].prompt === "Si ___ más tiempo, viajaría a Oaxaca cada mes.", "siclauses question order is unchanged");
+assert(Array.isArray(siclausesBank.bank) && siclausesBank.bank.length === 11, "siclauses replay bank is 11 questions");
+assert(siclausesBank.bank[0].type === "mc" && siclausesBank.bank[0].prompt === "Actúa como si nunca ___ pasado nada." && siclausesBank.bank[0].answer === "hubiera", "siclauses bank MC is George's");
+assert(siclausesBank.bank[0].choices.join("|") === "ha|había|hubiera|habría", "siclauses bank MC choices");
+assert(siclausesBank.bank[0].explain === "«Como si» sobre algo que ya pasó exige pluscuamperfecto de subjuntivo: hubiera pasado; ha, había y habría no van tras «como si».", "siclauses bank MC explain is George's");
+assert(siclausesBank.bank[5].type === "type" && siclausesBank.bank[5].prompt === "Si mis primos ___ el sábado, haríamos una comida en casa." && siclausesBank.bank[5].note === "(venir)", "siclauses bank type is George's");
+assert(siclausesBank.bank[5].answers.join("|") === "vinieran|viniesen" && siclausesBank.bank[5].explain === "La consecuencia en condicional (haríamos) pide imperfecto de subjuntivo en la cláusula con «si»: vinieran.", "siclauses bank type answer and explain");
+assert(siclausesBank.bank[8].type === "order" && siclausesBank.bank[8].answer === "Si saliéramos ahorita, llegaríamos a tiempo", "siclauses bank order answer");
+assert(siclausesBank.bank[8].words.join("|") === "Si|saliéramos|ahorita,|llegaríamos|a|tiempo|saldríamos|llegaremos", "siclauses bank order words include the decoys");
+assert(siclausesBank.bank[8].explain === "Saliéramos (subjuntivo) + llegaríamos (condicional). «Saldríamos / llegaremos» son señuelos: «si» no lleva condicional ni futuro.", "siclauses bank order explain is George's");
+assert(siclausesBank.bank[8].prompt === "Construye: “If we left now, we would arrive on time.”", "siclauses bank order uses the existing English Construye cue");
+const siclausesNew = [
+  ["mc", "Yo que tú, ___ con tu jefe antes de firmar.", "hablaría"],
+  ["mc", "Si ___ estudiado más, habrías pasado el examen.", "hubieras"],
+  ["mc", "Si me ___ hoy, mañana pago la renta.", "depositan"],
+  ["mc", "Si no ___ por mi hermana, hoy no tendría trabajo.", "fuera"],
+  ["type", "Si mis primos ___ el sábado, haríamos una comida en casa.", "vinieran|viniesen"],
+  ["type", "Si me tocara la lotería, ___ por todo el país.", "viajaría|viajaria"],
+  ["type", "Si hubieras llegado temprano, ___ cenado juntos.", "habríamos|habriamos|hubiéramos|hubieramos|hubiésemos|hubiesemos"],
+  ["order", "Construye: “If we left now, we would arrive on time.”", "Si saliéramos ahorita, llegaríamos a tiempo"],
+  ["order", "Construye: “I would like to ask you a favor.”", "Quisiera pedirle un favor"],
+  ["transform", "Transforma la oración", "Si lloviera, no iríamos|Si lloviese, no iríamos"],
+];
+siclausesNew.forEach(([type, prompt, answer], n) => {
+  const q = siclausesBank.bank[n + 1];
+  const got = q.type === "type" || q.type === "transform" ? q.answers.join("|") : q.answer;
+  assert(q.type === type && q.prompt === prompt && got === answer, `siclauses bank item ${n + 2} is George's`);
+});
+assert(siclausesBank.bank[3].note === "¡Ojo!", "siclauses bank trap keeps the ¡Ojo! note");
+assert(siclausesBank.bank[9].words.join("|") === "Quisiera|pedirle|un|favor|Quise|Querré", "siclauses bank order words include the decoys");
+assert(siclausesBank.bank[10].base === "Si llueve, no vamos." && siclausesBank.bank[10].instruction === "Hazlo irreal (empieza con «Si lloviera…»)", "siclauses bank transform base and instruction");
+const siclausesPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((q, i) => {
+      if (u.id === "siclauses" && kind === "bank") return;
+      if (q.type === "transform") {
+        const base = q.base || q.source;
+        if (base) siclausesPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (q.prompt) siclausesPromptOwners.set(q.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+siclausesBank.bank.forEach((q, i) => {
+  if (q.type === "transform") {
+    assert(!siclausesPromptOwners.has(q.base), `siclauses bank ${i} transform base repeats a prompt`);
+    assert(!siclausesPromptOwners.has(`base:${q.base}`), `siclauses bank ${i} transform base repeats ${siclausesPromptOwners.get(`base:${q.base}`) || "another item"}`);
+    return;
+  }
+  assert(!siclausesPromptOwners.has(q.prompt), `siclauses bank ${i} prompt duplicates ${siclausesPromptOwners.get(q.prompt) || "another item"}`);
+  siclausesPromptOwners.set(q.prompt, `siclauses bank ${i}`);
+});
+const siclausesBankEn = [
+  "«Como si» about something that already happened requires the pluperfect subjunctive: hubiera pasado; ha, había and habría don’t follow «como si».",
+  "«Yo que tú» gives hypothetical advice → conditional: hablaría; present, past and future would state a fact, not advice.",
+  "Past unreal: the «si» clause takes the pluperfect subjunctive: hubieras estudiado. «Habrías» is saved for the result.",
+  "Trap: a real or likely condition → «si» + present indicative: depositan; «si» doesn’t take the present subjunctive, the future or the conditional.",
+  "«Si no fuera por…» is an unreal formula (imperfect subjunctive) and goes with the conditional: tendría.",
+  "A conditional result (haríamos) calls for the imperfect subjunctive in the «si» clause: vinieran.",
+  "After «si» + imperfect subjunctive, the result takes the conditional: viajaría.",
+  "Past unreal → conditional perfect: habríamos + cenado; «hubiéramos» is also heard in speech.",
+  "Saliéramos (subjunctive) + llegaríamos (conditional). «Saldríamos / llegaremos» are decoys: «si» doesn’t take the conditional or the future.",
+  "«Quisiera» + infinitive is the polite way to ask. «Quise / querré» are decoys: past and future.",
+  "The unreal version changes both verbs: llueve → lloviera, vamos → iríamos.",
+];
+siclausesBank.bank.forEach((q, i) => {
+  const row = explainByEs.get(q.explain);
+  assert(row && row.es === q.explain, "bank Why ES matches the authored explain");
+  assert(row.en === siclausesBankEn[i], `siclauses bank ${i} EN is George's`);
+  assert(explainText(q, "es") === q.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(q, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(q);
+  assertPreppedQuestion(prepped, `siclauses bank ${i}`);
+  if (q.type === "mc") {
+    assert(q.choices.length === 4 && new Set(q.choices).size === 4 && q.choices.includes(q.answer), `siclauses bank ${i} mc choices`);
+  }
+  if (q.type === "order") {
+    assert(prepped.words.join("|") === q.words.join("|"), `siclauses bank ${i} order tiles stay authored`);
+    assert(prepped.answer === q.answer, `siclauses bank ${i} order answer stays authored`);
+  }
+  if (q.type === "type" || q.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === q.answers.join("|"), `siclauses bank ${i} answers stay authored`);
+    const seAt = q.answers.findIndex((a) => /(?:se|ses)$/.test(String(a).split(" ").pop()));
+    if (seAt >= 0) assert(seAt > 0, `siclauses bank ${i} -se form stays an accepted answer but not first`);
+  }
+});
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;

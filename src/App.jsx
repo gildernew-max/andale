@@ -4,6 +4,7 @@ import { playSound as playGameSound } from "./playSound.js";
 import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
 import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./schema.js";
 import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuestion.js";
+import { drawLessonIndexes, questionByIndex } from "./replayBank.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
@@ -16,6 +17,8 @@ import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { STREAK_FLAME, shouldPopFirstStreak, streakChipLabel, streakLabelColor } from "./streakChip.js";
+import { streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
+import { shouldShowWelcomeBack, welcomeBackLine } from "./welcomeBack.js";
 import { winNumeralColor } from "./winNumeral.js";
 import { scoreCountClause } from "./scoreLine.js";
 import { probeAudioFile, storyAudioUrl } from "./storyAudio.js";
@@ -54,7 +57,7 @@ import {
   sobremesaTipsLabel,
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
-import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
@@ -215,6 +218,7 @@ import {
   startCrosswordRun,
   typeCrosswordLetter,
 } from "./crossword.js";
+import { ANDALE_BUILD } from "./buildId.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -379,6 +383,19 @@ const UNITS = [
       { type: "transform", base: "Creo que viene.", instruction: "Agrega duda (empieza con «No creo…»)", prompt: "Transforma la oración", answers: ["No creo que venga"], explain: "Negar la creencia obliga al subjuntivo: viene → venga." },
       { type: "listen", text: "Es importante que llegues temprano a la reunión.", answers: ["Es importante que llegues temprano a la reunión"], explain: "Expresión impersonal de valoración + que → subjuntivo: llegues." },
     ],
+    bank: [
+      { type: "mc", prompt: "Me da gusto que ya te ___ mejor.", note: "", choices: ["sientes", "sientas", "sentirás", "sentías"], answer: "sientas", explain: "«Me da gusto que» (emoción) dispara el subjuntivo. Tú → sientas." },
+      { type: "type", prompt: "Te presto mi coche para que ___ al aeropuerto.", note: "(ir, tú)", answers: ["vayas"], explain: "«Para que» (finalidad) siempre pide subjuntivo: vayas." },
+      { type: "order", prompt: "Construye: “Write to me before you leave.”", words: ["Escríbeme", "antes", "de", "que", "salgas", "sales", "saldrás"], answer: "Escríbeme antes de que salgas", explain: "«Antes de que» siempre pide subjuntivo: salgas. «Sales / saldrás» son señuelos en indicativo." },
+      { type: "mc", prompt: "Es posible que Lupita no ___ ir el jueves.", note: "", choices: ["puede", "pueda", "podrá", "pudo"], answer: "pueda", explain: "«Es posible que» plantea una posibilidad sin afirmarla → subjuntivo: pueda; las otras opciones la dan por hecha." },
+      { type: "mc", prompt: "Dile a Rosa que me ___ hoy sin falta.", note: "", choices: ["llama", "llame", "llamará", "llamaba"], answer: "llame", explain: "Aquí «decir que» es una petición, no una noticia → subjuntivo: llame; como noticia sería «Dice que me llama»." },
+      { type: "mc", prompt: "Llévate un suéter en caso de que ___ frío.", note: "", choices: ["hace", "haga", "hará", "hacía"], answer: "haga", explain: "«En caso de que» habla de algo que quizá no pase → subjuntivo: haga; las otras opciones lo tratan como un hecho." },
+      { type: "mc", prompt: "Estoy seguro de que Paco ya ___ en camino.", note: "¡Ojo!", choices: ["esté", "está", "estuviera", "estás"], answer: "está", explain: "Trampa: «estoy seguro de que» expresa certeza → indicativo: está. Con «no estoy seguro de que» sí iría subjuntivo: esté." },
+      { type: "type", prompt: "Te recomiendo que ___ el mole poblano.", note: "(probar, tú)", answers: ["pruebes"], explain: "«Recomendar que» (consejo) pide subjuntivo; probar cambia la vocal: pruebes." },
+      { type: "type", prompt: "Aquí no hay nadie que ___ arreglar esto.", note: "(saber)", answers: ["sepa"], explain: "Un antecedente negativo («no hay nadie que») no existe, así que va en subjuntivo: sepa." },
+      { type: "order", prompt: "Construye: “Stay here until I get back.”", words: ["Quédate", "aquí", "hasta", "que", "regrese", "regreso", "regresaré"], answer: "Quédate aquí hasta que regrese", explain: "«Hasta que» + acción futura pide subjuntivo: regrese. «Regreso / regresaré» son señuelos en indicativo." },
+      { type: "transform", base: "Quiero entrar. Nadie me ve.", instruction: "Únelas con «sin que»", prompt: "Transforma la oración", answers: ["Quiero entrar sin que nadie me vea", "Quiero entrar sin que me vea nadie"], explain: "«Sin que» siempre pide subjuntivo y cambia de sujeto: ve → vea." },
+    ],
   },
   {
     id: "pret", title: "Pretérito vs. imperfecto", desc: "El pasado que narra vs. el pasado que pinta",
@@ -447,6 +464,19 @@ const UNITS = [
       { type: "transform", base: "Voy a ir.", instruction: "Hazlo condicional (una palabra)", prompt: "Transforma la oración", answers: ["Iría"], explain: "Futuro inmediato → condicional: iría." },
       { type: "listen", text: "Si pudiera, me mudaría a San Miguel mañana mismo.", answers: ["Si pudiera, me mudaría a San Miguel mañana mismo", "Si pudiera me mudaría a San Miguel mañana mismo"], explain: "Pudiera → mudaría: el dúo clásico de la hipótesis irreal." },
     ],
+    bank: [
+      { type: "mc", prompt: "Actúa como si nunca ___ pasado nada.", note: "", choices: ["ha", "había", "hubiera", "habría"], answer: "hubiera", explain: "«Como si» sobre algo que ya pasó exige pluscuamperfecto de subjuntivo: hubiera pasado; ha, había y habría no van tras «como si»." },
+      { type: "mc", prompt: "Yo que tú, ___ con tu jefe antes de firmar.", note: "", choices: ["hablo", "hablaría", "hablé", "hablaré"], answer: "hablaría", explain: "«Yo que tú» da un consejo hipotético → condicional: hablaría; presente, pasado y futuro serían un hecho, no un consejo." },
+      { type: "mc", prompt: "Si ___ estudiado más, habrías pasado el examen.", note: "", choices: ["hubieras", "habías", "has", "habrías"], answer: "hubieras", explain: "Pasado irreal: la cláusula con «si» lleva pluscuamperfecto de subjuntivo: hubieras estudiado. «Habrías» queda para la consecuencia." },
+      { type: "mc", prompt: "Si me ___ hoy, mañana pago la renta.", note: "¡Ojo!", choices: ["depositan", "depositen", "depositarán", "depositarían"], answer: "depositan", explain: "Trampa: condición real o probable → «si» + presente de indicativo: depositan; «si» no lleva presente de subjuntivo, futuro ni condicional." },
+      { type: "mc", prompt: "Si no ___ por mi hermana, hoy no tendría trabajo.", note: "", choices: ["es", "sea", "fuera", "fue"], answer: "fuera", explain: "«Si no fuera por…» es una fórmula irreal (imperfecto de subjuntivo) y va con condicional: tendría." },
+      { type: "type", prompt: "Si mis primos ___ el sábado, haríamos una comida en casa.", note: "(venir)", answers: ["vinieran", "viniesen"], explain: "La consecuencia en condicional (haríamos) pide imperfecto de subjuntivo en la cláusula con «si»: vinieran." },
+      { type: "type", prompt: "Si me tocara la lotería, ___ por todo el país.", note: "(viajar, yo)", answers: ["viajaría", "viajaria"], explain: "Tras «si» + imperfecto de subjuntivo, la consecuencia va en condicional: viajaría." },
+      { type: "type", prompt: "Si hubieras llegado temprano, ___ cenado juntos.", note: "(haber, nosotros — condicional)", answers: ["habríamos", "habriamos", "hubiéramos", "hubieramos", "hubiésemos", "hubiesemos"], explain: "Pasado irreal → condicional compuesto: habríamos + cenado; en el habla también se oye «hubiéramos»." },
+      { type: "order", prompt: "Construye: “If we left now, we would arrive on time.”", words: ["Si", "saliéramos", "ahorita,", "llegaríamos", "a", "tiempo", "saldríamos", "llegaremos"], answer: "Si saliéramos ahorita, llegaríamos a tiempo", explain: "Saliéramos (subjuntivo) + llegaríamos (condicional). «Saldríamos / llegaremos» son señuelos: «si» no lleva condicional ni futuro." },
+      { type: "order", prompt: "Construye: “I would like to ask you a favor.”", words: ["Quisiera", "pedirle", "un", "favor", "Quise", "Querré"], answer: "Quisiera pedirle un favor", explain: "«Quisiera» + infinitivo es la forma cortés de pedir. «Quise / querré» son señuelos: pasado y futuro." },
+      { type: "transform", base: "Si llueve, no vamos.", instruction: "Hazlo irreal (empieza con «Si lloviera…»)", prompt: "Transforma la oración", answers: ["Si lloviera, no iríamos", "Si lloviese, no iríamos"], explain: "Lo irreal cambia los dos verbos: llueve → lloviera, vamos → iríamos." },
+    ],
   },
   {
     id: "pronombres", title: "Pronombres y «se»", desc: "Se lo dije, se me olvidó, se vende",
@@ -506,7 +536,7 @@ const UNITS = [
     blurb: "Contrafactuales, cortesía y comparaciones con «como si».",
     questions: [
       { type: "mc", prompt: "Si yo ___ rico, viajaría por todo México.", choices: ["fuera", "soy", "era", "sería"], answer: "fuera", note: "Si + imperfect subjunctive + conditional → counterfactual present. «Si soy» would make it a real condition, not a hypothetical." },
-      { type: "mc", prompt: "Habla como si lo ___ todo.", choices: ["sabe", "supiera", "sabría", "sabe"], answer: "supiera", note: "«Como si» (as if) is always followed by imperfect subjunctive, no exceptions." },
+      { type: "mc", prompt: "Habla como si lo ___ todo.", choices: ["sabe", "supiera", "sabría", "sepa"], answer: "supiera", note: "«Como si» (as if) is always followed by imperfect subjunctive, no exceptions." },
       { type: "type", prompt: "Translate: «If I had time, I would help you.»", answer: "Si tuviera tiempo, te ayudaría.", note: "Si + imperfect subj + conditional. The classic structure." },
       { type: "mc", prompt: "Me dijo que ___ a la junta a las nueve.", choices: ["llegara", "llegue", "llego", "llegaba"], answer: "llegara", note: "Reported subjunctive: «Llega a las nueve» → «Me dijo que llegara». Past trigger → imperfect subjunctive." },
       { type: "transform", prompt: "Soften this command into a request.", source: "¿Puedes traerme el menú?", answer: "¿Pudieras traerme el menú?", note: "Imperfect subjunctive of poder/querer/deber softens requests dramatically — the polite move in Mexican Spanish: «Quisiera un café», «Pudieras ayudarme»." },
@@ -516,6 +546,19 @@ const UNITS = [
       { type: "mc", prompt: "Buscaba un departamento que ___ cerca del metro.", choices: ["está", "estuviera", "esté", "fue"], answer: "estuviera", note: "Antecedent that may not exist + past tense → imperfect subjunctive." },
       { type: "mc", prompt: "Quisiera que tú ___ con nosotros.", choices: ["vienes", "vengas", "vinieras", "vendrías"], answer: "vinieras", note: "Quisiera (already imperfect subj) + que → imperfect subj. Sequence of tenses." },
       { type: "type", prompt: "Translate: «He left without my noticing.»", answer: "Se fue sin que yo me diera cuenta.", note: "«Sin que» always takes subjunctive. Past context → imperfect subjunctive." },
+    ],
+    bank: [
+      { type: "mc", prompt: "Mi mamá quería que yo ___ medicina.", note: "", choices: ["estudio", "estudie", "estudiara", "estudiaría"], answer: "estudiara", explain: "«Querer que» en pasado pide imperfecto de subjuntivo: estudiara; el presente (estudie) no concuerda con «quería»." },
+      { type: "mc", prompt: "Me saludó como si no me ___.", note: "", choices: ["conoce", "conociera", "conoció", "conocería"], answer: "conociera", explain: "«Como si» pide imperfecto de subjuntivo: conociera; las otras opciones presentan la comparación como un hecho." },
+      { type: "mc", prompt: "En la fiesta no había nadie que ___ bailar salsa.", note: "", choices: ["sabe", "sepa", "supiera", "sabría"], answer: "supiera", explain: "Antecedente negativo («no había nadie que») en pasado → imperfecto de subjuntivo: supiera." },
+      { type: "mc", prompt: "Se fue antes de que yo ___ despedirme.", note: "", choices: ["puedo", "pueda", "pudiera", "podría"], answer: "pudiera", explain: "«Antes de que» siempre pide subjuntivo; con «se fue» (pasado) va en imperfecto: pudiera." },
+      { type: "mc", prompt: "Yo sabía que Pedro ___ en la oficina a esa hora.", note: "¡Ojo!", choices: ["esté", "estuviera", "estaba", "estará"], answer: "estaba", explain: "Trampa: «saber que» expresa certeza → indicativo: estaba. El subjuntivo (estuviera) aparece al negar: «No creía que estuviera»." },
+      { type: "type", prompt: "Si Memo ___ más rápido, llegaríamos a tiempo.", note: "(manejar)", answers: ["manejara", "manejase"], explain: "Si + imperfecto de subjuntivo para lo irreal: manejara; llegaríamos es la consecuencia." },
+      { type: "type", prompt: "Era importante que nos ___ la verdad.", note: "(decir, tú)", answers: ["dijeras", "dijeses"], explain: "«Era importante que» (pasado) pide imperfecto de subjuntivo: dijeras, que sale de «dijeron»." },
+      { type: "type", prompt: "¿Te molestó que ___ la ventana?", note: "(abrir, yo)", answers: ["abriera", "abriese"], explain: "«¿Te molestó que…?» habla del pasado y pide imperfecto de subjuntivo: abriera." },
+      { type: "order", prompt: "Construye: “If I lived nearby, I would walk.”", words: ["Si", "viviera", "cerca,", "iría", "caminando", "vivía", "iré"], answer: "Si viviera cerca, iría caminando", explain: "Viviera (subjuntivo) + iría (condicional). «Vivía / iré» son señuelos." },
+      { type: "order", prompt: "Construye: “I left early so you could rest.”", words: ["Me", "fui", "temprano", "para", "que", "descansaras", "descansas", "descansarás"], answer: "Me fui temprano para que descansaras", explain: "«Para que» en pasado pide imperfecto de subjuntivo: descansaras. «Descansas / descansarás» son señuelos en indicativo." },
+      { type: "transform", base: "Es una lástima que no vengas.", instruction: "Ponlo en pasado (empieza con «Era una lástima…»)", prompt: "Transforma la oración", answers: ["Era una lástima que no vinieras", "Era una lástima que no vinieses"], explain: "Si el verbo principal pasa a imperfecto, el subjuntivo también: vengas → vinieras." },
     ],
     pairs: [
       { es: "fuera", en: "(I/he/she) were (subj.)" },
@@ -3947,31 +3990,8 @@ const PHRASE_DOCTOR = [
     natural: "¿Me puedes mandar un plomero? Se tapó el lavabo.",
     formal: "¿Podría mandarme un plomero? Se tapó el lavabo.",
     text: "¿Me mandas un plomero?",
+    answers: ["conseguir un plomero"],
     diagnosis: "«Obtener un plomero» sounds like paperwork. At home, «¿me puedes mandar…?» is natural.",
-    skill: "Vida diaria",
-  },
-  {
-    awkward: "No puedo attend your comida on Sunday.",
-    natural: "Ese día no puedo — ¿nos vemos la otra semana?",
-    formal: "Lamentablemente ese día no puedo. ¿Podríamos la semana siguiente?",
-    text: "Ese domingo no — ¿la otra?",
-    diagnosis: "«Attend» is English. Soft Mexican decline keeps «qué padre» + another day.",
-    skill: "Vida diaria",
-  },
-  {
-    awkward: "Can you tell me how to arrive to the market please?",
-    natural: "Disculpe, ¿para el mercado por aquí?",
-    formal: "Disculpe, ¿podría indicarme cómo llegar al mercado?",
-    text: "¿Para el mercado por aquí?",
-    diagnosis: "«How to arrive to» is English syntax. On the street, «disculpe + destino + por aquí» is direct.",
-    skill: "Vida diaria",
-  },
-  {
-    awkward: "I need to make an appointment for open an account.",
-    natural: "Quiero agendar una cita para abrir una cuenta.",
-    formal: "Quisiera agendar una cita para abrir una cuenta, por favor.",
-    text: "¿Agendan citas para cuenta nueva?",
-    diagnosis: "«Make an appointment for open» is English word-for-word. Office WhatsApp: «quiero agendar una cita» + the reason.",
     skill: "Vida diaria",
   },
 ];
@@ -4270,7 +4290,7 @@ const UI = {
     goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina hecha", workoutToday: "Rutina de hoy", dailyWorkout: "Rutina diaria",
     workoutDesc: "5 retos: escucha, trampa gramatical, mexicanismo, repaso y lectura.", play: "Jugar", repeat: "Repetir",
     sectionSkills: "habilidades + cofre", skip: "SALTAR", start: "EMPIEZA", claimed: "Reclamado", chest: "Cofre", openMe: "¡Ábreme!",
-    storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
+    storyPrefix: "Cuento", nextStory: "Siguiente cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
     missionsTitle: "Misiones", missionsDesc: "Situaciones reales con mezcla de gramática, oído y tono.", enter: "Entrar",
     dialogueDuel: "DUELO", best: "mejor marca", duel: "Duelo",
     library: "Biblioteca", storiesClaimed: "cuentos reclamados · lectura sin vidas", paragraphs: "párrafos · toca palabras · escucha por párrafo",
@@ -4315,6 +4335,7 @@ const UI = {
     playScene: "Jugar la escena",
     hubHoy: "Hoy",
     hubHoyQuiet: "Plan de hoy",
+    hubGoalDone: "Meta de hoy cumplida",
     hoyPlanEyebrow: "HOY · ~10 MIN",
     hoyPlanSell: "Un plan corto para hoy. Unos diez minutos. Luego paras.",
     hoyPlanCta: "Empezar el plan",
@@ -4361,7 +4382,7 @@ const UI = {
     goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Routine done", workoutToday: "Today's routine", dailyWorkout: "Daily routine",
     workoutDesc: "5 challenges: listening, grammar trap, Mexicanism, review, and reading.", play: "Play", repeat: "Repeat",
     sectionSkills: "skills + chest", skip: "SKIP", start: "START", claimed: "Claimed", chest: "Chest", openMe: "Open me!",
-    storyPrefix: "Story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
+    storyPrefix: "Story", nextStory: "Next story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
     missionsTitle: "Challenges", missionsDesc: "Real situations mixing grammar, listening, and tone.", enter: "Enter",
     dialogueDuel: "DIALOGUE DUEL", best: "best score", duel: "Duel",
     library: "Library", storiesClaimed: "stories claimed · reading costs no lives", paragraphs: "paragraphs · tap words · listen by paragraph",
@@ -4406,6 +4427,7 @@ const UI = {
     playScene: "Play the scene",
     hubHoy: "Hoy",
     hubHoyQuiet: "Today's plan",
+    hubGoalDone: "Today\u2019s goal done",
     hoyPlanEyebrow: "TODAY · ~10 MIN",
     hoyPlanSell: "A short plan for today. About ten minutes. Then you stop.",
     hoyPlanCta: "Start the plan",
@@ -4864,6 +4886,32 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
 
 /* ---------------- APP ---------------- */
 
+/** Address already published on public/support.html. The link only opens the mail app. */
+const PROBLEM_REPORT_MAIL = "gildernew@gmail.com";
+
+function problemReportDevice() {
+  try {
+    const ua = typeof navigator === "undefined" ? "" : navigator.userAgent;
+    return typeof ua === "string" ? ua : "";
+  } catch {
+    return "";
+  }
+}
+
+function problemReportMailto(uiLang, theme, tab) {
+  const en = uiLang === "en";
+  const lang = en ? "en" : "es";
+  const mode = theme === "dark" ? (en ? "dark" : "oscuro") : (en ? "light" : "claro");
+  const screen = tab;
+  const device = problemReportDevice();
+  const deviceTail = device ? (en ? ` · device ${device}` : ` · dispositivo ${device}`) : "";
+  const subject = en ? "Ándale: problem report" : "Ándale: reporte de problema";
+  const body = en
+    ? `What were you doing?\n\nWhat did you expect to happen?\n\nWhat happened?\n\nIf you can, attach a screenshot.\n\n—\nDetails to help us (please keep them): version ${ANDALE_BUILD} · language ${lang} · mode ${mode} · screen ${screen}${deviceTail}`
+    : `¿Qué estabas haciendo?\n\n¿Qué esperabas que pasara?\n\n¿Qué pasó?\n\nSi puedes, adjunta una captura de pantalla.\n\n—\nDatos para ayudarnos (por favor no los borres): versión ${ANDALE_BUILD} · idioma ${lang} · modo ${mode} · pantalla ${screen}${deviceTail}`;
+  return `mailto:${PROBLEM_REPORT_MAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function HangmanEmphasis({ text }) {
   return emphasisParts(text).map((part, i) => (
     part.em ? <em key={i}>{part.text}</em> : <span key={i}>{part.text}</span>
@@ -5080,7 +5128,6 @@ export default function App() {
 	    p = acceptProgress(p);
 	    if (p) p = migrateFirstSession(p);
 	    const needsOnboarding = shouldShowOnboarding(p);
-	    let loaded = null;
 	    setProg((base) => {
 	      let merged = { ...base, ...(p || {}), contentVersion: CONTENT_VERSION };
 	      if (needsOnboarding) merged = { ...merged, onboardingPending: true };
@@ -5092,9 +5139,8 @@ export default function App() {
 	        merged = { ...merged, srs, mistakes: [] };
 	      }
       if (merged.voiceName) window.__andaleVoiceName = merged.voiceName;
-      loaded = regen(merged);
       hydrated.current = true;
-      return loaded;
+      return regen(merged);
     });
 	    if (needsOnboarding) {
 	      const resume = onboardingResume(p);
@@ -5106,12 +5152,13 @@ export default function App() {
 	      setOnboardingOpen(false);
 	    }
 	    try { window.speechSynthesis.getVoices(); } catch (e) {}
-	    // Streak gap check: if last activity was 2 days ago, the streak is "salvageable"
+	    // Streak gap check: if last activity was 2 days ago, the streak is salvageable.
+	    // Uses the save just read. The setProg updater above has not run yet.
 	    const today = todayStr(); const y = yesterdayStr();
-	    if (loaded?.lastDay && loaded.lastDay !== today && loaded.lastDay !== y && (loaded.streak || 0) >= 2 && !loaded.repairChecked) {
+	    if (p?.lastDay && p.lastDay !== today && p.lastDay !== y && (p.streak || 0) >= 2 && !p.repairChecked) {
 	      const dayBefore = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);
-	      if (loaded.lastDay === dayBefore) {
-	        setStreakRepair((loaded.freezes || 0) > 0 ? "freeze" : "repair");
+	      if (p.lastDay === dayBefore) {
+	        setStreakRepair((p.freezes || 0) > 0 ? "freeze" : "repair");
 	      }
 	    }
 	  })();
@@ -5213,7 +5260,7 @@ export default function App() {
         }
         const src = UNITS.find((x) => x.id === o.u);
         if (!src) return null;
-        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...src.questions[o.i], _u: o.u, _i: o.i };
+        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...questionByIndex(src, o.i), _u: o.u, _i: o.i };
       }).filter(Boolean).map(prepQuestion);
       if (qs.length) {
         beginSession({
@@ -5240,7 +5287,7 @@ export default function App() {
       // Resume a saved session: same question order, same position, same score.
       const qs = snap.order.map((o) => {
         const src = UNITS.find((x) => x.id === o.u);
-        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...src.questions[o.i], _u: o.u, _i: o.i };
+        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...questionByIndex(src, o.i), _u: o.u, _i: o.i };
       }).map(prepQuestion);
       beginSession({ title: u.title, color: section.color, dark: section.dark, unitId: u.id, review: false, host: hostForUnit(u.id), questions: qs });
       setQi(Math.min(snap.qi || 0, qs.length - 1));
@@ -5254,8 +5301,19 @@ export default function App() {
       beginFirstSession(u, section, { beginner: prog.learnerLevel === "beginner" });
       return;
     }
-    const qs = u.questions.map((q, i) => ({ ...q, _u: u.id, _i: i }));
-    const withMatch = [...shuffle(qs), { type: "match", pairs: u.pairs, _u: u.id, _i: -1 }];
+    const bankCount = Array.isArray(u.bank) ? u.bank.length : 0;
+    const indexes = drawLessonIndexes({
+      questionCount: u.questions.length,
+      bankCount,
+      crowns: prog.done?.[u.id] || 0,
+      previous: bankCount ? prog.served?.[u.id] : [],
+    });
+    const qs = indexes.map((i) => ({ ...questionByIndex(u, i), _u: u.id, _i: i }));
+    const withMatch = [...qs, { type: "match", pairs: u.pairs, _u: u.id, _i: -1 }];
+    // Remember this run only when a bank exists, inside the andale-v3 record.
+    if (bankCount > 0) {
+      save((prev) => ({ ...prev, served: { ...(prev.served || {}), [u.id]: indexes } }));
+    }
     beginSession({ title: u.title, color: section.color, dark: section.dark, unitId: u.id, review: false, host: hostForUnit(u.id), questions: withMatch.map(prepQuestion) });
   };
 
@@ -5323,7 +5381,7 @@ export default function App() {
     };
     pool.slice(0, count).forEach(([k]) => {
       const [uid, iStr] = k.split("|"); const i = parseInt(iStr, 10);
-      const u = UNITS.find((x) => x.id === uid); const qq = u?.questions[i];
+      const u = UNITS.find((x) => x.id === uid); const qq = questionByIndex(u, i);
       addItem(uid, i, qq, "Repaso");
     });
     shuffle(focus.units).forEach((uid) => {
@@ -5379,7 +5437,7 @@ export default function App() {
       .slice(0, 12)
       .map(([k]) => {
         const [uid, iStr] = k.split("|"); const i = parseInt(iStr, 10);
-        const u = UNITS.find((x) => x.id === uid); const qq = u?.questions[i];
+        const u = UNITS.find((x) => x.id === uid); const qq = questionByIndex(u, i);
         return qq ? prepQuestion({ ...qq, _u: uid, _i: i }) : null;
       })
       .filter(Boolean);
@@ -5419,7 +5477,7 @@ export default function App() {
     const reviewQ = due ? (() => {
       const [uid, iStr] = due[0].split("|");
       const i = parseInt(iStr, 10);
-      const qq = getUnit(uid)?.questions[i];
+      const qq = questionByIndex(getUnit(uid), i);
       return qq ? { ...qq, _u: uid, _i: i, skill: "Repaso" } : null;
     })() : null;
     const story = pickCompletedStory(STORIES, prog.stories);
@@ -7221,11 +7279,18 @@ export default function App() {
   const todaySceneDone = !!prog.missions?.[`scene-${todayKey}`];
   const dailyDone = !!prog.missions?.[`daily-${todayKey}`];
   const storyCount = STORIES.filter((st) => prog.stories?.[st.id]).length;
+  const surfacedLectura = nextOffPathStory(STORIES, prog.stories, SECTIONS.length);
   const flashcards = Object.values(prog.flashcards || {}).sort((a, b) => (a.due || 0) - (b.due || 0));
   const dueFlashcards = flashcards.filter((c) => (c.due || 0) <= Date.now());
   const flashDeck = flashRun?.deck || [];
   const activeCard = flashRun && !flashRun.done && flashRun.idx < flashDeck.length ? flashDeck[flashRun.idx] : null;
   const uiLang = prog.uiLang === "en" ? "en" : "es";
+  const streakView = streakDisplay({
+    prog,
+    today: todayKey,
+    repairModal: !!streakRepair,
+    lang: uiLang,
+  });
   const firstSessionWhy = session?.firstSession
     ? (session.beginnerFirst ? beginnerWhyLine(qi, uiLang) : firstSessionWhyLine(qi, uiLang))
     : null;
@@ -8202,7 +8267,7 @@ export default function App() {
           </button>
           {!inLesson && (
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
-              {!onboardingOpen && <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3 }} title={streakChipLabel(prog.streak, uiLang) || L.streakDays}><IcFlame size={19} fill={STREAK_FLAME} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>}
+              {!onboardingOpen && <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3 }} title={streakChipLabel(streakView.displayStreak, uiLang) || L.streakDays}><IcFlame size={19} fill={STREAK_FLAME} className={streakView.displayStreak > 0 ? "flame" : ""} /> {streakView.displayStreak}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>}
               {!onboardingOpen && <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>}
               {!onboardingOpen && (voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
                 <button onClick={() => { if (voiceDead || (voicesReady && !voices.length)) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label={uiLang === "en" ? "Sound" : "Sonido"}
@@ -8251,6 +8316,15 @@ export default function App() {
             const pathSection = resumeU
               ? (FLAT.find((x) => x.unit.id === resumeU.id)?.section || SECTIONS[0])
               : nextF?.section;
+            const beginnerResume = prog.resume?.unitId === "_first"
+              && Array.isArray(prog.resume.order)
+              && prog.resume.order.some((step) => step?.u === "_beginner");
+            const resumeLesson = beginnerResume
+              ? uiText(BEGINNER_SESSION_TITLE, uiLang)
+              : (pathUnit?.title || "");
+            const welcomeLine = shouldShowWelcomeBack({ prog, today: todayKey })
+              ? welcomeBackLine({ lang: uiLang, streak: streakView.displayStreak, lesson: resumeLesson })
+              : "";
             const openPath = () => {
               if (!pathUnit) return;
               setSheet({ unit: pathUnit, section: pathSection || SECTIONS[0], crowns: prog.done?.[pathUnit.id] || 0 });
@@ -8259,8 +8333,9 @@ export default function App() {
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
             const hoyLoud = hoyHubLoud({ todayScene });
             const hoyDone = hoyHubDone({ todaySceneDone });
+            const goalReached = (prog.xpToday || 0) >= DAILY_GOAL;
             const hubTiles = [
-              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
+              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: welcomeLine || L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
               { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => openGamesHub() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
@@ -8280,7 +8355,7 @@ export default function App() {
                         alignItems: "center",
                         justifyContent: "space-between",
                         width: "100%",
-                        height: 168,
+                        ...(welcomeLine ? { height: "auto", minHeight: 168 } : { height: 168 }),
                         boxSizing: "border-box",
                         position: "relative",
                         background: theme === "dark" ? D.card : HUB_CREAM,
@@ -8293,7 +8368,7 @@ export default function App() {
                         textAlign: "center",
                         color: D.ink,
                       }}>
-                      {tile.id === "hoy" && hoyDone && (
+                      {tile.id === "hoy" && (hoyDone || goalReached) && (
                         <span data-testid="hub-hoy-done" aria-hidden="true" style={{
                           position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: 99,
                           background: D.greenBg, color: limeText(D.okText, D), fontSize: 12, fontWeight: 900, lineHeight: "20px",
@@ -8302,11 +8377,19 @@ export default function App() {
                       <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
                       <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
                       <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
-                      {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{tile.quiet}</div>}
+                      {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, overflowWrap: "break-word", maxWidth: "100%" }}>{tile.quiet}</div>}
+                      {tile.id === "hoy" && goalReached && (
+                        <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}: {DAILY_GOAL}{"\u00a0"}XP.</div>
+                      )}
                       </span>
                     </button>
                   ))}
                 </div>
+                {streakView.line ? (
+                  <p data-testid="streak-home-note" data-streak-status={streakView.status} style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, overflowWrap: "break-word", maxWidth: "100%" }}>
+                    {streakView.line}
+                  </p>
+                ) : null}
                 {showLine && (
                   <p data-testid="come-back-tomorrow" style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
                     {comeBackTomorrowLine({
@@ -8380,6 +8463,43 @@ export default function App() {
                   </div>
                 )}
                 </div>
+              </div>
+            );
+          })()}
+          {surfacedLectura && (() => {
+            const story = surfacedLectura;
+            const sec = SECTIONS[story.section] || SECTIONS[0];
+            const extra = STORY_EXTRAS[story.id] || {};
+            const meta = STORY_META[story.id] || {};
+            const souvenir = extra.collectible || meta.souvenir;
+            const shelfTitle = uiLang === "en" ? (story.titleEn || story.title) : story.title;
+            const found = (prog.storyFinds?.[story.id] || []).length;
+            const total = extra.keyWords?.length || 0;
+            return (
+              <div data-testid="lectura-next" style={{ margin: "8px 0 12px", maxWidth: "100%" }}>
+                <button
+                  type="button"
+                  data-testid="lectura-next-story"
+                  data-story-id={story.id}
+                  data-locked="false"
+                  onClick={() => openStory(story)}
+                  className="choice-card"
+                  aria-label={shelfTitle}
+                  style={{ display: "block", width: "100%", maxWidth: "100%", boxSizing: "border-box", textAlign: "left", padding: 15, cursor: "pointer", fontFamily: "inherit", background: theme === "dark" ? D.card : "#fff", borderColor: D.line, borderBottomColor: D.line }}
+                >
+                  <div style={{ display: "flex", gap: 13, alignItems: "center", minWidth: 0 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 15, background: sec.color, borderBottom: `5px solid ${sec.dark}`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <IcBook size={28} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-testid="lectura-next-eyebrow" style={{ fontSize: 11.5, fontWeight: 900, color: D.sub, lineHeight: 1.2, marginBottom: 2, overflowWrap: "break-word" }}>{L.nextStory}</div>
+                      <div style={{ fontWeight: 900, fontSize: 18, color: D.ink, overflowWrap: "break-word" }}>{shelfTitle}</div>
+                      <div style={{ fontSize: 13, color: D.sub, fontWeight: 800, overflowWrap: "break-word" }}>{meta.place ? `${meta.place} · ` : ""}{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
+                      <div style={{ fontSize: 12, color: theme === "dark" ? D.sub : limeText(sec.color, D), fontWeight: 900, marginTop: 4, overflowWrap: "break-word" }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
+                      {souvenir && <div style={{ fontSize: 11.5, color: D.sub, fontWeight: 900, marginTop: 4, overflowWrap: "break-word" }}>{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
+                    </div>
+                  </div>
+                </button>
               </div>
             );
           })()}
@@ -9246,14 +9366,14 @@ export default function App() {
           </div>}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
-	              { icon: <IcFlame size={26} fill={STREAK_FLAME} />, v: prog.streak || 0, l: (prog.streak || 0) === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays, ink: streakLabelColor(theme) },
+	              { icon: <IcFlame size={26} fill={STREAK_FLAME} />, v: streakView.displayStreak, l: streakView.displayStreak === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays, ink: streakLabelColor(theme), testid: "perfil-streak" },
 	              { icon: <IcBolt size={26} />, v: prog.xp || 0, l: L.totalXp },
 	              { icon: <IcCrown size={26} />, v: totalCrowns, l: L.crowns },
 	              { icon: <IcGem size={24} />, v: prog.gems || 0, l: L.gems },
 	              { icon: <IcBarbell size={24} color={D.blue} />, v: `${dueCount}/${trackedCount}`, l: L.reviewsStat },
 	              { icon: <IcMedal size={24} />, v: prog.perfects || 0, l: L.perfectLessons },
             ].map((s, i) => (
-              <div key={i} style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>
+              <div key={i} data-testid={s.testid} style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>
                 <span style={{ lineHeight: 0 }}>{s.icon}</span>
                 <div><div style={{ fontWeight: 900, fontSize: 18, color: s.ink }}>{s.v}</div><div style={{ fontSize: 11, color: D.sub, fontWeight: 800 }}>{s.l}</div></div>
               </div>
@@ -9410,9 +9530,10 @@ export default function App() {
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 28, display: "flex", gap: 20, justifyContent: "center" }}>
+          <div data-testid="perfil-footer" style={{ marginTop: 28, display: "flex", flexWrap: "wrap", gap: 20, justifyContent: "center", maxWidth: "100%" }}>
             <a href={`${import.meta.env.BASE_URL}privacy.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Privacidad</a>
             <a href={`${import.meta.env.BASE_URL}support.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Soporte</a>
+            <a data-testid="report-problem" href={problemReportMailto(uiLang, theme, tab)} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>{uiLang === "en" ? "Report a problem" : "Reportar un problema"}</a>
           </div>
         </div>
       )}
@@ -9890,12 +10011,8 @@ export default function App() {
             </div>
             <div style={{ fontWeight: 800, fontSize: 13.5, color: D.sub, marginBottom: 16, lineHeight: 1.45 }}>
               {streakRepair === "freeze"
-                ? (uiLang === "en"
-                  ? `A freeze auto-protected your ${prog.streak}-day streak yesterday. ${prog.freezes - 1 || 0} ${(prog.freezes - 1) === 1 ? "freeze" : "freezes"} remaining.`
-                  : `Un congelamiento protegió tu racha de ${prog.streak} días ayer. Te quedan ${prog.freezes - 1 || 0}.`)
-                : (uiLang === "en"
-                  ? `Your ${prog.streak}-day streak is in danger. Repair it with gems before today ends.`
-                  : `Tu racha de ${prog.streak} días está en peligro. Repárala con gemas antes de que termine el día.`)}
+                ? streakFreezeBody(prog.streak, Math.max(0, (Number(prog.freezes) || 0) - 1), uiLang)
+                : streakRepairBody(prog.streak, uiLang)}
             </div>
             <div style={{ display: "grid", gap: 9 }}>
               {streakRepair === "freeze" ? (
@@ -9904,7 +10021,7 @@ export default function App() {
                   const y = yesterdayStr();
                   save({ freezes: Math.max(0, (prog.freezes || 1) - 1), lastDay: y, repairChecked: true });
                   setStreakRepair(null);
-                }}>{uiLang === "en" ? "Use freeze (auto)" : "Usar congelamiento"}</Btn>
+                }}>{streakFreezeButton(uiLang)}</Btn>
               ) : (
                 <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < 200} onClick={() => {
                   const y = yesterdayStr();
@@ -11925,7 +12042,7 @@ export default function App() {
       {screen === "sessionClose" && (
         <div data-testid="session-close" style={{ maxWidth: 480, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
           <div style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 20, padding: "28px 22px 22px" }}>
-            <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 900, fontSize: 18 }} title={streakChipLabel(prog.streak, uiLang) || L.streakDays}><IcFlame size={22} fill={STREAK_FLAME} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}</span>
+            <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 900, fontSize: 18 }} title={streakChipLabel(streakView.displayStreak, uiLang) || L.streakDays}><IcFlame size={22} fill={STREAK_FLAME} className={streakView.displayStreak > 0 ? "flame" : ""} /> {streakView.displayStreak}</span>
             <p data-testid="session-close-next" style={{ margin: "16px 0 22px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
               {L.playScene}
             </p>

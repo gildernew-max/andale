@@ -242,7 +242,14 @@ export const assertHubFace = (lang = hubUiLang()) => {
   const face = HUB_FACE[lang];
   const tiles = screen.getByTestId("learn-hub-tiles");
   expect(screen.getByTestId("hub-hoy-label").textContent).toBe(face.hoy);
-  expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe(face.hoyQuiet);
+  const quiet = screen.getByTestId("hub-hoy-quiet").textContent;
+  const welcomeLead = lang === "en" ? "Good to see you again. " : "Qué bueno verte de nuevo. ";
+  if (quiet.startsWith(welcomeLead)) {
+    expect(quiet.endsWith(".")).toBe(true);
+    expect(quiet).not.toMatch(/[!¡]/);
+  } else {
+    expect(quiet).toBe(face.hoyQuiet);
+  }
   expect(screen.getByTestId("hub-stories").textContent).toContain(face.stories);
   expect(screen.getByTestId("hub-games").textContent).toContain(face.games);
   expect(screen.getByTestId("hub-phrase-doctor").textContent).toContain(face.doctor);

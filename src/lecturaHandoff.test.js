@@ -10,6 +10,7 @@ import {
   lecturaHandoffQuiet,
   isLecturaStoryOpen,
   lecturaHandoffTarget,
+  nextOffPathStory,
   nextUnreadStory,
   shouldShowLecturaHandoff,
   shouldStampLecturaHandoff,
@@ -58,6 +59,30 @@ assert(lecturaHandoffTarget(stories, { "story-0": true, "story-1": true })?.id =
 assert(lecturaHandoffTarget(stories, { "story-0": true, "story-1": true, "story-2": true }) == null, "no open unread story, no handoff target");
 assert(lecturaHandoffTarget(stories, { "story-2": true })?.id === "story-0", "a later claim does not steal the handoff from unread story-0");
 
+const shelf = [
+  { id: "story-0", section: 0 },
+  { id: "story-1", section: 1 },
+  { id: "story-2", section: 2 },
+  { id: "story-3", section: 0 },
+  { id: "story-4", section: 1 },
+  { id: "story-5", section: 1 },
+  { id: "story-6", section: 1 },
+  { id: "story-7", section: 2 },
+  { id: "story-8", section: 2 },
+  { id: "story-9", section: 2 },
+];
+const claimedThrough = (n) => Object.fromEntries(shelf.slice(0, n).map((story) => [story.id, true]));
+assert(nextOffPathStory(shelf, {}, 3) == null, "story-0 is already on the path");
+assert(nextOffPathStory(shelf, claimedThrough(1), 3) == null, "story-1 is already on the path");
+assert(nextOffPathStory(shelf, claimedThrough(2), 3) == null, "story-2 is already on the path");
+assert(nextOffPathStory(shelf, claimedThrough(3), 3)?.id === "story-3", "finished story-2 surfaces story-3");
+assert(nextOffPathStory(shelf, claimedThrough(4), 3)?.id === "story-4", "order stays story-3 then story-4");
+assert(nextOffPathStory(shelf, claimedThrough(9), 3)?.id === "story-9", "the last hidden story still surfaces");
+assert(nextOffPathStory(shelf, claimedThrough(10), 3) == null, "a finished shelf has nothing to surface");
+assert(nextOffPathStory(shelf, { "story-3": true }, 3) == null, "a later claim does not surface a locked story");
+assert(!isLecturaStoryOpen(shelf, claimedThrough(1), "story-3"), "story-3 stays locked until it is the frontier");
+assert(nextOffPathStory(null, {}, 3) == null, "missing list surfaces nothing");
+
 const hoy = { firstHoy: true };
 const doctora = { firstDoctora: true };
 const story0 = { firstStory0: true, storyId: "story-0" };
@@ -99,6 +124,8 @@ assert(appSrc.includes("LECTURA_HANDOFF_SEEN") || appSrc.includes("lecturaHandof
 assert(appSrc.includes("shouldShowLecturaHandoff"), "done screen uses the show gate");
 assert(appSrc.includes("shouldStampLecturaHandoff"), "done screen stamps the once-gate");
 assert(appSrc.includes("lecturaHandoffTarget(STORIES, prog.stories)"), "CTA destination is the open unread story");
+assert(appSrc.includes("nextOffPathStory(STORIES, prog.stories, SECTIONS.length)"), "Learn home surfaces the off-path frontier");
+assert(appSrc.includes('data-testid="lectura-next-story"'), "off-path story card is testable");
 assert(appSrc.includes("isLecturaStoryOpen"), "openStory refuses a locked story");
 assert(appSrc.includes("lecturaHandoffQuiet(uiLang)"), "quiet line follows uiLang");
 assert(appSrc.includes("lecturaHandoffCta(uiLang)"), "CTA follows uiLang");
