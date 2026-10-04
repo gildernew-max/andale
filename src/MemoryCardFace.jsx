@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 
 /** Gloss is 70% of this card's hero. A 26px hero keeps an 18.2px gloss. */
 export const MEMORY_CARD_GLOSS_SCALE = 0.7;
-export const MEMORY_CARD_GLOSS_COLOR = "#777777";
+export const MEMORY_CARD_GLOSS_COLOR = "#6B6258";
 
 /** Gloss size for a fitted hero. 26 → 18.2, 20 → 14. */
 export function memoryGlossPx(heroPx) {
