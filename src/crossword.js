@@ -42,7 +42,7 @@ export function crosswordColors(dark) {
       letter: CROSSWORD_INK,
       lockedLetter: "#FFFFFF",
       number: "#8A8175",
-      lockedNumber: CROSSWORD_CREAM,
+      lockedNumber: "#FFFFFF",
       quiet: "#8A8175",
       clue: CROSSWORD_INK,
       sageText: CROSSWORD_SAGE,
