@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import {
   CROSSWORD_LINE,
+  CROSSWORD_LINE_DARK,
   CROSSWORD_SAGE,
   crosswordColors,
   crosswordCursor,
@@ -10,20 +11,22 @@ import {
 } from "./crossword.js";
 
 /** Flat geometric grid — cream / terracotta / sage. No bird.
- *  `tile` is the plate behind the grid. Games hub passes the dark card in dark mode. */
-export function CrosswordMark({ size = 44, tile = "#F6EFE4" }) {
+ *  `tile` is the plate. `paper` is an empty cell. Light keeps #FFFFFF.
+ *  Dark Games hub passes the card and the slate tile. No new colors. */
+export function CrosswordMark({ size = 44, tile = "#F6EFE4", paper = "#FFFFFF" }) {
+  const paperLine = String(paper).toUpperCase() === "#FFFFFF" ? CROSSWORD_LINE : CROSSWORD_LINE_DARK;
   return (
     <svg data-testid="crossword-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
       <rect x="5" y="5" width="34" height="34" rx="4" fill={tile} stroke="#C46B3A" strokeWidth="2" />
-      <rect x="9" y="9" width="8" height="8" fill="#FFFFFF" stroke={CROSSWORD_LINE} />
+      <rect x="9" y="9" width="8" height="8" fill={paper} stroke={paperLine} />
       <rect x="17" y="9" width="8" height="8" fill={CROSSWORD_SAGE} />
-      <rect x="25" y="9" width="8" height="8" fill="#FFFFFF" stroke={CROSSWORD_LINE} />
+      <rect x="25" y="9" width="8" height="8" fill={paper} stroke={paperLine} />
       <rect x="9" y="17" width="8" height="8" fill={CROSSWORD_SAGE} />
-      <rect x="17" y="17" width="8" height="8" fill="#FFFFFF" stroke={CROSSWORD_LINE} />
+      <rect x="17" y="17" width="8" height="8" fill={paper} stroke={paperLine} />
       <rect x="25" y="17" width="8" height="8" fill="#C46B3A" />
-      <rect x="9" y="25" width="8" height="8" fill="#FFFFFF" stroke={CROSSWORD_LINE} />
+      <rect x="9" y="25" width="8" height="8" fill={paper} stroke={paperLine} />
       <rect x="17" y="25" width="8" height="8" fill="#C46B3A" />
-      <rect x="25" y="25" width="8" height="8" fill="#FFFFFF" stroke={CROSSWORD_LINE} />
+      <rect x="25" y="25" width="8" height="8" fill={paper} stroke={paperLine} />
     </svg>
   );
 }
