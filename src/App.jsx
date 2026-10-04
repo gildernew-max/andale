@@ -1596,9 +1596,10 @@ const CoachPortrait = ({ id = "luna", mood = "happy", size = 92, badge }) => {
 
 const coachName = (id) => COACHES[id]?.name || COACHES.luna.name;
 
-/** Dark mode only, and only the Luna name tag. Light mode stays on .nametag. */
-const lunaNameTagChrome = (theme, name) => (
-  theme === "dark" && name === "Luna"
+/** Dark coach name tags on a lesson, including Ordena. Light mode stays on .nametag (#fff).
+ *  Ink #CDBBA6 on #1E2128 is 8.63:1. Same chip Luna already used. */
+const lunaNameTagChrome = (theme) => (
+  theme === "dark"
     ? { background: "#1E2128", borderColor: "#2A2E36", color: "#CDBBA6" }
     : undefined
 );
@@ -10893,7 +10894,7 @@ export default function App() {
           <button onClick={() => startCrossword("games")} data-testid="crossword-start" className="games-hub-card"
             style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
+              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} paper={theme === "dark" ? D.subtle : "#FFFFFF"} /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>

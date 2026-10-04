@@ -200,7 +200,7 @@ for (const id of ["hangman-start", "jeopardy-start", "memory-start", "crossword-
 }
 assert(games.includes("<JeopardyMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} />"), "Jeopardy plate follows the tile");
 assert(games.includes("<MemoryMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} />"), "Memory plate follows the tile");
-assert(games.includes("<CrosswordMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} />"), "Crossword plate follows the tile");
+assert(games.includes("<CrosswordMark size={28} tile={theme === \"dark\" ? D.card : HUB_CREAM} paper={theme === \"dark\" ? D.subtle : \"#FFFFFF\"} />"), "Crossword plate follows the tile and dark cells are slate, not white");
 const practicaAt = appSrc.indexOf('startAhorcado("practica")');
 const practica = appSrc.slice(practicaAt, appSrc.indexOf('startCrossword("practica")', practicaAt));
 assert(!practica.includes('theme === "dark" ? D.card : HUB_CREAM'), "Práctica tiles stay on the light cream path");
