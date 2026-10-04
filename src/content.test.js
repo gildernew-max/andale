@@ -750,7 +750,7 @@ assert(FUNNEL_EVENTS.emailSubmitted === "email-submitted", "funnel email-submitt
 assert(FUNNEL_EVENTS.emailSkipped === "email-skipped", "funnel email-skipped name");
 assert(PAYWALL_TAP.continueFree === "continue_free", "continue-free tap is continue_free");
 assert(appSrc.includes("from \"./funnel.js\""), "App imports the funnel module");
-assert(appSrc.includes("emitFunnelEvent({ event: FUNNEL_EVENTS.open })"), "open fires on App mount");
+assert(/const daysSinceLast = daysSinceLastVisit\(readStoredLastDay\(\)\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.open, daysSinceLast \}\);/.test(appSrc), "open reads stored lastDay then fires on App mount");
 assert(appSrc.includes("completeCenzontleBeat"), "bird beat finish is a named handler");
 assert(appSrc.includes("onComplete={completeCenzontleBeat}"), "fly-away / WinBounce finish emit cenzontle_complete");
 assert(appSrc.includes("FUNNEL_EVENTS.cenzontleComplete"), "cenzontle_complete is wired");

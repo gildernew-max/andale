@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { isBajioUnlockFlashDue, markBajioUnlockFlashDue } from "./recuerdos.js";
 import { lettersForLayout } from "./letterBoard.js";
+import { prevDayKey } from "./firstDoor.js";
 import { isWhiteOrCreamFill } from "./spanishKeyboard.js";
 import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaName, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
@@ -1233,6 +1234,48 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(open.email).toBeUndefined();
     expect(open.deviceId).toBeUndefined();
     expect(JSON.stringify(open)).not.toMatch(/Dave|@|device/i);
+    expect(open.daysSinceLast).toBeUndefined();
+    expect(localStorage.getItem("andale-device-id")).toBeNull();
+  });
+
+  it("open carries daysSinceLast from stored lastDay", async () => {
+    const today = localToday();
+    let fiveAgo = today;
+    for (let i = 0; i < 5; i += 1) fiveAgo = prevDayKey(fiveAgo);
+    const cases = [
+      { lastDay: today, days: 0 },
+      { lastDay: prevDayKey(today), days: 1 },
+      { lastDay: fiveAgo, days: 5 },
+    ];
+    for (const item of cases) {
+      cleanup();
+      delete window.__andaleFunnelLog;
+      localStorage.clear();
+      mockBrowser();
+      seedProgress({
+        lastDay: item.lastDay,
+        streak: 2,
+        name: "Dave",
+        onboardingDone: true,
+        firstSessionDone: true,
+      });
+      render(<App />);
+      await waitFor(() => expect(funnelOf("open").length).toBeGreaterThan(0));
+      const open = funnelOf("open")[0];
+      expect(open.daysSinceLast).toBe(item.days);
+      expect(open.name).toBeUndefined();
+      expect(open.email).toBeUndefined();
+      expect(JSON.stringify(open)).not.toMatch(/Dave|@/);
+      expect(localStorage.getItem("andale-device-id")).toBeNull();
+    }
+    cleanup();
+    delete window.__andaleFunnelLog;
+    localStorage.clear();
+    mockBrowser();
+    render(<App />);
+    await waitFor(() => expect(funnelOf("open").length).toBeGreaterThan(0));
+    expect(funnelOf("open")[0].daysSinceLast).toBeUndefined();
+    expect(localStorage.getItem("andale-device-id")).toBeNull();
   });
 
   it("cenzontle_complete fires when the first-Hoy bird beat finishes", async () => {

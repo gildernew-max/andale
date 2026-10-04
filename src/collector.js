@@ -4,7 +4,9 @@
  *  collector off. This repo does not deploy that script.
  *
  *  Events already on the in-browser funnel bus go out as
- *  { type:'event', name, lang, deviceId, ts }. The address is never on that row.
+ *  { type:'event', name, lang, deviceId, ts }.
+ *  `open` may also include daysSinceLast (integer 0–365). Nothing else is added.
+ *  The address is never on that row.
  *  Email submits go out as { type:'email', email, lang, source, ts }.
  */
 
@@ -48,6 +50,14 @@ function postedAt(now, fallback) {
 
 function faceLang(lang) {
   return lang === "en" ? "en" : "es";
+}
+
+/** Open-only. Same 0–365 integer allowlist as the funnel bus. */
+function openDaysSinceLast(detail) {
+  if (!detail || detail.event !== FUNNEL_EVENTS.open) return null;
+  const value = detail.daysSinceLast;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 365) return null;
+  return value;
 }
 
 function browserStorage() {
@@ -134,5 +144,7 @@ export async function shipFunnelEvent(detail, {
     deviceId: collectorDeviceId(store, random),
     ts: postedAt(now, detail && detail.at),
   };
+  const daysSinceLast = openDaysSinceLast(detail);
+  if (daysSinceLast != null) record.daysSinceLast = daysSinceLast;
   return postCollector(record, { endpoint: url, fetchImpl, beaconImpl });
 }

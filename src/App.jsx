@@ -26,7 +26,7 @@ import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
-import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, emitFunnelEvent } from "./funnel.js";
+import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent } from "./funnel.js";
 import { isWaitlistEmail } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
@@ -1051,6 +1051,20 @@ const storage = {
     } catch (e) {}
   },
 };
+
+/** Stored lastDay on andale-v3. Synchronous so the open event reads it before a win stamps today. */
+function readStoredLastDay() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage?.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const lastDay = parsed && typeof parsed === "object" ? parsed.lastDay : null;
+    return typeof lastDay === "string" && lastDay ? lastDay : null;
+  } catch {
+    return null;
+  }
+}
 
 /* WRAP PREP — speech/storage flags. Enroll off.
    Pages stays vite base '/andale/'. Wrap/WKWebView rebuild uses base '/'.
@@ -7322,7 +7336,8 @@ export default function App() {
     setPaywallStillMiss(false);
   }, [paywallStillRel]);
   useEffect(() => {
-    emitFunnelEvent({ event: FUNNEL_EVENTS.open });
+    const daysSinceLast = daysSinceLastVisit(readStoredLastDay());
+    emitFunnelEvent({ event: FUNNEL_EVENTS.open, daysSinceLast });
   }, []);
   useEffect(() => {
     const onFunnel = (ev) => {

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { COLLECTOR_DEVICE_KEY, COLLECTOR_ENDPOINT, collectorEndpoint, setCollectorEndpointOverride, shipFunnelEvent } from "./collector.js";
-import { FUNNEL_EVENTS } from "./funnel.js";
+import { FUNNEL_EVENTS, daysSinceLastVisit } from "./funnel.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -39,11 +39,14 @@ const required = [
 let beacons = 0;
 let fetches = 0;
 const quiet = memoryStorage();
-for (const name of required) {
+for (const name of required.concat(FUNNEL_EVENTS.open)) {
   const skipped = await shipFunnelEvent({
     event: name,
     at: "2026-09-28T18:00:00.000Z",
     email: "ada@example.com",
+    daysSinceLast: 1,
+    streak: 3,
+    xp: 10,
   }, {
     endpoint: "",
     lang: "en",
@@ -66,6 +69,9 @@ for (const name of required) {
     email: "ada@example.com",
     storyId: "story-0",
     choice: "annual",
+    daysSinceLast: 5,
+    streak: 2,
+    xp: 40,
   }, {
     endpoint,
     lang: name === FUNNEL_EVENTS.paywallSeen ? "en" : "es",
@@ -100,6 +106,79 @@ assert(sent.some((row) => JSON.parse(row.body).name === "lectura_start"), "Lectu
 assert(sent.some((row) => JSON.parse(row.body).name === "lectura_chapter_done"), "Lectura chapter done is sent");
 assert(sent.some((row) => JSON.parse(row.body).name === "paywall_tap"), "paywall tap is sent");
 assert(sent.find((row) => JSON.parse(row.body).name === "paywall_seen") && JSON.parse(sent.find((row) => JSON.parse(row.body).name === "paywall_seen").body).lang === "en", "paywall_seen keeps the English face");
+assert(sent.every((row) => !("daysSinceLast" in JSON.parse(row.body))), "daysSinceLast stays off events that are not open");
+
+setCollectorEndpointOverride("https://override.example/open");
+const openStore = memoryStorage();
+const openPosts = [];
+for (const [lastDay, today, days, label] of [
+  ["2026-10-04", "2026-10-04", 0, "same day"],
+  ["2026-10-03", "2026-10-04", 1, "yesterday"],
+  ["2026-09-29", "2026-10-04", 5, "five days ago"],
+]) {
+  const result = await shipFunnelEvent({
+    event: FUNNEL_EVENTS.open,
+    at: "2026-10-04T16:00:00.000Z",
+    daysSinceLast: daysSinceLastVisit(lastDay, today),
+    email: "ada@example.com",
+    streak: 4,
+    xp: 40,
+    storyId: "story-0",
+    userAgent: "Mozilla/5.0",
+  }, {
+    lang: "es",
+    storage: openStore,
+    random: () => "device-open-1",
+    beaconImpl: (_url, body) => {
+      openPosts.push(JSON.parse(body));
+      return true;
+    },
+    fetchImpl: async () => { throw new Error("fetch should not run"); },
+  });
+  assert(result.sent === true, `${label} open is sent on the test override endpoint`);
+  assert(daysSinceLastVisit(lastDay, today) === days, `${label} computes to ${days}`);
+}
+assert(openPosts.map((row) => row.daysSinceLast).join(",") === "0,1,5", "open carries same day, yesterday, and five days");
+for (const row of openPosts) {
+  assert(Object.keys(row).sort().join(",") === "daysSinceLast,deviceId,lang,name,ts,type", "open posted keys are exactly type, name, lang, deviceId, ts, daysSinceLast");
+  assert(row.type === "event" && row.name === "open" && row.lang === "es" && row.deviceId === "device-open-1" && row.ts === "2026-10-04T16:00:00.000Z", "open posted values");
+  assert(!("email" in row) && !("streak" in row) && !("xp" in row) && !("storyId" in row) && !("userAgent" in row), "open row has no other fields");
+}
+let firstVisit = null;
+const firstResult = await shipFunnelEvent({
+  event: FUNNEL_EVENTS.open,
+  at: "2026-10-04T16:01:00.000Z",
+  daysSinceLast: daysSinceLastVisit(null, "2026-10-04"),
+  email: "ada@example.com",
+}, {
+  lang: "en",
+  storage: openStore,
+  beaconImpl: (_url, body) => {
+    firstVisit = JSON.parse(body);
+    return true;
+  },
+  fetchImpl: async () => { throw new Error("fetch should not run"); },
+});
+assert(firstResult.sent === true, "first visit open still sends when the override endpoint is set");
+assert(!("daysSinceLast" in firstVisit), "first visit omits daysSinceLast");
+assert(Object.keys(firstVisit).sort().join(",") === "deviceId,lang,name,ts,type", "first visit open keeps the base keys only");
+assert(openStore.data[COLLECTOR_DEVICE_KEY] === "device-open-1", "open reuses one device id once the endpoint is on");
+setCollectorEndpointOverride("");
+const forcedOff = memoryStorage();
+let forcedBeacons = 0;
+const forced = await shipFunnelEvent({
+  event: FUNNEL_EVENTS.open,
+  daysSinceLast: 1,
+  email: "ada@example.com",
+}, {
+  storage: forcedOff,
+  beaconImpl: () => { forcedBeacons += 1; return true; },
+  fetchImpl: async () => { forcedBeacons += 1; return { ok: true }; },
+});
+assert(forced.sent === false && forcedBeacons === 0, "a blank override sends nothing");
+assert(forcedOff.data[COLLECTOR_DEVICE_KEY] == null, "a blank override does not mint andale-device-id");
+setCollectorEndpointOverride(undefined);
+assert(collectorEndpoint() === "", "clearing the override leaves the build endpoint empty");
 
 const again = await shipFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, at: "2026-09-28T18:06:00.000Z" }, {
   endpoint,
