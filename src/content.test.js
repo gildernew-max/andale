@@ -2397,7 +2397,7 @@ const porparaBankEn = [
   "Heading toward a destination → para: se va para Puebla. «Por Puebla» would mean passing through or around it, not the destination. «Fue» is past tense and clashes with «mañana».",
   "Para + infinitive expresses purpose (the «what for»): hago ejercicio para bajar de peso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-66, -55).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
 porparaBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2583,7 +2583,7 @@ const sereflexBankEn = [
   "Reflexive passive: «los tacos» is plural → se comen. «Come» doesn't agree with «los tacos»; «me / le» are decoys.",
   "Se + me marks an unintentional accident, and the verb agrees with the thing: rompí un vaso → se me rompió un vaso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
 sereflexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2725,7 +2725,7 @@ const compsupBankEn = [
   "Irregular superlative: la + mejor + noun + de + group → la mejor alumna del salón. «Peor» would say the opposite, and «más» is not added to «mejor». In ordinary speech the superlative goes before the noun (not «la alumna mejor»).",
   "Quantity with a noun → tantos + noun + como: she has ten pairs and I have ten → tantos pares de tenis como yo. «Pares» is masculine plural, which is why it's tantos.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
 compsupBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2878,7 +2878,7 @@ const mexBankEn = [
   "«Al rato» = later, with no fixed time, and it is a set phrase: nos vemos al rato en la taquería, not «al ratos» or «el rato».",
   "«Un chorro de» = a ton of, and it replaces «mucha»: hay mucha gente → hay un chorro de gente. Unlike «mucha», it doesn’t agree with the noun.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
 mexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3029,7 +3029,7 @@ const pronBankEn = [
   "In Mexico, «marcar» also means to phone someone: luego te marco = luego te llamo. This item asks for the first-person present: marco.",
   "«Encantar» works like gustar: it takes an indirect-object pronoun, and for «mi hermana y yo» that is «nos»: nos encantan los tamales. «Lo» and «los» are direct-object pronouns and are not used with encantar.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
 pronBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3128,6 +3128,170 @@ for (const phrase of ["me", "le"]) {
   assert(gradeListedPhrase(phrase, pronSe).status === "wrong", `se type is rejected: ${phrase}`);
 }
 assert(gradeListedPhrase("llamo", pronMarco).status === "wrong", "marco type is rejected: llamo");
+const futcondBank = UNITS.find((u) => u.id === "futcond");
+assert(futcondBank.questions.length === 11, "futcond authored questions stay 11");
+assert(futcondBank.questions[0].prompt === "Mañana ___ a Querétaro.", "futcond question order is unchanged");
+assert(Array.isArray(futcondBank.bank) && futcondBank.bank.length === 11, "futcond replay bank is 11 questions");
+assert(futcondBank.bank.map((q) => q.type).join(",") === "mc,mc,type,order,mc,type,transform,mc,order,type,mc", "futcond bank types interleave mc/type/order/transform");
+assert(futcondBank.bank[0].prompt === "El sábado mis primos de Guadalajara ___ a la posada de la oficina." && futcondBank.bank[0].choices.join("|") === "venirán|vendrán|vendrás|vengan" && futcondBank.bank[0].answer === "vendrán", "futcond bank item 1");
+assert(futcondBank.bank[1].choices.join("|") === "hará|haría|hizo|hacería" && futcondBank.bank[1].answer === "haría", "futcond bank item 2");
+assert(futcondBank.bank[2].note === "(costar, futuro de probabilidad)" && futcondBank.bank[2].answers.join("|") === "costará", "futcond bank type costará");
+assert(futcondBank.bank[3].prompt === "Construye: “I would visit my grandma if I had a car.” («visitaría» y «a mi abuela» van juntos)" && futcondBank.bank[3].words.join("|") === "visitaría|a|mi|abuela|si|tuviera|coche|visitaré|tenga", "futcond si-clause order words include the decoy");
+assert(futcondBank.bank[4].note === "(condicional de probabilidad)" && futcondBank.bank[4].choices.join("|") === "tuvo|tendrá|tendría|tuviera" && futcondBank.bank[4].answer === "tendría", "futcond bank item 5 keeps the cue and keeps the imperfect out of the choices");
+assert(futcondBank.bank[5].prompt === "El sábado yo ___ con mi mamá a la boda de mi prima." && futcondBank.bank[5].note === "(ir, futuro simple, yo; una palabra)" && futcondBank.bank[5].answers.join("|") === "iré", "futcond bank type iré lists the accented form only");
+assert(futcondBank.bank[6].base === "Probablemente Lupita estaba cansada." && futcondBank.bank[6].instruction === "Dilo con el condicional de probabilidad (una sola forma verbal), sin «probablemente», y conserva el resto igual" && futcondBank.bank[6].answers.join("|") === "Lupita estaría cansada|Estaría cansada Lupita|Estaría Lupita cansada", "futcond bank transform");
+assert(futcondBank.bank[7].choices.join("|") === "sea|será|serán|ser" && futcondBank.bank[7].answer === "será", "futcond bank item 8");
+assert(futcondBank.bank[8].prompt === "Construye: “My dad said he would arrive tomorrow.” (con condicional)" && futcondBank.bank[8].words.join("|") === "mi|papá|dijo|que|llegaría|mañana|llegó|llegaré", "futcond reported-speech order words include the decoy");
+assert(futcondBank.bank[3].words.every((w) => w === w.toLowerCase() && !w.includes(",")) && futcondBank.bank[8].words.every((w) => w === w.toLowerCase() && !w.includes(",")), "futcond order tiles are lowercase with no comma");
+assert(futcondBank.bank[9].note === "(hacer, futuro simple, nosotros; una palabra)" && futcondBank.bank[9].answers.join("|") === "haremos", "futcond bank type haremos");
+assert(futcondBank.bank[10].note === "(condicional)" && futcondBank.bank[10].prompt === "El jueves pasado mi vecina me preguntó si la ___ a cargar las bolsas del súper al día siguiente." && futcondBank.bank[10].choices.join("|") === "ayudo|ayudé|ayudaría|ayude" && futcondBank.bank[10].answer === "ayudaría", "futcond bank item 11 keeps the cue");
+assert(futcondBank.bank.every((q) => q.type !== "mc" || q.note !== "¡Ojo!"), "futcond has no trap item, so no mc carries ¡Ojo!");
+const futcondPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((item, i) => {
+      if (u.id === "futcond" && kind === "bank") return;
+      if (item.type === "transform") {
+        const base = item.base || item.source;
+        if (base) futcondPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (item.prompt) futcondPromptOwners.set(item.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+futcondBank.bank.forEach((item, i) => {
+  if (item.type === "transform") {
+    assert(!futcondPromptOwners.has(item.base), `futcond bank ${i} transform base repeats a prompt`);
+    assert(!futcondPromptOwners.has(`base:${item.base}`), `futcond bank ${i} transform base repeats ${futcondPromptOwners.get(`base:${item.base}`) || "another item"}`);
+    return;
+  }
+  assert(!futcondPromptOwners.has(item.prompt), `futcond bank ${i} prompt duplicates ${futcondPromptOwners.get(item.prompt) || "another item"}`);
+  futcondPromptOwners.set(item.prompt, `futcond bank ${i}`);
+});
+const futcondBankEn = [
+  "Simple future: «venir» has an irregular stem, vendr- + ending: mis primos vendrán. «Venirán» regularizes the stem and does not exist.",
+  "In an unreal condition, «si» + imperfect subjunctive («si tuviera») calls for the conditional in the other half: haría ejercicio. The future («hará») does not combine with «si tuviera».",
+  "Future of probability: the simple future guesses a present fact: costará unos doscientos mil = it probably costs about two hundred thousand. «Cuesta» states the price instead of guessing it.",
+  "Unreal condition: «si» + imperfect subjunctive (tuviera) and the result in the conditional (visitaría). The two halves can swap places; with these tiles, «visitaría a mi abuela» stays together. The future «visitaré» does not go with «si tuviera».",
+  "Conditional of probability: it guesses about the past: tendría unos ochenta años = he was probably about eighty. The future («tendrá») guesses about the present. In speech «tenía unos ochenta» is also said; this item practices the conditional.",
+  "Simple future of «ir»: iré, in one word. «Voy a ir» is also very common in speech, but this exercise asks for the simple future.",
+  "Conditional of probability: one form, estaría, replaces «probablemente estaba» and guesses about the past: Lupita estaría cansada. «Estaba» states the fact instead of guessing it.",
+  "Future of probability: ¿quién será? = «I wonder who it is». The future guesses about the present; the subjunctive («sea») is not used in a question like this.",
+  "Reported speech in the past: what was future can be told with the conditional: dijo que llegaría mañana. In speech you also hear «dijo que llegaba» or «que iba a llegar»; this item practices the conditional.",
+  "Simple future of «hacer»: irregular stem har- + ending: haremos. «Haceremos» regularizes the stem and does not exist.",
+  "Reported speech in the past: «¿Me ayudas mañana?» → me preguntó si la ayudaría al día siguiente. «Al día siguiente» puts the help in the future of the past, so the present («ayudo») does not fit. In speech «si la ayudaba» is also heard; this item practices the conditional.",
+];
+assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === futcondBank.bank[i].explain && row.en === futcondBankEn[i]), "futcond Why rows are appended in bank order");
+futcondBank.bank.forEach((item, i) => {
+  const row = explainByEs.get(item.explain);
+  assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === futcondBankEn[i], `futcond bank ${i} EN row equals the English row`);
+  assert(explainText(item, "es") === item.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(item, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(item);
+  assertPreppedQuestion(prepped, `futcond bank ${i}`);
+  if (item.type === "mc") {
+    assert(item.choices.length === 4 && new Set(item.choices).size === 4 && item.choices.includes(item.answer), `futcond bank ${i} mc choices include the answer`);
+    assert(item.note !== "¡Ojo!", `futcond bank ${i} mc note is not a trap`);
+  }
+  if (item.type === "type") {
+    assert(item.note === { 2: "(costar, futuro de probabilidad)", 5: "(ir, futuro simple, yo; una palabra)", 9: "(hacer, futuro simple, nosotros; una palabra)" }[i], `futcond bank ${i} type note`);
+  }
+  if (item.type === "order") {
+    assert(prepped.words.join("|") === item.words.join("|"), `futcond bank ${i} order tiles stay authored`);
+    assert(prepped.answer === item.answer, `futcond bank ${i} order answer stays authored`);
+    assert(Array.isArray(item.answers) && item.answers[0] === item.answer, `futcond bank ${i} answers start with the authored answer`);
+    assert(item.words.every((w) => !String(w).includes(",")), `futcond bank ${i} tiles carry no comma`);
+    assert(item.words.every((w) => w === w.toLowerCase()), `futcond bank ${i} tiles stay lowercase`);
+    item.answers.forEach((phrase) => {
+      const answerTokens = stripPhrase(phrase).split(" ").filter(Boolean);
+      const tilePool = item.words.map((w) => stripPhrase(w));
+      answerTokens.forEach((tok) => {
+        const at = tilePool.indexOf(tok);
+        assert(at >= 0, `futcond bank ${i} answer word ${tok} is a tile`);
+        tilePool.splice(at, 1);
+      });
+      const built = builtFromOrderTiles(item.words, phrase);
+      assert(built, `futcond bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(phrase, item).status !== "wrong", `futcond bank ${i} listed order is accepted: ${phrase}`);
+      assert(gradeListedPhrase(built, item).status !== "wrong", `futcond bank ${i} tile-built order is accepted: ${built}`);
+    });
+    const builtPrimary = builtFromOrderTiles(item.words, item.answer);
+    assert(builtPrimary && builtPrimary.toLowerCase() === item.answer.toLowerCase(), `futcond bank ${i} primary order is the authored tile text`);
+  }
+  if (item.type === "type" || item.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === item.answers.join("|"), `futcond bank ${i} answers stay authored`);
+  }
+});
+const futcondCostara = futcondBank.bank[2];
+const futcondVisit = futcondBank.bank[3];
+const futcondIre = futcondBank.bank[5];
+const futcondEstaria = futcondBank.bank[6];
+const futcondLlegaria = futcondBank.bank[8];
+const futcondHaremos = futcondBank.bank[9];
+assert(futcondVisit.answers.join("|") === "Visitaría a mi abuela si tuviera coche|Si tuviera coche visitaría a mi abuela", "futcond visit order lists the accepted alternates");
+assert(futcondEstaria.answers.join("|") === "Lupita estaría cansada|Estaría cansada Lupita|Estaría Lupita cansada", "futcond transform lists the accepted alternates");
+assert(futcondLlegaria.answers.join("|") === "Mi papá dijo que llegaría mañana|Mi papá dijo que mañana llegaría|Dijo mi papá que llegaría mañana|Dijo mi papá que mañana llegaría", "futcond reported-speech order lists the accepted alternates");
+assert(gradeListedPhrase("costará", futcondCostara).status !== "wrong", "costará type is accepted");
+assert(gradeListedPhrase("costara", futcondCostara).status !== "wrong", "costará accent is ignored");
+for (const phrase of ["cuesta", "costaría", "valdrá"]) {
+  assert(gradeListedPhrase(phrase, futcondCostara).status === "wrong", `costará type is rejected: ${phrase}`);
+}
+for (const phrase of futcondVisit.answers) {
+  assert(gradeListedPhrase(phrase, futcondVisit).status !== "wrong", `visit order accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("Si tuviera coche visitaría a mi abuela", futcondVisit).status !== "wrong", "visit accepted alternate grades ok");
+for (const phrase of [
+  "A mi abuela visitaría si tuviera coche",
+  "Si tuviera coche a mi abuela visitaría",
+  "Visitaría si tuviera coche a mi abuela",
+  "Visitaré a mi abuela si tuviera coche",
+  "Si tuviera coche visitaré a mi abuela",
+  "Visitaría a mi abuela si tenga coche",
+  "Si tenga coche visitaría a mi abuela",
+]) {
+  assert(gradeListedPhrase(phrase, futcondVisit).status === "wrong", `visit order is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("iré", futcondIre).status !== "wrong", "iré type is accepted");
+assert(gradeListedPhrase("ire", futcondIre).status !== "wrong", "iré accent is ignored");
+for (const phrase of ["voy", "voy a ir", "iría"]) {
+  assert(gradeListedPhrase(phrase, futcondIre).status === "wrong", `iré type is rejected: ${phrase}`);
+}
+for (const phrase of futcondEstaria.answers) {
+  assert(gradeListedPhrase(phrase, futcondEstaria).status !== "wrong", `estaría transform accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("Estaría cansada Lupita", futcondEstaria).status !== "wrong", "transform accepted alternate grades ok");
+assert(gradeListedPhrase("Estaría Lupita cansada", futcondEstaria).status !== "wrong", "transform accepted alternate grades ok");
+for (const phrase of [
+  "Lupita estaba cansada",
+  "Lupita estará cansada",
+  "Lupita habría estado cansada",
+  "Probablemente Lupita estaría cansada",
+  "Lupita estuviera cansada",
+]) {
+  assert(gradeListedPhrase(phrase, futcondEstaria).status === "wrong", `estaría transform is rejected: ${phrase}`);
+}
+for (const phrase of futcondLlegaria.answers) {
+  assert(gradeListedPhrase(phrase, futcondLlegaria).status !== "wrong", `llegaría order accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("Mi papá dijo que mañana llegaría", futcondLlegaria).status !== "wrong", "llegaría accepted alternate grades ok");
+assert(gradeListedPhrase("Dijo mi papá que llegaría mañana", futcondLlegaria).status !== "wrong", "llegaría accepted alternate grades ok");
+assert(gradeListedPhrase("Dijo mi papá que mañana llegaría", futcondLlegaria).status !== "wrong", "llegaría accepted alternate grades ok");
+for (const phrase of [
+  "Mañana mi papá dijo que llegaría",
+  "Mi papá que dijo llegaría mañana",
+  "Mi papá dijo que llegó mañana",
+  "Mi papá dijo que llegaré mañana",
+]) {
+  assert(gradeListedPhrase(phrase, futcondLlegaria).status === "wrong", `llegaría order is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("haremos", futcondHaremos).status !== "wrong", "haremos type is accepted");
+for (const phrase of ["hacemos", "haceremos", "vamos a hacer"]) {
+  assert(gradeListedPhrase(phrase, futcondHaremos).status === "wrong", `haremos type is rejected: ${phrase}`);
+}
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;
