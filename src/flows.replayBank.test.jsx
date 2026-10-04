@@ -218,6 +218,100 @@ describe("replay bank", { timeout: 20000 }, () => {
     expect(screen.getByTestId("practice-why").textContent).toBe("Trap: «estoy seguro de que» expresses certainty → indicative: está. With «no estoy seguro de que» it would be subjunctive: esté.");
   });
 
+  const SUBJ2_OPEN = {
+    subj1: 1, pret: 1, porpara: 1, sereflex: 1, compsup: 1, mex: 1, siclauses: 1, pronombres: 1, subj2: 1,
+  };
+  const SUBJ2_TRAP_ES = "Trampa: «saber que» expresa certeza → indicativo: estaba. El subjuntivo (estuviera) aparece al negar: «No creía que estuviera».";
+  const SUBJ2_TRAP_EN = "Trap: «saber que» expresses certainty → indicative: estaba. The subjunctive (estuviera) appears when you negate: «No creía que estuviera».";
+
+  const startSubj2 = async (user, label) => {
+    const unitBtn = screen.queryByRole("button", { name: "Si yo fuera..." })
+      || (await openCaminoMore(user), screen.getByRole("button", { name: "Si yo fuera..." }));
+    await user.click(unitBtn);
+    await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: label }));
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+  };
+
+  const missSubj2Trap = async (user, whyName, whyText) => {
+    await startSubj2(user, /Practice again|Practicar de nuevo|Start|Empezar/);
+    await waitFor(() => expect(document.body.textContent).toContain("Yo sabía que Pedro"));
+    const wrong = screen.getAllByTestId("choice-card").find((el) => el.textContent.includes("estuviera"));
+    expect(wrong).toBeTruthy();
+    await user.click(wrong);
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getByRole("button", { name: whyName })).toBeTruthy());
+    await user.click(screen.getByRole("button", { name: whyName }));
+    expect(screen.getByTestId("practice-why").textContent).toBe(whyText);
+  };
+
+  it("a replay of subj2 draws the new bank, and the trap wrong answer shows George's Spanish and English rows", async () => {
+    cleanup();
+    seedProgress({
+      hearts: 5,
+      firstSessionDone: true,
+      uiLang: "es",
+      xp: 42,
+      streak: 3,
+      done: SUBJ2_OPEN,
+      served: { subj2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+    });
+    const user = await boot();
+    await startSubj2(user, /Practicar de nuevo/);
+    await user.click(screen.getByTestId("lesson-exit"));
+    await user.click(screen.getByTestId("save-and-quit"));
+    await waitFor(() => {
+      const prog = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      expect(prog.resume?.order?.length).toBe(12);
+    });
+    const prog = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const indexes = prog.resume.order.map((o) => o.i);
+    expect(indexes[indexes.length - 1]).toBe(-1);
+    const questions = indexes.filter((i) => i !== -1);
+    expect(new Set(questions).size).toBe(11);
+    expect(questions.slice().sort((a, b) => a - b)).toEqual([11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]);
+    expect(prog.done.subj2).toBe(1);
+    expect(prog.xp).toBe(42);
+    expect(prog.streak).toBe(3);
+    expect(prog.hearts).toBe(5);
+
+    cleanup();
+    localStorage.clear();
+    mockBrowser();
+    seedProgress({
+      hearts: 5,
+      firstSessionDone: true,
+      uiLang: "es",
+      paywallSeen: true,
+      done: SUBJ2_OPEN,
+      resume: { unitId: "subj2", order: [{ u: "subj2", i: 15 }], qi: 0, xp: 0, right: 0, wrong: 0 },
+    });
+    const userEs = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    await waitFor(() => expect(screen.queryByTestId("splash-start")).toBeNull());
+    await missSubj2Trap(userEs, /¿Por qué\?/, SUBJ2_TRAP_ES);
+
+    cleanup();
+    localStorage.clear();
+    mockBrowser();
+    seedProgress({
+      hearts: 5,
+      firstSessionDone: true,
+      uiLang: "en",
+      paywallSeen: true,
+      xp: 42,
+      streak: 3,
+      done: SUBJ2_OPEN,
+      resume: { unitId: "subj2", order: [{ u: "subj2", i: 15 }], qi: 0, xp: 0, right: 0, wrong: 0 },
+    });
+    const userEn = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    await waitFor(() => expect(screen.queryByTestId("splash-start")).toBeNull());
+    await missSubj2Trap(userEn, /Why\?/, SUBJ2_TRAP_EN);
+  });
+
   const SICLAUSES_OPEN = {
     subj1: 1, pret: 1, porpara: 1, sereflex: 1, compsup: 1, mex: 1, siclauses: 1,
   };
