@@ -1759,7 +1759,7 @@ assert((appSrc.match(/" \(locked\)"/g) || []).length === 2, "camino story and sh
 assert((appSrc.match(/" \(cerrado\)"/g) || []).length === 2, "camino story and shelf use ES cerrado");
 assert(appSrc.includes('sheet.crowns === 1 ? (uiLang === "es" ? "corona" : "crown") : L.crowns'), "one crown is singular in ES and EN");
 assert(appSrc.includes('(flashRun.reviewed || 0) === 1 ? (uiLang === "es" ? "tarjeta" : "card") : L.flashCardsWord'), "one flashcard is singular in ES and EN");
-assert(appSrc.includes('(prog.streak || 0) === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays'), "one streak day is singular in ES and EN");
+assert(appSrc.includes('streakView.displayStreak === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays'), "one streak day is singular in ES and EN");
 assert(appSrc.includes("Idioma de contexto: inglés") && appSrc.includes("Idioma de contexto: español"), "perfil lang aria follows uiLang");
 assert(appSrc.includes("English context language") && appSrc.includes("Spanish context language"), "EN perfil lang aria kept");
 assert(!/aria-label=\{opt\.id === "en" \? "English context language" : "Spanish context language"\}/.test(appSrc), "perfil lang aria is not hardcoded English");
