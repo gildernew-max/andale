@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-10-04 (beginner onboarding flow-test timeout)
+
+**What changed**
+- The beginner-wrong-answer + story-start paywall flow test timeout is 40s (was 20s).
+- Same path as before: reject the night greeting, finish the five beats, Lectura start, then the wall. No product change.
+
+**Why**
+- `main` CI `test` failed on `adafaaa`: that `it` timed out at 20s after the paywall-after-story-start tail. Local run is ~2.4s; the flows file already takes ~11 minutes on CI.
+
 ## 2026-10-03 (First-win email hidden)
 
 **What changed**
