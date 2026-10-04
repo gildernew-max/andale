@@ -28,6 +28,18 @@ describe("off-path Lectura on Learn home", () => {
     expect(card.getAttribute("data-locked")).toBe("false");
     expect(card.getAttribute("aria-label")).toBe("El hijo del Rey Tigre");
     expect(card.disabled).toBe(false);
+    const eyebrow = screen.getByTestId("lectura-next-eyebrow");
+    const title = [...card.querySelectorAll("div")].find((el) => el.textContent === "El hijo del Rey Tigre");
+    expect(eyebrow.textContent).toBe("Siguiente cuento");
+    expect(eyebrow.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(eyebrow.style.color).toBe("rgb(107, 98, 88)");
+    expect(eyebrow.style.fontSize).toBe("11.5px");
+    expect(eyebrow.style.fontWeight).toBe("900");
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("lectura-next-eyebrow").textContent).toBe("Next story"));
+    expect(screen.getByTestId("lectura-next-eyebrow").textContent).not.toMatch(/Siguiente/);
+    await user.click(screen.getByTestId("lang-es"));
+    await waitFor(() => expect(screen.getByTestId("lectura-next-eyebrow").textContent).toBe("Siguiente cuento"));
     expect(screen.getByTestId("camino-story-story-0").getAttribute("data-locked")).toBe("false");
     expect(screen.getByTestId("camino-story-story-1").getAttribute("data-locked")).toBe("false");
     expect(screen.queryByTestId("camino-story-story-3")).toBeNull();
@@ -73,6 +85,9 @@ describe("off-path Lectura on Learn home", () => {
     await boot();
     expect(screen.queryByTestId("lectura-next")).toBeNull();
     expect(screen.queryByTestId("lectura-next-story")).toBeNull();
+    expect(screen.queryByTestId("lectura-next-eyebrow")).toBeNull();
+    expect(screen.queryByText("Siguiente cuento")).toBeNull();
+    expect(screen.queryByText("Next story")).toBeNull();
     expect(screen.getByTestId("camino-story-story-0").getAttribute("aria-label")).toBe("Cuento: La noche en que vuelven");
     expect(screen.getByTestId("camino-story-story-0").getAttribute("data-locked")).toBe("false");
     expect(screen.getByTestId("camino-story-story-1").getAttribute("aria-label")).toBe("Cuento: La casa azul (cerrado)");

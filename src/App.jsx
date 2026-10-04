@@ -4256,7 +4256,7 @@ const UI = {
     goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina hecha", workoutToday: "Rutina de hoy", dailyWorkout: "Rutina diaria",
     workoutDesc: "5 retos: escucha, trampa gramatical, mexicanismo, repaso y lectura.", play: "Jugar", repeat: "Repetir",
     sectionSkills: "habilidades + cofre", skip: "SALTAR", start: "EMPIEZA", claimed: "Reclamado", chest: "Cofre", openMe: "¡Ábreme!",
-    storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
+    storyPrefix: "Cuento", nextStory: "Siguiente cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
     missionsTitle: "Misiones", missionsDesc: "Situaciones reales con mezcla de gramática, oído y tono.", enter: "Entrar",
     dialogueDuel: "DUELO", best: "mejor marca", duel: "Duelo",
     library: "Biblioteca", storiesClaimed: "cuentos reclamados · lectura sin vidas", paragraphs: "párrafos · toca palabras · escucha por párrafo",
@@ -4347,7 +4347,7 @@ const UI = {
     goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Routine done", workoutToday: "Today's routine", dailyWorkout: "Daily routine",
     workoutDesc: "5 challenges: listening, grammar trap, Mexicanism, review, and reading.", play: "Play", repeat: "Repeat",
     sectionSkills: "skills + chest", skip: "SKIP", start: "START", claimed: "Claimed", chest: "Chest", openMe: "Open me!",
-    storyPrefix: "Story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
+    storyPrefix: "Story", nextStory: "Next story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
     missionsTitle: "Challenges", missionsDesc: "Real situations mixing grammar, listening, and tone.", enter: "Enter",
     dialogueDuel: "DIALOGUE DUEL", best: "best score", duel: "Duel",
     library: "Library", storiesClaimed: "stories claimed · reading costs no lives", paragraphs: "paragraphs · tap words · listen by paragraph",
@@ -8395,6 +8395,7 @@ export default function App() {
                       <IcBook size={28} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-testid="lectura-next-eyebrow" style={{ fontSize: 11.5, fontWeight: 900, color: D.sub, lineHeight: 1.2, marginBottom: 2, overflowWrap: "break-word" }}>{L.nextStory}</div>
                       <div style={{ fontWeight: 900, fontSize: 18, color: D.ink, overflowWrap: "break-word" }}>{shelfTitle}</div>
                       <div style={{ fontSize: 13, color: D.sub, fontWeight: 800, overflowWrap: "break-word" }}>{meta.place ? `${meta.place} · ` : ""}{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
                       <div style={{ fontSize: 12, color: theme === "dark" ? D.sub : limeText(sec.color, D), fontWeight: 900, marginTop: 4, overflowWrap: "break-word" }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
