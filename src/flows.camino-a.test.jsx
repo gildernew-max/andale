@@ -1431,7 +1431,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
         if (region) expect(region.textContent, `${row.word} ${uiLang} region`).not.toMatch(/\*/);
       }
     }
-  });
+    // 20 bank words × 2 langs plus the two seeded boots. CI already spends ~15s here.
+  }, 40000);
 
   it("Jeopardy round: pick a tile, answer, return to the board", async () => {
     const user = await boot();

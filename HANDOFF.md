@@ -2,6 +2,15 @@
 
 Running log between audits and execution. Newest entry first. Keep each entry short.
 
+## 2026-10-04 (Hangman italicize flow-test timeout)
+
+**What changed**
+- The Hangman Why/region italicize `it` timeout is 40s (describe stays 15s).
+- Same path: two seeded solves, then every bank word in EN and ES. Assertions unchanged. No product change.
+
+**Why**
+- `main` CI `test` failed on `d2932ae`: `Hangman Why and region lines italicize starred words and drop the asterisks` timed out at 15000ms (ran 15136ms).
+
 ## 2026-10-04 (light greenText part 2 flow-test timeout)
 
 **What changed**
