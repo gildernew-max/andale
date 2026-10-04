@@ -262,6 +262,19 @@ const D_DARK = {
   goldBg: "#332B1A", greenBg: "#1F3A1A", redBg: "#3A1A1A", blueBg: "#0F2A3A", purpleBg: "#2A1A3A", orangeBg: "#3A2A1A",
   track: "#2A2E36", trackWarm: "#3A2E1F", accent: "#FFB347",
 };
+
+/** Dark lesson chips only. Light callers keep their own #fff / lime literals.
+ *  Idle #F6EFE4 on #252830 is 12.90:1. Selected #58CC02 on #1F3A1A is 5.99:1.
+ *  Wrong #FF6B6B on #3A1A1A is 5.64:1. */
+function darkLessonChipPaint({ used = false, wrong = false, D, cream }) {
+  if (wrong && used) {
+    return { background: D.badBg, borderColor: D.red, borderBottomColor: D.red, color: D.red, opacity: 1 };
+  }
+  if (used) {
+    return { background: D.greenBg, borderColor: D.green, borderBottomColor: D.green, color: D.green, opacity: 1 };
+  }
+  return { background: D.subtle, borderColor: D.line, borderBottomColor: D.line, color: cream, opacity: 1 };
+}
 // Legacy alias — anything OUTSIDE the App function that reads D still works (icons, etc.).
 const D = D_LIGHT;
 
@@ -8117,7 +8130,7 @@ export default function App() {
         .memory-card { width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
         .memory-board .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
-        ${theme === "dark" ? `.lesson-blank::placeholder{color:${HUB_CREAM};opacity:1}` : ""}
+        ${theme === "dark" ? `.lesson-blank::placeholder{color:${D.sub};opacity:1}` : ""}
         .tile:disabled { opacity:.3; cursor:default; }
         .tile:active:not(:disabled) { transform: translateY(2px); border-bottom-width:2px; }
         .tile-bank, .tile-row { display:flex; flex-wrap:wrap; align-content:flex-start; gap:8px; width:100%; max-width:100%; min-width:0; box-sizing:border-box; }
@@ -10164,13 +10177,13 @@ export default function App() {
                     <div className="idle"><CoachPortrait id={session.host} mood="happy" size={86} /></div>
                     <span className="nametag" style={lunaNameTagChrome(theme, coachName(session.host))}>{coachName(session.host)}</span>
                   </div>
-                  <div data-testid={q.type === "order" ? "order-prompt" : undefined} style={{ position: "relative", border: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderRadius: 16, padding: "14px 16px", background: orderCream ? HUB_CREAM : D.card, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.ink, flex: 1, marginBottom: 14 }}>
+                  <div data-testid={q.type === "order" ? "order-prompt" : q.type === "type" ? "type-prompt" : undefined} style={{ position: "relative", border: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderRadius: 16, padding: "14px 16px", background: orderCream ? HUB_CREAM : D.card, color: orderCream ? D_LIGHT.ink : ((orderDark || (theme === "dark" && q.type === "type")) ? HUB_CREAM : D.ink), flex: 1, marginBottom: 14 }}>
                     <div style={{ position: "absolute", left: -9, bottom: 16, width: 14, height: 14, background: orderCream ? HUB_CREAM : D.card, borderLeft: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderBottom: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, transform: "rotate(45deg)" }} />
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                       <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, fontSize: 16, cursor: "pointer", padding: "5px 9px", flexShrink: 0, color: D.blue, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
                       <div>
                         <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>{uiText(q.prompt, uiLang)}</div>
-                        {q.note ? <div style={{ fontSize: 13, color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub, fontWeight: 700, marginTop: 3 }}>{uiText(q.note, uiLang)}</div> : null}
+                        {q.note ? <div data-testid="lesson-note" style={{ fontSize: 13, color: orderCream ? D_LIGHT.ink : D.sub, fontWeight: 700, marginTop: 3 }}>{uiText(q.note, uiLang)}</div> : null}
                       </div>
                     </div>
                   </div>
@@ -10198,6 +10211,8 @@ export default function App() {
                   return (
                     <button key={idx} type="button" className="choice-card" data-testid="choice-card" data-selected={isSel ? "true" : undefined} aria-pressed={isSel} disabled={showState} onClick={() => setSelected(idx)}
                       style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd, borderWidth: paint?.edge, borderBottomWidth: paint?.edge, boxShadow: hoyDark ? "none" : (isSel && !showState ? `0 0 0 3px ${D.blue}` : undefined) }}>
+                      <span data-testid={`mc-option-${idx}`} hidden />
+                      {showState && isSel && !isAns ? <span data-testid="mc-option-wrong" hidden /> : null}
                       <span style={{ fontSize: 12, fontWeight: 900, border: `2px solid ${bd}`, borderRadius: 8, padding: "1px 7px", color: badgeCol }}>{idx + 1}</span>
                       {c}
                     </button>
@@ -10239,7 +10254,7 @@ export default function App() {
                                 title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
                                 aria-label={`${tile.w}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                                 onClick={() => removeAnswerTile(id)}
-                                style={{ background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark, padding: "7px 10px", fontSize: 14 }}>
+                                style={{ ...(theme === "dark" ? darkLessonChipPaint({ used: true, wrong: status === "wrong", D, cream: HUB_CREAM }) : { background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blueDark }), padding: "7px 10px", fontSize: 14 }}>
                                 {tile.w}
                                 <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                               </button>
@@ -10271,13 +10286,18 @@ export default function App() {
                               style={{
                                 visibility: hide ? "hidden" : "visible",
                                 pointerEvents: hide ? "none" : "auto",
-                                background: used ? D.greenBg : (theme === "dark" ? D.subtle : "#fff"),
-                                borderColor: used ? D.green : D.line,
-                                borderBottomColor: used ? D.green : D.line,
-                                color: used ? D.greenDark : D.green,
                                 fontWeight: 800,
                                 padding: "8px 11px",
                                 fontSize: 14,
+                                ...(theme === "dark"
+                                  ? darkLessonChipPaint({ used, wrong: status === "wrong", D, cream: HUB_CREAM })
+                                  : {
+                                      background: used ? D.greenBg : "#fff",
+                                      borderColor: used ? D.green : D.line,
+                                      borderBottomColor: used ? D.green : D.line,
+                                      color: used ? D.greenDark : D.green,
+                                      fontWeight: 800,
+                                    }),
                               }}>
                               {tile.w}
                             </button>
@@ -10295,7 +10315,7 @@ export default function App() {
                 )}
                 <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
                   {ACCENTS.map((ch) => (
-                    <button key={ch} onClick={() => insertChar(ch)} disabled={status !== "idle"} className="tile" style={{ padding: "4px 11px", fontSize: 15 }}>
+                    <button key={ch} onClick={() => insertChar(ch)} disabled={status !== "idle"} className="tile" style={{ padding: "4px 11px", fontSize: 15, ...(theme === "dark" ? darkLessonChipPaint({ used: false, wrong: false, D, cream: HUB_CREAM }) : null) }}>
                       {ch}
                     </button>
                   ))}
@@ -10317,7 +10337,7 @@ export default function App() {
                         onClick={() => unplaceOrderTile(id)}
                         style={orderCream
                           ? { background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }
-                          : { background: D.card, borderColor: D.line, borderBottomColor: D.line, color: HUB_CREAM }}>
+                          : darkLessonChipPaint({ used: true, wrong: status === "wrong", D, cream: HUB_CREAM })}>
                         {label}
                         <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
                       </button>
@@ -10351,7 +10371,7 @@ export default function App() {
                             pointerEvents: used ? "none" : "auto",
                             ...(orderCream
                               ? { background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }
-                              : { background: D.card, borderColor: D.line, borderBottomColor: D.line, color: HUB_CREAM }),
+                              : darkLessonChipPaint({ used: false, wrong: false, D, cream: HUB_CREAM })),
                           }}>
                           {label}
                         </button>
@@ -10372,6 +10392,8 @@ export default function App() {
                       const isWrong = matchWrong && ((matchWrong.a.side === side && matchWrong.a.idx === idx) || (matchWrong.b.side === side && matchWrong.b.idx === idx));
                       return (
                         <button key={idx} className="choice-card" disabled={isMatched}
+                          data-testid={`match-tile-${(side === 0 ? 0 : (q.left?.length || 0)) + idx}`}
+                          data-state={isMatched ? "matched" : isWrong ? "wrong" : isSel ? "selected" : "idle"}
                           onClick={() => { if (side === 0) speak(item.t); onMatchTap(side, idx, item.id); }}
                           style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : (theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")), borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? D.okText : isWrong ? D.badText : (theme === "dark" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)), opacity: isMatched ? 0.55 : 1 }}>
                           {item.t}
@@ -10906,6 +10928,7 @@ export default function App() {
                         return (
                           <button key={`${side}-${item.id}`} type="button" className="choice-card"
                             data-testid={side === 0 ? `match-tile-left-${item.id}` : `match-tile-right-${item.id}`}
+                            data-state={isMatched ? "matched" : isWrong ? "wrong" : isSel ? "selected" : "idle"}
                             disabled={isMatched || matchGame.done}
                             onClick={() => onMatchPracticeTap(side, item.id)}
                             style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : (theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")), borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? D.okText : isWrong ? D.badText : (theme === "dark" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)), opacity: isMatched ? 0.55 : 1 }}>
