@@ -2315,12 +2315,12 @@ const HUB_FACES = {
   sendero: "hub/sendero.png",
 };
 
-const HubTileArt = ({ face, height = 96 }) => (
+const HubTileArt = ({ face }) => (
   <img
     src={`${import.meta.env.BASE_URL}${HUB_FACES[face]}`}
     alt=""
     aria-hidden="true"
-    style={{ display: "block", width: "100%", height, objectFit: "contain" }}
+    style={{ display: "block", width: "100%", height: 96, objectFit: "contain" }}
   />
 );
 
@@ -8307,7 +8307,7 @@ export default function App() {
             const hoyDone = hoyHubDone({ todaySceneDone });
             const goalReached = (prog.xpToday || 0) >= DAILY_GOAL;
             const hubTiles = [
-              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" height={goalReached ? 80 : 96} />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
+              { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
               { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => openGamesHub() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
@@ -8347,7 +8347,7 @@ export default function App() {
                         }}>✓</span>
                       )}
                       <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
-                      <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", ...(tile.id === "hoy" && goalReached ? { minHeight: 0 } : null) }}>{tile.art}</div>
+                      <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
                       <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
                       {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2 }}>{tile.quiet}</div>}
                       {tile.id === "hoy" && goalReached && (
