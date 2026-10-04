@@ -4805,7 +4805,10 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
 let btnTheme = "light";
 const BtnThemeContext = createContext("light");
 
-const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, theme: themeProp, ...rest }) => {
+/** Lesson Check / lime Continue label. Other filled buttons, including the paywall, stay on CONTINUE_LABEL. */
+const LESSON_LIME_INK = "#1F3A1A";
+
+const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, theme: themeProp, ink, ...rest }) => {
   const ctxTheme = useContext(BtnThemeContext);
   const theme = themeProp || ctxTheme || btnTheme;
   const outlineDark = outline && theme === "dark";
@@ -4815,7 +4818,7 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
         fontFamily: "inherit", fontWeight: 800, fontSize: 15, letterSpacing: ".06em", textTransform: "uppercase",
         borderRadius: 14, padding: "13px 24px", cursor: disabled ? "default" : "pointer",
         background: outlineDark ? D_DARK.card : outline ? "#fff" : disabled ? D.lockGray : color,
-        color: outlineDark ? D_DARK.ink : outline ? color : disabled ? D.lockIcon : CONTINUE_LABEL,
+        color: outlineDark ? D_DARK.ink : outline ? color : disabled ? D.lockIcon : (ink || CONTINUE_LABEL),
         border: outlineDark ? `2px solid ${D_DARK.line}` : outline ? `2px solid ${D.line}` : "none",
         borderBottom: outlineDark ? `4px solid ${D_DARK.line}` : outline ? `4px solid ${D.line}` : `4px solid ${disabled ? "#CFCFCF" : dark}`,
         ...style,
@@ -10489,7 +10492,7 @@ export default function App() {
                 footerCapped ? (
                 <div data-testid="lesson-footer-actions" style={{ flexShrink: 0, width: "100%", boxSizing: "border-box", padding: "12px 20px 14px" }}>
                 {status === "idle" ? (
-	                  <Btn data-testid="lesson-check" onClick={check} style={{ width: "100%", flexShrink: 0 }}>{L.check}</Btn>
+	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} onClick={check} style={{ width: "100%", flexShrink: 0 }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
 	                    <div style={{ fontSize: 11, fontWeight: 900, color: D.okText, marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
@@ -10500,12 +10503,12 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-	                  <Btn color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ width: "100%", flexShrink: 0 }}>{L.continue}</Btn>
+	                  <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ width: "100%", flexShrink: 0 }}>{L.continue}</Btn>
                 )}
                 </div>
                 ) : (
                 status === "idle" ? (
-	                  <Btn data-testid="lesson-check" onClick={check} style={{ flexShrink: 0 }}>{L.check}</Btn>
+	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} onClick={check} style={{ flexShrink: 0 }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
 	                    <div style={{ fontSize: 11, fontWeight: 900, color: D.okText, marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
@@ -10516,7 +10519,7 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-	                  <Btn color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ flexShrink: 0 }}>{L.continue}</Btn>
+	                  <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ flexShrink: 0 }}>{L.continue}</Btn>
                 )
                 )
               ) : null}
