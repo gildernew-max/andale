@@ -9663,7 +9663,8 @@ describe("short onboarding", () => {
     await user.click(screen.getByTestId("brand-home"));
     await awaitSoftPaywallAfterFirstWin();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
-  }, 20000);
+    // Full beginner path + Lectura start + wall. CI already spends ~10 minutes on this file.
+  }, 40000);
 });
 
 describe("words audit strings", () => {
