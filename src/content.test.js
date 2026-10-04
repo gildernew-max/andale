@@ -2301,6 +2301,199 @@ for (const phrase of [
 ]) {
   assert(gradeListedPhrase(phrase, pretHabit).status === "wrong", `habit order is rejected: ${phrase}`);
 }
+const porparaBank = UNITS.find((u) => u.id === "porpara");
+assert(porparaBank.questions.length === 11, "porpara authored questions stay 11");
+assert(porparaBank.questions[0].prompt === "Gracias ___ tu ayuda con el contrato.", "porpara question order is unchanged");
+assert(Array.isArray(porparaBank.bank) && porparaBank.bank.length === 11, "porpara replay bank is 11 questions");
+assert(porparaBank.bank.map((q) => q.type).join(",") === "mc,mc,mc,mc,mc,type,type,type,order,order,transform", "porpara bank types are mc/type/order/transform");
+assert(porparaBank.bank[0].type === "mc" && porparaBank.bank[0].prompt === "Llegamos tarde ___ el tráfico del Periférico." && porparaBank.bank[0].answer === "por", "porpara bank MC is George's");
+assert(porparaBank.bank[0].choices.join("|") === "a|por|para|de", "porpara bank MC choices");
+assert(porparaBank.bank[0].explain === "Causa o motivo: el tráfico explica el retraso → por. «Para» marcaría una meta o propósito, no una razón.", "porpara bank MC explain is George's");
+assert(porparaBank.bank[5].type === "type" && porparaBank.bank[5].prompt === "Mi tío vivió en Chicago ___ diez años y luego regresó a Morelia." && porparaBank.bank[5].note === "(por o para)", "porpara bank type is George's");
+assert(porparaBank.bank[5].answers.join("|") === "por" && porparaBank.bank[5].explain === "Duración (cuánto tiempo duró algo) → por: por diez años. Una fecha límite llevaría «para»: «para mañana».", "porpara bank type answer and explain");
+assert(porparaBank.bank[8].type === "order" && porparaBank.bank[8].answer === "Vendí mi celular por mil pesos", "porpara bank order answer");
+assert(porparaBank.bank[8].words.join("|") === "Vendí|mi|celular|por|mil|pesos|para|vendo", "porpara bank order words include the decoys");
+assert(porparaBank.bank[8].explain === "Intercambio de una cosa por dinero → por: vendí mi celular por mil pesos. «Para / vendo» son señuelos: la preposición equivocada y el presente.", "porpara bank order explain is George's");
+assert(porparaBank.bank[8].prompt === "Construye: “I sold my phone for a thousand pesos.”", "porpara bank order uses the existing English Construye cue");
+const porparaNew = [
+  ["mc", "Llegamos tarde ___ el tráfico del Periférico.", "por"],
+  ["mc", "___ mi abuela, el mejor mole es el de Oaxaca.", "Para"],
+  ["mc", "Esta bolsa de pan dulce es ___ tu mamá; todavía está calientito.", "para"],
+  ["mc", "Rumbo a la playa, cruzamos ___ un pueblito muy bonito.", "por"],
+  ["mc", "No estoy ___ bromas hoy; tuve un día horrible.", "para"],
+  ["type", "Mi tío vivió en Chicago ___ diez años y luego regresó a Morelia.", "por"],
+  ["type", "Mi hija tiene que entregar la maqueta ___ mañana a primera hora.", "para"],
+  ["type", "Mejor hablamos ___ teléfono; es más rápido.", "por"],
+  ["order", "Construye: “I sold my phone for a thousand pesos.”", "Vendí mi celular por mil pesos"],
+  ["order", "Construye: “My mom is leaving for Puebla tomorrow.”", "Mi mamá se va para Puebla mañana"],
+];
+porparaNew.forEach(([type, prompt, answer], n) => {
+  const item = porparaBank.bank[n];
+  const got = item.type === "type" ? item.answers.join("|") : item.answer;
+  assert(item.type === type && item.prompt === prompt && got === answer, `porpara bank item ${n + 1} is George's`);
+});
+assert(porparaBank.bank[4].note === "¡Ojo!", "porpara bank trap keeps the ¡Ojo! note");
+assert(porparaBank.bank[4].type === "mc", "porpara bank fifth item is the mc trap");
+[
+  "a|por|para|de",
+  "Por|En|Para|De",
+  "a|por|con|para",
+  "para|de|por|con",
+  "por|en|a|para",
+].forEach((choices, n) => {
+  assert(porparaBank.bank[n].choices.join("|") === choices, `porpara bank MC ${n + 1} choices are George's`);
+});
+assert(porparaBank.bank[9].words.join("|") === "Mi|mamá|se|va|para|por|Puebla|mañana|fue", "porpara bank Puebla order tiles are exactly George's");
+assert(!porparaBank.bank[9].words.includes("a") && !porparaBank.bank[9].words.includes("van"), "porpara bank Puebla order has no a tile and no van");
+assert(porparaBank.bank[9].answer === "Mi mamá se va para Puebla mañana", "porpara bank Puebla order answer");
+const porparaTransform = [
+  "Hago ejercicio para bajar de peso",
+  "Yo hago ejercicio para bajar de peso",
+  "Para bajar de peso hago ejercicio",
+  "Para bajar de peso yo hago ejercicio",
+  "Hago ejercicio para poder bajar de peso",
+  "Yo hago ejercicio para poder bajar de peso",
+  "Para poder bajar de peso hago ejercicio",
+  "Para poder bajar de peso yo hago ejercicio",
+];
+assert(porparaBank.bank[10].type === "transform" && porparaBank.bank[10].prompt === "Transforma la oración", "porpara bank transform prompt");
+assert(porparaBank.bank[10].base === "Hago ejercicio. Quiero bajar de peso." && porparaBank.bank[10].instruction === "Únelas con «para»", "porpara bank transform base and instruction");
+assert(porparaBank.bank[10].answers.join("|") === porparaTransform.join("|"), "porpara bank transform lists the 8 accepted answers");
+const porparaPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((item, i) => {
+      if (u.id === "porpara" && kind === "bank") return;
+      if (item.type === "transform") {
+        const base = item.base || item.source;
+        if (base) porparaPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (item.prompt) porparaPromptOwners.set(item.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+porparaBank.bank.forEach((item, i) => {
+  if (item.type === "transform") {
+    assert(!porparaPromptOwners.has(item.base), `porpara bank ${i} transform base repeats a prompt`);
+    assert(!porparaPromptOwners.has(`base:${item.base}`), `porpara bank ${i} transform base repeats ${porparaPromptOwners.get(`base:${item.base}`) || "another item"}`);
+    return;
+  }
+  assert(!porparaPromptOwners.has(item.prompt), `porpara bank ${i} prompt duplicates ${porparaPromptOwners.get(item.prompt) || "another item"}`);
+  porparaPromptOwners.set(item.prompt, `porpara bank ${i}`);
+});
+const porparaBankEn = [
+  "Cause or reason: the traffic explains the delay → por. «Para» would signal a goal or purpose, not a reason.",
+  "Para + a person gives their point of view («in their opinion»): para mi abuela. «Por» doesn't introduce opinions.",
+  "Recipient → para: the bread is meant for your mom. «Por» would mean «because of» or «on behalf of» her.",
+  "Movement through a place → por: cruzamos por el pueblito. «Para» would mark the direction or destination, like the beach.",
+  "Trap: «por» tempts as a cause (a horrible day), but «no estar para» something = not being in the mood for it: no estoy para bromas. «Estar por» + infinitive is something else: «está por llegar» = it's about to arrive.",
+  "Duration (how long something lasted) → por: por diez años. A deadline would take «para»: «para mañana».",
+  "A deadline (when it has to be ready) → para: para mañana. A duration would take «por»: «por dos horas».",
+  "A means or channel of communication → por: por teléfono, por WhatsApp, por correo.",
+  "Exchanging something for money → por: vendí mi celular por mil pesos. «Para / vendo» are decoys: the wrong preposition and the present tense.",
+  "Heading toward a destination → para: se va para Puebla. «Por Puebla» would mean passing through or around it, not the destination. «Fue» is past tense and clashes with «mañana».",
+  "Para + infinitive expresses purpose (the «what for»): hago ejercicio para bajar de peso.",
+];
+assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
+porparaBank.bank.forEach((item, i) => {
+  const row = explainByEs.get(item.explain);
+  assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === porparaBankEn[i], `porpara bank ${i} EN is George's`);
+  assert(explainText(item, "es") === item.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(item, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(item);
+  assertPreppedQuestion(prepped, `porpara bank ${i}`);
+  if (item.type === "mc") {
+    assert(item.choices.length === 4 && new Set(item.choices).size === 4 && item.choices.includes(item.answer), `porpara bank ${i} mc choices include the answer`);
+    assert(item.note === (i === 4 ? "¡Ojo!" : ""), `porpara bank ${i} mc note is George's`);
+  }
+  if (item.type === "type") {
+    assert(item.note === "(por o para)", `porpara bank ${i} type note is George's`);
+  }
+  if (item.type === "order") {
+    assert(prepped.words.join("|") === item.words.join("|"), `porpara bank ${i} order tiles stay authored`);
+    assert(prepped.answer === item.answer, `porpara bank ${i} order answer stays authored`);
+    assert(Array.isArray(item.answers) && item.answers[0] === item.answer, `porpara bank ${i} answers start with the authored answer`);
+    assert(item.words.every((w) => !String(w).includes(",")), `porpara bank ${i} tiles carry no comma`);
+    item.answers.forEach((phrase) => {
+      const answerTokens = stripPhrase(phrase).split(" ").filter(Boolean);
+      const tilePool = item.words.map((w) => stripPhrase(w));
+      answerTokens.forEach((tok) => {
+        const at = tilePool.indexOf(tok);
+        assert(at >= 0, `porpara bank ${i} answer word ${tok} is a tile`);
+        tilePool.splice(at, 1);
+      });
+      const built = builtFromOrderTiles(item.words, phrase);
+      assert(built, `porpara bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(phrase, item).status !== "wrong", `porpara bank ${i} listed order is accepted: ${phrase}`);
+      assert(gradeListedPhrase(built, item).status !== "wrong", `porpara bank ${i} tile-built order is accepted: ${built}`);
+    });
+    assert(builtFromOrderTiles(item.words, item.answer) === item.answer, `porpara bank ${i} primary order is the authored tile text`);
+  }
+  if (item.type === "type" || item.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === item.answers.join("|"), `porpara bank ${i} answers stay authored`);
+  }
+});
+const porparaPhone = porparaBank.bank[8];
+const porparaPuebla = porparaBank.bank[9];
+const porparaPurpose = porparaBank.bank[10];
+assert(porparaPhone.answers.join("|") === "Vendí mi celular por mil pesos|Por mil pesos vendí mi celular", "porpara phone order lists the accepted alternates");
+assert(porparaPuebla.answers.join("|") === "Mi mamá se va para Puebla mañana|Mañana mi mamá se va para Puebla|Mi mamá se va mañana para Puebla|Mi mamá mañana se va para Puebla|Mañana se va mi mamá para Puebla|Mañana se va para Puebla mi mamá", "porpara Puebla order lists the accepted alternates");
+for (const phrase of porparaPhone.answers) {
+  assert(gradeListedPhrase(phrase, porparaPhone).status !== "wrong", `phone order accepted: ${phrase}`);
+}
+for (const phrase of [
+  "Vendí mi celular por mil pesos.",
+  "vendí mi celular por mil pesos",
+  "Por mil pesos, vendí mi celular",
+]) {
+  assert(gradeListedPhrase(phrase, porparaPhone).status !== "wrong", `phone order still accepts case, comma, or edge punctuation: ${phrase}`);
+}
+for (const phrase of [
+  "Mi celular vendí por mil pesos",
+  "Vendí por mil pesos mi celular",
+  "Vendí mi celular para mil pesos",
+]) {
+  assert(gradeListedPhrase(phrase, porparaPhone).status === "wrong", `phone order is rejected: ${phrase}`);
+}
+for (const phrase of porparaPuebla.answers) {
+  assert(gradeListedPhrase(phrase, porparaPuebla).status !== "wrong", `Puebla order accepted: ${phrase}`);
+}
+for (const phrase of [
+  "Mañana, mi mamá se va para Puebla",
+  "MI MAMÁ SE VA PARA PUEBLA MAÑANA",
+  "Mi mama se va para Puebla manana",
+]) {
+  assert(gradeListedPhrase(phrase, porparaPuebla).status !== "wrong", `Puebla order still accepts comma, case, or accents: ${phrase}`);
+}
+for (const phrase of [
+  "Mi mamá se va por Puebla mañana",
+  "Mi mamá se va para mañana Puebla",
+  "Mi mamá va se para Puebla mañana",
+]) {
+  assert(gradeListedPhrase(phrase, porparaPuebla).status === "wrong", `Puebla order is rejected: ${phrase}`);
+}
+porparaPurpose.answers.forEach((phrase) => {
+  assert(gradeListedPhrase(phrase, porparaPurpose).status !== "wrong", `purpose transform accepted: ${phrase}`);
+});
+for (const phrase of [
+  "Para poder bajar de peso, hago ejercicio",
+  "PARA PODER BAJAR DE PESO, HAGO EJERCICIO",
+  "Para poder bajar de pésó, hago ejercicio",
+  "hago ejercicio para bajar de peso",
+]) {
+  assert(gradeListedPhrase(phrase, porparaPurpose).status !== "wrong", `purpose transform still accepts comma, case, or accent: ${phrase}`);
+}
+for (const phrase of [
+  "Hago ejercicio por bajar de peso",
+  "Hago ejercicio porque bajar de peso",
+  "Hago ejercicio para adelgazar",
+]) {
+  assert(gradeListedPhrase(phrase, porparaPurpose).status === "wrong", `purpose transform is rejected: ${phrase}`);
+}
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;
