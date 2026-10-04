@@ -8378,7 +8378,7 @@ export default function App() {
             </div>
 	            <span>{L.goal}: {prog.xpToday || 0}/{DAILY_GOAL} XP</span>
 	            <button data-testid="rayo-toggle" aria-pressed={!!prog.rayo} onClick={() => save({ rayo: !prog.rayo })} title={uiLang === "en" ? "Lightning mode: answer against the clock. Correct in time: +3 XP. Time out counts as a mistake." : "Modo Rayo: responde contra reloj. Acierta a tiempo: +3 XP. Se acaba el tiempo: cuenta como error."}
-	              style={{ display: "flex", alignItems: "center", gap: 5, border: `2px solid ${prog.rayo ? D.gold : D.line}`, borderBottom: `3px solid ${prog.rayo ? D.goldDark : D.line}`, background: prog.rayo ? "#FFF6DC" : (theme === "dark" ? D.card : "#fff"), color: prog.rayo ? D.goldDark : (theme === "dark" ? MEMORY_DARK_INK : D.sub), borderRadius: 99, padding: "4px 12px", fontWeight: 900, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+	              style={{ display: "flex", alignItems: "center", gap: 5, border: `2px solid ${prog.rayo ? (theme === "dark" ? "#FFD43B" : D.gold) : D.line}`, borderBottom: `3px solid ${prog.rayo ? (theme === "dark" ? "#FFD43B" : D.goldDark) : D.line}`, background: prog.rayo ? (theme === "dark" ? "#3A2A1A" : "#FFF6DC") : (theme === "dark" ? D.card : "#fff"), color: prog.rayo ? (theme === "dark" ? "#FFD43B" : D.goldDark) : (theme === "dark" ? MEMORY_DARK_INK : D.sub), borderRadius: 99, padding: "4px 12px", fontWeight: 900, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
 	              <IcBolt size={14} /> {L.rayo} {prog.rayo ? L.on : L.off}
             </button>
           </div>
@@ -8409,8 +8409,8 @@ export default function App() {
                     )}
                   </div>
                   <div data-testid="section-lane" data-section={si} style={{ position: "relative", background: bg, borderRadius: "0 0 22px 22px", padding: "20px 0 26px", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
-                    <div aria-hidden="true" style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", background: laneDark ? "transparent" : "radial-gradient(circle, rgba(255,255,255,.9), rgba(255,255,255,0) 70%)", top: -60, right: -60, pointerEvents: "none" }} />
-                    <div aria-hidden="true" style={{ position: "absolute", width: 260, height: 260, borderRadius: "50%", background: laneDark ? "transparent" : "radial-gradient(circle, rgba(255,255,255,.7), rgba(255,255,255,0) 70%)", bottom: -80, left: -80, pointerEvents: "none" }} />
+                    <div aria-hidden="true" style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", background: theme === "dark" ? "transparent" : "radial-gradient(circle, rgba(255,255,255,.9), rgba(255,255,255,0) 70%)", top: -60, right: -60, pointerEvents: "none" }} />
+                    <div aria-hidden="true" style={{ position: "absolute", width: 260, height: 260, borderRadius: "50%", background: theme === "dark" ? "transparent" : "radial-gradient(circle, rgba(255,255,255,.7), rgba(255,255,255,0) 70%)", bottom: -80, left: -80, pointerEvents: "none" }} />
                     {sec.unitIds.map((uid) => {
                       g += 1;
                       const u = UNITS.find((x) => x.id === uid);
