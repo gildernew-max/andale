@@ -810,8 +810,14 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     markBajioUnlockFlashDue(false);
     seedProgress({ streak: 1, lastDay: localToday(), stories: { "story-0": true } });
     render(<App />);
+    // The wall mounts in render; paywall_seen is emitted in the effect after
+    // that commit. Reading the funnel log in the same turn races the flush.
+    await screen.findByTestId("soft-paywall", {}, { timeout: 3000 });
     await awaitSoftPaywallAfterFirstWin();
-    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(true);
+    await waitFor(() => {
+      expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+      expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(true);
+    });
   });
 
   it("soft paywall does not render on splash or boot before a win", async () => {
