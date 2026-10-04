@@ -10398,7 +10398,21 @@ export default function App() {
                           data-testid={`match-tile-${(side === 0 ? 0 : (q.left?.length || 0)) + idx}`}
                           data-state={isMatched ? "matched" : isWrong ? "wrong" : isSel ? "selected" : "idle"}
                           onClick={() => { if (side === 0) speak(item.t); onMatchTap(side, idx, item.id); }}
-                          style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : (theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")), borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? D.okText : isWrong ? D.badText : (theme === "dark" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)), opacity: isMatched ? 0.55 : 1 }}>
+                          style={{
+                            padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit",
+                            cursor: isMatched ? "default" : "pointer",
+                            ...(theme === "dark"
+                              ? (isSel && !isMatched && !isWrong
+                                ? { background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blue, opacity: 1 }
+                                : darkLessonChipPaint({ used: !!(isMatched || isWrong), wrong: !!isWrong, D, cream: HUB_CREAM }))
+                              : {
+                                  background: isMatched ? D.okBg : isWrong ? D.badBg : (isSel ? "#DDF4FF" : "#fff"),
+                                  borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line,
+                                  borderBottomColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line,
+                                  color: isMatched ? D.okText : isWrong ? D.badText : (isSel ? D.blueDark : D.ink),
+                                  opacity: isMatched ? 0.55 : 1,
+                                }),
+                          }}>
                           {item.t}
                         </button>
                       );

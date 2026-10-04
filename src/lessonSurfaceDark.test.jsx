@@ -146,7 +146,12 @@ describe("dark lesson surfaces", () => {
       "hit ? D.greenDark : (theme === \"dark\" ? D.red : D.redDark)",
       ".lesson-blank::placeholder{color:${D.sub};opacity:1}",
     ]) expect(appSrc).toContain(needle);
-    expect((appSrc.match(/theme === "dark" \? D\.subtle : \(isSel \? "#DDF4FF" : "#fff"\)/g) || []).length).toBe(2);
+    expect((appSrc.match(/theme === "dark" \? D\.subtle : \(isSel \? "#DDF4FF" : "#fff"\)/g) || []).length).toBe(1);
+    const lessonMatch = sliceBetween('{q.type === "match" && (', '{/* ---------- ACTION BAR');
+    expect(lessonMatch).toContain("darkLessonChipPaint({ used: !!(isMatched || isWrong), wrong: !!isWrong, D, cream: HUB_CREAM })");
+    expect(lessonMatch).toContain("background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blue, opacity: 1");
+    expect(lessonMatch).not.toContain("darkLessonChipPaint({ used: !!(isMatched || isSel || isWrong)");
+    expect(lessonMatch).not.toContain('theme === "dark" ? D.subtle');
     const light = appSrc.slice(appSrc.indexOf("const D_LIGHT"), appSrc.indexOf("const D_DARK"));
     expect(light).toContain('red: "#FF4B4B", redDark: "#EA2B2B"');
     expect(light).toContain('badText: "#EA2B2B"');
@@ -215,6 +220,96 @@ describe("dark lesson surfaces", () => {
     await boot("light", lessonLive({ session: matchSession }));
     await waitFor(() => expect(screen.getByText("Une las parejas")).toBeTruthy());
     expect(paint(card("ojalá"))).toMatchObject({ fill: "#ffffff", ink: "#3c3c3c" });
+  });
+
+  it("paints lesson match tiles with the chip palette in dark and keeps every light fill", async () => {
+    const pairs = {
+      title: "Parejas", host: "luna", unitId: "subj1", color: "#58CC02", dark: "#46A302",
+      questions: [{
+        type: "match",
+        pairs: [["ojalá", "hopefully"], ["dudar", "to doubt"]],
+        left: [{ t: "ojalá", id: 0 }, { t: "dudar", id: 1 }],
+        right: [{ t: "hopefully", id: 0 }, { t: "to doubt", id: 1 }],
+      }],
+    };
+    const live = (extra) => lessonLive({ session: pairs, ...extra });
+    const tiles = () => [...document.querySelectorAll("[data-testid]")].filter((el) => /^match-tile-\d+$/.test(el.getAttribute("data-testid")));
+    const noWhite = () => tiles().forEach((el) => expect(paint(el).fill).not.toBe("#ffffff"));
+    const user = userEvent.setup();
+
+    await boot("dark", live());
+    await screen.findByTestId("match-tile-3");
+    expect(tiles().map((el) => el.getAttribute("data-state"))).toEqual(["idle", "idle", "idle", "idle"]);
+    tiles().forEach((el) => expect(paint(el)).toMatchObject({ fill: "#252830", ink: "#f6efe4", line: "#2a2e36" }));
+    noWhite();
+    expect(Number(contrastRatio("#F6EFE4", "#252830").toFixed(2))).toBe(12.9);
+
+    await boot("dark", live({ matchSel: { side: 0, idx: 0, id: 0 }, matched: [1] }));
+    await screen.findByTestId("match-tile-0");
+    expect(screen.getByTestId("match-tile-0").getAttribute("data-state")).toBe("selected");
+    expect(screen.getByTestId("match-tile-1").getAttribute("data-state")).toBe("matched");
+    const selected = paint(screen.getByTestId("match-tile-0"));
+    const matchedBeside = paint(screen.getByTestId("match-tile-1"));
+    expect(selected).toMatchObject({ fill: "#0f2a3a", ink: "#1cb0f6", line: "#1cb0f6" });
+    expect(matchedBeside).toMatchObject({ fill: "#1f3a1a", ink: "#58cc02", line: "#58cc02" });
+    expect(selected.fill).not.toBe(matchedBeside.fill);
+    expect(selected.ink).not.toBe(matchedBeside.ink);
+    expect(screen.getByTestId("match-tile-2").getAttribute("data-state")).toBe("idle");
+    noWhite();
+    expect(Number(contrastRatio("#1CB0F6", "#0F2A3A").toFixed(2))).toBe(6.08);
+    expect(Number(contrastRatio("#58CC02", "#1F3A1A").toFixed(2))).toBe(5.99);
+
+    await boot("dark", live({ matched: [0] }));
+    await screen.findByTestId("match-tile-2");
+    expect(screen.getByTestId("match-tile-0").getAttribute("data-state")).toBe("matched");
+    expect(screen.getByTestId("match-tile-2").getAttribute("data-state")).toBe("matched");
+    expect(screen.getByTestId("match-tile-1").getAttribute("data-state")).toBe("idle");
+    expect(paint(screen.getByTestId("match-tile-0"))).toMatchObject({ fill: "#1f3a1a", ink: "#58cc02", line: "#58cc02" });
+    expect(screen.getByTestId("match-tile-0").style.opacity).toBe("1");
+    expect(paint(screen.getByTestId("match-tile-0")).fill).not.toBe("#0f2a3a");
+    expect(paint(screen.getByTestId("match-tile-0")).ink).not.toBe("#1cb0f6");
+    noWhite();
+
+    await boot("dark", live());
+    await user.click(await screen.findByTestId("match-tile-0"));
+    await user.click(screen.getByTestId("match-tile-3"));
+    expect(screen.getByTestId("match-tile-0").getAttribute("data-state")).toBe("wrong");
+    expect(screen.getByTestId("match-tile-3").getAttribute("data-state")).toBe("wrong");
+    expect(screen.getByTestId("match-tile-1").getAttribute("data-state")).toBe("idle");
+    expect(paint(screen.getByTestId("match-tile-0"))).toMatchObject({ fill: "#3a1a1a", ink: "#ff6b6b", line: "#ff6b6b" });
+    expect(paint(screen.getByTestId("match-tile-3"))).toMatchObject({ fill: "#3a1a1a", ink: "#ff6b6b" });
+    noWhite();
+    expect(Number(contrastRatio("#FF6B6B", "#3A1A1A").toFixed(2))).toBe(5.64);
+
+    await boot("light", live());
+    await screen.findByTestId("match-tile-3");
+    expect(tiles().map((el) => el.getAttribute("data-state"))).toEqual(["idle", "idle", "idle", "idle"]);
+    tiles().forEach((el) => expect(paint(el)).toMatchObject({ fill: "#ffffff", ink: "#3c3c3c", line: "#e5e5e5" }));
+    expect(Number(contrastRatio("#3C3C3C", "#FFFFFF").toFixed(2))).toBe(11.03);
+
+    await boot("light", live({ matchSel: { side: 0, idx: 0, id: 0 } }));
+    await screen.findByTestId("match-tile-0");
+    expect(screen.getByTestId("match-tile-0").getAttribute("data-state")).toBe("selected");
+    expect(paint(screen.getByTestId("match-tile-0"))).toMatchObject({ fill: "#ddf4ff", ink: "#1899d6", line: "#1cb0f6" });
+    expect(paint(screen.getByTestId("match-tile-1"))).toMatchObject({ fill: "#ffffff", ink: "#3c3c3c", line: "#e5e5e5" });
+    expect(Number(contrastRatio("#1899D6", "#DDF4FF").toFixed(2))).toBe(2.81);
+
+    await boot("light", live({ matched: [0] }));
+    await screen.findByTestId("match-tile-2");
+    expect(screen.getByTestId("match-tile-0").getAttribute("data-state")).toBe("matched");
+    expect(paint(screen.getByTestId("match-tile-0"))).toMatchObject({ fill: "#d7ffb8", ink: "#58a700", line: "#58cc02" });
+    expect(screen.getByTestId("match-tile-0").style.opacity).toBe("0.55");
+    expect(paint(screen.getByTestId("match-tile-1"))).toMatchObject({ fill: "#ffffff", ink: "#3c3c3c" });
+    expect(Number(contrastRatio("#58A700", "#D7FFB8").toFixed(2))).toBe(2.72);
+
+    await boot("light", live());
+    await user.click(await screen.findByTestId("match-tile-0"));
+    await user.click(screen.getByTestId("match-tile-3"));
+    expect(screen.getByTestId("match-tile-0").getAttribute("data-state")).toBe("wrong");
+    expect(screen.getByTestId("match-tile-3").getAttribute("data-state")).toBe("wrong");
+    expect(paint(screen.getByTestId("match-tile-0"))).toMatchObject({ fill: "#ffdfe0", ink: "#ea2b2b", line: "#ff4b4b" });
+    expect(paint(screen.getByTestId("match-tile-1"))).toMatchObject({ fill: "#ffffff", ink: "#3c3c3c", line: "#e5e5e5" });
+    expect(Number(contrastRatio("#EA2B2B", "#FFDFE0").toFixed(2))).toBe(3.46);
   });
 
   it("paints the Safe/Risky wrong reveal #FF6B6B on #3A1A1A and keeps the light red", async () => {
