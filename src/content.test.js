@@ -1926,7 +1926,7 @@ const subj2BankEn = [
   "Trap: «saber que» expresses certainty → indicative: estaba. The subjunctive (estuviera) appears when you negate: «No creía que estuviera».",
   "Si + imperfect subjunctive for the unreal: manejara; llegaríamos is the result.",
   "«Era importante que» (past) takes the imperfect subjunctive: dijeras, which comes from «dijeron».",
-  "«Te molestó que…» is about something that already happened, so the subjunctive goes in the imperfect: abriera.",
+  "«¿Te molestó que…?» is about the past and takes the imperfect subjunctive: abriera.",
   "Viviera (subjunctive) + iría (conditional). «Vivía / iré» are decoys.",
   "«Para que» in the past takes the imperfect subjunctive: descansaras. «Descansas / descansarás» are indicative decoys.",
   "If the main verb moves to the imperfect, the subjunctive does too: vengas → vinieras.",
