@@ -9346,13 +9346,13 @@ export default function App() {
           <h3 style={{ fontWeight: 900, fontSize: 16, margin: "24px 0 10px" }}>{uiLang === "en" ? "Coach postcards" : "Postales de coaches"}</h3>
           <div style={{ display: "grid", gap: 9 }}>
             {coachUnlocks.map((u) => {
-              const lockedInk = "#6B6258";
+              const lockedInk = theme === "dark" ? "#A0A4AB" : "#6B6258";
               const portrait = <CoachPortrait id={u.coach} mood={u.ok ? "party" : "sad"} size={56} badge={u.ok} />;
               return (
-              <div key={u.id} style={{ display: "flex", gap: 12, alignItems: "center", border: `2px solid ${u.ok ? COACHES[u.coach].color : D.line}`, borderBottom: `4px solid ${u.ok ? COACHES[u.coach].dark : D.line}`, borderRadius: 14, padding: "9px 12px", background: u.ok ? "#fff" : "#F7F7F7" }}>
+              <div key={u.id} style={{ display: "flex", gap: 12, alignItems: "center", border: `2px solid ${u.ok ? COACHES[u.coach].color : D.line}`, borderBottom: `4px solid ${u.ok ? COACHES[u.coach].dark : D.line}`, borderRadius: 14, padding: "9px 12px", background: theme === "dark" ? D.card : (u.ok ? "#fff" : "#F7F7F7") }}>
                 {u.ok ? portrait : <span style={{ display: "block", flexShrink: 0, lineHeight: 0, opacity: 0.62 }}>{portrait}</span>}
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 900, fontSize: 14, color: u.ok ? undefined : lockedInk }}>{u.title}</div>
+                  <div style={{ fontWeight: 900, fontSize: 14, color: u.ok ? (theme === "dark" ? "#E8E8EA" : undefined) : lockedInk }}>{u.title}</div>
                   <div style={{ fontSize: 12, color: u.ok ? D.sub : lockedInk, fontWeight: 800 }}>{u.desc}</div>
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 900, color: u.ok ? D.green : lockedInk }}>{u.ok ? (uiLang === "en" ? "UNLOCKED" : "LISTO") : (uiLang === "en" ? "LOCKED" : "BLOQ.")}</span>
