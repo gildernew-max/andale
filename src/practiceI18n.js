@@ -179,7 +179,7 @@ export const PRACTICE_EXPLAIN = [
   { es: "Trampa: «saber que» expresa certeza → indicativo: estaba. El subjuntivo (estuviera) aparece al negar: «No creía que estuviera».", en: "Trap: «saber que» expresses certainty → indicative: estaba. The subjunctive (estuviera) appears when you negate: «No creía que estuviera»." },
   { es: "Si + imperfecto de subjuntivo para lo irreal: manejara; llegaríamos es la consecuencia.", en: "Si + imperfect subjunctive for the unreal: manejara; llegaríamos is the result." },
   { es: "«Era importante que» (pasado) pide imperfecto de subjuntivo: dijeras, que sale de «dijeron».", en: "«Era importante que» (past) takes the imperfect subjunctive: dijeras, which comes from «dijeron»." },
-  { es: "«¿Te molestaría que…?» es una petición de permiso cortés y pide imperfecto de subjuntivo: abriera.", en: "«¿Te molestaría que…?» is a polite request for permission and takes the imperfect subjunctive: abriera." },
+  { es: "Con «te molestó» (pasado), el subjuntivo va en imperfecto: abriera.", en: "With «te molestó» (past), the subjunctive goes in the imperfect: abriera." },
   { es: "Viviera (subjuntivo) + iría (condicional). «Vivía / iré» son señuelos.", en: "Viviera (subjunctive) + iría (conditional). «Vivía / iré» are decoys." },
   { es: "«Para que» en pasado pide imperfecto de subjuntivo: descansaras. «Descansas / descansarás» son señuelos en indicativo.", en: "«Para que» in the past takes the imperfect subjunctive: descansaras. «Descansas / descansarás» are indicative decoys." },
   { es: "Si el verbo principal pasa a imperfecto, el subjuntivo también: vengas → vinieras.", en: "If the main verb moves to the imperfect, the subjunctive does too: vengas → vinieras." },
