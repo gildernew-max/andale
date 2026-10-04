@@ -11647,12 +11647,16 @@ export default function App() {
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
                     <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => (
+                      {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => {
+                        const revealCorrect = !!checkState[pi] && checkState[pi] !== checkpoints[pi].a && choice === checkpoints[pi].a;
+                        const marked = checkState[pi] === choice || revealCorrect;
+                        return (
                         <button key={choice} disabled={!!checkState[pi]} onClick={() => answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a)}
-                          style={{ border: `1.5px solid ${checkState[pi] === choice ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: checkState[pi] === choice ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: checkState[pi] === choice && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
+                          style={{ border: `1.5px solid ${marked ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: marked ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: marked && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
                           {choice}
                         </button>
-                      ))}
+                        );
+                      })}
                       {wordSel && wordSel.pi === pi && renderWordSheet(true)}
                     </div>
                   </div>
