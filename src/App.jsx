@@ -61,6 +61,7 @@ import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHan
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
+import { resolveTheme } from "./themeDefault.js";
 import Onboarding from "./Onboarding.jsx";
 import { beginnerFirstQuestions, beginnerWhyLine, beginnerWinLine, BEGINNER_SESSION_TITLE } from "./beginnerFirstSession.js";
 import { firstSessionWhyLine, firstSessionWinLine } from "./firstSessionWords.js";
@@ -4943,8 +4944,9 @@ function HangmanEmphasis({ text }) {
 }
 
 export default function App() {
-  /* Theme: persisted under prog.theme; memoized D shadows the file-level D
-     for every component rendered inside App. Existing D.* call sites work. */
+  /* Theme: a saved prog.theme of light or dark is persisted. With no saved
+     choice the phone decides and that derived value is not written back.
+     Memoized D shadows the file-level D for every component rendered inside App. */
 
   const [tab, setTabRaw] = useState("camino");
   // Normalize legacy "juegos" tab (removed from primary nav, games live in "practica" now)
@@ -5097,9 +5099,12 @@ export default function App() {
   const [onboardingStep, setOnboardingStep] = useState("level");
   const [onboardingLevel, setOnboardingLevel] = useState(null);
   const [onboardingGoal, setOnboardingGoal] = useState(null);
-  /* Theme — derived from persisted prog.theme. The local `D` shadows the
-     file-level D constant, so all `D.green` reads inside App pick this up. */
-  const theme = prog.theme || "light";
+  /* Theme — a saved prog.theme of light or dark wins. With no saved choice,
+     follow the phone. Do not write that derived value into prog: an unsaved
+     learner keeps following the phone, and streak math stays on the save.
+     The local `D` shadows the file-level D constant, so all `D.green` reads
+     inside App pick this up. */
+  const theme = resolveTheme(prog.theme);
   btnTheme = theme;
   const D = theme === "dark" ? D_DARK : D_LIGHT;
   useEffect(() => {
@@ -8081,7 +8086,7 @@ export default function App() {
 
   return (
     <BtnThemeContext.Provider value={theme}>
-    <div data-testid="app-shell" style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
+    <div data-testid="app-shell" data-theme={theme} style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
       <style>{`
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 600; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-600.woff2') format('woff2'); }
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 700; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-700.woff2') format('woff2'); }
