@@ -1858,6 +1858,98 @@ subj1Bank.bank.forEach((q, i) => {
     assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === q.answers.join("|"), `subj1 bank ${i} answers stay authored`);
   }
 });
+const siclausesBank = UNITS.find((u) => u.id === "siclauses");
+assert(siclausesBank.questions.length === 11, "siclauses authored questions stay 11");
+assert(siclausesBank.questions[0].prompt === "Si ___ más tiempo, viajaría a Oaxaca cada mes.", "siclauses question order is unchanged");
+assert(Array.isArray(siclausesBank.bank) && siclausesBank.bank.length === 11, "siclauses replay bank is 11 questions");
+assert(siclausesBank.bank[0].type === "mc" && siclausesBank.bank[0].prompt === "Actúa como si nunca ___ pasado nada." && siclausesBank.bank[0].answer === "hubiera", "siclauses bank MC is George's");
+assert(siclausesBank.bank[0].choices.join("|") === "ha|había|hubiera|habría", "siclauses bank MC choices");
+assert(siclausesBank.bank[0].explain === "«Como si» sobre algo que ya pasó exige pluscuamperfecto de subjuntivo: hubiera pasado; ha, había y habría no van tras «como si».", "siclauses bank MC explain is George's");
+assert(siclausesBank.bank[5].type === "type" && siclausesBank.bank[5].prompt === "Si mis primos ___ el sábado, haríamos una comida en casa." && siclausesBank.bank[5].note === "(venir)", "siclauses bank type is George's");
+assert(siclausesBank.bank[5].answers.join("|") === "vinieran|viniesen" && siclausesBank.bank[5].explain === "La consecuencia en condicional (haríamos) pide imperfecto de subjuntivo en la cláusula con «si»: vinieran.", "siclauses bank type answer and explain");
+assert(siclausesBank.bank[8].type === "order" && siclausesBank.bank[8].answer === "Si saliéramos ahorita, llegaríamos a tiempo", "siclauses bank order answer");
+assert(siclausesBank.bank[8].words.join("|") === "Si|saliéramos|ahorita,|llegaríamos|a|tiempo|saldríamos|llegaremos", "siclauses bank order words include the decoys");
+assert(siclausesBank.bank[8].explain === "Saliéramos (subjuntivo) + llegaríamos (condicional). «Saldríamos / llegaremos» son señuelos: «si» no lleva condicional ni futuro.", "siclauses bank order explain is George's");
+assert(siclausesBank.bank[8].prompt === "Construye: “If we left now, we would arrive on time.”", "siclauses bank order uses the existing English Construye cue");
+const siclausesNew = [
+  ["mc", "Yo que tú, ___ con tu jefe antes de firmar.", "hablaría"],
+  ["mc", "Si ___ estudiado más, habrías pasado el examen.", "hubieras"],
+  ["mc", "Si me ___ hoy, mañana pago la renta.", "depositan"],
+  ["mc", "Si no ___ por mi hermana, hoy no tendría trabajo.", "fuera"],
+  ["type", "Si mis primos ___ el sábado, haríamos una comida en casa.", "vinieran|viniesen"],
+  ["type", "Si me tocara la lotería, ___ por todo el país.", "viajaría|viajaria"],
+  ["type", "Si hubieras llegado temprano, ___ cenado juntos.", "habríamos|habriamos|hubiéramos|hubieramos|hubiésemos|hubiesemos"],
+  ["order", "Construye: “If we left now, we would arrive on time.”", "Si saliéramos ahorita, llegaríamos a tiempo"],
+  ["order", "Construye: “I would like to ask you a favor.”", "Quisiera pedirle un favor"],
+  ["transform", "Transforma la oración", "Si lloviera, no iríamos|Si lloviese, no iríamos"],
+];
+siclausesNew.forEach(([type, prompt, answer], n) => {
+  const q = siclausesBank.bank[n + 1];
+  const got = q.type === "type" || q.type === "transform" ? q.answers.join("|") : q.answer;
+  assert(q.type === type && q.prompt === prompt && got === answer, `siclauses bank item ${n + 2} is George's`);
+});
+assert(siclausesBank.bank[3].note === "¡Ojo!", "siclauses bank trap keeps the ¡Ojo! note");
+assert(siclausesBank.bank[9].words.join("|") === "Quisiera|pedirle|un|favor|Quise|Querré", "siclauses bank order words include the decoys");
+assert(siclausesBank.bank[10].base === "Si llueve, no vamos." && siclausesBank.bank[10].instruction === "Hazlo irreal (empieza con «Si lloviera…»)", "siclauses bank transform base and instruction");
+const siclausesPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((q, i) => {
+      if (u.id === "siclauses" && kind === "bank") return;
+      if (q.type === "transform") {
+        const base = q.base || q.source;
+        if (base) siclausesPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (q.prompt) siclausesPromptOwners.set(q.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+siclausesBank.bank.forEach((q, i) => {
+  if (q.type === "transform") {
+    assert(!siclausesPromptOwners.has(q.base), `siclauses bank ${i} transform base repeats a prompt`);
+    assert(!siclausesPromptOwners.has(`base:${q.base}`), `siclauses bank ${i} transform base repeats ${siclausesPromptOwners.get(`base:${q.base}`) || "another item"}`);
+    return;
+  }
+  assert(!siclausesPromptOwners.has(q.prompt), `siclauses bank ${i} prompt duplicates ${siclausesPromptOwners.get(q.prompt) || "another item"}`);
+  siclausesPromptOwners.set(q.prompt, `siclauses bank ${i}`);
+});
+const siclausesBankEn = [
+  "«Como si» about something that already happened requires the pluperfect subjunctive: hubiera pasado; ha, había and habría don’t follow «como si».",
+  "«Yo que tú» gives hypothetical advice → conditional: hablaría; present, past and future would state a fact, not advice.",
+  "Past unreal: the «si» clause takes the pluperfect subjunctive: hubieras estudiado. «Habrías» is saved for the result.",
+  "Trap: a real or likely condition → «si» + present indicative: depositan; «si» doesn’t take the present subjunctive, the future or the conditional.",
+  "«Si no fuera por…» is an unreal formula (imperfect subjunctive) and goes with the conditional: tendría.",
+  "A conditional result (haríamos) calls for the imperfect subjunctive in the «si» clause: vinieran.",
+  "After «si» + imperfect subjunctive, the result takes the conditional: viajaría.",
+  "Past unreal → conditional perfect: habríamos + cenado; «hubiéramos» is also heard in speech.",
+  "Saliéramos (subjunctive) + llegaríamos (conditional). «Saldríamos / llegaremos» are decoys: «si» doesn’t take the conditional or the future.",
+  "«Quisiera» + infinitive is the polite way to ask. «Quise / querré» are decoys: past and future.",
+  "The unreal version changes both verbs: llueve → lloviera, vamos → iríamos.",
+];
+siclausesBank.bank.forEach((q, i) => {
+  const row = explainByEs.get(q.explain);
+  assert(row && row.es === q.explain, "bank Why ES matches the authored explain");
+  assert(row.en === siclausesBankEn[i], `siclauses bank ${i} EN is George's`);
+  assert(explainText(q, "es") === q.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(q, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(q);
+  assertPreppedQuestion(prepped, `siclauses bank ${i}`);
+  if (q.type === "mc") {
+    assert(q.choices.length === 4 && new Set(q.choices).size === 4 && q.choices.includes(q.answer), `siclauses bank ${i} mc choices`);
+  }
+  if (q.type === "order") {
+    assert(prepped.words.join("|") === q.words.join("|"), `siclauses bank ${i} order tiles stay authored`);
+    assert(prepped.answer === q.answer, `siclauses bank ${i} order answer stays authored`);
+  }
+  if (q.type === "type" || q.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === q.answers.join("|"), `siclauses bank ${i} answers stay authored`);
+    const seAt = q.answers.findIndex((a) => /(?:se|ses)$/.test(String(a).split(" ").pop()));
+    if (seAt >= 0) assert(seAt > 0, `siclauses bank ${i} -se form stays an accepted answer but not first`);
+  }
+});
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;
