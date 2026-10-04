@@ -74,7 +74,8 @@ describe("failing dark surfaces use the approved app darks", () => {
     const locked = [...document.querySelectorAll(".node-btn")].filter((el) => el.disabled && /solid/i.test(el.style.borderBottom));
     expect(locked.length).toBeGreaterThan(0);
     locked.forEach((el) => expect(norm(el.style.borderBottomColor)).toBe("#2a2e36"));
-    expect(lane(1).innerHTML).toContain("rgba(255, 255, 255");
+    expect(lane(1).innerHTML).not.toContain("rgba(255, 255, 255");
+    expect(lane(2).innerHTML).not.toContain("rgba(255, 255, 255");
     expect(fills(screen.getByTestId("jeopardy-section-start"))).toContain("#1e2128");
     expect(fills(screen.getByTestId("jeopardy-section-start"))).not.toContain("#f6efe4");
     const darkLabels = [...lane(1).querySelectorAll("[data-testid='section-lane-label']")];
@@ -86,6 +87,8 @@ describe("failing dark surfaces use the approved app darks", () => {
     expect(norm(lane(0).style.background)).toBe("#f3fbea");
     expect(norm(lane(1).style.background)).toBe("#f8f0ff");
     expect(norm(lane(2).style.background)).toBe("#eaf7fe");
+    expect(lane(1).innerHTML).toContain("rgba(255, 255, 255");
+    expect(lane(2).innerHTML).toContain("rgba(255, 255, 255");
     const lightLocked = [...document.querySelectorAll(".node-btn")].filter((el) => el.disabled && /solid/i.test(el.style.borderBottom));
     expect(lightLocked.some((el) => norm(el.style.borderBottomColor) === "#cfcfcf")).toBe(true);
     const lightLabels = [...lane(1).querySelectorAll("[data-testid='section-lane-label']")];
