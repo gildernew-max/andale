@@ -181,7 +181,14 @@ for (const u of UNITS) {
   assert(!unitIds.has(u.id), `duplicate unit id ${u.id}`);
   unitIds.add(u.id);
   assert(Array.isArray(u.pairs) && u.pairs.length > 0 && u.pairs.every(pairReady), `unit ${u.id} missing pairs`);
-  assert(Array.isArray(u.questions) && u.questions.length > 0, `unit ${u.id} missing questions`);
+  assert(Array.isArray(u.questions) && u.questions.length === 11, `unit ${u.id} questions stay 11; a replay bank is separate`);
+  if (u.bank != null) {
+    assert(Array.isArray(u.bank) && u.bank.length > 0 && u.bank.length !== u.questions.length, `unit ${u.id} bank is a separate non-empty list`);
+    u.bank.forEach((raw, i) => {
+      assert(!u.questions.includes(raw), `${u.id} bank ${i} is not an authored question`);
+      assertPreppedQuestion(prepQuestion(raw), `${u.id} bank ${i} (${raw.type || "?"})`);
+    });
+  }
 
   const matchQ = prepQuestion({ type: "match", pairs: u.pairs });
   assertPreppedQuestion(matchQ, `${u.id} generated match`);
@@ -1777,6 +1784,26 @@ assert(appSrc.includes("`Paragraph ${i + 1}`") && appSrc.includes("`Párrafo ${i
 assert(!/aria-label=\{`Párrafo \$\{i \+ 1\}`\}/.test(appSrc), "story paragraph nav aria is not hardcoded Párrafo");
 
 const explainByEs = new Map(PRACTICE_EXPLAIN.map((row) => [row.es, row]));
+const subj1Bank = UNITS.find((u) => u.id === "subj1");
+assert(subj1Bank.questions.length === 11, "subj1 authored questions stay 11");
+assert(subj1Bank.questions[0].prompt === "Espero que ___ a la fiesta el sábado.", "subj1 question order is unchanged");
+assert(Array.isArray(subj1Bank.bank) && subj1Bank.bank.length === 3, "subj1 replay bank is 3 questions");
+assert(subj1Bank.bank[0].type === "mc" && subj1Bank.bank[0].prompt === "Me da gusto que ya te ___ mejor." && subj1Bank.bank[0].answer === "sientas", "subj1 bank MC is George's");
+assert(subj1Bank.bank[0].choices.join("|") === "sientes|sientas|sentirás|sentías", "subj1 bank MC choices");
+assert(subj1Bank.bank[0].explain === "«Me da gusto que» (emoción) dispara el subjuntivo. Tú → sientas.", "subj1 bank MC explain is George's");
+assert(subj1Bank.bank[1].type === "type" && subj1Bank.bank[1].prompt === "Te presto mi coche para que ___ al aeropuerto." && subj1Bank.bank[1].note === "(ir, tú)", "subj1 bank type is George's");
+assert(subj1Bank.bank[1].answers.join("|") === "vayas" && subj1Bank.bank[1].explain === "«Para que» (finalidad) siempre pide subjuntivo: vayas.", "subj1 bank type answer and explain");
+assert(subj1Bank.bank[2].type === "order" && subj1Bank.bank[2].answer === "Escríbeme antes de que salgas", "subj1 bank order answer");
+assert(subj1Bank.bank[2].words.join("|") === "Escríbeme|antes|de|que|salgas|sales|saldrás", "subj1 bank order words include the decoys");
+assert(subj1Bank.bank[2].explain === "«Antes de que» siempre pide subjuntivo: salgas. «Sales / saldrás» son señuelos en indicativo.", "subj1 bank order explain is George's");
+assert(subj1Bank.bank[2].prompt === "Construye: “Write to me before you leave.”", "subj1 bank order uses the existing English Construye cue");
+for (const q of subj1Bank.bank) {
+  const row = explainByEs.get(q.explain);
+  assert(row && row.es === q.explain, "bank Why has an ES row");
+  assert(!row.en, "bank Why EN is not invented");
+  assert(explainText(q, "es") === q.explain, "bank Why ES is the authored explain");
+  assert(explainText(q, "en") === q.explain, "missing EN falls back to the Spanish explain, not a raw key");
+}
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;
