@@ -1,6 +1,6 @@
 /**
- * Lesson Check and the lime Continue share Btn with the paywall annual button.
- * Only the lesson labels move to #1F3A1A. The paywall ONE YEAR label stays white.
+ * Lesson Check, the lime Continue, and the paywall ONE YEAR label use #1F3A1A on #58CC02.
+ * Continue free and the fine print stay on their own colors.
  * A wrong answer keeps the red Continue on the white label. Disabled Btn ink stays lockIcon.
  */
 import { readFileSync } from "fs";
@@ -110,15 +110,18 @@ const continueButton = (uiLang) => screen.getByRole("button", { name: uiLang ===
 describe("lesson Check and Continue ink", () => {
   afterEach(() => { cleanup(); localStorage.clear(); });
 
-  it("keeps the lime face and lip, and only the lesson label uses #1F3A1A", () => {
+  it("keeps the lime face and lip, and the lesson and paywall ONE YEAR labels use #1F3A1A", () => {
+    expect(contrastRatio(INK, LIME)).toBeGreaterThanOrEqual(4.5);
     expect(Number(contrastRatio(INK, LIME).toFixed(2))).toBe(5.99);
     expect(appSrc).toContain('const LESSON_LIME_INK = "#1F3A1A"');
     expect(appSrc).toContain("disabled ? D.lockIcon : (ink || CONTINUE_LABEL)");
     expect((appSrc.match(/data-testid="lesson-check" ink=\{LESSON_LIME_INK\}/g) || []).length).toBe(2);
     expect((appSrc.match(/ink=\{status === "wrong" \? CONTINUE_LABEL : LESSON_LIME_INK\}/g) || []).length).toBe(2);
-    const annual = appSrc.slice(appSrc.indexOf('data-testid="soft-paywall-annual"') - 40, appSrc.indexOf('data-testid="soft-paywall-annual"') + 160);
-    expect(annual).not.toContain("LESSON_LIME_INK");
-    expect(annual).not.toContain("ink=");
+    expect((appSrc.match(/data-testid="soft-paywall-annual" ink=\{LESSON_LIME_INK\}/g) || []).length).toBe(1);
+    const annual = appSrc.slice(appSrc.indexOf('data-testid="soft-paywall-annual"'), appSrc.indexOf('data-testid="soft-paywall-annual"') + 160);
+    expect(annual).toContain("ink={LESSON_LIME_INK}");
+    expect(appSrc).not.toContain('data-testid="soft-paywall-monthly" ink=');
+    expect(appSrc).not.toContain('data-testid="soft-paywall-dismiss" ink=');
   });
 
   it.each([
@@ -159,9 +162,9 @@ describe("lesson Check and Continue ink", () => {
   });
 
   it.each([
-    ["light", "es", "Un año"],
-    ["dark", "en", "One year"],
-  ])("paywall ONE YEAR ink stays white in %s %s", async (theme, uiLang, label) => {
+    ["light", "es", "Un año", "Seguir gratis", "#6b6258", "#6b6258"],
+    ["dark", "en", "One year", "Continue free", "#cdbba6", "#a0a4ab"],
+  ])("paywall ONE YEAR ink is #1F3A1A in %s %s", async (theme, uiLang, label, freeLabel, freeInk, fineInk) => {
     cleanup();
     localStorage.clear();
     mockBrowser();
@@ -180,8 +183,18 @@ describe("lesson Check and Continue ink", () => {
     expect(annual.textContent).toBe(label);
     expect(annual.disabled).toBe(false);
     expect(norm(annual.style.background)).toBe(LIME);
-    expect(norm(annual.style.color)).toBe(WHITE);
+    expect(norm(annual.style.color)).toBe(INK);
     expect(norm(annual.style.borderBottom)).toBe(LIP);
-    expect(norm(annual.style.color)).not.toBe(INK);
+    expect(contrastRatio(norm(annual.style.color), LIME)).toBeGreaterThanOrEqual(4.5);
+
+    const free = screen.getByTestId("soft-paywall-dismiss");
+    expect(free.textContent).toBe(freeLabel);
+    expect(norm(free.style.color)).toBe(freeInk);
+    expect(norm(free.style.color)).not.toBe(INK);
+    expect(free.style.background).toBe("none");
+
+    const fine = screen.getByTestId("soft-paywall-disclosure");
+    expect(norm(fine.style.color)).toBe(fineInk);
+    expect(norm(fine.style.color)).not.toBe(INK);
   });
 });

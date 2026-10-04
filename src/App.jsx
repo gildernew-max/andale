@@ -4806,7 +4806,7 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
 let btnTheme = "light";
 const BtnThemeContext = createContext("light");
 
-/** Lesson Check / lime Continue label. Other filled buttons, including the paywall, stay on CONTINUE_LABEL. */
+/** #1F3A1A on lime #58CC02. Lesson Check, lime Continue, and the paywall ONE YEAR button. Other filled buttons stay on CONTINUE_LABEL. */
 const LESSON_LIME_INK = "#1F3A1A";
 
 const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, theme: themeProp, ink, ...rest }) => {
@@ -9783,7 +9783,7 @@ export default function App() {
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
             <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
-              <Btn data-testid="soft-paywall-annual" onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
+              <Btn data-testid="soft-paywall-annual" ink={LESSON_LIME_INK} onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
               <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
               <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, ...(theme === "dark" ? { color: "#F6EFE4", border: "2px solid #4A5160", borderBottom: "4px solid #4A5160" } : {}) }}>{L.paywallMonthly}</Btn>
               <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
