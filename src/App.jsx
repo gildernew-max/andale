@@ -55,7 +55,7 @@ import {
   sobremesaTipsLabel,
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
-import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
@@ -4263,7 +4263,7 @@ const UI = {
     goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina hecha", workoutToday: "Rutina de hoy", dailyWorkout: "Rutina diaria",
     workoutDesc: "5 retos: escucha, trampa gramatical, mexicanismo, repaso y lectura.", play: "Jugar", repeat: "Repetir",
     sectionSkills: "habilidades + cofre", skip: "SALTAR", start: "EMPIEZA", claimed: "Reclamado", chest: "Cofre", openMe: "¡Ábreme!",
-    storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
+    storyPrefix: "Cuento", nextStory: "Siguiente cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
     missionsTitle: "Misiones", missionsDesc: "Situaciones reales con mezcla de gramática, oído y tono.", enter: "Entrar",
     dialogueDuel: "DUELO", best: "mejor marca", duel: "Duelo",
     library: "Biblioteca", storiesClaimed: "cuentos reclamados · lectura sin vidas", paragraphs: "párrafos · toca palabras · escucha por párrafo",
@@ -4354,7 +4354,7 @@ const UI = {
     goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Routine done", workoutToday: "Today's routine", dailyWorkout: "Daily routine",
     workoutDesc: "5 challenges: listening, grammar trap, Mexicanism, review, and reading.", play: "Play", repeat: "Repeat",
     sectionSkills: "skills + chest", skip: "SKIP", start: "START", claimed: "Claimed", chest: "Chest", openMe: "Open me!",
-    storyPrefix: "Story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
+    storyPrefix: "Story", nextStory: "Next story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
     missionsTitle: "Challenges", missionsDesc: "Real situations mixing grammar, listening, and tone.", enter: "Enter",
     dialogueDuel: "DIALOGUE DUEL", best: "best score", duel: "Duel",
     library: "Library", storiesClaimed: "stories claimed · reading costs no lives", paragraphs: "paragraphs · tap words · listen by paragraph",
@@ -7251,6 +7251,7 @@ export default function App() {
   const todaySceneDone = !!prog.missions?.[`scene-${todayKey}`];
   const dailyDone = !!prog.missions?.[`daily-${todayKey}`];
   const storyCount = STORIES.filter((st) => prog.stories?.[st.id]).length;
+  const surfacedLectura = nextOffPathStory(STORIES, prog.stories, SECTIONS.length);
   const flashcards = Object.values(prog.flashcards || {}).sort((a, b) => (a.due || 0) - (b.due || 0));
   const dueFlashcards = flashcards.filter((c) => (c.due || 0) <= Date.now());
   const flashDeck = flashRun?.deck || [];
@@ -8409,6 +8410,43 @@ export default function App() {
                   </div>
                 )}
                 </div>
+              </div>
+            );
+          })()}
+          {surfacedLectura && (() => {
+            const story = surfacedLectura;
+            const sec = SECTIONS[story.section] || SECTIONS[0];
+            const extra = STORY_EXTRAS[story.id] || {};
+            const meta = STORY_META[story.id] || {};
+            const souvenir = extra.collectible || meta.souvenir;
+            const shelfTitle = uiLang === "en" ? (story.titleEn || story.title) : story.title;
+            const found = (prog.storyFinds?.[story.id] || []).length;
+            const total = extra.keyWords?.length || 0;
+            return (
+              <div data-testid="lectura-next" style={{ margin: "8px 0 12px", maxWidth: "100%" }}>
+                <button
+                  type="button"
+                  data-testid="lectura-next-story"
+                  data-story-id={story.id}
+                  data-locked="false"
+                  onClick={() => openStory(story)}
+                  className="choice-card"
+                  aria-label={shelfTitle}
+                  style={{ display: "block", width: "100%", maxWidth: "100%", boxSizing: "border-box", textAlign: "left", padding: 15, cursor: "pointer", fontFamily: "inherit", background: theme === "dark" ? D.card : "#fff", borderColor: D.line, borderBottomColor: D.line }}
+                >
+                  <div style={{ display: "flex", gap: 13, alignItems: "center", minWidth: 0 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 15, background: sec.color, borderBottom: `5px solid ${sec.dark}`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <IcBook size={28} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-testid="lectura-next-eyebrow" style={{ fontSize: 11.5, fontWeight: 900, color: D.sub, lineHeight: 1.2, marginBottom: 2, overflowWrap: "break-word" }}>{L.nextStory}</div>
+                      <div style={{ fontWeight: 900, fontSize: 18, color: D.ink, overflowWrap: "break-word" }}>{shelfTitle}</div>
+                      <div style={{ fontSize: 13, color: D.sub, fontWeight: 800, overflowWrap: "break-word" }}>{meta.place ? `${meta.place} · ` : ""}{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
+                      <div style={{ fontSize: 12, color: theme === "dark" ? D.sub : limeText(sec.color, D), fontWeight: 900, marginTop: 4, overflowWrap: "break-word" }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
+                      {souvenir && <div style={{ fontSize: 11.5, color: D.sub, fontWeight: 900, marginTop: 4, overflowWrap: "break-word" }}>{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
+                    </div>
+                  </div>
+                </button>
               </div>
             );
           })()}
