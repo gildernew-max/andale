@@ -194,6 +194,17 @@ export const PRACTICE_EXPLAIN = [
   { es: "Saliéramos (subjuntivo) + llegaríamos (condicional). «Saldríamos / llegaremos» son señuelos: «si» no lleva condicional ni futuro.", en: "Saliéramos (subjunctive) + llegaríamos (conditional). «Saldríamos / llegaremos» are decoys: «si» doesn’t take the conditional or the future." },
   { es: "«Quisiera» + infinitivo es la forma cortés de pedir. «Quise / querré» son señuelos: pasado y futuro.", en: "«Quisiera» + infinitive is the polite way to ask. «Quise / querré» are decoys: past and future." },
   { es: "Lo irreal cambia los dos verbos: llueve → lloviera, vamos → iríamos.", en: "The unreal version changes both verbs: llueve → lloviera, vamos → iríamos." },
+  { es: "La edad en el pasado es una descripción → imperfecto: tenía. «Tuve» no se usa con la edad; el evento sería «cumplí veinte años».", en: "Age in the past is a description → imperfect: tenía. «Tuve» isn't used for age; the event would be «cumplí veinte años»." },
+  { es: "«Mientras» presenta una acción en curso, de fondo: preparaba, igual que ponía. «Preparó» sonaría a acción terminada y choca con «ponía».", en: "«Mientras» frames an action in progress, as background: preparaba, matching ponía. «Preparó» would sound completed and clashes with ponía." },
+  { es: "«Conocer» en pretérito = conocerse por primera vez: conocieron; el imperfecto (conocían) diría que ya se conocían.", en: "«Conocer» in the preterite = to meet for the first time: conocieron; the imperfect (conocían) would say they already knew each other." },
+  { es: "«Poder» en pretérito = lograrlo: pude; «podía» solo expresa capacidad, no que lo lograste.", en: "«Poder» in the preterite = to manage to: pude; «podía» only expresses ability, not success." },
+  { es: "Trampa: «de niña» suena a imperfecto, pero «una vez» marca un solo evento → pretérito: llevó. Con «todos los veranos» sí iría «llevaba».", en: "Trap: «de niña» sounds imperfect, but «una vez» marks a single event → preterite: llevó. With «todos los veranos» it would be «llevaba»." },
+  { es: "«Ya» marca un estado que existía antes de ver → imperfecto: estaba.", en: "«Ya» marks a state already in place when the seeing happened → imperfect: estaba." },
+  { es: "Evento terminado con «ayer» → pretérito; venir cambia la raíz: vinieron.", en: "A finished event with «ayer» → preterite; venir changes its stem: vinieron." },
+  { es: "Hábito del pasado («antes», «todos los domingos») → imperfecto; ver es irregular: veía.", en: "A past habit («antes», «todos los domingos») → imperfect; ver is irregular: veía." },
+  { es: "«Anoche» + un evento puntual → pretérito: me dormí. «Dormía / duermo» son señuelos: imperfecto y presente.", en: "«Anoche» + a one-time event → preterite: me dormí. «Dormía / duermo» are decoys: imperfect and present." },
+  { es: "Un gusto de la infancia es un estado habitual → imperfecto: gustaba. «Gustaban» no concuerda con «el futbol»; «gusta» es presente.", en: "A childhood liking is a habitual state → imperfect: gustaba. «Gustaban» doesn't agree with «el futbol»; «gusta» is present tense." },
+  { es: "Un hábito que ya no existe va en imperfecto: jugamos → jugábamos.", en: "A habit that no longer exists takes the imperfect: jugamos → jugábamos." },
 ];
 
 const EXPLAIN_BY_ES = new Map(PRACTICE_EXPLAIN.map((row) => [row.es, row]));

@@ -28,7 +28,7 @@ import { isAudioGatedStep, LISTEN_SKIP, LISTEN_SKIP_HINT, listenSkipHint, listen
 import { WAITLIST_CTA, WAITLIST_ERROR, WAITLIST_PLACEHOLDER, WAITLIST_PRIVACY, WAITLIST_PRIVACY_URL, WAITLIST_PROMPT, WAITLIST_SUCCESS, waitlistCta, waitlistError, waitlistPlaceholder, waitlistPrivacy, waitlistPrompt, waitlistSuccess } from "./waitlist.js";
 import { FIRST_WIN_MINUTES, splashPromiseLine } from "./splashCopy.js";
 import { DOCTORA_FULL_BEAT_CAP, FIRST_DOCTORA_BEAT_CAP, FIRST_DOCTORA_KEEP_NATURALS, trimDoctoraBeats } from "./doctoraWin.js";
-import { gradeListedPhrase } from "./wordOrder.js";
+import { gradeListedPhrase, isIntrinsicOrderCapital, orderTileLabel, stripPhrase } from "./wordOrder.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -2101,6 +2101,206 @@ siclausesBank.bank.forEach((q, i) => {
     if (seAt >= 0) assert(seAt > 0, `siclauses bank ${i} -se form stays an accepted answer but not first`);
   }
 });
+const pretBank = UNITS.find((u) => u.id === "pret");
+assert(pretBank.questions.length === 11, "pret authored questions stay 11");
+assert(pretBank.questions[0].prompt === "Cuando era niño, ___ a Querétaro cada verano.", "pret question order is unchanged");
+assert(Array.isArray(pretBank.bank) && pretBank.bank.length === 11, "pret replay bank is 11 questions");
+assert(pretBank.bank.map((q) => q.type).join(",") === "mc,mc,mc,mc,mc,type,type,type,order,order,transform", "pret bank types are mc/type/order/transform");
+assert(pretBank.bank[0].type === "mc" && pretBank.bank[0].prompt === "Cuando me mudé a Monterrey, yo ___ veinte años." && pretBank.bank[0].answer === "tenía", "pret bank MC is George's");
+assert(pretBank.bank[0].choices.join("|") === "tuve|tenía|he tenido|tendría", "pret bank MC choices");
+assert(pretBank.bank[0].explain === "La edad en el pasado es una descripción → imperfecto: tenía. «Tuve» no se usa con la edad; el evento sería «cumplí veinte años».", "pret bank MC explain is George's");
+assert(pretBank.bank[5].type === "type" && pretBank.bank[5].prompt === "Cuando lo vi, Memo ya ___ muy nervioso." && pretBank.bank[5].note === "(estar)", "pret bank type is George's");
+assert(pretBank.bank[5].answers.join("|") === "estaba" && pretBank.bank[5].explain === "«Ya» marca un estado que existía antes de ver → imperfecto: estaba.", "pret bank type answer and explain");
+assert(pretBank.bank[8].type === "order" && pretBank.bank[8].answer === "Anoche me dormí a las diez", "pret bank order answer");
+assert(pretBank.bank[8].words.join("|") === "Anoche|me|dormí|a|las|diez|dormía|duermo", "pret bank order words include the decoys");
+assert(pretBank.bank[8].explain === "«Anoche» + un evento puntual → pretérito: me dormí. «Dormía / duermo» son señuelos: imperfecto y presente.", "pret bank order explain is George's");
+assert(pretBank.bank[8].prompt === "Construye: “Last night I fell asleep at ten.”", "pret bank order uses the existing English Construye cue");
+const pretNew = [
+  ["mc", "Cuando me mudé a Monterrey, yo ___ veinte años.", "tenía"],
+  ["mc", "Mientras mi mamá ___ el desayuno, yo ponía la mesa.", "preparaba"],
+  ["mc", "Mis papás se ___ en una fiesta en 1985.", "conocieron"],
+  ["mc", "Estuve diez minutos tratando de abrir el frasco y por fin ___ abrirlo.", "pude"],
+  ["mc", "De niña, una vez mi papá me ___ a pescar.", "llevó"],
+  ["type", "Cuando lo vi, Memo ya ___ muy nervioso.", "estaba"],
+  ["type", "Ayer mis tíos ___ a comer a la casa.", "vinieron"],
+  ["type", "Antes ___ a mis primos todos los domingos, pero ya casi no nos vemos.", "veía|veia"],
+  ["order", "Construye: “Last night I fell asleep at ten.”", "Anoche me dormí a las diez"],
+  ["order", "Construye: “As a kid, I liked soccer.”", "De niño me gustaba el futbol"],
+];
+pretNew.forEach(([type, prompt, answer], n) => {
+  const q = pretBank.bank[n];
+  const got = q.type === "type" ? q.answers.join("|") : q.answer;
+  assert(q.type === type && q.prompt === prompt && got === answer, `pret bank item ${n + 1} is George's`);
+});
+assert(pretBank.bank[4].note === "¡Ojo!", "pret bank trap keeps the ¡Ojo! note");
+assert(pretBank.bank[9].words.join("|") === "De|niño|me|gustaba|el|futbol|gustaban|gusta", "pret bank soccer order words include the decoys");
+assert(pretBank.bank[9].answer === "De niño me gustaba el futbol", "pret bank soccer order answer");
+const pretTransformCore = [
+  "Antes los sábados jugábamos futbol en el parque",
+  "Antes jugábamos futbol en el parque los sábados",
+  "Antes jugábamos futbol los sábados en el parque",
+  "Antes los sábados en el parque jugábamos futbol",
+  "Antes los sábados jugábamos al futbol en el parque",
+  "Antes jugábamos al futbol en el parque los sábados",
+  "Antes jugábamos al futbol los sábados en el parque",
+  "Antes los sábados en el parque jugábamos al futbol",
+];
+const pretTransformNosotros = pretTransformCore.map((s) => s.replace(/^Antes /, "Antes nosotros "));
+assert(pretBank.bank[10].type === "transform" && pretBank.bank[10].prompt === "Transforma la oración", "pret bank transform prompt");
+assert(pretBank.bank[10].base === "Los sábados jugamos futbol en el parque." && pretBank.bank[10].instruction === "Cuéntalo como hábito del pasado (empieza con «Antes…»)", "pret bank transform base and instruction");
+assert(pretBank.bank[10].answers.join("|") === pretTransformCore.concat(pretTransformNosotros).join("|"), "pret bank transform lists the 8 orders plus nosotros after Antes");
+const pretPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((q, i) => {
+      if (u.id === "pret" && kind === "bank") return;
+      if (q.type === "transform") {
+        const base = q.base || q.source;
+        if (base) pretPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (q.prompt) pretPromptOwners.set(q.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+pretBank.bank.forEach((q, i) => {
+  if (q.type === "transform") {
+    assert(!pretPromptOwners.has(q.base), `pret bank ${i} transform base repeats a prompt`);
+    assert(!pretPromptOwners.has(`base:${q.base}`), `pret bank ${i} transform base repeats ${pretPromptOwners.get(`base:${q.base}`) || "another item"}`);
+    return;
+  }
+  assert(!pretPromptOwners.has(q.prompt), `pret bank ${i} prompt duplicates ${pretPromptOwners.get(q.prompt) || "another item"}`);
+  pretPromptOwners.set(q.prompt, `pret bank ${i}`);
+});
+const pretBankEn = [
+  "Age in the past is a description → imperfect: tenía. «Tuve» isn't used for age; the event would be «cumplí veinte años».",
+  "«Mientras» frames an action in progress, as background: preparaba, matching ponía. «Preparó» would sound completed and clashes with ponía.",
+  "«Conocer» in the preterite = to meet for the first time: conocieron; the imperfect (conocían) would say they already knew each other.",
+  "«Poder» in the preterite = to manage to: pude; «podía» only expresses ability, not success.",
+  "Trap: «de niña» sounds imperfect, but «una vez» marks a single event → preterite: llevó. With «todos los veranos» it would be «llevaba».",
+  "«Ya» marks a state already in place when the seeing happened → imperfect: estaba.",
+  "A finished event with «ayer» → preterite; venir changes its stem: vinieron.",
+  "A past habit («antes», «todos los domingos») → imperfect; ver is irregular: veía.",
+  "«Anoche» + a one-time event → preterite: me dormí. «Dormía / duermo» are decoys: imperfect and present.",
+  "A childhood liking is a habitual state → imperfect: gustaba. «Gustaban» doesn't agree with «el futbol»; «gusta» is present tense.",
+  "A habit that no longer exists takes the imperfect: jugamos → jugábamos.",
+];
+const builtFromOrderTiles = (words, phrase) => {
+  const pool = words.map((w) => ({ w, used: false }));
+  const parts = [];
+  for (const tok of String(phrase).trim().split(/\s+/)) {
+    const hit = pool.find((t) => !t.used && stripPhrase(t.w) === stripPhrase(tok));
+    if (!hit) return null;
+    hit.used = true;
+    parts.push(hit.w);
+  }
+  return parts.join(" ");
+};
+pretBank.bank.forEach((q, i) => {
+  const row = explainByEs.get(q.explain);
+  assert(row && row.es === q.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === pretBankEn[i], `pret bank ${i} EN is George's`);
+  assert(explainText(q, "es") === q.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(q, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(q);
+  assertPreppedQuestion(prepped, `pret bank ${i}`);
+  if (q.type === "mc") {
+    assert(q.choices.length === 4 && new Set(q.choices).size === 4 && q.choices.includes(q.answer), `pret bank ${i} mc choices include the answer`);
+  }
+  if (q.type === "order") {
+    assert(prepped.words.join("|") === q.words.join("|"), `pret bank ${i} order tiles stay authored`);
+    assert(prepped.answer === q.answer, `pret bank ${i} order answer stays authored`);
+    assert(Array.isArray(q.answers) && q.answers[0] === q.answer, `pret bank ${i} answers start with the authored answer`);
+    assert(q.words.every((w) => !String(w).includes(",")), `pret bank ${i} tiles carry no comma`);
+    const answerTokens = stripPhrase(q.answer).split(" ").filter(Boolean);
+    const tilePool = q.words.map((w) => stripPhrase(w));
+    answerTokens.forEach((tok) => {
+      const at = tilePool.indexOf(tok);
+      assert(at >= 0, `pret bank ${i} answer word ${tok} is a tile`);
+      tilePool.splice(at, 1);
+    });
+    assert(builtFromOrderTiles(q.words, q.answer) === q.answer, `pret bank ${i} primary order is the authored tile text`);
+    q.answers.forEach((phrase) => {
+      const built = builtFromOrderTiles(q.words, phrase);
+      assert(built, `pret bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(built, q).status !== "wrong", `pret bank ${i} tile-built order is accepted: ${built}`);
+    });
+  }
+  if (q.type === "type" || q.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === q.answers.join("|"), `pret bank ${i} answers stay authored`);
+  }
+});
+const pretSleep = pretBank.bank[8];
+const pretSoccer = pretBank.bank[9];
+const pretHabit = pretBank.bank[10];
+assert(pretSleep.answers.join("|") === ["Anoche me dormí a las diez", "Me dormí a las diez anoche", "Anoche a las diez me dormí", "Me dormí anoche a las diez"].join("|"), "pret sleep order lists the accepted alternates");
+assert(pretSoccer.answers.join("|") === ["De niño me gustaba el futbol", "Me gustaba el futbol de niño", "El futbol me gustaba de niño", "De niño el futbol me gustaba"].join("|"), "pret soccer order lists the accepted alternates");
+assert(!isIntrinsicOrderCapital("Anoche", pretSleep.answer), "Anoche is sentence case, not an always-capital tile");
+assert(!isIntrinsicOrderCapital("De", pretSoccer.answer), "De is sentence case, not an always-capital tile");
+assert(orderTileLabel("Anoche", { answer: pretSleep.answer }) === "anoche", "Anoche is lowercase in the bank");
+assert(orderTileLabel("Anoche", { answer: pretSleep.answer, placedIndex: 0 }) === "Anoche", "Anoche capitalizes when it is the first placed tile");
+assert(orderTileLabel("me", { answer: pretSleep.answer, placedIndex: 0 }) === "Me", "a lowercase tile placed first still shows a capital");
+assert(orderTileLabel("De", { answer: pretSoccer.answer }) === "de", "De is lowercase in the bank");
+assert(orderTileLabel("De", { answer: pretSoccer.answer, placedIndex: 0 }) === "De", "De capitalizes when it is the first placed tile");
+assert(orderTileLabel("De", { answer: pretSoccer.answer, placedIndex: 4 }) === "de", "De is lowercase once it is not first");
+assert(orderTileLabel("niño", { answer: pretSoccer.answer, placedIndex: 1 }) === "niño", "niño tile has no comma");
+assert(pretSoccer.words.includes("niño") && !pretSoccer.words.includes("niño,"), "a comma after niño is not a tile");
+assert(stripPhrase("Anoche, me dormí a las diez") === stripPhrase("Anoche me dormí a las diez"), "stripPhrase drops the comma after Anoche");
+assert(stripPhrase("Me dormí anoche, a las diez") === stripPhrase("Me dormí anoche a las diez"), "stripPhrase drops a comma after Anoche mid-sentence");
+assert(stripPhrase("De niño, me gustaba el fútbol") === stripPhrase("De niño me gustaba el futbol"), "stripPhrase drops the comma after niño and the accent on fútbol");
+assert(stripPhrase("Me gustaba el fútbol de niño") === stripPhrase("Me gustaba el futbol de niño"), "stripPhrase equates fútbol and futbol");
+for (const phrase of [
+  "Anoche, me dormí a las diez",
+  "Me dormí anoche, a las diez",
+  "Anoche, me dormí a las diez.",
+  "De niño, me gustaba el futbol",
+  "De niño, me gustaba el fútbol",
+  "Me gustaba el fútbol de niño",
+  "El fútbol me gustaba de niño",
+  "De niño el fútbol me gustaba",
+  "Me gustaba el futbol de niño,",
+]) {
+  assert(gradeListedPhrase(phrase, phrase.startsWith("Anoche") || phrase.startsWith("Me dormí") ? pretSleep : pretSoccer).status !== "wrong", `comma or accent still accepted: ${phrase}`);
+}
+assert(builtFromOrderTiles(pretSoccer.words, "Me gustaba el futbol de niño") === "me gustaba el futbol De niño", "the De tile stays capital in the built string");
+assert(gradeListedPhrase("me gustaba el futbol De niño", pretSoccer).status !== "wrong", "a capital De tile off the first slot still grades");
+assert(builtFromOrderTiles(pretSleep.words, "Me dormí a las diez anoche") === "me dormí a las diez Anoche", "the Anoche tile stays capital in the built string");
+assert(gradeListedPhrase("me dormí a las diez Anoche", pretSleep).status !== "wrong", "a capital Anoche tile off the first slot still grades");
+for (const phrase of [
+  "Anoche dormí a las diez",
+  "Dormí a las diez anoche",
+  "A las diez dormí anoche",
+  "Me dormía a las diez anoche",
+]) {
+  assert(gradeListedPhrase(phrase, pretSleep).status === "wrong", `sleep order without me or with a decoy is rejected: ${phrase}`);
+}
+for (const phrase of [
+  "Me gustaba de niño el futbol",
+  "Me gustaba de niño el fútbol",
+  "De niño gustaba el futbol",
+  "El futbol gustaba de niño",
+  "Gustaba el futbol de niño",
+  "De niño me gustaban el futbol",
+]) {
+  assert(gradeListedPhrase(phrase, pretSoccer).status === "wrong", `soccer order is rejected: ${phrase}`);
+}
+pretHabit.answers.forEach((phrase) => {
+  assert(gradeListedPhrase(phrase, pretHabit).status !== "wrong", `habit order accepted: ${phrase}`);
+});
+assert(gradeListedPhrase("Antes, los sábados jugábamos fútbol en el parque", pretHabit).status !== "wrong", "habit primary still accepts a comma and fútbol");
+assert(gradeListedPhrase("Antes, nosotros los sábados jugábamos futbol en el parque", pretHabit).status !== "wrong", "nosotros after Antes still accepts a comma");
+for (const phrase of [
+  "Antes jugábamos los sábados futbol en el parque",
+  "Antes nosotros jugábamos los sábados futbol en el parque",
+  "Antes solíamos jugar futbol en el parque",
+  "Antes los sábados solíamos jugar futbol en el parque",
+  "Antes nosotros solíamos jugar al futbol en el parque los sábados",
+  "Antes solíamos jugar al futbol los sábados en el parque",
+]) {
+  assert(gradeListedPhrase(phrase, pretHabit).status === "wrong", `habit order is rejected: ${phrase}`);
+}
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;
