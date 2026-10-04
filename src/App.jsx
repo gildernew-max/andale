@@ -4,6 +4,7 @@ import { playSound as playGameSound } from "./playSound.js";
 import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
 import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./schema.js";
 import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuestion.js";
+import { drawLessonIndexes, questionByIndex } from "./replayBank.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
@@ -55,7 +56,7 @@ import {
   sobremesaTipsLabel,
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
-import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
@@ -216,6 +217,7 @@ import {
   startCrosswordRun,
   typeCrosswordLetter,
 } from "./crossword.js";
+import { ANDALE_BUILD } from "./buildId.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
@@ -379,6 +381,11 @@ const UNITS = [
       { type: "order", prompt: "Construye: “I doubt that it’s true.”", words: ["Dudo", "que", "sea", "verdad", "es", "será"], answer: "Dudo que sea verdad", explain: "«Dudar que» → subjuntivo: sea. «Es / será» son señuelos en indicativo." },
       { type: "transform", base: "Creo que viene.", instruction: "Agrega duda (empieza con «No creo…»)", prompt: "Transforma la oración", answers: ["No creo que venga"], explain: "Negar la creencia obliga al subjuntivo: viene → venga." },
       { type: "listen", text: "Es importante que llegues temprano a la reunión.", answers: ["Es importante que llegues temprano a la reunión"], explain: "Expresión impersonal de valoración + que → subjuntivo: llegues." },
+    ],
+    bank: [
+      { type: "mc", prompt: "Me da gusto que ya te ___ mejor.", note: "", choices: ["sientes", "sientas", "sentirás", "sentías"], answer: "sientas", explain: "«Me da gusto que» (emoción) dispara el subjuntivo. Tú → sientas." },
+      { type: "type", prompt: "Te presto mi coche para que ___ al aeropuerto.", note: "(ir, tú)", answers: ["vayas"], explain: "«Para que» (finalidad) siempre pide subjuntivo: vayas." },
+      { type: "order", prompt: "Construye: “Write to me before you leave.”", words: ["Escríbeme", "antes", "de", "que", "salgas", "sales", "saldrás"], answer: "Escríbeme antes de que salgas", explain: "«Antes de que» siempre pide subjuntivo: salgas. «Sales / saldrás» son señuelos en indicativo." },
     ],
   },
   {
@@ -4257,7 +4264,7 @@ const UI = {
     goal: "Meta", rayo: "Rayo", on: "ON", off: "OFF", workoutDone: "Rutina hecha", workoutToday: "Rutina de hoy", dailyWorkout: "Rutina diaria",
     workoutDesc: "5 retos: escucha, trampa gramatical, mexicanismo, repaso y lectura.", play: "Jugar", repeat: "Repetir",
     sectionSkills: "habilidades + cofre", skip: "SALTAR", start: "EMPIEZA", claimed: "Reclamado", chest: "Cofre", openMe: "¡Ábreme!",
-    storyPrefix: "Cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
+    storyPrefix: "Cuento", nextStory: "Siguiente cuento", shortcuts: "Luna, Don Rafa, Valeria y Diego te acompañan. Atajos: 1–4 · Enter",
     missionsTitle: "Misiones", missionsDesc: "Situaciones reales con mezcla de gramática, oído y tono.", enter: "Entrar",
     dialogueDuel: "DUELO", best: "mejor marca", duel: "Duelo",
     library: "Biblioteca", storiesClaimed: "cuentos reclamados · lectura sin vidas", paragraphs: "párrafos · toca palabras · escucha por párrafo",
@@ -4348,7 +4355,7 @@ const UI = {
     goal: "Goal", rayo: "Lightning", on: "ON", off: "OFF", workoutDone: "Routine done", workoutToday: "Today's routine", dailyWorkout: "Daily routine",
     workoutDesc: "5 challenges: listening, grammar trap, Mexicanism, review, and reading.", play: "Play", repeat: "Repeat",
     sectionSkills: "skills + chest", skip: "SKIP", start: "START", claimed: "Claimed", chest: "Chest", openMe: "Open me!",
-    storyPrefix: "Story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
+    storyPrefix: "Story", nextStory: "Next story", shortcuts: "Luna, Don Rafa, Valeria, and Diego are with you. Shortcuts: 1–4 · Enter",
     missionsTitle: "Challenges", missionsDesc: "Real situations mixing grammar, listening, and tone.", enter: "Enter",
     dialogueDuel: "DIALOGUE DUEL", best: "best score", duel: "Duel",
     library: "Library", storiesClaimed: "stories claimed · reading costs no lives", paragraphs: "paragraphs · tap words · listen by paragraph",
@@ -4851,6 +4858,32 @@ const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled,
 
 /* ---------------- APP ---------------- */
 
+/** Address already published on public/support.html. The link only opens the mail app. */
+const PROBLEM_REPORT_MAIL = "gildernew@gmail.com";
+
+function problemReportDevice() {
+  try {
+    const ua = typeof navigator === "undefined" ? "" : navigator.userAgent;
+    return typeof ua === "string" ? ua : "";
+  } catch {
+    return "";
+  }
+}
+
+function problemReportMailto(uiLang, theme, tab) {
+  const en = uiLang === "en";
+  const lang = en ? "en" : "es";
+  const mode = theme === "dark" ? (en ? "dark" : "oscuro") : (en ? "light" : "claro");
+  const screen = tab;
+  const device = problemReportDevice();
+  const deviceTail = device ? ` · device ${device}` : "";
+  const subject = en ? "Ándale: problem report" : "Ándale: reporte de problema";
+  const body = en
+    ? `What were you doing?\n\nWhat did you expect to happen?\n\nWhat happened?\n\nIf you can, attach a screenshot.\n\n—\nDetails to help us (please keep them): version ${ANDALE_BUILD} · language ${lang} · mode ${mode} · screen ${screen}${deviceTail}`
+    : `¿Qué estabas haciendo?\n\n¿Qué esperabas que pasara?\n\n¿Qué pasó?\n\nSi puedes, adjunta una captura de pantalla.\n\n—\nDatos para ayudarnos (por favor no los borres): versión ${ANDALE_BUILD} · idioma ${lang} · modo ${mode} · pantalla ${screen}${deviceTail}`;
+  return `mailto:${PROBLEM_REPORT_MAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function HangmanEmphasis({ text }) {
   return emphasisParts(text).map((part, i) => (
     part.em ? <em key={i}>{part.text}</em> : <span key={i}>{part.text}</span>
@@ -5199,7 +5232,7 @@ export default function App() {
         }
         const src = UNITS.find((x) => x.id === o.u);
         if (!src) return null;
-        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...src.questions[o.i], _u: o.u, _i: o.i };
+        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...questionByIndex(src, o.i), _u: o.u, _i: o.i };
       }).filter(Boolean).map(prepQuestion);
       if (qs.length) {
         beginSession({
@@ -5226,7 +5259,7 @@ export default function App() {
       // Resume a saved session: same question order, same position, same score.
       const qs = snap.order.map((o) => {
         const src = UNITS.find((x) => x.id === o.u);
-        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...src.questions[o.i], _u: o.u, _i: o.i };
+        return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...questionByIndex(src, o.i), _u: o.u, _i: o.i };
       }).map(prepQuestion);
       beginSession({ title: u.title, color: section.color, dark: section.dark, unitId: u.id, review: false, host: hostForUnit(u.id), questions: qs });
       setQi(Math.min(snap.qi || 0, qs.length - 1));
@@ -5240,8 +5273,19 @@ export default function App() {
       beginFirstSession(u, section, { beginner: prog.learnerLevel === "beginner" });
       return;
     }
-    const qs = u.questions.map((q, i) => ({ ...q, _u: u.id, _i: i }));
-    const withMatch = [...shuffle(qs), { type: "match", pairs: u.pairs, _u: u.id, _i: -1 }];
+    const bankCount = Array.isArray(u.bank) ? u.bank.length : 0;
+    const indexes = drawLessonIndexes({
+      questionCount: u.questions.length,
+      bankCount,
+      crowns: prog.done?.[u.id] || 0,
+      previous: bankCount ? prog.served?.[u.id] : [],
+    });
+    const qs = indexes.map((i) => ({ ...questionByIndex(u, i), _u: u.id, _i: i }));
+    const withMatch = [...qs, { type: "match", pairs: u.pairs, _u: u.id, _i: -1 }];
+    // Remember this run only when a bank exists, inside the andale-v3 record.
+    if (bankCount > 0) {
+      save((prev) => ({ ...prev, served: { ...(prev.served || {}), [u.id]: indexes } }));
+    }
     beginSession({ title: u.title, color: section.color, dark: section.dark, unitId: u.id, review: false, host: hostForUnit(u.id), questions: withMatch.map(prepQuestion) });
   };
 
@@ -5309,7 +5353,7 @@ export default function App() {
     };
     pool.slice(0, count).forEach(([k]) => {
       const [uid, iStr] = k.split("|"); const i = parseInt(iStr, 10);
-      const u = UNITS.find((x) => x.id === uid); const qq = u?.questions[i];
+      const u = UNITS.find((x) => x.id === uid); const qq = questionByIndex(u, i);
       addItem(uid, i, qq, "Repaso");
     });
     shuffle(focus.units).forEach((uid) => {
@@ -5365,7 +5409,7 @@ export default function App() {
       .slice(0, 12)
       .map(([k]) => {
         const [uid, iStr] = k.split("|"); const i = parseInt(iStr, 10);
-        const u = UNITS.find((x) => x.id === uid); const qq = u?.questions[i];
+        const u = UNITS.find((x) => x.id === uid); const qq = questionByIndex(u, i);
         return qq ? prepQuestion({ ...qq, _u: uid, _i: i }) : null;
       })
       .filter(Boolean);
@@ -5405,7 +5449,7 @@ export default function App() {
     const reviewQ = due ? (() => {
       const [uid, iStr] = due[0].split("|");
       const i = parseInt(iStr, 10);
-      const qq = getUnit(uid)?.questions[i];
+      const qq = questionByIndex(getUnit(uid), i);
       return qq ? { ...qq, _u: uid, _i: i, skill: "Repaso" } : null;
     })() : null;
     const story = pickCompletedStory(STORIES, prog.stories);
@@ -7207,6 +7251,7 @@ export default function App() {
   const todaySceneDone = !!prog.missions?.[`scene-${todayKey}`];
   const dailyDone = !!prog.missions?.[`daily-${todayKey}`];
   const storyCount = STORIES.filter((st) => prog.stories?.[st.id]).length;
+  const surfacedLectura = nextOffPathStory(STORIES, prog.stories, SECTIONS.length);
   const flashcards = Object.values(prog.flashcards || {}).sort((a, b) => (a.due || 0) - (b.due || 0));
   const dueFlashcards = flashcards.filter((c) => (c.due || 0) <= Date.now());
   const flashDeck = flashRun?.deck || [];
@@ -8379,6 +8424,43 @@ export default function App() {
               </div>
             );
           })()}
+          {surfacedLectura && (() => {
+            const story = surfacedLectura;
+            const sec = SECTIONS[story.section] || SECTIONS[0];
+            const extra = STORY_EXTRAS[story.id] || {};
+            const meta = STORY_META[story.id] || {};
+            const souvenir = extra.collectible || meta.souvenir;
+            const shelfTitle = uiLang === "en" ? (story.titleEn || story.title) : story.title;
+            const found = (prog.storyFinds?.[story.id] || []).length;
+            const total = extra.keyWords?.length || 0;
+            return (
+              <div data-testid="lectura-next" style={{ margin: "8px 0 12px", maxWidth: "100%" }}>
+                <button
+                  type="button"
+                  data-testid="lectura-next-story"
+                  data-story-id={story.id}
+                  data-locked="false"
+                  onClick={() => openStory(story)}
+                  className="choice-card"
+                  aria-label={shelfTitle}
+                  style={{ display: "block", width: "100%", maxWidth: "100%", boxSizing: "border-box", textAlign: "left", padding: 15, cursor: "pointer", fontFamily: "inherit", background: theme === "dark" ? D.card : "#fff", borderColor: D.line, borderBottomColor: D.line }}
+                >
+                  <div style={{ display: "flex", gap: 13, alignItems: "center", minWidth: 0 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 15, background: sec.color, borderBottom: `5px solid ${sec.dark}`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <IcBook size={28} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-testid="lectura-next-eyebrow" style={{ fontSize: 11.5, fontWeight: 900, color: D.sub, lineHeight: 1.2, marginBottom: 2, overflowWrap: "break-word" }}>{L.nextStory}</div>
+                      <div style={{ fontWeight: 900, fontSize: 18, color: D.ink, overflowWrap: "break-word" }}>{shelfTitle}</div>
+                      <div style={{ fontSize: 13, color: D.sub, fontWeight: 800, overflowWrap: "break-word" }}>{meta.place ? `${meta.place} · ` : ""}{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
+                      <div style={{ fontSize: 12, color: theme === "dark" ? D.sub : limeText(sec.color, D), fontWeight: 900, marginTop: 4, overflowWrap: "break-word" }}>{story.paragraphs.length} {latamNarration ? L.paragraphs : (uiLang === "en" ? "paragraphs · tap words" : "párrafos · toca palabras")} · {found}/{total} {uiLang === "en" ? "word hunt" : "cacería"}</div>
+                      {souvenir && <div style={{ fontSize: 11.5, color: D.sub, fontWeight: 900, marginTop: 4, overflowWrap: "break-word" }}>{uiLang === "en" ? "Souvenir" : "Recuerdo"}: {souvenir[uiLang]}</div>}
+                    </div>
+                  </div>
+                </button>
+              </div>
+            );
+          })()}
           {/* daily goal + Rayo: after first win only — empty 0/40 theater stays off the door */}
           {showDoorMeta && (
           <div data-testid="door-meta" style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0 6px", fontSize: 13, fontWeight: 800, color: D.sub }}>
@@ -9406,9 +9488,10 @@ export default function App() {
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 28, display: "flex", gap: 20, justifyContent: "center" }}>
+          <div data-testid="perfil-footer" style={{ marginTop: 28, display: "flex", flexWrap: "wrap", gap: 20, justifyContent: "center", maxWidth: "100%" }}>
             <a href={`${import.meta.env.BASE_URL}privacy.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Privacidad</a>
             <a href={`${import.meta.env.BASE_URL}support.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Soporte</a>
+            <a data-testid="report-problem" href={problemReportMailto(uiLang, theme, tab)} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>{uiLang === "en" ? "Report a problem" : "Reportar un problema"}</a>
           </div>
         </div>
       )}

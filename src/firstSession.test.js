@@ -55,6 +55,8 @@ const subj1 = units.find((u) => u.id === "subj1");
 
 assert(FIRST_SESSION_COUNT === 5, "first session is 5 exercises");
 assert(FIRST_SESSION_COUNT >= 4 && FIRST_SESSION_COUNT <= 6, "first session stays inside 4–6");
+assert(subj1.questions.length === 11, "subj1 questions stay 11; the replay bank is separate");
+assert(Array.isArray(subj1.bank) && subj1.bank.length === 3, "subj1 replay bank is 3 extra questions");
 assert(subj1.questions.length + 1 === 12, "Sendero subj1 is still the 12-challenge unit");
 
 const questions = firstSessionQuestions(units);
