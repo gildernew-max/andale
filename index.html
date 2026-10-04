@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ándale</title>
     <meta name="description" content="Español mexicano real para quien ya pasó lo básico." />
-    <meta name="theme-color" content="#5C7356" />
+    <meta name="theme-color" content="#F6EFE4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#15171C" media="(prefers-color-scheme: dark)" />
     <meta property="og:title" content="Ándale" />
     <meta property="og:description" content="Español mexicano real para quien ya pasó lo básico." />
     <meta property="og:image" content="https://gildernew-max.github.io/andale/mascot/cenzontle.png" />
@@ -16,7 +17,7 @@
     <link rel="icon" href="%BASE_URL%favicon.ico" sizes="any" />
     <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
-    <style>html,body,#root{margin:0;padding:0;width:100%;max-width:100%}html,body{background:#F6EFE4}</style>
+    <style>html,body,#root{margin:0;padding:0;width:100%;max-width:100%}html,body{background:#F6EFE4}@media (prefers-color-scheme: dark){html,body{background:#15171C}}</style>
     <script>
       (function () {
         var light = "#F6EFE4";
@@ -42,6 +43,17 @@
         var paint = document.createElement("style");
         paint.textContent = "html,body{background:" + bg + "}";
         document.head.appendChild(paint);
+        var metas = document.querySelectorAll('meta[name="theme-color"]');
+        if (!metas.length) {
+          var created = document.createElement("meta");
+          created.setAttribute("name", "theme-color");
+          document.head.appendChild(created);
+          metas = document.querySelectorAll('meta[name="theme-color"]');
+        }
+        for (var i = 0; i < metas.length; i++) {
+          metas[i].setAttribute("content", bg);
+          metas[i].removeAttribute("media");
+        }
       })();
     </script>
   </head>

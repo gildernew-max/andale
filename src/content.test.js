@@ -2585,7 +2585,10 @@ for (let i = 0, off = 6; i < 3; i++, off += 16) {
   pngHeadFacesRight(blob, `favicon.ico#${i}`);
 }
 
-assert(indexHtml.includes('content="#5C7356"'), "theme-color drops Duo lime for lockup sage");
+assert(indexHtml.includes('content="#F6EFE4" media="(prefers-color-scheme: light)"'), "theme-color light is the cream page");
+assert(indexHtml.includes('content="#15171C" media="(prefers-color-scheme: dark)"'), "theme-color dark is the dark page");
+assert(!indexHtml.includes("#58CC02"), "theme-color is not Duo lime");
+assert(!indexHtml.includes('content="#5C7356"'), "browser chrome follows the page, not the sage lockup");
 assert(indexHtml.includes("mascot/cenzontle.png"), "og/twitter image uses the Cenzontle path");
 assert(!indexHtml.includes("mascot/axolotl.png"), "og/twitter no longer point at axolotl.png");
 assert(!appSrc.includes("mascot/axolotl.png"), "LogoMark no longer points at axolotl.png");

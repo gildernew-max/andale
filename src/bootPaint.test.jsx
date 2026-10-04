@@ -47,6 +47,7 @@ const paint = (prepare) => {
     runScripts: "outside-only",
   });
   prepare(dom.window);
+  installThemeMetas(dom.window);
   let escaped = null;
   try {
     vm.runInContext(script, dom.getInternalVMContext());
@@ -55,12 +56,37 @@ const paint = (prepare) => {
   }
   const doc = dom.window.document;
   const injected = [...doc.querySelectorAll("style")].map((node) => node.textContent).join("\n");
+  const metas = [...doc.querySelectorAll('meta[name="theme-color"]')];
   return {
     escaped,
     htmlBg: norm(doc.documentElement.style.background),
     bodyBg: doc.body ? norm(doc.body.style.background) : "",
     injected,
+    themeColors: metas.map((node) => node.getAttribute("content")),
+    themeMedia: metas.map((node) => node.getAttribute("media")),
   };
+};
+
+const installThemeMetas = (window) => {
+  const add = (content, media) => {
+    const meta = window.document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    meta.setAttribute("content", content);
+    meta.setAttribute("media", media);
+    window.document.head.appendChild(meta);
+  };
+  add(CREAM, "(prefers-color-scheme: light)");
+  add(DARK, "(prefers-color-scheme: dark)");
+};
+
+const expectResolved = (result, color) => {
+  expect(result.escaped).toBeNull();
+  expect(result.htmlBg).toBe(norm(color));
+  expect(result.bodyBg).toBe(norm(color));
+  expect(result.injected).toContain(`html,body{background:${color}}`);
+  expect(result.themeColors.length).toBeGreaterThan(0);
+  for (const value of result.themeColors) expect(value).toBe(color);
+  for (const media of result.themeMedia) expect(media).toBeNull();
 };
 
 describe("boot paint", () => {
@@ -71,8 +97,15 @@ describe("boot paint", () => {
     expect(script).toContain(CREAM);
     expect(script).toContain(DARK);
     expect(indexHtml).toContain(`html,body{background:${CREAM}}`);
+    expect(indexHtml).toContain(`@media (prefers-color-scheme: dark){html,body{background:${DARK}}}`);
     expect(indexHtml).toContain("html,body,#root{margin:0;padding:0;width:100%;max-width:100%}");
-    expect(indexHtml).toContain('<meta name="theme-color" content="#5C7356" />');
+    expect(indexHtml).toContain(`<meta name="theme-color" content="${CREAM}" media="(prefers-color-scheme: light)" />`);
+    expect(indexHtml).toContain(`<meta name="theme-color" content="${DARK}" media="(prefers-color-scheme: dark)" />`);
+    expect(indexHtml).not.toContain('content="#5C7356"');
+    const styleAt = indexHtml.indexOf("<style>");
+    const scriptAt = indexHtml.indexOf("<script>");
+    expect(styleAt).toBeGreaterThan(0);
+    expect(styleAt).toBeLessThan(scriptAt);
   });
 
   it("colors match ONBOARDING_PAINT, HUB_CREAM, and D_DARK.bg", () => {
@@ -101,22 +134,14 @@ describe("boot paint", () => {
         welcomed: true,
       }));
     });
-    for (const result of [minimal, progress]) {
-      expect(result.escaped).toBeNull();
-      expect(result.htmlBg).toBe(norm(DARK));
-      expect(result.bodyBg).toBe(norm(DARK));
-      expect(result.injected).toContain(`html,body{background:${DARK}}`);
-    }
+    for (const result of [minimal, progress]) expectResolved(result, DARK);
   });
 
   it("saved theme light paints cream", () => {
     const result = paint((window) => {
       window.localStorage.setItem("andale-v3", JSON.stringify({ theme: "light" }));
     });
-    expect(result.escaped).toBeNull();
-    expect(result.htmlBg).toBe(norm(CREAM));
-    expect(result.bodyBg).toBe(norm(CREAM));
-    expect(result.injected).toContain(`html,body{background:${CREAM}}`);
+    expectResolved(result, CREAM);
   });
 
   const phone = (dark) => (query) => ({
@@ -128,20 +153,14 @@ describe("boot paint", () => {
     const result = paint((window) => {
       window.matchMedia = phone(true);
     });
-    expect(result.escaped).toBeNull();
-    expect(result.htmlBg).toBe(norm(DARK));
-    expect(result.bodyBg).toBe(norm(DARK));
-    expect(result.injected).toContain(`html,body{background:${DARK}}`);
+    expectResolved(result, DARK);
   });
 
   it("no saved theme on a light phone paints cream", () => {
     const result = paint((window) => {
       window.matchMedia = phone(false);
     });
-    expect(result.escaped).toBeNull();
-    expect(result.htmlBg).toBe(norm(CREAM));
-    expect(result.bodyBg).toBe(norm(CREAM));
-    expect(result.injected).toContain(`html,body{background:${CREAM}}`);
+    expectResolved(result, CREAM);
   });
 
   it("saved light on a dark phone paints cream", () => {
@@ -149,9 +168,7 @@ describe("boot paint", () => {
       window.localStorage.setItem("andale-v3", JSON.stringify({ theme: "light", streak: 4 }));
       window.matchMedia = phone(true);
     });
-    expect(result.escaped).toBeNull();
-    expect(result.htmlBg).toBe(norm(CREAM));
-    expect(result.bodyBg).toBe(norm(CREAM));
+    expectResolved(result, CREAM);
   });
 
   it("saved dark on a light phone paints the dark page", () => {
@@ -159,18 +176,14 @@ describe("boot paint", () => {
       window.localStorage.setItem("andale-v3", JSON.stringify({ theme: "dark" }));
       window.matchMedia = phone(false);
     });
-    expect(result.escaped).toBeNull();
-    expect(result.htmlBg).toBe(norm(DARK));
-    expect(result.bodyBg).toBe(norm(DARK));
+    expectResolved(result, DARK);
   });
 
   it("missing matchMedia with empty storage paints cream", () => {
     const result = paint((window) => {
       window.matchMedia = undefined;
     });
-    expect(result.escaped).toBeNull();
-    expect(result.htmlBg).toBe(norm(CREAM));
-    expect(result.bodyBg).toBe(norm(CREAM));
+    expectResolved(result, CREAM);
   });
 
   it("empty storage paints cream", () => {
@@ -178,20 +191,14 @@ describe("boot paint", () => {
     const liveOnly = paint((window) => {
       window.localStorage.setItem("andale-v3-live", JSON.stringify({ theme: "dark", screen: "lesson" }));
     });
-    for (const result of [empty, liveOnly]) {
-      expect(result.escaped).toBeNull();
-      expect(result.htmlBg).toBe(norm(CREAM));
-      expect(result.bodyBg).toBe(norm(CREAM));
-    }
+    for (const result of [empty, liveOnly]) expectResolved(result, CREAM);
   });
 
   it("corrupt JSON paints cream", () => {
     const result = paint((window) => {
       window.localStorage.setItem("andale-v3", "{theme:dark");
     });
-    expect(result.escaped).toBeNull();
-    expect(result.htmlBg).toBe(norm(CREAM));
-    expect(result.bodyBg).toBe(norm(CREAM));
+    expectResolved(result, CREAM);
   });
 
   it("localStorage throwing paints cream and does not throw", () => {
@@ -203,8 +210,6 @@ describe("boot paint", () => {
         },
       });
     });
-    expect(result.escaped).toBeNull();
-    expect(result.htmlBg).toBe(norm(CREAM));
-    expect(result.bodyBg).toBe(norm(CREAM));
+    expectResolved(result, CREAM);
   });
 });
