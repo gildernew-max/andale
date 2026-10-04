@@ -2101,7 +2101,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("top-left brand after paywall dismiss stays on Learn home", async () => {
     cleanup();
-    seedProgress({ streak: 1, lastDay: localToday() });
+    seedProgress({ streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
@@ -3791,7 +3791,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     vi.setSystemTime(new Date(2026, 8, 4, 23, 50, 0));
     try {
       cleanup();
-      seedProgress({ streak: 1, lastDay: "2026-09-04", paywallSeen: false });
+      seedProgress({ streak: 1, lastDay: "2026-09-04", paywallSeen: false, lecturaStartedAt: 1 });
       render(<App />);
       await awaitSoftPaywallAfterFirstWin();
       expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
@@ -4505,7 +4505,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("dark soft paywall title and prices are cream on #1E2128, not near-white on cream", async () => {
     cleanup();
-    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false });
+    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false, lecturaStartedAt: 1 });
     await boot();
     await waitFor(() => expect(screen.getByTestId("soft-paywall-card")).toBeTruthy());
     const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
@@ -4657,6 +4657,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hoy-win")).toBeTruthy());
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     await replay.click(screen.getByTestId("hoy-win-continue"));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+    await openStory0(replay);
+    await replay.click(screen.getByTestId("brand-home"));
     await awaitSoftPaywallAfterFirstWin();
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     assertSoftPaywallAnnualPrimary("es");
@@ -4797,8 +4801,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("bajio-unlock-flash")).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.getByTestId("bajio-unlock-flash-copy").textContent).toBe("Abierto");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy(), { timeout: 3000 });
-    expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull(), { timeout: 3000 });
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(false);
     expect(screen.queryByTestId("cdmx-unlock-flash")).toBeNull();
   });
 
@@ -5962,7 +5967,13 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("first-door-hero")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("session-close-dismiss"));
-    await awaitBajioFlashThenPaywall();
+    await waitFor(() => expect(screen.getByTestId("bajio-unlock-flash")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull(), { timeout: 3000 });
+    assertNoWallBeforeLectura();
+    await openStory0(user);
+    await user.click(screen.getByTestId("brand-home"));
+    await awaitSoftPaywallAfterFirstWin();
     await awaitHome();
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByText(/Vuelve mañana|Come back tomorrow/)).toBeNull();
@@ -6091,6 +6102,40 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("win-perch")).toBeNull();
   });
 
+  it("fresh session with today's win and no story started holds the soft paywall until story-0", async () => {
+    cleanup();
+    markBajioUnlockFlashDue(false);
+    seedProgress({
+      streak: 1,
+      lastDay: localToday(),
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitHome();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
+    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(false);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lecturaStartedAt).toBeFalsy();
+
+    await openStory0(user);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lecturaStartedAt).toBeTruthy();
+    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(false);
+
+    await user.click(screen.getByTestId("brand-home"));
+    await awaitSoftPaywallAfterFirstWin();
+    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(true);
+  });
+
+  it("a claimed story already in progress counts as started for the soft paywall", async () => {
+    cleanup();
+    markBajioUnlockFlashDue(false);
+    seedProgress({ streak: 1, lastDay: localToday(), stories: { "story-0": true } });
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
+    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(true);
+  });
+
   it("soft paywall does not render on splash or boot before a win", async () => {
     cleanup();
     localStorage.clear();
@@ -6137,7 +6182,13 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("session-close")).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("session-close-dismiss"));
-    await awaitBajioFlashThenPaywall();
+    await waitFor(() => expect(screen.getByTestId("bajio-unlock-flash")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull(), { timeout: 3000 });
+    assertNoWallBeforeLectura();
+    await openStory0(user);
+    await user.click(screen.getByTestId("brand-home"));
+    await awaitSoftPaywallAfterFirstWin();
     await waitFor(() => {
       const prog = JSON.parse(localStorage.getItem(STORAGE_KEY));
       expect(prog.streak).toBe(1);
@@ -6179,7 +6230,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     })();
     cleanup();
-    seedProgress({ uiLang: "en", streak: 1, lastDay: today });
+    seedProgress({ uiLang: "en", streak: 1, lastDay: today, lecturaStartedAt: 1 });
     window.__andalePurchaseLog = [];
     const events = [];
     const onPurchase = (e) => events.push(e.detail);
@@ -6217,7 +6268,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("soft paywall monthly CTA on web stays honest and does not unlock", async () => {
     cleanup();
-    seedProgress({ streak: 1, lastDay: localToday() });
+    seedProgress({ streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     const events = [];
     const onPurchase = (e) => events.push(e.detail);
     window.addEventListener("andale-purchase", onPurchase);
@@ -6241,7 +6292,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("soft paywall annual unlocks only after a real purchase success event", async () => {
     cleanup();
-    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday() });
+    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
     window.__andaleNativePurchase = async ({ productId }) => ({ status: "success", productId });
     window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
@@ -6275,7 +6326,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("soft paywall yearly is sole filled primary; monthly is outline; continue free is quiet", async () => {
     cleanup();
-    seedProgress({ streak: 1, lastDay: localToday() });
+    seedProgress({ streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     assertSoftPaywallAnnualPrimary("es");
@@ -6285,7 +6336,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("soft paywall conversion look: one bird, George hierarchy, dismiss leaves hub unchanged", async () => {
     cleanup();
-    seedProgress({ streak: 1, lastDay: localToday() });
+    seedProgress({ streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
@@ -6325,7 +6376,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("armed soft-paywall backdrop free-dismiss lands on post-dismiss-handoff", async () => {
     const today = localToday();
     cleanup();
-    seedProgress({ streak: 1, lastDay: today });
+    seedProgress({ streak: 1, lastDay: today, lecturaStartedAt: 1 });
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
@@ -6340,7 +6391,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const today = localToday();
     cleanup();
     mockA2hsEnv();
-    seedProgress({ streak: 1, lastDay: today });
+    seedProgress({ streak: 1, lastDay: today, lecturaStartedAt: 1 });
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
@@ -6390,7 +6441,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
     cleanup();
     mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
-    seedProgress({ streak: 1, lastDay: today });
+    seedProgress({ streak: 1, lastDay: today, lecturaStartedAt: 1 });
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
@@ -6401,7 +6452,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
     cleanup();
     mockA2hsEnv({ standalone: true });
-    seedProgress({ streak: 1, lastDay: today });
+    seedProgress({ streak: 1, lastDay: today, lecturaStartedAt: 1 });
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     await userEvent.setup().click(screen.getByTestId("soft-paywall-dismiss"));
@@ -6411,7 +6462,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
     cleanup();
     mockA2hsEnv();
-    seedProgress({ streak: 1, lastDay: today, a2hsSeen: true });
+    seedProgress({ streak: 1, lastDay: today, a2hsSeen: true, lecturaStartedAt: 1 });
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     await userEvent.setup().click(screen.getByTestId("soft-paywall-dismiss"));
@@ -6421,7 +6472,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
     cleanup();
     mockA2hsEnv();
-    seedProgress({ uiLang: "en", streak: 1, lastDay: today });
+    seedProgress({ uiLang: "en", streak: 1, lastDay: today, lecturaStartedAt: 1 });
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     await userEvent.setup().click(screen.getByTestId("soft-paywall-annual"));
@@ -6434,7 +6485,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
     cleanup();
     mockA2hsEnv({ userAgent: MAC_SAFARI_UA, platform: "MacIntel", maxTouchPoints: 0 });
-    seedProgress({ streak: 1, lastDay: today });
+    seedProgress({ streak: 1, lastDay: today, lecturaStartedAt: 1 });
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     await userEvent.setup().click(screen.getByTestId("soft-paywall-dismiss"));
@@ -6447,7 +6498,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const today = localToday();
     cleanup();
     mockA2hsEnv({ userAgent: MAC_SAFARI_UA, platform: "MacIntel", maxTouchPoints: 5 });
-    seedProgress({ streak: 1, lastDay: today });
+    seedProgress({ streak: 1, lastDay: today, lecturaStartedAt: 1 });
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
@@ -7730,7 +7781,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     cleanup();
     localStorage.removeItem(LIVE_KEY);
     markBajioUnlockFlashDue(false);
-    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false, bajioUnlockSeen: true });
+    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false, bajioUnlockSeen: true, lecturaStartedAt: 1 });
     render(<App />);
     const monthly = await screen.findByTestId("soft-paywall-monthly");
     expect(outlinePaint(monthly)).toMatchObject({ fill: darkFill, ink: cream, edge: "#4a5160", lip: "#4a5160" });
@@ -7855,7 +7906,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
 
   it("paywall_seen and paywall_tap fire for annual, monthly, and continue-free", async () => {
     cleanup();
-    seedProgress({ streak: 1, lastDay: localToday() });
+    seedProgress({ streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
@@ -7877,7 +7928,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
 
   it("waitlist strip is gone on the paywall and the hub", async () => {
     cleanup();
-    seedProgress({ streak: 1, lastDay: localToday() });
+    seedProgress({ streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
@@ -7895,7 +7946,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
 
   it("StoreKit cancel does not emit purchase", async () => {
     cleanup();
-    seedProgress({ streak: 1, lastDay: localToday() });
+    seedProgress({ streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
     window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
     window.__andaleNativePurchase = async () => ({
@@ -8040,7 +8091,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await awaitBajioFlashThenPaywall();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
-    expect(funnelOf("paywall_seen").length).toBeGreaterThan(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
@@ -8255,7 +8306,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
 });
 
 describe("first session before the paywall", () => {
-  it("a learner with no completed lessons gets 5 exercises, then a win, then the paywall", async () => {
+  it("a learner with no completed lessons gets 5 exercises, then a win, and the wall stays down", async () => {
     cleanup();
     seedProgress({ streak: 0, lastDay: null, hearts: 5, uiLang: "es", bajioUnlockSeen: true, firstSessionDone: false });
     const user = userEvent.setup();
@@ -8302,7 +8353,9 @@ describe("first session before the paywall", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByTestId("out-of-lives")).toBeNull();
     await tap(screen.getByTestId("win-continue"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(false);
     expect(taps).toBe(21);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).done?._first).toBeUndefined();
@@ -8427,9 +8480,9 @@ describe("first session before the paywall", () => {
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
       cleanup();
     };
-    seedProgress({ xp: 40, streak: 4, lastDay: localToday(), hearts: 5 });
+    seedProgress({ xp: 40, streak: 4, lastDay: localToday(), hearts: 5, paywallSeen: true });
     await openSheet();
-    seedProgress({ streak: 2, lastDay: localToday(), hearts: 5, done: { "_today:taqueria": 1 } });
+    seedProgress({ streak: 2, lastDay: localToday(), hearts: 5, done: { "_today:taqueria": 1 }, paywallSeen: true });
     await openSheet();
     seedProgress({ xp: 12, gems: 5, hearts: 5, missions: { safeRiskyBest: 3 } });
     await openSheet();
@@ -8530,6 +8583,10 @@ describe("first session before the paywall", () => {
     await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
     for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
     await user.click(await screen.findByTestId("win-continue"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await openStory0(user);
+    await user.click(screen.getByTestId("brand-home"));
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     const sendero = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(sendero.xp).toBe(62);
@@ -8795,6 +8852,7 @@ const openPaywallFrom = async (live, { streak = 1 } = {}) => {
     paywallSeen: false,
     bajioUnlockSeen: true,
     uiLang: "es",
+    lecturaStartedAt: 1,
   });
   if (live) localStorage.setItem(LIVE_KEY, JSON.stringify(live));
   const user = userEvent.setup();
@@ -8824,7 +8882,7 @@ describe("paywall headline follows the open source", () => {
   it("boot in English uses the English fallback headline", async () => {
     cleanup();
     markBajioUnlockFlashDue(false);
-    seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: false, bajioUnlockSeen: true, uiLang: "en" });
+    seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: false, bajioUnlockSeen: true, uiLang: "en", lecturaStartedAt: 1 });
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     assertPaywallHeadline(PAYWALL_SOURCE.boot, "en");
@@ -8903,6 +8961,7 @@ describe("paywall headline follows the open source", () => {
       paywallSeen: false,
       bajioUnlockSeen: true,
       uiLang: "es",
+      lecturaStartedAt: 1,
       flashcards: {
         hola: { word: "hola", en: "hi", note: "", story: "Hola", sentence: "Hola.", added: 1, due: 0, interval: 0, reps: 0, lapses: 0 },
       },
@@ -9029,7 +9088,7 @@ const assertFinePrintMatchesButtons = (lang) => {
 describe("paywall 3.1.2 disclosure", () => {
   it("renders EN prices, fine print, restore, and legal links without a purchase", async () => {
     cleanup();
-    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday() });
+    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     delete window.__andaleIapEnv;
     const user = userEvent.setup();
     render(<App />);
@@ -9093,7 +9152,7 @@ describe("paywall 3.1.2 disclosure", () => {
 
   it("renders ES prices, fine print, restore, and legal links", async () => {
     cleanup();
-    seedProgress({ uiLang: "es", streak: 1, lastDay: localToday() });
+    seedProgress({ uiLang: "es", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     delete window.__andaleIapEnv;
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
@@ -9123,7 +9182,7 @@ describe("paywall 3.1.2 disclosure", () => {
 
   it("prefers StoreKit displayPrice and the restore link adds no purchase", async () => {
     cleanup();
-    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday() });
+    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
     let restoreCalls = 0;
     let purchaseCalls = 0;
@@ -9185,7 +9244,7 @@ describe("paywall 3.1.2 disclosure", () => {
 
   it("falls back to locked prices when getProducts fails", async () => {
     cleanup();
-    seedProgress({ uiLang: "es", streak: 1, lastDay: localToday() });
+    seedProgress({ uiLang: "es", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
     window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
     window.__andaleNativeGetProducts = async () => {
@@ -9238,7 +9297,7 @@ describe("paywall 3.1.2 disclosure", () => {
 
   it.each(["en", "es"])("restore success shows one status line in %s and does not emit purchase", async (lang) => {
     cleanup();
-    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday() });
+    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
     let allowRestore = false;
     let restoreCalls = 0;
@@ -9264,7 +9323,7 @@ describe("paywall 3.1.2 disclosure", () => {
 
   it.each(["en", "es"])("restore with nothing to restore shows one status line in %s and does not emit purchase", async (lang) => {
     cleanup();
-    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday() });
+    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
     window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
     const user = userEvent.setup();
@@ -9280,7 +9339,7 @@ describe("paywall 3.1.2 disclosure", () => {
 
   it.each(["en", "es"])("a failed store restore shows one status line in %s and does not emit purchase", async (lang) => {
     cleanup();
-    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday() });
+    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
     window.__andaleNativeRestore = async () => {
       throw new Error("store_down");
@@ -9298,7 +9357,7 @@ describe("paywall 3.1.2 disclosure", () => {
 
   it.each(["en", "es"])("web restore shows the iPhone-app line in %s and does not emit purchase", async (lang) => {
     cleanup();
-    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday() });
+    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     delete window.__andaleIapEnv;
     const user = userEvent.setup();
     render(<App />);
@@ -9315,7 +9374,7 @@ describe("paywall 3.1.2 disclosure", () => {
 
   it("a partial StoreKit price list falls back to both locked prices", async () => {
     cleanup();
-    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday() });
+    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
     window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
     window.__andaleNativeGetProducts = async () => ({
@@ -9543,7 +9602,7 @@ describe("short onboarding", () => {
     expect(screen.queryByTestId("splash")).toBeNull();
   });
 
-  it("a wrong beginner answer is rejected and the right ones finish on the beginner win, then the paywall", async () => {
+  it("a wrong beginner answer is rejected and the right ones finish on the beginner win, then a story start opens the paywall", async () => {
     localStorage.clear();
     const user = userEvent.setup();
     render(<App />);
@@ -9596,7 +9655,13 @@ describe("short onboarding", () => {
       "Primera lección lista. Ya tienes tus primeras palabras para saludar, pedir un café y preguntar el precio. Mañana seguimos con la siguiente.",
     ));
     await user.click(screen.getByTestId("win-continue"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(false);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
+    await openStory0(user);
+    await user.click(screen.getByTestId("brand-home"));
+    await awaitSoftPaywallAfterFirstWin();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
   }, 20000);
 });

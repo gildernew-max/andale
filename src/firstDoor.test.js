@@ -18,6 +18,9 @@ import {
   SCREEN_HOME,
   SCREEN_SESSION_CLOSE,
   screenAfterWinContinue,
+  effectiveWinDays,
+  incrementedWinDays,
+  lecturaStartedFromProgress,
   shouldShowSoftPaywall,
   showColdPitch,
   showComeBackTomorrow,
@@ -114,14 +117,31 @@ assert(!showColdPitch({ streak: 1 }), "streak ≥ 1 hides the cold pitch on the 
 assert(!showColdPitch({ streak: 4 }), "later streak keeps the cold pitch off");
 
 const firstWinHome = { todaySceneDone: false, streak: 1, lastDay: "2026-09-04", today: "2026-09-04", screen: "home", splash: false };
-assert(shouldShowSoftPaywall(firstWinHome), "first win on home shows paywall after vuelve");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, splash: true }), "paywall never on splash");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, screen: "done" }), "paywall waits until after celebration");
-assert(shouldShowSoftPaywall(firstWinHome), "Phrase Doctor Curarla (home, no done screen) can fire the gate");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, streak: 0, lastDay: null }), "paywall never before a win");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, paywallHold: true }), "first-session hearts fail holds the wall until a win");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, paywallSeen: true }), "seen flag stops the loop");
-assert(!shouldShowSoftPaywall({ ...firstWinHome, unlockedPrem: true }), "StoreKit unlock skips the wall");
+assert(!shouldShowSoftPaywall(firstWinHome), "stored streak≥1 and lastDay today, paywallSeen unset, story not started → held");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, winDays: 1 }), "winDays 1 and no story stays held");
+assert(shouldShowSoftPaywall({ ...firstWinHome, lecturaStartedStored: true }), "stored story start opens the wall");
+assert(shouldShowSoftPaywall({ ...firstWinHome, winDays: 2 }), "winDays 2 and no story opens the wall");
+assert(shouldShowSoftPaywall({ ...firstWinHome, streak: 2 }), "legacy streak≥2 with no counter counts as two win days");
+assert(effectiveWinDays({ lastDay: "2026-09-04", streak: 1 }) === 1, "legacy streak 1 with lastDay counts as one win day");
+assert(effectiveWinDays({ lastDay: "2026-09-04", streak: 2 }) === 2, "legacy streak≥2 counts as two win days");
+assert(effectiveWinDays({}) === 0, "no lastDay and no counter is zero win days");
+assert(incrementedWinDays({ streak: 0, lastDay: null }, "2026-09-04") === 1, "first lesson finish stores win day 1");
+assert(incrementedWinDays({ winDays: 1, lastDay: "2026-09-04", streak: 1 }, "2026-09-04") == null, "same-day finish does not increment winDays");
+assert(incrementedWinDays({ winDays: 1, lastDay: "2026-09-04", streak: 1 }, "2026-09-05") === 2, "a new calendar day increments winDays");
+assert(incrementedWinDays({ lastDay: "2026-09-04", streak: 4 }, "2026-09-06") === 3, "legacy streak≥2 increments from 2");
+assert(!lecturaStartedFromProgress({}), "empty progress has not started Lectura");
+assert(lecturaStartedFromProgress({ lecturaStartedAt: 1 }), "lecturaStartedAt is a stored start");
+assert(lecturaStartedFromProgress({ stories: { "story-0": true } }), "a claimed story counts as started");
+assert(!lecturaStartedFromProgress({ stories: {} }), "an empty stories map is not a start");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, lecturaStartedStored: true, splash: true }), "paywall never on splash");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, lecturaStartedStored: true, screen: "done" }), "paywall waits until after celebration");
+assert(shouldShowSoftPaywall({ ...firstWinHome, lecturaStartedStored: true }), "Phrase Doctor Curarla (home, no done screen) can fire the gate once a story is stored as started");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, streak: 0, lastDay: null, lecturaStartedStored: true }), "paywall never before a win");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, lecturaStartedStored: true, paywallHold: true }), "first-session hearts fail holds the wall until a win");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, lecturaStartedStored: true, paywallSeen: true }), "seen flag stops the loop");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, lecturaStartedStored: true, unlockedPrem: true }), "StoreKit unlock skips the wall");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, winDays: 2, paywallSeen: true }), "seen flag still stops a two-day wall");
+assert(!shouldShowSoftPaywall({ ...firstWinHome, winDays: 2, unlockedPrem: true }), "premium still skips a two-day wall");
 const day2Home = {
   todaySceneDone: false,
   streak: 1,
@@ -149,13 +169,21 @@ assert(showComeBackTomorrow({
   lastDay: stamped.lastDay,
   today: "2026-09-04",
 }), "CONTINUE lands with Fh come-back true");
+assert(!shouldShowSoftPaywall({
+  ...stamped,
+  todaySceneDone: true,
+  today: "2026-09-04",
+  screen: "home",
+  splash: false,
+}), "CONTINUE home on win day 1 stays held until a story start");
 assert(shouldShowSoftPaywall({
   ...stamped,
   todaySceneDone: true,
   today: "2026-09-04",
   screen: "home",
   splash: false,
-}), "CONTINUE home + come-back opens paywall once");
+  lecturaStartedStored: true,
+}), "CONTINUE home + come-back opens paywall once a story is stored as started");
 assert(!shouldShowSoftPaywall({
   ...stamped,
   todaySceneDone: true,
