@@ -10,6 +10,7 @@ import { contrastRatio } from "./spanishKeyboard.js";
 import {
   LIVE_KEY,
   STORAGE_KEY,
+  freshEligible,
   installFlowHooks,
   localToday,
   seedProgress,
@@ -263,5 +264,103 @@ describe("win after a dead streak", () => {
     expect(saved().gems).toBe(400);
 
     await awardAndReturnHome();
+  });
+});
+
+const RESUME_SUBJ = {
+  unitId: "subj1",
+  order: [{ u: "subj1", i: 0 }],
+  qi: 0,
+  xp: 0,
+  right: 0,
+  wrong: 0,
+};
+
+const quiet = () => screen.getByTestId("hub-hoy-quiet");
+
+describe("welcome back on the Hoy caption", () => {
+  it("a returning learner on a new day with streak 3 sees the ES line, then the EN line", async () => {
+    const yesterday = prevDayKey(localToday());
+    homeSeed({
+      uiLang: "es",
+      theme: "light",
+      streak: 3,
+      lastDay: yesterday,
+      resume: RESUME_SUBJ,
+    });
+    await openHome();
+
+    expect(quiet().textContent).toBe("Qué bueno verte de nuevo. Racha: 3 días. Sigue donde quedaste: Subjuntivo presente.");
+    expect(screen.getByTestId("hub-hoy-label").textContent).toBe("Hoy");
+    expect(screen.getByTestId("hub-hoy").contains(quiet())).toBe(true);
+    expect(screen.getByTestId("streak-home-note").textContent).toBe("Tu racha de 3 días termina hoy. Haz una lección para mantenerla.");
+    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^3/);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(3);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lastDay).toBe(yesterday);
+    expect(quiet().style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+    expect(quiet().style.fontWeight).toBe("800");
+    expect(contrastRatio("#6B6258", "#F6EFE4")).toBeGreaterThanOrEqual(4.5);
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(quiet().textContent).toBe("Good to see you again. Streak: 3 days. Pick up where you left off: Subjuntivo presente."));
+    expect(quiet().textContent).not.toMatch(/Qué bueno|Racha:/);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(3);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lastDay).toBe(yesterday);
+  });
+
+  it("streak 0 drops the streak sentence in ES and EN", async () => {
+    const yesterday = prevDayKey(localToday());
+    homeSeed({
+      uiLang: "es",
+      theme: "dark",
+      streak: 0,
+      lastDay: yesterday,
+      resume: RESUME_SUBJ,
+    });
+    await openHome();
+
+    expect(quiet().textContent).toBe("Qué bueno verte de nuevo. Sigue donde quedaste: Subjuntivo presente.");
+    expect(quiet().textContent).not.toMatch(/Racha:|días|día/);
+    expect(screen.queryByTestId("streak-home-note")).toBeNull();
+    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^0/);
+    expect(quiet().style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
+    expect(screen.getByTestId("hub-hoy").style.background).toMatch(/#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i);
+    expect(contrastRatio("#A0A4AB", "#1E2128")).toBeGreaterThanOrEqual(4.5);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(0);
+
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(quiet().textContent).toBe("Good to see you again. Pick up where you left off: Subjuntivo presente."));
+    expect(quiet().textContent).not.toMatch(/Streak:|days|day/);
+  });
+
+  it("a same-day learner keeps today's Hoy caption", async () => {
+    homeSeed({
+      uiLang: "es",
+      theme: "light",
+      streak: 3,
+      lastDay: localToday(),
+      resume: RESUME_SUBJ,
+    });
+    await openHome();
+    expect(quiet().textContent).toBe("Plan de hoy");
+    expect(screen.queryByText(/Qué bueno verte de nuevo|Good to see you again/)).toBeNull();
+    expect(screen.getByTestId("hub-hoy").style.height).toBe("168px");
+
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(quiet().textContent).toBe("Today's plan"));
+    expect(screen.queryByText(/Good to see you again|Qué bueno verte de nuevo/)).toBeNull();
+  });
+
+  it("a brand-new learner sees no welcome line", async () => {
+    cleanup();
+    freshEligible({ uiLang: "es" });
+    await openHome();
+    expect(quiet().textContent).toBe("Plan de hoy");
+    expect(screen.queryByText(/Qué bueno verte de nuevo|Good to see you again/)).toBeNull();
+    expect(screen.getByTestId("hub-hoy").style.height).toBe("168px");
   });
 });

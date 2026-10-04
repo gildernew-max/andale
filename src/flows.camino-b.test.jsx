@@ -775,8 +775,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     render(<App />);
     await awaitHome();
     assertEqualHub();
+    expect(screen.getByTestId("hub-hoy-label").textContent).toBe("Hoy");
+    expect(screen.getByTestId("hub-hoy-quiet").textContent).toBe("Qué bueno verte de nuevo. Racha: 1 día. Sigue donde quedaste: Subjuntivo presente.");
     expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
-    expect(screen.getByTestId("hub-hoy").textContent).not.toMatch(/Continuar|Continue|Subjuntivo|Arreglar una frase|Fix a phrase/);
+    expect(screen.getByTestId("hub-hoy").textContent).not.toMatch(/Continuar|Continue|Arreglar una frase|Fix a phrase/);
     expect(promised.title).toBeTruthy();
     expect(screen.queryByTestId("home-pitch")).toBeNull();
     expect(document.body.textContent).not.toMatch(/Español mexicano real\. Tu primer logro empieza aquí/);
