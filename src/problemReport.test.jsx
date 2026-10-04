@@ -7,7 +7,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import { version as ANDALE_BUILD } from "../package.json";
+import { ANDALE_BUILD, andaleBuildFromSha } from "./buildId.js";
 import App from "./App.jsx";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -103,7 +103,12 @@ describe("perfil problem report", () => {
     expect(supportMail).toBe("gildernew@gmail.com");
     expect(appSrc).toContain(`const PROBLEM_REPORT_MAIL = "${supportMail}"`);
     expect(appSrc).toContain("mailto:${PROBLEM_REPORT_MAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}");
-    expect(appSrc).toContain('from "../package.json"');
+    expect(appSrc).toContain('from "./buildId.js"');
+    expect(typeof ANDALE_BUILD).toBe("string");
+    expect(ANDALE_BUILD).not.toBe("");
+    const pkgVersion = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")).version;
+    expect(andaleBuildFromSha("", pkgVersion)).toBe(pkgVersion);
+    expect(andaleBuildFromSha("   ", pkgVersion)).toBe(pkgVersion);
     const footer = appSrc.slice(appSrc.indexOf('data-testid="perfil-footer"'), appSrc.indexOf('data-testid="perfil-footer"') + 900);
     expect(footer).toContain("flexWrap: \"wrap\"");
     expect(footer).not.toContain("emitFunnelEvent");

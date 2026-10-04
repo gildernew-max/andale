@@ -215,7 +215,7 @@ import {
   startCrosswordRun,
   typeCrosswordLetter,
 } from "./crossword.js";
-import { version as ANDALE_BUILD } from "../package.json";
+import { ANDALE_BUILD } from "./buildId.js";
 
 /* ============================================================
    ¡Ándale! v3 — a faithful Duolingo-style clone
