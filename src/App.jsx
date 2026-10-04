@@ -10402,7 +10402,9 @@ export default function App() {
                             padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit",
                             cursor: isMatched ? "default" : "pointer",
                             ...(theme === "dark"
-                              ? darkLessonChipPaint({ used: !!(isMatched || isSel || isWrong), wrong: !!isWrong, D, cream: HUB_CREAM })
+                              ? (isSel && !isMatched && !isWrong
+                                ? { background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blue, opacity: 1 }
+                                : darkLessonChipPaint({ used: !!(isMatched || isWrong), wrong: !!isWrong, D, cream: HUB_CREAM }))
                               : {
                                   background: isMatched ? D.okBg : isWrong ? D.badBg : (isSel ? "#DDF4FF" : "#fff"),
                                   borderColor: isMatched ? D.green : isWrong ? D.red : isSel ? D.blue : D.line,

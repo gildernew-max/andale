@@ -148,7 +148,9 @@ describe("dark lesson surfaces", () => {
     ]) expect(appSrc).toContain(needle);
     expect((appSrc.match(/theme === "dark" \? D\.subtle : \(isSel \? "#DDF4FF" : "#fff"\)/g) || []).length).toBe(1);
     const lessonMatch = sliceBetween('{q.type === "match" && (', '{/* ---------- ACTION BAR');
-    expect(lessonMatch).toContain("darkLessonChipPaint({ used: !!(isMatched || isSel || isWrong), wrong: !!isWrong, D, cream: HUB_CREAM })");
+    expect(lessonMatch).toContain("darkLessonChipPaint({ used: !!(isMatched || isWrong), wrong: !!isWrong, D, cream: HUB_CREAM })");
+    expect(lessonMatch).toContain("background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blue, opacity: 1");
+    expect(lessonMatch).not.toContain("darkLessonChipPaint({ used: !!(isMatched || isSel || isWrong)");
     expect(lessonMatch).not.toContain('theme === "dark" ? D.subtle');
     const light = appSrc.slice(appSrc.indexOf("const D_LIGHT"), appSrc.indexOf("const D_DARK"));
     expect(light).toContain('red: "#FF4B4B", redDark: "#EA2B2B"');
@@ -242,12 +244,19 @@ describe("dark lesson surfaces", () => {
     noWhite();
     expect(Number(contrastRatio("#F6EFE4", "#252830").toFixed(2))).toBe(12.9);
 
-    await boot("dark", live({ matchSel: { side: 0, idx: 0, id: 0 } }));
+    await boot("dark", live({ matchSel: { side: 0, idx: 0, id: 0 }, matched: [1] }));
     await screen.findByTestId("match-tile-0");
     expect(screen.getByTestId("match-tile-0").getAttribute("data-state")).toBe("selected");
-    expect(paint(screen.getByTestId("match-tile-0"))).toMatchObject({ fill: "#1f3a1a", ink: "#58cc02", line: "#58cc02" });
-    expect(screen.getByTestId("match-tile-1").getAttribute("data-state")).toBe("idle");
+    expect(screen.getByTestId("match-tile-1").getAttribute("data-state")).toBe("matched");
+    const selected = paint(screen.getByTestId("match-tile-0"));
+    const matchedBeside = paint(screen.getByTestId("match-tile-1"));
+    expect(selected).toMatchObject({ fill: "#0f2a3a", ink: "#1cb0f6", line: "#1cb0f6" });
+    expect(matchedBeside).toMatchObject({ fill: "#1f3a1a", ink: "#58cc02", line: "#58cc02" });
+    expect(selected.fill).not.toBe(matchedBeside.fill);
+    expect(selected.ink).not.toBe(matchedBeside.ink);
+    expect(screen.getByTestId("match-tile-2").getAttribute("data-state")).toBe("idle");
     noWhite();
+    expect(Number(contrastRatio("#1CB0F6", "#0F2A3A").toFixed(2))).toBe(6.08);
     expect(Number(contrastRatio("#58CC02", "#1F3A1A").toFixed(2))).toBe(5.99);
 
     await boot("dark", live({ matched: [0] }));
@@ -257,6 +266,8 @@ describe("dark lesson surfaces", () => {
     expect(screen.getByTestId("match-tile-1").getAttribute("data-state")).toBe("idle");
     expect(paint(screen.getByTestId("match-tile-0"))).toMatchObject({ fill: "#1f3a1a", ink: "#58cc02", line: "#58cc02" });
     expect(screen.getByTestId("match-tile-0").style.opacity).toBe("1");
+    expect(paint(screen.getByTestId("match-tile-0")).fill).not.toBe("#0f2a3a");
+    expect(paint(screen.getByTestId("match-tile-0")).ink).not.toBe("#1cb0f6");
     noWhite();
 
     await boot("dark", live());
