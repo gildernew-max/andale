@@ -16,7 +16,24 @@
     <link rel="icon" href="%BASE_URL%favicon.ico" sizes="any" />
     <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
-    <style>html,body,#root{margin:0;padding:0;width:100%;max-width:100%}</style>
+    <style>html,body,#root{margin:0;padding:0;width:100%;max-width:100%}html,body{background:#F6EFE4}</style>
+    <script>
+      (function () {
+        var bg = "#F6EFE4";
+        try {
+          var raw = localStorage.getItem("andale-v3");
+          if (raw) {
+            var saved = JSON.parse(raw);
+            if (saved && saved.theme === "dark") bg = "#15171C";
+          }
+        } catch (e) {}
+        document.documentElement.style.background = bg;
+        if (document.body) document.body.style.background = bg;
+        var paint = document.createElement("style");
+        paint.textContent = "html,body{background:" + bg + "}";
+        document.head.appendChild(paint);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
