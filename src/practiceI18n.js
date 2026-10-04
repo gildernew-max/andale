@@ -164,6 +164,14 @@ export const PRACTICE_EXPLAIN = [
   { es: "«Me da gusto que» (emoción) dispara el subjuntivo. Tú → sientas.", en: "«Me da gusto que» (emotion) triggers the subjunctive. Tú → sientas." },
   { es: "«Para que» (finalidad) siempre pide subjuntivo: vayas.", en: "«Para que» (purpose) always takes the subjunctive: vayas." },
   { es: "«Antes de que» siempre pide subjuntivo: salgas. «Sales / saldrás» son señuelos en indicativo.", en: "«Antes de que» always takes the subjunctive: salgas. «Sales / saldrás» are indicative decoys." },
+  { es: "«Es posible que» plantea una posibilidad sin afirmarla → subjuntivo: pueda; las otras opciones la dan por hecha.", en: "«Es posible que» raises a possibility without stating it → subjunctive: pueda; the other choices treat it as fact." },
+  { es: "Aquí «decir que» es una petición, no una noticia → subjuntivo: llame; como noticia sería «Dice que me llama».", en: "Here «decir que» is a request, not news → subjunctive: llame; as news it would be «Dice que me llama»." },
+  { es: "«En caso de que» habla de algo que quizá no pase → subjuntivo: haga; las otras opciones lo tratan como un hecho.", en: "«En caso de que» talks about something that may not happen → subjunctive: haga; the other choices treat it as a fact." },
+  { es: "Trampa: «estoy seguro de que» expresa certeza → indicativo: está. Con «no estoy seguro de que» sí iría subjuntivo: esté.", en: "Trap: «estoy seguro de que» expresses certainty → indicative: está. With «no estoy seguro de que» it would be subjunctive: esté." },
+  { es: "«Recomendar que» (consejo) pide subjuntivo; probar cambia la vocal: pruebes.", en: "«Recomendar que» (advice) takes the subjunctive; probar changes its vowel: pruebes." },
+  { es: "Un antecedente negativo («no hay nadie que») no existe, así que va en subjuntivo: sepa.", en: "A negative antecedent («no hay nadie que») doesn’t exist, so it takes the subjunctive: sepa." },
+  { es: "«Hasta que» + acción futura pide subjuntivo: regrese. «Regreso / regresaré» son señuelos en indicativo.", en: "«Hasta que» + a future action takes the subjunctive: regrese. «Regreso / regresaré» are indicative decoys." },
+  { es: "«Sin que» siempre pide subjuntivo y cambia de sujeto: ve → vea.", en: "«Sin que» always takes the subjunctive and switches subject: ve → vea." },
 ];
 
 const EXPLAIN_BY_ES = new Map(PRACTICE_EXPLAIN.map((row) => [row.es, row]));

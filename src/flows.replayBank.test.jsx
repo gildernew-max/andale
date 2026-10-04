@@ -75,7 +75,7 @@ describe("replay bank", { timeout: 20000 }, () => {
     const questions = indexes.filter((i) => i !== -1);
     expect(new Set(questions).size).toBe(11);
     expect(questions.some((i) => i >= 11)).toBe(true);
-    expect(questions).toEqual(expect.arrayContaining([11, 12, 13]));
+    expect(questions.slice().sort((a, b) => a - b)).toEqual([11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]);
     expect(prog.done.subj1).toBe(1);
     expect(prog.xp).toBe(42);
     expect(prog.streak).toBe(3);
@@ -170,5 +170,51 @@ describe("replay bank", { timeout: 20000 }, () => {
     await user2.click(screen.getByTestId("camino-review"));
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
     expect(document.body.textContent).toContain(BANK_MC);
+  });
+
+  it("a replay can serve a new bank item and an English wrong answer shows George's row", async () => {
+    cleanup();
+    seedProgress({
+      hearts: 5,
+      firstSessionDone: true,
+      uiLang: "en",
+      paywallSeen: true,
+      done: { subj1: 1 },
+      resume: { unitId: "subj1", order: [{ u: "subj1", i: 14 }], qi: 0, xp: 0, right: 0, wrong: 0 },
+    });
+    const user = await boot();
+    await startSubj1(user, /Practice again|Start/);
+    await waitFor(() => expect(document.body.textContent).toContain("Es posible que Lupita no"));
+    expect(screen.getAllByTestId("choice-card").some((el) => el.textContent.includes("pueda"))).toBe(true);
+
+    cleanup();
+    localStorage.clear();
+    mockBrowser();
+    seedProgress({
+      hearts: 5,
+      firstSessionDone: true,
+      uiLang: "en",
+      paywallSeen: true,
+      xp: 42,
+      streak: 3,
+      done: { subj1: 1 },
+      resume: { unitId: "subj1", order: [{ u: "subj1", i: 17 }], qi: 0, xp: 0, right: 0, wrong: 0 },
+    });
+    const user2 = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    await waitFor(() => expect(screen.queryByTestId("splash-start")).toBeNull());
+    await startSubj1(user2, /Practice again|Start/);
+    await waitFor(() => expect(document.body.textContent).toContain("Estoy seguro de que Paco ya"));
+    const wrong = screen.getAllByTestId("choice-card").find((el) => el.textContent.includes("esté"));
+    expect(wrong).toBeTruthy();
+    await user2.click(wrong);
+    await user2.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => {
+      const prog = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      expect(prog.srs?.["subj1|17"]).toBeTruthy();
+    });
+    await user2.click(screen.getByRole("button", { name: /Why\?/ }));
+    expect(screen.getByTestId("practice-why").textContent).toBe("Trap: «estoy seguro de que» expresses certainty → indicative: está. With «no estoy seguro de que» it would be subjunctive: esté.");
   });
 });
