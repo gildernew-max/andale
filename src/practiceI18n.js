@@ -183,6 +183,17 @@ export const PRACTICE_EXPLAIN = [
   { es: "Viviera (subjuntivo) + iría (condicional). «Vivía / iré» son señuelos.", en: "Viviera (subjunctive) + iría (conditional). «Vivía / iré» are decoys." },
   { es: "«Para que» en pasado pide imperfecto de subjuntivo: descansaras. «Descansas / descansarás» son señuelos en indicativo.", en: "«Para que» in the past takes the imperfect subjunctive: descansaras. «Descansas / descansarás» are indicative decoys." },
   { es: "Si el verbo principal pasa a imperfecto, el subjuntivo también: vengas → vinieras.", en: "If the main verb moves to the imperfect, the subjunctive does too: vengas → vinieras." },
+  { es: "«Como si» sobre algo que ya pasó exige pluscuamperfecto de subjuntivo: hubiera pasado; ha, había y habría no van tras «como si».", en: "«Como si» about something that already happened requires the pluperfect subjunctive: hubiera pasado; ha, había and habría don’t follow «como si»." },
+  { es: "«Yo que tú» da un consejo hipotético → condicional: hablaría; presente, pasado y futuro serían un hecho, no un consejo.", en: "«Yo que tú» gives hypothetical advice → conditional: hablaría; present, past and future would state a fact, not advice." },
+  { es: "Pasado irreal: la cláusula con «si» lleva pluscuamperfecto de subjuntivo: hubieras estudiado. «Habrías» queda para la consecuencia.", en: "Past unreal: the «si» clause takes the pluperfect subjunctive: hubieras estudiado. «Habrías» is saved for the result." },
+  { es: "Trampa: condición real o probable → «si» + presente de indicativo: depositan; «si» no lleva presente de subjuntivo, futuro ni condicional.", en: "Trap: a real or likely condition → «si» + present indicative: depositan; «si» doesn’t take the present subjunctive, the future or the conditional." },
+  { es: "«Si no fuera por…» es una fórmula irreal (imperfecto de subjuntivo) y va con condicional: tendría.", en: "«Si no fuera por…» is an unreal formula (imperfect subjunctive) and goes with the conditional: tendría." },
+  { es: "La consecuencia en condicional (haríamos) pide imperfecto de subjuntivo en la cláusula con «si»: vinieran.", en: "A conditional result (haríamos) calls for the imperfect subjunctive in the «si» clause: vinieran." },
+  { es: "Tras «si» + imperfecto de subjuntivo, la consecuencia va en condicional: viajaría.", en: "After «si» + imperfect subjunctive, the result takes the conditional: viajaría." },
+  { es: "Pasado irreal → condicional compuesto: habríamos + cenado; en el habla también se oye «hubiéramos».", en: "Past unreal → conditional perfect: habríamos + cenado; «hubiéramos» is also heard in speech." },
+  { es: "Saliéramos (subjuntivo) + llegaríamos (condicional). «Saldríamos / llegaremos» son señuelos: «si» no lleva condicional ni futuro.", en: "Saliéramos (subjunctive) + llegaríamos (conditional). «Saldríamos / llegaremos» are decoys: «si» doesn’t take the conditional or the future." },
+  { es: "«Quisiera» + infinitivo es la forma cortés de pedir. «Quise / querré» son señuelos: pasado y futuro.", en: "«Quisiera» + infinitive is the polite way to ask. «Quise / querré» are decoys: past and future." },
+  { es: "Lo irreal cambia los dos verbos: llueve → lloviera, vamos → iríamos.", en: "The unreal version changes both verbs: llueve → lloviera, vamos → iríamos." },
 ];
 
 const EXPLAIN_BY_ES = new Map(PRACTICE_EXPLAIN.map((row) => [row.es, row]));
