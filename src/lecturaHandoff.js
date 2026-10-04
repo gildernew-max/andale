@@ -54,6 +54,31 @@ export function lecturaHandoffTarget(stories, claimed) {
   return next;
 }
 
+/**
+ * Camino shows one story per section: the first story with that section index.
+ * Later stories in the same section are off the path.
+ */
+function caminoShowsStory(stories, sectionCount, storyId) {
+  const list = Array.isArray(stories) ? stories : [];
+  const n = Number.isFinite(sectionCount) && sectionCount > 0 ? sectionCount : 0;
+  for (let si = 0; si < n; si += 1) {
+    if (list.find((story) => story?.section === si)?.id === storyId) return true;
+  }
+  return false;
+}
+
+/**
+ * The open unread story when the Camino path does not already show it.
+ * Null when the frontier is a path node, locked, or missing.
+ * Open/locked rules stay in isLecturaStoryOpen — this never returns a locked id.
+ */
+export function nextOffPathStory(stories, claimed, sectionCount) {
+  const next = nextUnreadStory(stories, claimed);
+  if (!next?.id || !isLecturaStoryOpen(stories, claimed, next.id)) return null;
+  if (caminoShowsStory(stories, sectionCount, next.id)) return null;
+  return next;
+}
+
 /** Persist on the first Cenzontle win so the strip cannot return. */
 export function shouldStampLecturaHandoff({ handoffSeen, session, ready = true } = {}) {
   if (!ready || handoffSeen) return false;
