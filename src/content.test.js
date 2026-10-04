@@ -183,7 +183,8 @@ for (const u of UNITS) {
   assert(Array.isArray(u.pairs) && u.pairs.length > 0 && u.pairs.every(pairReady), `unit ${u.id} missing pairs`);
   assert(Array.isArray(u.questions) && u.questions.length === 11, `unit ${u.id} questions stay 11; a replay bank is separate`);
   if (u.bank != null) {
-    assert(Array.isArray(u.bank) && u.bank.length > 0 && u.bank.length !== u.questions.length, `unit ${u.id} bank is a separate non-empty list`);
+    assert(Array.isArray(u.bank) && u.bank.length > 0, `unit ${u.id} bank is a separate non-empty list`);
+    assert(u.bank.map((q) => q.prompt).join("\n") !== u.questions.map((q) => q.prompt).join("\n"), `unit ${u.id} bank is not a copy of the authored questions`);
     u.bank.forEach((raw, i) => {
       assert(!u.questions.includes(raw), `${u.id} bank ${i} is not an authored question`);
       assertPreppedQuestion(prepQuestion(raw), `${u.id} bank ${i} (${raw.type || "?"})`);
@@ -1787,7 +1788,7 @@ const explainByEs = new Map(PRACTICE_EXPLAIN.map((row) => [row.es, row]));
 const subj1Bank = UNITS.find((u) => u.id === "subj1");
 assert(subj1Bank.questions.length === 11, "subj1 authored questions stay 11");
 assert(subj1Bank.questions[0].prompt === "Espero que ___ a la fiesta el sábado.", "subj1 question order is unchanged");
-assert(Array.isArray(subj1Bank.bank) && subj1Bank.bank.length === 3, "subj1 replay bank is 3 questions");
+assert(Array.isArray(subj1Bank.bank) && subj1Bank.bank.length === 11, "subj1 replay bank is 11 questions");
 assert(subj1Bank.bank[0].type === "mc" && subj1Bank.bank[0].prompt === "Me da gusto que ya te ___ mejor." && subj1Bank.bank[0].answer === "sientas", "subj1 bank MC is George's");
 assert(subj1Bank.bank[0].choices.join("|") === "sientes|sientas|sentirás|sentías", "subj1 bank MC choices");
 assert(subj1Bank.bank[0].explain === "«Me da gusto que» (emoción) dispara el subjuntivo. Tú → sientas.", "subj1 bank MC explain is George's");
@@ -1797,10 +1798,49 @@ assert(subj1Bank.bank[2].type === "order" && subj1Bank.bank[2].answer === "Escr�
 assert(subj1Bank.bank[2].words.join("|") === "Escríbeme|antes|de|que|salgas|sales|saldrás", "subj1 bank order words include the decoys");
 assert(subj1Bank.bank[2].explain === "«Antes de que» siempre pide subjuntivo: salgas. «Sales / saldrás» son señuelos en indicativo.", "subj1 bank order explain is George's");
 assert(subj1Bank.bank[2].prompt === "Construye: “Write to me before you leave.”", "subj1 bank order uses the existing English Construye cue");
+const subj1New = [
+  ["mc", "Es posible que Lupita no ___ ir el jueves.", "pueda"],
+  ["mc", "Dile a Rosa que me ___ hoy sin falta.", "llame"],
+  ["mc", "Llévate un suéter en caso de que ___ frío.", "haga"],
+  ["mc", "Estoy seguro de que Paco ya ___ en camino.", "está"],
+  ["type", "Te recomiendo que ___ el mole poblano.", "pruebes"],
+  ["type", "Aquí no hay nadie que ___ arreglar esto.", "sepa"],
+  ["order", "Construye: “Stay here until I get back.”", "Quédate aquí hasta que regrese"],
+  ["transform", "Transforma la oración", "Quiero entrar sin que nadie me vea|Quiero entrar sin que me vea nadie"],
+];
+subj1New.forEach(([type, prompt, answer], n) => {
+  const q = subj1Bank.bank[n + 3];
+  const got = q.type === "type" || q.type === "transform" ? q.answers.join("|") : q.answer;
+  assert(q.type === type && q.prompt === prompt && got === answer, `subj1 bank item ${n + 4} is George's`);
+});
+assert(subj1Bank.bank[6].note === "¡Ojo!", "subj1 bank trap keeps the ¡Ojo! note");
+assert(subj1Bank.bank[9].words.join("|") === "Quédate|aquí|hasta|que|regrese|regreso|regresaré", "subj1 bank order words include the decoys");
+assert(subj1Bank.bank[10].base === "Quiero entrar. Nadie me ve." && subj1Bank.bank[10].instruction === "Únelas con «sin que»", "subj1 bank transform base and instruction");
+const subj1PromptOwners = new Map();
+subj1Bank.questions.forEach((q, i) => {
+  if (q.type === "transform") return;
+  subj1PromptOwners.set(q.prompt, `question ${i}`);
+});
+subj1Bank.bank.forEach((q, i) => {
+  if (q.type === "transform") {
+    assert(!subj1Bank.questions.some((qq) => qq.base === q.base), `subj1 bank ${i} transform base is new`);
+    return;
+  }
+  assert(!subj1PromptOwners.has(q.prompt), `subj1 bank ${i} prompt duplicates ${subj1PromptOwners.get(q.prompt) || "another item"}`);
+  subj1PromptOwners.set(q.prompt, `bank ${i}`);
+});
 const subj1BankEn = [
   "«Me da gusto que» (emotion) triggers the subjunctive. Tú → sientas.",
   "«Para que» (purpose) always takes the subjunctive: vayas.",
   "«Antes de que» always takes the subjunctive: salgas. «Sales / saldrás» are indicative decoys.",
+  "«Es posible que» raises a possibility without stating it → subjunctive: pueda; the other choices treat it as fact.",
+  "Here «decir que» is a request, not news → subjunctive: llame; as news it would be «Dice que me llama».",
+  "«En caso de que» talks about something that may not happen → subjunctive: haga; the other choices treat it as a fact.",
+  "Trap: «estoy seguro de que» expresses certainty → indicative: está. With «no estoy seguro de que» it would be subjunctive: esté.",
+  "«Recomendar que» (advice) takes the subjunctive; probar changes its vowel: pruebes.",
+  "A negative antecedent («no hay nadie que») doesn’t exist, so it takes the subjunctive: sepa.",
+  "«Hasta que» + a future action takes the subjunctive: regrese. «Regreso / regresaré» are indicative decoys.",
+  "«Sin que» always takes the subjunctive and switches subject: ve → vea.",
 ];
 subj1Bank.bank.forEach((q, i) => {
   const row = explainByEs.get(q.explain);
@@ -1808,6 +1848,15 @@ subj1Bank.bank.forEach((q, i) => {
   assert(row.en === subj1BankEn[i], `subj1 bank ${i} EN is George's`);
   assert(explainText(q, "es") === q.explain, "bank Why ES resolves to the authored explain");
   assert(explainText(q, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(q);
+  assertPreppedQuestion(prepped, `subj1 bank ${i}`);
+  if (q.type === "order") {
+    assert(prepped.words.join("|") === q.words.join("|"), `subj1 bank ${i} order tiles stay authored`);
+    assert(prepped.answer === q.answer, `subj1 bank ${i} order answer stays authored`);
+  }
+  if (q.type === "type" || q.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === q.answers.join("|"), `subj1 bank ${i} answers stay authored`);
+  }
 });
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
