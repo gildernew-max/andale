@@ -2032,6 +2032,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("Memory dark theme follows the dark-game board and keeps light chrome off it", async () => {
     cleanup();
+    // Earlier tests paint document.body and never clear it.
+    document.body.style.background = "";
+    document.body.style.color = "";
+    document.body.style.transition = "";
     seedProgress({ uiLang: "es", theme: "dark" });
     const combi = MEMORY_BANK.find((r) => r.word === "combi");
     const tian = MEMORY_BANK.find((r) => r.word === "tianguis");
@@ -2060,7 +2064,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       },
     }));
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("memory-board")).toBeTruthy());
     const page = /#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i;
     const card = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
     const edge = /#252830|rgb\(\s*37,\s*40,\s*48\s*\)/i;
@@ -2068,6 +2071,13 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const gloss = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
     const sage = /#677050|rgb\(\s*103,\s*112,\s*80\s*\)/i;
     const label = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
+    // The dark board commits before the body colour effect. Under load that
+    // effect is still the previous cream when the board node already exists.
+    await waitFor(() => {
+      expect(screen.getByTestId("memory-board").style.background).toMatch(page);
+      expect(screen.getByTestId("app-shell").style.background).toMatch(page);
+      expect(document.body.style.background).toMatch(page);
+    });
     expect(screen.getByTestId("app-shell").style.background).toMatch(page);
     expect(document.body.style.background).toMatch(page);
     expect(screen.getByTestId("memory-board").style.background).toMatch(page);
