@@ -17,6 +17,7 @@ import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from
 import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { STREAK_FLAME, shouldPopFirstStreak, streakChipLabel, streakLabelColor } from "./streakChip.js";
+import { streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
 import { winNumeralColor } from "./winNumeral.js";
 import { scoreCountClause } from "./scoreLine.js";
 import { probeAudioFile, storyAudioUrl } from "./storyAudio.js";
@@ -5099,7 +5100,6 @@ export default function App() {
 	    p = acceptProgress(p);
 	    if (p) p = migrateFirstSession(p);
 	    const needsOnboarding = shouldShowOnboarding(p);
-	    let loaded = null;
 	    setProg((base) => {
 	      let merged = { ...base, ...(p || {}), contentVersion: CONTENT_VERSION };
 	      if (needsOnboarding) merged = { ...merged, onboardingPending: true };
@@ -5111,9 +5111,8 @@ export default function App() {
 	        merged = { ...merged, srs, mistakes: [] };
 	      }
       if (merged.voiceName) window.__andaleVoiceName = merged.voiceName;
-      loaded = regen(merged);
       hydrated.current = true;
-      return loaded;
+      return regen(merged);
     });
 	    if (needsOnboarding) {
 	      const resume = onboardingResume(p);
@@ -5125,12 +5124,13 @@ export default function App() {
 	      setOnboardingOpen(false);
 	    }
 	    try { window.speechSynthesis.getVoices(); } catch (e) {}
-	    // Streak gap check: if last activity was 2 days ago, the streak is "salvageable"
+	    // Streak gap check: if last activity was 2 days ago, the streak is salvageable.
+	    // Uses the save just read. The setProg updater above has not run yet.
 	    const today = todayStr(); const y = yesterdayStr();
-	    if (loaded?.lastDay && loaded.lastDay !== today && loaded.lastDay !== y && (loaded.streak || 0) >= 2 && !loaded.repairChecked) {
+	    if (p?.lastDay && p.lastDay !== today && p.lastDay !== y && (p.streak || 0) >= 2 && !p.repairChecked) {
 	      const dayBefore = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);
-	      if (loaded.lastDay === dayBefore) {
-	        setStreakRepair((loaded.freezes || 0) > 0 ? "freeze" : "repair");
+	      if (p.lastDay === dayBefore) {
+	        setStreakRepair((p.freezes || 0) > 0 ? "freeze" : "repair");
 	      }
 	    }
 	  })();
@@ -7257,6 +7257,12 @@ export default function App() {
   const flashDeck = flashRun?.deck || [];
   const activeCard = flashRun && !flashRun.done && flashRun.idx < flashDeck.length ? flashDeck[flashRun.idx] : null;
   const uiLang = prog.uiLang === "en" ? "en" : "es";
+  const streakView = streakDisplay({
+    prog,
+    today: todayKey,
+    repairModal: !!streakRepair,
+    lang: uiLang,
+  });
   const firstSessionWhy = session?.firstSession
     ? (session.beginnerFirst ? beginnerWhyLine(qi, uiLang) : firstSessionWhyLine(qi, uiLang))
     : null;
@@ -8232,7 +8238,7 @@ export default function App() {
           </button>
           {!inLesson && (
 	            <div style={{ display: "flex", gap: 14, fontWeight: 900, fontSize: 15, alignItems: "center" }}>
-              {!onboardingOpen && <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3 }} title={streakChipLabel(prog.streak, uiLang) || L.streakDays}><IcFlame size={19} fill={STREAK_FLAME} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>}
+              {!onboardingOpen && <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3 }} title={streakChipLabel(streakView.displayStreak, uiLang) || L.streakDays}><IcFlame size={19} fill={STREAK_FLAME} className={streakView.displayStreak > 0 ? "flame" : ""} /> {streakView.displayStreak}{(prog.freezes || 0) > 0 && <span title={uiLang === "en" ? "Streak freezes available" : "Congelamientos disponibles"} style={{ fontSize: 12, marginLeft: 2, color: "#1CB0F6" }}>❄️{prog.freezes}</span>}</span>}
               {!onboardingOpen && <span style={{ color: D.red, display: "inline-flex", alignItems: "center", gap: 3 }} title={prog.hearts < MAX_HEARTS ? `${L.nextLife} ${nextHeartMin} min` : `${L.lives} ${MAX_HEARTS}/${MAX_HEARTS}`}><IcHeart size={18} /> {prog.hearts ?? MAX_HEARTS}</span>}
               {!onboardingOpen && (voiceDead || (voicesReady && !voices.length) || !prog.sound) && (
                 <button onClick={() => { if (voiceDead || (voicesReady && !voices.length)) { setTab("perfil"); } else { save({ sound: !prog.sound }); } }} aria-label={uiLang === "en" ? "Sound" : "Sonido"}
@@ -8337,6 +8343,11 @@ export default function App() {
                     </button>
                   ))}
                 </div>
+                {streakView.line ? (
+                  <p data-testid="streak-home-note" data-streak-status={streakView.status} style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, overflowWrap: "break-word", maxWidth: "100%" }}>
+                    {streakView.line}
+                  </p>
+                ) : null}
                 {showLine && (
                   <p data-testid="come-back-tomorrow" style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
                     {comeBackTomorrowLine({
@@ -9313,14 +9324,14 @@ export default function App() {
           </div>}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[
-	              { icon: <IcFlame size={26} fill={STREAK_FLAME} />, v: prog.streak || 0, l: (prog.streak || 0) === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays, ink: streakLabelColor(theme) },
+	              { icon: <IcFlame size={26} fill={STREAK_FLAME} />, v: streakView.displayStreak, l: streakView.displayStreak === 1 ? (uiLang === "es" ? "día de racha" : "streak day") : L.streakDays, ink: streakLabelColor(theme), testid: "perfil-streak" },
 	              { icon: <IcBolt size={26} />, v: prog.xp || 0, l: L.totalXp },
 	              { icon: <IcCrown size={26} />, v: totalCrowns, l: L.crowns },
 	              { icon: <IcGem size={24} />, v: prog.gems || 0, l: L.gems },
 	              { icon: <IcBarbell size={24} color={D.blue} />, v: `${dueCount}/${trackedCount}`, l: L.reviewsStat },
 	              { icon: <IcMedal size={24} />, v: prog.perfects || 0, l: L.perfectLessons },
             ].map((s, i) => (
-              <div key={i} style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>
+              <div key={i} data-testid={s.testid} style={{ border: `2px solid ${D.line}`, borderRadius: 16, padding: "14px 16px", display: "flex", gap: 10, alignItems: "center" }}>
                 <span style={{ lineHeight: 0 }}>{s.icon}</span>
                 <div><div style={{ fontWeight: 900, fontSize: 18, color: s.ink }}>{s.v}</div><div style={{ fontSize: 11, color: D.sub, fontWeight: 800 }}>{s.l}</div></div>
               </div>
@@ -9958,12 +9969,8 @@ export default function App() {
             </div>
             <div style={{ fontWeight: 800, fontSize: 13.5, color: D.sub, marginBottom: 16, lineHeight: 1.45 }}>
               {streakRepair === "freeze"
-                ? (uiLang === "en"
-                  ? `A freeze auto-protected your ${prog.streak}-day streak yesterday. ${prog.freezes - 1 || 0} ${(prog.freezes - 1) === 1 ? "freeze" : "freezes"} remaining.`
-                  : `Un congelamiento protegió tu racha de ${prog.streak} días ayer. Te quedan ${prog.freezes - 1 || 0}.`)
-                : (uiLang === "en"
-                  ? `Your ${prog.streak}-day streak is in danger. Repair it with gems before today ends.`
-                  : `Tu racha de ${prog.streak} días está en peligro. Repárala con gemas antes de que termine el día.`)}
+                ? streakFreezeBody(prog.streak, Math.max(0, (Number(prog.freezes) || 0) - 1), uiLang)
+                : streakRepairBody(prog.streak, uiLang)}
             </div>
             <div style={{ display: "grid", gap: 9 }}>
               {streakRepair === "freeze" ? (
@@ -9972,7 +9979,7 @@ export default function App() {
                   const y = yesterdayStr();
                   save({ freezes: Math.max(0, (prog.freezes || 1) - 1), lastDay: y, repairChecked: true });
                   setStreakRepair(null);
-                }}>{uiLang === "en" ? "Use freeze (auto)" : "Usar congelamiento"}</Btn>
+                }}>{streakFreezeButton(uiLang)}</Btn>
               ) : (
                 <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < 200} onClick={() => {
                   const y = yesterdayStr();
@@ -11993,7 +12000,7 @@ export default function App() {
       {screen === "sessionClose" && (
         <div data-testid="session-close" style={{ maxWidth: 480, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
           <div style={{ background: D.card, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 20, padding: "28px 22px 22px" }}>
-            <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 900, fontSize: 18 }} title={streakChipLabel(prog.streak, uiLang) || L.streakDays}><IcFlame size={22} fill={STREAK_FLAME} className={prog.streak > 0 ? "flame" : ""} /> {prog.streak || 0}</span>
+            <span data-testid="streak" style={{ color: streakLabelColor(theme), display: "inline-flex", alignItems: "center", gap: 3, fontWeight: 900, fontSize: 18 }} title={streakChipLabel(streakView.displayStreak, uiLang) || L.streakDays}><IcFlame size={22} fill={STREAK_FLAME} className={streakView.displayStreak > 0 ? "flame" : ""} /> {streakView.displayStreak}</span>
             <p data-testid="session-close-next" style={{ margin: "16px 0 22px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, cursor: "default", pointerEvents: "none" }}>
               {L.playScene}
             </p>
