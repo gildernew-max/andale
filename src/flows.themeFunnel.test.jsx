@@ -154,7 +154,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     screen.getAllByTestId("bank-tile").forEach((tile) => {
       expect(paintOf(tile)).toMatchObject({ fill: "#ffffff", ink: "#58cc02" });
     });
-    expect(cssHex(screen.getByTestId("lesson-note").style.color)).toBe("#777777");
+    expect(cssHex(screen.getByTestId("lesson-note").style.color)).toBe("#6b6258");
 
     cleanup();
     localStorage.clear();

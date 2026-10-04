@@ -1962,7 +1962,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(byId("apapacho-word").style.background).toMatch(whiteFace);
     expect(byId("apapacho-word").style.color).toMatch(lightInk);
     expect(byId("apapacho-word").style.borderTopColor).toMatch(terracotta);
-    expect(screen.getByTestId("memory-title").style.color).toMatch(/#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i);
+    expect(screen.getByTestId("memory-title").style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
     expect(screen.getByTestId("memory-mark").querySelectorAll("rect")[1].getAttribute("fill")).toBe("#5C7356");
     expect(screen.getByTestId("app-shell").style.background).toMatch(creamFace);
 
