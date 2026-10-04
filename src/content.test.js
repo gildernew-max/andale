@@ -2397,7 +2397,7 @@ const porparaBankEn = [
   "Heading toward a destination → para: se va para Puebla. «Por Puebla» would mean passing through or around it, not the destination. «Fue» is past tense and clashes with «mañana».",
   "Para + infinitive expresses purpose (the «what for»): hago ejercicio para bajar de peso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
 porparaBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2493,6 +2493,182 @@ for (const phrase of [
   "Hago ejercicio para adelgazar",
 ]) {
   assert(gradeListedPhrase(phrase, porparaPurpose).status === "wrong", `purpose transform is rejected: ${phrase}`);
+}
+const sereflexBank = UNITS.find((u) => u.id === "sereflex");
+assert(sereflexBank.questions.length === 11, "sereflex authored questions stay 11");
+assert(sereflexBank.questions[0].prompt === "Aquí ___ español. (general statement)", "sereflex question order is unchanged");
+assert(Array.isArray(sereflexBank.bank) && sereflexBank.bank.length === 11, "sereflex replay bank is 11 questions");
+assert(sereflexBank.bank.map((q) => q.type).join(",") === "mc,mc,mc,mc,mc,type,type,type,order,order,transform", "sereflex bank types are mc/type/order/transform");
+assert(sereflexBank.bank[0].type === "mc" && sereflexBank.bank[0].prompt === "Los boletos para el concierto ___ en la taquilla del estadio." && sereflexBank.bank[0].answer === "se venden", "sereflex bank MC is George's");
+assert(sereflexBank.bank[0].choices.join("|") === "se vende|se venden|venden|es vendido", "sereflex bank MC choices");
+assert(sereflexBank.bank[0].explain === "Pasiva refleja: el verbo concuerda con lo que se vende. «Los boletos» es plural → se venden; «se vende» es singular.", "sereflex bank MC explain is George's");
+assert(sereflexBank.bank[5].type === "type" && sereflexBank.bank[5].prompt === "Los tamales de mi tía todavía se ___ con manteca." && sereflexBank.bank[5].note === "(preparar, presente)", "sereflex bank type is George's");
+assert(sereflexBank.bank[5].answers.join("|") === "preparan" && sereflexBank.bank[5].explain === "El sujeto de la pasiva refleja es «los tamales»: plural → se preparan. «Se prepara» no concuerda.", "sereflex bank type answer and explain");
+assert(sereflexBank.bank[8].type === "order" && sereflexBank.bank[8].answer === "Se me olvidó la tarea en casa", "sereflex bank order answer");
+assert(sereflexBank.bank[8].words.join("|") === "se|me|olvidó|la|tarea|en|casa|te|le|olvidaron", "sereflex homework order words include the decoys");
+assert(sereflexBank.bank[8].explain === "Olvido sin querer: se + me + verbo que concuerda con la cosa → se me olvidó la tarea. «Te / le» son otras personas; «olvidaron» es plural.", "sereflex bank order explain is George's");
+assert(sereflexBank.bank[8].prompt === "Construye: “I forgot my homework at home.”", "sereflex bank order uses the existing English Construye cue");
+const sereflexNew = [
+  ["mc", "Los boletos para el concierto ___ en la taquilla del estadio.", "se venden"],
+  ["mc", "En Mérida se ___ muy tranquilo, la verdad.", "vive"],
+  ["mc", "Perdón, ___ el vaso; no fue mi intención.", "se me cayó"],
+  ["mc", "En el cine no se ___ usar el celular.", "puede"],
+  ["mc", "A mis papás ___ la tele y no pudieron ver el partido.", "se les rompió"],
+  ["type", "Los tamales de mi tía todavía se ___ con manteca.", "preparan"],
+  ["type", "Ayer a mi hermana se le ___ las llaves en el metro.", "cayeron"],
+  ["type", "Disculpe, ¿por dónde se ___ a la estación del metro?", "va"],
+  ["order", "Construye: “I forgot my homework at home.”", "Se me olvidó la tarea en casa"],
+  ["order", "Construye con «se»: “Tacos are eaten with salsa.”", "Los tacos se comen con salsa"],
+  ["transform", "Transforma la oración", "Ayer se me rompió un vaso en la cocina"],
+];
+sereflexNew.forEach(([type, prompt, answer], n) => {
+  const item = sereflexBank.bank[n];
+  const got = item.type === "type" || item.type === "transform" ? item.answers.join("|") : item.answer;
+  assert(item.type === type && item.prompt === prompt && got === answer, `sereflex bank item ${n + 1} is George's`);
+});
+assert(sereflexBank.bank[4].note === "¡Ojo!" && sereflexBank.bank[4].explain.startsWith("Trampa:"), "sereflex bank trap keeps the ¡Ojo! note");
+assert(sereflexBank.bank[4].type === "mc", "sereflex bank fifth item is the mc trap");
+[
+  "se vende|se venden|venden|es vendido",
+  "vive|viven|vives|vivimos",
+  "se me cayó|se te cayó|se le cayó|se les cayó",
+  "puede|pueden|puedes|podemos",
+  "se les rompió|se les rompieron|se nos rompió|se me rompió",
+].forEach((choices, n) => {
+  assert(sereflexBank.bank[n].choices.join("|") === choices, `sereflex bank MC ${n + 1} choices are George's`);
+});
+assert(sereflexBank.bank[9].prompt === "Construye con «se»: “Tacos are eaten with salsa.”" && sereflexBank.bank[9].words.join("|") === "los|tacos|se|comen|con|salsa|come|me|le", "sereflex tacos order words include the decoys");
+assert(sereflexBank.bank[9].answers.length === 4 && sereflexBank.bank[9].answer === "Los tacos se comen con salsa", "sereflex tacos order has exactly 4 accepted orders");
+const sereflexTransform = [
+  "Ayer se me rompió un vaso en la cocina",
+];
+assert(sereflexBank.bank[10].type === "transform" && sereflexBank.bank[10].prompt === "Transforma la oración", "sereflex bank transform prompt");
+assert(sereflexBank.bank[10].base === "Ayer rompí un vaso en la cocina." && sereflexBank.bank[10].instruction === "Cuéntalo como accidente: empieza con «Ayer se me rompió…» y conserva el resto igual.", "sereflex bank transform base and instruction");
+assert(sereflexBank.bank[10].answers.join("|") === sereflexTransform.join("|"), "sereflex bank transform lists the accepted answer");
+const sereflexPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((item, i) => {
+      if (u.id === "sereflex" && kind === "bank") return;
+      if (item.type === "transform") {
+        const base = item.base || item.source;
+        if (base) sereflexPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (item.prompt) sereflexPromptOwners.set(item.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+sereflexBank.bank.forEach((item, i) => {
+  if (item.type === "transform") {
+    assert(!sereflexPromptOwners.has(item.base), `sereflex bank ${i} transform base repeats a prompt`);
+    assert(!sereflexPromptOwners.has(`base:${item.base}`), `sereflex bank ${i} transform base repeats ${sereflexPromptOwners.get(`base:${item.base}`) || "another item"}`);
+    return;
+  }
+  assert(!sereflexPromptOwners.has(item.prompt), `sereflex bank ${i} prompt duplicates ${sereflexPromptOwners.get(item.prompt) || "another item"}`);
+  sereflexPromptOwners.set(item.prompt, `sereflex bank ${i}`);
+});
+const sereflexBankEn = [
+  "Reflexive passive: the verb agrees with the thing being sold. «Los boletos» is plural → se venden; «se vende» is singular.",
+  "Impersonal (no one in particular): se + singular verb → se vive. «Se viven» would need a plural subject, and there isn't one here.",
+  "The accident happened to me («no fue mi intención») → se me cayó. «Se te / se le / se les» point to someone else.",
+  "Reflexive passive with a modal: «poder» agrees with the thing being used. «El celular» is singular → se puede usar; with a plural it would be «se pueden usar los celulares».",
+  "Trap: «mis papás» is plural and tempts «se les rompieron», but the verb agrees with the thing that breaks: la tele → rompió. The «les» is what marks the parents.",
+  "The subject of the reflexive passive is «los tamales»: plural → se preparan. «Se prepara» doesn't agree.",
+  "The verb agrees with the thing that falls: las llaves → cayeron, not «cayó». The «le» is the sister.",
+  "To ask for directions with no specific subject: se + third-person singular → se va; ir is irregular.",
+  "Unintentional forgetting: se + me + verb agreeing with the thing → se me olvidó la tarea. «Te / le» are other people; «olvidaron» is plural.",
+  "Reflexive passive: «los tacos» is plural → se comen. «Come» doesn't agree with «los tacos»; «me / le» are decoys.",
+  "Se + me marks an unintentional accident, and the verb agrees with the thing: rompí un vaso → se me rompió un vaso.",
+];
+assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
+sereflexBank.bank.forEach((item, i) => {
+  const row = explainByEs.get(item.explain);
+  assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === sereflexBankEn[i], `sereflex bank ${i} EN is George's`);
+  assert(explainText(item, "es") === item.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(item, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(item);
+  assertPreppedQuestion(prepped, `sereflex bank ${i}`);
+  if (item.type === "mc") {
+    assert(item.choices.length === 4 && new Set(item.choices).size === 4 && item.choices.includes(item.answer), `sereflex bank ${i} mc choices include the answer`);
+    assert(item.note === (i === 4 ? "¡Ojo!" : ""), `sereflex bank ${i} mc note is George's`);
+  }
+  if (item.type === "type") {
+    assert(item.note === ["(preparar, presente)", "(caer, pretérito)", "(ir, presente)"][i - 5], `sereflex bank ${i} type note is George's`);
+  }
+  if (item.type === "order") {
+    assert(prepped.words.join("|") === item.words.join("|"), `sereflex bank ${i} order tiles stay authored`);
+    assert(prepped.answer === item.answer, `sereflex bank ${i} order answer stays authored`);
+    assert(Array.isArray(item.answers) && item.answers[0] === item.answer, `sereflex bank ${i} answers start with the authored answer`);
+    assert(item.words.every((w) => !String(w).includes(",")), `sereflex bank ${i} tiles carry no comma`);
+    assert(item.words.every((w) => w === w.toLowerCase()), `sereflex bank ${i} tiles stay lowercase`);
+    item.answers.forEach((phrase) => {
+      const answerTokens = stripPhrase(phrase).split(" ").filter(Boolean);
+      const tilePool = item.words.map((w) => stripPhrase(w));
+      answerTokens.forEach((tok) => {
+        const at = tilePool.indexOf(tok);
+        assert(at >= 0, `sereflex bank ${i} answer word ${tok} is a tile`);
+        tilePool.splice(at, 1);
+      });
+      const built = builtFromOrderTiles(item.words, phrase);
+      assert(built, `sereflex bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(phrase, item).status !== "wrong", `sereflex bank ${i} listed order is accepted: ${phrase}`);
+      assert(gradeListedPhrase(built, item).status !== "wrong", `sereflex bank ${i} tile-built order is accepted: ${built}`);
+    });
+    const builtPrimary = builtFromOrderTiles(item.words, item.answer);
+    assert(builtPrimary && stripPhrase(builtPrimary) === stripPhrase(item.answer), `sereflex bank ${i} primary order is the authored tile text`);
+  }
+  if (item.type === "type" || item.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === item.answers.join("|"), `sereflex bank ${i} answers stay authored`);
+  }
+});
+const sereflexHomework = sereflexBank.bank[8];
+const sereflexTacos = sereflexBank.bank[9];
+const sereflexAccident = sereflexBank.bank[10];
+assert(sereflexHomework.answers.join("|") === "Se me olvidó la tarea en casa|En casa se me olvidó la tarea|La tarea se me olvidó en casa|Se me olvidó en casa la tarea", "sereflex homework order lists the accepted alternates");
+assert(sereflexTacos.answers.join("|") === "Los tacos se comen con salsa|Se comen los tacos con salsa|Se comen con salsa los tacos|Con salsa se comen los tacos", "sereflex tacos order lists the accepted alternates");
+assert(sereflexAccident.instruction === "Cuéntalo como accidente: empieza con «Ayer se me rompió…» y conserva el resto igual.", "sereflex transform instruction is George's");
+assert(sereflexAccident.answers.join("|") === "Ayer se me rompió un vaso en la cocina", "sereflex transform answer is George's");
+for (const phrase of sereflexHomework.answers) {
+  assert(gradeListedPhrase(phrase, sereflexHomework).status !== "wrong", `homework order accepted: ${phrase}`);
+}
+for (const phrase of [
+  "Se te olvidó la tarea en casa",
+  "Se le olvidó la tarea en casa",
+  "Se me olvidaron la tarea en casa",
+  "Olvidó la tarea en casa",
+  "La tarea en casa se me olvidó",
+  "En casa la tarea se me olvidó",
+]) {
+  assert(gradeListedPhrase(phrase, sereflexHomework).status === "wrong", `homework order is rejected: ${phrase}`);
+}
+for (const phrase of sereflexTacos.answers) {
+  assert(gradeListedPhrase(phrase, sereflexTacos).status !== "wrong", `tacos order accepted: ${phrase}`);
+}
+for (const phrase of [
+  "Los tacos se come con salsa",
+  "Los tacos me comen con salsa",
+  "Los tacos le comen con salsa",
+  "Comen los tacos con salsa",
+  "Con salsa los tacos se comen",
+  "Los tacos con salsa se comen",
+]) {
+  assert(gradeListedPhrase(phrase, sereflexTacos).status === "wrong", `tacos order is rejected: ${phrase}`);
+}
+sereflexAccident.answers.forEach((phrase) => {
+  assert(gradeListedPhrase(phrase, sereflexAccident).status !== "wrong", `accident transform accepted: ${phrase}`);
+});
+for (const phrase of [
+  "Ayer se rompió un vaso en la cocina",
+  "Ayer yo rompí un vaso en la cocina",
+  "Ayer se me cayó un vaso en la cocina",
+  "Ayer se me rompió un vaso",
+  "Ayer se me rompió el vaso en la cocina",
+]) {
+  assert(gradeListedPhrase(phrase, sereflexAccident).status === "wrong", `accident transform is rejected: ${phrase}`);
 }
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
