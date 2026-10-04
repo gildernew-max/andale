@@ -2397,7 +2397,7 @@ const porparaBankEn = [
   "Heading toward a destination → para: se va para Puebla. «Por Puebla» would mean passing through or around it, not the destination. «Fue» is past tense and clashes with «mañana».",
   "Para + infinitive expresses purpose (the «what for»): hago ejercicio para bajar de peso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
 porparaBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2583,7 +2583,7 @@ const sereflexBankEn = [
   "Reflexive passive: «los tacos» is plural → se comen. «Come» doesn't agree with «los tacos»; «me / le» are decoys.",
   "Se + me marks an unintentional accident, and the verb agrees with the thing: rompí un vaso → se me rompió un vaso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
 sereflexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2670,6 +2670,158 @@ for (const phrase of [
 ]) {
   assert(gradeListedPhrase(phrase, sereflexAccident).status === "wrong", `accident transform is rejected: ${phrase}`);
 }
+const compsupBank = UNITS.find((u) => u.id === "compsup");
+assert(compsupBank.questions.length === 11, "compsup authored questions stay 11");
+assert(compsupBank.questions[0].prompt === "Este café es ___ que el otro.", "compsup question order is unchanged");
+assert(Array.isArray(compsupBank.bank) && compsupBank.bank.length === 11, "compsup replay bank is 11 questions");
+assert(compsupBank.bank.map((q) => q.type).join(",") === "mc,mc,mc,mc,mc,type,type,type,order,order,transform", "compsup bank types are mc/type/order/transform");
+assert(compsupBank.bank[0].prompt === "Mi coche no es ___ rápido como el de mi hermano, pero llega a todos lados." && compsupBank.bank[0].answer === "tan", "compsup bank item 1");
+assert(compsupBank.bank[0].choices.join("|") === "tan|tanto|más|menos", "compsup bank MC choices");
+assert(compsupBank.bank[3].prompt === "El pozole de mi tía Rosa es el ___ rico de toda la familia; nadie le gana." && compsupBank.bank[3].choices.join("|") === "más|muy|tan|tanto" && compsupBank.bank[3].answer === "más", "compsup bank item 4 keeps the muy decoy in the predicate frame");
+assert(compsupBank.bank[4].note === "¡Ojo!" && compsupBank.bank[4].explain.startsWith("Ante un número") && compsupBank.bank[4].answer === "más de", "compsup bank trap keeps the ¡Ojo! note");
+assert(compsupBank.bank[4].choices.join("|") === "más de|más que|más de lo|más del", "compsup bank trap choices");
+assert(compsupBank.bank[5].note === "(una palabra: mayor o menor)" && compsupBank.bank[5].answers.join("|") === "mayor", "compsup bank type mayor");
+assert(compsupBank.bank[6].answers.join("|") === "contentísima", "compsup bank type -ísima lists the accented form only (the grader ignores accents)");
+assert(compsupBank.bank[7].answers.join("|") === "peor", "compsup bank type peor");
+assert(compsupBank.bank[8].prompt === "Construye: “There is less traffic today than yesterday.”" && compsupBank.bank[8].words.join("|") === "hoy|hay|menos|tráfico|que|ayer|más|como", "compsup traffic order words include the decoys");
+assert(compsupBank.bank[9].prompt === "Construye: “My cousin is the best student in the class.” (superlativo antes del sustantivo)" && compsupBank.bank[9].words.join("|") === "mi|prima|es|la|mejor|alumna|del|salón|peor|más", "compsup best-student order words include the decoys");
+assert(compsupBank.bank[8].words.every((w) => w === w.toLowerCase() && !w.includes(",")) && compsupBank.bank[9].words.every((w) => w === w.toLowerCase() && !w.includes(",")), "compsup order tiles are lowercase with no comma");
+assert(compsupBank.bank[10].base === "Mi hermana tiene diez pares de tenis. Yo tengo diez pares de tenis." && compsupBank.bank[10].instruction === "Únelas con «tantos … como»: empieza con «Mi hermana tiene…» y conserva «pares de tenis»", "compsup bank transform base and instruction");
+const compsupPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((item, i) => {
+      if (u.id === "compsup" && kind === "bank") return;
+      if (item.type === "transform") {
+        const base = item.base || item.source;
+        if (base) compsupPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (item.prompt) compsupPromptOwners.set(item.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+compsupBank.bank.forEach((item, i) => {
+  if (item.type === "transform") {
+    assert(!compsupPromptOwners.has(item.base), `compsup bank ${i} transform base repeats a prompt`);
+    assert(!compsupPromptOwners.has(`base:${item.base}`), `compsup bank ${i} transform base repeats ${compsupPromptOwners.get(`base:${item.base}`) || "another item"}`);
+    return;
+  }
+  assert(!compsupPromptOwners.has(item.prompt), `compsup bank ${i} prompt duplicates ${compsupPromptOwners.get(item.prompt) || "another item"}`);
+  compsupPromptOwners.set(item.prompt, `compsup bank ${i}`);
+});
+const compsupBankEn = [
+  "Equality with an adjective → tan + adjective + como: tan rápido como. «Tanto» goes with nouns or verbs, not with adjectives.",
+  "Quantity with a noun → tanto/a/os/as + noun + como, and it agrees with the noun: buñuelos is masculine plural → tantos. «Tantas» doesn't agree and «tan» doesn't go before a noun.",
+  "«Mejor» is already the comparative of «bien» and «bueno», so it takes no «más»: va mejor que el año pasado. «Más mejor» would double the comparative.",
+  "Superlative: the + más + adjective + de + group → the tastiest in the whole family. «Muy» only intensifies; it cannot follow «el» and does not compare against a group.",
+  "Before a number, affirmative comparisons take «más de»: more than three hundred guests. «Más que» compares two things (taller than me) or appears in «no … más que» = only.",
+  "Age: «mayor» = older; «menor» = younger. Fifteen versus twelve → he is older than I am. (Everyday speech also uses «más grande», but this unit drills «mayor».)",
+  "-ísimo/a is the absolute superlative (muy + adjective): contenta → contentísima. It agrees with la abuela, which is why it ends in -a.",
+  "The superlative of «malo» is irregular: el peor día de mi vida. Its opposite is «el mejor día».",
+  "«Menos» + noun + que compares quantities: hay menos tráfico que ayer. «Más» would say the opposite, and «como» goes with «tan / tanto», not with «menos».",
+  "Irregular superlative: la + mejor + noun + de + group → la mejor alumna del salón. «Peor» would say the opposite, and «más» is not added to «mejor». In ordinary speech the superlative goes before the noun (not «la alumna mejor»).",
+  "Quantity with a noun → tantos + noun + como: she has ten pairs and I have ten → tantos pares de tenis como yo. «Pares» is masculine plural, which is why it's tantos.",
+];
+assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
+compsupBank.bank.forEach((item, i) => {
+  const row = explainByEs.get(item.explain);
+  assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === compsupBankEn[i], `compsup bank ${i} EN row equals the English row`);
+  assert(explainText(item, "es") === item.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(item, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(item);
+  assertPreppedQuestion(prepped, `compsup bank ${i}`);
+  if (item.type === "mc") {
+    assert(item.choices.length === 4 && new Set(item.choices).size === 4 && item.choices.includes(item.answer), `compsup bank ${i} mc choices include the answer`);
+    assert(item.note === (i === 4 ? "¡Ojo!" : ""), `compsup bank ${i} mc note`);
+  }
+  if (item.type === "type") {
+    assert(item.note === ["(una palabra: mayor o menor)", "(contenta, con -ísima)", "(malo, forma irregular)"][i - 5], `compsup bank ${i} type note`);
+  }
+  if (item.type === "order") {
+    assert(prepped.words.join("|") === item.words.join("|"), `compsup bank ${i} order tiles stay authored`);
+    assert(prepped.answer === item.answer, `compsup bank ${i} order answer stays authored`);
+    assert(Array.isArray(item.answers) && item.answers[0] === item.answer, `compsup bank ${i} answers start with the authored answer`);
+    assert(item.words.every((w) => !String(w).includes(",")), `compsup bank ${i} tiles carry no comma`);
+    assert(item.words.every((w) => w === w.toLowerCase()), `compsup bank ${i} tiles stay lowercase`);
+    item.answers.forEach((phrase) => {
+      const answerTokens = stripPhrase(phrase).split(" ").filter(Boolean);
+      const tilePool = item.words.map((w) => stripPhrase(w));
+      answerTokens.forEach((tok) => {
+        const at = tilePool.indexOf(tok);
+        assert(at >= 0, `compsup bank ${i} answer word ${tok} is a tile`);
+        tilePool.splice(at, 1);
+      });
+      const built = builtFromOrderTiles(item.words, phrase);
+      assert(built, `compsup bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(phrase, item).status !== "wrong", `compsup bank ${i} listed order is accepted: ${phrase}`);
+      assert(gradeListedPhrase(built, item).status !== "wrong", `compsup bank ${i} tile-built order is accepted: ${built}`);
+    });
+    const builtPrimary = builtFromOrderTiles(item.words, item.answer);
+    assert(builtPrimary && builtPrimary.toLowerCase() === item.answer.toLowerCase(), `compsup bank ${i} primary order is the authored tile text`);
+  }
+  if (item.type === "type" || item.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === item.answers.join("|"), `compsup bank ${i} answers stay authored`);
+  }
+});
+const compsupTraffic = compsupBank.bank[8];
+const compsupStudent = compsupBank.bank[9];
+const compsupPares = compsupBank.bank[10];
+const compsupMayor = compsupBank.bank[5];
+const compsupIsima = compsupBank.bank[6];
+const compsupPeor = compsupBank.bank[7];
+assert(compsupTraffic.answers.join("|") === "Hoy hay menos tráfico que ayer|Hay menos tráfico hoy que ayer|Hay hoy menos tráfico que ayer", "compsup traffic order lists the accepted alternates");
+assert(compsupStudent.answers.join("|") === "Mi prima es la mejor alumna del salón|La mejor alumna del salón es mi prima|Es mi prima la mejor alumna del salón", "compsup best-student order lists the accepted alternates");
+assert(compsupPares.answers.join("|") === "Mi hermana tiene tantos pares de tenis como yo|Mi hermana tiene tantos pares de tenis como yo tengo|Mi hermana tiene tantos pares de tenis como tengo yo", "compsup transform lists the accepted alternates");
+for (const phrase of compsupTraffic.answers) {
+  assert(gradeListedPhrase(phrase, compsupTraffic).status !== "wrong", `traffic order accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("Hay hoy menos tráfico que ayer", compsupTraffic).status !== "wrong", "traffic accepted alternate grades ok");
+for (const phrase of [
+  "Hoy hay más tráfico que ayer",
+  "Hoy hay menos tráfico como ayer",
+  "Ayer hay menos tráfico que hoy",
+  "Hay menos tráfico que ayer hoy",
+]) {
+  assert(gradeListedPhrase(phrase, compsupTraffic).status === "wrong", `traffic order is rejected: ${phrase}`);
+}
+for (const phrase of compsupStudent.answers) {
+  assert(gradeListedPhrase(phrase, compsupStudent).status !== "wrong", `best-student order accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("Es mi prima la mejor alumna del salón", compsupStudent).status !== "wrong", "best-student accepted alternate grades ok");
+for (const phrase of [
+  "Mi prima es la peor alumna del salón",
+  "Mi prima es la más mejor alumna del salón",
+  "Mi prima es la alumna mejor del salón",
+  "Mi prima es la mejor del salón alumna",
+]) {
+  assert(gradeListedPhrase(phrase, compsupStudent).status === "wrong", `best-student order is rejected: ${phrase}`);
+}
+for (const phrase of compsupPares.answers) {
+  assert(gradeListedPhrase(phrase, compsupPares).status !== "wrong", `pares transform accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("Mi hermana tiene tantos pares de tenis como tengo yo", compsupPares).status !== "wrong", "transform accepted alternate grades ok");
+for (const phrase of [
+  "Mi hermana tiene tantas pares de tenis como yo",
+  "Mi hermana tiene tanto pares de tenis como yo",
+  "Mi hermana tiene tantos pares de tenis que yo",
+  "Mi hermana tiene lo mismo que yo",
+  "Mi hermana tiene tantos tenis como yo",
+  "Yo tengo tantos pares de tenis como mi hermana",
+  "Mi hermana tiene tantos pares como yo",
+]) {
+  assert(gradeListedPhrase(phrase, compsupPares).status === "wrong", `pares transform is rejected: ${phrase}`);
+}
+for (const phrase of ["menor", "más grande"]) {
+  assert(gradeListedPhrase(phrase, compsupMayor).status === "wrong", `mayor type is rejected: ${phrase}`);
+}
+for (const phrase of ["contenta", "muy contenta"]) {
+  assert(gradeListedPhrase(phrase, compsupIsima).status === "wrong", `contentísima type is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("más malo", compsupPeor).status === "wrong", "peor type is rejected: más malo");
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;
