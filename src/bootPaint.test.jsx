@@ -1,6 +1,8 @@
 /**
  * Pre-bundle page paint. index.html reads andale-v3 before the module
- * script so a saved dark theme does not flash cream. The key holds the
+ * script so a saved dark theme does not flash cream. With no saved
+ * light or dark choice, a phone that prefers dark gets the dark page.
+ * That derived choice is not written into the save. The key holds the
  * progress object itself ({ theme: "light" | "dark", ... }), not the
  * { value } wrapper storage.get returns, and not andale-v3-live.
  */
@@ -65,6 +67,7 @@ describe("boot paint", () => {
   it("inline script exists in index.html before the module script", () => {
     expect(script).toContain('localStorage.getItem("andale-v3")');
     expect(script).not.toContain("andale-v3-live");
+    expect(script).toContain("prefers-color-scheme: dark");
     expect(script).toContain(CREAM);
     expect(script).toContain(DARK);
     expect(indexHtml).toContain(`html,body{background:${CREAM}}`);
@@ -114,6 +117,60 @@ describe("boot paint", () => {
     expect(result.htmlBg).toBe(norm(CREAM));
     expect(result.bodyBg).toBe(norm(CREAM));
     expect(result.injected).toContain(`html,body{background:${CREAM}}`);
+  });
+
+  const phone = (dark) => (query) => ({
+    matches: dark === true && String(query).includes("prefers-color-scheme: dark"),
+    media: query,
+  });
+
+  it("no saved theme on a dark phone paints the dark page", () => {
+    const result = paint((window) => {
+      window.matchMedia = phone(true);
+    });
+    expect(result.escaped).toBeNull();
+    expect(result.htmlBg).toBe(norm(DARK));
+    expect(result.bodyBg).toBe(norm(DARK));
+    expect(result.injected).toContain(`html,body{background:${DARK}}`);
+  });
+
+  it("no saved theme on a light phone paints cream", () => {
+    const result = paint((window) => {
+      window.matchMedia = phone(false);
+    });
+    expect(result.escaped).toBeNull();
+    expect(result.htmlBg).toBe(norm(CREAM));
+    expect(result.bodyBg).toBe(norm(CREAM));
+    expect(result.injected).toContain(`html,body{background:${CREAM}}`);
+  });
+
+  it("saved light on a dark phone paints cream", () => {
+    const result = paint((window) => {
+      window.localStorage.setItem("andale-v3", JSON.stringify({ theme: "light", streak: 4 }));
+      window.matchMedia = phone(true);
+    });
+    expect(result.escaped).toBeNull();
+    expect(result.htmlBg).toBe(norm(CREAM));
+    expect(result.bodyBg).toBe(norm(CREAM));
+  });
+
+  it("saved dark on a light phone paints the dark page", () => {
+    const result = paint((window) => {
+      window.localStorage.setItem("andale-v3", JSON.stringify({ theme: "dark" }));
+      window.matchMedia = phone(false);
+    });
+    expect(result.escaped).toBeNull();
+    expect(result.htmlBg).toBe(norm(DARK));
+    expect(result.bodyBg).toBe(norm(DARK));
+  });
+
+  it("missing matchMedia with empty storage paints cream", () => {
+    const result = paint((window) => {
+      window.matchMedia = undefined;
+    });
+    expect(result.escaped).toBeNull();
+    expect(result.htmlBg).toBe(norm(CREAM));
+    expect(result.bodyBg).toBe(norm(CREAM));
   });
 
   it("empty storage paints cream", () => {
