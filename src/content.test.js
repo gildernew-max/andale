@@ -877,7 +877,7 @@ assert(appSrc.includes("data-testid=\"lesson-listen-skip-hint\""), "Listen Skip 
 assert(appSrc.includes("skipAudioGate"), "Listen Skip calls skipAudioGate");
 assert(appSrc.includes("isAudioGatedStep(q)"), "Skip only fires on a gated audio beat");
 const listenSkipSrc = appSrc.slice(appSrc.indexOf("data-testid=\"lesson-listen-skip\""), appSrc.indexOf("data-testid=\"lesson-listen-skip\"") + 520);
-assert(/background:\s*HUB_CREAM/.test(listenSkipSrc), "Listen Skip sits on HUB_CREAM like timer-off");
+assert(/background:\s*theme === "dark" \? D\.card : HUB_CREAM/.test(listenSkipSrc), "Listen Skip is HUB_CREAM in light and the dark card in dark");
 assert(listenSkipSrc.includes("border: \"none\""), "Listen Skip has no new border chrome");
 assert(listenSkipSrc.includes("fontSize: 11"), "Listen Skip matches timer-off / soft secondary weight");
 assert(!/duo-btn/.test(listenSkipSrc), "Listen Skip is not a primary duo-btn");
