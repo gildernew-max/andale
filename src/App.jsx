@@ -464,6 +464,19 @@ const UNITS = [
       { type: "transform", base: "Voy a ir.", instruction: "Hazlo condicional (una palabra)", prompt: "Transforma la oración", answers: ["Iría"], explain: "Futuro inmediato → condicional: iría." },
       { type: "listen", text: "Si pudiera, me mudaría a San Miguel mañana mismo.", answers: ["Si pudiera, me mudaría a San Miguel mañana mismo", "Si pudiera me mudaría a San Miguel mañana mismo"], explain: "Pudiera → mudaría: el dúo clásico de la hipótesis irreal." },
     ],
+    bank: [
+      { type: "mc", prompt: "Actúa como si nunca ___ pasado nada.", note: "", choices: ["ha", "había", "hubiera", "habría"], answer: "hubiera", explain: "«Como si» sobre algo que ya pasó exige pluscuamperfecto de subjuntivo: hubiera pasado; ha, había y habría no van tras «como si»." },
+      { type: "mc", prompt: "Yo que tú, ___ con tu jefe antes de firmar.", note: "", choices: ["hablo", "hablaría", "hablé", "hablaré"], answer: "hablaría", explain: "«Yo que tú» da un consejo hipotético → condicional: hablaría; presente, pasado y futuro serían un hecho, no un consejo." },
+      { type: "mc", prompt: "Si ___ estudiado más, habrías pasado el examen.", note: "", choices: ["hubieras", "habías", "has", "habrías"], answer: "hubieras", explain: "Pasado irreal: la cláusula con «si» lleva pluscuamperfecto de subjuntivo: hubieras estudiado. «Habrías» queda para la consecuencia." },
+      { type: "mc", prompt: "Si me ___ hoy, mañana pago la renta.", note: "¡Ojo!", choices: ["depositan", "depositen", "depositarán", "depositarían"], answer: "depositan", explain: "Trampa: condición real o probable → «si» + presente de indicativo: depositan; «si» no lleva presente de subjuntivo, futuro ni condicional." },
+      { type: "mc", prompt: "Si no ___ por mi hermana, hoy no tendría trabajo.", note: "", choices: ["es", "sea", "fuera", "fue"], answer: "fuera", explain: "«Si no fuera por…» es una fórmula irreal (imperfecto de subjuntivo) y va con condicional: tendría." },
+      { type: "type", prompt: "Si mis primos ___ el sábado, haríamos una comida en casa.", note: "(venir)", answers: ["vinieran", "viniesen"], explain: "La consecuencia en condicional (haríamos) pide imperfecto de subjuntivo en la cláusula con «si»: vinieran." },
+      { type: "type", prompt: "Si me tocara la lotería, ___ por todo el país.", note: "(viajar, yo)", answers: ["viajaría", "viajaria"], explain: "Tras «si» + imperfecto de subjuntivo, la consecuencia va en condicional: viajaría." },
+      { type: "type", prompt: "Si hubieras llegado temprano, ___ cenado juntos.", note: "(haber, nosotros — condicional)", answers: ["habríamos", "habriamos", "hubiéramos", "hubieramos", "hubiésemos", "hubiesemos"], explain: "Pasado irreal → condicional compuesto: habríamos + cenado; en el habla también se oye «hubiéramos»." },
+      { type: "order", prompt: "Construye: “If we left now, we would arrive on time.”", words: ["Si", "saliéramos", "ahorita,", "llegaríamos", "a", "tiempo", "saldríamos", "llegaremos"], answer: "Si saliéramos ahorita, llegaríamos a tiempo", explain: "Saliéramos (subjuntivo) + llegaríamos (condicional). «Saldríamos / llegaremos» son señuelos: «si» no lleva condicional ni futuro." },
+      { type: "order", prompt: "Construye: “I would like to ask you a favor.”", words: ["Quisiera", "pedirle", "un", "favor", "Quise", "Querré"], answer: "Quisiera pedirle un favor", explain: "«Quisiera» + infinitivo es la forma cortés de pedir. «Quise / querré» son señuelos: pasado y futuro." },
+      { type: "transform", base: "Si llueve, no vamos.", instruction: "Hazlo irreal (empieza con «Si lloviera…»)", prompt: "Transforma la oración", answers: ["Si lloviera, no iríamos", "Si lloviese, no iríamos"], explain: "Lo irreal cambia los dos verbos: llueve → lloviera, vamos → iríamos." },
+    ],
   },
   {
     id: "pronombres", title: "Pronombres y «se»", desc: "Se lo dije, se me olvidó, se vende",
@@ -523,7 +536,7 @@ const UNITS = [
     blurb: "Contrafactuales, cortesía y comparaciones con «como si».",
     questions: [
       { type: "mc", prompt: "Si yo ___ rico, viajaría por todo México.", choices: ["fuera", "soy", "era", "sería"], answer: "fuera", note: "Si + imperfect subjunctive + conditional → counterfactual present. «Si soy» would make it a real condition, not a hypothetical." },
-      { type: "mc", prompt: "Habla como si lo ___ todo.", choices: ["sabe", "supiera", "sabría", "sabe"], answer: "supiera", note: "«Como si» (as if) is always followed by imperfect subjunctive, no exceptions." },
+      { type: "mc", prompt: "Habla como si lo ___ todo.", choices: ["sabe", "supiera", "sabría", "sepa"], answer: "supiera", note: "«Como si» (as if) is always followed by imperfect subjunctive, no exceptions." },
       { type: "type", prompt: "Translate: «If I had time, I would help you.»", answer: "Si tuviera tiempo, te ayudaría.", note: "Si + imperfect subj + conditional. The classic structure." },
       { type: "mc", prompt: "Me dijo que ___ a la junta a las nueve.", choices: ["llegara", "llegue", "llego", "llegaba"], answer: "llegara", note: "Reported subjunctive: «Llega a las nueve» → «Me dijo que llegara». Past trigger → imperfect subjunctive." },
       { type: "transform", prompt: "Soften this command into a request.", source: "¿Puedes traerme el menú?", answer: "¿Pudieras traerme el menú?", note: "Imperfect subjunctive of poder/querer/deber softens requests dramatically — the polite move in Mexican Spanish: «Quisiera un café», «Pudieras ayudarme»." },
@@ -533,6 +546,19 @@ const UNITS = [
       { type: "mc", prompt: "Buscaba un departamento que ___ cerca del metro.", choices: ["está", "estuviera", "esté", "fue"], answer: "estuviera", note: "Antecedent that may not exist + past tense → imperfect subjunctive." },
       { type: "mc", prompt: "Quisiera que tú ___ con nosotros.", choices: ["vienes", "vengas", "vinieras", "vendrías"], answer: "vinieras", note: "Quisiera (already imperfect subj) + que → imperfect subj. Sequence of tenses." },
       { type: "type", prompt: "Translate: «He left without my noticing.»", answer: "Se fue sin que yo me diera cuenta.", note: "«Sin que» always takes subjunctive. Past context → imperfect subjunctive." },
+    ],
+    bank: [
+      { type: "mc", prompt: "Mi mamá quería que yo ___ medicina.", note: "", choices: ["estudio", "estudie", "estudiara", "estudiaría"], answer: "estudiara", explain: "«Querer que» en pasado pide imperfecto de subjuntivo: estudiara; el presente (estudie) no concuerda con «quería»." },
+      { type: "mc", prompt: "Me saludó como si no me ___.", note: "", choices: ["conoce", "conociera", "conoció", "conocería"], answer: "conociera", explain: "«Como si» pide imperfecto de subjuntivo: conociera; las otras opciones presentan la comparación como un hecho." },
+      { type: "mc", prompt: "En la fiesta no había nadie que ___ bailar salsa.", note: "", choices: ["sabe", "sepa", "supiera", "sabría"], answer: "supiera", explain: "Antecedente negativo («no había nadie que») en pasado → imperfecto de subjuntivo: supiera." },
+      { type: "mc", prompt: "Se fue antes de que yo ___ despedirme.", note: "", choices: ["puedo", "pueda", "pudiera", "podría"], answer: "pudiera", explain: "«Antes de que» siempre pide subjuntivo; con «se fue» (pasado) va en imperfecto: pudiera." },
+      { type: "mc", prompt: "Yo sabía que Pedro ___ en la oficina a esa hora.", note: "¡Ojo!", choices: ["esté", "estuviera", "estaba", "estará"], answer: "estaba", explain: "Trampa: «saber que» expresa certeza → indicativo: estaba. El subjuntivo (estuviera) aparece al negar: «No creía que estuviera»." },
+      { type: "type", prompt: "Si Memo ___ más rápido, llegaríamos a tiempo.", note: "(manejar)", answers: ["manejara", "manejase"], explain: "Si + imperfecto de subjuntivo para lo irreal: manejara; llegaríamos es la consecuencia." },
+      { type: "type", prompt: "Era importante que nos ___ la verdad.", note: "(decir, tú)", answers: ["dijeras", "dijeses"], explain: "«Era importante que» (pasado) pide imperfecto de subjuntivo: dijeras, que sale de «dijeron»." },
+      { type: "type", prompt: "¿Te molestó que ___ la ventana?", note: "(abrir, yo)", answers: ["abriera", "abriese"], explain: "«¿Te molestó que…?» habla del pasado y pide imperfecto de subjuntivo: abriera." },
+      { type: "order", prompt: "Construye: “If I lived nearby, I would walk.”", words: ["Si", "viviera", "cerca,", "iría", "caminando", "vivía", "iré"], answer: "Si viviera cerca, iría caminando", explain: "Viviera (subjuntivo) + iría (condicional). «Vivía / iré» son señuelos." },
+      { type: "order", prompt: "Construye: “I left early so you could rest.”", words: ["Me", "fui", "temprano", "para", "que", "descansaras", "descansas", "descansarás"], answer: "Me fui temprano para que descansaras", explain: "«Para que» en pasado pide imperfecto de subjuntivo: descansaras. «Descansas / descansarás» son señuelos en indicativo." },
+      { type: "transform", base: "Es una lástima que no vengas.", instruction: "Ponlo en pasado (empieza con «Era una lástima…»)", prompt: "Transforma la oración", answers: ["Era una lástima que no vinieras", "Era una lástima que no vinieses"], explain: "Si el verbo principal pasa a imperfecto, el subjuntivo también: vengas → vinieras." },
     ],
     pairs: [
       { es: "fuera", en: "(I/he/she) were (subj.)" },
@@ -4318,6 +4344,7 @@ const UI = {
     playScene: "Jugar la escena",
     hubHoy: "Hoy",
     hubHoyQuiet: "Plan de hoy",
+    hubGoalDone: "Meta de hoy cumplida",
     hoyPlanEyebrow: "HOY · ~10 MIN",
     hoyPlanSell: "Un plan corto para hoy. Unos diez minutos. Luego paras.",
     hoyPlanCta: "Empezar el plan",
@@ -4409,6 +4436,7 @@ const UI = {
     playScene: "Play the scene",
     hubHoy: "Hoy",
     hubHoyQuiet: "Today's plan",
+    hubGoalDone: "Today\u2019s goal done",
     hoyPlanEyebrow: "TODAY · ~10 MIN",
     hoyPlanSell: "A short plan for today. About ten minutes. Then you stop.",
     hoyPlanCta: "Start the plan",
@@ -8313,6 +8341,7 @@ export default function App() {
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
             const hoyLoud = hoyHubLoud({ todayScene });
             const hoyDone = hoyHubDone({ todaySceneDone });
+            const goalReached = (prog.xpToday || 0) >= DAILY_GOAL;
             const hubTiles = [
               { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: welcomeLine || L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
@@ -8347,7 +8376,7 @@ export default function App() {
                         textAlign: "center",
                         color: D.ink,
                       }}>
-                      {tile.id === "hoy" && hoyDone && (
+                      {tile.id === "hoy" && (hoyDone || goalReached) && (
                         <span data-testid="hub-hoy-done" aria-hidden="true" style={{
                           position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: 99,
                           background: D.greenBg, color: limeText(D.okText, D), fontSize: 12, fontWeight: 900, lineHeight: "20px",
@@ -8357,6 +8386,9 @@ export default function App() {
                       <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
                       <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
                       {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, overflowWrap: "break-word", maxWidth: "100%" }}>{tile.quiet}</div>}
+                      {tile.id === "hoy" && goalReached && (
+                        <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}: {DAILY_GOAL}{"\u00a0"}XP.</div>
+                      )}
                       </span>
                     </button>
                   ))}
