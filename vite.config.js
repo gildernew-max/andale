@@ -13,6 +13,10 @@ export default defineConfig({
   base: andaleViteBase(),
   test: {
     environment: 'jsdom',
-    include: ['src/flows.test.jsx', 'src/GlossedText.test.jsx', 'src/WinBounce.test.jsx', 'src/PaywallFlyAway.test.jsx', 'src/wordOrderLayout.test.jsx', 'src/MemoryCardFace.test.jsx', 'src/sageCleanup.test.jsx', 'src/lessonSurfaceDark.test.jsx'],
+    // Any src/**/*.test.jsx is collected. Node scripts src/*.test.js stay on `npm test`.
+    include: ['src/**/*.test.jsx'],
+    // The old flows.test.jsx file held one worker for ~10 minutes. Cap the pool at 4
+    // so a larger runner does not fan out to one worker per file.
+    maxWorkers: 4,
   },
 })
