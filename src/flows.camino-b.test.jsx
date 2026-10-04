@@ -417,7 +417,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const CREAM_INK = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
     const LIGHT_INK = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
     const LOCK_INK = /#AFAFAF|rgb\(\s*175,\s*175,\s*175\s*\)/i;
-    const LIGHT_SUB = /#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i;
+    const LIGHT_SUB = /#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i;
     const WHITE = /#fff\b|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\)/i;
 
     cleanup();
@@ -470,7 +470,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const MINT = /#F3FBEA|rgb\(\s*243,\s*251,\s*234\s*\)/i;
     const WHITE = /#fff\b|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\)/i;
     const LIGHT_INK = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
-    const LIGHT_SUB = /#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i;
+    const LIGHT_SUB = /#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i;
     const LIGHT_BLUE = /#DDF4FF|rgb\(\s*221,\s*244,\s*255\s*\)/i;
     const LIGHT_SUBTLE = /#F7F7F7|rgb\(\s*247,\s*247,\s*247\s*\)/i;
     const TRACK = /#E8E8E8|rgb\(\s*232,\s*232,\s*232\s*\)/i;

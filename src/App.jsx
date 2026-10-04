@@ -239,7 +239,7 @@ const D_LIGHT = {
   purple: "#CE82FF", purpleDark: "#A567CC",
   red: "#FF4B4B", redDark: "#EA2B2B",
   gold: "#FFC800", goldDark: "#E6A800",
-  ink: "#3C3C3C", sub: "#777777",
+  ink: "#3C3C3C", sub: "#6B6258",
   line: "#E5E5E5", lockGray: "#E5E5E5", lockIcon: "#AFAFAF",
   bg: HUB_CREAM, card: "#FFFFFF", subtle: "#F7F7F7",
   okBg: "#D7FFB8", okText: "#58A700",

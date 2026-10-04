@@ -104,7 +104,7 @@ describe("four ink contrast", () => {
     expect(appSrc).toContain('(quietWin || perchCard) && theme !== "dark" ? "#85672C" : D.gold');
     expect(appSrc).toContain('color: theme === "dark" ? D.gold : "#85672C"');
     const dLight = appSrc.slice(appSrc.indexOf("const D_LIGHT"), appSrc.indexOf("const D_DARK"));
-    expect(dLight).toContain('sub: "#777777"');
+    expect(dLight).toContain('sub: "#6B6258"');
     expect(dLight).toContain('gold: "#FFC800"');
     const dDark = appSrc.slice(appSrc.indexOf("const D_DARK"), appSrc.indexOf("const D_DARK") + 700);
     expect(dDark).toContain('gold: "#FFD43B"');

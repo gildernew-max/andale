@@ -214,7 +214,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("first-win-email").textContent).not.toMatch(/Privacidad/);
   });
 
-  it("Lectura handoff quiet line is #6B6258 on the cream strip in dark and stays #777777 in light", async () => {
+  it("Lectura handoff quiet line is #6B6258 on the cream strip in dark and in light", async () => {
     const user = userEvent.setup();
     await reachFirstHoyWin(user, { theme: "dark", uiLang: "es" });
     const darkQuiet = screen.getByTestId("lectura-handoff-quiet");
@@ -231,7 +231,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await reachFirstHoyWin(user, { theme: "light", uiLang: "es" });
     const lightQuiet = screen.getByTestId("lectura-handoff-quiet");
     expect(lightQuiet.textContent).toBe(LECTURA_HANDOFF_QUIET.es);
-    expect(lightQuiet.style.color).toMatch(/#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i);
+    expect(lightQuiet.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
     expect(styleHas(screen.getByTestId("lectura-handoff"), "#F6EFE4")).toBe(true);
     expect(styleHas(screen.getByTestId("lectura-handoff-cta"), "#5C7356")).toBe(true);
   });
@@ -1873,7 +1873,7 @@ describe("paywall 3.1.2 disclosure", () => {
 describe("cream caption contrast", { timeout: 20000 }, () => {
   const LIGHT_CAPTION = /#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i;
   const DARK_SUB = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
-  const LIGHT_SUB = /#777777|rgb\(\s*119,\s*119,\s*119\s*\)/i;
+  const LIGHT_SUB = /#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i;
 
   const assertCaption = (el, colorRe) => {
     expect(el.style.color).toMatch(colorRe);
@@ -1913,10 +1913,10 @@ describe("cream caption contrast", { timeout: 20000 }, () => {
     await waitFor(() => expect(screen.getByTestId(testId)).toBeTruthy());
   };
 
-  it("light cream captions are #6B6258 at 12px/700 and D_LIGHT.sub still paints #777777", async () => {
+  it("light cream captions are #6B6258 at 12px/700 and D_LIGHT.sub paints #6B6258", async () => {
     const user = await bootHome("light");
     assertCaption(screen.getByTestId("atajos"), LIGHT_CAPTION);
-    expect(screen.getByTestId("atajos").style.color).not.toMatch(LIGHT_SUB);
+    expect(screen.getByTestId("atajos").style.color).toMatch(LIGHT_SUB);
     const divider = screen.getByTestId("lang-toggle").querySelector("[aria-hidden='true']");
     expect(divider.textContent).toBe("|");
     expect(divider.style.color).toMatch(LIGHT_SUB);
