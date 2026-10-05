@@ -680,6 +680,19 @@ const UNITS = [
       { type: "type", prompt: "Translate: «By the time she arrived, we had already eaten.»", answer: "Para cuando llegó, ya habíamos comido.", note: "«Para cuando» + past + ya + pluperfect — classic temporal sequencing." },
       { type: "transform", prompt: "Express that something was probably done by now.", source: "Probablemente ya terminó.", answer: "Ya habrá terminado.", note: "Future perfect of probability: «He's probably finished by now.»" },
     ],
+    bank: [
+      { type: "mc", prompt: "Cuando llegamos al cine, la película ya ___.", note: "", choices: ["había empezado", "había empezada", "ha empezado", "habrá empezado"], answer: "había empezado", explain: "Pluscuamperfecto: había + participio sitúa una acción antes de otro momento del pasado: la película ya había empezado cuando llegamos. El participio de un tiempo compuesto no cambia con el sustantivo: «empezado», no «empezada». Al hablar también se oye «ya empezó»; aquí se practica el pluscuamperfecto." },
+      { type: "mc", prompt: "Si hubiera sabido que venías a comer, ___ hecho pozole.", note: "", choices: ["habría", "habré", "había", "he"], answer: "habría", explain: "Condición irreal del pasado: «si» + hubiera + participio (si hubiera sabido) pide habría + participio en la otra mitad: habría hecho pozole. El futuro perfecto («habré hecho») habla de algo que estará terminado más adelante, no de lo que no pasó. Al hablar también se oye «hubiera hecho»; aquí se practica el condicional perfecto." },
+      { type: "type", prompt: "Cuando llegué, mi mamá ya había ___ la mesa para la comida.", note: "(poner, participio)", answers: ["puesto"], explain: "Pluscuamperfecto con participio irregular: poner → puesto: mi mamá ya había puesto la mesa. «Ponido» regulariza el participio y no existe." },
+      { type: "order", prompt: "Construye: “If I had known, I would have brought a gift.” («habría traído un regalo» va junto)", words: ["si", "hubiera", "sabido", "habría", "traído", "un", "regalo", "habré", "traer"], answer: "Si hubiera sabido habría traído un regalo", answers: ["Si hubiera sabido habría traído un regalo", "Habría traído un regalo si hubiera sabido"], explain: "Condición irreal del pasado: «si» + hubiera + participio (si hubiera sabido) y habría + participio como resultado (habría traído un regalo). Las dos mitades pueden cambiar de lugar, pero «habría traído un regalo» se queda junto. Al hablar también se oye «hubiera traído»; con estas fichas se practica «habría»." },
+      { type: "mc", prompt: "Si no ___ llovido tanto anoche, la fiesta habría sido en el jardín.", note: "", choices: ["hubiera", "habría", "habrá", "haya"], answer: "hubiera", explain: "En una condición irreal del pasado, la parte con «si» lleva hubiera + participio: si no hubiera llovido. Habría + participio va en el resultado (habría sido), no en la parte con «si». «Si no haya llovido» no se dice. También es correcto «hubiese llovido»; aquí se practica «hubiera»." },
+      { type: "type", prompt: "Mi hermano salió de la oficina a las seis y ya son las nueve; ya ___ llegado a su casa.", note: "(haber, futuro perfecto, él; una palabra)", answers: ["habrá"], explain: "Futuro perfecto de probabilidad: habrá + participio supone algo ya terminado: ya habrá llegado = seguramente ya llegó. «Ha llegado» afirma el hecho en lugar de suponerlo. Al hablar también se dice «ya debe de haber llegado»." },
+      { type: "transform", base: "No llamé a mi abuela ayer.", instruction: "Exprésalo como arrepentimiento. Empieza con «Debería haber…» (sin «de»), sin pronombres (le, la), y conserva el resto igual", prompt: "Transforma la oración", answers: ["Debería haber llamado a mi abuela ayer", "Debería haber llamado ayer a mi abuela"], explain: "Arrepentimiento: debería haber + participio equivale a «should have»: no llamé → debería haber llamado. También se dicen «debí haber llamado», «debería de haber llamado» y «debería haberla llamado»; aquí se pide «debería haber», sin «de» y sin pronombres." },
+      { type: "mc", prompt: "Mañana, para las cinco de la tarde, el plomero ya ___ terminado.", note: "", choices: ["había", "habrá", "hubiera", "haya"], answer: "habrá", explain: "Futuro perfecto: habrá + participio dice que algo estará terminado antes de un momento futuro: para las cinco el plomero ya habrá terminado. El pluscuamperfecto («había») mira hacia un pasado, no hacia mañana, y «haya» necesita antes una expresión como «espero que»." },
+      { type: "order", prompt: "Construye: “By the time we arrived, they had left.” («se habían ido» va junto)", words: ["para cuando", "llegamos", "se", "habían", "ido", "idos", "haber"], answer: "Para cuando llegamos se habían ido", answers: ["Para cuando llegamos se habían ido", "Se habían ido para cuando llegamos"], explain: "Con «para cuando» + pretérito, el pluscuamperfecto marca lo que ya había pasado: para cuando llegamos, se habían ido. El participio de un tiempo compuesto no cambia: se habían ido, no «se habían idos». Sin «para cuando» también se dice «cuando llegamos ya se habían ido»; con esta ficha se practica «para cuando»." },
+      { type: "type", prompt: "Antes de mudarse a Puebla, mi abuela nunca ___ salido de Tlaxcala.", note: "(haber, pluscuamperfecto de indicativo; una palabra)", answers: ["había"], explain: "Pluscuamperfecto: había + participio sitúa algo antes de otro momento del pasado (antes de mudarse a Puebla): nunca había salido. «Habría» (condicional perfecto) hablaría de algo hipotético, no de un hecho." },
+      { type: "mc", prompt: "Perdí el vuelo porque salí tarde de la casa. Ahora pienso: «___ salido más temprano.»", note: "", choices: ["Debería haber", "Debería", "Debería hacer", "Debería ser"], answer: "Debería haber", explain: "Arrepentimiento: debería haber + participio equivale a «should have»: debería haber salido más temprano. Sin «haber» no hay tiempo compuesto: «debería salido», «debería hacer salido» y «debería ser salido» no se dicen. Al hablar también se dice «debí haber salido» o «debí salir»; aquí se practica «debería haber»." },
+    ],
     pairs: [
       { es: "había hecho", en: "I had done" },
       { es: "habría hecho", en: "I would have done" },
@@ -746,6 +759,19 @@ const UNITS = [
       { type: "mc", prompt: "Por favor, ___. (Tell me the truth — usted)", choices: ["dime la verdad", "dígame la verdad", "me diga la verdad", "me dice la verdad"], answer: "dígame la verdad", note: "Usted command: «diga» + «me» → «dígame» (attached + accent preserved)." },
       { type: "mc", prompt: "¿La carta? Ya ___ envié.", choices: ["la", "le", "se la", "lo"], answer: "la", note: "Direct object «la carta» → «la». No indirect object here, so no double-pronoun magic." },
       { type: "type", prompt: "Translate: «Don't tell it to him.»", answer: "No se lo digas.", note: "Negative tú command + double pronoun + «le→se» rule. The full machine in one short sentence." },
+    ],
+    bank: [
+      { type: "mc", prompt: "Mis tíos pidieron las fotos de la boda y ya ___ mandé.", note: "", choices: ["se las", "les las", "se los", "las se"], answer: "se las", explain: "Con dos pronombres, «le» y «les» se convierten en «se» ante lo, la, los o las: mandé las fotos a mis tíos → se las mandé. El segundo pronombre concuerda con lo mandado: fotos (femenino plural) → las, no «los»." },
+      { type: "mc", prompt: "—Oye, Laura, ¿puedo ___ una pregunta?", note: "", choices: ["hacerte", "hacer te", "te hacer", "hacerlo"], answer: "hacerte", explain: "Con infinitivo, el pronombre se pega al final, sin espacio: hacerte (te = a ti, Laura). Suelto («hacer te») o antes del infinitivo («te hacer») no se escribe así. Subir el pronombre («¿te puedo hacer una pregunta?») también es correcto, pero este espacio solo admite la forma pegada." },
+      { type: "type", prompt: "—Ya terminé mi dibujo, mamá. —¡Qué bien! ___, quiero verlo.", note: "(enseñar, mandato de tú, me + lo; una palabra)", answers: ["enséñamelo"], explain: "Mandato afirmativo de tú: los pronombres se pegan al final del verbo, primero me y luego lo, y la palabra lleva acento escrito: enséñamelo. Al hablar también se pide con «¿me lo enseñas?»; aquí se pide el mandato." },
+      { type: "order", prompt: "Construye: “Don't send it to them yet.” (it = el archivo; dos pronombres, cinco fichas)", words: ["no", "se", "lo", "mandes", "todavía", "mándaselo", "le"], answer: "No se lo mandes todavía", answers: ["No se lo mandes todavía", "Todavía no se lo mandes"], explain: "En el mandato negativo, «le» pasa a «se» ante «lo»: no se lo mandes todavía. Después de «no», los pronombres van antes del verbo, y el verbo va en subjuntivo (mandes); la forma pegada (mándaselo) es solo para el mandato afirmativo. «Todavía no se lo mandes» también es correcto." },
+      { type: "mc", prompt: "En la papelería le pides la libreta azul al señor de la caja, de usted: «Por favor, ___.»", note: "", choices: ["pásemela", "pásamela", "pásemelo", "pase me la"], answer: "pásemela", explain: "Mandato afirmativo de usted: pase + me + la, pegados y con acento escrito: pásemela (la = la libreta). «Pásamela» es de tú, y aquí se trata de usted; «pásemelo» no concuerda con libreta; «pase me la» va suelto." },
+      { type: "type", prompt: "—¿Y el cuento? —Mi hermano está en el cuarto de los niños ___ ahorita.", note: "(leer, gerundio, se + lo; una palabra)", answers: ["leyéndoselo"], explain: "Con gerundio, los pronombres se pueden pegar al final: leyendo + se + lo → leyéndoselo, con acento escrito; «se» (de «les», a los niños) va antes de «lo». También se dice «se lo está leyendo»; aquí se pide la forma pegada." },
+      { type: "transform", base: "Cómpraselo a tu sobrina.", instruction: "Conviértelo en mandato negativo de tú, con un solo verbo; empieza con «No se lo…» y conserva el resto igual", prompt: "Transforma la oración", answers: ["No se lo compres a tu sobrina"], explain: "Del mandato afirmativo al negativo de tú: los pronombres dejan de ir pegados y pasan antes del verbo, y el verbo cambia a la forma del subjuntivo: cómpraselo → no se lo compres. «Se» se mantiene porque sigue ante «lo»." },
+      { type: "mc", prompt: "Mi hermana no sabe que me voy a mudar; mañana tengo que ___.", note: "", choices: ["decírselo", "decírlelo", "decir se lo", "se lo decir"], answer: "decírselo", explain: "Con infinitivo y dos pronombres, los dos se pegan al final: decir + le + lo → decírselo, porque «le» se vuelve «se» ante «lo» (no «decírlelo»). Subir los pronombres («se lo tengo que decir») también es correcto, pero este espacio solo admite la forma pegada." },
+      { type: "order", prompt: "Construye: “I'm going to take them to her tomorrow.” (them = las tortillas; dos pronombres)", words: ["voy a", "llevárselas", "se", "las", "los", "llevar", "mañana", "llevárselos"], answer: "Voy a llevárselas mañana", answers: ["Voy a llevárselas mañana", "Mañana voy a llevárselas", "Se las voy a llevar mañana", "Mañana se las voy a llevar"], explain: "Con infinitivo, los pronombres pueden ir pegados al final (voy a llevárselas) o subir antes de «voy» (se las voy a llevar); las dos formas son correctas. «Se» va antes de «las», y «las» concuerda con las tortillas (femenino plural), no «los»." },
+      { type: "type", prompt: "—¿Ya les dijiste a tus papás lo del viaje? —Sí, ya ___ lo dije.", note: "(pronombre átono, una palabra)", answers: ["se"], explain: "Ante «lo», «les» (y «le») se convierte en «se»: a mis papás + lo del viaje → ya se lo dije. «Les lo» no se dice." },
+      { type: "mc", prompt: "—¿Y los frijoles? —Mi mamá está ___ en la estufa.", note: "", choices: ["calentándolos", "calentando los", "los calentando", "calentándoles"], answer: "calentándolos", explain: "Con gerundio, el pronombre se pega al final y lleva acento escrito: calentando + los → calentándolos. Suelto («calentando los») o antes del gerundio («los calentando») no se escribe así. También se dice «los está calentando»; aquí el espacio pide la forma pegada." },
     ],
     pairs: [
       { es: "se lo doy", en: "I give it to him/her" },
@@ -2009,6 +2035,24 @@ function boardPadding(top, x, bottom, pinned) {
     paddingBottom: pinned ? PINNED_BOARD_BOTTOM : bottom,
     paddingLeft: x,
   };
+}
+
+/** Uncapped lesson footer: quip + explainText longer than this puts Continue on its own line.
+ *  A character count, not a measurement — jsdom reports no heights. The 60vh cap is separate. */
+const LESSON_FOOTER_LONG_FEEDBACK_CHARS = 90;
+
+function lessonFooterFeedbackChars(quip, question, lang) {
+  return `${uiText(quip, lang)} ${explainText(question, lang)}`.trim().length;
+}
+
+/** Short feedback leaves Continue a direct flex child of the row. Long feedback drops it full-width below the bird. */
+function LessonFooterContinueSlot({ stack, children }) {
+  if (!stack) return children;
+  return (
+    <div data-testid="lesson-footer-continue-block" style={{ display: "flex", flexWrap: "wrap", flex: "1 0 100%", flexBasis: "100%", width: "100%", boxSizing: "border-box" }}>
+      {children}
+    </div>
+  );
 }
 
 function CappedFeedback({ testId, className = "", style, onPin, children }) {
@@ -8175,6 +8219,10 @@ export default function App() {
     beginFirstSession(unit, section, { beginner: route.beginner === true });
   };
 
+  const lessonFooterStackContinue = (status === "correct" || status === "almost" || status === "wrong")
+    && !(session?.review && (status === "correct" || status === "almost"))
+    && lessonFooterFeedbackChars(quip, q, uiLang) > LESSON_FOOTER_LONG_FEEDBACK_CHARS;
+
   return (
     <BtnThemeContext.Provider value={theme}>
     <div data-testid="app-shell" data-theme={theme} style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
@@ -10713,15 +10761,15 @@ export default function App() {
 
           {/* ---------- ACTION BAR with mascot ---------- */}
           <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className={footerCapped ? "lesson-footer-cap" : undefined} style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(footerCapped ? { display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
-            <div style={footerCapped ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", minWidth: 0, minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", overflow: "hidden" } : { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-              <div ref={footerCapped ? footerScrollRef : undefined} data-testid={footerCapped ? "lesson-footer-scroll" : undefined} className={footerCapped ? "lesson-footer-scroll" : undefined} style={footerCapped ? { flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", padding: "14px 20px 0" } : { display: "flex", flex: "1 1 auto", minWidth: 0, alignItems: "center", gap: 14 }}>
+            <div style={footerCapped ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", minWidth: 0, minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", overflow: "hidden" } : lessonFooterStackContinue ? { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14 } : { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+              <div ref={footerCapped ? footerScrollRef : undefined} data-testid={footerCapped ? "lesson-footer-scroll" : (lessonFooterStackContinue ? "lesson-footer-feedback-row" : undefined)} className={footerCapped ? "lesson-footer-scroll" : undefined} style={footerCapped ? { flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", padding: "14px 20px 0" } : lessonFooterStackContinue ? { display: "flex", flex: "1 1 100%", width: "100%", minWidth: 0, alignItems: "center", gap: 14 } : { display: "flex", flex: "1 1 auto", minWidth: 0, alignItems: "center", gap: 14 }}>
                 <div style={footerCapped ? { display: "flex", alignItems: "flex-start", gap: 14, minWidth: 0 } : { display: "contents" }}>
               {status !== "idle" && (
                 <div className={status === "wrong" ? "" : "jump"} style={{ flexShrink: 0 }}>
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div style={{ flex: 1, ...(footerCapped ? { minWidth: 0 } : null), fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : limeText(D.okText, D) }}>
+              <div style={{ flex: 1, ...(footerCapped || lessonFooterStackContinue ? { minWidth: 0 } : null), fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : limeText(D.okText, D) }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
                     <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: theme === "dark" ? 0.85 : 1 }}>
@@ -10804,7 +10852,9 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-	                  <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ flexShrink: 0 }}>{L.continue}</Btn>
+	                  <LessonFooterContinueSlot stack={lessonFooterStackContinue}>
+	                    <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={lessonFooterStackContinue ? { width: "100%", flexBasis: "100%", flexShrink: 0 } : { flexShrink: 0 }}>{L.continue}</Btn>
+	                  </LessonFooterContinueSlot>
                 )
                 )
               ) : null}
