@@ -2397,7 +2397,7 @@ const porparaBankEn = [
   "Heading toward a destination → para: se va para Puebla. «Por Puebla» would mean passing through or around it, not the destination. «Fue» is past tense and clashes with «mañana».",
   "Para + infinitive expresses purpose (the «what for»): hago ejercicio para bajar de peso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-143, -132).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-154, -143).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
 porparaBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2583,7 +2583,7 @@ const sereflexBankEn = [
   "Reflexive passive: «los tacos» is plural → se comen. «Come» doesn't agree with «los tacos»; «me / le» are decoys.",
   "Se + me marks an unintentional accident, and the verb agrees with the thing: rompí un vaso → se me rompió un vaso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-132, -121).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-143, -132).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
 sereflexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2725,7 +2725,7 @@ const compsupBankEn = [
   "Irregular superlative: la + mejor + noun + de + group → la mejor alumna del salón. «Peor» would say the opposite, and «más» is not added to «mejor». In ordinary speech the superlative goes before the noun (not «la alumna mejor»).",
   "Quantity with a noun → tantos + noun + como: she has ten pairs and I have ten → tantos pares de tenis como yo. «Pares» is masculine plural, which is why it's tantos.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-121, -110).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-132, -121).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
 compsupBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2878,7 +2878,7 @@ const mexBankEn = [
   "«Al rato» = later, with no fixed time, and it is a set phrase: nos vemos al rato en la taquería, not «al ratos» or «el rato».",
   "«Un chorro de» = a ton of, and it replaces «mucha»: hay mucha gente → hay un chorro de gente. Unlike «mucha», it doesn’t agree with the noun.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-110, -99).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-121, -110).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
 mexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3029,7 +3029,7 @@ const pronBankEn = [
   "In Mexico, «marcar» also means to phone someone: luego te marco = luego te llamo. This item asks for the first-person present: marco.",
   "«Encantar» works like gustar: it takes an indirect-object pronoun, and for «mi hermana y yo» that is «nos»: nos encantan los tamales. «Lo» and «los» are direct-object pronouns and are not used with encantar.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-99, -88).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-110, -99).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
 pronBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3184,7 +3184,7 @@ const futcondBankEn = [
   "Simple future of «hacer»: irregular stem har- + ending: haremos. «Haceremos» regularizes the stem and does not exist.",
   "Reported speech in the past: «¿Me ayudas mañana?» → me preguntó si la ayudaría al día siguiente. «Al día siguiente» puts the help in the future of the past, so the present («ayudo») does not fit. In speech «si la ayudaba» is also heard; this item practices the conditional.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-88, -77).every((row, i) => row.es === futcondBank.bank[i].explain && row.en === futcondBankEn[i]), "futcond Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-99, -88).every((row, i) => row.es === futcondBank.bank[i].explain && row.en === futcondBankEn[i]), "futcond Why rows are appended in bank order");
 futcondBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3348,7 +3348,7 @@ const pluscampBankEn = [
   "Pluperfect: había + participle places something before another moment in the past (before moving to Puebla): nunca había salido. «Habría» (conditional perfect) would talk about something hypothetical, not a fact.",
   "Regret: debería haber + participle is «should have»: debería haber salido más temprano. Without «haber» there is no compound tense: «debería salido», «debería hacer salido» and «debería ser salido» are not said. In speech «debí haber salido» or «debí salir» is also said; this exercise practices «debería haber».",
 ];
-assert(PRACTICE_EXPLAIN.slice(-77, -66).every((row, i) => row.es === pluscampBank.bank[i].explain && row.en === pluscampBankEn[i]), "pluscamp Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-88, -77).every((row, i) => row.es === pluscampBank.bank[i].explain && row.en === pluscampBankEn[i]), "pluscamp Why rows are appended in bank order");
 const builtFromOrderTilesMulti = (words, phrase) => {
   const toks = String(phrase).trim().split(/\s+/).map(stripPhrase);
   const pool = words.map((w) => ({ w, used: false, k: stripPhrase(w).split(" ") }));
@@ -3540,7 +3540,7 @@ const pronombres2BankEn = [
   "Before «lo», «les» (and «le») becomes «se»: a mis papás + lo del viaje → ya se lo dije. «Les lo» is not said.",
   "With a gerund, the pronoun attaches to the end and takes a written accent: calentando + los → calentándolos. Detached («calentando los») or before the gerund («los calentando») is not written that way. «Los está calentando» is also said; here the blank asks for the attached form.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-66, -55).every((row, i) => row.es === pronombres2Bank.bank[i].explain && row.en === pronombres2BankEn[i]), "pronombres2 Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-77, -66).every((row, i) => row.es === pronombres2Bank.bank[i].explain && row.en === pronombres2BankEn[i]), "pronombres2 Why rows are appended in bank order");
 pronombres2Bank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3722,7 +3722,7 @@ const conectoresBankEn = [
   "Debido a + noun introduces the cause of an event: el vuelo se canceló debido a la tormenta. A pesar de would mark a concession.",
   "«En cuanto a» + noun means «regarding» and introduces a topic: en cuanto a la hora, la junta es a las nueve. «En cuanto» without «a» takes a conjugated verb and means «as soon as»."
 ];
-assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === conectoresBank.bank[i].explain && row.en === conectoresBankEn[i]), "conectores Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-66, -55).every((row, i) => row.es === conectoresBank.bank[i].explain && row.en === conectoresBankEn[i]), "conectores Why rows are appended in bank order");
 conectoresBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3873,7 +3873,7 @@ const registroBankEn = [
   "The proverb advises facing problems with a good attitude: al mal tiempo, buena cara.",
   "Caerle gordo to someone means finding them disagreeable or annoying: ese compañero me cae gordo. Caer bien would be the opposite."
 ];
-assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === registroBank.bank[i].explain && row.en === registroBankEn[i]), "registro Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === registroBank.bank[i].explain && row.en === registroBankEn[i]), "registro Why rows are appended in bank order");
 registroBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -4029,7 +4029,7 @@ const relativosBankEn = [
   "Que is the most frequent relative and does not change form: el libro que leí era largo. Here quien does not fit, because it is reserved for people.",
   "Cuyo agrees with the thing possessed, not the owner: perros is masculine plural, so cuyos: los vecinos cuyos perros ladraron toda la noche pidieron disculpas. Cuyas would go with a feminine plural noun. Cuyo is more a written or formal word; in speech many people say que sus perros, but here cuyos is what is practiced.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === relativosBank.bank[i].explain && row.en === relativosBankEn[i]), "relativos Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === relativosBank.bank[i].explain && row.en === relativosBankEn[i]), "relativos Why rows are appended in bank order");
 relativosBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -4184,7 +4184,7 @@ const reportedBankEn = [
   "«Ayer» becomes «el día anterior» when you report what was said in the past: mi jefa me dijo que el día anterior había cerrado el trato. «El día previo» is also seen in formal register; here «el día anterior» is what is practiced.",
   "To report a request, «pidió que» + imperfect subjunctive is used: mi jefe me pidió que llegara temprano el lunes. Here «contó», «preguntó» and «presumió» do not report a request, so they do not take that subjunctive.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === reportedBank.bank[i].explain && row.en === reportedBankEn[i]), "reported Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === reportedBank.bank[i].explain && row.en === reportedBankEn[i]), "reported Why rows are appended in bank order");
 reportedBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -4343,7 +4343,7 @@ const slang2BankEn = [
   "«Chambear» is the verb of «la chamba» and means to work, in colloquial Mexican speech: mañana tengo que chambear toda la mañana. Here, after «tengo que» comes the infinitive.",
   "«Naco» is used to judge someone's behavior or taste as rude or common, and is often set against «fresa»: un chavo naco. «Naca» is feminine and does not agree with «chavo»; «nacos» is plural; «nacho» is a proper name (Ignacio) or a snack, not an adjective. Careful: «naco» is classist and can offend; learn it to recognize it, not to label anyone."
 ];
-assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === slang2Bank.bank[i].explain && row.en === slang2BankEn[i]), "slang2 Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === slang2Bank.bank[i].explain && row.en === slang2BankEn[i]), "slang2 Why rows are appended in bank order");
 slang2Bank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -4423,6 +4423,154 @@ assert(gradeListedPhrase("chambear", slang2Chambear).status !== "wrong", "chambe
 assert(gradeListedPhrase("Chambear", slang2Chambear).status !== "wrong", "chambear case is ignored");
 for (const phrase of ["trabajar", "chamba", "chambeo", "chambeando", "chambeado", "chambeé"]) {
   assert(gradeListedPhrase(phrase, slang2Chambear).status === "wrong", `chambear type is rejected: ${phrase}`);
+}
+
+const formalBank = UNITS.find((u) => u.id === "formal");
+assert(formalBank.questions.length === 11, "formal authored questions stay 11");
+assert(formalBank.questions[0].prompt === "___ presente, le confirmo nuestra junta del jueves.", "formal question order is unchanged");
+assert(Array.isArray(formalBank.bank) && formalBank.bank.length === 11, "formal replay bank is 11 questions");
+assert(formalBank.bank.map((q) => q.type).join(",") === "mc,mc,type,order,mc,type,transform,mc,order,type,mc", "formal bank types interleave mc/type/order/transform");
+assert(formalBank.bank[0].prompt === "En caso de que el arrendatario ___ la renta a tiempo, se le aplicará una multa." && formalBank.bank[0].note === "" && formalBank.bank[0].choices.join("|") === "no pague|no paga|no pagó|no pagará" && formalBank.bank[0].answer === "no pague", "formal bank item 1");
+assert(formalBank.bank[1].prompt === "La garantía tiene ___ hasta el 31 de diciembre de 2030." && formalBank.bank[1].note === "" && formalBank.bank[1].choices.join("|") === "vigencia|vigente|vigentes|vigorosa" && formalBank.bank[1].answer === "vigencia", "formal bank item 2");
+assert(formalBank.bank[2].prompt === "El arrendatario deberá ___ el inmueble al término del contrato." && formalBank.bank[2].note === "(una palabra de nueve letras: empieza con «deso»)" && formalBank.bank[2].answers.join("|") === "desocupar", "formal bank type item 3");
+assert(formalBank.bank[3].prompt === "Construye: “The contract must be signed no later than Friday.”" && formalBank.bank[3].words.join("|") === "el contrato deberá firmarse|a más tardar el viernes|el contrato deberán firmarse|a más tarde el viernes" && formalBank.bank[3].answers.join("|") === "El contrato deberá firmarse a más tardar el viernes|A más tardar el viernes el contrato deberá firmarse", "formal bank order item 4 fuses the fixed phrase and includes both decoys");
+assert(formalBank.bank[4].prompt === "___ lo anterior, la renta no se reducirá este año." && formalBank.bank[4].note === "" && formalBank.bank[4].choices.join("|") === "No obstante|Sin embargo|Aunque|Pero" && formalBank.bank[4].answer === "No obstante", "formal bank item 5");
+assert(formalBank.bank[5].prompt === "El comprador que no paga a tiempo ___ el contrato." && formalBank.bank[5].note === "(una palabra de ocho letras: empieza con «incum»)" && formalBank.bank[5].answers.join("|") === "incumple", "formal bank type item 6");
+assert(formalBank.bank[6].base === "Te aviso que ya recibí tu pago." && formalBank.bank[6].instruction === "Hazlo formal, de usted: cambia «Te aviso» por «Le informo» y «tu» por «su», y conserva el resto igual" && formalBank.bank[6].answers.join("|") === "Le informo que ya recibí su pago", "formal bank transform");
+assert(formalBank.bank[7].prompt === "Las partes ___ por escrito que aceptan las condiciones del arrendamiento." && formalBank.bank[7].note === "" && formalBank.bank[7].choices.join("|") === "manifiestan|manifiesta|manifiestas|manifestar" && formalBank.bank[7].answer === "manifiestan", "formal bank item 8");
+assert(formalBank.bank[8].prompt === "Construye: “Payment will be made in accordance with the agreed terms.”" && formalBank.bank[8].words.join("|") === "se procederá al pago|conforme a lo acordado|se procederán al pago|conforme de lo acordado" && formalBank.bank[8].answers.join("|") === "Se procederá al pago conforme a lo acordado|Conforme a lo acordado se procederá al pago", "formal bank order item 9 fuses the fixed phrase and includes both decoys");
+assert(formalBank.bank[9].prompt === "A partir de la firma de este contrato, las notificaciones se enviarán, en lo ___, por correo electrónico." && formalBank.bank[9].note === "(una palabra de ocho letras: empieza con «suc»)" && formalBank.bank[9].answers.join("|") === "sucesivo", "formal bank type item 10");
+assert(formalBank.bank[10].prompt === "En la primera línea de una carta formal: «Por la ___, le informo que su solicitud fue aprobada.»" && formalBank.bank[10].note === "" && formalBank.bank[10].choices.join("|") === "presente|presentes|presenta|presentar" && formalBank.bank[10].answer === "presente", "formal bank item 11");
+assert(formalBank.bank[3].answers.length === 2 && formalBank.bank[8].answers.length === 2, "formal order items list exactly two accepted answers");
+assert([3, 8].every((i) => formalBank.bank[i].words.every((w) => w === w.toLowerCase() && !/[,;:¿?¡!.«»"“”]/.test(w))), "formal order tiles are lowercase with no punctuation or quotes");
+for (const q of [formalBank.bank[3], formalBank.bank[8]]) {
+  const ans = new Set(q.answers.flatMap((a) => stripPhrase(a).split(" ")));
+  const decoys = q.words.filter((w) => !stripPhrase(w).split(" ").every((x) => ans.has(x)));
+  assert(decoys.length >= 2 && decoys.length <= 4 && decoys.every((w) => !ans.has(stripPhrase(w))) && q.words.every((w) => /\p{L}/u.test(w)), "formal decoy tiles do not spell an answer word");
+  assert(decoys.join("|") === (q === formalBank.bank[3] ? "el contrato deberán firmarse|a más tarde el viernes" : "se procederán al pago|conforme de lo acordado"), "formal order decoys stay the two non-answer tiles");
+}
+assert(orderTileLabel(formalBank.bank[3].words[0], { answer: "El contrato deberá firmarse a más tardar el viernes", placedIndex: 0 }) === "El contrato deberá firmarse", "formal multi-word tile capitalizes only the first letter in slot 0");
+assert(formalBank.bank[3].answers.every((a) => builtFromOrderTiles(formalBank.bank[3].words, a) === null) && formalBank.bank[8].answers.every((a) => builtFromOrderTiles(formalBank.bank[8].words, a) === null), "formal fused-tile order answers return null from the one-token helper");
+assert(formalBank.bank[3].answers.every((a) => builtFromOrderTilesMulti(formalBank.bank[3].words, a) !== null) && formalBank.bank[8].answers.every((a) => builtFromOrderTilesMulti(formalBank.bank[8].words, a) !== null), "formal order answers are buildable with the multi-word helper");
+assert(formalBank.bank.every((q) => q.type !== "mc" || q.note === ""), "formal has no ¡Ojo! item and no mc note");
+
+const formalPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((item, i) => {
+      if (u.id === "formal" && kind === "bank") return;
+      if (item.type === "transform") {
+        const base = item.base || item.source;
+        if (base) formalPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (item.prompt) formalPromptOwners.set(item.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+formalBank.bank.forEach((item, i) => {
+  if (item.type === "transform") {
+    assert(!formalPromptOwners.has(item.base), `formal bank ${i} transform base repeats a prompt`);
+    assert(!formalPromptOwners.has(`base:${item.base}`), `formal bank ${i} transform base repeats ${formalPromptOwners.get(`base:${item.base}`) || "another item"}`);
+    return;
+  }
+  assert(!formalPromptOwners.has(item.prompt), `formal bank ${i} prompt duplicates ${formalPromptOwners.get(item.prompt) || "another item"}`);
+  formalPromptOwners.set(item.prompt, `formal bank ${i}`);
+});
+const formalBankEn = [
+  "After «en caso de que», in this clause the verb takes the subjunctive: en caso de que el arrendatario no pague la renta a tiempo, se le aplicará una multa. «No paga», «no pagó» and «no pagará» are indicative forms.",
+  "«Vigencia» is the noun for the period in which something is in effect: la garantía tiene vigencia hasta 2030. «Vigente» and «vigentes» are adjectives (for example, «está vigente») and «vigorosa» is another adjective, meaning strong; none of them fills the slot after «tiene» in this sentence.",
+  "«Desocupar» means to vacate a property, leaving it free of people and belongings, and is the usual verb in lease agreements: el arrendatario deberá desocupar el inmueble al término del contrato. Here it is an infinitive, because it follows «deberá».",
+  "«A más tardar» marks the last permitted moment and is an invariable set phrase: el contrato deberá firmarse a más tardar el viernes. «Deberán» does not agree with the singular «el contrato», and «a más tarde» does not exist as a variant of that phrase. The sentence can also start with «a más tardar el viernes».",
+  "«No obstante lo anterior» is the formal connector that introduces a qualification of what was just said: no obstante lo anterior, la renta no se reducirá este año. «Sin embargo», «aunque» and «pero» do not take «lo anterior» right after them, as here.",
+  "«Incumplir» means not doing what a contract requires: el comprador que no paga a tiempo incumple el contrato. Here it is in the present and the third person singular, because it agrees with «el comprador».",
+  "To speak with usted you use «le» instead of «te» and «su» instead of «tu»; to sound more formal, «avisar» is also swapped for «informar»: le informo que ya recibí su pago. Only those words change here; the rest of the sentence stays the same.",
+  "«Manifestar» means to declare formally, and the verb agrees with the plural subject «las partes»: las partes manifiestan por escrito que aceptan las condiciones. «Manifiesta» is singular, «manifiestas» is the «tú» form and «manifestar» is the infinitive.",
+  "«Conforme a» introduces what something is done in accordance with: se procederá al pago conforme a lo acordado. After «conforme» the preposition is «a», not «de», and with this impersonal «se» the verb stays singular, not «se procederán». The sentence can also start with «conforme a lo acordado».",
+  "«En lo sucesivo» means «from now on» and is a set phrase of legal language: las notificaciones se enviarán, en lo sucesivo, por correo electrónico. Here «sucesivo» is masculine, after «lo».",
+  "«Por la presente» is an opening formula («by this letter») still current in formal, official and legal letters, though it sounds dated outside that sphere: por la presente le informo que su solicitud fue aprobada. «Presentes» is plural and does not agree with «la», «presenta» is a verb form and «presentar» is an infinitive; none of them completes the formula.",
+];
+assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === formalBank.bank[i].explain && row.en === formalBankEn[i]), "formal Why rows are appended in bank order");
+formalBank.bank.forEach((item, i) => {
+  const row = explainByEs.get(item.explain);
+  assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === formalBankEn[i], `formal bank ${i} EN row equals the English row`);
+  assert(explainText(item, "es") === item.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(item, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(item);
+  assertPreppedQuestion(prepped, `formal bank ${i}`);
+  if (item.type === "mc") {
+    assert(item.choices.length === 4 && new Set(item.choices).size === 4 && item.choices.includes(item.answer), `formal bank ${i} mc choices include the answer`);
+    assert(item.note === "", `formal bank ${i} mc note is empty`);
+    assert(item.note !== "¡Ojo!", `formal bank ${i} mc note is not a trap`);
+  }
+  if (item.type === "type") {
+    assert(item.note === { 2: "(una palabra de nueve letras: empieza con «deso»)", 5: "(una palabra de ocho letras: empieza con «incum»)", 9: "(una palabra de ocho letras: empieza con «suc»)" }[i], `formal bank ${i} type note`);
+  }
+  if (item.type === "order") {
+    assert(prepped.words.join("|") === item.words.join("|"), `formal bank ${i} order tiles stay authored`);
+    assert(prepped.answer === item.answer, `formal bank ${i} order answer stays authored`);
+    assert(Array.isArray(item.answers) && item.answers[0] === item.answer, `formal bank ${i} answers start with the authored answer`);
+    assert(item.words.every((w) => !String(w).includes(",")), `formal bank ${i} tiles carry no comma`);
+    assert(item.words.every((w) => w === w.toLowerCase()), `formal bank ${i} tiles stay lowercase`);
+    assert(item.words.every((w) => !/[,;:¿?¡!.«»"“”]/.test(w)), `formal bank ${i} tiles carry no punctuation or quotes`);
+    const buildTiles = (i === 3 || i === 8) ? builtFromOrderTilesMulti : builtFromOrderTiles;
+    item.answers.forEach((phrase) => {
+      const built = buildTiles(item.words, phrase);
+      assert(built, `formal bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(phrase, item).status !== "wrong", `formal bank ${i} listed order is accepted: ${phrase}`);
+      assert(gradeListedPhrase(built, item).status !== "wrong", `formal bank ${i} tile-built order is accepted: ${built}`);
+    });
+    const builtPrimary = buildTiles(item.words, item.answer);
+    assert(builtPrimary && builtPrimary.toLowerCase() === item.answer.toLowerCase(), `formal bank ${i} primary order is the authored tile text`);
+  }
+  if (item.type === "type" || item.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === item.answers.join("|"), `formal bank ${i} answers stay authored`);
+  }
+});
+const formalDesocupar = formalBank.bank[2];
+const formalTardar = formalBank.bank[3];
+const formalIncumple = formalBank.bank[5];
+const formalInformo = formalBank.bank[6];
+const formalAcordado = formalBank.bank[8];
+const formalSucesivo = formalBank.bank[9];
+assert(formalTardar.answers.join("|") === "El contrato deberá firmarse a más tardar el viernes|A más tardar el viernes el contrato deberá firmarse", "formal item 4 lists the accepted alternates");
+assert(formalAcordado.answers.join("|") === "Se procederá al pago conforme a lo acordado|Conforme a lo acordado se procederá al pago", "formal item 9 lists the accepted alternates");
+assert(formalInformo.answers.join("|") === "Le informo que ya recibí su pago", "formal transform lists the accepted answer");
+assert(gradeListedPhrase("desocupar", formalDesocupar).status !== "wrong", "desocupar type is accepted");
+assert(gradeListedPhrase("Desocupar", formalDesocupar).status !== "wrong", "desocupar case is ignored");
+for (const phrase of ["desalojar", "abandonar", "restituir", "entregar", "devolver", "liberar", "vaciar", "dejar", "desocupe", "desocupa", "desocupen", "desocupado"]) {
+  assert(gradeListedPhrase(phrase, formalDesocupar).status === "wrong", `desocupar type is rejected: ${phrase}`);
+}
+for (const phrase of ["El contrato deberá firmarse a más tardar el viernes", "A más tardar el viernes el contrato deberá firmarse"]) {
+  assert(gradeListedPhrase(phrase, formalTardar).status !== "wrong", `tardar order accepted: ${phrase}`);
+}
+for (const phrase of ["El contrato deberán firmarse a más tardar el viernes", "El contrato deberá firmarse a más tarde el viernes", "El contrato deberá firmarse", "A más tardar el viernes"]) {
+  assert(gradeListedPhrase(phrase, formalTardar).status === "wrong", `tardar order is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("incumple", formalIncumple).status !== "wrong", "incumple type is accepted");
+assert(gradeListedPhrase("Incumple", formalIncumple).status !== "wrong", "incumple case is ignored");
+for (const phrase of ["infringe", "viola", "incumpla", "rompe", "incumplir"]) {
+  assert(gradeListedPhrase(phrase, formalIncumple).status === "wrong", `incumple type is rejected: ${phrase}`);
+}
+for (const phrase of ["Le informo que ya recibí su pago", "Le informo que ya recibí su pago."]) {
+  assert(gradeListedPhrase(phrase, formalInformo).status !== "wrong", `informo transform accepted: ${phrase}`);
+}
+for (const phrase of ["Le aviso que ya recibí su pago", "Le informo que ya recibí tu pago", "Le informo que he recibido su pago", "Te aviso que ya recibí tu pago"]) {
+  assert(gradeListedPhrase(phrase, formalInformo).status === "wrong", `informo transform is rejected: ${phrase}`);
+}
+for (const phrase of ["Se procederá al pago conforme a lo acordado", "Conforme a lo acordado se procederá al pago"]) {
+  assert(gradeListedPhrase(phrase, formalAcordado).status !== "wrong", `acordado order accepted: ${phrase}`);
+}
+for (const phrase of ["Se procederán al pago conforme a lo acordado", "Se procederá al pago conforme de lo acordado", "Se procederá al pago", "Conforme a lo acordado"]) {
+  assert(gradeListedPhrase(phrase, formalAcordado).status === "wrong", `acordado order is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("sucesivo", formalSucesivo).status !== "wrong", "sucesivo type is accepted");
+assert(gradeListedPhrase("Sucesivo", formalSucesivo).status !== "wrong", "sucesivo case is ignored");
+for (const phrase of ["futuro", "posterior", "siguiente", "sucesiva"]) {
+  assert(gradeListedPhrase(phrase, formalSucesivo).status === "wrong", `sucesivo type is rejected: ${phrase}`);
 }
 
 for (const u of UNITS) {

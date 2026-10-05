@@ -982,9 +982,22 @@ const UNITS = [
       { type: "transform", prompt: "Convert to formal register.", source: "Te aviso que la junta cambió.", answer: "Le informo que la junta ha sido reprogramada.", note: "«Te aviso» → «Le informo». «Cambió» → «ha sido reprogramada» (passive voice + present perfect)." },
       { type: "mc", prompt: "Las partes ___ que han leído y aceptan los términos.", choices: ["dicen", "manifiestan", "hablan", "comentan"], answer: "manifiestan", note: "«Manifestar» = to formally state/declare. The standard verb for contract recitals." },
       { type: "type", prompt: "Translate: «Should the borrower fail to pay...»", answer: "En caso de que el prestatario incumpla...", note: "«En caso de que» + subjunctive = «in the event that / should». «Incumpla» from «incumplir» (to default)." },
-      { type: "mc", prompt: "El presente contrato ___ por un período de cinco años.", choices: ["dura", "tendrá vigencia", "se queda", "está"], answer: "tendrá vigencia", note: "«Tener vigencia» = «to be in effect». A contract «tiene vigencia», doesn't «dura». Different register." },
-      { type: "mc", prompt: "___ a los efectos de notificación, las partes señalan los siguientes domicilios.", choices: ["Por", "Para", "A los efectos", "Con"], answer: "Para", note: "«Para los efectos de» = «For the purposes of». Standard preamble to notice provisions." },
+      { type: "mc", prompt: "El presente contrato ___ por un período de cinco años.", choices: ["hace vigencia", "tendrá vigencia", "se queda", "está"], answer: "tendrá vigencia", note: "«Tener vigencia» = «to be in effect», the legal formula for a contract's term. In everyday speech you'll also hear «dura»; legal drafting prefers «tener vigencia»." },
+      { type: "mc", prompt: "___ los efectos de notificación, las partes señalan los siguientes domicilios.", choices: ["Por", "Para", "Hacia", "Con"], answer: "Para", note: "«Para los efectos de» = «For the purposes of». Standard preamble to notice provisions in Mexico. «A los efectos de» is also correct legal Spanish, more common outside Mexico." },
       { type: "type", prompt: "Translate the closing: «Yours sincerely,»", answer: "Atentamente,", note: "«Atentamente» — the universal Spanish business closing. «Cordialmente» also works, slightly warmer. «Saludos» is too casual for legal correspondence." },
+    ],
+    bank: [
+      { type: "mc", prompt: "En caso de que el arrendatario ___ la renta a tiempo, se le aplicará una multa.", note: "", choices: ["no pague","no paga","no pagó","no pagará"], answer: "no pague", explain: "Después de «en caso de que», en esta cláusula el verbo va en subjuntivo: en caso de que el arrendatario no pague la renta a tiempo, se le aplicará una multa. «No paga», «no pagó» y «no pagará» son formas del indicativo." },
+      { type: "mc", prompt: "La garantía tiene ___ hasta el 31 de diciembre de 2030.", note: "", choices: ["vigencia","vigente","vigentes","vigorosa"], answer: "vigencia", explain: "«Vigencia» es el sustantivo del periodo en que algo está en efecto: la garantía tiene vigencia hasta 2030. «Vigente» y «vigentes» son adjetivos (por ejemplo, «está vigente») y «vigorosa» es otro adjetivo, que significa fuerte; ninguno llena el hueco después de «tiene» en esta oración." },
+      { type: "type", prompt: "El arrendatario deberá ___ el inmueble al término del contrato.", note: "(una palabra de nueve letras: empieza con «deso»)", answers: ["desocupar"], explain: "«Desocupar» es dejar libre un inmueble, sin personas ni bienes, y es el verbo habitual en los contratos de arrendamiento: el arrendatario deberá desocupar el inmueble al término del contrato. Aquí va en infinitivo, porque sigue a «deberá»." },
+      { type: "order", prompt: "Construye: “The contract must be signed no later than Friday.”", words: ["el contrato deberá firmarse","a más tardar el viernes","el contrato deberán firmarse","a más tarde el viernes"], answer: "El contrato deberá firmarse a más tardar el viernes", answers: ["El contrato deberá firmarse a más tardar el viernes","A más tardar el viernes el contrato deberá firmarse"], explain: "«A más tardar» marca el último momento permitido y es una frase hecha que no cambia: el contrato deberá firmarse a más tardar el viernes. «Deberán» no concuerda con «el contrato», que es singular, y «a más tarde» no existe como variante de esa frase. También se puede empezar con «a más tardar el viernes»." },
+      { type: "mc", prompt: "___ lo anterior, la renta no se reducirá este año.", note: "", choices: ["No obstante","Sin embargo","Aunque","Pero"], answer: "No obstante", explain: "«No obstante lo anterior» es el conector formal que introduce una salvedad respecto de lo ya dicho: no obstante lo anterior, la renta no se reducirá este año. «Sin embargo», «aunque» y «pero» no admiten «lo anterior» justo después, como aquí." },
+      { type: "type", prompt: "El comprador que no paga a tiempo ___ el contrato.", note: "(una palabra de ocho letras: empieza con «incum»)", answers: ["incumple"], explain: "«Incumplir» es no hacer lo que un contrato exige: el comprador que no paga a tiempo incumple el contrato. Aquí va en presente y en tercera persona del singular, porque concuerda con «el comprador»." },
+      { type: "transform", base: "Te aviso que ya recibí tu pago.", instruction: "Hazlo formal, de usted: cambia «Te aviso» por «Le informo» y «tu» por «su», y conserva el resto igual", prompt: "Transforma la oración", answers: ["Le informo que ya recibí su pago"], explain: "Para hablar de usted se usa «le» en lugar de «te» y «su» en lugar de «tu»; además, para sonar más formal, «avisar» se cambia por «informar»: le informo que ya recibí su pago. Aquí solo cambian esas palabras; el resto de la oración se queda igual." },
+      { type: "mc", prompt: "Las partes ___ por escrito que aceptan las condiciones del arrendamiento.", note: "", choices: ["manifiestan","manifiesta","manifiestas","manifestar"], answer: "manifiestan", explain: "«Manifestar» es declarar formalmente, y el verbo concuerda con el sujeto plural «las partes»: las partes manifiestan por escrito que aceptan las condiciones. «Manifiesta» es de singular, «manifiestas» es de «tú» y «manifestar» es el infinitivo." },
+      { type: "order", prompt: "Construye: “Payment will be made in accordance with the agreed terms.”", words: ["se procederá al pago","conforme a lo acordado","se procederán al pago","conforme de lo acordado"], answer: "Se procederá al pago conforme a lo acordado", answers: ["Se procederá al pago conforme a lo acordado","Conforme a lo acordado se procederá al pago"], explain: "«Conforme a» introduce aquello de acuerdo con lo cual se hace algo: se procederá al pago conforme a lo acordado. Con «conforme» la preposición es «a», no «de», y con este «se» impersonal el verbo va en singular, no «se procederán». También se puede empezar con «conforme a lo acordado»." },
+      { type: "type", prompt: "A partir de la firma de este contrato, las notificaciones se enviarán, en lo ___, por correo electrónico.", note: "(una palabra de ocho letras: empieza con «suc»)", answers: ["sucesivo"], explain: "«En lo sucesivo» significa «de ahora en adelante» y es una frase hecha del lenguaje legal: las notificaciones se enviarán, en lo sucesivo, por correo electrónico. Aquí «sucesivo» va en masculino, después de «lo»." },
+      { type: "mc", prompt: "En la primera línea de una carta formal: «Por la ___, le informo que su solicitud fue aprobada.»", note: "", choices: ["presente","presentes","presenta","presentar"], answer: "presente", explain: "«Por la presente» es una fórmula de apertura («con esta carta») que sigue vigente en cartas formales, oficiales y legales, aunque fuera de ese ámbito suena anticuada: por la presente le informo que su solicitud fue aprobada. «Presentes» es plural y no concuerda con «la», «presenta» es una forma verbal y «presentar» es un infinitivo; ninguno completa la fórmula." },
     ],
     pairs: [
       { es: "por la presente", en: "herein / by this letter" },
@@ -1372,7 +1385,7 @@ const CURATED_DISTRACTORS = {
   fue: ["iba", "va", "iría"],
   solia: ["suele", "solió", "soliera"],
   hubo: ["había", "hay", "habrá"],
-  para: ["por", "a", "hacia"],
+  para: ["por"],
   por: ["para", "de", "a"],
   chamba: ["trabajo", "empleo", "jale"],
   compraria: ["compro", "compré", "comprara"],
@@ -1383,11 +1396,11 @@ const CURATED_DISTRACTORS = {
   se: ["le", "lo", "la", "les"],
   le: ["se", "lo", "la", "les"],
   sino: ["pero", "si no", "aunque"],
-  tanto: ["menos", "demás", "mismo"],
+  tanto: ["menos", "demás"],
   nunca: ["siempre", "jamás", "tarde"],
   venga: ["viene", "vino", "vendrá"],
   iria: ["voy", "fui", "fuera"],
-  atentamente: ["Saludos,", "Cordialmente,", "Gracias,"],
+  atentamente: ["Atentivamente,", "Atendiendo,", "Atentado,"],
   mande: ["¿Qué?", "Dime", "¿Cómo?"],
 };
 
@@ -4555,7 +4568,7 @@ const GRAMMAR_GUIDES = {
   relativos: { title: "Pronombres relativos", pattern: "que / quien / cuyo / lo que / el cual — each for a different relationship.", examples: [["La mujer que vimos.", "The woman we saw."], ["El abogado, quien firmó…", "The lawyer, who signed…"], ["El libro cuyo autor murió.", "The book whose author died."]], trap: "After a comma + person → «quien» preferred. «Cuyo» agrees with the thing possessed, not the owner." },
   reported: { title: "Estilo indirecto", pattern: "Tenses shift in reported speech: present→imperfect, preterite→pluperfect, future→conditional.", examples: [["«Vivo aquí.» → Dijo que vivía aquí.", "He said he lived here."], ["«Voy a ir.» → Dijo que iba a ir.", "He said he was going to go."], ["«Llámame.» → Me pidió que lo llamara.", "He asked me to call him."]], trap: "Time words shift too: «mañana» → «al día siguiente», «hoy» → «aquel día»." },
   slang2: { title: "Caló mexicano II", pattern: "Slang beyond «padre/chido» — the words that signal you're in, not translating.", examples: [["Es neta.", "It's true / for real."], ["Voy a chambear.", "I'm going to work."], ["¡Qué oso!", "How embarrassing!"]], trap: "«Mande» is uniquely Mexican — never use «¿qué?» alone to ask «what?»; it can sound rude." },
-  formal: { title: "Registro formal/legal", pattern: "The vocabulary of contracts and formal correspondence.", examples: [["Por la presente, …", "Herein, …"], ["No obstante lo anterior, …", "Notwithstanding the foregoing, …"], ["A más tardar el 15.", "No later than the 15th."]], trap: "«Tener vigencia» (be in effect) — a contract «tiene vigencia», it doesn't «dura»." },
+  formal: { title: "Registro formal/legal", pattern: "The vocabulary of contracts and formal correspondence.", examples: [["Por la presente, …", "Herein, …"], ["No obstante lo anterior, …", "Notwithstanding the foregoing, …"], ["A más tardar el 15.", "No later than the 15th."]], trap: "«Tener vigencia» (be in effect) is the legal formula for a contract's term; «durar» is everyday speech." },
 };
 
 const UI = {
