@@ -4,7 +4,7 @@
  * already uses. A right tap leaves every other choice untouched.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 
@@ -121,5 +121,35 @@ describe("lectura checkpoint answer paint", () => {
       const savedRight = JSON.parse(localStorage.getItem(STORAGE_KEY));
       expect(savedRight.storyChecks["story-0"]["0"]).toBe(CORRECT);
     }
+  });
+
+  it("keeps checkpoint chips inert while the flores sheet shows its translation", async () => {
+    const user = userEvent.setup();
+    await boot("light");
+    const flores = [...document.querySelectorAll("span")].find((el) => el.textContent === "flores");
+    expect(flores).toBeTruthy();
+    await user.click(flores);
+    const sheet = await screen.findByTestId("word-sheet");
+    await waitFor(() => expect(sheet.style.visibility).toBe("visible"));
+    expect(screen.getByTestId("word-sheet-translation").textContent).toMatch(/flowers/);
+    expect(sheet.textContent).toMatch(/flores/);
+    expect(sheet.querySelector("button[aria-label='Escuchar palabra']").style.pointerEvents).not.toBe("none");
+    expect(sheet.querySelector("button[aria-label='Cerrar']").style.pointerEvents).not.toBe("none");
+
+    const sadness = choice(OTHER);
+    expect(sadness.style.pointerEvents).toBe("none");
+    expect(screen.getByTestId("lectura-checkpoint-answers").style.pointerEvents).toBe("none");
+    fireEvent.click(sadness);
+    expect(sadness.disabled).toBe(false);
+    expect(choice(CORRECT).disabled).toBe(false);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).storyChecks?.["story-0"]?.["0"]).toBeUndefined();
+    expect(paint(sadness).fill).toBe("#f7f7f7");
+
+    await user.click(sheet.querySelector("button[aria-label='Cerrar']"));
+    await waitFor(() => expect(screen.queryByTestId("word-sheet")).toBeNull());
+    expect(choice(OTHER).style.pointerEvents).toBe("auto");
+    await user.click(choice(OTHER));
+    expect(choice(OTHER).disabled).toBe(true);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).storyChecks["story-0"]["0"]).toBe(OTHER);
   });
 });
