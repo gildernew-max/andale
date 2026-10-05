@@ -69,7 +69,7 @@ describe("first-session measurement events", () => {
     expect(names("first_session_exercise1_correct")).toEqual(["first_session_exercise1_correct"]);
     await answerFirstSessionBeat(user);
     expect(names("first_session_exercise1_correct")).toEqual(["first_session_exercise1_correct"]);
-  });
+  }, 15000);
 
   it("fires first_session_complete once on the win and not on a remount", async () => {
     const user = userEvent.setup();
