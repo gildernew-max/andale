@@ -1458,7 +1458,7 @@ const orderFillerTilesFor = (q) => {
   });
   const tileOk = (w) => {
     const v = String(w || "").trim();
-    if (!v || !/\p{L}/u.test(v) || sentencePunct.test(v)) return false;
+    if (!v || !/\p{L}/u.test(v) || sentencePunct.test(v) || /[«»\u0022\u201c\u201d]/.test(v)) return false;
     const key = strip(v);
     return !!key && !banned.has(key);
   };
