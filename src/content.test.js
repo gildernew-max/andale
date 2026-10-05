@@ -3979,9 +3979,10 @@ assert(relativosBank.bank[8].prompt === "Construye: “We talked about what happ
 assert(relativosBank.bank[3].answers.length === 2 && relativosBank.bank[8].answers.length === 2, "relativos order items list exactly two accepted answers");
 assert(relativosBank.bank[3].words.every((w) => w === w.toLowerCase() && !/[,;:¿?¡!.]/.test(w)) && relativosBank.bank[8].words.every((w) => w === w.toLowerCase() && !/[,;:¿?¡!.]/.test(w)), "relativos order tiles are lowercase with no punctuation");
 for (const q of [relativosBank.bank[3], relativosBank.bank[8]]) {
-  const ans = new Set(q.answers.flatMap((a) => stripPhrase(a).split(" ")));
-  const decoys = q.words.filter((w) => !stripPhrase(q.answer).split(" ").some((x) => w.split(" ").includes(x)));
+  const ans = new Set(q.answers.flatMap((a) => stripPhrase(a).split(" ").filter(Boolean)));
+  const decoys = q.words.filter((w) => !stripPhrase(w).split(" ").some((part) => ans.has(part)));
   assert(decoys.length >= 2 && decoys.every((w) => !ans.has(stripPhrase(w))), "relativos decoy tiles do not spell an answer word");
+  assert(decoys.join("|") === (q === relativosBank.bank[3] ? "cuya|donde" : "cuyo|cuales"), "relativos order decoys stay the two non-answer tiles");
 }
 assert(relativosBank.bank[9].prompt === "El libro ___ leí era largo." && relativosBank.bank[9].note === "(relativo; una palabra)" && relativosBank.bank[9].answers.join("|") === "que", "relativos bank type que");
 assert(relativosBank.bank[10].prompt === "Los vecinos ___ perros ladraron toda la noche pidieron disculpas." && relativosBank.bank[10].choices.join("|") === "cuyos|cuyo|cuya|cuyas" && relativosBank.bank[10].answer === "cuyos", "relativos bank item 11");
