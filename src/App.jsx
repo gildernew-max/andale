@@ -3279,7 +3279,7 @@ const STORIES = [
     ],
     glossary: {
       muerte: ["death"], triste: ["sad"], oscuro: ["dark"], abuela: ["grandmother"], nació: ["was born (nacer)"],
-      orilla: ["shore / edge"], lago: ["lake"], contrario: ["the opposite"], cortaba: ["was cutting (cortar)"],
+      orilla: ["shore / edge"], lago: ["lake"], contrario: ["the opposite"], cortaba: ["was cutting (cortar)"], flores: ["flowers"],
       cempasúchil: ["Mexican marigold", "The flower of the dead — its scent is said to guide souls home."],
       patio: ["courtyard"], visitarnos: ["to visit us"], recibirla: ["to welcome her"], limpia: ["clean"],
       finales: ["the end (of a month)"], pueblo: ["town / village"], cambiaba: ["changed (imperfect)"],
@@ -11896,7 +11896,7 @@ export default function App() {
               <div style={{ flex: 1 }}>
                 <span style={{ fontWeight: 900, fontSize: 18 }}>{wordSel.display}</span>
                 {wordSel.en && (storyMode !== "challenge" || wordReveal) ? (
-                  <span style={{ fontWeight: 700, fontSize: 15, color: D.sub }}> — {wordSel.en}</span>
+                  <span data-testid="word-sheet-translation" style={{ fontWeight: 700, fontSize: 15, color: D.sub }}> — {wordSel.en}</span>
                 ) : wordSel.en ? (
                   <span style={{ fontWeight: 700, fontSize: 14, color: D.sub, fontStyle: "italic" }}> — {uiLang === "en" ? "guess from context first" : "adivina por contexto"}</span>
                 ) : null}
@@ -12018,26 +12018,29 @@ export default function App() {
                     {extra.en[pi]}
                   </div>
                 )}
-                {checkpoints[pi] && (
-                  <div data-testid="lectura-checkpoint" style={{ position: "relative", zIndex: wordSel && wordSel.pi === pi ? 31 : "auto", marginTop: 10 + wordSheetSpacer, marginLeft: latamNarration ? 48 : 0, border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
+                {checkpoints[pi] && (() => {
+                  const sheetBlocksAnswers = !!(wordSel && wordSel.pi === pi);
+                  return (
+                  <div data-testid="lectura-checkpoint" style={{ position: "relative", zIndex: sheetBlocksAnswers ? 31 : "auto", marginTop: 10 + wordSheetSpacer, marginLeft: latamNarration ? 48 : 0, border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
                     <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? limeText(D.okText, D) : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
-                    <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", zIndex: wordSel && wordSel.pi === pi ? 40 : "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", zIndex: "auto", pointerEvents: sheetBlocksAnswers ? "none" : "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => {
                         const revealCorrect = !!checkState[pi] && checkState[pi] !== checkpoints[pi].a && choice === checkpoints[pi].a;
                         const marked = checkState[pi] === choice || revealCorrect;
                         return (
-                        <button key={choice} disabled={!!checkState[pi]} onClick={() => answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a)}
-                          style={{ border: `1.5px solid ${marked ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: marked ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] ? "default" : "pointer", color: marked && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
+                        <button key={choice} disabled={!!checkState[pi]} onClick={() => { if (sheetBlocksAnswers) return; answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a); }}
+                          style={{ border: `1.5px solid ${marked ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: marked ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] || sheetBlocksAnswers ? "default" : "pointer", pointerEvents: sheetBlocksAnswers ? "none" : "auto", color: marked && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
                           {choice}
                         </button>
                         );
                       })}
                     </div>
-                    {wordSel && wordSel.pi === pi && renderWordSheet(true)}
+                    {sheetBlocksAnswers && renderWordSheet(true)}
                   </div>
-                )}
+                  );
+                })()}
               </div>
             ); })}
 
