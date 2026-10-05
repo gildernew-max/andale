@@ -726,7 +726,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const proto = HTMLElement.prototype;
     const prev = Object.getOwnPropertyDescriptor(proto, "offsetHeight");
     Object.defineProperty(proto, "offsetHeight", { configurable: true, get() { return 900; } });
-    const inputProto = HTMLInputElement.prototype;
+    const inputProto = HTMLTextAreaElement.prototype;
     const prevBlur = inputProto.blur;
     const blurWhen = [];
     inputProto.blur = function blurSpy(...args) {
