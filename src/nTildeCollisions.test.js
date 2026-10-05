@@ -45,15 +45,17 @@ const extractConst = (src, name) => {
   throw new Error(`App.jsx unclosed ${name}`);
 };
 
-/** Bind a one-line `const name = (s) => …;` from a module without editing it. */
+/** Bind a one-line `const name = (s) => …;` from a module without editing it.
+ *  The punctuation class contains a semicolon, so the cut is the end of the line. */
 const loadPrivateKey = (file, name) => {
   const src = readFileSync(join(here, file), "utf8");
   const needle = `const ${name} = `;
   const start = src.indexOf(needle);
   if (start < 0) throw new Error(`${file} missing ${name}`);
-  const semi = src.indexOf(";", start);
-  if (semi < 0) throw new Error(`${file} unclosed ${name}`);
-  const fn = Function(`"use strict"; return (${src.slice(start + needle.length, semi).trim()});`)();
+  const lineEnd = src.indexOf("\n", start);
+  const line = src.slice(start + needle.length, lineEnd < 0 ? src.length : lineEnd).trim();
+  const expr = line.endsWith(";") ? line.slice(0, -1).trim() : line;
+  const fn = Function(`"use strict"; return (${expr});`)();
   assert(typeof fn === "function", `${name} did not evaluate to a function`);
   return fn;
 };
