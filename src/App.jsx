@@ -24,7 +24,7 @@ import { scoreCountClause } from "./scoreLine.js";
 import { probeAudioFile, storyAudioUrl } from "./storyAudio.js";
 import { watchWordSheetPlacement, wordSheetClose, wordSheetReveal } from "./wordSheet.js";
 import { isSenderoLesson } from "./senderoWin.js";
-import { gradeListedPhrase, orderTileLabel } from "./wordOrder.js";
+import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
@@ -1346,7 +1346,7 @@ const relatedDistractorsFor = (answer, q, count = 3) => {
   const add = (value) => {
     const v = String(value || "").trim();
     const key = strip(v);
-    if (!v || !key || seen.has(key) || out.some((x) => strip(x) === key)) return;
+    if (!v || !key || !/\p{L}/u.test(v) || seen.has(key) || out.some((x) => strip(x) === key)) return;
     out.push(v);
   };
 
@@ -1403,6 +1403,36 @@ const relatedDistractorsFor = (answer, q, count = 3) => {
   return out.slice(0, count);
 };
 
+/** Build-with-words decoys. At least two tiles, and never fewer than the pre-filter count (max 4). */
+const orderFillerTilesFor = (q) => {
+  const sentencePunct = /[¿?¡!.,;:\u2026]/;
+  const answers = [...new Set((q?.answers || [q?.answer || q?.text]).filter(Boolean).map((a) => String(a).trim()).filter(Boolean))];
+  if (!answers.length) return [];
+  const words = answerTokens(answers[0]);
+  if (words.length <= 1) return [];
+  const banned = new Set();
+  listedAnswers(q).forEach((phrase) => {
+    answerTokens(phrase).forEach((w) => {
+      const key = strip(w);
+      if (key) banned.add(key);
+    });
+  });
+  const tileOk = (w) => {
+    const v = String(w || "").trim();
+    if (!v || !/\p{L}/u.test(v) || sentencePunct.test(v)) return false;
+    const key = strip(v);
+    return !!key && !banned.has(key);
+  };
+  const requested = Math.min(4, Math.max(2, Math.ceil(words.length / 3)));
+  const pool = relatedDistractorsFor(answers[0], q, 200);
+  const legacy = pool.slice(0, requested)
+    .flatMap(answerTokens)
+    .filter((w) => !words.some((correct) => strip(correct) === strip(w)))
+    .slice(0, 4);
+  const target = Math.min(4, Math.max(2, legacy.length));
+  return pool.flatMap(answerTokens).filter(tileOk).slice(0, target);
+};
+
 const answerAidFor = (q) => {
   if (!q || !(q.type === "type" || q.type === "listen" || q.type === "transform")) return null;
   const answers = [...new Set((q.answers || [q.answer || q.text]).filter(Boolean).map((a) => String(a).trim()).filter(Boolean))];
@@ -1418,10 +1448,7 @@ const answerAidFor = (q) => {
     const distractors = relatedDistractorsFor(words[0], q, 3);
     return { mode: "choices", tiles: shuffle([words[0], ...distractors].map((w, i) => ({ id: `choice-${i}`, w }))) };
   }
-  const distractors = relatedDistractorsFor(answers[0], q, Math.min(4, Math.max(2, Math.ceil(words.length / 3))))
-    .flatMap(answerTokens)
-    .filter((w) => !words.some((correct) => strip(correct) === strip(w)))
-    .slice(0, 4);
+  const distractors = orderFillerTilesFor(q);
   return { mode: "bank", tiles: shuffle([...words.map((w, i) => ({ w, id: `word-${i}` })), ...distractors.map((w, i) => ({ w, id: `distractor-${i}` }))]) };
 };
 

@@ -28,7 +28,7 @@ import { isAudioGatedStep, LISTEN_SKIP, LISTEN_SKIP_HINT, listenSkipHint, listen
 import { WAITLIST_CTA, WAITLIST_ERROR, WAITLIST_PLACEHOLDER, WAITLIST_PRIVACY, WAITLIST_PRIVACY_URL, WAITLIST_PROMPT, WAITLIST_SUCCESS, waitlistCta, waitlistError, waitlistPlaceholder, waitlistPrivacy, waitlistPrompt, waitlistSuccess } from "./waitlist.js";
 import { FIRST_WIN_MINUTES, splashPromiseLine } from "./splashCopy.js";
 import { DOCTORA_FULL_BEAT_CAP, FIRST_DOCTORA_BEAT_CAP, FIRST_DOCTORA_KEEP_NATURALS, trimDoctoraBeats } from "./doctoraWin.js";
-import { gradeListedPhrase, isIntrinsicOrderCapital, orderTileLabel, stripPhrase } from "./wordOrder.js";
+import { gradeListedPhrase, isIntrinsicOrderCapital, listedAnswers, orderTileLabel, stripPhrase } from "./wordOrder.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -4527,3 +4527,99 @@ assert(
   "Xochimilco no longer uses the three ahorita chips",
 );
 console.log(`ok: tap-an-answer length — ${tapChipItems} shipped chip items; Xochimilco chips ${xochiChips.join(" | ")}`);
+
+/* Filler tiles: no word of any listed answer, no letter-free chip, and no
+   sentence punctuation on build-with-words decoys. Tap chips keep punctuation. */
+const orderFillerTilesFor = Function(
+  "relatedDistractorsFor",
+  "answerTokens",
+  "listedAnswers",
+  "strip",
+  `"use strict"; return (q) => ${extractArrowFn(appSrc, "orderFillerTilesFor")};`,
+)(relatedDistractorsFor, distractorTokens, listedAnswers, distractorStrip);
+const hasLetter = (value) => /\p{L}/u.test(String(value || ""));
+const sentencePunct = /[¿?¡!.,;:\u2026]/;
+const phraseAccepted = (phrase, item) => {
+  const hit = gradeListedPhrase(phrase, item);
+  return hit.status === "correct" || hit.status === "equivalent";
+};
+const tileBagCovers = (phrase, tiles) => {
+  const bag = new Map();
+  tiles.forEach((tile) => bag.set(tile, (bag.get(tile) || 0) + 1));
+  return String(phrase || "").trim().split(/\s+/).filter(Boolean).every((word) => {
+    const n = bag.get(word) || 0;
+    if (!n) return false;
+    bag.set(word, n - 1);
+    return true;
+  });
+};
+const isOrderFillerItem = (q) => {
+  if (!q || !(q.type === "type" || q.type === "listen" || q.type === "transform")) return false;
+  const answers = [...new Set((q.answers || [q.answer || q.text]).filter(Boolean).map((a) => String(a).trim()).filter(Boolean))];
+  if (!answers.length) return false;
+  if (q.type === "type" && answers.every((a) => distractorTokens(a).length <= 3)) return false;
+  return distractorTokens(answers[0]).length > 1;
+};
+
+const compsupUnit = UNITS.find((u) => u.id === "compsup");
+const compsupTenisIdx = compsupUnit.bank.findIndex((q) => (q.answers || []).includes("Mi hermana tiene tantos pares de tenis como yo"));
+const compsupTenis = prepQuestion({
+  ...compsupUnit.bank[compsupTenisIdx],
+  _u: "compsup",
+  _i: compsupUnit.questions.length + compsupTenisIdx,
+});
+const compsupTenisFillers = orderFillerTilesFor(compsupTenis);
+const compsupTenisTiles = [...distractorTokens(compsupTenis.answers[0]), ...compsupTenisFillers];
+assert(compsupTenisFillers.length >= 2, `compsup tenis keeps two decoy tiles, got ${JSON.stringify(compsupTenisFillers)}`);
+assert(
+  compsupTenisFillers.every((tile) => distractorStrip(tile) !== "tengo"),
+  `compsup tenis fillers must not include Tengo, got ${JSON.stringify(compsupTenisFillers)}`,
+);
+listedAnswers(compsupTenis).forEach((phrase) => {
+  assert(phraseAccepted(phrase, compsupTenis), `compsup tenis accepts listed answer: ${phrase}`);
+});
+for (const fragment of ["como yo Tengo", "como Tengo yo"]) {
+  assert(!phraseAccepted(fragment, compsupTenis), `compsup tenis rejects fragment: ${fragment}`);
+}
+for (const built of [
+  "Mi hermana tiene tantos pares de tenis como yo Tengo",
+  "Mi hermana tiene tantos pares de tenis como Tengo yo",
+]) {
+  assert(!tileBagCovers(built, compsupTenisTiles), `compsup tenis tiles cannot build ${built}`);
+}
+
+let letterFree = [];
+let punctFillers = [];
+let shortFillerSets = [];
+let orderFillerItems = 0;
+for (const { unit } of FLAT) {
+  for (const [bucket, list] of [["questions", unit.questions || []], ["bank", unit.bank || []]]) {
+    list.forEach((raw, i) => {
+      const q = prepQuestion({ ...raw, _u: unit.id, _i: bucket === "bank" ? unit.questions.length + i : i });
+      const loc = `${unit.id} ${bucket}[${i}]`;
+      const call = tapDistractorCall(q);
+      if (call?.count) {
+        relatedDistractorsFor(call.answer, q, call.count).forEach((chip) => {
+          if (!hasLetter(chip)) letterFree.push(`${loc} chip ${JSON.stringify(chip)}`);
+        });
+      }
+      if (!isOrderFillerItem(q)) return;
+      orderFillerItems += 1;
+      const fillers = orderFillerTilesFor(q);
+      if (fillers.length < 2) shortFillerSets.push(`${loc} (${fillers.length}): ${q.answers?.[0] || q.answer}`);
+      fillers.forEach((tile) => {
+        if (!hasLetter(tile)) letterFree.push(`${loc} filler ${JSON.stringify(tile)}`);
+        if (sentencePunct.test(tile)) punctFillers.push(`${loc} ${JSON.stringify(tile)}`);
+      });
+    });
+  }
+}
+assert(orderFillerItems > 0, "shipped units include build-with-words filler sets");
+assert(letterFree.length === 0, `letter-free chip or filler: ${letterFree.join("; ")}`);
+assert(punctFillers.length === 0, `order filler carries sentence punctuation: ${punctFillers.join("; ")}`);
+assert(
+  xochiChips.join(" | ") === "Nunca | Qué grande | Qué cara",
+  "Xochimilco tap chips still keep their punctuation",
+);
+if (shortFillerSets.length) console.log(`order filler sets below two decoys: ${shortFillerSets.join(" | ")}`);
+console.log(`ok: filler tiles — compsup tenis excludes Tengo; ${orderFillerItems} order sets; letter-free ${letterFree.length}; sentence-punct ${punctFillers.length}; short ${shortFillerSets.length}`);
