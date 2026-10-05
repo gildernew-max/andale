@@ -5383,6 +5383,7 @@ export default function App() {
     return () => { document.body.style.overflow = prev; };
   }, [onboardingOpen]);
   const inputRef = useRef(null);
+  const lessonBodyRef = useRef(null);
   const lessonFooterRef = useRef(null);
   const footerScrollRef = useRef(null);
   const [footerCapped, setFooterCapped] = useState(false);
@@ -7271,6 +7272,33 @@ export default function App() {
     if (footerCapped && status !== "idle") inputRef.current?.blur();
   }, [footerCapped, status]);
 
+  // A tall wrong/correct bar shortens the lesson body. Choice rows that land
+  // under that bar scroll up so every chip stays readable above it.
+  useLayoutEffect(() => {
+    if (screen !== "lesson" || status === "idle") return undefined;
+    const body = lessonBodyRef.current;
+    if (!body) return undefined;
+    const view = body.getBoundingClientRect();
+    if (view.width === 0 && view.height === 0) return undefined;
+    const choiceSlots = [...body.querySelectorAll("[data-tile-slot]")].filter((el) => el.querySelector("[data-testid='choice-chip-key']"));
+    const cards = [...body.querySelectorAll("[data-testid='choice-card']")];
+    const targets = choiceSlots.length ? choiceSlots : cards;
+    if (!targets.length) return undefined;
+    let top = Infinity;
+    let bottom = 0;
+    targets.forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.height <= 0) return;
+      if (r.top < top) top = r.top;
+      if (r.bottom > bottom) bottom = r.bottom;
+    });
+    if (!bottom || top === Infinity) return undefined;
+    const gap = 8;
+    const overflow = bottom - (view.bottom - gap);
+    if (overflow > 0.5) body.scrollTop += overflow;
+    return undefined;
+  }, [screen, status, qi, theme, footerCapped, showWhy, typed]);
+
   // Drop leftover overlays when the view swaps so the first tap hits the new screen.
   useEffect(() => {
     setConfirmExit(false);
@@ -8858,7 +8886,7 @@ export default function App() {
                       </button>
                     )}
                   </div>
-                  <div data-testid="section-lane" data-section={si} style={{ position: "relative", background: bg, borderRadius: "0 0 22px 22px", padding: "20px 0 26px", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
+                  <div data-testid="section-lane" data-section={si} style={{ position: "relative", background: bg, borderRadius: "0 0 22px 22px", padding: "32px 0 26px", display: "flex", flexDirection: "column", alignItems: "center", overflow: "hidden" }}>
                     <div aria-hidden="true" style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", background: theme === "dark" ? "transparent" : "radial-gradient(circle, rgba(255,255,255,.9), rgba(255,255,255,0) 70%)", top: -60, right: -60, pointerEvents: "none" }} />
                     <div aria-hidden="true" style={{ position: "absolute", width: 260, height: 260, borderRadius: "50%", background: theme === "dark" ? "transparent" : "radial-gradient(circle, rgba(255,255,255,.7), rgba(255,255,255,0) 70%)", bottom: -80, left: -80, pointerEvents: "none" }} />
                     {sec.unitIds.map((uid) => {
@@ -10529,7 +10557,7 @@ export default function App() {
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
         <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={{ flex: "1 1 auto", minHeight: 0, width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", overflow: "hidden", ...(orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : orderDark ? { background: D.bg, color: HUB_CREAM } : null) }}>
-        <div data-testid="lesson-body" style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 0", position: "relative", flex: "1 1 auto", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", background: D.bg }}>
+        <div ref={lessonBodyRef} data-testid="lesson-body" style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 0", position: "relative", flex: "1 1 auto", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", background: D.bg }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
               <span style={{ fontWeight: 900, fontSize: 42, color: "#FF9600", textShadow: "0 3px 0 rgba(0,0,0,.12), 0 0 24px rgba(255,200,0,.5)", letterSpacing: ".02em" }}>{inter.text}</span>
@@ -10917,7 +10945,7 @@ export default function App() {
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div style={{ flex: 1, ...(footerCapped || lessonFooterStackContinue ? { minWidth: 0 } : null), fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : limeText(D.okText, D) }}>
+              <div style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : limeText(D.okText, D) }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
                     <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: theme === "dark" ? 0.85 : 1 }}>
@@ -10942,11 +10970,11 @@ export default function App() {
 		                      {errorKind && <div data-testid="practice-focus" style={{ display: "inline-flex", alignItems: "center", gap: 5, background: D.card, border: `1.5px solid ${D.red}`, borderRadius: 99, padding: "1px 8px", fontSize: 11, fontWeight: 900, marginBottom: 5 }}>{L.focus}: {focusLabel(errorKind, uiLang)}</div>}
 	                      {showDiff ? (
                         <div>
-	                          <div style={{ fontSize: 12.5, opacity: 0.8 }}>{L.yourAnswer}: <span style={{ textDecoration: "line-through", textDecorationThickness: 2 }}>{typed}</span></div>
-                          <div style={{ fontSize: 15.5, marginTop: 2 }}>
+	                          <div style={{ fontSize: 12.5, opacity: 0.8, minWidth: 0, overflowWrap: "anywhere" }}>{L.yourAnswer}: <span style={{ textDecoration: "line-through", textDecorationThickness: 2 }}>{typed}</span></div>
+                          <div data-testid="practice-correct" style={{ fontSize: 15.5, marginTop: 2, display: "flex", flexWrap: "wrap", columnGap: 5, rowGap: 2, alignItems: "baseline", minWidth: 0, maxWidth: "100%" }}>
 	                            <span style={{ opacity: 0.8, fontSize: 12.5 }}>{L.correct}: </span>
                             {marks.map((m, i) => (
-                              <b key={i} style={{ color: m.k === "ok" ? limeText(D.okText, D) : m.k === "accent" ? "#E08600" : D.badText, borderBottom: m.k === "ok" ? "none" : "2.5px solid currentColor", marginRight: 5 }}>{m.w}</b>
+                              <b key={i} style={{ color: m.k === "ok" ? limeText(D.okText, D) : m.k === "accent" ? "#E08600" : D.badText, borderBottom: m.k === "ok" ? "none" : "2.5px solid currentColor", maxWidth: "100%" }}>{m.w}</b>
                             ))}
                           </div>
 	                          {hasAccent && <div style={{ fontSize: 11.5, color: D.accent, marginTop: 2 }}>{uiLang === "en" ? "orange = only the accent is missing" : "naranja = solo falta el acento"}</div>}
