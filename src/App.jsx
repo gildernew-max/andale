@@ -4648,6 +4648,7 @@ const UI = {
     whyLabel: "Por qué",
     narrationLabel: "NARRACIÓN",
     narrationSub: "La voz en español de tu dispositivo, frase por frase.",
+    narrationSubRecorded: "Voz en español grabada, párrafo por párrafo.",
     narrationFail: "El audio no suena ahora. Puedes leer el cuento sin él.",
     splashLine: splashPromiseLine("es"),
     splashCta: "¡Empezar!",
@@ -4740,6 +4741,7 @@ const UI = {
     whyLabel: "Why",
     narrationLabel: "NARRATION",
     narrationSub: "Your device's Spanish voice, one sentence at a time.",
+    narrationSubRecorded: "Recorded Spanish voice, one paragraph at a time.",
     narrationFail: "Audio isn't playing right now. The story reads fine without it.",
     splashLine: splashPromiseLine("en"),
     splashCta: "Start!",
@@ -5253,6 +5255,7 @@ export default function App() {
   const wordSheetCloseScrollRef = useRef(null);
   wordSheetBoxRef.current = wordSheetBox;
   const storyAudioUrlRef = useRef(null);
+  const [storyAudioReady, setStoryAudioReady] = useState(false);
   const [wordReveal, setWordReveal] = useState(true);
   const [ansSel, setAnsSel] = useState({}); // story question selections (choice value, or legacy display index)
   const [storyShuffle, setStoryShuffle] = useState(null); // per-open Lectura choice order
@@ -6778,20 +6781,24 @@ export default function App() {
   useEffect(() => {
     if (screen !== "story" || !storyView?.id) {
       storyAudioUrlRef.current = null;
+      setStoryAudioReady(false);
       return undefined;
     }
     const pi = paraIdx;
     if (!Number.isInteger(pi) || pi < 0 || pi >= storyView.paragraphs.length) {
       storyAudioUrlRef.current = null;
+      setStoryAudioReady(false);
       return undefined;
     }
     let cancelled = false;
     const url = storyAudioUrl(storyView.id, pi, import.meta.env.BASE_URL);
     storyAudioUrlRef.current = null;
+    setStoryAudioReady(false);
     if (!url) return undefined;
     probeAudioFile(url).then((ok) => {
       if (cancelled) return;
       storyAudioUrlRef.current = ok ? url : null;
+      setStoryAudioReady(!!ok);
     });
     return () => { cancelled = true; };
   }, [screen, storyView, paraIdx]);
@@ -11932,7 +11939,7 @@ export default function App() {
                 <div>
                   <div data-testid="narration-label" style={{ fontSize: 11, fontWeight: 900, color: limeText(sec.dark, D), letterSpacing: ".06em" }}>{L.narrationLabel}</div>
                   <div data-testid="narration-sub" style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>
-                    {L.narrationSub}
+                    {storyAudioReady ? L.narrationSubRecorded : L.narrationSub}
                   </div>
                   {voiceDead && (
                     <div data-testid="narration-fail" style={{ fontSize: 12.5, fontWeight: 800, color: D.sub }}>
