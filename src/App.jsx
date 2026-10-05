@@ -10516,7 +10516,7 @@ export default function App() {
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
         <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={{ flex: "1 1 auto", minHeight: 0, width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", overflow: "hidden", ...(orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : orderDark ? { background: D.bg, color: HUB_CREAM } : null) }}>
-        <div data-testid="lesson-body" style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 0", position: "relative", flex: "1 1 auto", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+        <div data-testid="lesson-body" style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 0", position: "relative", flex: "1 1 auto", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", background: D.bg }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
               <span style={{ fontWeight: 900, fontSize: 42, color: "#FF9600", textShadow: "0 3px 0 rgba(0,0,0,.12), 0 0 24px rgba(255,200,0,.5)", letterSpacing: ".02em" }}>{inter.text}</span>
@@ -10895,7 +10895,7 @@ export default function App() {
         </div>
 
           {/* ---------- ACTION BAR with mascot ---------- */}
-          <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className={footerCapped ? "lesson-footer-cap" : undefined} style={{ flexShrink: 0, width: "100%", boxSizing: "border-box", background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(footerCapped ? { display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
+          <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className={footerCapped ? "lesson-footer-cap" : undefined} style={{ flexShrink: 0, width: "100%", boxSizing: "border-box", background: status === "idle" ? D.bg : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? D.bg : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(footerCapped ? { display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
             <div style={footerCapped ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", minWidth: 0, minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", overflow: "hidden" } : lessonFooterStackContinue ? { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14 } : { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
               <div ref={footerCapped ? footerScrollRef : undefined} data-testid={footerCapped ? "lesson-footer-scroll" : (lessonFooterStackContinue ? "lesson-footer-feedback-row" : undefined)} className={footerCapped ? "lesson-footer-scroll" : undefined} style={footerCapped ? { flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", padding: "14px 20px 0" } : lessonFooterStackContinue ? { display: "flex", flex: "1 1 100%", width: "100%", minWidth: 0, alignItems: "center", gap: 14 } : { display: "flex", flex: "1 1 auto", minWidth: 0, alignItems: "center", gap: 14 }}>
                 <div style={footerCapped ? { display: "flex", alignItems: "flex-start", gap: 14, minWidth: 0 } : { display: "contents" }}>
@@ -10976,7 +10976,7 @@ export default function App() {
                 </div>
                 ) : (
                 status === "idle" ? (
-	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} onClick={check} style={{ flexShrink: 0 }}>{L.check}</Btn>
+	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} onClick={check} style={{ flexShrink: 0, marginTop: "auto" }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
 	                    <div style={{ fontSize: 11, fontWeight: 900, color: limeText(D.okText, D), marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
@@ -10988,7 +10988,7 @@ export default function App() {
                   </div>
                 ) : (
 	                  <LessonFooterContinueSlot stack={lessonFooterStackContinue}>
-	                    <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={lessonFooterStackContinue ? { width: "100%", flexBasis: "100%", flexShrink: 0 } : { flexShrink: 0 }}>{L.continue}</Btn>
+	                    <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={lessonFooterStackContinue ? { width: "100%", flexBasis: "100%", flexShrink: 0, marginTop: "auto" } : { flexShrink: 0, marginTop: "auto" }}>{L.continue}</Btn>
 	                  </LessonFooterContinueSlot>
                 )
                 )
