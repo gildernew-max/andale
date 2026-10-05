@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { watchWordSheetPlacement, wordSheetClose, wordSheetFrame, wordSheetPlacementReason, wordSheetReveal } from "./wordSheet.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
@@ -156,5 +157,15 @@ assert(closedLast.scrollY === 241, "close does not jump the page off a last-line
 const closedFirst = wordSheetClose({ scrollY: 96, spacer: firstLine.plan.spacer });
 assert(closedFirst.spacer === 0, "close resets a first-line spacer to 0");
 assert(closedFirst.scrollY === 96, "close does not jump the page off a first-line word");
+
+const appSrc = readFileSync(new URL("./App.jsx", import.meta.url), "utf8");
+const answersAt = appSrc.indexOf('data-testid="lectura-checkpoint-answers"');
+const sheetAt = appSrc.indexOf("renderWordSheet(true)");
+assert(answersAt > 0 && sheetAt > answersAt, "anchored word sheet renders with the checkpoint");
+const between = appSrc.slice(answersAt, sheetAt);
+assert(between.includes("</div>"), "the answer row closes before the anchored sheet");
+assert(!between.includes("renderWordSheet"), "the anchored sheet is not inside the answer row");
+assert(between.includes("? 40 : \"auto\""), "the answer row stacks above the open sheet");
+assert(appSrc.includes('pointerEvents: wordSheetBox ? "auto" : "none"'), "an unplaced sheet does not take taps");
 
 console.log("ok: word sheet stops above checkpoint buttons and below the tapped word");

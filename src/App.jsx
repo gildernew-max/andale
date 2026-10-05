@@ -6928,7 +6928,10 @@ export default function App() {
       wordSheetLock.current = true;
       if (Math.abs(plan.scrollDelta) > 1) window.scrollBy(0, plan.scrollDelta);
       wordSheetLock.current = false;
-      const anchorLeft = hasCp ? plan.frame.left - cp.left : plan.frame.left;
+      const cardEl = hasCp ? checkpointAnswersRef.current?.closest("[data-testid='lectura-checkpoint']") : null;
+      const cardRect = cardEl?.getBoundingClientRect();
+      const originLeft = cardRect ? cardRect.left + cardEl.clientLeft : cp.left;
+      const anchorLeft = hasCp ? plan.frame.left - originLeft : plan.frame.left;
       setWordSheetBox((prev) => {
         const next = { ...plan.frame, anchored: hasCp, anchorLeft };
         if (prev && prev.left === next.left && prev.width === next.width && prev.bottom === next.bottom && prev.maxHeight === next.maxHeight && prev.backdropBottom === next.backdropBottom && prev.anchored === next.anchored && prev.anchorLeft === next.anchorLeft) return prev;
@@ -11851,7 +11854,7 @@ export default function App() {
         const cpOrder = storyShuffle?.storyId === story.id ? storyShuffle.checkpoints : null;
         const correct = story.questions.reduce((n, qq, i) => n + (isStoryChoiceCorrect(qq, ansSel[i], qOrder?.[i]) ? 1 : 0), 0);
         const renderWordSheet = (anchored) => (
-          <div ref={wordSheetRef} data-testid="word-sheet" className="pop" style={{ visibility: wordSheetBox ? "visible" : "hidden", position: anchored ? "absolute" : "fixed", left: anchored ? (wordSheetBox ? wordSheetBox.anchorLeft : 0) : (wordSheetBox ? wordSheetBox.left : 8), width: wordSheetBox ? wordSheetBox.width : 320, bottom: anchored ? "calc(100% + 10px)" : (wordSheetBox ? wordSheetBox.bottom : 8), zIndex: 30, boxSizing: "border-box", background: D.card, border: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: wordSheetBox ? wordSheetBox.maxHeight : "none", overflowY: "auto" }}>
+          <div ref={wordSheetRef} data-testid="word-sheet" className="pop" style={{ visibility: wordSheetBox ? "visible" : "hidden", pointerEvents: wordSheetBox ? "auto" : "none", position: anchored ? "absolute" : "fixed", left: anchored ? (wordSheetBox ? wordSheetBox.anchorLeft : 0) : (wordSheetBox ? wordSheetBox.left : 8), width: wordSheetBox ? wordSheetBox.width : 320, bottom: anchored ? "calc(100% + 10px)" : (wordSheetBox ? wordSheetBox.bottom : 8), zIndex: 30, boxSizing: "border-box", background: D.card, border: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: wordSheetBox ? wordSheetBox.maxHeight : "none", overflowY: "auto" }}>
             <div ref={wordSheetContentRef} style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
               <button onClick={() => speak(wordSel.display)} aria-label={uiLang === "en" ? "Listen to word" : "Escuchar palabra"}
                 style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "7px 9px", flexShrink: 0, lineHeight: 0 }}>
@@ -11987,7 +11990,7 @@ export default function App() {
                     <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? limeText(D.okText, D) : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
-                    <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", zIndex: wordSel && wordSel.pi === pi ? 40 : "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => {
                         const revealCorrect = !!checkState[pi] && checkState[pi] !== checkpoints[pi].a && choice === checkpoints[pi].a;
                         const marked = checkState[pi] === choice || revealCorrect;
@@ -11998,8 +12001,8 @@ export default function App() {
                         </button>
                         );
                       })}
-                      {wordSel && wordSel.pi === pi && renderWordSheet(true)}
                     </div>
+                    {wordSel && wordSel.pi === pi && renderWordSheet(true)}
                   </div>
                 )}
               </div>
