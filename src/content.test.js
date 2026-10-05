@@ -2397,7 +2397,7 @@ const porparaBankEn = [
   "Heading toward a destination → para: se va para Puebla. «Por Puebla» would mean passing through or around it, not the destination. «Fue» is past tense and clashes with «mañana».",
   "Para + infinitive expresses purpose (the «what for»): hago ejercicio para bajar de peso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-88, -77).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-99, -88).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
 porparaBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2583,7 +2583,7 @@ const sereflexBankEn = [
   "Reflexive passive: «los tacos» is plural → se comen. «Come» doesn't agree with «los tacos»; «me / le» are decoys.",
   "Se + me marks an unintentional accident, and the verb agrees with the thing: rompí un vaso → se me rompió un vaso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-77, -66).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-88, -77).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
 sereflexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2725,7 +2725,7 @@ const compsupBankEn = [
   "Irregular superlative: la + mejor + noun + de + group → la mejor alumna del salón. «Peor» would say the opposite, and «más» is not added to «mejor». In ordinary speech the superlative goes before the noun (not «la alumna mejor»).",
   "Quantity with a noun → tantos + noun + como: she has ten pairs and I have ten → tantos pares de tenis como yo. «Pares» is masculine plural, which is why it's tantos.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-66, -55).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-77, -66).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
 compsupBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2878,7 +2878,7 @@ const mexBankEn = [
   "«Al rato» = later, with no fixed time, and it is a set phrase: nos vemos al rato en la taquería, not «al ratos» or «el rato».",
   "«Un chorro de» = a ton of, and it replaces «mucha»: hay mucha gente → hay un chorro de gente. Unlike «mucha», it doesn’t agree with the noun.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-66, -55).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
 mexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3029,7 +3029,7 @@ const pronBankEn = [
   "In Mexico, «marcar» also means to phone someone: luego te marco = luego te llamo. This item asks for the first-person present: marco.",
   "«Encantar» works like gustar: it takes an indirect-object pronoun, and for «mi hermana y yo» that is «nos»: nos encantan los tamales. «Lo» and «los» are direct-object pronouns and are not used with encantar.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
 pronBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3184,7 +3184,7 @@ const futcondBankEn = [
   "Simple future of «hacer»: irregular stem har- + ending: haremos. «Haceremos» regularizes the stem and does not exist.",
   "Reported speech in the past: «¿Me ayudas mañana?» → me preguntó si la ayudaría al día siguiente. «Al día siguiente» puts the help in the future of the past, so the present («ayudo») does not fit. In speech «si la ayudaba» is also heard; this item practices the conditional.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === futcondBank.bank[i].explain && row.en === futcondBankEn[i]), "futcond Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === futcondBank.bank[i].explain && row.en === futcondBankEn[i]), "futcond Why rows are appended in bank order");
 futcondBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3348,7 +3348,7 @@ const pluscampBankEn = [
   "Pluperfect: había + participle places something before another moment in the past (before moving to Puebla): nunca había salido. «Habría» (conditional perfect) would talk about something hypothetical, not a fact.",
   "Regret: debería haber + participle is «should have»: debería haber salido más temprano. Without «haber» there is no compound tense: «debería salido», «debería hacer salido» and «debería ser salido» are not said. In speech «debí haber salido» or «debí salir» is also said; this exercise practices «debería haber».",
 ];
-assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === pluscampBank.bank[i].explain && row.en === pluscampBankEn[i]), "pluscamp Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === pluscampBank.bank[i].explain && row.en === pluscampBankEn[i]), "pluscamp Why rows are appended in bank order");
 const builtFromOrderTilesMulti = (words, phrase) => {
   const toks = String(phrase).trim().split(/\s+/).map(stripPhrase);
   const pool = words.map((w) => ({ w, used: false, k: stripPhrase(w).split(" ") }));
@@ -3540,7 +3540,7 @@ const pronombres2BankEn = [
   "Before «lo», «les» (and «le») becomes «se»: a mis papás + lo del viaje → ya se lo dije. «Les lo» is not said.",
   "With a gerund, the pronoun attaches to the end and takes a written accent: calentando + los → calentándolos. Detached («calentando los») or before the gerund («los calentando») is not written that way. «Los está calentando» is also said; here the blank asks for the attached form.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === pronombres2Bank.bank[i].explain && row.en === pronombres2BankEn[i]), "pronombres2 Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === pronombres2Bank.bank[i].explain && row.en === pronombres2BankEn[i]), "pronombres2 Why rows are appended in bank order");
 pronombres2Bank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3662,6 +3662,158 @@ assert(gradeListedPhrase("se", pronombres2Se).status !== "wrong", "se type is ac
 assert(gradeListedPhrase("Se", pronombres2Se).status !== "wrong", "se case is ignored");
 for (const phrase of ["les", "le", "lo", "me"]) {
   assert(gradeListedPhrase(phrase, pronombres2Se).status === "wrong", `se type is rejected: ${phrase}`);
+}
+const conectoresBank = UNITS.find((u) => u.id === "conectores");
+assert(conectoresBank.questions.length === 11, "conectores authored questions stay 11");
+assert(conectoresBank.questions[0].prompt === "Quería ir al concierto; ___, no conseguí boletos.", "conectores question order is unchanged");
+assert(Array.isArray(conectoresBank.bank) && conectoresBank.bank.length === 11, "conectores replay bank is 11 questions");
+assert(conectoresBank.bank.map((q) => q.type).join(",") === "mc,mc,type,order,mc,type,transform,mc,order,type,mc", "conectores bank types interleave mc/type/order/transform");
+assert(conectoresBank.bank[0].prompt === "El hotel está junto a la playa; ___, el desayuno está incluido." && conectoresBank.bank[0].choices.join("|") === "además|sin embargo|por lo tanto|debido a" && conectoresBank.bank[0].answer === "además", "conectores bank item 1");
+assert(conectoresBank.bank[1].prompt === "No vine a pelear, ___ a ayudarte." && conectoresBank.bank[1].choices.join("|") === "sino|pero|y|aunque" && conectoresBank.bank[1].answer === "sino", "conectores bank item 2");
+assert(conectoresBank.bank[2].prompt === "Los resultados fueron buenos; no ___, el comité pidió más pruebas." && conectoresBank.bank[2].note === "(conector formal de contraste; una palabra)" && conectoresBank.bank[2].answers.join("|") === "obstante", "conectores bank type obstante");
+assert(conectoresBank.bank[3].prompt === "Construye: “She didn't buy the car; she rented it.”" && conectoresBank.bank[3].words.join("|") === "no|compró|el|coche|sino que|lo|rentó|rentando|rentar", "conectores «sino que» order words fuse the conjunction and include both decoys");
+assert(conectoresBank.bank[4].prompt === "___ llegues a casa, mándame un mensaje." && conectoresBank.bank[4].choices.join("|") === "En cuanto|En cuanto a|Debido a|A pesar de" && conectoresBank.bank[4].answer === "En cuanto", "conectores bank item 5");
+assert(conectoresBank.bank[5].prompt === "___ llovió toda la tarde, salimos a caminar." && conectoresBank.bank[5].note === "(concesión; una palabra)" && conectoresBank.bank[5].answers.join("|") === "aunque", "conectores bank type aunque");
+assert(conectoresBank.bank[6].base === "Estudié toda la noche. Reprobé el examen." && conectoresBank.bank[6].instruction === "Únelas con «sin embargo» entre las dos oraciones, sin añadir otras palabras, y conserva el orden" && conectoresBank.bank[6].answers.join("|") === "Estudié toda la noche, sin embargo reprobé el examen", "conectores bank transform");
+assert(conectoresBank.bank[7].prompt === "Los boletos del tren se agotaron; ___, tuvimos que cancelar el viaje." && conectoresBank.bank[7].choices.join("|") === "por lo tanto|sin embargo|aunque|debido a" && conectoresBank.bank[7].answer === "por lo tanto", "conectores bank item 8");
+assert(conectoresBank.bank[8].prompt === "Construye: “We went to the park even though it was raining hard.” («fuimos al parque» va junto)" && conectoresBank.bank[8].words.join("|") === "fuimos|al|parque|a pesar de que|llovía|mucho|llover|sino", "conectores «a pesar de que» order words fuse the conjunction and include both decoys");
+assert(conectoresBank.bank[3].words.every((w) => w === w.toLowerCase() && !w.includes(",")) && conectoresBank.bank[8].words.every((w) => w === w.toLowerCase() && !w.includes(",")), "conectores order tiles are lowercase with no comma");
+assert(conectoresBank.bank[9].prompt === "El vuelo se canceló ___ a la tormenta." && conectoresBank.bank[9].note === "(causa; una palabra que empieza con «d»)" && conectoresBank.bank[9].answers.join("|") === "debido", "conectores bank type debido");
+assert(conectoresBank.bank[10].prompt === "___ la hora, la junta es a las nueve." && conectoresBank.bank[10].choices.join("|") === "En cuanto a|En cuanto|Debido|Sin embargo" && conectoresBank.bank[10].answer === "En cuanto a", "conectores bank item 11");
+assert(orderTileLabel(conectoresBank.bank[3].words[4], { answer: conectoresBank.bank[3].answer, placedIndex: 0 }) === "Sino que" && orderTileLabel(conectoresBank.bank[8].words[3], { answer: conectoresBank.bank[8].answers[1], placedIndex: 0 }) === "A pesar de que", "conectores two-word tiles capitalize only the first letter in slot 0");
+assert(conectoresBank.bank[3].answers.every((a) => builtFromOrderTilesMulti(conectoresBank.bank[3].words, a) !== null) && conectoresBank.bank[8].answers.every((a) => builtFromOrderTilesMulti(conectoresBank.bank[8].words, a) !== null), "conectores order answers are buildable with the multi-word helper");
+assert(conectoresBank.bank.every((q) => q.type !== "mc" || q.note !== "¡Ojo!"), "conectores has no ¡Ojo! item, so no mc carries ¡Ojo!");
+
+const conectoresPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((item, i) => {
+      if (u.id === "conectores" && kind === "bank") return;
+      if (item.type === "transform") {
+        const base = item.base || item.source;
+        if (base) conectoresPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (item.prompt) conectoresPromptOwners.set(item.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+conectoresBank.bank.forEach((item, i) => {
+  if (item.type === "transform") {
+    assert(!conectoresPromptOwners.has(item.base), `conectores bank ${i} transform base repeats a prompt`);
+    assert(!conectoresPromptOwners.has(`base:${item.base}`), `conectores bank ${i} transform base repeats ${conectoresPromptOwners.get(`base:${item.base}`) || "another item"}`);
+    return;
+  }
+  assert(!conectoresPromptOwners.has(item.prompt), `conectores bank ${i} prompt duplicates ${conectoresPromptOwners.get(item.prompt) || "another item"}`);
+  conectoresPromptOwners.set(item.prompt, `conectores bank ${i}`);
+});
+const conectoresBankEn = [
+  "«Además» adds another advantage to the previous one: el hotel está junto a la playa; además, el desayuno está incluido. «Sin embargo» would mark contrast, and here the two ideas point the same way.",
+  "After a negation, «sino» corrects with another element: no vine a pelear, sino a ayudarte. Here «pero» does not correct what was negated.",
+  "«No obstante» marks contrast in a more formal register than «sin embargo» (frequent in contracts and legal opinions): los resultados fueron buenos; no obstante, el comité pidió más pruebas.",
+  "«Sino que» corrects a negation when a conjugated verb follows: no compró el coche, sino que lo rentó. In this sentence, «pero» would present a contrast, not a correction.",
+  "«En cuanto» + a conjugated verb means «as soon as»: en cuanto llegues a casa, mándame un mensaje. «En cuanto a» goes with a noun and means «regarding».",
+  "Aunque + indicative presents a real fact as an obstacle that didn't stop the outcome: aunque llovió toda la tarde, salimos a caminar. Aunque + subjunctive (aunque llueva) refers to something merely possible, or a fact treated as beside the point.",
+  "Sin embargo links two opposing ideas; here it sits between them: estudié toda la noche; sin embargo, reprobé el examen. Por lo tanto would mark a consequence, not a contrast.",
+  "Por lo tanto links a cause to its consequence: los boletos del tren se agotaron; por lo tanto, tuvimos que cancelar el viaje. Sin embargo would mark contrast, not result.",
+  "«A pesar de que» + indicative introduces a fact that did not prevent the result, and that part can come first or last: fuimos al parque a pesar de que llovía mucho, or a pesar de que llovía mucho, fuimos al parque. «Debido a que» would mark a cause.",
+  "Debido a + noun introduces the cause of an event: el vuelo se canceló debido a la tormenta. A pesar de would mark a concession.",
+  "«En cuanto a» + noun means «regarding» and introduces a topic: en cuanto a la hora, la junta es a las nueve. «En cuanto» without «a» takes a conjugated verb and means «as soon as»."
+];
+assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === conectoresBank.bank[i].explain && row.en === conectoresBankEn[i]), "conectores Why rows are appended in bank order");
+conectoresBank.bank.forEach((item, i) => {
+  const row = explainByEs.get(item.explain);
+  assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === conectoresBankEn[i], `conectores bank ${i} EN row equals the English row`);
+  assert(explainText(item, "es") === item.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(item, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(item);
+  assertPreppedQuestion(prepped, `conectores bank ${i}`);
+  if (item.type === "mc") {
+    assert(item.choices.length === 4 && new Set(item.choices).size === 4 && item.choices.includes(item.answer), `conectores bank ${i} mc choices include the answer`);
+    assert(item.note !== "¡Ojo!", `conectores bank ${i} mc note is not a trap`);
+  }
+  if (item.type === "type") {
+    assert(item.note === { 2: "(conector formal de contraste; una palabra)", 5: "(concesión; una palabra)", 9: "(causa; una palabra que empieza con «d»)" }[i], `conectores bank ${i} type note`);
+  }
+  if (item.type === "order") {
+    assert(prepped.words.join("|") === item.words.join("|"), `conectores bank ${i} order tiles stay authored`);
+    assert(prepped.answer === item.answer, `conectores bank ${i} order answer stays authored`);
+    assert(Array.isArray(item.answers) && item.answers[0] === item.answer, `conectores bank ${i} answers start with the authored answer`);
+    assert(item.words.every((w) => !String(w).includes(",")), `conectores bank ${i} tiles carry no comma`);
+    assert(item.words.every((w) => w === w.toLowerCase()), `conectores bank ${i} tiles stay lowercase`);
+    const buildTiles = (i === 3 || i === 8) ? builtFromOrderTilesMulti : builtFromOrderTiles;
+    item.answers.forEach((phrase) => {
+      if (i !== 3 && i !== 8) {
+        const answerTokens = stripPhrase(phrase).split(" ").filter(Boolean);
+        const tilePool = item.words.map((w) => stripPhrase(w));
+        answerTokens.forEach((tok) => {
+          const at = tilePool.indexOf(tok);
+          assert(at >= 0, `conectores bank ${i} answer word ${tok} is a tile`);
+          tilePool.splice(at, 1);
+        });
+      }
+      const built = buildTiles(item.words, phrase);
+      assert(built, `conectores bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(phrase, item).status !== "wrong", `conectores bank ${i} listed order is accepted: ${phrase}`);
+      assert(gradeListedPhrase(built, item).status !== "wrong", `conectores bank ${i} tile-built order is accepted: ${built}`);
+    });
+    const builtPrimary = buildTiles(item.words, item.answer);
+    assert(builtPrimary && builtPrimary.toLowerCase() === item.answer.toLowerCase(), `conectores bank ${i} primary order is the authored tile text`);
+  }
+  if (item.type === "type" || item.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === item.answers.join("|"), `conectores bank ${i} answers stay authored`);
+  }
+});
+const conectoresObstante = conectoresBank.bank[2];
+const conectoresSino = conectoresBank.bank[3];
+const conectoresAunque = conectoresBank.bank[5];
+const conectoresSinEmbargo = conectoresBank.bank[6];
+const conectoresParque = conectoresBank.bank[8];
+const conectoresDebido = conectoresBank.bank[9];
+assert(conectoresSino.answers.join("|") === "No compró el coche sino que lo rentó", "conectores sino que order lists the accepted answer");
+assert(conectoresParque.answers.join("|") === "Fuimos al parque a pesar de que llovía mucho|A pesar de que llovía mucho fuimos al parque", "conectores a pesar de que order lists the accepted alternates");
+assert(conectoresSinEmbargo.answers.join("|") === "Estudié toda la noche, sin embargo reprobé el examen", "conectores transform lists the accepted answer");
+assert(gradeListedPhrase("obstante", conectoresObstante).status !== "wrong", "obstante type is accepted");
+assert(gradeListedPhrase("Obstante", conectoresObstante).status !== "wrong", "obstante case is ignored");
+for (const phrase of ["embargo", "sin", "duda", "obstantes"]) {
+  assert(gradeListedPhrase(phrase, conectoresObstante).status === "wrong", `obstante type is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("No compró el coche sino que lo rentó", conectoresSino).status !== "wrong", "sino que order is accepted");
+assert(conectoresSino.answers.every((phrase) => builtFromOrderTiles(conectoresSino.words, phrase) === null), "conectores sino que one-token helper returns null");
+assert(orderTileLabel(conectoresSino.words[4], { answer: conectoresSino.answer, placedIndex: 1 }) === "sino que", "conectores «sino que» stays lowercase off slot 0");
+for (const phrase of ["No compró el coche sino que lo rentando", "No compró el coche sino que lo rentar", "No rentó el coche sino que lo compró", "Sino que lo rentó no compró el coche", "No compró el coche lo sino que rentó", "No compró el coche pero lo rentó", "No compró el coche sino lo rentó"]) {
+  assert(gradeListedPhrase(phrase, conectoresSino).status === "wrong", `sino que order is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("aunque", conectoresAunque).status !== "wrong", "aunque type is accepted");
+assert(gradeListedPhrase("Aunque", conectoresAunque).status !== "wrong", "aunque case is ignored");
+for (const phrase of ["pese", "mientras", "si", "aun"]) {
+  assert(gradeListedPhrase(phrase, conectoresAunque).status === "wrong", `aunque type is rejected: ${phrase}`);
+}
+for (const phrase of ["Estudié toda la noche, sin embargo reprobé el examen", "Estudié toda la noche, sin embargo, reprobé el examen", "Estudié toda la noche; sin embargo reprobé el examen", "Estudié toda la noche; sin embargo, reprobé el examen", "Estudié toda la noche. Sin embargo reprobé el examen", "Estudié toda la noche. Sin embargo, reprobé el examen", "Estudié toda la noche sin embargo reprobé el examen", "Estudié toda la noche sin embargo, reprobé el examen"]) {
+  assert(gradeListedPhrase(phrase, conectoresSinEmbargo).status !== "wrong", `sin embargo transform accepted: ${phrase}`);
+}
+for (const phrase of ["Estudié toda la noche pero reprobé el examen", "Estudié toda la noche, no obstante reprobé el examen", "Estudié toda la noche, por lo tanto reprobé el examen", "Estudié toda la noche y sin embargo reprobé el examen", "Estudié toda la noche, pero sin embargo reprobé el examen", "Estudié toda la noche; reprobé, sin embargo, el examen", "Reprobé el examen, sin embargo estudié toda la noche"]) {
+  assert(gradeListedPhrase(phrase, conectoresSinEmbargo).status === "wrong", `sin embargo transform is rejected: ${phrase}`);
+}
+for (const phrase of conectoresParque.answers) {
+  const built = builtFromOrderTilesMulti(conectoresParque.words, phrase);
+  assert(built, `parque order is reachable from the fused tile: ${phrase}`);
+  assert(builtFromOrderTiles(conectoresParque.words, phrase) === null, `parque answer is not one token per tile: ${phrase}`);
+  assert(gradeListedPhrase(phrase, conectoresParque).status !== "wrong", `parque order accepted: ${phrase}`);
+  assert(gradeListedPhrase(built, conectoresParque).status !== "wrong", `parque tile-built order is accepted: ${built}`);
+}
+assert(gradeListedPhrase("A pesar de que llovía mucho fuimos al parque", conectoresParque).status !== "wrong", "parque accepted alternate grades ok");
+assert(orderTileLabel(conectoresParque.words[3], { answer: conectoresParque.answer, placedIndex: 1 }) === "a pesar de que", "conectores «a pesar de que» stays lowercase off slot 0");
+for (const phrase of ["Al parque fuimos a pesar de que llovía mucho", "A pesar de que llovía mucho al parque fuimos", "Fuimos al parque a pesar de que llover mucho", "Fuimos al parque sino llovía mucho", "Llovía mucho a pesar de que fuimos al parque", "Fuimos al parque a pesar de llovía mucho"]) {
+  assert(gradeListedPhrase(phrase, conectoresParque).status === "wrong", `parque order is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("debido", conectoresDebido).status !== "wrong", "debido type is accepted");
+assert(gradeListedPhrase("Debido", conectoresDebido).status !== "wrong", "debido case is ignored");
+for (const phrase of ["gracias", "dado", "debida", "por"]) {
+  assert(gradeListedPhrase(phrase, conectoresDebido).status === "wrong", `debido type is rejected: ${phrase}`);
 }
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
