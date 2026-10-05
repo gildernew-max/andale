@@ -116,19 +116,30 @@ describe("short onboarding", () => {
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.levelTitle, "en")));
+    const promise = screen.getByTestId("onboarding-promise");
+    expect(promise.textContent).toBe(onboardingLine(onboardingCopy.levelPromise, "en"));
+    expect(screen.getByTestId("onboarding-title").nextElementSibling).toBe(promise);
+    expect(promise.style.fontSize).toBe("16px");
+    expect(promise.style.fontWeight).toBe("600");
+    expect(promise.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+    expect(promise.style.textWrap).toBe("balance");
+    expect(promise.style.webkitLineClamp).toBe("2");
     expect(onboardingText("en")).toContain(onboardingLine(onboardingCopy.levels.some.desc, "en"));
     expect(onboardingText("en")).not.toMatch(/stripe|paypal|revenuecat|minute|audio/i);
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.levelTitle, "es")));
+    expect(screen.getByTestId("onboarding-promise").textContent).toBe(onboardingLine(onboardingCopy.levelPromise, "es"));
     expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.beginner.name, "es"));
     expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.beginner.desc, "es"));
     expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.conversation.desc, "es"));
     await user.click(screen.getByTestId("onboarding-level-some"));
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-2").textContent).toBe(onboardingLine(onboardingCopy.goals[2], "es")));
+    expect(screen.queryByTestId("onboarding-promise")).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-2").textContent).toBe(onboardingLine(onboardingCopy.goals[2], "en")));
     await user.click(screen.getByTestId("onboarding-goal-2"));
     await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.planTitle, "en")));
+    expect(screen.queryByTestId("onboarding-promise")).toBeNull();
     expect(screen.getByTestId("onboarding-plan-level").textContent).toBe(
       `${onboardingLine(onboardingCopy.planLevel, "en")}: ${onboardingLine(onboardingCopy.levels.some.name, "en")}`,
     );
@@ -225,6 +236,7 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding").style.background).toMatch(/#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i);
     expect(screen.getByTestId("onboarding").style.color).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
     expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.goalTitle, "es"));
+    expect(screen.queryByTestId("onboarding-promise")).toBeNull();
     expect(screen.queryByTestId("splash")).toBeNull();
   });
 

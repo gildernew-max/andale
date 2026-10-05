@@ -144,4 +144,18 @@ assert(uiSrc.includes("paint.button") && uiSrc.includes("paint.buttonLip"), "gre
 assert(uiSrc.includes("{onboardingLine(onboardingCopy.planLevel, lang)}: {onboardingLine(levelSlot?.name, lang)}"), "the plan level line is label, colon, name");
 assert(uiSrc.includes("{onboardingLine(onboardingCopy.planGoal, lang)}: {onboardingLine(goalSlot, lang)}"), "the plan goal line is label, colon, goal");
 
+assert(onboardingCopy.levelPromise.en === "Mexican Spanish past the basics — for people who already know some.", "level promise EN is the stamped line");
+assert(onboardingCopy.levelPromise.es === "Español mexicano más allá de lo básico — para quien ya sabe algo.", "level promise ES is the stamped line");
+assert(uiSrc.includes("onboardingCopy.levelPromise"), "the subline reads the stamped slot");
+assert(uiSrc.includes("const levelStep = step !== \"goal\" && step !== \"plan\""), "the promise is the level step only");
+const promiseAt = uiSrc.indexOf('data-testid="onboarding-promise"');
+assert(promiseAt > 0, "level screen paints a promise subline");
+assert(uiSrc.slice(promiseAt - 180, promiseAt).includes("levelStep ?"), "the subline renders only on the level step");
+assert(uiSrc.includes('fontWeight: 600') && uiSrc.includes("fontSize: 16"), "promise line is 16px weight 600");
+assert(uiSrc.includes('theme === "dark" ? "#CDBBA6" : "#6B6258"'), "promise ink is #6B6258 on cream and #CDBBA6 on dark");
+assert(uiSrc.includes('textWrap: "balance"') && uiSrc.includes("WebkitLineClamp: 2"), "promise wraps balanced, at most two lines");
+assert(Number(contrast("#6B6258", ONBOARDING_PAINT.light.page).toFixed(2)) === 5.23, "promise ink on cream is 5.23:1");
+assert(contrast("#6B6258", ONBOARDING_PAINT.light.page) >= 5.1, "promise ink on cream clears 5.1:1");
+assert(contrast("#CDBBA6", ONBOARDING_PAINT.dark.page) >= 4.5, "promise ink on the dark page clears 4.5");
+
 console.log("onboarding.test.js: ok");

@@ -2,6 +2,11 @@
 
 export const onboardingCopy = {
   levelTitle: { en: "Where are you with Spanish?", es: "¿En qué punto estás con el español?" },
+  /** George + No face. Level screen only, under the title. */
+  levelPromise: {
+    en: "Mexican Spanish past the basics — for people who already know some.",
+    es: "Español mexicano más allá de lo básico — para quien ya sabe algo.",
+  },
   levels: {
     beginner: {
       name: { en: "Starting from zero", es: "Empiezo de cero" },

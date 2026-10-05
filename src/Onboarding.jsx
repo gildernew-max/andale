@@ -9,6 +9,21 @@ import {
 } from "./onboarding.js";
 import { onboardingCopy, onboardingLine } from "./onboardingCopy.js";
 
+/** Splash promise-line look. Copy is the level promise, not splashPromiseLine. */
+const levelPromiseStyle = (theme) => ({
+  fontWeight: 600,
+  fontSize: 16,
+  color: theme === "dark" ? "#CDBBA6" : "#6B6258",
+  margin: "0 0 12px",
+  lineHeight: 1.35,
+  maxWidth: "22em",
+  textWrap: "balance",
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+});
+
 const cardStyle = (paint) => ({
   display: "block",
   width: "100%",
@@ -43,6 +58,7 @@ function ChoiceCard({ paint, testId, selected, onClick, children }) {
 
 export default function Onboarding({ lang, theme = "light", step, level, goal, onLevel, onGoal, onStart }) {
   const paint = theme === "dark" ? ONBOARDING_PAINT.dark : ONBOARDING_PAINT.light;
+  const levelStep = step !== "goal" && step !== "plan";
   const title = step === "goal"
     ? onboardingLine(onboardingCopy.goalTitle, lang)
     : step === "plan"
@@ -89,7 +105,12 @@ export default function Onboarding({ lang, theme = "light", step, level, goal, o
         padding: "76px 20px 24px",
       }}
     >
-      <h1 data-testid="onboarding-title" style={{ fontWeight: 900, fontSize: 26, lineHeight: 1.15, margin: "4px 0 14px" }}>{title}</h1>
+      <h1 data-testid="onboarding-title" style={{ fontWeight: 900, fontSize: 26, lineHeight: 1.15, margin: levelStep ? "4px 0 6px" : "4px 0 14px" }}>{title}</h1>
+      {levelStep ? (
+        <p data-testid="onboarding-promise" style={levelPromiseStyle(theme)}>
+          {onboardingLine(onboardingCopy.levelPromise, lang)}
+        </p>
+      ) : null}
       {step === "plan" ? (
         <div style={{ display: "grid", gap: 10 }}>
           <div data-testid="onboarding-plan-level" style={{ background: paint.card, border: `2px solid ${paint.accent}`, borderRadius: 16, padding: "12px 14px", fontSize: 18, fontWeight: 900, lineHeight: 1.3 }}>
