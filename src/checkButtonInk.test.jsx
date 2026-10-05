@@ -2,6 +2,7 @@
  * Lesson Check, the lime Continue, and the paywall ONE YEAR label use #1F3A1A on #58CC02.
  * Continue free and the fine print stay on their own colors.
  * A wrong answer paints the red Continue label #3A1A1A. Disabled Btn ink stays lockIcon.
+ * An empty lesson Check is the grey face and a no-op. The first answer paints lime #1F3A1A.
  */
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
@@ -79,7 +80,7 @@ const seed = (extra = {}) => {
   }));
 };
 
-const bootLesson = async (theme, uiLang = "es") => {
+const bootLesson = async (theme, uiLang = "es", questions) => {
   cleanup();
   localStorage.clear();
   mockBrowser();
@@ -97,12 +98,37 @@ const bootLesson = async (theme, uiLang = "es") => {
       unitId: "subj1",
       color: "#58CC02",
       dark: "#46A302",
-      questions: [question, { ...question, prompt: "Siguiente." }],
+      questions: questions || [question, { ...question, prompt: "Siguiente." }],
     },
   }));
   render(<App />);
   await waitFor(() => expect(norm(screen.getByTestId("app-shell").style.background)).toBe(theme === "dark" ? "#15171c" : "#f6efe4"));
   return screen.findByTestId("lesson-check");
+};
+
+const emptyFace = (theme) => (theme === "dark"
+  ? { fill: "#2a2e36", lip: "#1e2128", label: "#6b7078" }
+  : { fill: "#e5e5e5", lip: "#cecece", label: "#afafaf" });
+
+const expectEmptyCheck = (check, theme) => {
+  const face = emptyFace(theme);
+  expect(check.disabled).toBe(true);
+  expect(norm(check.style.background)).toBe(face.fill);
+  expect(norm(check.style.color)).toBe(face.label);
+  expect(norm(check.style.borderBottom)).toBe(face.lip);
+  expect(check.style.padding).toBe("13px 24px");
+  expect(check.style.fontSize).toBe("15px");
+  expect(check.style.borderRadius).toBe("14px");
+};
+
+const expectLimeCheck = (check) => {
+  expect(check.disabled).toBe(false);
+  expect(norm(check.style.background)).toBe(LIME);
+  expect(norm(check.style.color)).toBe(INK);
+  expect(norm(check.style.borderBottom)).toBe(LIP);
+  expect(check.style.padding).toBe("13px 24px");
+  expect(check.style.fontSize).toBe("15px");
+  expect(check.style.borderRadius).toBe("14px");
 };
 
 const continueButton = (uiLang) => screen.getByRole("button", { name: uiLang === "en" ? /^Continue$/i : /^Continuar$/i });
@@ -114,6 +140,8 @@ describe("lesson Check and Continue ink", () => {
     expect(contrastRatio(INK, LIME)).toBeGreaterThanOrEqual(4.5);
     expect(Number(contrastRatio(INK, LIME).toFixed(2))).toBe(5.99);
     expect(appSrc).toContain('const LESSON_LIME_INK = "#1F3A1A"');
+    expect(appSrc).toContain('fill: "#E5E5E5", lip: "#CECECE", label: "#AFAFAF"');
+    expect(appSrc).toContain('fill: "#2A2E36", lip: "#1E2128", label: "#6B7078"');
     expect(appSrc).toContain("disabled ? D.lockIcon : (ink || CONTINUE_LABEL)");
     expect((appSrc.match(/data-testid="lesson-check" ink=\{LESSON_LIME_INK\}/g) || []).length).toBe(2);
     expect(appSrc).toContain('const WRONG_CONTINUE_INK = "#3A1A1A"');
@@ -132,14 +160,15 @@ describe("lesson Check and Continue ink", () => {
     ["dark", "en", "Check", "Continue"],
   ])("%s %s Check and lime Continue are #1F3A1A on #58CC02", async (theme, uiLang, checkLabel, continueLabel) => {
     const check = await bootLesson(theme, uiLang);
-    expect(check.disabled).toBe(false);
     expect(check.textContent).toBe(checkLabel);
-    expect(norm(check.style.background)).toBe(LIME);
-    expect(norm(check.style.color)).toBe(INK);
-    expect(norm(check.style.borderBottom)).toBe(LIP);
+    expectEmptyCheck(check, theme);
+    check.click();
+    expect(screen.getByTestId("lesson-check")).toBe(check);
+    expect(screen.queryByRole("button", { name: uiLang === "en" ? /^Continue$/i : /^Continuar$/i })).toBeNull();
 
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /vengas/ }));
+    expectLimeCheck(check);
     await user.click(check);
     const cont = await waitFor(() => continueButton(uiLang));
     expect(cont.disabled).toBe(false);
@@ -148,6 +177,55 @@ describe("lesson Check and Continue ink", () => {
     expect(norm(cont.style.color)).toBe(INK);
     expect(norm(cont.style.borderBottom)).toBe(LIP);
     expect(screen.queryByTestId("lesson-check")).toBeNull();
+  });
+
+  it.each(["light", "dark"])("a %s keystroke, choice chip, or order tile turns the empty Check lime", async (theme) => {
+    const user = userEvent.setup();
+    const typed = await bootLesson(theme, "en", [{
+      type: "type",
+      prompt: "Escribe la oración.",
+      answers: ["ojalá que llueva"],
+      note: "una palabra de nueve letras",
+    }]);
+    expect(typed.textContent).toBe("Check");
+    expectEmptyCheck(typed, theme);
+    const field = screen.getByRole("textbox");
+    await user.type(field, " ");
+    expectEmptyCheck(typed, theme);
+    await user.type(field, "o");
+    expectLimeCheck(typed);
+    await user.clear(field);
+    expectEmptyCheck(typed, theme);
+
+    const chip = await bootLesson(theme, "es", [{
+      type: "type",
+      prompt: "Ojalá que no ___ mañana.",
+      answers: ["llueva"],
+      answerAid: { mode: "choices", tiles: [{ id: "choice-0", w: "llueva" }, { id: "choice-1", w: "salga" }] },
+    }]);
+    expectEmptyCheck(chip, theme);
+    chip.click();
+    expect(screen.getByTestId("lesson-check")).toBe(chip);
+    await user.click(screen.getByRole("button", { name: "llueva" }));
+    expectLimeCheck(chip);
+
+    const order = await bootLesson(theme, "es", [{
+      type: "order",
+      prompt: "Arma la frase.",
+      answer: "dudo que sea verdad",
+      words: ["dudo", "que", "sea", "verdad"],
+      shuffledWords: [
+        { w: "dudo", id: 0 },
+        { w: "que", id: 1 },
+        { w: "sea", id: 2 },
+        { w: "verdad", id: 3 },
+      ],
+    }]);
+    expectEmptyCheck(order, theme);
+    await user.click(screen.getAllByTestId("bank-tile")[0]);
+    expectLimeCheck(order);
+    await user.click(screen.getByTestId("placed-tile"));
+    expectEmptyCheck(order, theme);
   });
 
   it.each(["light", "dark"])("a wrong %s Continue is #3A1A1A on the red fill", async (theme) => {
