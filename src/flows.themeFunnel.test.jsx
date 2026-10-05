@@ -700,8 +700,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(window.innerHeight).toBe(844);
       // jsdom has no layout, so the footer stays on the at-rest row. The cap is proven in Chromium.
       expect(footer.getAttribute("data-capped")).toBe("0");
-      expect(footer.style.position).toBe("fixed");
-      expect(footer.style.bottom).toBe("0px");
+      expect(footer.style.position).not.toBe("fixed");
+      expect(footer.style.bottom).toBe("");
       expect(footer.style.display).toBe("");
       expect(footer.style.overflow).toBe("");
       expect(footer.style.maxHeight).toBe("");

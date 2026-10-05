@@ -5369,7 +5369,6 @@ export default function App() {
     return () => { document.body.style.overflow = prev; };
   }, [onboardingOpen]);
   const inputRef = useRef(null);
-  const lessonShellRef = useRef(null);
   const lessonFooterRef = useRef(null);
   const footerScrollRef = useRef(null);
   const [footerCapped, setFooterCapped] = useState(false);
@@ -7235,17 +7234,6 @@ export default function App() {
     if (row.offsetHeight > vh * 0.6 + 0.5) setFooterCapped(true);
     return undefined;
   }, [footerCapped, footerCapKey]);
-
-  // Lesson column ends at the fixed footer. The body scrolls inside that space.
-  useLayoutEffect(() => {
-    if (screen !== "lesson") return undefined;
-    const footer = lessonFooterRef.current;
-    const shell = lessonShellRef.current;
-    if (!footer || !shell) return undefined;
-    const h = Math.ceil(footer.getBoundingClientRect().height);
-    if (h > 0) shell.style.setProperty("--lesson-footer-space", `${h}px`);
-    return undefined;
-  }, [screen, status, qi, showWhy, typed, theme, footerCapped, quip, prog.uiLang]);
 
   // Grow the built-answer field with the sentence. jsdom reports no scrollHeight, so it stays one row.
   useLayoutEffect(() => {
@@ -10526,8 +10514,8 @@ export default function App() {
 
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
-        <div ref={lessonShellRef} data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={{ flex: "1 1 auto", minHeight: 0, width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", paddingBottom: "var(--lesson-footer-space, 80px)", ...(orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : orderDark ? { background: D.bg, color: HUB_CREAM } : null) }}>
-        <div data-testid="lesson-body" style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 16px", position: "relative", flex: "1 1 auto", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={{ flex: "1 1 auto", minHeight: 0, width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", overflow: "hidden", ...(orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : orderDark ? { background: D.bg, color: HUB_CREAM } : null) }}>
+        <div data-testid="lesson-body" style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 0", position: "relative", flex: "0 1 auto", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
               <span style={{ fontWeight: 900, fontSize: 42, color: "#FF9600", textShadow: "0 3px 0 rgba(0,0,0,.12), 0 0 24px rgba(255,200,0,.5)", letterSpacing: ".02em" }}>{inter.text}</span>
@@ -10712,7 +10700,7 @@ export default function App() {
                   onKeyDown={(e) => { if (insertChoiceChipFromKey(e)) return; if (e.key === "Enter") { e.preventDefault(); status === "idle" ? check() : next(); } }}
 	                  placeholder={q.type === "listen" ? (uiLang === "en" ? "Write the full sentence…" : "Escribe la oración completa…") : q.type === "transform" ? (uiLang === "en" ? "Write the transformed sentence…" : "Escribe la oración transformada…") : (uiLang === "en" ? "Write the missing word…" : "Escribe la palabra que falta…")}
                   autoCapitalize="off" autoCorrect="off" spellCheck={false}
-                  style={{ width: "100%", boxSizing: "border-box", display: "block", resize: "none", overflow: "hidden", whiteSpace: "pre-wrap", fieldSizing: "content", minHeight: 54, padding: "15px 16px", fontSize: 17, fontWeight: 700, fontFamily: "inherit", lineHeight: 1.35, borderRadius: 14, border: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, background: status === "idle" ? (theme === "dark" ? D.subtle : "#F7F7F7") : status === "wrong" ? D.badBg : D.okBg, color: theme === "dark" ? HUB_CREAM : undefined }} />
+                  style={{ width: "100%", boxSizing: "border-box", display: "block", resize: "none", overflow: "hidden", textOverflow: "clip", whiteSpace: "pre-wrap", fieldSizing: "content", minHeight: 54, padding: "15px 16px", fontSize: 17, fontWeight: 700, fontFamily: "inherit", lineHeight: 1.35, borderRadius: 14, border: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, background: status === "idle" ? (theme === "dark" ? D.subtle : "#F7F7F7") : status === "wrong" ? D.badBg : D.okBg, color: theme === "dark" ? HUB_CREAM : undefined }} />
                 {q.answerAid && (
                   <div style={{ marginTop: 12, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 11, background: D.card }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 9 }}>
@@ -10906,7 +10894,7 @@ export default function App() {
         </div>
 
           {/* ---------- ACTION BAR with mascot ---------- */}
-          <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className={footerCapped ? "lesson-footer-cap" : undefined} style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(footerCapped ? { display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
+          <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className={footerCapped ? "lesson-footer-cap" : undefined} style={{ flexShrink: 0, width: "100%", boxSizing: "border-box", background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(footerCapped ? { display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
             <div style={footerCapped ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", minWidth: 0, minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", overflow: "hidden" } : lessonFooterStackContinue ? { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14 } : { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
               <div ref={footerCapped ? footerScrollRef : undefined} data-testid={footerCapped ? "lesson-footer-scroll" : (lessonFooterStackContinue ? "lesson-footer-feedback-row" : undefined)} className={footerCapped ? "lesson-footer-scroll" : undefined} style={footerCapped ? { flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", padding: "14px 20px 0" } : lessonFooterStackContinue ? { display: "flex", flex: "1 1 100%", width: "100%", minWidth: 0, alignItems: "center", gap: 14 } : { display: "flex", flex: "1 1 auto", minWidth: 0, alignItems: "center", gap: 14 }}>
                 <div style={footerCapped ? { display: "flex", alignItems: "flex-start", gap: 14, minWidth: 0 } : { display: "contents" }}>
