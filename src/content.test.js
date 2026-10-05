@@ -4428,6 +4428,8 @@ for (const phrase of ["trabajar", "chamba", "chambeo", "chambeando", "chambeado"
 const formalBank = UNITS.find((u) => u.id === "formal");
 assert(formalBank.questions.length === 11, "formal authored questions stay 11");
 assert(formalBank.questions[0].prompt === "___ presente, le confirmo nuestra junta del jueves.", "formal question order is unchanged");
+assert(formalBank.questions[8].answer === "tendrá vigencia" && formalBank.questions[8].choices.join("|") === "hace vigencia|tendrá vigencia|se queda|está", "formal-985 key stays tendrá vigencia");
+assert(formalBank.questions[9].answer === "Para" && formalBank.questions[9].choices.join("|") === "Por|Para|Hacia|Con", "formal-986 key stays Para");
 assert(Array.isArray(formalBank.bank) && formalBank.bank.length === 11, "formal replay bank is 11 questions");
 assert(formalBank.bank.map((q) => q.type).join(",") === "mc,mc,type,order,mc,type,transform,mc,order,type,mc", "formal bank types interleave mc/type/order/transform");
 assert(formalBank.bank[0].prompt === "En caso de que el arrendatario ___ la renta a tiempo, se le aplicará una multa." && formalBank.bank[0].note === "" && formalBank.bank[0].choices.join("|") === "no pague|no paga|no pagó|no pagará" && formalBank.bank[0].answer === "no pague", "formal bank item 1");
