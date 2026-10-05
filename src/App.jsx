@@ -5265,6 +5265,10 @@ export default function App() {
   const [combo, setCombo] = useState(0);
   const [lessonStats, setLessonStats] = useState({ right: 0, wrong: 0 });
   const [inter, setInter] = useState(null); // {text, key} combo interstitial
+  const interTimerRef = useRef(null);
+  useEffect(() => () => {
+    if (interTimerRef.current != null) clearTimeout(interTimerRef.current);
+  }, []);
   const [sheet, setSheet] = useState(null); // {unit, section} node preview bottom sheet
   const [showWhy, setShowWhy] = useState(false); // expandable grammar note on misses
   const [failKind, setFailKind] = useState("hearts"); // hearts | test
@@ -6458,7 +6462,18 @@ export default function App() {
   const onMemoryTap = (cardId) => applyMemoryMove(applyMemoryTap, cardId);
   const onMemoryPair = (fromId, toId) => applyMemoryMove(applyMemoryPair, fromId, toId);
 
+  // Combo praise sits fixed over the prompt for 1.1s. CONTINUE (and a new
+  // lesson) drop it in the same paint as the feedback panel.
+  const clearComboPraise = () => {
+    if (interTimerRef.current != null) {
+      clearTimeout(interTimerRef.current);
+      interTimerRef.current = null;
+    }
+    setInter(null);
+  };
+
   const beginSession = (s) => {
+    clearComboPraise();
     lecturaPaywallAfterWin.current = false;
     awardLockRef.current.delete("lesson");
     itemXpLockRef.current = new Set();
@@ -6561,9 +6576,13 @@ export default function App() {
       const newCombo = combo + 1;
       const bonus = !session.review && newCombo % 4 === 0 ? LESSON_XP_COMBO : 0;
       if (bonus) {
+        if (interTimerRef.current != null) clearTimeout(interTimerRef.current);
         setInter({ text: INTERSTITIALS[(newCombo / 4 - 1) % INTERSTITIALS.length], key: Date.now() });
         setBurst(Date.now());
-        setTimeout(() => setInter(null), 1100);
+        interTimerRef.current = setTimeout(() => {
+          interTimerRef.current = null;
+          setInter(null);
+        }, 1100);
         beep("combo");
       }
       setCombo(newCombo);
@@ -6623,6 +6642,7 @@ export default function App() {
   };
 
   const next = () => {
+    clearComboPraise();
     if (status === "wrong" && session.testOut != null && lessonStats.wrong >= 3) { setFailKind("test"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return; }
     if (status === "wrong" && (prog.hearts ?? 0) <= 0 && !session.review && !session.rival) {
       if (session.firstSession) {
@@ -10619,12 +10639,13 @@ export default function App() {
         <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-cold-first-hoy={session.coldFirstHoy ? "1" : undefined} data-qtype={q.type} style={{ flex: "1 1 auto", minHeight: 0, width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", overflow: "hidden", ...(orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : orderDark ? { background: D.bg, color: HUB_CREAM } : null) }}>
         <div ref={lessonBodyRef} data-testid="lesson-body" style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 0", position: "relative", flex: "1 1 0%", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", background: D.bg }}>
           <div data-testid="lesson-result-pad" style={{ paddingBottom: lessonResultPad }}>
-          {inter && (
-            <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
+          {/* Praise and combo confetti both stamp Date.now(). A shared key leaves the word mounted after CONTINUE. */}
+          {inter && (status === "correct" || status === "almost") && (
+            <div key={`praise-${inter.key}`} className="inter" data-testid="combo-praise" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
               <span style={{ fontWeight: 900, fontSize: 42, color: "#FF9600", textShadow: "0 3px 0 rgba(0,0,0,.12), 0 0 24px rgba(255,200,0,.5)", letterSpacing: ".02em" }}>{inter.text}</span>
             </div>
           )}
-          {burst > 0 && status !== "idle" && status !== "wrong" && inter && <Confetti key={burst} count={28} />}
+          {burst > 0 && status !== "idle" && status !== "wrong" && inter && <Confetti key={`burst-${burst}`} count={28} />}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 26 }}>
             <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div data-testid="lesson-progress" data-pct={pct} style={{ flex: 1, height: 16, background: D.line, borderRadius: 99, overflow: "hidden" }}>
