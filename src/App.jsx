@@ -8414,7 +8414,7 @@ export default function App() {
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled) { transform: scale(1.06); }
         .node-btn:active:not(:disabled) { transform: translateY(3px); }
-        .choice-card { border:2px solid ${D.line}; border-bottom-width:4px; border-radius:14px; background:${D.card}; transition: background .1s, box-shadow .1s, border-color .1s; color:${D.ink}; }
+        .choice-card { border:2px solid ${D.line}; border-bottom-width:4px; border-radius:14px; background:${D.card}; transition: background .1s, box-shadow .1s, border-color .1s; color:${D.ink}; box-sizing:border-box; min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
         .choice-card:hover:not(:disabled) { background:${D.subtle}; }
         .choice-card[data-selected="true"],
         .choice-card[data-selected="true"]:hover:not(:disabled) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
@@ -8434,6 +8434,9 @@ export default function App() {
         .tile-row { justify-content:flex-start; align-items:center; }
         .tile-slot { display:flex; flex:0 0 auto; width:max-content; max-width:100%; min-width:min-content; min-height:2.55rem; }
         .tile-slot .tile, .tile-row > .tile { flex:0 0 auto; width:max-content; min-width:min-content; max-width:100%; white-space:nowrap; }
+        /* TAP AN ANSWER chips share .tile with word-order tiles. A phrase must wrap inside the card; order tiles stay one word. */
+        .tile-slot:has([data-testid="choice-chip-key"]) { flex:0 1 auto; width:min(100%, max-content); min-width:0; max-width:100%; }
+        .tile-slot:has([data-testid="choice-chip-key"]) > .tile { flex:0 1 auto; width:min(100%, max-content); min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
       `}</style>
 
       {winBounce && shouldPlayWinBounce(session) && <WinBounce onComplete={completeCenzontleBeat} />}
