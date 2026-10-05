@@ -3163,7 +3163,7 @@ const pickQuip = (host, kind) => {
 };
 const hostForUnit = (uid) => {
   if (uid === "mex") return "rafa";
-  if (uid === "registro" || uid === "conectores" || uid === "pronombres") return "valeria";
+  if (uid === "registro" || uid === "conectores" || uid === "pronombres" || uid === "formal") return "valeria";
   if (uid === "siclauses") return "valeria";
   return "luna";
 };
