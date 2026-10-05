@@ -2024,6 +2024,24 @@ function boardPadding(top, x, bottom, pinned) {
   };
 }
 
+/** Uncapped lesson footer: quip + explainText longer than this puts Continue on its own line.
+ *  A character count, not a measurement — jsdom reports no heights. The 60vh cap is separate. */
+const LESSON_FOOTER_LONG_FEEDBACK_CHARS = 90;
+
+function lessonFooterFeedbackChars(quip, question, lang) {
+  return `${uiText(quip, lang)} ${explainText(question, lang)}`.trim().length;
+}
+
+/** Short feedback leaves Continue a direct flex child of the row. Long feedback drops it full-width below the bird. */
+function LessonFooterContinueSlot({ stack, children }) {
+  if (!stack) return children;
+  return (
+    <div data-testid="lesson-footer-continue-block" style={{ display: "flex", flexWrap: "wrap", flex: "1 0 100%", flexBasis: "100%", width: "100%", boxSizing: "border-box" }}>
+      {children}
+    </div>
+  );
+}
+
 function CappedFeedback({ testId, className = "", style, onPin, children }) {
   const ref = useRef(null);
   const [pin, setPin] = useState(false);
@@ -8188,6 +8206,10 @@ export default function App() {
     beginFirstSession(unit, section, { beginner: route.beginner === true });
   };
 
+  const lessonFooterStackContinue = (status === "correct" || status === "almost" || status === "wrong")
+    && !(session?.review && (status === "correct" || status === "almost"))
+    && lessonFooterFeedbackChars(quip, q, uiLang) > LESSON_FOOTER_LONG_FEEDBACK_CHARS;
+
   return (
     <BtnThemeContext.Provider value={theme}>
     <div data-testid="app-shell" data-theme={theme} style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
@@ -10726,15 +10748,15 @@ export default function App() {
 
           {/* ---------- ACTION BAR with mascot ---------- */}
           <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className={footerCapped ? "lesson-footer-cap" : undefined} style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(footerCapped ? { display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
-            <div style={footerCapped ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", minWidth: 0, minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", overflow: "hidden" } : { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-              <div ref={footerCapped ? footerScrollRef : undefined} data-testid={footerCapped ? "lesson-footer-scroll" : undefined} className={footerCapped ? "lesson-footer-scroll" : undefined} style={footerCapped ? { flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", padding: "14px 20px 0" } : { display: "flex", flex: "1 1 auto", minWidth: 0, alignItems: "center", gap: 14 }}>
+            <div style={footerCapped ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", minWidth: 0, minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", overflow: "hidden" } : lessonFooterStackContinue ? { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14 } : { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+              <div ref={footerCapped ? footerScrollRef : undefined} data-testid={footerCapped ? "lesson-footer-scroll" : (lessonFooterStackContinue ? "lesson-footer-feedback-row" : undefined)} className={footerCapped ? "lesson-footer-scroll" : undefined} style={footerCapped ? { flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", padding: "14px 20px 0" } : lessonFooterStackContinue ? { display: "flex", flex: "1 1 100%", width: "100%", minWidth: 0, alignItems: "center", gap: 14 } : { display: "flex", flex: "1 1 auto", minWidth: 0, alignItems: "center", gap: 14 }}>
                 <div style={footerCapped ? { display: "flex", alignItems: "flex-start", gap: 14, minWidth: 0 } : { display: "contents" }}>
               {status !== "idle" && (
                 <div className={status === "wrong" ? "" : "jump"} style={{ flexShrink: 0 }}>
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div style={{ flex: 1, ...(footerCapped ? { minWidth: 0 } : null), fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : limeText(D.okText, D) }}>
+              <div style={{ flex: 1, ...(footerCapped || lessonFooterStackContinue ? { minWidth: 0 } : null), fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : limeText(D.okText, D) }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
                     <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: theme === "dark" ? 0.85 : 1 }}>
@@ -10817,7 +10839,9 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-	                  <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ flexShrink: 0 }}>{L.continue}</Btn>
+	                  <LessonFooterContinueSlot stack={lessonFooterStackContinue}>
+	                    <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={lessonFooterStackContinue ? { width: "100%", flexBasis: "100%", flexShrink: 0 } : { flexShrink: 0 }}>{L.continue}</Btn>
+	                  </LessonFooterContinueSlot>
                 )
                 )
               ) : null}
