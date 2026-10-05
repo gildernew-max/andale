@@ -3,6 +3,9 @@
  *  The address never rides this bus. Delivery lives in firstWinEmail.js.
  *  `open` may also carry daysSinceLast: whole local calendar days since
  *  stored lastDay, 0–365. Missing lastDay omits the field.
+ *  first_session_start / first_session_exercise1_correct / first_session_complete
+ *  / day2_return are event + timestamp only. Once-per-device gating lives in
+ *  firstSessionFunnel.js, not on this bus.
  */
 
 import { dayKeyFromDate } from "./firstDoor.js";
@@ -22,6 +25,10 @@ export const FUNNEL_EVENTS = Object.freeze({
   firstWinSeen: "first-win-seen",
   emailSubmitted: "email-submitted",
   emailSkipped: "email-skipped",
+  firstSessionStart: "first_session_start",
+  firstSessionExercise1Correct: "first_session_exercise1_correct",
+  firstSessionComplete: "first_session_complete",
+  day2Return: "day2_return",
 });
 
 export const PAYWALL_TAP = Object.freeze({
@@ -89,6 +96,8 @@ function safeStoryId(id) {
  * storyId / beat / choice are content labels only.
  * waitlist_submit, first-win-seen, email-submitted, and email-skipped
  * are event + timestamp only — never the email.
+ * first_session_start, first_session_exercise1_correct, first_session_complete,
+ * and day2_return are event + timestamp only.
  * purchase is event + at + allowlisted plan / productId only.
  * open is event + at, plus daysSinceLast when it is an integer 0–365.
  */

@@ -30,6 +30,7 @@ import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurc
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent } from "./funnel.js";
+import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1, claimFirstSessionStart, isFirstExerciseCorrect, sessionOneFromProgress } from "./firstSessionFunnel.js";
 import { isWaitlistEmail } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
@@ -1302,6 +1303,18 @@ function readStoredLastDay() {
     return typeof lastDay === "string" && lastDay ? lastDay : null;
   } catch {
     return null;
+  }
+}
+
+/** Armed session one plus lastDay, read before hydration so day-2 sees yesterday. */
+function readStoredSessionOne() {
+  if (typeof window === "undefined") return { started: false, lastDay: null };
+  try {
+    const raw = window.localStorage?.getItem(STORAGE_KEY);
+    if (!raw) return { started: false, lastDay: null };
+    return sessionOneFromProgress(JSON.parse(raw));
+  } catch {
+    return { started: false, lastDay: null };
   }
 }
 
@@ -5523,6 +5536,10 @@ export default function App() {
   // Alias so existing beep() calls keep working
   const beep = playSound;
 
+  const emitClaimed = (event, claim) => {
+    if (claim?.fire) emitFunnelEvent({ event });
+  };
+
   /* ---------- progression ---------- */
   /* ---------- progression ---------- */
 
@@ -5559,6 +5576,7 @@ export default function App() {
         return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...questionByIndex(src, o.i), _u: o.u, _i: o.i };
       }).filter(Boolean).map(prepQuestion);
       if (qs.length) {
+        emitClaimed(FUNNEL_EVENTS.firstSessionStart, claimFirstSessionStart(window.localStorage, todayStr()));
         beginSession({
           title: beginnerResume ? BEGINNER_SESSION_TITLE : (u?.title || UNITS[0].title),
           color: section?.color || SECTIONS[0].color,
@@ -5616,6 +5634,7 @@ export default function App() {
   const beginFirstSession = (u, section, { fromLectura = false, beginner = false } = {}) => {
     const questions = (beginner ? beginnerFirstQuestions() : firstSessionQuestions(UNITS)).map(prepQuestion);
     if (!questions.length) return;
+    emitClaimed(FUNNEL_EVENTS.firstSessionStart, claimFirstSessionStart(window.localStorage, todayStr()));
     save({ firstSessionArmed: true });
     beginSession({
       title: beginner ? BEGINNER_SESSION_TITLE : (u?.title || UNITS[0].title),
@@ -6503,6 +6522,9 @@ export default function App() {
         return p;
       });
     } else {
+      if (isFirstExerciseCorrect({ firstSession: session.firstSession === true, index: qi, result: r, requeued: !!q._requeued })) {
+        emitClaimed(FUNNEL_EVENTS.firstSessionExercise1Correct, claimFirstSessionExercise1(window.localStorage));
+      }
       beep("ok");
       const hard = q.type === "order" || q.type === "listen" || q.type === "transform";
       // Review cards are 4 XP (Bien). Do not use the lesson 10/12 rate — that
@@ -6743,6 +6765,9 @@ export default function App() {
     });
     if (rivalOut) { setRivalOutcome(rivalOut); setScreen("rivalDone"); }
     else {
+      if (session.firstSession) {
+        emitClaimed(FUNNEL_EVENTS.firstSessionComplete, claimFirstSessionComplete(window.localStorage));
+      }
       if (shouldPlayWinBounce(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session)) {
         winBouncePlayed.current = true;
         setWinBounce(true);
@@ -7740,6 +7765,13 @@ export default function App() {
   useEffect(() => {
     const daysSinceLast = daysSinceLastVisit(readStoredLastDay());
     emitFunnelEvent({ event: FUNNEL_EVENTS.open, daysSinceLast });
+    const sessionOne = readStoredSessionOne();
+    const day2 = claimDay2Return(window.localStorage, {
+      today: todayStr(),
+      progressStarted: sessionOne.started,
+      lastDay: sessionOne.lastDay,
+    });
+    if (day2.fire) emitFunnelEvent({ event: FUNNEL_EVENTS.day2Return });
   }, []);
   useEffect(() => {
     const onFunnel = (ev) => {

@@ -24,10 +24,14 @@ assert(FUNNEL_EVENTS.purchase === "purchase", "purchase is the StoreKit success 
 assert(FUNNEL_EVENTS.firstWinSeen === "first-win-seen", "first-win-seen is the email card");
 assert(FUNNEL_EVENTS.emailSubmitted === "email-submitted", "email-submitted is the address send");
 assert(FUNNEL_EVENTS.emailSkipped === "email-skipped", "email-skipped leaves the card");
+assert(FUNNEL_EVENTS.firstSessionStart === "first_session_start", "first_session_start is session one beginning");
+assert(FUNNEL_EVENTS.firstSessionExercise1Correct === "first_session_exercise1_correct", "first_session_exercise1_correct is exercise 1");
+assert(FUNNEL_EVENTS.firstSessionComplete === "first_session_complete", "first_session_complete is the session-one win");
+assert(FUNNEL_EVENTS.day2Return === "day2_return", "day2_return is the later-day open");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "email-skipped", "email-submitted", "first-win-seen", "lectura_chapter_done", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "waitlist_submit"].join(","),
-  "funnel allowlist is the conversion chain plus lectura_chapter_done, paywall tap, waitlist, and first-win email",
+    === ["cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "lectura_chapter_done", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "waitlist_submit"].join(","),
+  "funnel allowlist is the conversion chain plus lectura, paywall, waitlist, first-win email, and first-session measurement",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
 assert(PAYWALL_TAP.monthly === "monthly", "monthly tap label");
@@ -185,7 +189,15 @@ assert(JSON.stringify(notice) === JSON.stringify({ event: "waitlist_submit", at:
 assert(bus.events.at(-1).detail.email == null, "CustomEvent detail has no email");
 assert(!/example\.com|@/.test(JSON.stringify(notice)), "waitlist_submit JSON has no address");
 
-for (const event of [FUNNEL_EVENTS.firstWinSeen, FUNNEL_EVENTS.emailSubmitted, FUNNEL_EVENTS.emailSkipped]) {
+for (const event of [
+  FUNNEL_EVENTS.firstWinSeen,
+  FUNNEL_EVENTS.emailSubmitted,
+  FUNNEL_EVENTS.emailSkipped,
+  FUNNEL_EVENTS.firstSessionStart,
+  FUNNEL_EVENTS.firstSessionExercise1Correct,
+  FUNNEL_EVENTS.firstSessionComplete,
+  FUNNEL_EVENTS.day2Return,
+]) {
   const step = emitFunnelEvent({
     event,
     email: "dave@example.com",
