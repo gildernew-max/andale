@@ -65,7 +65,7 @@ import { resolveTheme } from "./themeDefault.js";
 import Onboarding from "./Onboarding.jsx";
 import { beginnerFirstQuestions, beginnerWhyLine, beginnerWinLine, BEGINNER_SESSION_TITLE } from "./beginnerFirstSession.js";
 import { firstSessionWhyLine, firstSessionWinLine } from "./firstSessionWords.js";
-import { WinBounce, WinPerch } from "./WinBounce.jsx";
+import { HoyWinBird, WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyCorrectKeys, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
 import {
@@ -5144,7 +5144,7 @@ const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onT
 let btnTheme = "light";
 const BtnThemeContext = createContext("light");
 
-/** #1F3A1A on lime #58CC02. Lesson Check, lime Continue, and the paywall ONE YEAR button. Other filled buttons stay on CONTINUE_LABEL. */
+/** #1F3A1A on lime #58CC02. Lesson Check, lime Continue, Hoy ¡Eso! Continue, and the paywall ONE YEAR button. Other filled buttons stay on CONTINUE_LABEL. */
 const LESSON_LIME_INK = "#1F3A1A";
 /** #3A1A1A on the red Continue fill. Same ink in light (#FF4B4B) and dark (#FF6B6B). Label only. */
 const WRONG_CONTINUE_INK = "#3A1A1A";
@@ -12132,9 +12132,13 @@ export default function App() {
           )}
           {quietWin && (
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
-              {shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session)
-                ? <CenzontleFlyAway surface="win" onComplete={completeCenzontleBeat} />
-                : <WinPerch theme={theme} />}
+              {shouldPlayHoyBeat(session) ? (
+                <HoyWinBird onComplete={completeCenzontleBeat} />
+              ) : shouldPlayStory0Beat(session) || shouldPlayDoctoraBeat(session) ? (
+                <CenzontleFlyAway surface="win" onComplete={completeCenzontleBeat} />
+              ) : (
+                <WinPerch theme={theme} />
+              )}
             </div>
           )}
           {screenQuip && !quietWin && !perchCard && <div style={{ fontWeight: 800, fontStyle: "italic", color: D.ink, margin: "2px 0 0", fontSize: 15 }}>
@@ -12169,7 +12173,7 @@ export default function App() {
           )}
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
-	            <Btn data-testid={continueTestId || "win-continue"} onClick={continueFromWin}>{L.continue}</Btn>
+	            <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy ? LESSON_LIME_INK : undefined} onClick={continueFromWin}>{L.continue}</Btn>
           </div>
           {showFirstWinEmail && (
             <form

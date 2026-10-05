@@ -24,7 +24,7 @@ import {
   localToday,
   HOY_TITLES,
   expectedComeBack,
-  assertFreeWinFlyAway,
+  assertHoyWinBird,
   STORY_LIFT_RE,
   CEREZAS_Q_RE,
   laterHoySeed,
@@ -822,10 +822,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => {
       expect(screen.getByTestId("hoy-win")).toBeTruthy();
-      expect(screen.getByTestId("win-fly-away")).toBeTruthy();
+      expect(screen.getByTestId("hoy-win-bird-img")).toBeTruthy();
     });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    assertFreeWinFlyAway();
+    assertHoyWinBird();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
@@ -1150,10 +1150,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => {
       expect(screen.getByTestId("hoy-win")).toBeTruthy();
-      expect(screen.getByTestId("win-fly-away")).toBeTruthy();
+      expect(screen.getByTestId("hoy-win-bird-img")).toBeTruthy();
     });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    assertFreeWinFlyAway();
+    assertHoyWinBird();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
@@ -1167,7 +1167,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
     expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: /You won!|¡Ganaste!|Lesson complete/ })).toBeNull();
-    assertFreeWinFlyAway();
+    assertHoyWinBird();
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
     await waitFor(() => {
@@ -1275,7 +1275,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(await screen.findByRole("button", { name: /^Continuar$/i }));
     const strip = await screen.findByTestId("lectura-handoff");
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("win-fly-away")).toBeTruthy();
+    assertHoyWinBird();
     expect(strip.querySelector("img")).toBeNull();
     expect(screen.getByTestId("lectura-handoff-quiet").textContent).toBe(LECTURA_HANDOFF_QUIET.es);
     const cta = screen.getByTestId("lectura-handoff-cta");

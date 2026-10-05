@@ -13,6 +13,9 @@ import { HOY_WIN_EN, HOY_WIN_ES } from "./hoyWin.js";
 
 export const WIN_BOUNCE_MS = 720;
 export const WIN_BOUNCE_SRC = "mascot/cenzontle.png";
+/** Hoy ¡Eso! entrance. Same 168px band as the old fly-away rest pose. Lands and stays. */
+export const HOY_WIN_ENTER_MS = 900;
+export const HOY_WIN_BIRD_PX = 168;
 
 /** Lectura story-0 only. Cubetas v2 780ms family. Do not replay on later stories. */
 export const STORY0_ID = "story-0";
@@ -38,7 +41,7 @@ export function shouldPlayWinBounce(session) {
   return false;
 }
 
-/** Live done-screen gate. firstHoy only — Cubetas v2 780ms, then WinPerch. Later Hoy same day does not replay. */
+/** Live done-screen gate. firstHoy only — Cenzontle enters the band and stays. Later Hoy same day does not replay. */
 export function shouldPlayHoyBeat(session) {
   if (!session || typeof session !== "object") return false;
   return !!session.firstHoy;

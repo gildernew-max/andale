@@ -609,6 +609,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(document.body.textContent).not.toMatch(/¡IMPECABLE!|FLAWLESS!/);
     expect(document.body.textContent).not.toMatch(/Necesito hacer una decisión|Voy a aplicar para el trabajo|beat 5/);
     expect(screen.getByTestId("win-fly-away")).toBeTruthy();
+    expect(screen.getByTestId("doctora-win-continue").style.color).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
     expect(screen.queryByTestId("win-earned-xp")).toBeNull();
     expect(screen.queryByTestId("win-earned-gems")).toBeNull();
     expect(screen.getByTestId("win-earned-streak").textContent.replace(/\s+/g, " ").trim()).toBe("Racha de 1 día");

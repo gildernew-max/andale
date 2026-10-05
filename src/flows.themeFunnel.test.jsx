@@ -1317,14 +1317,16 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
-    await waitFor(() => expect(screen.getByTestId("win-fly-away")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("hoy-win-bird-img")).toBeTruthy());
     expect(funnelOf("cenzontle_complete")).toHaveLength(0);
     expect(screen.queryByTestId("win-perch")).toBeNull();
+    expect(screen.queryByTestId("win-fly-away")).toBeNull();
     await waitFor(() => expect(funnelOf("cenzontle_complete").length).toBeGreaterThan(0), { timeout: 1500 });
     const bird = funnelOf("cenzontle_complete");
     expect(bird.length).toBeGreaterThan(0);
     expect(bird.at(-1).beat).toBe("hoy");
     expect(JSON.stringify(bird.at(-1))).not.toMatch(/Dave|@/);
+    expect(screen.getByTestId("hoy-win-bird-img").getAttribute("src")).toMatch(/cenzontle\.png/);
   });
 
   it("lectura_start fires when a Lectura story opens", async () => {
@@ -1445,8 +1447,9 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await user.click(document.querySelector(".choice-card"));
     await user.click(screen.getByTestId("lesson-check"));
     await user.click(await screen.findByRole("button", { name: /^Continuar$/i }));
-    await waitFor(() => expect(screen.getByTestId("win-fly-away")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("hoy-win-bird-img")).toBeTruthy());
     await waitFor(() => expect(funnelOf("cenzontle_complete").some((e) => e.beat === "hoy")).toBe(true), { timeout: 1500 });
+    expect(screen.getByTestId("hoy-win-bird-img").getAttribute("src")).toMatch(/cenzontle\.png/);
     expect(funnelOf("lectura_start")).toHaveLength(0);
     await user.click(screen.getByTestId("lectura-handoff-cta"));
     await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));

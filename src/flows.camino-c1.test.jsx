@@ -30,7 +30,7 @@ import {
   startHoyFromHub,
   localToday,
   expectedComeBack,
-  assertFreeWinFlyAway,
+  assertHoyWinBird,
   assertSoftPaywallAnnualPrimary,
   awaitSoftPaywallAfterFirstWin,
   assertNoWallBeforeLectura,
@@ -257,7 +257,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
     expect(screen.queryByTestId("lectura-handoff")).toBeNull();
-    expect(screen.getByTestId("win-fly-away")).toBeTruthy();
+    assertHoyWinBird();
 
     cleanup();
     seedProgress({ uiLang: "es", stories: { "story-0": true }, streak: 1, lastDay: localToday() });
@@ -328,10 +328,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
     await waitFor(() => {
       expect(screen.getByTestId("hoy-win")).toBeTruthy();
-      expect(screen.getByTestId("win-fly-away")).toBeTruthy();
+      expect(screen.getByTestId("hoy-win-bird-img")).toBeTruthy();
     });
     expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!");
-    assertFreeWinFlyAway();
+    assertHoyWinBird();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
@@ -339,6 +339,39 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("win-perch")).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("That's it."));
+    assertHoyWinBird();
+  });
+
+  it("Hoy win Cenzontle stays and CONTINUE ink is #1F3A1A in light and dark, ES and EN", async () => {
+    for (const theme of ["light", "dark"]) {
+      for (const uiLang of ["es", "en"]) {
+        cleanup();
+        seedProgress({ theme, uiLang, streak: 1, lastDay: localToday(), paywallSeen: true, lecturaHandoffSeen: true, bajioUnlockSeen: true });
+        localStorage.setItem(LIVE_KEY, JSON.stringify({
+          screen: "done",
+          tab: "camino",
+          lessonStats: { right: 5, wrong: 0 },
+          session: {
+            firstHoy: true,
+            coldFirstHoy: theme === "light",
+            day2Hoy: theme === "dark",
+            title: "En la calle",
+            host: "luna",
+            questions: [{}],
+            awarded: true,
+            earnedXP: 6,
+            earnedGems: 2,
+          },
+        }));
+        render(<App />);
+        const heading = uiLang === "en" ? "That's it." : "¡Eso!";
+        const label = uiLang === "en" ? "Continue" : "Continuar";
+        await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe(heading));
+        assertHoyWinBird();
+        expect(screen.getByTestId("hoy-win-continue").textContent).toBe(label);
+        expect(screen.getByTestId("app-shell").getAttribute("data-theme")).toBe(theme);
+      }
+    }
   });
 
   it("dark soft paywall title and prices are cream on #1E2128, not near-white on cream", async () => {
@@ -445,6 +478,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       await answerOpenLessonBeat(user);
     }
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    assertHoyWinBird();
     expect(seen).toEqual(["mc", "listen", "type", "order", "transform"]);
     expect(new Set(seen).size).toBeGreaterThanOrEqual(3);
     expect(seen.length).toBeGreaterThanOrEqual(4);
