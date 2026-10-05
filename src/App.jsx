@@ -2172,6 +2172,14 @@ function boardPadding(top, x, bottom, pinned) {
   };
 }
 
+/** Result copy breaks on spaces only. A word never splits, and the line never hyphenates. */
+const RESULT_COPY_WRAP = {
+  overflowWrap: "normal",
+  wordBreak: "normal",
+  hyphens: "none",
+  whiteSpace: "normal",
+};
+
 function CappedFeedback({ testId, className = "", style, onPin, children }) {
   const ref = useRef(null);
   const [pin, setPin] = useState(false);
@@ -8390,6 +8398,14 @@ export default function App() {
     beginFirstSession(unit, section, { beginner: route.beginner === true });
   };
 
+  // Red and green results: Continue is its own row under the copy, so the text
+  // uses the full width beside the avatar. The row stays the last item in the
+  // bottom-pinned panel. Review self-grade stays beside the copy. The 60vh cap
+  // already puts Continue in its own actions row.
+  const resultContinueOwnRow = !footerCapped
+    && status !== "idle"
+    && !(session?.review && (status === "correct" || status === "almost"));
+
   return (
     <BtnThemeContext.Provider value={theme}>
     <div data-testid="app-shell" data-theme={theme} style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))", ...(screen === "lesson" ? { height: "100dvh", maxHeight: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
@@ -10934,15 +10950,15 @@ export default function App() {
 
           {/* ---------- ACTION BAR with mascot ---------- */}
           <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className={footerCapped ? "lesson-footer-cap" : undefined} style={{ flexShrink: 0, width: "100%", boxSizing: "border-box", background: status === "idle" ? D.bg : status === "wrong" ? D.badBg : D.okBg, borderTop: status === "idle" ? `1px solid ${D.line}` : `2px solid ${status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(footerCapped ? { display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
-            <div style={footerCapped ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", minWidth: 0, minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", overflow: "hidden" } : { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", flexWrap: "nowrap", alignItems: "center", gap: 14 }}>
-              <div ref={footerCapped ? footerScrollRef : undefined} data-testid={footerCapped ? "lesson-footer-scroll" : undefined} className={footerCapped ? "lesson-footer-scroll" : undefined} style={footerCapped ? { flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", padding: "14px 20px 0" } : { display: "flex", flex: "1 1 auto", minWidth: 0, alignItems: "center", gap: 14 }}>
+            <div style={footerCapped ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", minWidth: 0, minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", overflow: "hidden" } : resultContinueOwnRow ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", padding: "14px 20px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14 } : { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", flexWrap: "nowrap", alignItems: "center", gap: 14 }}>
+              <div ref={footerCapped ? footerScrollRef : undefined} data-testid={footerCapped ? "lesson-footer-scroll" : (resultContinueOwnRow ? "lesson-footer-feedback-row" : undefined)} className={footerCapped ? "lesson-footer-scroll" : undefined} style={footerCapped ? { flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", padding: "14px 20px 0" } : resultContinueOwnRow ? { display: "flex", flex: "1 0 100%", width: "100%", minWidth: 0, alignItems: "center", gap: 14, boxSizing: "border-box" } : { display: "flex", flex: "1 1 auto", minWidth: 0, alignItems: "center", gap: 14 }}>
                 <div style={footerCapped ? { display: "flex", alignItems: "flex-start", gap: 14, minWidth: 0 } : { display: "contents" }}>
               {status !== "idle" && (
                 <div className={status === "wrong" ? "" : "jump"} style={{ flexShrink: 0 }}>
                   <CoachPortrait id={session.host} mood={status === "wrong" ? "sad" : "party"} size={58} />
                 </div>
               )}
-              <div data-testid="lesson-footer-text" style={{ flex: 1, minWidth: 0, overflowWrap: "break-word", whiteSpace: "normal", textOverflow: "clip", overflow: "visible", fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : limeText(D.okText, D) }}>
+              <div data-testid="lesson-footer-text" style={{ flex: 1, minWidth: 0, ...RESULT_COPY_WRAP, textOverflow: "clip", overflow: "visible", fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: status === "wrong" ? D.badText : status === "idle" ? (orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub) : limeText(D.okText, D) }}>
                 {showWordOrderTip && status !== "idle" && status !== "wrong" && (
                   <div>
                     <div data-testid="word-order-miss" style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6, opacity: theme === "dark" ? 0.85 : 1 }}>
@@ -10967,17 +10983,17 @@ export default function App() {
 		                      {errorKind && <div data-testid="practice-focus" style={{ display: "inline-flex", alignItems: "center", gap: 5, background: D.card, border: `1.5px solid ${D.red}`, borderRadius: 99, padding: "1px 8px", fontSize: 11, fontWeight: 900, marginBottom: 5 }}>{L.focus}: {focusLabel(errorKind, uiLang)}</div>}
 	                      {showDiff ? (
                         <div>
-	                          <div style={{ fontSize: 12.5, opacity: 0.8, minWidth: 0, overflowWrap: "anywhere" }}>{L.yourAnswer}: <span style={{ textDecoration: "line-through", textDecorationThickness: 2 }}>{typed}</span></div>
-                          <div data-testid="practice-correct" style={{ fontSize: 15.5, marginTop: 2, display: "flex", flexWrap: "wrap", columnGap: 5, rowGap: 2, alignItems: "baseline", minWidth: 0, maxWidth: "100%", whiteSpace: "normal", textOverflow: "clip", overflow: "visible" }}>
+	                          <div style={{ fontSize: 12.5, opacity: 0.8, minWidth: 0, ...RESULT_COPY_WRAP }}>{L.yourAnswer}: <span style={{ textDecoration: "line-through", textDecorationThickness: 2 }}>{typed}</span></div>
+                          <div data-testid="practice-correct" style={{ fontSize: 15.5, marginTop: 2, display: "flex", flexWrap: "wrap", columnGap: 5, rowGap: 2, alignItems: "baseline", minWidth: 0, maxWidth: "100%", ...RESULT_COPY_WRAP, textOverflow: "clip", overflow: "visible" }}>
 	                            <span style={{ opacity: 0.8, fontSize: 12.5 }}>{L.correct}: </span>
                             {marks.map((m, i) => (
-                              <b key={i} style={{ color: m.k === "ok" ? limeText(D.okText, D) : m.k === "accent" ? "#E08600" : D.badText, borderBottom: m.k === "ok" ? "none" : "2.5px solid currentColor", maxWidth: "100%", overflowWrap: "anywhere" }}>{m.w}</b>
+                              <b key={i} data-testid="practice-correct-word" style={{ color: m.k === "ok" ? limeText(D.okText, D) : m.k === "accent" ? "#E08600" : D.badText, borderBottom: m.k === "ok" ? "none" : "2.5px solid currentColor", ...RESULT_COPY_WRAP, whiteSpace: "nowrap" }}>{m.w}</b>
                             ))}
                           </div>
 	                          {hasAccent && <div style={{ fontSize: 11.5, color: D.accent, marginTop: 2 }}>{uiLang === "en" ? "orange = only the accent is missing" : "naranja = solo falta el acento"}</div>}
                         </div>
                       ) : (
-	                        <div style={{ minWidth: 0, overflowWrap: "break-word", whiteSpace: "normal" }}><b>{L.correctAnswer}:</b> {correctText}</div>
+	                        <div style={{ minWidth: 0, ...RESULT_COPY_WRAP }}><b>{L.correctAnswer}:</b> {correctText}</div>
                       )}
                       <button onClick={() => setShowWhy((w) => !w)}
                         style={{ background: "none", border: "none", padding: 0, marginTop: 5, cursor: "pointer", fontFamily: "inherit", fontWeight: 900, fontSize: 13, color: D.blue, textDecoration: "underline" }}>
@@ -11025,7 +11041,7 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-	                  <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ flexShrink: 0, marginTop: "auto" }}>{L.continue}</Btn>
+	                  <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={resultContinueOwnRow ? { flexGrow: 1, flexShrink: 0, flexBasis: "100%", width: "100%", boxSizing: "border-box" } : { flexShrink: 0, marginTop: "auto" }}>{L.continue}</Btn>
                 )
                 )
               ) : null}
