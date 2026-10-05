@@ -2397,7 +2397,7 @@ const porparaBankEn = [
   "Heading toward a destination → para: se va para Puebla. «Por Puebla» would mean passing through or around it, not the destination. «Fue» is past tense and clashes with «mañana».",
   "Para + infinitive expresses purpose (the «what for»): hago ejercicio para bajar de peso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-132, -121).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-143, -132).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
 porparaBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2583,7 +2583,7 @@ const sereflexBankEn = [
   "Reflexive passive: «los tacos» is plural → se comen. «Come» doesn't agree with «los tacos»; «me / le» are decoys.",
   "Se + me marks an unintentional accident, and the verb agrees with the thing: rompí un vaso → se me rompió un vaso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-121, -110).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-132, -121).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
 sereflexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2725,7 +2725,7 @@ const compsupBankEn = [
   "Irregular superlative: la + mejor + noun + de + group → la mejor alumna del salón. «Peor» would say the opposite, and «más» is not added to «mejor». In ordinary speech the superlative goes before the noun (not «la alumna mejor»).",
   "Quantity with a noun → tantos + noun + como: she has ten pairs and I have ten → tantos pares de tenis como yo. «Pares» is masculine plural, which is why it's tantos.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-110, -99).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-121, -110).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
 compsupBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2878,7 +2878,7 @@ const mexBankEn = [
   "«Al rato» = later, with no fixed time, and it is a set phrase: nos vemos al rato en la taquería, not «al ratos» or «el rato».",
   "«Un chorro de» = a ton of, and it replaces «mucha»: hay mucha gente → hay un chorro de gente. Unlike «mucha», it doesn’t agree with the noun.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-99, -88).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-110, -99).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
 mexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3029,7 +3029,7 @@ const pronBankEn = [
   "In Mexico, «marcar» also means to phone someone: luego te marco = luego te llamo. This item asks for the first-person present: marco.",
   "«Encantar» works like gustar: it takes an indirect-object pronoun, and for «mi hermana y yo» that is «nos»: nos encantan los tamales. «Lo» and «los» are direct-object pronouns and are not used with encantar.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-88, -77).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-99, -88).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
 pronBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3184,7 +3184,7 @@ const futcondBankEn = [
   "Simple future of «hacer»: irregular stem har- + ending: haremos. «Haceremos» regularizes the stem and does not exist.",
   "Reported speech in the past: «¿Me ayudas mañana?» → me preguntó si la ayudaría al día siguiente. «Al día siguiente» puts the help in the future of the past, so the present («ayudo») does not fit. In speech «si la ayudaba» is also heard; this item practices the conditional.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-77, -66).every((row, i) => row.es === futcondBank.bank[i].explain && row.en === futcondBankEn[i]), "futcond Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-88, -77).every((row, i) => row.es === futcondBank.bank[i].explain && row.en === futcondBankEn[i]), "futcond Why rows are appended in bank order");
 futcondBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3348,7 +3348,7 @@ const pluscampBankEn = [
   "Pluperfect: había + participle places something before another moment in the past (before moving to Puebla): nunca había salido. «Habría» (conditional perfect) would talk about something hypothetical, not a fact.",
   "Regret: debería haber + participle is «should have»: debería haber salido más temprano. Without «haber» there is no compound tense: «debería salido», «debería hacer salido» and «debería ser salido» are not said. In speech «debí haber salido» or «debí salir» is also said; this exercise practices «debería haber».",
 ];
-assert(PRACTICE_EXPLAIN.slice(-66, -55).every((row, i) => row.es === pluscampBank.bank[i].explain && row.en === pluscampBankEn[i]), "pluscamp Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-77, -66).every((row, i) => row.es === pluscampBank.bank[i].explain && row.en === pluscampBankEn[i]), "pluscamp Why rows are appended in bank order");
 const builtFromOrderTilesMulti = (words, phrase) => {
   const toks = String(phrase).trim().split(/\s+/).map(stripPhrase);
   const pool = words.map((w) => ({ w, used: false, k: stripPhrase(w).split(" ") }));
@@ -3540,7 +3540,7 @@ const pronombres2BankEn = [
   "Before «lo», «les» (and «le») becomes «se»: a mis papás + lo del viaje → ya se lo dije. «Les lo» is not said.",
   "With a gerund, the pronoun attaches to the end and takes a written accent: calentando + los → calentándolos. Detached («calentando los») or before the gerund («los calentando») is not written that way. «Los está calentando» is also said; here the blank asks for the attached form.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === pronombres2Bank.bank[i].explain && row.en === pronombres2BankEn[i]), "pronombres2 Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-66, -55).every((row, i) => row.es === pronombres2Bank.bank[i].explain && row.en === pronombres2BankEn[i]), "pronombres2 Why rows are appended in bank order");
 pronombres2Bank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3722,7 +3722,7 @@ const conectoresBankEn = [
   "Debido a + noun introduces the cause of an event: el vuelo se canceló debido a la tormenta. A pesar de would mark a concession.",
   "«En cuanto a» + noun means «regarding» and introduces a topic: en cuanto a la hora, la junta es a las nueve. «En cuanto» without «a» takes a conjugated verb and means «as soon as»."
 ];
-assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === conectoresBank.bank[i].explain && row.en === conectoresBankEn[i]), "conectores Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === conectoresBank.bank[i].explain && row.en === conectoresBankEn[i]), "conectores Why rows are appended in bank order");
 conectoresBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3873,7 +3873,7 @@ const registroBankEn = [
   "The proverb advises facing problems with a good attitude: al mal tiempo, buena cara.",
   "Caerle gordo to someone means finding them disagreeable or annoying: ese compañero me cae gordo. Caer bien would be the opposite."
 ];
-assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === registroBank.bank[i].explain && row.en === registroBankEn[i]), "registro Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === registroBank.bank[i].explain && row.en === registroBankEn[i]), "registro Why rows are appended in bank order");
 registroBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -4029,7 +4029,7 @@ const relativosBankEn = [
   "Que is the most frequent relative and does not change form: el libro que leí era largo. Here quien does not fit, because it is reserved for people.",
   "Cuyo agrees with the thing possessed, not the owner: perros is masculine plural, so cuyos: los vecinos cuyos perros ladraron toda la noche pidieron disculpas. Cuyas would go with a feminine plural noun. Cuyo is more a written or formal word; in speech many people say que sus perros, but here cuyos is what is practiced.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === relativosBank.bank[i].explain && row.en === relativosBankEn[i]), "relativos Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === relativosBank.bank[i].explain && row.en === relativosBankEn[i]), "relativos Why rows are appended in bank order");
 relativosBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -4184,7 +4184,7 @@ const reportedBankEn = [
   "«Ayer» becomes «el día anterior» when you report what was said in the past: mi jefa me dijo que el día anterior había cerrado el trato. «El día previo» is also seen in formal register; here «el día anterior» is what is practiced.",
   "To report a request, «pidió que» + imperfect subjunctive is used: mi jefe me pidió que llegara temprano el lunes. Here «contó», «preguntó» and «presumió» do not report a request, so they do not take that subjunctive.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === reportedBank.bank[i].explain && row.en === reportedBankEn[i]), "reported Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === reportedBank.bank[i].explain && row.en === reportedBankEn[i]), "reported Why rows are appended in bank order");
 reportedBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -4275,6 +4275,156 @@ assert(gradeListedPhrase("Anterior", reportedAnterior).status !== "wrong", "ante
 for (const phrase of ["siguiente", "previo", "pasado", "ayer", "hoy"]) {
   assert(gradeListedPhrase(phrase, reportedAnterior).status === "wrong", `anterior type is rejected: ${phrase}`);
 }
+
+const slang2Bank = UNITS.find((u) => u.id === "slang2");
+assert(slang2Bank.questions.length === 11, "slang2 authored questions stay 11");
+assert(slang2Bank.questions[0].prompt === "«Te lo juro, ___.»", "slang2 question order is unchanged");
+assert(Array.isArray(slang2Bank.bank) && slang2Bank.bank.length === 11, "slang2 replay bank is 11 questions");
+assert(slang2Bank.bank.map((q) => q.type).join(",") === "mc,mc,type,order,mc,type,transform,mc,order,type,mc", "slang2 bank types interleave mc/type/order/transform");
+assert(slang2Bank.bank[0].prompt === "Mi ___ Luis me prestó su coche; nos conocemos desde la prepa." && slang2Bank.bank[0].note === "" && slang2Bank.bank[0].choices.join("|") === "compa|compañía|compás|compra" && slang2Bank.bank[0].answer === "compa", "slang2 bank item 1");
+assert(slang2Bank.bank[1].prompt === "¡Qué oso! Ayer yo ___ el oso frente a toda la oficina." && slang2Bank.bank[1].note === "" && slang2Bank.bank[1].choices.join("|") === "hice|hizo|hecho|hacer" && slang2Bank.bank[1].answer === "hice", "slang2 bank item 2");
+assert(slang2Bank.bank[2].prompt === "Mi primo nunca paga la cuenta ni invita un taco; es bien ___." && slang2Bank.bank[2].note === "(una palabra de cuatro letras: empieza con «co»)" && slang2Bank.bank[2].answers.join("|") === "codo", "slang2 bank type item 3");
+assert(slang2Bank.bank[3].prompt === "Construye: “Honestly, I don’t know.”" && slang2Bank.bank[3].words.join("|") === "la neta|no|sé|saber|sabiendo" && slang2Bank.bank[3].answers.join("|") === "La neta no sé|No sé la neta", "slang2 bank order item 4 fuses the idiom and includes both decoys");
+assert(slang2Bank.bank[4].prompt === "Mi vecina solo va a restaurantes de lujo y nunca toma el metro: es bien ___." && slang2Bank.bank[4].note === "" && slang2Bank.bank[4].choices.join("|") === "fresa|fresas|frescura|fresno" && slang2Bank.bank[4].answer === "fresa", "slang2 bank item 5");
+assert(slang2Bank.bank[5].prompt === "Tu abuela te llama desde la cocina y no alcanzas a oír lo que dice. Le contestas con cortesía: «¿___?»" && slang2Bank.bank[5].note === "(una palabra de cinco letras: empieza con «m»)" && slang2Bank.bank[5].answers.join("|") === "mande", "slang2 bank type item 6");
+assert(slang2Bank.bank[6].base === "No hay problema si llegas tarde." && slang2Bank.bank[6].instruction === "Cámbialo al caló: cambia «problema» por «bronca» y conserva el resto igual" && slang2Bank.bank[6].answers.join("|") === "No hay bronca si llegas tarde", "slang2 bank transform");
+assert(slang2Bank.bank[7].prompt === "Mi prima consiguió una buena ___ en un banco y ya no busca otro empleo." && slang2Bank.bank[7].note === "" && slang2Bank.bank[7].choices.join("|") === "chamba|chambeo|chambeando|chambeado" && slang2Bank.bank[7].answer === "chamba", "slang2 bank item 8");
+assert(slang2Bank.bank[8].prompt === "Construye: “That taco is really awesome.”" && slang2Bank.bank[8].words.join("|") === "ese|taco|está bien chido|esos|tacos" && slang2Bank.bank[8].answers.join("|") === "Ese taco está bien chido|Está bien chido ese taco", "slang2 bank order item 9 fuses the idiom and includes both decoys");
+assert(slang2Bank.bank[9].prompt === "Mañana entro al turno de las seis en la fábrica: tengo que ___ toda la mañana, así que hoy me acuesto temprano." && slang2Bank.bank[9].note === "(una palabra de ocho letras: empieza con «cham»)" && slang2Bank.bank[9].answers.join("|") === "chambear", "slang2 bank type item 10");
+assert(slang2Bank.bank[10].prompt === "Mi amigo no es fresa; hay quien dice que es un chavo ___, pero esa palabra es clasista y puede ofender, y yo no la uso." && slang2Bank.bank[10].note === "" && slang2Bank.bank[10].choices.join("|") === "naco|naca|nacos|nacho" && slang2Bank.bank[10].answer === "naco", "slang2 bank item 11");
+assert(slang2Bank.bank[3].answers.length === 2 && slang2Bank.bank[8].answers.length === 2, "slang2 order items list exactly two accepted answers");
+assert([3, 8].every((i) => slang2Bank.bank[i].words.every((w) => w === w.toLowerCase() && !/[,;:¿?¡!.]/.test(w))), "slang2 order tiles are lowercase with no punctuation");
+for (const q of [slang2Bank.bank[3], slang2Bank.bank[8]]) {
+  const ans = new Set(q.answers.flatMap((a) => stripPhrase(a).split(" ")));
+  const decoys = q.words.filter((w) => !stripPhrase(w).split(" ").every((x) => ans.has(x)));
+  assert(decoys.length >= 2 && decoys.length <= 4 && decoys.every((w) => !ans.has(stripPhrase(w))) && q.words.every((w) => /\p{L}/u.test(w)), "slang2 decoy tiles do not spell an answer word");
+  assert(decoys.join("|") === (q === slang2Bank.bank[3] ? "saber|sabiendo" : "esos|tacos"), "slang2 order decoys stay the two non-answer tiles");
+}
+assert(orderTileLabel(slang2Bank.bank[3].words[0], { answer: "La neta no sé", placedIndex: 0 }) === "La neta", "slang2 two-word tile capitalizes only the first letter in slot 0");
+assert(slang2Bank.bank[3].answers.every((a) => builtFromOrderTiles(slang2Bank.bank[3].words, a) === null) && slang2Bank.bank[8].answers.every((a) => builtFromOrderTiles(slang2Bank.bank[8].words, a) === null), "slang2 fused-tile order answers return null from the one-token helper");
+assert(slang2Bank.bank[3].answers.every((a) => builtFromOrderTilesMulti(slang2Bank.bank[3].words, a) !== null) && slang2Bank.bank[8].answers.every((a) => builtFromOrderTilesMulti(slang2Bank.bank[8].words, a) !== null), "slang2 order answers are buildable with the multi-word helper");
+assert(slang2Bank.bank.every((q) => q.type !== "mc" || q.note === ""), "slang2 has no ¡Ojo! item and no mc note");
+
+const slang2PromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((item, i) => {
+      if (u.id === "slang2" && kind === "bank") return;
+      if (item.type === "transform") {
+        const base = item.base || item.source;
+        if (base) slang2PromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (item.prompt) slang2PromptOwners.set(item.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+slang2Bank.bank.forEach((item, i) => {
+  if (item.type === "transform") {
+    assert(!slang2PromptOwners.has(item.base), `slang2 bank ${i} transform base repeats a prompt`);
+    assert(!slang2PromptOwners.has(`base:${item.base}`), `slang2 bank ${i} transform base repeats ${slang2PromptOwners.get(`base:${item.base}`) || "another item"}`);
+    return;
+  }
+  assert(!slang2PromptOwners.has(item.prompt), `slang2 bank ${i} prompt duplicates ${slang2PromptOwners.get(item.prompt) || "another item"}`);
+  slang2PromptOwners.set(item.prompt, `slang2 bank ${i}`);
+});
+const slang2BankEn = [
+  "«Compa» is short for «compañero», a buddy, in Mexican speech: mi compa Luis. «Compañía», «compás» and «compra» do not name a person, so they do not fit before the name «Luis».",
+  "«Hacer el oso» means to make a fool of yourself in front of others; with «ayer yo» the verb takes the preterite of «yo»: ayer yo hice el oso. «Hizo» is for «él» or «ella», «hecho» is a participle and «hacer» is an infinitive.",
+  "«Codo» describes someone stingy, who will not spend or share money: mi primo es bien codo. Literally «codo» is the elbow, the joint of the arm; here it is a colloquial adjective, and «bien» intensifies, like «muy».",
+  "«La neta» is «the truth»; at the start or the end of the sentence it works like «honestly»: la neta no sé; no sé, la neta. Here the verb is conjugated («sé»); with the infinitive or the gerund there is no sentence.",
+  "«Fresa» describes someone upper-class with expensive tastes, and sometimes a bit of a show-off: mi vecina es bien fresa. «Fresas» is plural and does not agree with «es»; «frescura» is a different noun (the quality of being fresh) and «fresno» is a tree, so neither describes a person.",
+  "«¿Mande?» is a very typical polite reply in Mexico when someone calls you or you did not hear well, especially when speaking with older people or in situations of respect. «¿Cómo?» and «¿perdón?» are also heard, but here «mande» is what is practiced. A bare «¿qué?», especially when answering an older person, can sound curt or rude.",
+  "«Bronca» is a problem or a fight in Mexican slang, and «no hay bronca» is the set phrase for «no problem»: no hay bronca si llegas tarde. Here only «problema» becomes «bronca».",
+  "«La chamba» is the job, a feminine noun: una buena chamba. «Chambeo» is the «yo» form of «chambear», «chambeando» is the gerund and «chambeado» is the participle; none of them is a feminine noun. After «una buena» a feminine noun is needed.",
+  "«Bien chido» means «very cool»: ese taco está bien chido. «Ese» and «taco» go together in the masculine singular: «esos taco» and «ese tacos» do not agree. «Está bien chido ese taco» is also said.",
+  "«Chambear» is the verb of «la chamba» and means to work, in colloquial Mexican speech: mañana tengo que chambear toda la mañana. Here, after «tengo que» comes the infinitive.",
+  "«Naco» is used to judge someone's behavior or taste as rude or common, and is often set against «fresa»: un chavo naco. «Naca» is feminine and does not agree with «chavo»; «nacos» is plural; «nacho» is a proper name (Ignacio) or a snack, not an adjective. Careful: «naco» is classist and can offend; learn it to recognize it, not to label anyone."
+];
+assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === slang2Bank.bank[i].explain && row.en === slang2BankEn[i]), "slang2 Why rows are appended in bank order");
+slang2Bank.bank.forEach((item, i) => {
+  const row = explainByEs.get(item.explain);
+  assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === slang2BankEn[i], `slang2 bank ${i} EN row equals the English row`);
+  assert(explainText(item, "es") === item.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(item, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(item);
+  assertPreppedQuestion(prepped, `slang2 bank ${i}`);
+  if (item.type === "mc") {
+    assert(item.choices.length === 4 && new Set(item.choices).size === 4 && item.choices.includes(item.answer), `slang2 bank ${i} mc choices include the answer`);
+    assert(item.note === "", `slang2 bank ${i} mc note is empty`);
+    assert(item.note !== "¡Ojo!", `slang2 bank ${i} mc note is not a trap`);
+  }
+  if (item.type === "type") {
+    assert(item.note === { 2: "(una palabra de cuatro letras: empieza con «co»)", 5: "(una palabra de cinco letras: empieza con «m»)", 9: "(una palabra de ocho letras: empieza con «cham»)" }[i], `slang2 bank ${i} type note`);
+  }
+  if (item.type === "order") {
+    assert(prepped.words.join("|") === item.words.join("|"), `slang2 bank ${i} order tiles stay authored`);
+    assert(prepped.answer === item.answer, `slang2 bank ${i} order answer stays authored`);
+    assert(Array.isArray(item.answers) && item.answers[0] === item.answer, `slang2 bank ${i} answers start with the authored answer`);
+    assert(item.words.every((w) => !String(w).includes(",")), `slang2 bank ${i} tiles carry no comma`);
+    assert(item.words.every((w) => w === w.toLowerCase()), `slang2 bank ${i} tiles stay lowercase`);
+    assert(item.words.every((w) => !/[,;:¿?¡!.]/.test(w)), `slang2 bank ${i} tiles carry no punctuation`);
+    const buildTiles = (i === 3 || i === 8) ? builtFromOrderTilesMulti : builtFromOrderTiles;
+    item.answers.forEach((phrase) => {
+      const built = buildTiles(item.words, phrase);
+      assert(built, `slang2 bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(phrase, item).status !== "wrong", `slang2 bank ${i} listed order is accepted: ${phrase}`);
+      assert(gradeListedPhrase(built, item).status !== "wrong", `slang2 bank ${i} tile-built order is accepted: ${built}`);
+    });
+    const builtPrimary = buildTiles(item.words, item.answer);
+    assert(builtPrimary && builtPrimary.toLowerCase() === item.answer.toLowerCase(), `slang2 bank ${i} primary order is the authored tile text`);
+  }
+  if (item.type === "type" || item.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === item.answers.join("|"), `slang2 bank ${i} answers stay authored`);
+  }
+});
+const slang2Codo = slang2Bank.bank[2];
+const slang2Neta = slang2Bank.bank[3];
+const slang2Mande = slang2Bank.bank[5];
+const slang2Bronca = slang2Bank.bank[6];
+const slang2Chido = slang2Bank.bank[8];
+const slang2Chambear = slang2Bank.bank[9];
+assert(slang2Neta.answers.join("|") === "La neta no sé|No sé la neta", "slang2 item 4 lists the accepted alternates");
+assert(slang2Chido.answers.join("|") === "Ese taco está bien chido|Está bien chido ese taco", "slang2 item 9 lists the accepted alternates");
+assert(slang2Bronca.answers.join("|") === "No hay bronca si llegas tarde", "slang2 transform lists the accepted answer");
+assert(gradeListedPhrase("codo", slang2Codo).status !== "wrong", "codo type is accepted");
+assert(gradeListedPhrase("Codo", slang2Codo).status !== "wrong", "codo case is ignored");
+for (const phrase of ["chido", "padre", "neta", "tacaño", "apretado", "cicatero"]) {
+  assert(gradeListedPhrase(phrase, slang2Codo).status === "wrong", `codo type is rejected: ${phrase}`);
+}
+for (const phrase of ["La neta no sé", "No sé la neta"]) {
+  assert(gradeListedPhrase(phrase, slang2Neta).status !== "wrong", `neta order accepted: ${phrase}`);
+}
+for (const phrase of ["No saber la neta", "Sabiendo la neta no sé", "La neta no saber", "No sé", "La neta"]) {
+  assert(gradeListedPhrase(phrase, slang2Neta).status === "wrong", `neta order is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("mande", slang2Mande).status !== "wrong", "mande type is accepted");
+assert(gradeListedPhrase("Mande", slang2Mande).status !== "wrong", "mande case is ignored");
+assert(gradeListedPhrase("¿Mande?", slang2Mande).status !== "wrong", "mande punctuation is ignored");
+for (const phrase of ["dime", "cómo", "qué", "perdón", "manda", "¿Cómo?", "¿Perdón?"]) {
+  assert(gradeListedPhrase(phrase, slang2Mande).status === "wrong", `mande type is rejected: ${phrase}`);
+}
+for (const phrase of ["No hay bronca si llegas tarde", "No hay bronca si llegas tarde."]) {
+  assert(gradeListedPhrase(phrase, slang2Bronca).status !== "wrong", `bronca transform accepted: ${phrase}`);
+}
+for (const phrase of ["No hay broncas si llegas tarde", "Si llegas tarde no hay bronca", "No hay problema si llegas tarde", "No hay bronca si llegas bien"]) {
+  assert(gradeListedPhrase(phrase, slang2Bronca).status === "wrong", `bronca transform is rejected: ${phrase}`);
+}
+for (const phrase of ["Ese taco está bien chido", "Está bien chido ese taco"]) {
+  assert(gradeListedPhrase(phrase, slang2Chido).status !== "wrong", `chido order accepted: ${phrase}`);
+}
+for (const phrase of ["Esos taco está bien chido", "Ese tacos está bien chido", "Ese está bien chido", "Ese taco está chido", "Bien chido está ese taco"]) {
+  assert(gradeListedPhrase(phrase, slang2Chido).status === "wrong", `chido order is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("chambear", slang2Chambear).status !== "wrong", "chambear type is accepted");
+assert(gradeListedPhrase("Chambear", slang2Chambear).status !== "wrong", "chambear case is ignored");
+for (const phrase of ["trabajar", "chamba", "chambeo", "chambeando", "chambeado", "chambeé"]) {
+  assert(gradeListedPhrase(phrase, slang2Chambear).status === "wrong", `chambear type is rejected: ${phrase}`);
+}
+
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
     if (typeof q.explain !== "string") return;
