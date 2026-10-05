@@ -1,7 +1,7 @@
 /**
  * Lesson Check, the lime Continue, and the paywall ONE YEAR label use #1F3A1A on #58CC02.
  * Continue free and the fine print stay on their own colors.
- * A wrong answer keeps the red Continue on the white label. Disabled Btn ink stays lockIcon.
+ * A wrong answer paints the red Continue label #3A1A1A. Disabled Btn ink stays lockIcon.
  */
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
@@ -18,7 +18,7 @@ const LIVE_KEY = "andale-v3-live";
 const LIME = "#58cc02";
 const LIP = "#46a302";
 const INK = "#1f3a1a";
-const WHITE = "#ffffff";
+const WRONG_INK = "#3a1a1a";
 
 const lin = (channel) => {
   const c = channel / 255;
@@ -116,7 +116,8 @@ describe("lesson Check and Continue ink", () => {
     expect(appSrc).toContain('const LESSON_LIME_INK = "#1F3A1A"');
     expect(appSrc).toContain("disabled ? D.lockIcon : (ink || CONTINUE_LABEL)");
     expect((appSrc.match(/data-testid="lesson-check" ink=\{LESSON_LIME_INK\}/g) || []).length).toBe(2);
-    expect((appSrc.match(/ink=\{status === "wrong" \? CONTINUE_LABEL : LESSON_LIME_INK\}/g) || []).length).toBe(2);
+    expect(appSrc).toContain('const WRONG_CONTINUE_INK = "#3A1A1A"');
+    expect((appSrc.match(/ink=\{status === "wrong" \? WRONG_CONTINUE_INK : LESSON_LIME_INK\}/g) || []).length).toBe(2);
     expect((appSrc.match(/data-testid="soft-paywall-annual" ink=\{LESSON_LIME_INK\}/g) || []).length).toBe(1);
     const annual = appSrc.slice(appSrc.indexOf('data-testid="soft-paywall-annual"'), appSrc.indexOf('data-testid="soft-paywall-annual"') + 160);
     expect(annual).toContain("ink={LESSON_LIME_INK}");
@@ -149,16 +150,18 @@ describe("lesson Check and Continue ink", () => {
     expect(screen.queryByTestId("lesson-check")).toBeNull();
   });
 
-  it.each(["light", "dark"])("a wrong %s Continue stays white on red", async (theme) => {
+  it.each(["light", "dark"])("a wrong %s Continue is #3A1A1A on the red fill", async (theme) => {
     const check = await bootLesson(theme, "es");
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /vienes/ }));
     await user.click(check);
     const cont = await waitFor(() => continueButton("es"));
+    const fill = theme === "dark" ? "#ff6b6b" : "#ff4b4b";
     expect(cont.textContent).toBe("Continuar");
-    expect(norm(cont.style.color)).toBe(WHITE);
-    expect(norm(cont.style.background)).toBe(theme === "dark" ? "#ff6b6b" : "#ff4b4b");
+    expect(norm(cont.style.color)).toBe(WRONG_INK);
+    expect(norm(cont.style.background)).toBe(fill);
     expect(norm(cont.style.borderBottom)).toBe("#ea2b2b");
+    expect(contrastRatio(WRONG_INK, fill)).toBeGreaterThanOrEqual(3);
   });
 
   it.each([

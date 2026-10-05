@@ -34,7 +34,7 @@ const BUTTON_BG = {
   light: { correct: "#58cc02", almost: "#58cc02", wrong: "#ff4b4b" },
   dark: { correct: "#58cc02", almost: "#58cc02", wrong: "#ff6b6b" },
 };
-const BUTTON_INK = { correct: "#1f3a1a", almost: "#1f3a1a", wrong: "#ffffff" };
+const BUTTON_INK = { correct: "#1f3a1a", almost: "#1f3a1a", wrong: "#3a1a1a" };
 
 const QUIP = { es: "Eso suena natural.", en: "That sounds natural." };
 const SHORT_EXPLAIN = { es: "Claro.", en: "Clear." };

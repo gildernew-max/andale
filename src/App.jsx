@@ -5146,6 +5146,8 @@ const BtnThemeContext = createContext("light");
 
 /** #1F3A1A on lime #58CC02. Lesson Check, lime Continue, and the paywall ONE YEAR button. Other filled buttons stay on CONTINUE_LABEL. */
 const LESSON_LIME_INK = "#1F3A1A";
+/** #3A1A1A on the red Continue fill. Same ink in light (#FF4B4B) and dark (#FF6B6B). Label only. */
+const WRONG_CONTINUE_INK = "#3A1A1A";
 
 const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, theme: themeProp, ink, ...rest }) => {
   const ctxTheme = useContext(BtnThemeContext);
@@ -11025,7 +11027,7 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-	                  <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ width: "100%", flexShrink: 0 }}>{L.continue}</Btn>
+	                  <Btn ink={status === "wrong" ? WRONG_CONTINUE_INK : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={{ width: "100%", flexShrink: 0 }}>{L.continue}</Btn>
                 )}
                 </div>
                 ) : (
@@ -11041,7 +11043,7 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-	                  <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={resultContinueOwnRow ? { flexGrow: 1, flexShrink: 0, flexBasis: "100%", width: "100%", boxSizing: "border-box" } : { flexShrink: 0, marginTop: "auto" }}>{L.continue}</Btn>
+	                  <Btn ink={status === "wrong" ? WRONG_CONTINUE_INK : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={resultContinueOwnRow ? { flexGrow: 1, flexShrink: 0, flexBasis: "100%", width: "100%", boxSizing: "border-box" } : { flexShrink: 0, marginTop: "auto" }}>{L.continue}</Btn>
                 )
                 )
               ) : null}
