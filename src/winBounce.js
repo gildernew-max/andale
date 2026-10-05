@@ -14,7 +14,7 @@ import { HOY_WIN_EN, HOY_WIN_ES } from "./hoyWin.js";
 export const WIN_BOUNCE_MS = 720;
 export const WIN_BOUNCE_SRC = "mascot/cenzontle.png";
 /** Hoy ¡Eso! entrance. Same 168px band as the old fly-away rest pose. Lands and stays. */
-export const HOY_WIN_ENTER_MS = 900;
+export const HOY_WIN_ENTER_MS = 780;
 export const HOY_WIN_BIRD_PX = 168;
 
 /** Lectura story-0 only. Cubetas v2 780ms family. Do not replay on later stories. */

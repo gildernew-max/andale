@@ -118,7 +118,7 @@ export function HoyWinBird({ onComplete }) {
           object-fit: contain;
           opacity: 1;
           transform: none;
-          animation: hoy-bird-enter ${HOY_WIN_ENTER_MS}ms cubic-bezier(.22,.75,.25,1) both;
+          animation: hoy-bird-enter ${HOY_WIN_ENTER_MS}ms ${STORY0_EASE_ENTER} both;
         }
         @keyframes hoy-bird-enter {
           0% { transform: translate(36px, 6px) rotate(-8deg); opacity: 0; }
