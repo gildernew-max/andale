@@ -60,6 +60,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
+import { lecturaAdvanceScrollY, lecturaStickyHeaderBottom } from "./lecturaAdvance.js";
 import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -5306,6 +5307,10 @@ export default function App() {
   useEffect(() => { const iv = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(iv); }, []);
   const [confirmExit, setConfirmExit] = useState(false);
   const [paraIdx, setParaIdx] = useState(0);
+  const [lecturaAdvanceNonce, setLecturaAdvanceNonce] = useState(0);
+  const lecturaParagraphRef = useRef(null);
+  const lecturaQuestionsRef = useRef(null);
+  const lecturaAdvanceScrollRef = useRef(false);
   const [voiceDead, setVoiceDead] = useState(false);
   useEffect(() => {
     const onDead = () => setVoiceDead(true);
@@ -6951,6 +6956,26 @@ export default function App() {
     });
   }, [wordSel, screen, wordSheetSpacer]);
 
+  // After the word-sheet close pass, so a spacer restore cannot put the
+  // learner back at the bottom of the previous paragraph.
+  useLayoutEffect(() => {
+    if (screen !== "story") {
+      lecturaAdvanceScrollRef.current = false;
+      return;
+    }
+    if (!lecturaAdvanceScrollRef.current || wordSheetSpacer) return;
+    const el = lecturaParagraphRef.current || lecturaQuestionsRef.current;
+    if (!el) return;
+    const headerBottom = lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']"));
+    const nextY = lecturaAdvanceScrollY({
+      paragraphTop: el.getBoundingClientRect().top,
+      scrollY: window.scrollY,
+      headerBottom,
+    });
+    lecturaAdvanceScrollRef.current = false;
+    if (Math.abs((Number(window.scrollY) || 0) - nextY) > 0.5) window.scrollTo(0, nextY);
+  }, [screen, paraIdx, wordSheetSpacer, lecturaAdvanceNonce]);
+
   const releaseLecturaWin = (beat) => {
     if (!beat) return;
     setLecturaCliffhanger(null);
@@ -7080,6 +7105,14 @@ export default function App() {
         narrationRef.current.currentTime = 0;
       }
     } catch (e) {}
+  };
+
+  const advanceLectura = (idx) => {
+    stopNarration();
+    setWordSel(null);
+    lecturaAdvanceScrollRef.current = true;
+    setParaIdx(idx);
+    setLecturaAdvanceNonce((n) => n + 1);
   };
 
   const playStoryParagraph = (story, pi, text) => {
@@ -11921,10 +11954,10 @@ export default function App() {
             </div>
             <div data-testid="lectura-progress" style={{ display: "flex", gap: 5, alignItems: "center", margin: "2px 0 14px" }}>
               {story.paragraphs.map((_, i) => (
-                <button key={i} onClick={() => { stopNarration(); setWordSel(null); setParaIdx(i); }} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
+                <button key={i} onClick={() => advanceLectura(i)} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
                   style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : (theme === "dark" ? D.track : "#E8E8E8"), outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
               ))}
-              <button onClick={() => { stopNarration(); setWordSel(null); setParaIdx(story.paragraphs.length); }} aria-label={uiLang === "en" ? "Questions" : "Preguntas"}
+              <button onClick={() => advanceLectura(story.paragraphs.length)} aria-label={uiLang === "en" ? "Questions" : "Preguntas"}
                 style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : (theme === "dark" ? D.track : "#E8E8E8"), color: paraIdx >= story.paragraphs.length ? "#fff" : (theme === "dark" ? D.ink : D.sub) }}>?</button>
             </div>
             {paraIdx < story.paragraphs.length && (
@@ -11934,7 +11967,7 @@ export default function App() {
             )}
 
             {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
-              <div key={pi} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
+              <div key={pi} ref={lecturaParagraphRef} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
                 <img
                   src={`${import.meta.env.BASE_URL}lectura/${story.id}/p${pi}.png`}
                   alt=""
@@ -12008,6 +12041,17 @@ export default function App() {
               </div>
             ); })}
 
+            {paraIdx < story.paragraphs.length && (
+              <div data-testid="lectura-advance" style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                <Btn outline disabled={paraIdx === 0} onClick={() => advanceLectura(paraIdx - 1)} style={{ flex: 1 }}>
+                  ← {uiLang === "en" ? "Back" : "Anterior"}
+                </Btn>
+                <Btn onClick={() => advanceLectura(paraIdx + 1)} style={{ flex: 2 }}>
+                  {paraIdx === story.paragraphs.length - 1 ? (uiLang === "en" ? "Questions →" : "Preguntas →") : (uiLang === "en" ? "Next →" : "Siguiente →")}
+                </Btn>
+              </div>
+            )}
+
             {latamNarration && (
             <div data-testid="narration-card" style={{ border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 10, background: D.card, marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 8 }}>
@@ -12066,21 +12110,10 @@ export default function App() {
               </div>
             </div>
 
-            {/* chunk navigation */}
-            {paraIdx < story.paragraphs.length && (
-              <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                <Btn outline disabled={paraIdx === 0} onClick={() => { stopNarration(); setWordSel(null); setParaIdx(paraIdx - 1); }} style={{ flex: 1 }}>
-                  ← {uiLang === "en" ? "Back" : "Anterior"}
-                </Btn>
-                <Btn onClick={() => { stopNarration(); setWordSel(null); setParaIdx(paraIdx + 1); }} style={{ flex: 2 }}>
-                  {paraIdx === story.paragraphs.length - 1 ? (uiLang === "en" ? "Questions →" : "Preguntas →") : (uiLang === "en" ? "Next →" : "Siguiente →")}
-                </Btn>
-              </div>
-            )}
-
             {/* comprehension questions — final step */}
-            {paraIdx >= story.paragraphs.length && (<>
-            <Btn outline onClick={() => { setParaIdx(story.paragraphs.length - 1); }} style={{ marginBottom: 4, padding: "9px 14px", fontSize: 12.5 }}>
+            {paraIdx >= story.paragraphs.length && (
+            <div ref={lecturaQuestionsRef} data-testid="lectura-questions">
+            <Btn outline onClick={() => advanceLectura(story.paragraphs.length - 1)} style={{ marginBottom: 4, padding: "9px 14px", fontSize: 12.5 }}>
               ← {uiLang === "en" ? "Back to the story" : "Volver al cuento"}
             </Btn>
             <div style={{ borderTop: `2px solid ${D.line}`, marginTop: 12, paddingTop: 20 }}>
@@ -12142,7 +12175,7 @@ export default function App() {
                 </div>
               )}
             </div>
-            </>)}
+            </div>)}
 
             {lecturaCliffhanger?.storyId === story.id && (
               <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, marginLeft: -16, marginRight: -16, background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 14, padding: "14px 10px 12px" }}>
