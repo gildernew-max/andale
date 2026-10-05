@@ -395,6 +395,26 @@ export const expectedComeBack = (lang) => {
   return comeBackTomorrowLine({ lang, nextTitle: hoyTitleForLang(next, lang) });
 };
 
+/** Hoy ¡Eso! keeps one 168px Cenzontle in the band. Lime CONTINUE label is #1F3A1A. */
+export const assertHoyWinBird = () => {
+  const slot = screen.getByTestId("win-perch-slot");
+  const bird = screen.getByTestId("hoy-win-bird-img");
+  const cont = screen.getByTestId("hoy-win-continue");
+  expect(bird.tagName).toBe("IMG");
+  expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+  expect(bird.getAttribute("width")).toBe("168");
+  expect(bird.getAttribute("height")).toBe("168");
+  expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)/);
+  expect(slot.querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+  expect(screen.queryByTestId("win-fly-away")).toBeNull();
+  expect(screen.queryByTestId("win-fly-away-bird")).toBeNull();
+  expect(slot.querySelector("[data-testid='win-perch']")).toBeNull();
+  expect(screen.queryByTestId("win-perch")).toBeNull();
+  expect(screen.queryByTestId("story-0-beat")).toBeNull();
+  expect(cont.style.color).toMatch(/#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i);
+  expect(cont.style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+};
+
 /** Free story-win / CONTINUAR: fly-away in flight or already off-screen. No perch. Soft chrome parked. */
 export const assertFreeWinFlyAway = () => {
   const slot = screen.getByTestId("win-perch-slot");

@@ -182,12 +182,13 @@ assert(appSrc.includes("<WinPerch"), "later Lectura win keeps static WinPerch");
 assert(appSrc.includes("win-perch-slot"), "bird slot reserves the on-screen zone");
 assert(appSrc.includes("shouldArmStory0Beat"), "claimStory arms the story-0 bird");
 assert(appSrc.includes("shouldPlayStory0Beat(session)"), "done screen gates the story-0 fly-away");
-assert(appSrc.includes("shouldPlayHoyBeat(session)"), "done screen gates the firstHoy fly-away");
+assert(appSrc.includes("shouldPlayHoyBeat(session)"), "done screen gates the Hoy staying bird");
+assert(appSrc.includes("<HoyWinBird"), "Hoy win mounts the staying Cenzontle");
 assert(appSrc.includes("shouldPlayDoctoraBeat(session)"), "done screen gates the firstDoctora fly-away");
-assert(appSrc.includes("shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session)"), "firstHoy reuses the story-0 fly-away helper");
-assert(appSrc.includes("shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session)"), "firstDoctora reuses the story-0 fly-away helper");
+assert(appSrc.includes("shouldPlayStory0Beat(session) || shouldPlayDoctoraBeat(session)"), "story-0 and Doctora still share the fly-away");
+assert(!appSrc.includes("shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session)"), "Hoy no longer shares the story-0 fly-away");
 assert(appSrc.includes("if (shouldPlayWinBounce(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session))"), "Hoy / Doctora finish arm the first-win bird with done");
-assert(appSrc.includes("<CenzontleFlyAway"), "story-0 / firstHoy / firstDoctora mount the shared fly-away");
+assert(appSrc.includes("<CenzontleFlyAway"), "story-0 and Doctora mount the shared fly-away");
 assert(appSrc.includes('surface="win"'), "free win bird uses the #161 fly-away motion");
 assert(!appSrc.includes("<Story0Beat"), "done screen does not mount Cubetas flap-then-perch");
 assert(appSrc.includes("session.firstStory0"), "quiet win includes first story-0");
@@ -232,6 +233,6 @@ assert(!/confetti|hover|idleBob|wink|look-back|lookBack/i.test(story0Src.slice(s
 
 console.log("ok: Cenzontle first-win bounce — on-screen fly-in / points drop / perch.");
 console.log("ok: story-0 Cenzontle 780ms beat — Cubetas v2 family + WinPerch.");
-console.log("ok: firstHoy Cenzontle 780ms beat — Cubetas v2 family + WinPerch; 720ms courier retired.");
+console.log("ok: firstHoy Cenzontle stays in the band after the entrance; 720ms courier retired.");
 console.log("ok: firstDoctora Cenzontle 780ms beat — Cubetas v2 family + WinPerch; 720ms courier retired.");
 console.log("ok: later Lectura WinPerch static — no 780ms motion.");

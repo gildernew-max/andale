@@ -7,6 +7,8 @@ import {
   STORY0_EASE_ENTER,
   STORY0_EASE_EXIT,
   STORY0_ENTER_MS,
+  HOY_WIN_BIRD_PX,
+  HOY_WIN_ENTER_MS,
   WIN_BOUNCE_MS,
   WIN_BOUNCE_SRC,
 } from "./winBounce.js";
@@ -71,6 +73,73 @@ export function WinPerch({ theme = "light" }) {
         className="cenzontle-perch-bird"
       />
       <XpChip testId="win-perch-chip" ink={xpInk} />
+    </div>
+  );
+}
+
+/**
+ * Hoy win Cenzontle. One entrance into the empty band, then it stays.
+ * 168px, centered by the perch slot — the fly-away rest pose. No wing, no XP chip, no exit.
+ */
+export function HoyWinBird({ onComplete }) {
+  const doneRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  const reduce = prefersReducedMotion();
+
+  useEffect(() => {
+    const finish = () => {
+      if (doneRef.current) return;
+      doneRef.current = true;
+      onCompleteRef.current?.();
+    };
+    if (reduce) {
+      finish();
+      return undefined;
+    }
+    const t = setTimeout(finish, HOY_WIN_ENTER_MS);
+    return () => clearTimeout(t);
+  }, [reduce]);
+
+  const src = markSrc();
+
+  return (
+    <div data-testid="hoy-win-bird" aria-hidden="true" className="hoy-win-bird">
+      <style>{`
+        .hoy-win-bird {
+          height: ${HOY_WIN_BIRD_PX}px;
+          margin: 0 auto;
+          pointer-events: none;
+        }
+        .hoy-win-bird-img {
+          display: block;
+          width: ${HOY_WIN_BIRD_PX}px;
+          height: ${HOY_WIN_BIRD_PX}px;
+          object-fit: contain;
+          opacity: 1;
+          transform: none;
+          animation: hoy-bird-enter ${HOY_WIN_ENTER_MS}ms ${STORY0_EASE_ENTER} both;
+        }
+        @keyframes hoy-bird-enter {
+          0% { transform: translate(36px, 6px) rotate(-8deg); opacity: 0; }
+          100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hoy-win-bird-img {
+            animation: none !important;
+            opacity: 1;
+            transform: none;
+          }
+        }
+      `}</style>
+      <img
+        data-testid="hoy-win-bird-img"
+        src={src}
+        alt=""
+        width={HOY_WIN_BIRD_PX}
+        height={HOY_WIN_BIRD_PX}
+        className="hoy-win-bird-img"
+      />
     </div>
   );
 }

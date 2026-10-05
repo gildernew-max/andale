@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { Story0Beat, WinBounce, WinPerch } from "./WinBounce.jsx";
-import { STORY0_BEAT_MS, WIN_BOUNCE_MS } from "./winBounce.js";
+import { HoyWinBird, Story0Beat, WinBounce, WinPerch } from "./WinBounce.jsx";
+import { HOY_WIN_ENTER_MS, STORY0_BEAT_MS, WIN_BOUNCE_MS } from "./winBounce.js";
 
 afterEach(() => {
   cleanup();
@@ -48,6 +48,42 @@ describe("WinBounce", () => {
     render(<WinPerch />);
     expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
     expect(screen.getByTestId("win-perch-chip").textContent).toMatch(/XP/);
+  });
+});
+
+describe("HoyWinBird", () => {
+  it("plays the entrance, then keeps the 168px Cenzontle", () => {
+    vi.useFakeTimers();
+    const onComplete = vi.fn();
+    render(<HoyWinBird onComplete={onComplete} />);
+    const bird = screen.getByTestId("hoy-win-bird-img");
+    expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(bird.getAttribute("width")).toBe("168");
+    expect(bird.getAttribute("height")).toBe("168");
+    expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)/);
+    expect(onComplete).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(HOY_WIN_ENTER_MS - 1);
+    expect(onComplete).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("hoy-win-bird-img")).toBe(bird);
+  });
+
+  it("keeps the landed bird when motion is reduced", () => {
+    const prev = window.matchMedia;
+    window.matchMedia = (query) => ({
+      matches: String(query).includes("prefers-reduced-motion"),
+      media: query,
+      addEventListener() {},
+      removeEventListener() {},
+      addListener() {},
+      removeListener() {},
+    });
+    const onComplete = vi.fn();
+    render(<HoyWinBird onComplete={onComplete} />);
+    expect(screen.getByTestId("hoy-win-bird-img").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    window.matchMedia = prev;
   });
 });
 

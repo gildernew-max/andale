@@ -517,6 +517,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(screen.getByTestId("win-fly-away")).toBeTruthy();
     });
     expect(screen.getByTestId("story-0-win").textContent).toBe("¡Eso!");
+    expect(screen.getByTestId("story-0-win-continue").style.color).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
     expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
     expect(screen.queryByTestId("lectura-handoff")).toBeNull();
     await waitFor(() => expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lecturaHandoffSeen).toBe(true));
