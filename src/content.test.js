@@ -2397,7 +2397,7 @@ const porparaBankEn = [
   "Heading toward a destination → para: se va para Puebla. «Por Puebla» would mean passing through or around it, not the destination. «Fue» is past tense and clashes with «mañana».",
   "Para + infinitive expresses purpose (the «what for»): hago ejercicio para bajar de peso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-66, -55).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-77, -66).every((row, i) => row.es === porparaBank.bank[i].explain && row.en === porparaBankEn[i]), "porpara Why rows are appended in bank order");
 porparaBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2583,7 +2583,7 @@ const sereflexBankEn = [
   "Reflexive passive: «los tacos» is plural → se comen. «Come» doesn't agree with «los tacos»; «me / le» are decoys.",
   "Se + me marks an unintentional accident, and the verb agrees with the thing: rompí un vaso → se me rompió un vaso.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-66, -55).every((row, i) => row.es === sereflexBank.bank[i].explain && row.en === sereflexBankEn[i]), "sereflex Why rows are appended in bank order");
 sereflexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2725,7 +2725,7 @@ const compsupBankEn = [
   "Irregular superlative: la + mejor + noun + de + group → la mejor alumna del salón. «Peor» would say the opposite, and «más» is not added to «mejor». In ordinary speech the superlative goes before the noun (not «la alumna mejor»).",
   "Quantity with a noun → tantos + noun + como: she has ten pairs and I have ten → tantos pares de tenis como yo. «Pares» is masculine plural, which is why it's tantos.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-55, -44).every((row, i) => row.es === compsupBank.bank[i].explain && row.en === compsupBankEn[i]), "compsup Why rows are appended in bank order");
 compsupBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -2878,7 +2878,7 @@ const mexBankEn = [
   "«Al rato» = later, with no fixed time, and it is a set phrase: nos vemos al rato en la taquería, not «al ratos» or «el rato».",
   "«Un chorro de» = a ton of, and it replaces «mucha»: hay mucha gente → hay un chorro de gente. Unlike «mucha», it doesn’t agree with the noun.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-44, -33).every((row, i) => row.es === mexBank.bank[i].explain && row.en === mexBankEn[i]), "mex Why rows are appended in bank order");
 mexBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3029,7 +3029,7 @@ const pronBankEn = [
   "In Mexico, «marcar» also means to phone someone: luego te marco = luego te llamo. This item asks for the first-person present: marco.",
   "«Encantar» works like gustar: it takes an indirect-object pronoun, and for «mi hermana y yo» that is «nos»: nos encantan los tamales. «Lo» and «los» are direct-object pronouns and are not used with encantar.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-33, -22).every((row, i) => row.es === pronBank.bank[i].explain && row.en === pronBankEn[i]), "pronombres Why rows are appended in bank order");
 pronBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3184,7 +3184,7 @@ const futcondBankEn = [
   "Simple future of «hacer»: irregular stem har- + ending: haremos. «Haceremos» regularizes the stem and does not exist.",
   "Reported speech in the past: «¿Me ayudas mañana?» → me preguntó si la ayudaría al día siguiente. «Al día siguiente» puts the help in the future of the past, so the present («ayudo») does not fit. In speech «si la ayudaba» is also heard; this item practices the conditional.",
 ];
-assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === futcondBank.bank[i].explain && row.en === futcondBankEn[i]), "futcond Why rows are appended in bank order");
+assert(PRACTICE_EXPLAIN.slice(-22, -11).every((row, i) => row.es === futcondBank.bank[i].explain && row.en === futcondBankEn[i]), "futcond Why rows are appended in bank order");
 futcondBank.bank.forEach((item, i) => {
   const row = explainByEs.get(item.explain);
   assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
@@ -3291,6 +3291,194 @@ for (const phrase of [
 assert(gradeListedPhrase("haremos", futcondHaremos).status !== "wrong", "haremos type is accepted");
 for (const phrase of ["hacemos", "haceremos", "vamos a hacer"]) {
   assert(gradeListedPhrase(phrase, futcondHaremos).status === "wrong", `haremos type is rejected: ${phrase}`);
+}
+const pluscampBank = UNITS.find((u) => u.id === "pluscamp");
+assert(pluscampBank.questions.length === 11, "pluscamp authored questions stay 11");
+assert(pluscampBank.questions[0].prompt === "Cuando llegué, ya ___ la junta.", "pluscamp question order is unchanged");
+assert(Array.isArray(pluscampBank.bank) && pluscampBank.bank.length === 11, "pluscamp replay bank is 11 questions");
+assert(pluscampBank.bank.map((q) => q.type).join(",") === "mc,mc,type,order,mc,type,transform,mc,order,type,mc", "pluscamp bank types interleave mc/type/order/transform");
+assert(pluscampBank.bank[0].prompt === "Cuando llegamos al cine, la película ya ___." && pluscampBank.bank[0].choices.join("|") === "había empezado|había empezada|ha empezado|habrá empezado" && pluscampBank.bank[0].answer === "había empezado", "pluscamp bank item 1");
+assert(pluscampBank.bank[1].prompt === "Si hubiera sabido que venías a comer, ___ hecho pozole." && pluscampBank.bank[1].choices.join("|") === "habría|habré|había|he" && pluscampBank.bank[1].answer === "habría", "pluscamp bank item 2 keeps «hubiera» out of the choices");
+assert(pluscampBank.bank[2].note === "(poner, participio)" && pluscampBank.bank[2].answers.join("|") === "puesto", "pluscamp bank type puesto");
+assert(pluscampBank.bank[3].prompt === "Construye: “If I had known, I would have brought a gift.” («habría traído un regalo» va junto)" && pluscampBank.bank[3].words.join("|") === "si|hubiera|sabido|habría|traído|un|regalo|habré|traer", "pluscamp si-clause order words include both decoys");
+assert(pluscampBank.bank[4].prompt === "Si no ___ llovido tanto anoche, la fiesta habría sido en el jardín." && pluscampBank.bank[4].choices.join("|") === "hubiera|habría|habrá|haya" && pluscampBank.bank[4].answer === "hubiera", "pluscamp bank item 5");
+assert(pluscampBank.bank[5].prompt === "Mi hermano salió de la oficina a las seis y ya son las nueve; ya ___ llegado a su casa." && pluscampBank.bank[5].note === "(haber, futuro perfecto, él; una palabra)" && pluscampBank.bank[5].answers.join("|") === "habrá", "pluscamp bank type habrá lists the accented form only");
+assert(pluscampBank.bank[6].base === "No llamé a mi abuela ayer." && pluscampBank.bank[6].instruction === "Exprésalo como arrepentimiento. Empieza con «Debería haber…» (sin «de»), sin pronombres (le, la), y conserva el resto igual" && pluscampBank.bank[6].answers.join("|") === "Debería haber llamado a mi abuela ayer|Debería haber llamado ayer a mi abuela", "pluscamp bank transform");
+assert(pluscampBank.bank[7].prompt === "Mañana, para las cinco de la tarde, el plomero ya ___ terminado." && pluscampBank.bank[7].choices.join("|") === "había|habrá|hubiera|haya" && pluscampBank.bank[7].answer === "habrá", "pluscamp bank item 8");
+assert(pluscampBank.bank[8].prompt === "Construye: “By the time we arrived, they had left.” («se habían ido» va junto)" && pluscampBank.bank[8].words.join("|") === "para cuando|llegamos|se|habían|ido|idos|haber", "pluscamp «para cuando» order words use one fused tile and include both decoys");
+assert(pluscampBank.bank[3].words.every((w) => w === w.toLowerCase() && !w.includes(",")) && pluscampBank.bank[8].words.every((w) => w === w.toLowerCase() && !w.includes(",")) && pluscampBank.bank[8].words[0] === "para cuando", "pluscamp order tiles are lowercase with no comma");
+assert(pluscampBank.bank[9].prompt === "Antes de mudarse a Puebla, mi abuela nunca ___ salido de Tlaxcala." && pluscampBank.bank[9].note === "(haber, pluscuamperfecto de indicativo; una palabra)" && pluscampBank.bank[9].answers.join("|") === "había", "pluscamp bank type había");
+assert(pluscampBank.bank[10].prompt === "Perdí el vuelo porque salí tarde de la casa. Ahora pienso: «___ salido más temprano.»" && pluscampBank.bank[10].choices.join("|") === "Debería haber|Debería|Debería hacer|Debería ser" && pluscampBank.bank[10].answer === "Debería haber", "pluscamp bank item 11");
+assert(pluscampBank.bank.every((q) => q.type !== "mc" || q.note !== "¡Ojo!"), "pluscamp has no trap item, so no mc carries ¡Ojo!");
+const pluscampPromptOwners = new Map();
+for (const u of UNITS) {
+  const lists = [["question", u.questions || []]];
+  if (Array.isArray(u.bank)) lists.push(["bank", u.bank]);
+  for (const [kind, list] of lists) {
+    list.forEach((item, i) => {
+      if (u.id === "pluscamp" && kind === "bank") return;
+      if (item.type === "transform") {
+        const base = item.base || item.source;
+        if (base) pluscampPromptOwners.set(`base:${base}`, `${u.id} ${kind} ${i}`);
+        return;
+      }
+      if (item.prompt) pluscampPromptOwners.set(item.prompt, `${u.id} ${kind} ${i}`);
+    });
+  }
+}
+pluscampBank.bank.forEach((item, i) => {
+  if (item.type === "transform") {
+    assert(!pluscampPromptOwners.has(item.base), `pluscamp bank ${i} transform base repeats a prompt`);
+    assert(!pluscampPromptOwners.has(`base:${item.base}`), `pluscamp bank ${i} transform base repeats ${pluscampPromptOwners.get(`base:${item.base}`) || "another item"}`);
+    return;
+  }
+  assert(!pluscampPromptOwners.has(item.prompt), `pluscamp bank ${i} prompt duplicates ${pluscampPromptOwners.get(item.prompt) || "another item"}`);
+  pluscampPromptOwners.set(item.prompt, `pluscamp bank ${i}`);
+});
+const pluscampBankEn = [
+  "Pluperfect: había + participle places an action before another moment in the past: la película ya había empezado cuando llegamos. The participle of a compound tense does not agree with the noun: «empezado», not «empezada». In speech «ya empezó» is also heard; this exercise practices the pluscuamperfecto.",
+  "Unreal past condition: «si» + hubiera + participle (si hubiera sabido) takes habría + participle in the other half: habría hecho pozole. The future perfect («habré hecho») talks about something that will be finished later, not about what did not happen. In speech «hubiera hecho» is also heard; this exercise practices the conditional perfect.",
+  "Pluperfect with an irregular participle: poner → puesto: mi mamá ya había puesto la mesa. «Ponido» regularizes the participle and does not exist.",
+  "Unreal past condition: «si» + hubiera + participle (si hubiera sabido) and habría + participle as the result (habría traído un regalo). The two halves can swap places, but «habría traído un regalo» stays together. In speech «hubiera traído» is also heard; with these tiles «habría» is practiced.",
+  "In an unreal past condition, the «si» part takes hubiera + participle: si no hubiera llovido. Habría + participle goes in the result (habría sido), not in the «si» part. «Si no haya llovido» is not said. «Hubiese llovido» is also correct; this exercise practices «hubiera».",
+  "Future perfect of probability: habrá + participle assumes something already finished: ya habrá llegado = he has surely arrived. «Ha llegado» states the fact instead of assuming it. In speech «ya debe de haber llegado» is also said.",
+  "Regret: debería haber + participle is «should have»: no llamé → debería haber llamado. «Debí haber llamado», «debería de haber llamado» and «debería haberla llamado» are also said; here «debería haber» is required, with no «de» and no pronouns.",
+  "Future perfect: habrá + participle says something will be finished before a future moment: para las cinco el plomero ya habrá terminado. The pluperfect («había») looks back at a past, not toward tomorrow, and «haya» needs a trigger such as «espero que».",
+  "With «para cuando» + preterite, the pluperfect marks what had already happened: para cuando llegamos, se habían ido. The participle of a compound tense does not change: se habían ido, not «se habían idos». Without «para cuando» «cuando llegamos ya se habían ido» is also said; this tile practices «para cuando».",
+  "Pluperfect: había + participle places something before another moment in the past (before moving to Puebla): nunca había salido. «Habría» (conditional perfect) would talk about something hypothetical, not a fact.",
+  "Regret: debería haber + participle is «should have»: debería haber salido más temprano. Without «haber» there is no compound tense: «debería salido», «debería hacer salido» and «debería ser salido» are not said. In speech «debí haber salido» or «debí salir» is also said; this exercise practices «debería haber».",
+];
+assert(PRACTICE_EXPLAIN.slice(-11).every((row, i) => row.es === pluscampBank.bank[i].explain && row.en === pluscampBankEn[i]), "pluscamp Why rows are appended in bank order");
+const builtFromOrderTilesMulti = (words, phrase) => {
+  const toks = String(phrase).trim().split(/\s+/).map(stripPhrase);
+  const pool = words.map((w) => ({ w, used: false, k: stripPhrase(w).split(" ") }));
+  const parts = [];
+  let i = 0;
+  while (i < toks.length) {
+    const hit = pool.filter((t) => !t.used && t.k.every((x, j) => toks[i + j] === x)).sort((a, b) => b.k.length - a.k.length)[0];
+    if (!hit) return null;
+    hit.used = true;
+    parts.push(hit.w);
+    i += hit.k.length;
+  }
+  return parts.join(" ");
+};
+pluscampBank.bank.forEach((item, i) => {
+  const row = explainByEs.get(item.explain);
+  assert(row && row.es === item.explain, "bank Why ES matches the authored explain");
+  assert(row.en && row.en === pluscampBankEn[i], `pluscamp bank ${i} EN row equals the English row`);
+  assert(explainText(item, "es") === item.explain, "bank Why ES resolves to the authored explain");
+  assert(explainText(item, "en") === row.en, "bank Why EN resolves in English");
+  const prepped = prepQuestion(item);
+  assertPreppedQuestion(prepped, `pluscamp bank ${i}`);
+  if (item.type === "mc") {
+    assert(item.choices.length === 4 && new Set(item.choices).size === 4 && item.choices.includes(item.answer), `pluscamp bank ${i} mc choices include the answer`);
+    assert(item.note !== "¡Ojo!", `pluscamp bank ${i} mc note is not a trap`);
+  }
+  if (item.type === "type") {
+    assert(item.note === { 2: "(poner, participio)", 5: "(haber, futuro perfecto, él; una palabra)", 9: "(haber, pluscuamperfecto de indicativo; una palabra)" }[i], `pluscamp bank ${i} type note`);
+  }
+  if (item.type === "order") {
+    assert(prepped.words.join("|") === item.words.join("|"), `pluscamp bank ${i} order tiles stay authored`);
+    assert(prepped.answer === item.answer, `pluscamp bank ${i} order answer stays authored`);
+    assert(Array.isArray(item.answers) && item.answers[0] === item.answer, `pluscamp bank ${i} answers start with the authored answer`);
+    assert(item.words.every((w) => !String(w).includes(",")), `pluscamp bank ${i} tiles carry no comma`);
+    assert(item.words.every((w) => w === w.toLowerCase()), `pluscamp bank ${i} tiles stay lowercase`);
+    const buildTiles = i === 8 ? builtFromOrderTilesMulti : builtFromOrderTiles;
+    item.answers.forEach((phrase) => {
+      if (i !== 8) {
+        const answerTokens = stripPhrase(phrase).split(" ").filter(Boolean);
+        const tilePool = item.words.map((w) => stripPhrase(w));
+        answerTokens.forEach((tok) => {
+          const at = tilePool.indexOf(tok);
+          assert(at >= 0, `pluscamp bank ${i} answer word ${tok} is a tile`);
+          tilePool.splice(at, 1);
+        });
+      }
+      const built = buildTiles(item.words, phrase);
+      assert(built, `pluscamp bank ${i} order is reachable from tiles: ${phrase}`);
+      assert(gradeListedPhrase(phrase, item).status !== "wrong", `pluscamp bank ${i} listed order is accepted: ${phrase}`);
+      assert(gradeListedPhrase(built, item).status !== "wrong", `pluscamp bank ${i} tile-built order is accepted: ${built}`);
+    });
+    const builtPrimary = buildTiles(item.words, item.answer);
+    assert(builtPrimary && builtPrimary.toLowerCase() === item.answer.toLowerCase(), `pluscamp bank ${i} primary order is the authored tile text`);
+  }
+  if (item.type === "type" || item.type === "transform") {
+    assert(Array.isArray(prepped.answers) && prepped.answers.join("|") === item.answers.join("|"), `pluscamp bank ${i} answers stay authored`);
+  }
+});
+const pluscampPuesto = pluscampBank.bank[2];
+const pluscampGift = pluscampBank.bank[3];
+const pluscampHabra = pluscampBank.bank[5];
+const pluscampDeberia = pluscampBank.bank[6];
+const pluscampCuando = pluscampBank.bank[8];
+const pluscampHabia = pluscampBank.bank[9];
+assert(pluscampGift.answers.join("|") === "Si hubiera sabido habría traído un regalo|Habría traído un regalo si hubiera sabido", "pluscamp gift order lists the accepted alternates");
+assert(pluscampDeberia.answers.join("|") === "Debería haber llamado a mi abuela ayer|Debería haber llamado ayer a mi abuela", "pluscamp transform lists the accepted alternates");
+assert(pluscampCuando.answers.join("|") === "Para cuando llegamos se habían ido|Se habían ido para cuando llegamos", "pluscamp para cuando order lists the accepted alternates");
+assert(gradeListedPhrase("puesto", pluscampPuesto).status !== "wrong", "puesto type is accepted");
+assert(gradeListedPhrase("Puesto", pluscampPuesto).status !== "wrong", "puesto case is ignored");
+for (const phrase of ["ponido", "poner", "pusado"]) {
+  assert(gradeListedPhrase(phrase, pluscampPuesto).status === "wrong", `puesto type is rejected: ${phrase}`);
+}
+for (const phrase of pluscampGift.answers) {
+  assert(gradeListedPhrase(phrase, pluscampGift).status !== "wrong", `gift order accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("Habría traído un regalo si hubiera sabido", pluscampGift).status !== "wrong", "gift accepted alternate grades ok");
+for (const phrase of [
+  "Si hubiera sabido un regalo habría traído",
+  "Un regalo habría traído si hubiera sabido",
+  "Si hubiera sabido habré traído un regalo",
+  "Habré traído un regalo si hubiera sabido",
+  "Habría sabido si hubiera traído un regalo",
+  "Si hubiera sabido habría un regalo traído",
+]) {
+  assert(gradeListedPhrase(phrase, pluscampGift).status === "wrong", `gift order is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("habrá", pluscampHabra).status !== "wrong", "habrá type is accepted");
+assert(gradeListedPhrase("habra", pluscampHabra).status !== "wrong", "habrá accent is ignored");
+for (const phrase of ["ha", "habría", "había", "habré"]) {
+  assert(gradeListedPhrase(phrase, pluscampHabra).status === "wrong", `habrá type is rejected: ${phrase}`);
+}
+for (const phrase of pluscampDeberia.answers) {
+  assert(gradeListedPhrase(phrase, pluscampDeberia).status !== "wrong", `debería transform accepted: ${phrase}`);
+}
+assert(gradeListedPhrase("Debería haber llamado ayer a mi abuela", pluscampDeberia).status !== "wrong", "transform accepted alternate grades ok");
+for (const phrase of [
+  "Debí haber llamado a mi abuela ayer",
+  "Debería haberle llamado a mi abuela ayer",
+  "Debería de haber llamado a mi abuela ayer",
+  "Debería haberla llamado a mi abuela ayer",
+  "Tendría que haber llamado a mi abuela ayer",
+  "Ayer debería haber llamado a mi abuela",
+  "Debería llamado a mi abuela ayer",
+  "No debería haber llamado a mi abuela ayer",
+  "No llamé a mi abuela ayer",
+]) {
+  assert(gradeListedPhrase(phrase, pluscampDeberia).status === "wrong", `debería transform is rejected: ${phrase}`);
+}
+for (const phrase of pluscampCuando.answers) {
+  const built = builtFromOrderTilesMulti(pluscampCuando.words, phrase);
+  assert(built, `para cuando order is reachable from the fused tile: ${phrase}`);
+  assert(builtFromOrderTiles(pluscampCuando.words, phrase) === null, `para cuando answer is not one token per tile: ${phrase}`);
+  assert(gradeListedPhrase(phrase, pluscampCuando).status !== "wrong", `para cuando order accepted: ${phrase}`);
+  assert(gradeListedPhrase(built, pluscampCuando).status !== "wrong", `para cuando tile-built order is accepted: ${built}`);
+}
+assert(gradeListedPhrase("Se habían ido para cuando llegamos", pluscampCuando).status !== "wrong", "para cuando accepted alternate grades ok");
+assert(orderTileLabel(pluscampCuando.words[0], { answer: pluscampCuando.answer, placedIndex: 0 }) === "Para cuando", "pluscamp «para cuando» slot 0 display is Para cuando");
+assert(orderTileLabel(pluscampCuando.words[0], { answer: pluscampCuando.answer, placedIndex: 1 }) === "para cuando", "pluscamp «para cuando» stays lowercase off slot 0");
+for (const phrase of [
+  "Para cuando llegamos se habían idos",
+  "Para cuando llegamos se habían ido idos",
+  "Llegamos para cuando se habían ido",
+  "Para cuando se habían ido llegamos",
+]) {
+  assert(gradeListedPhrase(phrase, pluscampCuando).status === "wrong", `para cuando order is rejected: ${phrase}`);
+}
+assert(gradeListedPhrase("había", pluscampHabia).status !== "wrong", "había type is accepted");
+assert(gradeListedPhrase("habia", pluscampHabia).status !== "wrong", "había accent is ignored");
+for (const phrase of ["habría", "ha", "habíamos", "hubo"]) {
+  assert(gradeListedPhrase(phrase, pluscampHabia).status === "wrong", `había type is rejected: ${phrase}`);
 }
 for (const u of UNITS) {
   u.questions.forEach((q, i) => {
