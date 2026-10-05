@@ -1,7 +1,7 @@
 /**
- * A long lesson-result explanation stacks Continue under the bird.
- * Short feedback stays one row. The cutoff is LESSON_FOOTER_LONG_FEEDBACK_CHARS
- * on quip + explainText, because jsdom reports no heights.
+ * Lesson results stay one row beside Continue, long or short.
+ * The text column keeps minWidth 0 and a 14px gap to the button.
+ * A result taller than 60vh still uses the footer cap.
  */
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
@@ -89,7 +89,29 @@ const bootResult = async ({ theme, uiLang, status, explain, quip = QUIP, review 
   render(<App />);
 };
 
-describe("long lesson explanations stack Continue", () => {
+const expectSideBySide = (label) => {
+  const footer = screen.getByTestId("lesson-footer");
+  const row = footer.firstElementChild;
+  const text = screen.getByTestId("lesson-footer-text");
+  expect(footer.getAttribute("data-capped"), label).toBe("0");
+  expect(screen.queryByTestId("lesson-footer-scroll"), label).toBeNull();
+  expect(screen.queryByTestId("lesson-footer-actions"), label).toBeNull();
+  expect(screen.queryByTestId("lesson-footer-continue-block"), label).toBeNull();
+  expect(screen.queryByTestId("lesson-footer-feedback-row"), label).toBeNull();
+  expect(row.style.display, label).toBe("flex");
+  expect(row.style.flexWrap, label).toBe("nowrap");
+  expect(row.style.alignItems, label).toBe("center");
+  expect(row.style.gap, label).toBe("14px");
+  expect(text.style.minWidth, label).toBe("0px");
+  expect(text.style.overflowWrap, label).toBe("break-word");
+  expect(text.style.whiteSpace, label).toBe("normal");
+  expect(text.style.textOverflow, label).toBe("clip");
+  expect(text.style.overflow, label).toBe("visible");
+  expect(row.contains(text), label).toBe(true);
+  return { footer, row, text };
+};
+
+describe("lesson results stay beside Continue", () => {
   const prevW = window.innerWidth;
   const prevH = window.innerHeight;
 
@@ -100,11 +122,17 @@ describe("long lesson explanations stack Continue", () => {
     Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: prevH });
   });
 
-  it("names the character threshold", () => {
-    expect(appSrc).toContain("const LESSON_FOOTER_LONG_FEEDBACK_CHARS = 90");
+  it("pads the lesson body by the measured panel and does not stack Continue", () => {
+    expect(appSrc).not.toContain("LESSON_FOOTER_LONG_FEEDBACK_CHARS");
+    expect(appSrc).not.toContain("lesson-footer-continue-block");
+    expect(appSrc).not.toContain("lesson-footer-feedback-row");
+    expect(appSrc).toContain("const [lessonResultPad, setLessonResultPad] = useState(0)");
+    expect(appSrc).toContain("paddingBottom: lessonResultPad");
+    expect(appSrc).toContain('flexWrap: "nowrap"');
+    expect(appSrc).toContain('data-testid="lesson-footer-text"');
   });
 
-  it("puts Continue on its own full-width line under the bird when quip plus explain is long", async () => {
+  it("keeps a long explain on the same row as Continue", async () => {
     Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
     Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: 844 });
     for (const status of ["correct", "almost", "wrong"]) {
@@ -113,32 +141,15 @@ describe("long lesson explanations stack Continue", () => {
           const label = `${status} ${theme} ${uiLang}`;
           await bootResult({ theme, uiLang, status, explain: LONG_EXPLAIN });
           const cont = await waitFor(() => screen.getByRole("button", { name: continueLabel(uiLang) }));
-          const footer = screen.getByTestId("lesson-footer");
-          const row = footer.firstElementChild;
-          const feedback = screen.getByTestId("lesson-footer-feedback-row");
-          const block = screen.getByTestId("lesson-footer-continue-block");
+          const { footer, row } = expectSideBySide(label);
           const quip = screen.getByTestId("practice-quip");
-
-          expect(footer.getAttribute("data-capped"), label).toBe("0");
-          expect(screen.queryByTestId("lesson-footer-scroll"), label).toBeNull();
-          expect(screen.queryByTestId("lesson-footer-actions"), label).toBeNull();
-          expect(row.style.display, label).toBe("flex");
-          expect(row.style.flexWrap, label).toBe("wrap");
-          expect(row.style.alignItems, label).toBe("center");
-          expect(feedback.style.width, label).toBe("100%");
-          expect(feedback.style.flex, label).toBe("1 1 100%");
-          expect(feedback.contains(quip), label).toBe(true);
-          expect(feedback.querySelector("svg")?.getAttribute("width"), label).toBe("58");
-          expect(feedback.contains(cont), label).toBe(false);
-          expect(feedback.nextElementSibling, label).toBe(block);
-          expect(block.contains(cont), label).toBe(true);
-          expect(block.style.display, label).toBe("flex");
-          expect(block.style.flexWrap, label).toBe("wrap");
-          expect(block.style.width, label).toBe("100%");
-          expect(block.style.flexBasis, label).toBe("100%");
-          expect(cont.style.width, label).toBe("100%");
-          expect(cont.style.flexBasis, label).toBe("100%");
+          expect(cont.parentElement, label).toBe(row);
+          expect(cont.style.width, label).toBe("");
+          expect(cont.style.flexBasis, label).toBe("");
           expect(cont.style.flexShrink, label).toBe("0");
+          expect(cont.style.marginTop, label).toBe("auto");
+          expect(row.contains(quip), label).toBe(true);
+          expect(row.querySelector("svg")?.getAttribute("width"), label).toBe("58");
           expect(norm(footer.style.background), label).toBe(FOOTER_BG[theme][status]);
           expect(norm(cont.style.background), label).toBe(BUTTON_BG[theme][status]);
           expect(norm(cont.style.color), label).toBe(BUTTON_INK[status]);
@@ -149,7 +160,7 @@ describe("long lesson explanations stack Continue", () => {
     }
   }, 60000);
 
-  it("keeps a short explain on the single row", async () => {
+  it("keeps a short explain on that same row", async () => {
     Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
     Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: 844 });
     for (const status of ["correct", "almost", "wrong"]) {
@@ -158,19 +169,12 @@ describe("long lesson explanations stack Continue", () => {
           const label = `${status} ${theme} ${uiLang}`;
           await bootResult({ theme, uiLang, status, explain: SHORT_EXPLAIN });
           const cont = await waitFor(() => screen.getByRole("button", { name: continueLabel(uiLang) }));
-          const footer = screen.getByTestId("lesson-footer");
-          const row = footer.firstElementChild;
-          expect(footer.getAttribute("data-capped"), label).toBe("0");
-          expect(screen.queryByTestId("lesson-footer-continue-block"), label).toBeNull();
-          expect(screen.queryByTestId("lesson-footer-feedback-row"), label).toBeNull();
-          expect(screen.queryByTestId("lesson-footer-actions"), label).toBeNull();
-          expect(row.style.display, label).toBe("flex");
-          expect(row.style.flexWrap, label).toBe("");
-          expect(row.style.alignItems, label).toBe("center");
+          const { footer, row } = expectSideBySide(label);
           expect(cont.parentElement, label).toBe(row);
           expect(cont.style.width, label).toBe("");
           expect(cont.style.flexBasis, label).toBe("");
           expect(cont.style.flexShrink, label).toBe("0");
+          expect(cont.style.marginTop, label).toBe("auto");
           expect(row.contains(screen.getByTestId("practice-quip")), label).toBe(true);
           expect(row.querySelector("svg")?.getAttribute("width"), label).toBe("58");
           expect(norm(footer.style.background), label).toBe(FOOTER_BG[theme][status]);
@@ -181,7 +185,7 @@ describe("long lesson explanations stack Continue", () => {
     }
   }, 60000);
 
-  it("follows uiLang, and 90 characters stays one row while 91 stacks", async () => {
+  it("follows uiLang for a long explain and a short one without stacking", async () => {
     Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 390 });
     Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: 844 });
     const quip = { es: "Listo.", en: "Done." };
@@ -192,7 +196,9 @@ describe("long lesson explanations stack Continue", () => {
       quip,
       explain: { es: "x".repeat(120), en: "Short." },
     });
-    await waitFor(() => expect(screen.getByTestId("lesson-footer-continue-block")).toBeTruthy());
+    const longEs = await waitFor(() => screen.getByRole("button", { name: "Continuar" }));
+    expectSideBySide("long es");
+    expect(longEs.parentElement).toBe(screen.getByTestId("lesson-footer").firstElementChild);
     expect(screen.getByTestId("practice-quip").textContent).toContain("x".repeat(40));
 
     await bootResult({
@@ -203,27 +209,9 @@ describe("long lesson explanations stack Continue", () => {
       explain: { es: "x".repeat(120), en: "Short." },
     });
     const shortEn = await waitFor(() => screen.getByRole("button", { name: "Continue" }));
-    expect(screen.queryByTestId("lesson-footer-continue-block")).toBeNull();
+    expectSideBySide("short en");
     expect(shortEn.parentElement).toBe(screen.getByTestId("lesson-footer").firstElementChild);
     expect(screen.getByTestId("practice-quip").textContent).toContain("Short.");
-
-    const atLimit = "y".repeat(90 - "Done.".length - 1);
-    const overLimit = "y".repeat(91 - "Done.".length - 1);
-    expect(`Done. ${atLimit}`.length).toBe(90);
-    expect(`Done. ${overLimit}`.length).toBe(91);
-
-    await bootResult({ theme: "light", uiLang: "en", status: "almost", quip: "Done.", explain: atLimit });
-    const atBtn = await waitFor(() => screen.getByRole("button", { name: "Continue" }));
-    expect(screen.queryByTestId("lesson-footer-continue-block")).toBeNull();
-    expect(atBtn.parentElement).toBe(screen.getByTestId("lesson-footer").firstElementChild);
-
-    await bootResult({ theme: "dark", uiLang: "es", status: "wrong", quip: "Done.", explain: overLimit });
-    const overBtn = await waitFor(() => screen.getByRole("button", { name: "Continuar" }));
-    const block = screen.getByTestId("lesson-footer-continue-block");
-    expect(block.contains(overBtn)).toBe(true);
-    expect(block.style.flexBasis).toBe("100%");
-    expect(overBtn.style.flexBasis).toBe("100%");
-    expect(screen.getByTestId("lesson-footer-feedback-row").nextElementSibling).toBe(block);
   }, 30000);
 
   it("leaves review self-grade buttons on the single row", async () => {
@@ -231,12 +219,8 @@ describe("long lesson explanations stack Continue", () => {
     Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: 844 });
     await bootResult({ theme: "light", uiLang: "en", status: "correct", explain: LONG_EXPLAIN, review: true });
     const easy = await waitFor(() => screen.getByRole("button", { name: "Easy" }));
-    const footer = screen.getByTestId("lesson-footer");
-    const row = footer.firstElementChild;
-    expect(screen.queryByTestId("lesson-footer-continue-block")).toBeNull();
+    const { row } = expectSideBySide("review");
     expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
-    expect(row.style.flexWrap).toBe("");
-    expect(row.style.alignItems).toBe("center");
     expect(row.contains(easy)).toBe(true);
     expect(row.contains(screen.getByRole("button", { name: "Hard" }))).toBe(true);
     expect(row.contains(screen.getByRole("button", { name: "Good" }))).toBe(true);
