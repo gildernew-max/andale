@@ -1477,9 +1477,10 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const tiles = screen.getAllByTestId("bank-tile");
     expect(tiles.length).toBeGreaterThan(3);
     const check = screen.getByTestId("lesson-check");
-    const lime = /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i;
     const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
-    expect(check.style.background).toMatch(lime);
+    expect(check.disabled).toBe(true);
+    expect(check.style.background).toMatch(/#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\)/i);
+    expect(check.style.color).toMatch(/#6B7078|rgb\(\s*107,\s*112,\s*120\s*\)/i);
     tiles.forEach((tile) => {
       expect(tile.style.color).toMatch(cream);
       expect(tile.style.background).toMatch(/#252830|rgb\(\s*37,\s*40,\s*48\s*\)/i);

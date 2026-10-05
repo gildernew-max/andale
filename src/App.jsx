@@ -5163,6 +5163,23 @@ const BtnThemeContext = createContext("light");
 const LESSON_LIME_INK = "#1F3A1A";
 /** #3A1A1A on the red Continue fill. Same ink in light (#FF4B4B) and dark (#FF6B6B). Label only. */
 const WRONG_CONTINUE_INK = "#3A1A1A";
+/** Empty lesson CHECK. Same size and place as the lime CHECK. Tap is a no-op. */
+const CHECK_EMPTY_LIGHT = { fill: "#E5E5E5", lip: "#CECECE", label: "#AFAFAF" };
+const CHECK_EMPTY_DARK = { fill: "#2A2E36", lip: "#1E2128", label: "#6B7078" };
+
+/** True when an idle lesson Check would grade nothing. Match has no Check while idle. */
+function lessonAnswerEmpty(q, { selected, typed, placed } = {}) {
+  if (!q || q.type === "match") return false;
+  if (q.type === "mc") return selected == null;
+  if (q.type === "order") return !placed?.length;
+  return !String(typed ?? "").trim();
+}
+
+function emptyCheckPaint(theme, empty) {
+  if (!empty) return null;
+  const face = theme === "dark" ? CHECK_EMPTY_DARK : CHECK_EMPTY_LIGHT;
+  return { background: face.fill, color: face.label, borderBottom: `4px solid ${face.lip}` };
+}
 
 const Btn = ({ color = D.green, dark = D.greenDark, children, outline, disabled, onClick, style, theme: themeProp, ink, ...rest }) => {
   const ctxTheme = useContext(BtnThemeContext);
@@ -6453,6 +6470,7 @@ export default function App() {
   };
 
   const q = session?.questions?.[qi] ?? null;
+  const lessonCheckEmpty = lessonAnswerEmpty(q, { selected, typed, placed });
   /** Light word-order is Learn cream. Dark word-order is the app dark page and card, with cream text. */
   const orderCream = q?.type === "order" && theme !== "dark";
   const orderDark = q?.type === "order" && theme === "dark";
@@ -11040,7 +11058,7 @@ export default function App() {
                 footerCapped ? (
                 <div data-testid="lesson-footer-actions" style={{ flexShrink: 0, width: "100%", boxSizing: "border-box", padding: "12px 20px 14px" }}>
                 {status === "idle" ? (
-	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} onClick={check} style={{ width: "100%", flexShrink: 0 }}>{L.check}</Btn>
+	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} disabled={lessonCheckEmpty} onClick={check} style={{ width: "100%", flexShrink: 0, ...emptyCheckPaint(theme, lessonCheckEmpty) }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
 	                    <div style={{ fontSize: 11, fontWeight: 900, color: limeText(D.okText, D), marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
@@ -11056,7 +11074,7 @@ export default function App() {
                 </div>
                 ) : (
                 status === "idle" ? (
-	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} onClick={check} style={{ flexShrink: 0, marginTop: "auto" }}>{L.check}</Btn>
+	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} disabled={lessonCheckEmpty} onClick={check} style={{ flexShrink: 0, marginTop: "auto", ...emptyCheckPaint(theme, lessonCheckEmpty) }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
 	                    <div style={{ fontSize: 11, fontWeight: 900, color: limeText(D.okText, D), marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
