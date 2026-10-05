@@ -4252,3 +4252,126 @@ assert(!/eighty-twenty-title|eighty-twenty-header/.test(appSrc), "80/20 sheet ha
 
 const qCount = UNITS.reduce((n, u) => n + u.questions.length, 0);
 console.log(`ok: content schema — ${UNITS.length} units / ${qCount} questions after prepQuestion; ${SECTIONS.length} sections; FLAT ${FLAT.length}; ${STORIES.length} stories (story-0); ${MISSIONS.length} missions; ${TODAY_SCENES.length} today scenes`);
+
+/* Tap-an-answer distractors. Sibling candidates are eligible only when trimmed
+   length is within a factor of 2 of the answer, with 4 characters of slack:
+   len <= 2*ansLen+4 and len >= ansLen/2-4. Curated entries and verb seeds are
+   not run through that filter.
+   Exception: a distractor chip may be longer than 2× the answer's length + 4
+   when no closer sibling candidate was still available — every sibling with a
+   smaller absolute length difference was already an accepted answer or already
+   chosen as a chip. */
+const extractArrowFn = (src, name) => {
+  const needle = `const ${name} = `;
+  const start = src.indexOf(needle);
+  if (start < 0) throw new Error(`App.jsx missing ${name}`);
+  const arrow = src.indexOf("=>", start);
+  let i = src.indexOf("{", arrow);
+  const from = i;
+  let depth = 0;
+  let inStr = null;
+  let escaped = false;
+  for (; i < src.length; i++) {
+    const c = src[i];
+    const n = src[i + 1];
+    if (inStr) {
+      if (escaped) { escaped = false; continue; }
+      if (c === "\\") { escaped = true; continue; }
+      if (c === inStr) inStr = null;
+      continue;
+    }
+    if (c === "/" && n === "/") { i = src.indexOf("\n", i); if (i < 0) break; continue; }
+    if (c === "/" && n === "*") { i = src.indexOf("*/", i + 2); if (i < 0) break; i += 1; continue; }
+    if (c === "\"" || c === "'" || c === "`") { inStr = c; continue; }
+    if (c === "{") depth++;
+    else if (c === "}") {
+      depth--;
+      if (depth === 0) return src.slice(from, i + 1);
+    }
+  }
+  throw new Error(`App.jsx unclosed ${name}`);
+};
+const distractorStrip = (s) => String(s || "").toLowerCase().trim().replace(/[¿?¡!.,;:—–-]/g, " ").replace(/\s+/g, " ").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const CURATED_DISTRACTORS = Function(`"use strict"; return (${extractConst(appSrc, "CURATED_DISTRACTORS")});`)();
+const relatedDistractorsFor = Function(
+  "UNITS",
+  "strip",
+  "CURATED_DISTRACTORS",
+  `"use strict"; return (answer, q, count = 3) => ${extractArrowFn(appSrc, "relatedDistractorsFor")};`,
+)(UNITS, distractorStrip, CURATED_DISTRACTORS);
+const distractorTokens = (text) => String(text || "").trim().split(/\s+/).filter(Boolean);
+const tapDistractorCall = (q) => {
+  if (!q || !(q.type === "type" || q.type === "listen" || q.type === "transform")) return null;
+  const answers = [...new Set((q.answers || [q.answer || q.text]).filter(Boolean).map((a) => String(a).trim()).filter(Boolean))];
+  if (!answers.length) return null;
+  const shortAlternatives = q.type === "type" && answers.every((a) => distractorTokens(a).length <= 3);
+  if (shortAlternatives) return { answer: answers[0], count: answers.length >= 4 ? 0 : 4 - answers.length };
+  const words = distractorTokens(answers[0]);
+  if (words.length === 1) return { answer: words[0], count: 3 };
+  return null;
+};
+const siblingCandidatesFor = (q) => {
+  const found = [];
+  const unit = UNITS.find((u) => u.id === q?._u);
+  unit?.questions?.forEach((item) => {
+    if (item === q) return;
+    (item.choices || []).forEach((value) => found.push(value));
+    const itemAnswers = Array.isArray(item.answers) ? item.answers : item.answers ? [item.answers] : item.answer ? [item.answer] : [];
+    itemAnswers.forEach((value) => found.push(value));
+    if (item.type === "order") (item.words || item.tokens || []).forEach((value) => found.push(value));
+  });
+  return found;
+};
+assert(appSrc.split("relatedDistractorsFor(").length - 1 === 5, "typed/order chips, Jeopardy, and quick-check all call relatedDistractorsFor");
+let tapChipItems = 0;
+for (const { unit } of FLAT) {
+  for (const [bucket, list] of [["questions", unit.questions || []], ["bank", unit.bank || []]]) {
+    list.forEach((raw, i) => {
+      const q = prepQuestion({ ...raw, _u: unit.id, _i: bucket === "bank" ? unit.questions.length + i : i });
+      const call = tapDistractorCall(q);
+      if (!call) return;
+      tapChipItems += 1;
+      const distractors = call.count ? relatedDistractorsFor(call.answer, q, call.count) : [];
+      const ansLen = String(call.answer || "").trim().length;
+      const maxLen = 2 * ansLen + 4;
+      const loc = `${unit.id} ${bucket}[${i}]`;
+      const answerKeys = new Set([call.answer, ...(q.answers || [])].filter(Boolean).map((a) => distractorStrip(a)));
+      const chosen = new Set(distractors.map((chip) => distractorStrip(chip)));
+      distractors.forEach((chip) => {
+        const len = String(chip).trim().length;
+        if (len <= maxLen) return;
+        const chipDiff = Math.abs(len - ansLen);
+        const closer = siblingCandidatesFor(q).find((cand) => {
+          const v = String(cand || "").trim();
+          const key = distractorStrip(v);
+          if (!v || !key || answerKeys.has(key) || chosen.has(key)) return false;
+          return Math.abs(v.length - ansLen) < chipDiff;
+        });
+        assert(
+          !closer,
+          `${loc}: chip ${JSON.stringify(chip)} is longer than 2× answer length + 4 (${len} > ${maxLen}) and a closer sibling was available: ${JSON.stringify(String(closer).trim())}`,
+        );
+      });
+    });
+  }
+}
+assert(tapChipItems > 0, "shipped units include tap-an-answer items");
+
+const xochi = UNITS.find((u) => u.id === "mex").bank.find((q) => String(q.prompt || "").includes("Xochimilco"));
+const xochiQ = prepQuestion({ ...xochi, _u: "mex", _i: 99 });
+assert(xochiQ.answers[0] === "padrísimo", "Xochimilco answer is padrísimo");
+const xochiChips = relatedDistractorsFor(xochiQ.answers[0], xochiQ, 3);
+const xochiAgain = relatedDistractorsFor(xochiQ.answers[0], xochiQ, 3);
+assert(JSON.stringify(xochiChips) === JSON.stringify(xochiAgain), "Xochimilco chips are deterministic");
+assert(
+  xochiChips.join(" | ") === ["Nunca", "Qué grande", "Qué cara"].join(" | "),
+  `Xochimilco tap chips are length-close siblings, got ${JSON.stringify(xochiChips)}`,
+);
+for (const longChip of ["Solo «en este preciso instante»", "Ahora, en un rato, o en un futuro gloriosamente indefinido"]) {
+  assert(!xochiChips.includes(longChip), `Xochimilco no longer chooses the long ahorita chip ${longChip}`);
+}
+assert(
+  xochiChips.join(" | ") !== ["Solo «en este preciso instante»", "Nunca", "Ahora, en un rato, o en un futuro gloriosamente indefinido"].join(" | "),
+  "Xochimilco no longer uses the three ahorita chips",
+);
+console.log(`ok: tap-an-answer length — ${tapChipItems} shipped chip items; Xochimilco chips ${xochiChips.join(" | ")}`);

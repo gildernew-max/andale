@@ -1339,14 +1339,36 @@ const relatedDistractorsFor = (answer, q, count = 3) => {
 
   (CURATED_DISTRACTORS[strip(answer)] || []).forEach(add);
 
+  const siblingCandidates = [];
   const unit = UNITS.find((u) => u.id === q?._u);
   unit?.questions?.forEach((item) => {
     if (item === q) return;
-    (item.choices || []).forEach(add);
+    (item.choices || []).forEach((value) => siblingCandidates.push(value));
     const itemAnswers = Array.isArray(item.answers) ? item.answers : item.answers ? [item.answers] : item.answer ? [item.answer] : [];
-    itemAnswers.forEach(add);
-    if (item.type === "order") (item.words || item.tokens || []).forEach(add);
+    itemAnswers.forEach((value) => siblingCandidates.push(value));
+    if (item.type === "order") (item.words || item.tokens || []).forEach((value) => siblingCandidates.push(value));
   });
+
+  const ansLen = String(answer || "").trim().length;
+  // Sibling chips only: within 2× of the answer, plus 4 characters of slack, both directions.
+  const lengthClose = (value) => {
+    const len = String(value || "").trim().length;
+    return len <= 2 * ansLen + 4 && len >= ansLen / 2 - 4;
+  };
+  siblingCandidates.forEach((value) => {
+    if (lengthClose(value)) add(value);
+  });
+  if (out.length < count) {
+    siblingCandidates
+      .map((value, index) => ({ value, index }))
+      .filter(({ value }) => !lengthClose(value))
+      .sort((a, b) => {
+        const aLen = String(a.value || "").trim().length;
+        const bLen = String(b.value || "").trim().length;
+        return Math.abs(aLen - ansLen) - Math.abs(bLen - ansLen) || a.index - b.index;
+      })
+      .forEach(({ value }) => add(value));
+  }
 
   const noteVerb = String(q?.note || q?.instruction || q?.prompt || "").match(/\(([^,)]+)(?:,|\))/);
   if (noteVerb) {
