@@ -5415,3 +5415,73 @@ for (const unit of UNITS) {
 }
 assert(quoteFillers.length === 0, `filler tile contains a quote mark: ${quoteFillers.join("; ")}`);
 console.log(`ok: filler quotes — mex mercado fillers ${mexMercadoFillers.join(" | ")}; quote tiles ${quoteFillers.length}`);
+
+/* A typed blank whose note is a letter-count or prefix cue must not offer tap chips.
+   Listen and transform keep their aid. A typed item without that cue still does. */
+const isSpellCue = Function(
+  `"use strict"; return (note) => ${extractArrowFn(appSrc, "isSpellCue")};`,
+)();
+const answerAidFor = Function(
+  "relatedDistractorsFor",
+  "orderFillerTilesFor",
+  "answerTokens",
+  "shuffle",
+  "isSpellCue",
+  `"use strict"; return (q) => ${extractArrowFn(appSrc, "answerAidFor")};`,
+)(relatedDistractorsFor, orderFillerTilesFor, distractorTokens, (arr) => arr.slice(), isSpellCue);
+
+const spellCueHits = [];
+for (const unit of UNITS) {
+  (unit.questions || []).forEach((raw, i) => {
+    assert(!isSpellCue(raw.note), `${unit.id} questions[${i}] note is not a spell cue`);
+  });
+  (unit.bank || []).forEach((raw, i) => {
+    if (!isSpellCue(raw.note)) return;
+    const q = { ...raw, _u: unit.id, _i: unit.questions.length + i };
+    const aid = answerAidFor(q);
+    spellCueHits.push(`${unit.id}:${(raw.answers || [raw.answer])[0]}`);
+    assert(raw.type === "type", `${unit.id} bank[${i}] spell cue is a typed item`);
+    assert(aid === null, `${unit.id} bank[${i}] spell cue returns no aid, got ${JSON.stringify(aid)}`);
+  });
+}
+assert(
+  spellCueHits.join("|") === [
+    "mex:lana",
+    "conectores:debido",
+    "registro:respuesta",
+    "reported:siguiente",
+    "reported:anterior",
+    "slang2:codo",
+    "slang2:mande",
+    "slang2:chambear",
+    "formal:desocupar",
+    "formal:incumple",
+    "formal:sucesivo",
+  ].join("|"),
+  `spell-cue bank items: ${spellCueHits.join("|")}`,
+);
+
+assert(mexChambea && mexChambea.type === "type" && !isSpellCue(mexChambea.note), "chambea is a non-cue typed item");
+const chambeaAid = answerAidFor({ ...mexChambea, _u: "mex", _i: mexBank.questions.length + mexBank.bank.indexOf(mexChambea) });
+assert(chambeaAid && chambeaAid.mode === "choices", "non-cue single-word typed item still gets a choices aid");
+assert(
+  (chambeaAid.tiles || []).some((tile) => tile.w === "chambea"),
+  `chambea aid includes the accepted word, got ${JSON.stringify(chambeaAid)}`,
+);
+
+const listenCue = answerAidFor({
+  type: "listen",
+  note: "(una palabra de nueve letras: empieza con «deso»)",
+  text: "El arrendatario deberá desocupar el inmueble.",
+  answers: ["El arrendatario deberá desocupar el inmueble"],
+});
+assert(listenCue && listenCue.mode === "bank", "listen keeps its aid when the note is a spell cue");
+const transformCue = answerAidFor({
+  type: "transform",
+  note: "(empieza con «Hay»)",
+  base: "Hay mucha gente en el mercado.",
+  instruction: "empieza con «Hay…»",
+  answers: ["Hay un chorro de gente en el mercado"],
+});
+assert(transformCue && transformCue.mode === "bank", "transform keeps its aid when the note is a spell cue");
+console.log(`ok: spell cue — ${spellCueHits.length} bank items return null; chambea still has choices`);
