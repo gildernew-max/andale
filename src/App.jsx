@@ -10,7 +10,7 @@ import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./the
 import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { paywallStillPath } from "./paywallStill.js";
-import { isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
+import { buildColdFirstHoyQueue, coldFirstHoySceneBeats, isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
 import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from "./hoyChoiceCard.js";
@@ -5803,36 +5803,9 @@ export default function App() {
       lastDay: prog.lastDay,
       today: todayStr(),
     });
-    const picks = scene.units.flatMap((uid) => {
-      const q1 = sampleQuestion(uid, (q) => q.type === "listen" || q.type === "transform" || q.type === "order");
-      const q2 = sampleQuestion(uid, (q) => q.type === "mc" || q.type === "type");
-      return [q1, q2].filter(Boolean);
-    }).slice(0, 3);
     const story = hoyStoryForScene(scene, STORIES);
     const storyQ = story?.questions?.[Math.floor(Math.random() * (story.questions?.length || 1))];
-    const listenBeat = {
-      type: "listen",
-      text: scene.line,
-      answers: scene.answers,
-      explain: scene.explain,
-      explainEn: scene.explainEn,
-      _u: "_today",
-      _i: -1,
-      skill: "Escucha real",
-    };
-    const sceneBeat = {
-      type: "mc",
-      prompt: uiLang === "en" ? scene.questionEn : scene.question,
-      text: scene.line,
-      line: scene.line,
-      choices: scene.choices,
-      answer: scene.answer,
-      explain: scene.explain,
-      explainEn: scene.explainEn,
-      _u: "_today",
-      _i: -1,
-      skill: "Vida real",
-    };
+    const [sceneBeat, listenBeat] = coldFirstHoySceneBeats(scene, uiLang);
     const storyBeat = gatedLiftStoryQuiz(
       prog.stories,
       story,
@@ -5840,12 +5813,23 @@ export default function App() {
       story && storyQ ? `Postal de ${story.title}: ${storyQ.prompt}` : "",
       story ? { es: culturalHintExplain(story.title, "es"), en: culturalHintExplain(story.title, "en") } : {},
     );
-    // Day-2 return: native setup · line · Q only (already ≤4). First session keeps extras, cap 4.
+    // Cold streak 0: 5 mixed beats (mc, listen, type, order, transform). No early exit.
+    // Day-2 return: scene MC + listen, still wins on the first correct.
     // Full / Más path only when a scene grows past 4.
-    const shortQueue = day2Hoy ? [sceneBeat, listenBeat] : [sceneBeat, listenBeat, ...picks];
-    const items = firstHoy
-      ? trimHoyBeats(shortQueue, { firstHoy: true })
-      : trimHoyBeats(shuffle([listenBeat, sceneBeat, ...picks, storyBeat].filter(Boolean)), { firstHoy: false });
+    const coldFirstHoy = firstHoy && !day2Hoy;
+    let items;
+    if (coldFirstHoy) {
+      items = buildColdFirstHoyQueue(scene, UNITS, uiLang);
+    } else if (firstHoy) {
+      items = trimHoyBeats([sceneBeat, listenBeat], { firstHoy: true });
+    } else {
+      const picks = scene.units.flatMap((uid) => {
+        const q1 = sampleQuestion(uid, (q) => q.type === "listen" || q.type === "transform" || q.type === "order");
+        const q2 = sampleQuestion(uid, (q) => q.type === "mc" || q.type === "type");
+        return [q1, q2].filter(Boolean);
+      }).slice(0, 3);
+      items = trimHoyBeats(shuffle([listenBeat, sceneBeat, ...picks, storyBeat].filter(Boolean)), { firstHoy: false });
+    }
     beginSession({
       title: uiLang === "en" ? scene.titleEn : scene.title,
       color: scene.color,
@@ -5853,6 +5837,7 @@ export default function App() {
       unitId: `_today:${scene.id}`,
       todaySceneId: scene.id,
       firstHoy,
+      ...(coldFirstHoy ? { coldFirstHoy: true } : {}),
       ...(day2Hoy ? { day2Hoy: true } : {}),
       scenario: uiLang === "en" ? scene.setupEn : scene.setup,
       review: false,
@@ -6599,7 +6584,7 @@ export default function App() {
       }
       setFailKind("hearts"); setScreenQuip(pickQuip(session.host, "sad")); setScreen("failed"); return;
     }
-    if (status !== "wrong" && shouldHoyEarlyWin({ firstHoy: session.firstHoy, hits: lessonStats.right })) {
+    if (status !== "wrong" && shouldHoyEarlyWin({ firstHoy: session.firstHoy, hits: lessonStats.right, coldRun: session.coldFirstHoy })) {
       finishLesson();
       return;
     }
@@ -10569,7 +10554,7 @@ export default function App() {
 
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
-        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={{ flex: "1 1 auto", minHeight: 0, width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", overflow: "hidden", ...(orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : orderDark ? { background: D.bg, color: HUB_CREAM } : null) }}>
+        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-cold-first-hoy={session.coldFirstHoy ? "1" : undefined} data-qtype={q.type} style={{ flex: "1 1 auto", minHeight: 0, width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", overflow: "hidden", ...(orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : orderDark ? { background: D.bg, color: HUB_CREAM } : null) }}>
         <div ref={lessonBodyRef} data-testid="lesson-body" style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 0", position: "relative", flex: "1 1 0%", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", background: D.bg }}>
           <div data-testid="lesson-result-pad" style={{ paddingBottom: lessonResultPad }}>
           {inter && (
