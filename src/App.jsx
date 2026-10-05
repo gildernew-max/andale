@@ -2751,6 +2751,10 @@ const MemoryTeach = ({ entry, uiLang, D }) => {
 
 /** Brand CLEAR 2026-09-20 size lock — 167's 96/20 still read as a strip. Soft chrome parked. */
 const MEMORY_CARD_MIN = 140;
+/** Order tile line box. With padding 9+9 and border 2+4 the tile is 46px, matching the drawn chip. */
+const ORDER_TILE_LINE = 22;
+/** Two tile rows, the 8px wrap gap, and the answer row's 10+10 padding plus 2+2 borders. */
+const ORDER_ANSWER_MIN_HEIGHT = (ORDER_TILE_LINE + 9 + 9 + 2 + 4) * 2 + 8 + 10 + 10 + 2 + 2;
 const MEMORY_CARD_TYPE = 26;
 const MEMORY_CARD_MARK = 54;
 /** Width lock only — 169's 480 column + 8px pad + UA body margin still read as a center strip. */
@@ -8648,6 +8652,7 @@ export default function App() {
         .tile-row { justify-content:flex-start; align-items:center; }
         .tile-slot { display:flex; flex:0 0 auto; width:max-content; max-width:100%; min-width:min-content; min-height:2.55rem; }
         .tile-slot .tile, .tile-row > .tile { flex:0 0 auto; width:max-content; min-width:min-content; max-width:100%; white-space:nowrap; }
+        .order-answer-row > .tile, .order-tile-bank .tile { line-height: ${ORDER_TILE_LINE}px; }
         /* TAP AN ANSWER chips share .tile with word-order tiles. A phrase must wrap inside the card; order tiles stay one word. */
         .tile-slot:has([data-testid="choice-chip-key"]) { flex:0 1 auto; width:min(100%, max-content); min-width:0; max-width:100%; }
         .tile-slot:has([data-testid="choice-chip-key"]) > .tile { flex:0 1 auto; width:min(100%, max-content); min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
@@ -10801,17 +10806,15 @@ export default function App() {
                   style={{ width: "100%", boxSizing: "border-box", display: "block", resize: "none", overflow: "hidden", textOverflow: "clip", whiteSpace: "pre-wrap", fieldSizing: "content", minHeight: 54, padding: "15px 16px", fontSize: 17, fontWeight: 700, fontFamily: "inherit", lineHeight: 1.35, borderRadius: 14, border: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, background: status === "idle" ? (theme === "dark" ? D.subtle : "#F7F7F7") : status === "wrong" ? D.badBg : D.okBg, color: theme === "dark" ? HUB_CREAM : undefined }} />
                 {q.answerAid && (
                   <div style={{ marginTop: 12, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 11, background: D.card }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 9 }}>
+                    <div data-testid="answer-aid-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 9 }}>
                       <div style={{ fontSize: 11, fontWeight: 900, color: limeText(session.color, D), letterSpacing: ".06em" }}>
                         {q.answerAid.mode === "choices"
                           ? (uiLang === "en" ? "TAP AN ANSWER" : "TOCA UNA RESPUESTA")
                           : (uiLang === "en" ? "BUILD WITH WORDS" : "ARMA CON PALABRAS")}
                       </div>
-                      {typedTileIds.length > 0 && status === "idle" && (
-                        <button type="button" onClick={() => { setPlaceAt(null); setTypedFromTiles([]); }} style={{ border: "none", background: "none", color: D.sub, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
-                          {uiLang === "en" ? "Clear" : "Borrar"}
-                        </button>
-                      )}
+                      <button type="button" data-testid="answer-aid-clear" aria-hidden={typedTileIds.length > 0 && status === "idle" ? undefined : true} tabIndex={typedTileIds.length > 0 && status === "idle" ? 0 : -1} onClick={() => { if (!(typedTileIds.length > 0 && status === "idle")) return; setPlaceAt(null); setTypedFromTiles([]); }} style={{ visibility: typedTileIds.length > 0 && status === "idle" ? "visible" : "hidden", border: "none", background: "none", color: D.sub, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: typedTileIds.length > 0 && status === "idle" ? "pointer" : "default", padding: "4px 0" }}>
+                        {uiLang === "en" ? "Clear" : "Borrar"}
+                      </button>
                     </div>
                     {q.answerAid.mode === "bank" && (
                       <div>
@@ -10895,7 +10898,7 @@ export default function App() {
 
             {q.type === "order" && (
               <div style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : { color: HUB_CREAM }}>
-                <div data-testid="order-answer-row" className="tile-row" style={{ minHeight: 88, borderBottom: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderTop: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, padding: "10px 4px", marginBottom: 6, background: orderCream ? HUB_CREAM : D.card }}>
+                <div data-testid="order-answer-row" className="tile-row order-answer-row" style={{ minHeight: ORDER_ANSWER_MIN_HEIGHT, borderBottom: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, borderTop: `2px solid ${orderCream ? D_LIGHT.line : D.line}`, padding: "10px 4px", marginBottom: 6, background: orderCream ? HUB_CREAM : D.card }}>
 	                  {placed.length === 0 && <span style={{ color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontWeight: 700, fontSize: 14 }}>{L.typeOrder}</span>}
                   {placed.map((id, index) => {
                     const t = q.shuffledWords.find((x) => x.id === id);
@@ -10914,17 +10917,15 @@ export default function App() {
                     );
                   })}
                 </div>
-                {placed.length > 0 && status === "idle" && (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 800, color: orderCream ? D_LIGHT.ink : HUB_CREAM }}>
-                      {uiLang === "en" ? "Tap a placed word to move it." : "Toca una ficha colocada para moverla."}
-                    </div>
-                    <button type="button" onClick={() => { setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer", padding: "4px 0" }}>
-                      {uiLang === "en" ? "Clear" : "Borrar"}
-                    </button>
+                <div data-testid="order-move-hint" aria-hidden={placed.length > 0 && status === "idle" ? undefined : true} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12, visibility: placed.length > 0 && status === "idle" ? "visible" : "hidden" }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: orderCream ? D_LIGHT.ink : HUB_CREAM }}>
+                    {uiLang === "en" ? "Tap a placed word to move it." : "Toca una ficha colocada para moverla."}
                   </div>
-                )}
-                <div className="tile-bank" data-testid="order-tile-bank">
+                  <button type="button" tabIndex={placed.length > 0 && status === "idle" ? 0 : -1} onClick={() => { if (!(placed.length > 0 && status === "idle")) return; setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: placed.length > 0 && status === "idle" ? "pointer" : "default", padding: "4px 0" }}>
+                    {uiLang === "en" ? "Clear" : "Borrar"}
+                  </button>
+                </div>
+                <div className="tile-bank order-tile-bank" data-testid="order-tile-bank">
                   {q.shuffledWords.map((t) => {
                     const used = placed.includes(t.id);
                     const label = orderTileLabel(t.w, { answer: q.answer });

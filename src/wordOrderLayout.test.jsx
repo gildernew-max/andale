@@ -193,6 +193,63 @@ describe("word-order tile layout", () => {
     tiles.forEach(isIntrinsicTile);
   });
 
+  it("reserves the move hint and a second answer line so the bank does not gain rows", async () => {
+    const user = userEvent.setup();
+    await openOrder(orderQuestion(
+      ["Dudo", "que", "sea", "verdad", "es", "será"],
+      "Dudo que sea verdad",
+      "Construye: “I doubt that it’s true.”",
+    ));
+
+    const hint = screen.getByTestId("order-move-hint");
+    const row = screen.getByTestId("order-answer-row");
+    expect(getComputedStyle(hint).display).toBe("flex");
+    expect(getComputedStyle(hint).visibility).toBe("hidden");
+    expect(hint.textContent).toContain("Toca una ficha colocada para moverla.");
+    expect(screen.queryByRole("button", { name: "Borrar" })).toBeNull();
+    expect(row.style.minHeight).toBe("124px");
+    const cssText = [...document.querySelectorAll("style")].map((el) => el.textContent).join("\n");
+    expect(cssText).toMatch(/\.order-answer-row > \.tile, \.order-tile-bank \.tile \{ line-height: 22px; \}/);
+
+    await user.click(screen.getByRole("button", { name: "dudo" }));
+    expect(getComputedStyle(screen.getByTestId("order-move-hint")).visibility).toBe("visible");
+    expect(screen.getByRole("button", { name: "Borrar" })).toBeTruthy();
+    expect(screen.getByTestId("order-answer-row").style.minHeight).toBe("124px");
+
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(getComputedStyle(screen.getByTestId("order-move-hint")).visibility).toBe("hidden"));
+    expect(screen.getByTestId("order-move-hint").textContent).toContain("Borrar");
+    expect(screen.queryByRole("button", { name: "Borrar" })).toBeNull();
+    expect(screen.getByTestId("order-answer-row").style.minHeight).toBe("124px");
+  });
+
+  it("keeps fill-in Clear in the header so the chip row does not grow when it shows", async () => {
+    const user = userEvent.setup();
+    localStorage.clear();
+    mockSpeech();
+    seedLesson({
+      type: "type",
+      prompt: "Ojalá que no ___ mañana.",
+      answers: ["llueva"],
+      answerAid: {
+        mode: "choices",
+        tiles: [
+          { id: "choice-0", w: "llueva" },
+          { id: "choice-1", w: "lloviera" },
+        ],
+      },
+    });
+    render(<App />);
+    const clear = await screen.findByTestId("answer-aid-clear");
+    expect(getComputedStyle(clear).visibility).toBe("hidden");
+    expect(screen.queryByRole("button", { name: "Borrar" })).toBeNull();
+    expect(clear.textContent).toBe("Borrar");
+
+    await user.click(screen.getByRole("button", { name: "llueva" }));
+    expect(getComputedStyle(screen.getByTestId("answer-aid-clear")).visibility).toBe("visible");
+    expect(screen.getByRole("button", { name: "Borrar" })).toBeTruthy();
+  });
+
   it("uses the app dark page and card with cream text", async () => {
     const page = /#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i;
     const card = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
@@ -235,6 +292,7 @@ describe("word-order tile layout", () => {
     expect(placed.style.borderTopColor).toMatch(selectedInk);
     expect(screen.getByText("Toca una ficha colocada para moverla.").style.color).toMatch(cream);
     expect(screen.getByRole("button", { name: "Borrar" }).style.color).toMatch(cream);
+    expect(getComputedStyle(screen.getByTestId("order-move-hint")).visibility).toBe("visible");
     expect(screen.getByTestId("lang-en").style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
     expect(document.body.style.background).toMatch(page);
   });
