@@ -7236,6 +7236,23 @@ export default function App() {
     return undefined;
   }, [footerCapped, footerCapKey]);
 
+  // Grow the built-answer field with the sentence. jsdom reports no scrollHeight, so it stays one row.
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el || el.tagName !== "TEXTAREA") return undefined;
+    if (!el.value) {
+      el.style.height = "";
+      return undefined;
+    }
+    el.style.height = "auto";
+    const scroll = el.scrollHeight;
+    if (scroll > 0) {
+      const border = Math.max(0, el.offsetHeight - el.clientHeight);
+      el.style.height = `${scroll + border}px`;
+    }
+    return undefined;
+  }, [typed, qi, status, theme, screen]);
+
   // Blur only after the footer actually caps. A short answer keeps main's focus.
   useEffect(() => {
     if (footerCapped && status !== "idle") inputRef.current?.blur();
@@ -8339,7 +8356,7 @@ export default function App() {
 
   return (
     <BtnThemeContext.Provider value={theme}>
-    <div data-testid="app-shell" data-theme={theme} style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))" }}>
+    <div data-testid="app-shell" data-theme={theme} style={{ minHeight: "100vh", background: D.bg, color: D.ink, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", paddingBottom: inLesson ? 0 : "calc(70px + env(safe-area-inset-bottom, 0px))", ...(screen === "lesson" ? { height: "100dvh", maxHeight: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
       <style>{`
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 600; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-600.woff2') format('woff2'); }
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 700; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-700.woff2') format('woff2'); }
@@ -8434,7 +8451,7 @@ export default function App() {
         .duo-btn:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px !important; }
         .duo-btn { transition: transform .05s, filter .1s; }
         .duo-btn:hover:not(:disabled) { filter: brightness(1.05); }
-        button:focus-visible, input:focus-visible { outline: 3px solid ${D.blue}; outline-offset: 2px; }
+        button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid ${D.blue}; outline-offset: 2px; }
         .games-hub-card:hover, .games-hub-card:focus-visible { outline: 2px solid ${gamesHubFocusColor(theme)}; outline-offset: 2px; }
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         .bounce { animation: bounce 1.1s ease-in-out infinite; }
@@ -10498,8 +10515,8 @@ export default function App() {
 
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
-        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink, minHeight: "100vh" } : orderDark ? { background: D.bg, color: HUB_CREAM, minHeight: "100vh" } : undefined}>
-        <div data-testid="lesson-body" style={{ maxWidth: 600, margin: "0 auto", padding: footerCapped ? "20px 20px calc(240px + env(safe-area-inset-bottom, 0px))" : "20px 20px 190px", position: "relative" }}>
+        <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-qtype={q.type} style={{ flex: "1 1 auto", minHeight: 0, width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", overflow: "hidden", ...(orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : orderDark ? { background: D.bg, color: HUB_CREAM } : null) }}>
+        <div data-testid="lesson-body" style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 0", position: "relative", flex: "1 1 auto", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", background: D.bg }}>
           {inter && (
             <div key={inter.key} className="inter" style={{ position: "fixed", top: "32%", left: 0, right: 0, textAlign: "center", zIndex: 60, pointerEvents: "none" }}>
               <span style={{ fontWeight: 900, fontSize: 42, color: "#FF9600", textShadow: "0 3px 0 rgba(0,0,0,.12), 0 0 24px rgba(255,200,0,.5)", letterSpacing: ".02em" }}>{inter.text}</span>
@@ -10679,12 +10696,12 @@ export default function App() {
 
             {(q.type === "type" || q.type === "listen" || q.type === "transform") && (
               <div>
-                <input ref={inputRef} className="lesson-blank" value={typed} disabled={status !== "idle"}
-                  onChange={(e) => { setTypedTileIds([]); setPlaceAt(null); setTyped(e.target.value); }}
+                <textarea ref={inputRef} className="lesson-blank" rows={1} value={typed} disabled={status !== "idle"}
+                  onChange={(e) => { setTypedTileIds([]); setPlaceAt(null); setTyped(e.target.value.replace(/[\r\n]+/g, " ")); }}
                   onKeyDown={(e) => { if (insertChoiceChipFromKey(e)) return; if (e.key === "Enter") { e.preventDefault(); status === "idle" ? check() : next(); } }}
 	                  placeholder={q.type === "listen" ? (uiLang === "en" ? "Write the full sentence…" : "Escribe la oración completa…") : q.type === "transform" ? (uiLang === "en" ? "Write the transformed sentence…" : "Escribe la oración transformada…") : (uiLang === "en" ? "Write the missing word…" : "Escribe la palabra que falta…")}
                   autoCapitalize="off" autoCorrect="off" spellCheck={false}
-                  style={{ width: "100%", boxSizing: "border-box", padding: "15px 16px", fontSize: 17, fontWeight: 700, fontFamily: "inherit", borderRadius: 14, border: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, background: status === "idle" ? (theme === "dark" ? D.subtle : "#F7F7F7") : status === "wrong" ? D.badBg : D.okBg, color: theme === "dark" ? HUB_CREAM : undefined }} />
+                  style={{ width: "100%", boxSizing: "border-box", display: "block", resize: "none", overflow: "hidden", textOverflow: "clip", whiteSpace: "pre-wrap", fieldSizing: "content", minHeight: 54, padding: "15px 16px", fontSize: 17, fontWeight: 700, fontFamily: "inherit", lineHeight: 1.35, borderRadius: 14, border: `2px solid ${status === "idle" ? D.line : status === "wrong" ? D.red : D.green}`, background: status === "idle" ? (theme === "dark" ? D.subtle : "#F7F7F7") : status === "wrong" ? D.badBg : D.okBg, color: theme === "dark" ? HUB_CREAM : undefined }} />
                 {q.answerAid && (
                   <div style={{ marginTop: 12, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 14, padding: 11, background: D.card }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 9 }}>
@@ -10875,9 +10892,10 @@ export default function App() {
               </div>
             )}
           </div>
+        </div>
 
           {/* ---------- ACTION BAR with mascot ---------- */}
-          <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className={footerCapped ? "lesson-footer-cap" : undefined} style={{ position: "fixed", left: 0, right: 0, bottom: 0, background: status === "idle" ? (orderCream ? HUB_CREAM : D.card) : status === "wrong" ? D.badBg : D.okBg, borderTop: `2px solid ${status === "idle" ? (orderCream ? D_LIGHT.line : D.line) : status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(footerCapped ? { display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
+          <div ref={lessonFooterRef} data-testid="lesson-footer" data-capped={footerCapped ? "1" : "0"} className={footerCapped ? "lesson-footer-cap" : undefined} style={{ flexShrink: 0, width: "100%", boxSizing: "border-box", background: status === "idle" ? D.bg : status === "wrong" ? D.badBg : D.okBg, borderTop: status === "idle" ? `1px solid ${D.line}` : `2px solid ${status === "wrong" ? D.red : D.green}`, zIndex: 10, paddingBottom: "env(safe-area-inset-bottom, 0px)", ...(footerCapped ? { display: "flex", flexDirection: "column", overflow: "hidden" } : null) }}>
             <div style={footerCapped ? { maxWidth: 600, width: "100%", boxSizing: "border-box", margin: "0 auto", minWidth: 0, minHeight: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", overflow: "hidden" } : lessonFooterStackContinue ? { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14 } : { maxWidth: 600, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
               <div ref={footerCapped ? footerScrollRef : undefined} data-testid={footerCapped ? "lesson-footer-scroll" : (lessonFooterStackContinue ? "lesson-footer-feedback-row" : undefined)} className={footerCapped ? "lesson-footer-scroll" : undefined} style={footerCapped ? { flex: "1 1 auto", minWidth: 0, minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", padding: "14px 20px 0" } : lessonFooterStackContinue ? { display: "flex", flex: "1 1 100%", width: "100%", minWidth: 0, alignItems: "center", gap: 14 } : { display: "flex", flex: "1 1 auto", minWidth: 0, alignItems: "center", gap: 14 }}>
                 <div style={footerCapped ? { display: "flex", alignItems: "flex-start", gap: 14, minWidth: 0 } : { display: "contents" }}>
@@ -10958,7 +10976,7 @@ export default function App() {
                 </div>
                 ) : (
                 status === "idle" ? (
-	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} onClick={check} style={{ flexShrink: 0 }}>{L.check}</Btn>
+	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} onClick={check} style={{ flexShrink: 0, marginTop: "auto" }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
 	                    <div style={{ fontSize: 11, fontWeight: 900, color: limeText(D.okText, D), marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
@@ -10970,14 +10988,13 @@ export default function App() {
                   </div>
                 ) : (
 	                  <LessonFooterContinueSlot stack={lessonFooterStackContinue}>
-	                    <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={lessonFooterStackContinue ? { width: "100%", flexBasis: "100%", flexShrink: 0 } : { flexShrink: 0 }}>{L.continue}</Btn>
+	                    <Btn ink={status === "wrong" ? CONTINUE_LABEL : LESSON_LIME_INK} color={status === "wrong" ? D.red : D.green} dark={status === "wrong" ? D.redDark : D.greenDark} onClick={next} style={lessonFooterStackContinue ? { width: "100%", flexBasis: "100%", flexShrink: 0, marginTop: "auto" } : { flexShrink: 0, marginTop: "auto" }}>{L.continue}</Btn>
 	                  </LessonFooterContinueSlot>
                 )
                 )
               ) : null}
             </div>
           </div>
-        </div>
         </div>
       )}
 

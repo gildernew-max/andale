@@ -1441,7 +1441,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(saldreIdx).toBeGreaterThanOrEqual(0);
     const key = CHOICE_CHIP_KEYS[saldreIdx];
     expect(key).toBeTruthy();
-    const blank = document.querySelector("input[placeholder]");
+    const blank = document.querySelector("textarea.lesson-blank, input[placeholder]");
     expect(blank).toBeTruthy();
     blank.focus();
     await user.keyboard(key);

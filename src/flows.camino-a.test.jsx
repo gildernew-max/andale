@@ -48,7 +48,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
     const hasPrompt = () => !!(
       document.querySelector(".choice-card")
-      || document.querySelector("input[placeholder]")
+      || document.querySelector("textarea.lesson-blank, input[placeholder]")
       || screen.queryAllByTestId("bank-tile").length
       || document.querySelector(".tile")
     );
@@ -57,7 +57,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     // Skip non-MC items (shuffle) until a multiple-choice prompt is up.
     for (let i = 0; i < 12 && !document.querySelector(".choice-card"); i++) {
       const listenSkip = screen.queryByTestId("lesson-listen-skip");
-      const input = document.querySelector("input[placeholder]");
+      const input = document.querySelector("textarea.lesson-blank, input[placeholder]");
       const tiles = screen.queryAllByTestId("bank-tile");
       const orderTiles = document.querySelectorAll(".tile");
       if (listenSkip) {

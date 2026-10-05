@@ -120,7 +120,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(cssHex(note.style.color)).toBe("#a0a4ab");
     expect(pair("#A0A4AB", "#1E2128")).toBeGreaterThanOrEqual(4.5);
     expect(Number(pair("#A0A4AB", "#1E2128").toFixed(2))).toBe(6.44);
-    const input = document.querySelector("input.lesson-blank");
+    const input = document.querySelector("textarea.lesson-blank");
     expect(cssHex(input.style.background)).toBe("#252830");
     expect([...document.querySelectorAll("style")].some((el) => el.textContent.includes(".lesson-blank::placeholder{color:#A0A4AB;opacity:1}"))).toBe(true);
     expect(pair("#A0A4AB", "#252830")).toBeGreaterThanOrEqual(4.5);
@@ -149,8 +149,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await bootLesson("light");
     expect(cssHex(screen.getByTestId("type-prompt").style.background)).toBe("#ffffff");
     expect(cssHex(screen.getByTestId("type-prompt").style.color)).toBe("#3c3c3c");
-    expect(cssHex(document.querySelector("input.lesson-blank").style.background)).toBe("#f7f7f7");
-    expect(document.querySelector("input.lesson-blank").style.color).toBe("");
+    expect(cssHex(document.querySelector("textarea.lesson-blank").style.background)).toBe("#f7f7f7");
+    expect(document.querySelector("textarea.lesson-blank").style.color).toBe("");
     expect([...document.querySelectorAll("style")].some((el) => el.textContent.includes(".lesson-blank::placeholder"))).toBe(false);
     screen.getAllByTestId("bank-tile").forEach((tile) => {
       expect(paintOf(tile)).toMatchObject({ fill: "#ffffff", ink: "#2e7500" });
@@ -700,8 +700,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(window.innerHeight).toBe(844);
       // jsdom has no layout, so the footer stays on the at-rest row. The cap is proven in Chromium.
       expect(footer.getAttribute("data-capped")).toBe("0");
-      expect(footer.style.position).toBe("fixed");
-      expect(footer.style.bottom).toBe("0px");
+      expect(footer.style.position).not.toBe("fixed");
+      expect(footer.style.bottom).toBe("");
       expect(footer.style.display).toBe("");
       expect(footer.style.overflow).toBe("");
       expect(footer.style.maxHeight).toBe("");
@@ -726,7 +726,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const proto = HTMLElement.prototype;
     const prev = Object.getOwnPropertyDescriptor(proto, "offsetHeight");
     Object.defineProperty(proto, "offsetHeight", { configurable: true, get() { return 900; } });
-    const inputProto = HTMLInputElement.prototype;
+    const inputProto = HTMLTextAreaElement.prototype;
     const prevBlur = inputProto.blur;
     const blurWhen = [];
     inputProto.blur = function blurSpy(...args) {
