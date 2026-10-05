@@ -1243,6 +1243,10 @@ assert(!/LAB/.test(UI.es.narrationLabel + UI.en.narrationLabel), "narration chro
 assert(!/LAB DE NARRACIÓN|NARRATION LAB/.test(appSrc), "LAB DE NARRACIÓN / NARRATION LAB are gone");
 assert(UI.es.narrationSub === "La voz en español de tu dispositivo, frase por frase.", "UI.es.narrationSub");
 assert(UI.en.narrationSub === "Your device's Spanish voice, one sentence at a time.", "UI.en.narrationSub");
+assert(UI.es.narrationSubRecorded === "Voz en español grabada, párrafo por párrafo.", "UI.es.narrationSubRecorded");
+assert(UI.en.narrationSubRecorded === "Recorded Spanish voice, one paragraph at a time.", "UI.en.narrationSubRecorded");
+assert(!/cacheado|cached|dispositivo/i.test(UI.es.narrationSubRecorded + UI.en.narrationSubRecorded), "recorded sub is not device or cache copy");
+assert(appSrc.includes("storyAudioReady ? L.narrationSubRecorded : L.narrationSub"), "narration sub follows the paragraph file probe");
 assert(UI.es.narrationFail === "El audio no suena ahora. Puedes leer el cuento sin él.", "UI.es.narrationFail");
 assert(UI.en.narrationFail === "Audio isn't playing right now. The story reads fine without it.", "UI.en.narrationFail");
 assert(UI.es.paragraphs === "párrafos · toca palabras · escucha por párrafo", "UI.es.paragraphs");

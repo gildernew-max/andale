@@ -45,6 +45,13 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   const LIBRARY_QUIET_EN = "paragraphs · tap words";
   const NARRATION_ES = "La voz en español de tu dispositivo, frase por frase.";
   const NARRATION_EN = "Your device's Spanish voice, one sentence at a time.";
+  const NARRATION_RECORDED_ES = "Voz en español grabada, párrafo por párrafo.";
+  const NARRATION_RECORDED_EN = "Recorded Spanish voice, one paragraph at a time.";
+  const audioProbe = (ok) => vi.fn(async () => ({
+    ok,
+    status: ok ? 200 : 404,
+    headers: { get: (name) => (name === "content-type" ? (ok ? "audio/mp4" : "text/html") : null) },
+  }));
   const NARRATION_FAIL_ES = "El audio no suena ahora. Puedes leer el cuento sin él.";
   const NARRATION_FAIL_EN = "Audio isn't playing right now. The story reads fine without it.";
 
@@ -98,6 +105,41 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("story-shelf-story-0")).toBeTruthy());
     expect(screen.getByTestId("story-shelf-story-0").textContent).toContain(LIBRARY_EN);
     expect(document.body.textContent).not.toMatch(NARRATION_BANNED);
+  });
+
+  it("Lectura narration uses the recorded line when the paragraph file probe is green", async () => {
+    vi.stubGlobal("fetch", audioProbe(true));
+    withVoices([{ lang: "es-MX", name: "Paulina" }]);
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    await user.click(screen.getByTestId("story-shelf-story-0"));
+    await waitFor(() => expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_RECORDED_ES));
+    const sub = screen.getByTestId("narration-sub");
+    expect(sub.style.fontSize).toBe("12.5px");
+    expect(sub.style.fontWeight).toBe("800");
+    expect(screen.getByTestId("narration-label").textContent).toBe("NARRACIÓN");
+    expect(screen.queryByTestId("narration-fail")).toBeNull();
+    expect(screen.getByRole("button", { name: "Escuchar párrafo" })).toBeTruthy();
+    expect(screen.getByTestId("story-reader").textContent).not.toMatch(NARRATION_BANNED);
+    await user.click(screen.getByRole("button", { name: "Párrafo 2" }));
+    await waitFor(() => expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_RECORDED_ES));
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_RECORDED_EN));
+    expect(screen.getByTestId("narration-label").textContent).toBe("NARRATION");
+    expect(screen.queryByTestId("narration-fail")).toBeNull();
+  });
+
+  it("Lectura narration keeps the device voice line when the paragraph file probe fails", async () => {
+    vi.stubGlobal("fetch", audioProbe(false));
+    withVoices([{ lang: "es-MX", name: "Paulina" }]);
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    await user.click(screen.getByTestId("story-shelf-story-0"));
+    await waitFor(() => expect(screen.getByTestId("narration-card")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_ES));
+    expect(screen.queryByTestId("narration-fail")).toBeNull();
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("narration-sub").textContent).toBe(NARRATION_EN));
   });
 
   it("library subtitle keeps the listen clause in ES and EN when a Latin American voice exists", async () => {
