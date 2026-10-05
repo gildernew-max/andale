@@ -521,7 +521,7 @@ export const laterHoySeed = (extra = {}) => seedProgress({
 
 export async function advanceLessonBeat(user) {
   const choices = document.querySelectorAll(".choice-card:not([disabled])");
-  const input = document.querySelector("input[placeholder]");
+  const input = document.querySelector("textarea.lesson-blank, input[placeholder]");
   const tiles = screen.queryAllByTestId("bank-tile");
   if (choices.length) {
     await user.click(choices[0]);
