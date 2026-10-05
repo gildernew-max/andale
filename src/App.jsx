@@ -1498,8 +1498,16 @@ const orderFillerTilesFor = (q) => {
   return pool.flatMap(answerTokens).filter(tileOk).slice(0, target);
 };
 
+/** Letter-count («una palabra de nueve letras») or prefix («empieza con») cue. */
+const isSpellCue = (note) => {
+  const text = String(note || "");
+  return /una palabra de \S+ letras/i.test(text) || /empieza con/i.test(text);
+};
+
 const answerAidFor = (q) => {
   if (!q || !(q.type === "type" || q.type === "listen" || q.type === "transform")) return null;
+  // Letter-count or prefix cue: the learner types the word. No tap chips.
+  if (q.type === "type" && isSpellCue(q.note)) return null;
   const answers = [...new Set((q.answers || [q.answer || q.text]).filter(Boolean).map((a) => String(a).trim()).filter(Boolean))];
   if (!answers.length) return null;
   const shortAlternatives = q.type === "type" && answers.every((a) => answerTokens(a).length <= 3);
