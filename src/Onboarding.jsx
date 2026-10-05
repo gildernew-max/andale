@@ -9,7 +9,10 @@ import {
 } from "./onboarding.js";
 import { onboardingCopy, onboardingLine } from "./onboardingCopy.js";
 
-/** Splash promise-line look. Copy is the level promise, not splashPromiseLine. */
+/** Level-screen promise under the title. Same type as the splash line
+ *  (16px / 600, #6B6258 light, #CDBBA6 dark). The two-line clamp is gone:
+ *  below 360px the full EN/ES line may run to three lines.
+ */
 const levelPromiseStyle = (theme) => ({
   fontWeight: 600,
   fontSize: 16,
@@ -18,10 +21,6 @@ const levelPromiseStyle = (theme) => ({
   lineHeight: 1.35,
   maxWidth: "22em",
   textWrap: "balance",
-  display: "-webkit-box",
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: "vertical",
-  overflow: "hidden",
 });
 
 const cardStyle = (paint) => ({

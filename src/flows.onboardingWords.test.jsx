@@ -123,7 +123,9 @@ describe("short onboarding", () => {
     expect(promise.style.fontWeight).toBe("600");
     expect(promise.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
     expect(promise.style.textWrap).toBe("balance");
-    expect(promise.style.webkitLineClamp).toBe("2");
+    expect(promise.style.webkitLineClamp).toBe("");
+    expect(promise.style.webkitBoxOrient).toBe("");
+    expect(promise.style.overflow).toBe("");
     expect(onboardingText("en")).toContain(onboardingLine(onboardingCopy.levels.some.desc, "en"));
     expect(onboardingText("en")).not.toMatch(/stripe|paypal|revenuecat|minute|audio/i);
     await user.click(screen.getByTestId("lang-es"));
