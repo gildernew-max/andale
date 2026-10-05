@@ -780,6 +780,73 @@ export const playShortHoyBeat = async (user, answer) => {
   await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
 };
 
+const liveLessonQuestion = () => {
+  const live = JSON.parse(localStorage.getItem(LIVE_KEY) || "null");
+  const shell = document.querySelector("[data-qtype]");
+  const q = live?.session?.questions?.[live.qi ?? 0];
+  if (!shell || !q || live.status !== "idle") return null;
+  if (shell.getAttribute("data-qtype") !== q.type) return null;
+  return q;
+};
+
+const clickTileById = async (user, id) => {
+  const tile = document.querySelector(`[data-testid="bank-tile"][data-tile-id="${id}"]`);
+  expect(tile, `tile ${id}`).toBeTruthy();
+  await user.click(tile);
+};
+
+/** Answer the open lesson beat from the live question, then Continuar. */
+export const answerOpenLessonBeat = async (user) => {
+  let q;
+  await waitFor(() => {
+    q = liveLessonQuestion();
+    expect(q).toBeTruthy();
+  });
+  if (q.type === "mc") {
+    const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
+      q.answer && el.textContent.includes(q.answer));
+    expect(choice, q.answer).toBeTruthy();
+    await user.click(choice);
+  } else if (q.type === "order") {
+    const remaining = [...(q.shuffledWords || [])];
+    for (const token of String(q.answer || "").trim().split(/\s+/).filter(Boolean)) {
+      const idx = remaining.findIndex((tile) => tile.w === token);
+      expect(idx, token).toBeGreaterThanOrEqual(0);
+      const [tile] = remaining.splice(idx, 1);
+      await clickTileById(user, tile.id);
+    }
+  } else if (q.answerAid?.mode === "choices") {
+    const accepted = new Set([...(q.answers || []), q.answer].filter(Boolean).map((a) => String(a).trim()));
+    const tile = (q.answerAid.tiles || []).find((item) => accepted.has(String(item.w).trim()));
+    expect(tile, [...accepted][0]).toBeTruthy();
+    await clickTileById(user, tile.id);
+  } else if (q.answerAid?.mode === "bank") {
+    const words = (q.answerAid.tiles || [])
+      .filter((tile) => String(tile.id).startsWith("word-"))
+      .sort((a, b) => Number(String(a.id).slice(5)) - Number(String(b.id).slice(5)));
+    expect(words.length).toBeGreaterThan(0);
+    for (const tile of words) await clickTileById(user, tile.id);
+  } else {
+    const answer = (q.answers && q.answers[0]) || q.answer || q.text || "";
+    const box = document.querySelector("textarea.lesson-blank");
+    expect(box).toBeTruthy();
+    await user.click(box);
+    await user.type(box, String(answer));
+  }
+  await user.click(screen.getByTestId("lesson-check"));
+  await waitFor(() => expect(screen.getByRole("button", { name: /^(Continuar|Continue)$/i })).toBeTruthy());
+  await user.click(screen.getByRole("button", { name: /^(Continuar|Continue)$/i }));
+};
+
+/** Play the cold first-Hoy mix through to ¡Eso!. Does not stop after the first correct. */
+export const finishColdFirstHoy = async (user) => {
+  for (let guard = 0; guard < 8; guard++) {
+    if (screen.queryByTestId("hoy-win")) return;
+    await answerOpenLessonBeat(user);
+  }
+  await waitFor(() => expect(screen.getByTestId("hoy-win")).toBeTruthy());
+};
+
 export const openCaminoMore = async (user) => {
   const more = screen.getByTestId("camino-more");
   if (more.getAttribute("aria-expanded") !== "true") await user.click(more);

@@ -1,10 +1,20 @@
+import { readFileSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import {
+  COLD_FIRST_HOY_COUNT,
+  COLD_FIRST_HOY_MAX,
+  COLD_FIRST_HOY_MIN,
+  COLD_FIRST_HOY_MIN_TYPES,
   FIRST_HOY_BEAT_CAP,
   HOY_FULL_BEAT_CAP,
   HOY_WIN_EN,
   HOY_WIN_ES,
+  buildColdFirstHoyQueue,
+  coldFirstHoyTypes,
   hoyBeatCap,
   hoyWinCopy,
+  isColdFirstHoyQueue,
   isFirstHoySession,
   isShortHoy,
   hoySceneBeatCount,
@@ -80,6 +90,95 @@ assert(!shouldHoyEarlyWin({ firstHoy: false, hits: 1 }), "later Hoy does not ear
 assert(!shouldHoyEarlyWin({ hits: 1 }), "missing firstHoy flag does not early-win");
 assert(!shouldHoyEarlyWin({ firstHoy: true }), "missing hits does not early-win");
 assert(shouldHoyEarlyWin({ firstHoy: true, hits: 1 }), "day-2 return reuses the same firstHoy early-win lock");
+assert(shouldHoyEarlyWin({ firstHoy: true, hits: 1, coldRun: false }), "explicit non-cold short Hoy still ends on the first correct");
 assert(!shouldHoyEarlyWin({ firstHoy: false, hits: 1 }), "Más / full path does not early-win");
+assert(!shouldHoyEarlyWin({ firstHoy: true, hits: 1, coldRun: true }), "cold first Hoy does not end on the first correct");
+assert(!shouldHoyEarlyWin({ firstHoy: true, hits: 5, coldRun: true }), "cold first Hoy never early-wins, even after later hits");
 
-console.log("ok: first + day-2 Hoy ≤4 beats + early checkpoint + ¡Eso!/That's it.");
+assert(COLD_FIRST_HOY_COUNT === 5, "cold first Hoy is 5 beats");
+assert(COLD_FIRST_HOY_MIN === 4 && COLD_FIRST_HOY_MAX === 6, "cold first Hoy stays inside 4–6");
+assert(COLD_FIRST_HOY_MIN_TYPES === 3, "cold first Hoy needs at least 3 types");
+
+const extractConst = (src, name) => {
+  const needle = `const ${name} =`;
+  const start = src.indexOf(needle);
+  if (start < 0) throw new Error(`App.jsx missing ${name}`);
+  let i = start + needle.length;
+  while (i < src.length && /\s/.test(src[i])) i++;
+  const from = i;
+  let depth = 0;
+  let inStr = null;
+  let escaped = false;
+  for (; i < src.length; i++) {
+    const c = src[i];
+    const n = src[i + 1];
+    if (inStr) {
+      if (escaped) { escaped = false; continue; }
+      if (c === "\\") { escaped = true; continue; }
+      if (c === inStr) inStr = null;
+      continue;
+    }
+    if (c === "/" && n === "/") { i = src.indexOf("\n", i); if (i < 0) break; continue; }
+    if (c === "/" && n === "*") { i = src.indexOf("*/", i + 2); if (i < 0) break; i += 1; continue; }
+    if (c === "\"" || c === "'" || c === "`") { inStr = c; continue; }
+    if (c === "{" || c === "[") depth++;
+    else if (c === "}" || c === "]") {
+      depth--;
+      if (depth === 0) return src.slice(from, i + 1);
+    }
+  }
+  throw new Error(`App.jsx unclosed ${name}`);
+};
+
+const appSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "App.jsx"), "utf8");
+const D = {
+  green: "#58CC02", greenDark: "#46A302",
+  purple: "#CE82FF", purpleDark: "#A567CC",
+  blue: "#1CB0F6", blueDark: "#1899D6",
+  gold: "#FFC800", goldDark: "#E6A800",
+};
+const UNITS = Function("D", `"use strict"; return (${extractConst(appSrc, "UNITS")});`)(D);
+const TODAY_SCENES = Function("D", `"use strict"; return (${extractConst(appSrc, "TODAY_SCENES")});`)(D);
+
+for (const scene of TODAY_SCENES) {
+  const queue = buildColdFirstHoyQueue(scene, UNITS, "es");
+  const types = coldFirstHoyTypes(queue);
+  assert(isColdFirstHoyQueue(queue), `${scene.id} cold Hoy is a 4–6 mix with ≥3 types (got ${queue.length} / ${types.join(",")})`);
+  assert(queue.length === COLD_FIRST_HOY_COUNT, `${scene.id} cold Hoy is 5 beats, not ${queue.length}`);
+  assert(queue.length !== 1, `${scene.id} cold Hoy cannot shrink to 1 item`);
+  assert(types.join(",") === "mc,listen,type,order,transform", `${scene.id} mix is mc, listen, type, order, transform (got ${types.join(",")})`);
+  assert(queue[0].type === "mc" && queue[0].answer === scene.answer, `${scene.id} opens on the scene MC so the first correct is still one tap`);
+  assert(queue[1].type === "listen" && queue[1].text === scene.line, `${scene.id} second beat is the scene line`);
+  assert(queue.slice(2).every((q) => q._i >= 0 && scene.units.includes(q._u)), `${scene.id} later beats are authored unit questions`);
+  const en = buildColdFirstHoyQueue(scene, UNITS, "en");
+  assert(en.length === queue.length && coldFirstHoyTypes(en).join(",") === types.join(","), `${scene.id} EN keeps the same length and types`);
+  assert(en[0].prompt === scene.questionEn, `${scene.id} EN prompt is the scene question`);
+}
+
+const thinScene = {
+  id: "thin",
+  question: "¿Suena natural?",
+  questionEn: "Does it sound natural?",
+  line: "Oye, ¿puedes venir?",
+  answers: ["Oye, ¿puedes venir?"],
+  choices: ["natural", "formal"],
+  answer: "natural",
+  units: ["only"],
+};
+const thinUnits = [{
+  id: "only",
+  questions: [
+    { type: "type", prompt: "Tengo mucha ___ .", answers: ["chamba"] },
+    { type: "mc", prompt: "«Sale» significa:", choices: ["ok"], answer: "ok" },
+  ],
+}];
+const thin = buildColdFirstHoyQueue(thinScene, thinUnits, "es");
+assert(isColdFirstHoyQueue(thin), "a thin unit still fills to 4–6 with ≥3 types");
+assert(thin.length >= COLD_FIRST_HOY_MIN && thin.length !== 1, "a thin unit cannot shrink to 1 item");
+assert(coldFirstHoyTypes(thin).length >= COLD_FIRST_HOY_MIN_TYPES, "thin fill keeps at least 3 types");
+
+assert(appSrc.includes("buildColdFirstHoyQueue"), "cold first Hoy builder is wired");
+assert(appSrc.includes("coldFirstHoy: true"), "cold first Hoy is stamped on the session");
+assert(appSrc.includes("coldRun: session.coldFirstHoy"), "early win skips the cold mix");
+
+console.log("ok: cold first Hoy is 5 beats / mc+listen+type+order+transform; day-2 still checkpoints at 1.");

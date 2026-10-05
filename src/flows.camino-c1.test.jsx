@@ -28,7 +28,6 @@ import {
   contrastRatio,
   HUB_DOCTOR_RE,
   startHoyFromHub,
-  clickHoySceneMc,
   localToday,
   expectedComeBack,
   assertFreeWinFlyAway,
@@ -43,6 +42,8 @@ import {
   awaitOaxacaFlashVisible,
   awaitYucatanFlashThenIdle,
   playShortHoyBeat,
+  finishColdFirstHoy,
+  answerOpenLessonBeat,
   funnelOf,
   WALL_STRING_IDS,
 } from "./flowsHarness.jsx";
@@ -389,11 +390,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/));
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await startHoyFromHub(user);
-    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
-    await clickHoySceneMc(user);
-    await user.click(screen.getByTestId("lesson-check"));
-    await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
-    await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+    await finishColdFirstHoy(user);
     await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("hoy-win-continue"));
@@ -415,7 +412,44 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getByTestId("come-back-tomorrow")).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
-  });
+  }, 20000);
+
+  it("cold first Hoy plays 4–6 beats and at least 3 types before ¡Eso!", async () => {
+    cleanup();
+    seedProgress({ streak: 0, lastDay: null, hearts: 5, uiLang: "es" });
+    const user = userEvent.setup();
+    render(<App />);
+    await awaitHome();
+    await startHoyFromHub(user);
+    await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+    const shell = document.querySelector("[data-qtype]");
+    expect(shell.getAttribute("data-cold-first-hoy")).toBe("1");
+    const live = JSON.parse(localStorage.getItem(LIVE_KEY));
+    const questions = live.session.questions;
+    const types = [...new Set(questions.map((q) => q.type))];
+    expect(live.session.firstHoy).toBe(true);
+    expect(live.session.coldFirstHoy).toBe(true);
+    expect(questions.length).toBeGreaterThanOrEqual(4);
+    expect(questions.length).toBeLessThanOrEqual(6);
+    expect(questions.length).not.toBe(1);
+    expect(types.length).toBeGreaterThanOrEqual(3);
+    expect(types).toEqual(["mc", "listen", "type", "order", "transform"]);
+    expect(shell.getAttribute("data-count")).toBe(String(questions.length));
+    expect(shell.getAttribute("data-qtype")).toBe("mc");
+    const seen = [];
+    for (let guard = 0; guard < 8 && !screen.queryByTestId("hoy-win"); guard++) {
+      const type = document.querySelector("[data-qtype]")?.getAttribute("data-qtype");
+      expect(type).toBeTruthy();
+      seen.push(type);
+      expect(screen.queryByTestId("hoy-win")).toBeNull();
+      await answerOpenLessonBeat(user);
+    }
+    await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
+    expect(seen).toEqual(["mc", "listen", "type", "order", "transform"]);
+    expect(new Set(seen).size).toBeGreaterThanOrEqual(3);
+    expect(seen.length).toBeGreaterThanOrEqual(4);
+    expect(seen.length).toBeLessThanOrEqual(6);
+  }, 20000);
 
   it("first streak-1 Eso shows Bajío unlock flash once, then existing paywall", async () => {
     cleanup();
@@ -528,10 +562,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       const choice = [...document.querySelectorAll(".choice-card")].find((el) =>
         el.textContent.includes("natural y firme"));
       expect(choice).toBeTruthy();
-      await user.click(choice);
-      await user.click(screen.getByTestId("lesson-check"));
-      await waitFor(() => expect(screen.getByRole("button", { name: /^Continuar$/i })).toBeTruthy());
-      await user.click(screen.getByRole("button", { name: /^Continuar$/i }));
+      await finishColdFirstHoy(user);
       await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
       expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
       expect(screen.queryByTestId("soft-paywall")).toBeNull();
@@ -542,7 +573,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     } finally {
       vi.useRealTimers();
     }
-  });
+  }, 25000);
 
   it("Landlord WhatsApp first streak-1 CONTINUE shows Abierto before paywall", async () => {
     cleanup();
@@ -793,7 +824,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       await user.click(screen.getByTestId("lang-es"));
       await waitFor(() => expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/));
       await startHoyFromHub(user);
-      await playShortHoyBeat(user, "natural y firme");
+      await waitFor(() => expect(screen.getByTestId("lesson-exit")).toBeTruthy());
+      expect([...document.querySelectorAll(".choice-card")].some((el) => el.textContent.includes("natural y firme"))).toBe(true);
+      await finishColdFirstHoy(user);
       await waitFor(() => expect(screen.getByTestId("hoy-win").textContent).toBe("¡Eso!"));
       await user.click(screen.getByTestId("hoy-win-continue"));
       await lecturaThenBajioWall(user);
@@ -846,7 +879,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     } finally {
       vi.useRealTimers();
     }
-  }, 15000);
+  }, 25000);
 
   it("remount after day-2 Hoy CONTINUE still plays CDMX flash before idle", async () => {
     const today = localToday();
