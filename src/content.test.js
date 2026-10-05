@@ -5083,3 +5083,35 @@ assert(
 );
 if (shortFillerSets.length) console.log(`order filler sets below two decoys: ${shortFillerSets.join(" | ")}`);
 console.log(`ok: filler tiles — compsup tenis excludes Tengo; ${orderFillerItems} order sets; letter-free ${letterFree.length}; sentence-punct ${punctFillers.length}; short ${shortFillerSets.length}`);
+
+/* A sibling chip split on spaces must not yield a tile that still carries « » " “ ”.
+   Mexicanismos bank transform «Hay mucha gente en el mercado.» kept four fillers. */
+const fillerQuote = /[«»"“”]/;
+const mexMercado = prepQuestion({
+  ...mexBank.bank[10],
+  _u: "mex",
+  _i: mexBank.questions.length + 10,
+});
+assert(mexMercado.base === "Hay mucha gente en el mercado.", "mex mercado transform base");
+const mexMercadoFillers = orderFillerTilesFor(mexMercado);
+assert(
+  mexMercadoFillers.length === 4,
+  `mex mercado filler count stays 4, got ${JSON.stringify(mexMercadoFillers)}`,
+);
+assert(
+  mexMercadoFillers.every((tile) => !fillerQuote.test(tile)),
+  `mex mercado fillers contain a quote mark: ${JSON.stringify(mexMercadoFillers)}`,
+);
+const quoteFillers = [];
+for (const unit of UNITS) {
+  for (const [bucket, list] of [["questions", unit.questions || []], ["bank", unit.bank || []]]) {
+    list.forEach((raw, i) => {
+      const q = prepQuestion({ ...raw, _u: unit.id, _i: bucket === "bank" ? unit.questions.length + i : i });
+      orderFillerTilesFor(q).forEach((tile) => {
+        if (fillerQuote.test(String(tile))) quoteFillers.push(`${unit.id} ${bucket}[${i}] ${JSON.stringify(tile)}`);
+      });
+    });
+  }
+}
+assert(quoteFillers.length === 0, `filler tile contains a quote mark: ${quoteFillers.join("; ")}`);
+console.log(`ok: filler quotes — mex mercado fillers ${mexMercadoFillers.join(" | ")}; quote tiles ${quoteFillers.length}`);
