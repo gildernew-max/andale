@@ -22,8 +22,13 @@ const startOnboarding = async (user) => {
   render(<App />);
   await waitFor(() => expect(screen.getByTestId("onboarding-level-conversation")).toBeTruthy());
   await user.click(screen.getByTestId("onboarding-level-conversation"));
-  await waitFor(() => expect(screen.getByTestId("onboarding-goal-1")).toBeTruthy());
-  await user.click(screen.getByTestId("onboarding-goal-1"));
+  await user.click(screen.getByTestId("onboarding-cta"));
+  await waitFor(() => expect(screen.getByTestId("onboarding-why-travel")).toBeTruthy());
+  await user.click(screen.getByTestId("onboarding-why-travel"));
+  await user.click(screen.getByTestId("onboarding-cta"));
+  await waitFor(() => expect(screen.getByTestId("onboarding-goal-5")).toBeTruthy());
+  await user.click(screen.getByTestId("onboarding-goal-5"));
+  await user.click(screen.getByTestId("onboarding-cta"));
   await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
   await user.click(screen.getByTestId("onboarding-start"));
   await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
