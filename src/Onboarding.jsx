@@ -23,13 +23,13 @@ const levelPromiseStyle = (theme) => ({
   textWrap: "balance",
 });
 
-const cardStyle = (paint) => ({
+const cardStyle = (paint, selected) => ({
   display: "block",
   width: "100%",
   textAlign: "left",
   background: paint.card,
   color: paint.ink,
-  border: `2px solid ${paint.accent}`,
+  border: selected ? `2px solid ${paint.selectedEdge}` : `2px solid ${paint.accent}`,
   borderRadius: 16,
   padding: "12px 14px",
   fontFamily: "inherit",
@@ -43,7 +43,7 @@ function ChoiceCard({ paint, testId, selected, onClick, children }) {
       data-testid={testId}
       data-selected={selected ? "true" : undefined}
       onClick={onClick}
-      style={cardStyle(paint)}
+      style={cardStyle(paint, selected)}
     >
       <span style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
         <span style={{ display: "block", minWidth: 0 }}>{children}</span>
