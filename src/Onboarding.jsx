@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  CONTINUE_LABEL,
+  ONBOARDING_CTA_TOP,
   ONBOARDING_GOALS,
   ONBOARDING_LEVELS,
+  ONBOARDING_MINUTE_CHIP,
   ONBOARDING_PAINT,
-  ONBOARDING_SELECT_MS,
-  onboardingSelectionHeld,
+  ONBOARDING_WHYS,
 } from "./onboarding.js";
-import { onboardingCopy, onboardingLine } from "./onboardingCopy.js";
+import { onboardingCopy, onboardingLine, onboardingPlanLine } from "./onboardingCopy.js";
 
 /** Level-screen promise under the title. Same type as the splash line
  *  (16px / 600, #6B6258 light, #CDBBA6 dark). The two-line clamp is gone:
@@ -55,35 +55,64 @@ function ChoiceCard({ paint, testId, selected, onClick, children }) {
   );
 }
 
-export default function Onboarding({ lang, theme = "light", step, level, goal, onLevel, onGoal, onStart }) {
-  const paint = theme === "dark" ? ONBOARDING_PAINT.dark : ONBOARDING_PAINT.light;
-  const levelStep = step !== "goal" && step !== "plan";
-  const title = step === "goal"
-    ? onboardingLine(onboardingCopy.goalTitle, lang)
-    : step === "plan"
-      ? onboardingLine(onboardingCopy.planTitle, lang)
-      : onboardingLine(onboardingCopy.levelTitle, lang);
-  const levelSlot = onboardingCopy.levels[level];
-  const goalSlot = onboardingCopy.goals[goal];
-  const [selectedId, setSelectedId] = useState(null);
-  const timer = useRef(null);
+function OnboardingCta({ paint, ready, testId, label, onClick }) {
+  const face = ready
+    ? { fill: paint.button, ink: paint.buttonInk, lip: paint.buttonLip }
+    : { fill: paint.emptyFill, ink: paint.emptyInk, lip: paint.emptyLip };
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      disabled={!ready}
+      onClick={() => { if (ready) onClick(); }}
+      style={{
+        position: "absolute",
+        top: ONBOARDING_CTA_TOP,
+        left: 20,
+        right: 20,
+        boxSizing: "border-box",
+        fontFamily: "inherit",
+        fontWeight: 800,
+        fontSize: 15,
+        letterSpacing: ".06em",
+        textTransform: "uppercase",
+        borderRadius: 14,
+        padding: "13px 24px",
+        cursor: ready ? "pointer" : "default",
+        background: face.fill,
+        color: face.ink,
+        border: "none",
+        borderBottom: `4px solid ${face.lip}`,
+        opacity: 1,
+      }}
+    >
+      {label}
+    </button>
+  );
+}
 
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
+export default function Onboarding({ lang, theme = "light", step, goal, onLevel, onWhy, onGoal, onStart }) {
+  const paint = theme === "dark" ? ONBOARDING_PAINT.dark : ONBOARDING_PAINT.light;
+  const levelStep = step !== "why" && step !== "goal" && step !== "plan";
+  const title = step === "why"
+    ? onboardingLine(onboardingCopy.whyTitle, lang)
+    : step === "goal"
+      ? onboardingLine(onboardingCopy.goalTitle, lang)
+      : step === "plan"
+        ? onboardingLine(onboardingCopy.planTitle, lang)
+        : onboardingLine(onboardingCopy.levelTitle, lang);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
     setSelectedId(null);
   }, [step]);
 
-  const choose = (id, fn) => {
-    setSelectedId(id);
-    if (timer.current) clearTimeout(timer.current);
-    if (onboardingSelectionHeld()) return;
-    timer.current = setTimeout(() => {
-      timer.current = null;
-      fn(id);
-    }, ONBOARDING_SELECT_MS);
+  const ready = step === "plan" || selectedId != null;
+  const advance = () => {
+    if (step === "plan") onStart();
+    else if (step === "why") onWhy(selectedId);
+    else if (step === "goal") onGoal(selectedId);
+    else onLevel(selectedId);
   };
 
   return (
@@ -111,55 +140,57 @@ export default function Onboarding({ lang, theme = "light", step, level, goal, o
         </p>
       ) : null}
       {step === "plan" ? (
-        <div style={{ display: "grid", gap: 10 }}>
-          <div data-testid="onboarding-plan-level" style={{ background: paint.card, border: `2px solid ${paint.accent}`, borderRadius: 16, padding: "12px 14px", fontSize: 18, fontWeight: 900, lineHeight: 1.3 }}>
-            {onboardingLine(onboardingCopy.planLevel, lang)}: {onboardingLine(levelSlot?.name, lang)}
-          </div>
-          <div data-testid="onboarding-plan-goal" style={{ background: paint.card, border: `2px solid ${paint.accent}`, borderRadius: 16, padding: "12px 14px", fontSize: 18, fontWeight: 900, lineHeight: 1.3 }}>
-            {onboardingLine(onboardingCopy.planGoal, lang)}: {onboardingLine(goalSlot, lang)}
-          </div>
-          <button
-            type="button"
-            data-testid="onboarding-start"
-            onClick={onStart}
-            style={{
-              marginTop: 6,
-              width: "100%",
-              fontFamily: "inherit",
-              fontWeight: 800,
-              fontSize: 15,
-              letterSpacing: ".06em",
-              textTransform: "uppercase",
-              borderRadius: 14,
-              padding: "13px 24px",
-              cursor: "pointer",
-              background: paint.button,
-              color: CONTINUE_LABEL,
-              border: "none",
-              borderBottom: `4px solid ${paint.buttonLip}`,
-            }}
-          >
-            {onboardingLine(onboardingCopy.planStart, lang)}
-          </button>
+        <div>
+          <img
+            data-testid="onboarding-plan-bird"
+            src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
+            alt=""
+            width={120}
+            height={120}
+            aria-hidden="true"
+            style={{ display: "block", width: 120, height: 120, objectFit: "contain", margin: "8px auto 0" }}
+          />
+          <p data-testid="onboarding-plan-body" style={{ fontWeight: 700, fontSize: 18, lineHeight: 1.35, margin: "16px 0 0" }}>
+            {onboardingPlanLine(lang, goal)}
+          </p>
         </div>
       ) : step === "goal" ? (
         <div style={{ display: "grid", gap: 10 }}>
           {ONBOARDING_GOALS.map((count) => (
-            <ChoiceCard key={count} paint={paint} testId={`onboarding-goal-${count}`} selected={selectedId === `goal-${count}`} onClick={() => choose(`goal-${count}`, () => onGoal(count))}>
-              <span style={{ fontWeight: 900, fontSize: 17, lineHeight: 1.25 }}>{onboardingLine(onboardingCopy.goals[count], lang)}</span>
+            <ChoiceCard key={count} paint={paint} testId={`onboarding-goal-${count}`} selected={selectedId === count} onClick={() => setSelectedId(count)}>
+              <span style={{ display: "block", fontWeight: 900, fontSize: 17, lineHeight: 1.2 }}>{count} {ONBOARDING_MINUTE_CHIP}</span>
+              <span style={{ display: "block", fontWeight: 700, fontSize: 14, lineHeight: 1.3, marginTop: 3 }}>{onboardingLine(onboardingCopy.goals[count], lang)}</span>
+            </ChoiceCard>
+          ))}
+          <p data-testid="onboarding-goal-note" style={{ ...levelPromiseStyle(theme), margin: "2px 0 0" }}>
+            {onboardingLine(onboardingCopy.goalNote, lang)}
+          </p>
+        </div>
+      ) : step === "why" ? (
+        <div style={{ display: "grid", gap: 10 }}>
+          {ONBOARDING_WHYS.map((id) => (
+            <ChoiceCard key={id} paint={paint} testId={`onboarding-why-${id}`} selected={selectedId === id} onClick={() => setSelectedId(id)}>
+              <span style={{ fontWeight: 900, fontSize: 17, lineHeight: 1.25 }}>{onboardingLine(onboardingCopy.whys[id], lang)}</span>
             </ChoiceCard>
           ))}
         </div>
       ) : (
         <div style={{ display: "grid", gap: 10 }}>
           {ONBOARDING_LEVELS.map((id) => (
-            <ChoiceCard key={id} paint={paint} testId={`onboarding-level-${id}`} selected={selectedId === id} onClick={() => choose(id, () => onLevel(id))}>
+            <ChoiceCard key={id} paint={paint} testId={`onboarding-level-${id}`} selected={selectedId === id} onClick={() => setSelectedId(id)}>
               <span style={{ display: "block", fontWeight: 900, fontSize: 17, lineHeight: 1.2 }}>{onboardingLine(onboardingCopy.levels[id].name, lang)}</span>
               <span style={{ display: "block", fontWeight: 700, fontSize: 14, lineHeight: 1.3, marginTop: 3 }}>{onboardingLine(onboardingCopy.levels[id].desc, lang)}</span>
             </ChoiceCard>
           ))}
         </div>
       )}
+      <OnboardingCta
+        paint={paint}
+        ready={ready}
+        testId={step === "plan" ? "onboarding-start" : "onboarding-cta"}
+        label={step === "plan" ? onboardingLine(onboardingCopy.planStart, lang) : onboardingLine(onboardingCopy.ctaContinue, lang)}
+        onClick={advance}
+      />
     </div>
   );
 }

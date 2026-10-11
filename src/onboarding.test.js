@@ -5,21 +5,23 @@ import { migrateFirstSession } from "./firstSession.js";
 import {
   CONTINUE_LABEL,
   EASIEST_UNIT_ID,
+  ONBOARDING_CTA_TOP,
   ONBOARDING_GOALS,
-  ONBOARDING_HOLD_KEY,
   ONBOARDING_LEVELS,
+  ONBOARDING_MINUTE_CHIP,
   ONBOARDING_PAINT,
-  ONBOARDING_SELECT_MS,
   ONBOARDING_TAPS,
+  ONBOARDING_WHYS,
   firstLessonForLevel,
   hasFinishedLesson,
   hasSavedResume,
   onboardingResume,
-  readDailyGoalLessons,
+  readDailyGoalMinutes,
   readLearnerLevel,
+  readLearningWhy,
   shouldShowOnboarding,
 } from "./onboarding.js";
-import { onboardingCopy, onboardingLine } from "./onboardingCopy.js";
+import { onboardingCopy, onboardingLine, onboardingPlanLine } from "./onboardingCopy.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 const dir = dirname(fileURLToPath(import.meta.url));
@@ -53,9 +55,12 @@ function slots(node, acc = []) {
   return acc;
 }
 
-assert(ONBOARDING_TAPS <= 3 && ONBOARDING_TAPS === 3, "onboarding is 3 taps");
+assert(ONBOARDING_TAPS === 7, "four screens: three choice CTAs plus the plan CTA, each choice preceded by its card");
+assert(ONBOARDING_CTA_TOP === 780, "CTA top is y=780 on a 390×844 frame");
 assert(ONBOARDING_LEVELS.join(",") === "beginner,some,conversation", "three named levels");
-assert(ONBOARDING_GOALS.join(",") === "1,2,3", "daily goal is 1, 2, or 3 lessons");
+assert(ONBOARDING_WHYS.join(",") === "travel,family,live,work,me", "five reasons");
+assert(ONBOARDING_GOALS.join(",") === "5,10,15,20", "daily goal is 5, 10, 15, or 20 minutes");
+assert(ONBOARDING_MINUTE_CHIP === "min", "the minute chip abbreviation is min");
 
 assert(shouldShowOnboarding(null) === true, "fresh storage sees onboarding");
 assert(shouldShowOnboarding(undefined) === true, "missing storage sees onboarding");
@@ -72,15 +77,21 @@ assert(shouldShowOnboarding({ done: { subj1: 1 } }) === false, "a finished lesso
 assert(shouldShowOnboarding({ stories: { "story-0": true } }) === false, "a finished story skips onboarding");
 assert(shouldShowOnboarding(migrateFirstSession({ xp: 40, streak: 3 })) === false, "a pre-release save is migrated and skips onboarding");
 assert(shouldShowOnboarding(migrateFirstSession({ theme: "dark", uiLang: "en" })) === false, "a theme-only save keeps today's splash path");
-assert(shouldShowOnboarding({ learnerLevel: "beginner", dailyGoalLessons: 1, onboardingDone: true, firstSessionDone: false }) === false, "stored level and goal do not bring the screens back");
+assert(shouldShowOnboarding({ learnerLevel: "beginner", learningWhy: "travel", dailyGoalMinutes: 10, onboardingDone: true, firstSessionDone: false }) === false, "a finished onboarding stays down");
+assert(shouldShowOnboarding({ learnerLevel: "some", dailyGoalLessons: 2, onboardingDone: true }) === false, "an older finished save does not see the new screens");
 
 assert(readLearnerLevel({}) == null && readLearnerLevel({ learnerLevel: "nope" }) == null, "a missing level is skip-safe");
 assert(readLearnerLevel({ learnerLevel: "beginner" }) === "beginner", "a stored level reads back");
-assert(readDailyGoalLessons({}) == null && readDailyGoalLessons({ dailyGoalLessons: 9 }) == null, "a missing goal is skip-safe");
-assert(readDailyGoalLessons({ dailyGoalLessons: 2 }) === 2, "a stored goal reads back");
+assert(readLearningWhy({}) == null && readLearningWhy({ learningWhy: "nope" }) == null, "a missing reason is skip-safe");
+assert(readLearningWhy({ learningWhy: "work" }) === "work", "a stored reason reads back");
+assert(readDailyGoalMinutes({}) == null && readDailyGoalMinutes({ dailyGoalMinutes: 9 }) == null, "a missing minute goal is skip-safe");
+assert(readDailyGoalMinutes({ dailyGoalLessons: 2 }) == null, "an old lesson count is not a minute goal");
+assert(readDailyGoalMinutes({ dailyGoalMinutes: 10 }) === 10, "a stored minute goal reads back");
 assert(onboardingResume(null).step === "level", "a fresh pass starts on level");
-assert(onboardingResume({ learnerLevel: "some" }).step === "goal", "a saved level resumes on the goal");
-assert(onboardingResume({ learnerLevel: "conversation", dailyGoalLessons: 3 }).step === "plan", "both choices resume on the plan");
+assert(onboardingResume({ learnerLevel: "some" }).step === "why", "a saved level resumes on why");
+assert(onboardingResume({ learnerLevel: "some", dailyGoalLessons: 3 }).step === "why", "an old lesson count does not skip why");
+assert(onboardingResume({ learnerLevel: "some", learningWhy: "live" }).step === "goal", "level and reason resume on the goal");
+assert(onboardingResume({ learnerLevel: "conversation", learningWhy: "me", dailyGoalMinutes: 20 }).step === "plan", "all three choices resume on the plan");
 
 const beginner = firstLessonForLevel("beginner");
 const some = firstLessonForLevel("some");
@@ -101,7 +112,11 @@ for (const slot of lines) {
   assert(slot.en.trim() && slot.es.trim(), "EN and ES are non-empty");
   assert(slot.en !== slot.es, "EN and ES are not the same string");
   assert(onboardingLine(slot, "en") === slot.en && onboardingLine(slot, "es") === slot.es, "the helper returns the file strings");
-  assert(!/minute|minuto|hour|hora|fluent|fluido|audio|stripe|paypal|revenuecat/i.test(`${slot.en} ${slot.es}`), "no time, audio, or payment-provider claims");
+  const pair = `${slot.en} ${slot.es}`;
+  if (slot !== onboardingCopy.planBody) {
+    assert(!/minute|minuto|hour|hora|fluent|fluido|audio|stripe|paypal|revenuecat/i.test(pair), "no time claim outside the plan sentence");
+  }
+  assert(!/streak|racha|heart|coraz[oó]n|price|precio|paywall|\$/i.test(pair), "no streak, hearts, or price words");
   assert(copySrc.includes(slot.en) && copySrc.includes(slot.es), "the string lives in onboardingCopy.js");
   assert(!uiSrc.includes(`"${slot.en}"`) && !uiSrc.includes(`"${slot.es}"`) && !uiSrc.includes(`'${slot.en}'`) && !uiSrc.includes(`'${slot.es}'`), "Onboarding.jsx does not inline the string");
 }
@@ -109,45 +124,55 @@ const onboardingRender = appSrc.slice(appSrc.indexOf("<Onboarding"), appSrc.inde
 assert(onboardingRender.includes("lang={uiLang}"), "App passes the live language into the screen");
 assert(!/>[^<]*[A-Za-zÁÉÍÓÚáéíóúñ]{3,}/.test(onboardingRender), "App does not put screen words on the onboarding element");
 assert(uiSrc.includes('from "./onboardingCopy.js"'), "the screen reads onboardingCopy.js");
-assert(uiSrc.includes("onLevel(id)"), "a level tap advances by itself");
-assert(uiSrc.includes("onGoal(count)"), "a goal tap advances by itself");
-assert(ONBOARDING_SELECT_MS === 250, "the selected card holds for 250 ms");
-assert(uiSrc.includes("ONBOARDING_SELECT_MS"), "the screen uses that hold");
-assert(uiSrc.includes(ONBOARDING_HOLD_KEY) || uiSrc.includes("onboardingSelectionHeld"), "a hold hook can freeze the selected card");
+assert(uiSrc.includes("onLevel(selectedId)"), "the CTA continues with the chosen level");
+assert(uiSrc.includes("onWhy(selectedId)"), "the CTA continues with the chosen reason");
+assert(uiSrc.includes("onGoal(selectedId)"), "the CTA continues with the chosen minutes");
+assert(uiSrc.includes("setSelectedId(id)") && uiSrc.includes("setSelectedId(count)"), "a card tap selects and does not advance");
+assert(!uiSrc.includes("setTimeout"), "a card tap does not advance on a timer");
 assert(uiSrc.includes('data-testid="onboarding-check"'), "the selected card shows a check");
 assert(uiSrc.includes("2px solid ${paint.accent}"), "level and goal cards keep the sage edge");
-assert(uiSrc.includes("onClick={onStart}"), "the plan button is the start tap");
+assert(uiSrc.includes("onStart()"), "the plan CTA starts the lesson");
+assert(uiSrc.includes("top: ONBOARDING_CTA_TOP"), "the CTA is pinned at y=780");
 assert(appSrc.includes("shouldShowOnboarding(p)"), "the gate runs on the loaded save");
 assert(appSrc.includes("migrateFirstSession(p)"), "existing saves still migrate first");
 assert(appSrc.includes("firstLessonForLevel("), "the level chooses the first lesson");
 assert(appSrc.includes("onboardingPending: true"), "a fresh save is marked pending");
 assert(appSrc.includes("learnerLevel: level"), "the level is stored on the save");
-assert(appSrc.includes("dailyGoalLessons: goal"), "the goal is stored on the save");
+assert(appSrc.includes("learningWhy: why"), "the reason is stored on the save");
+assert(appSrc.includes("dailyGoalMinutes: goal"), "the minute goal is stored on the save");
+assert(!appSrc.includes("dailyGoalLessons"), "the lesson-count goal is no longer written");
 
 for (const mode of ["light", "dark"]) {
   const paint = ONBOARDING_PAINT[mode];
   assert(contrast(paint.ink, paint.page) >= 4.5, `${mode} ink on the page clears 4.5`);
   assert(contrast(paint.ink, paint.card) >= 4.5, `${mode} ink on the card clears 4.5`);
-  assert(paint.buttonInk === CONTINUE_LABEL, `${mode} button text is the CONTINUE label`);
+  assert(paint.buttonInk === "#1F3A1A", `${mode} CTA label is #1F3A1A`);
+  assert(paint.button === "#58CC02" && paint.buttonLip === "#46A302", `${mode} CTA is the lime CHECK`);
   assert(paint.accent === "#6F7757", `${mode} card edge stays sage`);
+  const empty = mode === "dark"
+    ? { fill: "#2A2E36", ink: "#6B7078", lip: "#1E2128" }
+    : { fill: "#E5E5E5", ink: "#AFAFAF", lip: "#CECECE" };
+  assert(paint.emptyFill === empty.fill && paint.emptyInk === empty.ink && paint.emptyLip === empty.lip, `${mode} empty CTA is the empty CHECK`);
 }
 assert(CONTINUE_LABEL === "#fff", "CONTINUE label is white");
 assert(appSrc.includes("CONTINUE_LABEL"), "the lesson CONTINUE button uses the same token");
-assert(uiSrc.includes("CONTINUE_LABEL"), "the plan button uses the same token");
-assert(uiSrc.includes('letterSpacing: ".06em"') && uiSrc.includes('textTransform: "uppercase"'), "the plan button matches the CONTINUE button");
-assert(!uiSrc.includes("#15171C"), "the plan button does not use the dark ink");
+assert(!uiSrc.includes("CONTINUE_LABEL"), "the onboarding CTA does not use the white CONTINUE label");
+assert(uiSrc.includes('letterSpacing: ".06em"') && uiSrc.includes('textTransform: "uppercase"'), "the CTA matches the CHECK button");
+assert(!uiSrc.includes("#15171C"), "the CTA does not use the dark page ink");
 assert(ONBOARDING_PAINT.dark.page === "#15171C", "dark page");
 assert(ONBOARDING_PAINT.dark.card === "#1E2128", "dark card");
 assert(ONBOARDING_PAINT.dark.ink === "#F6EFE4", "dark ink is cream");
 assert(ONBOARDING_PAINT.light.page === "#F6EFE4", "light page stays cream");
-assert(uiSrc.includes("paint.button") && uiSrc.includes("paint.buttonLip"), "green fill and lip come from the paint");
-assert(uiSrc.includes("{onboardingLine(onboardingCopy.planLevel, lang)}: {onboardingLine(levelSlot?.name, lang)}"), "the plan level line is label, colon, name");
-assert(uiSrc.includes("{onboardingLine(onboardingCopy.planGoal, lang)}: {onboardingLine(goalSlot, lang)}"), "the plan goal line is label, colon, goal");
+assert(uiSrc.includes("paint.button") && uiSrc.includes("paint.buttonLip") && uiSrc.includes("paint.buttonInk"), "lime fill, lip, and ink come from the paint");
+assert(uiSrc.includes("paint.emptyFill") && uiSrc.includes("paint.emptyInk") && uiSrc.includes("paint.emptyLip"), "the empty CTA uses the empty CHECK paint");
+assert(uiSrc.includes("onboardingPlanLine(lang, goal)"), "the plan sentence fills {n}");
+assert(uiSrc.includes("mascot/cenzontle.png"), "the plan reuses the static Cenzontle");
+assert(!/cenzontle-bounce|cenzontle-courier|animation:/.test(uiSrc), "the plan bird does not animate");
 
 assert(onboardingCopy.levelPromise.en === "Mexican Spanish past the basics — for people who already know some.", "level promise EN is the stamped line");
 assert(onboardingCopy.levelPromise.es === "Español mexicano más allá de lo básico — para quien ya sabe algo.", "level promise ES is the stamped line");
 assert(uiSrc.includes("onboardingCopy.levelPromise"), "the subline reads the stamped slot");
-assert(uiSrc.includes("const levelStep = step !== \"goal\" && step !== \"plan\""), "the promise is the level step only");
+assert(uiSrc.includes('const levelStep = step !== "why" && step !== "goal" && step !== "plan"'), "the promise is the level step only");
 const promiseAt = uiSrc.indexOf('data-testid="onboarding-promise"');
 assert(promiseAt > 0, "level screen paints a promise subline");
 assert(uiSrc.slice(promiseAt - 180, promiseAt).includes("levelStep ?"), "the subline renders only on the level step");
@@ -161,5 +186,33 @@ assert(/below 360px/.test(promiseStyle) && /three lines/.test(promiseStyle), "be
 assert(Number(contrast("#6B6258", ONBOARDING_PAINT.light.page).toFixed(2)) === 5.23, "promise ink on cream is 5.23:1");
 assert(contrast("#6B6258", ONBOARDING_PAINT.light.page) >= 5.1, "promise ink on cream clears 5.1:1");
 assert(contrast("#CDBBA6", ONBOARDING_PAINT.dark.page) >= 4.5, "promise ink on the dark page clears 4.5");
+assert(Number(contrast("#1F3A1A", "#58CC02").toFixed(2)) === 5.99, "CTA ink on lime is 5.99:1");
+
+assert(onboardingCopy.levelTitle.en === "Where are you with Spanish?" && onboardingCopy.levelTitle.es === "¿En qué punto estás con el español?", "level title stays the live line");
+assert(onboardingCopy.whyTitle.en === "Why are you learning Spanish?" && onboardingCopy.whyTitle.es === "¿Para qué aprendes español?", "why title is the locked line");
+assert(onboardingCopy.whys.travel.en === "Travel in Mexico" && onboardingCopy.whys.travel.es === "Viajar por México", "travel option");
+assert(onboardingCopy.whys.family.en === "Talk with family or friends" && onboardingCopy.whys.family.es === "Hablar con familia o amigos", "family option");
+assert(onboardingCopy.whys.live.en === "Live or retire in Mexico" && onboardingCopy.whys.live.es === "Vivir o retirarme en México", "live option");
+assert(onboardingCopy.whys.work.en === "Work" && onboardingCopy.whys.work.es === "Trabajo", "work option");
+assert(onboardingCopy.whys.me.en === "Just for me" && onboardingCopy.whys.me.es === "Por gusto", "for-me option");
+assert(onboardingCopy.goalTitle.en === "How much time a day?" && onboardingCopy.goalTitle.es === "¿Cuánto tiempo al día?", "goal title is the locked line");
+assert(onboardingCopy.goals[5].en === "Easy" && onboardingCopy.goals[5].es === "Tranquilo", "5 min adjective");
+assert(onboardingCopy.goals[10].en === "Steady" && onboardingCopy.goals[10].es === "Constante", "10 min adjective");
+assert(onboardingCopy.goals[15].en === "Serious" && onboardingCopy.goals[15].es === "En serio", "15 min adjective");
+assert(onboardingCopy.goals[20].en === "All in" && onboardingCopy.goals[20].es === "A fondo", "20 min adjective");
+assert(onboardingCopy.goalNote.en === "You can change this anytime in Profile." && onboardingCopy.goalNote.es === "Puedes cambiarlo cuando quieras en Perfil.", "goal note is the locked line");
+assert(onboardingCopy.planTitle.en === "Your plan" && onboardingCopy.planTitle.es === "Tu plan", "plan title");
+assert(onboardingCopy.planBody.en === "{n} minutes a day: one short lesson, then a story in Lectura.", "plan body EN");
+assert(onboardingCopy.planBody.es === "{n} minutos al día: una lección corta y luego un cuento en Lectura.", "plan body ES");
+assert(onboardingPlanLine("en", 10) === "10 minutes a day: one short lesson, then a story in Lectura.", "plan fills the chosen count");
+assert(onboardingPlanLine("es", 5) === "5 minutos al día: una lección corta y luego un cuento en Lectura.", "plan fills the chosen count in ES");
+assert(onboardingCopy.planStart.en === "Start my first lesson" && onboardingCopy.planStart.es === "Empezar mi primera lección", "plan CTA");
+assert(onboardingCopy.ctaContinue.en === "Continue" && onboardingCopy.ctaContinue.es === "Continuar", "choice CTA reuses Continue");
+for (const id of ONBOARDING_WHYS) {
+  assert(!onboardingCopy.whys[id].en.includes(".") && !onboardingCopy.whys[id].es.includes("."), "why options have no period");
+}
+for (const count of ONBOARDING_GOALS) {
+  assert(!onboardingCopy.goals[count].en.includes(".") && !onboardingCopy.goals[count].es.includes("."), "goal options have no period");
+}
 
 console.log("onboarding.test.js: ok");

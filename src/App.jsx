@@ -5406,6 +5406,7 @@ export default function App() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState("level");
   const [onboardingLevel, setOnboardingLevel] = useState(null);
+  const [onboardingWhy, setOnboardingWhy] = useState(null);
   const [onboardingGoal, setOnboardingGoal] = useState(null);
   /* Theme — a saved prog.theme of light or dark wins. With no saved choice,
      follow the phone. Do not write that derived value into prog: an unsaved
@@ -5484,6 +5485,7 @@ export default function App() {
 	    if (needsOnboarding) {
 	      const resume = onboardingResume(p);
 	      setOnboardingLevel(resume.level);
+	      setOnboardingWhy(resume.why);
 	      setOnboardingGoal(resume.goal);
 	      setOnboardingStep(resume.step);
 	      setOnboardingOpen(true);
@@ -8476,25 +8478,32 @@ export default function App() {
 
   const pickOnboardingLevel = (level) => {
     setOnboardingLevel(level);
-    setOnboardingStep("goal");
+    setOnboardingStep("why");
     save({ learnerLevel: level, onboardingPending: true });
+  };
+  const pickOnboardingWhy = (why) => {
+    setOnboardingWhy(why);
+    setOnboardingStep("goal");
+    save({ learningWhy: why, onboardingPending: true });
   };
   const pickOnboardingGoal = (goal) => {
     setOnboardingGoal(goal);
     setOnboardingStep("plan");
-    save({ dailyGoalLessons: goal, onboardingPending: true });
+    save({ dailyGoalMinutes: goal, onboardingPending: true });
   };
   const startOnboardingLesson = () => {
     const level = onboardingLevel;
+    const why = onboardingWhy;
     const goal = onboardingGoal;
-    if (!level || !goal) return;
+    if (!level || !why || !goal) return;
     const route = firstLessonForLevel(level);
     setOnboardingOpen(false);
     save({
       onboardingDone: true,
       onboardingPending: false,
       learnerLevel: level,
-      dailyGoalLessons: goal,
+      learningWhy: why,
+      dailyGoalMinutes: goal,
       welcomed: true,
     });
     const unit = UNITS.find((item) => item.id === route.unitId) || UNITS[0];
@@ -10131,9 +10140,9 @@ export default function App() {
           lang={uiLang}
           theme={theme}
           step={onboardingStep}
-          level={onboardingLevel}
           goal={onboardingGoal}
           onLevel={pickOnboardingLevel}
+          onWhy={pickOnboardingWhy}
           onGoal={pickOnboardingGoal}
           onStart={startOnboardingLesson}
         />
