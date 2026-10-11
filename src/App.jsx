@@ -7,7 +7,7 @@ import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuest
 import { drawLessonIndexes, questionByIndex } from "./replayBank.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { comeBackTomorrowLine, dayKeyFromDate, firstLecturaClaimed, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, storiesHubLoud, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { comeBackTomorrowLine, dayKeyFromDate, firstLecturaClaimed, hoyHubChecked, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, storiesHubLoud, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { paywallStillPath } from "./paywallStill.js";
 import { buildColdFirstHoyQueue, coldFirstHoySceneBeats, isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
@@ -58,7 +58,7 @@ import {
   sobremesaTipsLabel,
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
-import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { lecturaAdvanceScrollY, lecturaStickyHeaderBottom } from "./lecturaAdvance.js";
 import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
@@ -8814,13 +8814,14 @@ export default function App() {
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
             const hoyDone = hoyHubDone({ todaySceneDone });
-            const storyClaimed = firstLecturaClaimed({ stories: prog.stories });
-            const hoyLoud = hoyHubLoud({ todayScene, todaySceneDone });
-            const storiesLoud = storiesHubLoud({ todaySceneDone, firstStoryClaimed: storyClaimed });
             const goalReached = (prog.xpToday || 0) >= DAILY_GOAL;
+            const hoyChecked = hoyHubChecked({ todaySceneDone, goalReached });
+            const storyClaimed = firstLecturaClaimed({ stories: prog.stories });
+            const hoyLoud = hoyHubLoud({ todayScene, todaySceneDone, goalReached });
+            const storiesLoud = storiesHubLoud({ todaySceneDone, goalReached, firstStoryClaimed: storyClaimed });
             const hubTiles = [
               { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: welcomeLine || L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
-              { id: "stories", testid: "hub-stories", title: storiesLoud ? L.hubStoriesNext : L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
+              { id: "stories", testid: "hub-stories", title: storiesLoud ? L.hubStoriesNext : L.hubStories, art: <HubTileArt face="stories" />, act: () => storiesLoud ? openStory(nextUnreadStory(STORIES, prog.stories)) : setTab("lectura") },
               { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => openGamesHub() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
               { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, quiet: L.hubEightyQuiet, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
@@ -8866,7 +8867,7 @@ export default function App() {
                               color: D.ink,
                             }),
                       }}>
-                      {tile.id === "hoy" && (hoyDone || goalReached) && (
+                      {tile.id === "hoy" && hoyChecked && (
                         <span data-testid="hub-hoy-done" aria-hidden="true" style={{
                           position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: 99,
                           background: D.greenBg, color: limeText(D.okText, D), fontSize: 12, fontWeight: 900, lineHeight: "20px",

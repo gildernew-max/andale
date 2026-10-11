@@ -9,9 +9,11 @@ import App from "./App.jsx";
 import { dayKeyFromDate } from "./firstDoor.js";
 import { contrastRatio } from "./spanishKeyboard.js";
 import {
+  answerFirstSessionBeat,
   installFlowHooks,
   localToday,
   seedProgress,
+  STORAGE_KEY,
 } from "./flowsHarness.jsx";
 
 installFlowHooks();
@@ -80,6 +82,22 @@ describe("Stories is loud after Hoy until the first claim", () => {
     expect(stories.className).not.toMatch(/pop|jump|wiggle/);
   });
 
+  it("a goal check with no scene mission louds Stories and drops Hoy's outline", async () => {
+    await home({ missions: {}, xpToday: 62, uiLang: "en", theme: "dark" });
+    const stories = screen.getByTestId("hub-stories");
+    const hoy = screen.getByTestId("hub-hoy");
+    expect(loudTiles()).toHaveLength(1);
+    expect(stories.getAttribute("data-hub-loud")).toBe("stories");
+    expect(hoy.getAttribute("data-hub-loud")).toBeNull();
+    expect(hoy.getAttribute("data-hub-hoy-done")).toBeNull();
+    expect(screen.getByTestId("hub-hoy-done").textContent).toBe("✓");
+    expect(hoy.style.border).not.toMatch(LIME);
+    expect(hoy.style.boxShadow).not.toMatch(LIME);
+    expect(stories.style.background).toMatch(LIME);
+    expect(screen.getByTestId("hub-stories-label").textContent).toBe(NEXT.en);
+    expect(screen.getByTestId("hub-hoy-goal").textContent).toBe("Today\u2019s goal done: 40\u00a0XP.");
+  });
+
   it("keeps the usual Stories label while Hoy is still open", async () => {
     await home({ missions: {}, uiLang: "en" });
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
@@ -117,4 +135,97 @@ describe("Stories is loud after Hoy until the first claim", () => {
     expect(screen.getByTestId("hub-stories").getAttribute("data-hub-loud")).toBeNull();
     expect(screen.getByTestId("hub-hoy-done").textContent).toBe("✓");
   });
+
+  it("a fresh I-know-some lesson checks Hoy without the outline and opens story 1 in one tap", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("onboarding-level-some")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-level-some"));
+    await user.click(screen.getByTestId("onboarding-cta"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-why-live")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-why-live"));
+    await user.click(screen.getByTestId("onboarding-cta"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-10")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-goal-10"));
+    await user.click(screen.getByTestId("onboarding-cta"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-start"));
+    await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
+    for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
+    await user.click(await screen.findByTestId("win-continue"));
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const today = dayKeyFromDate(new Date());
+    expect(saved.firstSessionDone).toBe(true);
+    expect(saved.missions?.[`scene-${today}`]).toBeUndefined();
+    expect(saved.xpToday).toBeGreaterThanOrEqual(40);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+
+    const stories = screen.getByTestId("hub-stories");
+    const hoy = screen.getByTestId("hub-hoy");
+    expect(loudTiles()).toHaveLength(1);
+    expect(stories.getAttribute("data-hub-loud")).toBe("stories");
+    expect(hoy.getAttribute("data-hub-loud")).toBeNull();
+    expect(screen.getByTestId("hub-hoy-done").textContent).toBe("✓");
+    expect(hoy.style.border).not.toMatch(LIME);
+    expect(hoy.style.boxShadow).not.toMatch(LIME);
+    expect(stories.style.background).toMatch(LIME);
+    expect(stories.style.borderBottom).toMatch(LIP);
+    expect(screen.getByTestId("hub-stories-label").textContent).toBe(NEXT.en);
+    expect(screen.getByTestId("hub-stories-label").style.color).toMatch(INK);
+    expect(screen.getByTestId("hub-hoy-goal").textContent).toBe("Today\u2019s goal done: 40\u00a0XP.");
+    expect(screen.getByTestId("door-meta").textContent).toMatch(new RegExp(`Goal:\\s*${saved.xpToday}/40 XP`));
+
+    await user.click(stories);
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));
+    expect(screen.getByTestId("lectura-paragraph-first")).toBeTruthy();
+    expect(document.body.textContent).toMatch(/Paragraph 1 \/ /);
+    expect(screen.queryByTestId("story-shelf-story-0")).toBeNull();
+    expect(screen.queryByTestId("learn-hub")).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).stories?.["story-0"]).toBeFalsy();
+
+    await user.click(screen.getByTestId("brand-home"));
+    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("hub-stories").getAttribute("data-hub-loud")).toBe("stories");
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBeNull();
+    expect(screen.getByTestId("hub-hoy").style.border).not.toMatch(LIME);
+    expect(screen.getByTestId("hub-stories-label").textContent).toBe(NEXT.en);
+
+    await user.click(screen.getByTestId("hub-stories"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-0"));
+    for (;;) {
+      const next = screen.queryByRole("button", { name: /^(Siguiente|Next) →$/ });
+      if (!next) break;
+      await user.click(next);
+    }
+    await user.click(screen.getByRole("button", { name: /^(Preguntas|Questions) →$/ }));
+    await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
+    await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
+    await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
+    await user.click(screen.getByRole("button", { name: /El olvido/ }));
+    await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).stories?.["story-0"]).toBeTruthy();
+
+    await user.click(screen.getByTestId("brand-home"));
+    const wall = await screen.findByTestId("soft-paywall", {}, { timeout: 4000 }).catch(() => null);
+    if (wall) {
+      await user.click(screen.getByTestId("soft-paywall-dismiss"));
+      await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    }
+    await waitFor(() => expect(screen.getByTestId("hub-stories-label").textContent).toBe(USUAL.en));
+    expect(screen.getByTestId("hub-stories").getAttribute("data-hub-loud")).toBeNull();
+    expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBeNull();
+    expect(screen.getByTestId("hub-hoy-done").textContent).toBe("✓");
+    expect(loudTiles()).toHaveLength(0);
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+
+    await user.click(screen.getByTestId("hub-stories"));
+    await waitFor(() => expect(screen.getByTestId("story-shelf-story-0")).toBeTruthy());
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+  }, 90000);
 });
