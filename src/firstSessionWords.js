@@ -21,6 +21,13 @@ export function firstSessionWhyLine(beat, lang) {
   return filled(lang === "en" ? slot.en : slot.es);
 }
 
+/** "I know some" prepends the onda bank item, so the existing why lines stay on their exercises. */
+export function someFirstSessionWhyLine(beat, lang) {
+  const n = Number(beat);
+  if (!Number.isInteger(n) || n < 1) return null;
+  return firstSessionWhyLine(n - 1, lang);
+}
+
 export function firstSessionWinLine(lang) {
   const slot = firstSessionWords.win;
   if (!slot) return null;

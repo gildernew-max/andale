@@ -171,8 +171,8 @@ describe("first session before the paywall", () => {
     localStorage.clear();
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("onboarding-level-some")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-level-some"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-level-conversation")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-level-conversation"));
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-1")).toBeTruthy());
     await user.click(screen.getByTestId("onboarding-goal-1"));
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
