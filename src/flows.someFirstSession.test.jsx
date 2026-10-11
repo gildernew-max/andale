@@ -38,7 +38,7 @@ describe("I know some first session", () => {
     await startSomeLesson(user);
     expect(firstSessionRoot().getAttribute("data-beginner-first")).toBe("0");
     expect(firstSessionRoot().getAttribute("data-qtype")).toBe("mc");
-    expect(firstSessionRoot().getAttribute("data-count")).toBe("6");
+    expect(firstSessionRoot().getAttribute("data-count")).toBe("5");
     expect(document.body.textContent).toContain(ONDA_PROMPT);
     expect(document.body.textContent).not.toContain(MARISOL_PROMPT);
     expect(choiceLabels().slice().sort()).toEqual(["al rato", "mande", "onda", "padre"]);
@@ -89,7 +89,7 @@ describe("I know some first session", () => {
     await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
     await user.click(screen.getByTestId("hub-sendero"));
     await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
-    expect(screen.getByTestId("path-sheet").textContent).toMatch(/6 challenges/);
+    expect(screen.getByTestId("path-sheet").textContent).toMatch(/5 challenges/);
     await user.click(screen.getByRole("button", { name: /Start · \+XP/ }));
     await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBe("mc"));
     expect(document.body.textContent).toContain(ONDA_PROMPT);

@@ -101,12 +101,12 @@ export function findOndaBankQuestion(units) {
   return { ...bank[bankIndex], _u: "mex", _i: authored + bankIndex };
 }
 
-/** "I know some" only. Opener is the onda bank item; the existing mix follows, so Marisol is second. */
+/** "I know some" only. Onda opens, Marisol is second, and the last old beat is left off so the session stays five. */
 export function someFirstSessionQuestions(units) {
   const onda = findOndaBankQuestion(units);
   const rest = firstSessionQuestions(units);
   if (!onda) return rest;
-  return [onda, ...rest];
+  return [onda, ...rest.slice(0, -1)];
 }
 
 /** Sheet count. "some" follows its own list; every other level stays on the five-beat session. */

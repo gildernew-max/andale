@@ -107,7 +107,7 @@ describe("short onboarding", () => {
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
     await user.click(screen.getByTestId("onboarding-start"));
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-beginner-first")).toBe("0"));
-    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("6");
+    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
     expect(document.body.textContent).toContain("—¡Hola, Memo! ¿Qué ___? Hacía mucho que no te veía.");
     expect(document.body.textContent).not.toMatch(/Es obvio que Marisol/);
     expect(document.body.textContent).not.toMatch(/good morning/);
