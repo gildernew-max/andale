@@ -162,9 +162,6 @@ export default function Onboarding({ lang, theme = "light", step, goal, onLevel,
               <span style={{ display: "block", fontWeight: 700, fontSize: 14, lineHeight: 1.3, marginTop: 3 }}>{onboardingLine(onboardingCopy.goals[count], lang)}</span>
             </ChoiceCard>
           ))}
-          <p data-testid="onboarding-goal-note" style={{ ...levelPromiseStyle(theme), margin: "2px 0 0" }}>
-            {onboardingLine(onboardingCopy.goalNote, lang)}
-          </p>
         </div>
       ) : step === "why" ? (
         <div style={{ display: "grid", gap: 10 }}>

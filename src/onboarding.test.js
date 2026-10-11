@@ -200,7 +200,9 @@ assert(onboardingCopy.goals[5].en === "Easy" && onboardingCopy.goals[5].es === "
 assert(onboardingCopy.goals[10].en === "Steady" && onboardingCopy.goals[10].es === "Constante", "10 min adjective");
 assert(onboardingCopy.goals[15].en === "Serious" && onboardingCopy.goals[15].es === "En serio", "15 min adjective");
 assert(onboardingCopy.goals[20].en === "All in" && onboardingCopy.goals[20].es === "A fondo", "20 min adjective");
-assert(onboardingCopy.goalNote.en === "You can change this anytime in Profile." && onboardingCopy.goalNote.es === "Puedes cambiarlo cuando quieras en Perfil.", "goal note is the locked line");
+assert(onboardingCopy.goalNote == null, "the goal note is gone");
+assert(!copySrc.includes("You can change this anytime in Profile.") && !copySrc.includes("Puedes cambiarlo cuando quieras en Perfil."), "the goal note strings are gone");
+assert(!uiSrc.includes("onboarding-goal-note"), "the goal screen has no note");
 assert(onboardingCopy.planTitle.en === "Your plan" && onboardingCopy.planTitle.es === "Tu plan", "plan title");
 assert(onboardingCopy.planBody.en === "{n} minutes a day: one short lesson, then a story in Lectura.", "plan body EN");
 assert(onboardingCopy.planBody.es === "{n} minutos al día: una lección corta y luego un cuento en Lectura.", "plan body ES");

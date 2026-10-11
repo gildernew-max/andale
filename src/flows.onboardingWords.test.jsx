@@ -68,7 +68,8 @@ describe("short onboarding", () => {
     for (const count of [5, 10, 15, 20]) {
       expect(screen.getByTestId(`onboarding-goal-${count}`).textContent).toBe(`${count} min${onboardingLine(onboardingCopy.goals[count], "en")}`);
     }
-    expect(screen.getByTestId("onboarding-goal-note").textContent).toBe(onboardingLine(onboardingCopy.goalNote, "en"));
+    expect(screen.queryByTestId("onboarding-goal-note")).toBeNull();
+    expect(onboardingText("en")).not.toMatch(/Profile|Perfil/);
     await tap(screen.getByTestId("onboarding-goal-15"));
     await tap(screen.getByTestId("onboarding-cta"));
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("plan"));
@@ -181,10 +182,11 @@ describe("short onboarding", () => {
     await user.click(screen.getByTestId("onboarding-why-family"));
     await user.click(screen.getByTestId("onboarding-cta"));
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-10").textContent).toBe(`10 min${onboardingLine(onboardingCopy.goals[10], "en")}`));
-    expect(screen.getByTestId("onboarding-goal-note").textContent).toBe(onboardingLine(onboardingCopy.goalNote, "en"));
+    expect(screen.queryByTestId("onboarding-goal-note")).toBeNull();
+    expect(onboardingText("en")).not.toMatch(/Profile|Perfil/);
     await user.click(screen.getByTestId("lang-es"));
-    await waitFor(() => expect(screen.getByTestId("onboarding-goal-note").textContent).toBe(onboardingLine(onboardingCopy.goalNote, "es")));
-    expect(screen.getByTestId("onboarding-goal-20").textContent).toBe(`20 min${onboardingLine(onboardingCopy.goals[20], "es")}`);
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-20").textContent).toBe(`20 min${onboardingLine(onboardingCopy.goals[20], "es")}`));
+    expect(onboardingText("es")).not.toMatch(/Profile|Perfil/);
     await user.click(screen.getByTestId("onboarding-goal-10"));
     await user.click(screen.getByTestId("onboarding-cta"));
     await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.planTitle, "es")));

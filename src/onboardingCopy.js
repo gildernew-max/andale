@@ -41,10 +41,6 @@ export const onboardingCopy = {
     15: { en: "Serious", es: "En serio" },
     20: { en: "All in", es: "A fondo" },
   },
-  goalNote: {
-    en: "You can change this anytime in Profile.",
-    es: "Puedes cambiarlo cuando quieras en Perfil.",
-  },
   planTitle: { en: "Your plan", es: "Tu plan" },
   /** {n} is the chosen minute budget. */
   planBody: {
