@@ -12025,13 +12025,13 @@ export default function App() {
                     <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? limeText(D.okText, D) : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
-                    <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", zIndex: "auto", pointerEvents: sheetBlocksAnswers ? "none" : "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", zIndex: "auto", pointerEvents: "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => {
                         const revealCorrect = !!checkState[pi] && checkState[pi] !== checkpoints[pi].a && choice === checkpoints[pi].a;
                         const marked = checkState[pi] === choice || revealCorrect;
                         return (
-                        <button key={choice} disabled={!!checkState[pi]} onClick={() => { if (sheetBlocksAnswers) return; answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a); }}
-                          style={{ border: `1.5px solid ${marked ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: marked ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] || sheetBlocksAnswers ? "default" : "pointer", pointerEvents: sheetBlocksAnswers ? "none" : "auto", color: marked && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
+                        <button key={choice} disabled={!!checkState[pi]} onClick={() => { if (sheetBlocksAnswers) { setWordSel(null); return; } answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a); }}
+                          style={{ border: `1.5px solid ${marked ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: marked ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] || sheetBlocksAnswers ? "default" : "pointer", pointerEvents: "auto", color: marked && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
                           {choice}
                         </button>
                         );

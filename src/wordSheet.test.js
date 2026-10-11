@@ -166,8 +166,13 @@ const between = appSrc.slice(answersAt, sheetAt);
 assert(between.includes("</div>"), "the answer row closes before the anchored sheet");
 assert(!between.includes("renderWordSheet"), "the anchored sheet is not inside the answer row");
 assert(!between.includes("? 40 : \"auto\""), "answer chips do not stack above the open sheet");
-assert(between.includes('pointerEvents: sheetBlocksAnswers ? "none" : "auto"'), "checkpoint chips take no taps while the sheet is open");
-assert(appSrc.includes("if (sheetBlocksAnswers) return"), "a chip click cannot lock the checkpoint under an open sheet");
+assert(between.includes('pointerEvents: "auto"'), "checkpoint chips still receive a tap while the sheet is open");
+assert(!between.includes('pointerEvents: sheetBlocksAnswers ? "none"'), "an open sheet does not swallow the checkpoint tap");
+const guardAt = between.indexOf("if (sheetBlocksAnswers)");
+const answerAt = between.indexOf("answerStoryCheckpoint");
+assert(guardAt >= 0 && answerAt > guardAt, "the sheet guard runs before an answer");
+const guard = between.slice(guardAt, answerAt);
+assert(guard.includes("setWordSel(null)") && guard.includes("return"), "a checkpoint tap closes the gloss sheet and does not answer");
 assert(appSrc.includes('pointerEvents: wordSheetBox ? "auto" : "none"'), "an unplaced sheet does not take taps");
 assert(appSrc.includes('flores: ["flowers"]'), "flores keeps a translation line on the word sheet");
 
