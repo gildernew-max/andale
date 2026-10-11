@@ -165,7 +165,10 @@ assert(answersAt > 0 && sheetAt > answersAt, "anchored word sheet renders with t
 const between = appSrc.slice(answersAt, sheetAt);
 assert(between.includes("</div>"), "the answer row closes before the anchored sheet");
 assert(!between.includes("renderWordSheet"), "the anchored sheet is not inside the answer row");
-assert(between.includes("? 40 : \"auto\""), "the answer row stacks above the open sheet");
+assert(!between.includes("? 40 : \"auto\""), "answer chips do not stack above the open sheet");
+assert(between.includes('pointerEvents: sheetBlocksAnswers ? "none" : "auto"'), "checkpoint chips take no taps while the sheet is open");
+assert(appSrc.includes("if (sheetBlocksAnswers) return"), "a chip click cannot lock the checkpoint under an open sheet");
 assert(appSrc.includes('pointerEvents: wordSheetBox ? "auto" : "none"'), "an unplaced sheet does not take taps");
+assert(appSrc.includes('flores: ["flowers"]'), "flores keeps a translation line on the word sheet");
 
 console.log("ok: word sheet stops above checkpoint buttons and below the tapped word");
