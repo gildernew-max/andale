@@ -7,14 +7,17 @@ import {
   FIRST_SESSION_MIX,
   completedLessonCount,
   firstSessionProgressPct,
+  findOndaBankQuestion,
+  firstSessionChallengeCount,
   firstSessionQuestions,
   firstSessionTypes,
+  someFirstSessionQuestions,
   formatWalkClock,
   migrateFirstSession,
   scriptedWalkStats,
   shouldUseFirstSession,
 } from "./firstSession.js";
-import { firstSessionWhyLine, firstSessionWinLine, firstSessionWords } from "./firstSessionWords.js";
+import { firstSessionWhyLine, firstSessionWinLine, firstSessionWords, someFirstSessionWhyLine } from "./firstSessionWords.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -61,6 +64,32 @@ assert(subj1.questions.length + 1 === 12, "Sendero subj1 is still the 12-challen
 
 const questions = firstSessionQuestions(units);
 assert(questions.length === FIRST_SESSION_COUNT, "all five picks resolve");
+assert(questions[0].prompt === "Es obvio que Marisol ___ razón.", "the shared first session still opens on Marisol");
+
+const mex = units.find((u) => u.id === "mex");
+const ondaBank = mex.bank.find((q) => q.answer === "onda" && String(q.explain).includes("¿Qué onda?"));
+const onda = findOndaBankQuestion(units);
+assert(onda && ondaBank, "the onda item is already in the mex bank");
+assert(onda.prompt === ondaBank.prompt && onda.answer === ondaBank.answer && onda.explain === ondaBank.explain && onda.note === ondaBank.note && onda.type === ondaBank.type, "the opener is the bank item, not a rewritten copy");
+assert(onda.choices === ondaBank.choices, "onda choices stay the bank array");
+assert(onda._u === "mex" && onda._i === mex.questions.length + mex.bank.indexOf(ondaBank), "resume index is the bank slot");
+const someQuestions = someFirstSessionQuestions(units);
+const dropped = questions[questions.length - 1];
+assert(someQuestions.length === FIRST_SESSION_COUNT, "some stays at five");
+assert(someQuestions[0].prompt === ondaBank.prompt && someQuestions[0].choices === ondaBank.choices && someQuestions[0].answer === "onda", "some exercise 1 is the onda bank item");
+assert(someQuestions[1].prompt === "Es obvio que Marisol ___ razón." && someQuestions[1]._i === 3 && someQuestions[1]._u === "subj1", "Marisol moves to second");
+assert(dropped.prompt === "Te llamo cuando ___ del trabajo." && dropped._u === "subj1" && dropped._i === 4, "the dropped beat is the last old one");
+assert(!someQuestions.some((q) => q.prompt === dropped.prompt), "some does not include the dropped cuando beat");
+assert(someQuestions.slice(1).map((q) => `${q._u}:${q._i}:${q.prompt}`).join("|") === questions.slice(0, -1).map((q) => `${q._u}:${q._i}:${q.prompt}`).join("|"), "the kept beats are the old mix minus its last item");
+assert(firstSessionChallengeCount("some", units) === someQuestions.length, "the some sheet count matches the list");
+assert(firstSessionChallengeCount("conversation", units) === FIRST_SESSION_COUNT && firstSessionChallengeCount("beginner", units) === FIRST_SESSION_COUNT && firstSessionChallengeCount(undefined, units) === FIRST_SESSION_COUNT, "other levels stay at five");
+const mexWithoutOnda = units.map((u) => u.id === "mex" ? { ...u, bank: u.bank.filter((q) => q !== ondaBank) } : u);
+assert(findOndaBankQuestion(mexWithoutOnda) == null, "a missing onda item is not invented");
+assert(someFirstSessionQuestions(mexWithoutOnda)[0].prompt === "Es obvio que Marisol ___ razón.", "without the bank item, some does not grow a stand-in opener");
+assert(someFirstSessionWhyLine(0, "en") == null && someFirstSessionWhyLine(0, "es") == null, "the onda beat adds no why line");
+assert(someFirstSessionWhyLine(1, "en") === firstSessionWords[0].why.en && someFirstSessionWhyLine(1, "es") === firstSessionWords[0].why.es, "Marisol keeps the existing why line at beat 2");
+assert([2, 3, 4].every((beat) => someFirstSessionWhyLine(beat, "en") === firstSessionWords[beat - 1].why.en && someFirstSessionWhyLine(beat, "es") === firstSessionWords[beat - 1].why.es), "the kept why lines follow their exercises");
+assert(someFirstSessionWhyLine(4, "en") === firstSessionWords[3].why.en, "the last some beat keeps the Espero why, not the dropped Cuando line");
 assert(questions.every((q, i) => q.type === FIRST_SESSION_MIX[i].type), "pick types match the mix");
 assert(questions.every((q, i) => q._i === FIRST_SESSION_MIX[i].index && q._u === "subj1"), "picks stay on authored subj1 items");
 const types = firstSessionTypes(questions);

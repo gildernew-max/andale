@@ -131,7 +131,7 @@ describe("short onboarding", () => {
     expect(saved.firstSessionDone).not.toBe(true);
   });
 
-  it("some Spanish keeps the existing first session", async () => {
+  it("some Spanish opens on the onda bank item, not the beginner session", async () => {
     localStorage.clear();
     const user = userEvent.setup();
     render(<App />);
@@ -145,7 +145,9 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding-plan-body").textContent).toBe(onboardingPlanLine("en", 10));
     await user.click(screen.getByTestId("onboarding-start"));
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-beginner-first")).toBe("0"));
-    expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
+    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
+    expect(document.body.textContent).toContain("—¡Hola, Memo! ¿Qué ___? Hacía mucho que no te veía.");
+    expect(document.body.textContent).not.toMatch(/Es obvio que Marisol/);
     expect(document.body.textContent).not.toMatch(/good morning/);
   });
 

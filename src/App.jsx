@@ -61,12 +61,12 @@ import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, should
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { lecturaAdvanceScrollY, lecturaStickyHeaderBottom } from "./lecturaAdvance.js";
-import { FIRST_SESSION_COUNT, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession } from "./firstSession.js";
+import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
 import Onboarding from "./Onboarding.jsx";
 import { beginnerFirstQuestions, beginnerWhyLine, beginnerWinLine, BEGINNER_SESSION_TITLE } from "./beginnerFirstSession.js";
-import { firstSessionWhyLine, firstSessionWinLine } from "./firstSessionWords.js";
+import { firstSessionWhyLine, firstSessionWinLine, someFirstSessionWhyLine } from "./firstSessionWords.js";
 import { HoyWinBird, WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyCorrectKeys, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -5608,6 +5608,7 @@ export default function App() {
         return o.i === -1 ? { type: "match", pairs: src.pairs, _u: o.u, _i: -1 } : { ...questionByIndex(src, o.i), _u: o.u, _i: o.i };
       }).filter(Boolean).map(prepQuestion);
       if (qs.length) {
+        const someResume = !beginnerResume && qs[0]?._u === "mex" && qs[0]?.answer === "onda";
         emitClaimed(FUNNEL_EVENTS.firstSessionStart, claimFirstSessionStart(window.localStorage, todayStr()));
         beginSession({
           title: beginnerResume ? BEGINNER_SESSION_TITLE : (u?.title || UNITS[0].title),
@@ -5616,6 +5617,7 @@ export default function App() {
           unitId: "_first",
           firstSession: true,
           beginnerFirst: beginnerResume,
+          someFirst: someResume,
           review: false,
           host: hostForUnit(u?.id || "subj1"),
           questions: qs,
@@ -5644,7 +5646,7 @@ export default function App() {
       return;
     }
     if (shouldUseFirstSession({ done: prog.done, firstSessionDone: prog.firstSessionDone })) {
-      beginFirstSession(u, section, { beginner: prog.learnerLevel === "beginner" });
+      beginFirstSession(u, section, { beginner: prog.learnerLevel === "beginner", level: prog.learnerLevel });
       return;
     }
     const bankCount = Array.isArray(u.bank) ? u.bank.length : 0;
@@ -5663,9 +5665,14 @@ export default function App() {
     beginSession({ title: u.title, color: section.color, dark: section.dark, unitId: u.id, review: false, host: hostForUnit(u.id), questions: withMatch.map(prepQuestion) });
   };
 
-  const beginFirstSession = (u, section, { fromLectura = false, beginner = false } = {}) => {
-    const questions = (beginner ? beginnerFirstQuestions() : firstSessionQuestions(UNITS)).map(prepQuestion);
+  const beginFirstSession = (u, section, { fromLectura = false, beginner = false, level = null } = {}) => {
+    const some = !beginner && level === "some";
+    const source = beginner
+      ? beginnerFirstQuestions()
+      : some ? someFirstSessionQuestions(UNITS) : firstSessionQuestions(UNITS);
+    const questions = source.map(prepQuestion);
     if (!questions.length) return;
+    const someFirst = some && source[0]?._u === "mex" && source[0]?.answer === "onda";
     emitClaimed(FUNNEL_EVENTS.firstSessionStart, claimFirstSessionStart(window.localStorage, todayStr()));
     save({ firstSessionArmed: true });
     beginSession({
@@ -5675,6 +5682,7 @@ export default function App() {
       unitId: "_first",
       firstSession: true,
       beginnerFirst: !!beginner,
+      someFirst,
       review: false,
       host: hostForUnit(u?.id || "subj1"),
       questions,
@@ -7073,7 +7081,7 @@ export default function App() {
       if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
       setLecturaCliffhanger(null);
       setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
-      beginFirstSession(UNITS[0], SECTIONS[0], { fromLectura: true });
+      beginFirstSession(UNITS[0], SECTIONS[0], { fromLectura: true, level: prog.learnerLevel });
       return;
     }
     setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
@@ -7734,7 +7742,11 @@ export default function App() {
     lang: uiLang,
   });
   const firstSessionWhy = session?.firstSession
-    ? (session.beginnerFirst ? beginnerWhyLine(qi, uiLang) : firstSessionWhyLine(qi, uiLang))
+    ? (session.beginnerFirst
+      ? beginnerWhyLine(qi, uiLang)
+      : session.someFirst
+        ? someFirstSessionWhyLine(qi, uiLang)
+        : firstSessionWhyLine(qi, uiLang))
     : null;
   const firstSessionWin = session?.beginnerFirst ? beginnerWinLine(uiLang) : firstSessionWinLine(uiLang);
   const L = UI[uiLang];
@@ -8508,7 +8520,7 @@ export default function App() {
     });
     const unit = UNITS.find((item) => item.id === route.unitId) || UNITS[0];
     const section = SECTIONS.find((item) => item.unitIds.includes(unit.id)) || SECTIONS[0];
-    beginFirstSession(unit, section, { beginner: route.beginner === true });
+    beginFirstSession(unit, section, { beginner: route.beginner === true, level });
   };
 
   // Red and green results: Continue is its own row under the copy, so the text
@@ -10114,7 +10126,7 @@ export default function App() {
                   done: prog.done,
                   firstSessionDone: prog.firstSessionDone,
                   hasResume: !!(prog.resume && prog.resume.unitId === sheet.unit.id && Array.isArray(prog.resume.order)),
-                }) ? FIRST_SESSION_COUNT : sheet.unit.questions.length + 1)} {L.challenges}</span>
+                }) ? firstSessionChallengeCount(prog.learnerLevel, UNITS) : sheet.unit.questions.length + 1)} {L.challenges}</span>
               <span>·</span>
 	              <span style={{ color: sheet.crowns > 0 ? D.goldDark : D.sub }}><IcCrown size={14} /> {sheet.crowns} {sheet.crowns === 1 ? (uiLang === "es" ? "corona" : "crown") : L.crowns}</span>
               <span>·</span>

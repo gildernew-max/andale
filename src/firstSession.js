@@ -79,6 +79,42 @@ export function firstSessionQuestions(units) {
   }).filter(Boolean);
 }
 
+/**
+ * Mexicanismos bank item: answer "onda", Why already says «¿Qué onda?».
+ * Returns the bank object with resume indexes, or null when it is not there.
+ */
+export function findOndaBankQuestion(units) {
+  const mex = (units || []).find((u) => u && u.id === "mex");
+  const bank = Array.isArray(mex?.bank) ? mex.bank : null;
+  if (!bank) return null;
+  const bankIndex = bank.findIndex((q) =>
+    q
+    && q.type === "mc"
+    && q.answer === "onda"
+    && typeof q.prompt === "string"
+    && q.prompt.includes("¿Qué")
+    && typeof q.explain === "string"
+    && q.explain.includes("¿Qué onda?")
+  );
+  if (bankIndex < 0) return null;
+  const authored = Array.isArray(mex.questions) ? mex.questions.length : 0;
+  return { ...bank[bankIndex], _u: "mex", _i: authored + bankIndex };
+}
+
+/** "I know some" only. Onda opens, Marisol is second, and the last old beat is left off so the session stays five. */
+export function someFirstSessionQuestions(units) {
+  const onda = findOndaBankQuestion(units);
+  const rest = firstSessionQuestions(units);
+  if (!onda) return rest;
+  return [onda, ...rest.slice(0, -1)];
+}
+
+/** Sheet count. "some" follows its own list; every other level stays on the five-beat session. */
+export function firstSessionChallengeCount(level, units) {
+  if (level === "some") return someFirstSessionQuestions(units).length;
+  return FIRST_SESSION_COUNT;
+}
+
 export function firstSessionTypes(questions) {
   return [...new Set((questions || []).map((q) => q.type))];
 }

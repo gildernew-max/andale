@@ -104,7 +104,9 @@ assert(!gateSrc.includes("story-0") && !gateSrc.includes("lectura"), "the story-
 const startFn = appSrc.slice(appSrc.indexOf("const startOnboardingLesson"), appSrc.indexOf("return (", appSrc.indexOf("const startOnboardingLesson")));
 assert(!startFn.includes("openStory") && !startFn.includes("story-0"), "onboarding start does not open Lectura");
 assert(startFn.includes("beginner: route.beginner === true"), "the beginner flag reaches the first session");
-assert(appSrc.includes("beginner ? beginnerFirstQuestions() : firstSessionQuestions(UNITS)"), "only the beginner level swaps the question list");
+assert(appSrc.includes("some ? someFirstSessionQuestions(UNITS)"), "I know some uses its own first-session order");
+assert(appSrc.includes(": firstSessionQuestions(UNITS)"), "conversation and unmarked saves keep the existing first session");
+assert(startFn.includes("level"), "the chosen level reaches the first session");
 
 const lines = slots(onboardingCopy);
 assert(lines.length >= 12, "every screen string is an EN/ES pair");

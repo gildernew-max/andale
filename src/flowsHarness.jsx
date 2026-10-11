@@ -320,7 +320,7 @@ export const answerFirstSessionBeat = async (user) => {
   let taps = 0;
   const tap = async (el) => { taps += 1; await user.click(el); };
   if (type === "mc") {
-    const want = body.includes("Es obvio") ? "tiene" : "vengas";
+    const want = body.includes("Es obvio") ? "tiene" : body.includes("Memo") ? "onda" : "vengas";
     const card = [...document.querySelectorAll(".choice-card")].find((el) => el.textContent.includes(want));
     expect(card, want).toBeTruthy();
     await tap(card);
@@ -348,7 +348,7 @@ export const missFirstSessionBeat = async (user) => {
   const type = firstSessionRoot().getAttribute("data-qtype");
   const body = document.body.textContent;
   if (type === "mc") {
-    const avoid = body.includes("Es obvio") ? "tiene" : "vengas";
+    const avoid = body.includes("Es obvio") ? "tiene" : body.includes("Memo") ? "onda" : "vengas";
     const card = [...document.querySelectorAll(".choice-card")].find((el) => !el.textContent.includes(avoid));
     expect(card).toBeTruthy();
     await user.click(card);

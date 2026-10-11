@@ -96,7 +96,7 @@ export function onboardingResume(saved) {
   return { step: "plan", level, why, goal };
 }
 
-/** Beginner → the zero-start first session. Anyone else → the existing five-exercise first session. */
+/** Beginner → the zero-start first session. Anyone else → a first session. "some" order lives in firstSession.js. */
 export function firstLessonForLevel(level) {
   if (level === "beginner") return { kind: "firstSession", unitId: EASIEST_UNIT_ID, beginner: true };
   return { kind: "firstSession", unitId: EASIEST_UNIT_ID, beginner: false };
