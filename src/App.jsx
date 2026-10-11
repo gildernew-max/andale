@@ -5499,7 +5499,9 @@ export default function App() {
 	    // Uses the save just read. The setProg updater above has not run yet.
 	    const today = todayStr(); const y = yesterdayStr();
 	    if (p?.lastDay && p.lastDay !== today && p.lastDay !== y && (p.streak || 0) >= 2 && !p.repairChecked) {
-	      const dayBefore = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);
+	      const dayBeforeDate = new Date();
+	      dayBeforeDate.setDate(dayBeforeDate.getDate() - 2);
+	      const dayBefore = dayKeyFromDate(dayBeforeDate);
 	      if (p.lastDay === dayBefore) {
 	        setStreakRepair((p.freezes || 0) > 0 ? "freeze" : "repair");
 	      }
