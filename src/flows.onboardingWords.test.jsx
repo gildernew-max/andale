@@ -212,8 +212,10 @@ describe("short onboarding", () => {
     expect(card.getAttribute("data-selected")).toBe("true");
     expect(screen.getByTestId("onboarding-check")).toBeTruthy();
     expect(card.style.background).toMatch(/#FFFFFF|rgb\(\s*255,\s*255,\s*255\s*\)/i);
-    expect(card.style.border).toMatch(/2px solid (#2E7500|rgb\(\s*46,\s*117,\s*0\s*\))/i);
+    expect(card.style.border).toMatch(/3px solid (#2E7500|rgb\(\s*46,\s*117,\s*0\s*\))/i);
+    expect(card.style.padding).toBe("11px 13px");
     expect(screen.getByTestId("onboarding-level-some").style.border).toMatch(/2px solid (#6F7757|rgb\(\s*111,\s*119,\s*87\s*\))/i);
+    expect(screen.getByTestId("onboarding-level-some").style.padding).toBe("12px 14px");
     expect(screen.getByTestId("onboarding-level-some").style.background).toBe(card.style.background);
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level");
@@ -295,8 +297,10 @@ describe("short onboarding", () => {
     expect(picked.getAttribute("data-selected")).toBe("true");
     expect(screen.getByTestId("onboarding-check")).toBeTruthy();
     expect(picked.style.background).toMatch(/#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i);
-    expect(picked.style.border).toMatch(/2px solid (#58CC02|rgb\(\s*88,\s*204,\s*2\s*\))/i);
+    expect(picked.style.border).toMatch(/3px solid (#58CC02|rgb\(\s*88,\s*204,\s*2\s*\))/i);
+    expect(picked.style.padding).toBe("11px 13px");
     expect(screen.getByTestId("onboarding-why-travel").style.border).toMatch(/2px solid (#6F7757|rgb\(\s*111,\s*119,\s*87\s*\))/i);
+    expect(screen.getByTestId("onboarding-why-travel").style.padding).toBe("12px 14px");
     expect(screen.getByTestId("onboarding-why-travel").style.background).toBe(picked.style.background);
   });
 

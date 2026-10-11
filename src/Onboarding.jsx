@@ -29,9 +29,9 @@ const cardStyle = (paint, selected) => ({
   textAlign: "left",
   background: paint.card,
   color: paint.ink,
-  border: selected ? `2px solid ${paint.selectedEdge}` : `2px solid ${paint.accent}`,
+  border: selected ? `3px solid ${paint.selectedEdge}` : `2px solid ${paint.accent}`,
   borderRadius: 16,
-  padding: "12px 14px",
+  padding: selected ? "11px 13px" : "12px 14px",
   fontFamily: "inherit",
   cursor: "pointer",
 });
