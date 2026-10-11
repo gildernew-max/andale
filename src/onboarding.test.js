@@ -130,7 +130,10 @@ assert(uiSrc.includes("onGoal(selectedId)"), "the CTA continues with the chosen 
 assert(uiSrc.includes("setSelectedId(id)") && uiSrc.includes("setSelectedId(count)"), "a card tap selects and does not advance");
 assert(!uiSrc.includes("setTimeout"), "a card tap does not advance on a timer");
 assert(uiSrc.includes('data-testid="onboarding-check"'), "the selected card shows a check");
-assert(uiSrc.includes("2px solid ${paint.accent}"), "level and goal cards keep the sage edge");
+assert(uiSrc.includes("2px solid ${paint.accent}"), "an unselected card keeps the sage edge");
+assert(uiSrc.includes("2px solid ${paint.selectedEdge}"), "a selected card uses the picked edge");
+assert(ONBOARDING_PAINT.light.selectedEdge === "#2E7500", "light selected edge is #2E7500");
+assert(ONBOARDING_PAINT.dark.selectedEdge === "#58CC02", "dark selected edge is #58CC02");
 assert(uiSrc.includes("onStart()"), "the plan CTA starts the lesson");
 assert(uiSrc.includes("top: ONBOARDING_CTA_TOP"), "the CTA is pinned at y=780");
 assert(appSrc.includes("shouldShowOnboarding(p)"), "the gate runs on the loaded save");

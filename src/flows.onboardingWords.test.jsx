@@ -209,7 +209,10 @@ describe("short onboarding", () => {
     const card = screen.getByTestId("onboarding-level-beginner");
     expect(card.getAttribute("data-selected")).toBe("true");
     expect(screen.getByTestId("onboarding-check")).toBeTruthy();
-    expect(card.style.border).toMatch(/2px solid (#6F7757|rgb\(\s*111,\s*119,\s*87\s*\))/i);
+    expect(card.style.background).toMatch(/#FFFFFF|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    expect(card.style.border).toMatch(/2px solid (#2E7500|rgb\(\s*46,\s*117,\s*0\s*\))/i);
+    expect(screen.getByTestId("onboarding-level-some").style.border).toMatch(/2px solid (#6F7757|rgb\(\s*111,\s*119,\s*87\s*\))/i);
+    expect(screen.getByTestId("onboarding-level-some").style.background).toBe(card.style.background);
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level");
     expect(screen.getByTestId("onboarding-cta").disabled).toBe(false);
@@ -284,6 +287,15 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding-cta").style.background).toMatch(/#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\)/i);
     expect(screen.getByTestId("onboarding-cta").style.color).toMatch(/#6B7078|rgb\(\s*107,\s*112,\s*120\s*\)/i);
     expect(screen.queryByTestId("splash")).toBeNull();
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("onboarding-why-live"));
+    const picked = screen.getByTestId("onboarding-why-live");
+    expect(picked.getAttribute("data-selected")).toBe("true");
+    expect(screen.getByTestId("onboarding-check")).toBeTruthy();
+    expect(picked.style.background).toMatch(/#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i);
+    expect(picked.style.border).toMatch(/2px solid (#58CC02|rgb\(\s*88,\s*204,\s*2\s*\))/i);
+    expect(screen.getByTestId("onboarding-why-travel").style.border).toMatch(/2px solid (#6F7757|rgb\(\s*111,\s*119,\s*87\s*\))/i);
+    expect(screen.getByTestId("onboarding-why-travel").style.background).toBe(picked.style.background);
   });
 
   it("a wrong beginner answer is rejected and the right ones finish on the beginner win, then a story start opens the paywall", async () => {
