@@ -5406,6 +5406,7 @@ export default function App() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState("level");
   const [onboardingLevel, setOnboardingLevel] = useState(null);
+  const [onboardingWhy, setOnboardingWhy] = useState(null);
   const [onboardingGoal, setOnboardingGoal] = useState(null);
   /* Theme — a saved prog.theme of light or dark wins. With no saved choice,
      follow the phone. Do not write that derived value into prog: an unsaved
@@ -5484,6 +5485,7 @@ export default function App() {
 	    if (needsOnboarding) {
 	      const resume = onboardingResume(p);
 	      setOnboardingLevel(resume.level);
+	      setOnboardingWhy(resume.why);
 	      setOnboardingGoal(resume.goal);
 	      setOnboardingStep(resume.step);
 	      setOnboardingOpen(true);
@@ -8488,25 +8490,32 @@ export default function App() {
 
   const pickOnboardingLevel = (level) => {
     setOnboardingLevel(level);
-    setOnboardingStep("goal");
+    setOnboardingStep("why");
     save({ learnerLevel: level, onboardingPending: true });
+  };
+  const pickOnboardingWhy = (why) => {
+    setOnboardingWhy(why);
+    setOnboardingStep("goal");
+    save({ learningWhy: why, onboardingPending: true });
   };
   const pickOnboardingGoal = (goal) => {
     setOnboardingGoal(goal);
     setOnboardingStep("plan");
-    save({ dailyGoalLessons: goal, onboardingPending: true });
+    save({ dailyGoalMinutes: goal, onboardingPending: true });
   };
   const startOnboardingLesson = () => {
     const level = onboardingLevel;
+    const why = onboardingWhy;
     const goal = onboardingGoal;
-    if (!level || !goal) return;
+    if (!level || !why || !goal) return;
     const route = firstLessonForLevel(level);
     setOnboardingOpen(false);
     save({
       onboardingDone: true,
       onboardingPending: false,
       learnerLevel: level,
-      dailyGoalLessons: goal,
+      learningWhy: why,
+      dailyGoalMinutes: goal,
       welcomed: true,
     });
     const unit = UNITS.find((item) => item.id === route.unitId) || UNITS[0];
@@ -10143,9 +10152,9 @@ export default function App() {
           lang={uiLang}
           theme={theme}
           step={onboardingStep}
-          level={onboardingLevel}
           goal={onboardingGoal}
           onLevel={pickOnboardingLevel}
+          onWhy={pickOnboardingWhy}
           onGoal={pickOnboardingGoal}
           onStart={startOnboardingLesson}
         />
@@ -12037,13 +12046,13 @@ export default function App() {
                     <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? limeText(D.okText, D) : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
-                    <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", zIndex: "auto", pointerEvents: sheetBlocksAnswers ? "none" : "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", zIndex: "auto", pointerEvents: "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => {
                         const revealCorrect = !!checkState[pi] && checkState[pi] !== checkpoints[pi].a && choice === checkpoints[pi].a;
                         const marked = checkState[pi] === choice || revealCorrect;
                         return (
-                        <button key={choice} disabled={!!checkState[pi]} onClick={() => { if (sheetBlocksAnswers) return; answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a); }}
-                          style={{ border: `1.5px solid ${marked ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: marked ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] || sheetBlocksAnswers ? "default" : "pointer", pointerEvents: sheetBlocksAnswers ? "none" : "auto", color: marked && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
+                        <button key={choice} disabled={!!checkState[pi]} onClick={() => { if (sheetBlocksAnswers) { setWordSel(null); return; } answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a); }}
+                          style={{ border: `1.5px solid ${marked ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: marked ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] || sheetBlocksAnswers ? "default" : "pointer", pointerEvents: "auto", color: marked && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
                           {choice}
                         </button>
                         );

@@ -1,20 +1,16 @@
 import { completedLessonCount, hasFirstSessionMarker } from "./firstSession.js";
 
 export const ONBOARDING_LEVELS = Object.freeze(["beginner", "some", "conversation"]);
-export const ONBOARDING_GOALS = Object.freeze([1, 2, 3]);
+export const ONBOARDING_WHYS = Object.freeze(["travel", "family", "live", "work", "me"]);
+/** Minutes per day. Chip prefix is this abbreviation in both languages. */
+export const ONBOARDING_MINUTE_CHIP = "min";
+export const ONBOARDING_GOALS = Object.freeze([5, 10, 15, 20]);
 
-/** Level, daily goal, then the plan button. */
-export const ONBOARDING_TAPS = 3;
+/** Four screens. Each choice screen is a card tap plus the CTA. The plan is the CTA. */
+export const ONBOARDING_TAPS = 7;
 
-/** How long a tapped level or goal card holds its check before the next screen. */
-export const ONBOARDING_SELECT_MS = 250;
-
-/** Set on window to freeze the selected card for a screenshot or test. */
-export const ONBOARDING_HOLD_KEY = "__andaleHoldOnboardingSelection";
-
-export function onboardingSelectionHeld() {
-  return typeof window !== "undefined" && window[ONBOARDING_HOLD_KEY] === true;
-}
+/** CTA top edge on a 390×844 frame. */
+export const ONBOARDING_CTA_TOP = 780;
 
 export const EASIEST_UNIT_ID = "subj1";
 
@@ -28,8 +24,11 @@ export const ONBOARDING_PAINT = Object.freeze({
     ink: "#3C3C3C",
     accent: "#6F7757",
     button: "#58CC02",
-    buttonInk: CONTINUE_LABEL,
+    buttonInk: "#1F3A1A",
     buttonLip: "#46A302",
+    emptyFill: "#E5E5E5",
+    emptyInk: "#AFAFAF",
+    emptyLip: "#CECECE",
   }),
   dark: Object.freeze({
     page: "#15171C",
@@ -37,8 +36,11 @@ export const ONBOARDING_PAINT = Object.freeze({
     ink: "#F6EFE4",
     accent: "#6F7757",
     button: "#58CC02",
-    buttonInk: CONTINUE_LABEL,
+    buttonInk: "#1F3A1A",
     buttonLip: "#46A302",
+    emptyFill: "#2A2E36",
+    emptyInk: "#6B7078",
+    emptyLip: "#1E2128",
   }),
 });
 
@@ -46,8 +48,12 @@ export function readLearnerLevel(saved) {
   return ONBOARDING_LEVELS.includes(saved?.learnerLevel) ? saved.learnerLevel : null;
 }
 
-export function readDailyGoalLessons(saved) {
-  const n = Number(saved?.dailyGoalLessons);
+export function readLearningWhy(saved) {
+  return ONBOARDING_WHYS.includes(saved?.learningWhy) ? saved.learningWhy : null;
+}
+
+export function readDailyGoalMinutes(saved) {
+  const n = Number(saved?.dailyGoalMinutes);
   return ONBOARDING_GOALS.includes(n) ? n : null;
 }
 
@@ -82,10 +88,12 @@ export function shouldShowOnboarding(saved) {
 
 export function onboardingResume(saved) {
   const level = readLearnerLevel(saved);
-  const goal = readDailyGoalLessons(saved);
-  if (level && goal) return { step: "plan", level, goal };
-  if (level) return { step: "goal", level, goal: null };
-  return { step: "level", level: null, goal: null };
+  const why = readLearningWhy(saved);
+  const goal = readDailyGoalMinutes(saved);
+  if (!level) return { step: "level", level: null, why: null, goal: null };
+  if (!why) return { step: "why", level, why: null, goal: null };
+  if (!goal) return { step: "goal", level, why, goal: null };
+  return { step: "plan", level, why, goal };
 }
 
 /** Beginner → the zero-start first session. Anyone else → a first session. "some" order lives in firstSession.js. */

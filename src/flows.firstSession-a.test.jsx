@@ -173,8 +173,13 @@ describe("first session before the paywall", () => {
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("onboarding-level-conversation")).toBeTruthy());
     await user.click(screen.getByTestId("onboarding-level-conversation"));
-    await waitFor(() => expect(screen.getByTestId("onboarding-goal-1")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-goal-1"));
+    await user.click(screen.getByTestId("onboarding-cta"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-why-work")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-why-work"));
+    await user.click(screen.getByTestId("onboarding-cta"));
+    await waitFor(() => expect(screen.getByTestId("onboarding-goal-10")).toBeTruthy());
+    await user.click(screen.getByTestId("onboarding-goal-10"));
+    await user.click(screen.getByTestId("onboarding-cta"));
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
     await user.click(screen.getByTestId("onboarding-start"));
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
