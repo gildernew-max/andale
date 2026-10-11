@@ -2,7 +2,7 @@
  * After Hoy is ticked, Stories is the one loud hub tile until the first
  * Lectura claim. Then it returns to the quiet Cuentos / Stories label.
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
@@ -96,6 +96,54 @@ describe("Stories is loud after Hoy until the first claim", () => {
     expect(stories.style.background).toMatch(LIME);
     expect(screen.getByTestId("hub-stories-label").textContent).toBe(NEXT.en);
     expect(screen.getByTestId("hub-hoy-goal").textContent).toBe("Today\u2019s goal done: 40\u00a0XP.");
+  });
+
+  it("a new day after an earlier claim leaves Hoy outlined and Stories quiet", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      vi.setSystemTime(new Date(2026, 9, 10, 15, 0, 0));
+      const claimedDay = dayKeyFromDate(new Date());
+      cleanup();
+      seedProgress({
+        welcomed: true,
+        onboardingDone: true,
+        firstSessionDone: true,
+        paywallSeen: true,
+        bajioUnlockSeen: true,
+        uiLang: "en",
+        theme: "light",
+        streak: 1,
+        lastDay: claimedDay,
+        xpToday: 62,
+        stories: { "story-0": true },
+        missions: { [`scene-${claimedDay}`]: "taqueria" },
+      });
+      vi.setSystemTime(new Date(2026, 9, 11, 15, 0, 0));
+      const today = dayKeyFromDate(new Date());
+      expect(today).not.toBe(claimedDay);
+      render(<App />);
+      await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      expect(saved.stories["story-0"]).toBeTruthy();
+      expect(saved.missions[`scene-${today}`]).toBeUndefined();
+      expect(saved.xpToday).toBe(62);
+      expect(screen.getByTestId("door-meta").textContent).toMatch(/Goal:\s*0\/40 XP/);
+      expect(screen.queryByTestId("hub-hoy-goal")).toBeNull();
+
+      const hoy = screen.getByTestId("hub-hoy");
+      const stories = screen.getByTestId("hub-stories");
+      expect(screen.queryByTestId("hub-hoy-done")).toBeNull();
+      expect(hoy.getAttribute("data-hub-hoy-done")).toBeNull();
+      expect(hoy.getAttribute("data-hub-loud")).toBe("hoy");
+      expect(hoy.style.border).toMatch(LIME);
+      expect(hoy.style.boxShadow).toMatch(LIME);
+      expect(stories.getAttribute("data-hub-loud")).toBeNull();
+      expect(stories.style.background).not.toMatch(LIME);
+      expect(screen.getByTestId("hub-stories-label").textContent).toBe(USUAL.en);
+      expect(loudTiles()).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("keeps the usual Stories label while Hoy is still open", async () => {

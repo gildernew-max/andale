@@ -7,7 +7,7 @@ import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuest
 import { drawLessonIndexes, questionByIndex } from "./replayBank.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { comeBackTomorrowLine, dayKeyFromDate, firstLecturaClaimed, hoyHubChecked, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, storiesHubLoud, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { comeBackTomorrowLine, dayKeyFromDate, firstLecturaClaimed, hoyHubChecked, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, storiesHubLoud, streakAfterWin, todaySceneIdFromSession, xpCountedToday } from "./firstDoor.js";
 import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { paywallStillPath } from "./paywallStill.js";
 import { buildColdFirstHoyQueue, coldFirstHoySceneBeats, isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
@@ -7720,6 +7720,7 @@ export default function App() {
   const weakSpots = Object.entries(prog.weak || {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const smartFocus = smartPracticeFocus();
   const todayKey = dayKeyFromDate(new Date(now));
+  const xpTodayCount = xpCountedToday({ xpToday: prog.xpToday, lastDay: prog.lastDay, today: todayKey });
   const todayScene = hoySceneForDay(TODAY_SCENES, todayKey);
   const tomorrowScene = hoySceneForDay(TODAY_SCENES, nextDayKey(todayKey));
   const hoyStill = hoyStillFor(todayScene);
@@ -8814,7 +8815,7 @@ export default function App() {
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
             const hoyDone = hoyHubDone({ todaySceneDone });
-            const goalReached = (prog.xpToday || 0) >= DAILY_GOAL;
+            const goalReached = xpTodayCount >= DAILY_GOAL;
             const hoyChecked = hoyHubChecked({ todaySceneDone, goalReached });
             const storyClaimed = firstLecturaClaimed({ stories: prog.stories });
             const hoyLoud = hoyHubLoud({ todayScene, todaySceneDone, goalReached });
@@ -9007,11 +9008,11 @@ export default function App() {
           {showDoorMeta && (
           <div data-testid="door-meta" style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0 6px", fontSize: 13, fontWeight: 800, color: D.sub }}>
             <div style={{ flex: 1, height: 12, background: D.line, borderRadius: 99, overflow: "hidden", position: "relative" }}>
-              <div style={{ width: `${Math.min(100, Math.round(((prog.xpToday || 0) / DAILY_GOAL) * 100))}%`, height: "100%", background: D.gold, transition: "width .3s", position: "relative", overflow: "hidden", borderRadius: 99 }}>
+              <div style={{ width: `${Math.min(100, Math.round((xpTodayCount / DAILY_GOAL) * 100))}%`, height: "100%", background: D.gold, transition: "width .3s", position: "relative", overflow: "hidden", borderRadius: 99 }}>
                 <div className="shimmer" />
               </div>
             </div>
-	            <span>{L.goal}: {prog.xpToday || 0}/{DAILY_GOAL} XP</span>
+	            <span>{L.goal}: {xpTodayCount}/{DAILY_GOAL} XP</span>
 	            <button data-testid="rayo-toggle" aria-pressed={!!prog.rayo} onClick={() => save({ rayo: !prog.rayo })} title={uiLang === "en" ? "Lightning mode: answer against the clock. Correct in time: +3 XP. Time out counts as a mistake." : "Modo Rayo: responde contra reloj. Acierta a tiempo: +3 XP. Se acaba el tiempo: cuenta como error."}
 	              style={{ display: "flex", alignItems: "center", gap: 5, border: `2px solid ${prog.rayo ? (theme === "dark" ? "#FFD43B" : D.gold) : D.line}`, borderBottom: `3px solid ${prog.rayo ? (theme === "dark" ? "#FFD43B" : D.goldDark) : D.line}`, background: prog.rayo ? (theme === "dark" ? "#3A2A1A" : "#FFF6DC") : (theme === "dark" ? D.card : "#fff"), color: prog.rayo ? (theme === "dark" ? "#FFD43B" : D.goldDark) : (theme === "dark" ? MEMORY_DARK_INK : D.sub), borderRadius: 99, padding: "4px 12px", fontWeight: 900, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
 	              <IcBolt size={14} /> {L.rayo} {prog.rayo ? L.on : L.off}

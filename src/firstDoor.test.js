@@ -11,6 +11,7 @@ import {
   hoyHubDone,
   hoyHubLoud,
   storiesHubLoud,
+  xpCountedToday,
   hoySceneForDay,
   hoyStoryForScene,
   hoyTitleForLang,
@@ -61,6 +62,19 @@ assert(!hoyHubChecked({ todaySceneDone: false, goalReached: false }), "an open H
 assert(!hoyHubLoud({ todayScene: { id: "taqueria" }, todaySceneDone: false, goalReached: true }), "a goal check drops Hoy's green outline");
 assert(storiesHubLoud({ todaySceneDone: false, goalReached: true, firstStoryClaimed: false }), "the goal check, with no scene mission, louds Stories");
 assert(!storiesHubLoud({ goalReached: true, firstStoryClaimed: true }), "a claim after the goal quiets Stories");
+const newDay = {
+  todayScene: { id: "taqueria" },
+  todaySceneDone: false,
+  goalReached: false,
+  firstStoryClaimed: true,
+};
+assert(!hoyHubChecked(newDay), "a new day at goal 0 leaves Hoy unchecked");
+assert(hoyHubLoud(newDay), "a new day keeps Hoy's normal outline");
+assert(!storiesHubLoud(newDay), "a story claimed on an earlier day stays quiet on the new day");
+assert(xpCountedToday({ xpToday: 62, lastDay: "2026-10-10", today: "2026-10-10" }) === 62, "same-day XP still counts toward the goal");
+assert(xpCountedToday({ xpToday: 62, lastDay: "2026-10-10", today: "2026-10-11" }) === 0, "moving the date forward one day starts the goal at 0");
+assert(xpCountedToday({ xpToday: 62, lastDay: "2026-10-10" }) === 0, "missing today does not keep yesterday's XP");
+assert(xpCountedToday({}) === 0, "empty args count as no XP today");
 assert(!firstLecturaClaimed({}), "empty progress has not claimed Lectura");
 assert(!firstLecturaClaimed({ stories: {} }), "an empty stories map is not a claim");
 assert(!firstLecturaClaimed({ stories: { "story-0": false } }), "a false entry is not a claim");

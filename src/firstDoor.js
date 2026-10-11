@@ -13,6 +13,16 @@ export function firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff }
 }
 
 /**
+ * XP stored on an earlier calendar day does not count today.
+ * A new day starts the goal at 0 until this day earns more.
+ */
+export function xpCountedToday({ xpToday, lastDay, today } = {}) {
+  if (!today || lastDay !== today) return 0;
+  const n = Number(xpToday);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
  * The check drawn on the Hoy tile. A finished scene, or today's XP at the goal.
  * A first lesson writes the goal (xpToday), not a scene mission — that check is the tick.
  */
