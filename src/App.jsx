@@ -7,7 +7,7 @@ import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuest
 import { drawLessonIndexes, questionByIndex } from "./replayBank.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { comeBackTomorrowLine, dayKeyFromDate, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
+import { comeBackTomorrowLine, dayKeyFromDate, firstLecturaClaimed, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, storiesHubLoud, streakAfterWin, todaySceneIdFromSession } from "./firstDoor.js";
 import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { paywallStillPath } from "./paywallStill.js";
 import { buildColdFirstHoyQueue, coldFirstHoySceneBeats, isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
@@ -4643,6 +4643,7 @@ const UI = {
     hoyPlanSell: "Un plan corto para hoy. Unos diez minutos. Luego paras.",
     hoyPlanCta: "Empezar el plan",
     hubStories: "Cuentos",
+    hubStoriesNext: "Sigue: tu primer cuento",
     hubGames: "Juegos",
     hubDoctor: "Doctora de frases",
     hubEighty: "80/20",
@@ -4736,6 +4737,7 @@ const UI = {
     hoyPlanSell: "A short plan for today. About ten minutes. Then you stop.",
     hoyPlanCta: "Start the plan",
     hubStories: "Stories",
+    hubStoriesNext: "Next: your first story",
     hubGames: "Games",
     hubDoctor: "Phrase Doctor",
     hubEighty: "80/20",
@@ -8811,12 +8813,14 @@ export default function App() {
             };
             const reviewLabel = uiLang === "en" ? "Review" : "Repasar";
             const dailyLabel = dailyDone ? L.workoutDone : L.dailyWorkout;
-            const hoyLoud = hoyHubLoud({ todayScene });
             const hoyDone = hoyHubDone({ todaySceneDone });
+            const storyClaimed = firstLecturaClaimed({ stories: prog.stories });
+            const hoyLoud = hoyHubLoud({ todayScene, todaySceneDone });
+            const storiesLoud = storiesHubLoud({ todaySceneDone, firstStoryClaimed: storyClaimed });
             const goalReached = (prog.xpToday || 0) >= DAILY_GOAL;
             const hubTiles = [
               { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: welcomeLine || L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
-              { id: "stories", testid: "hub-stories", title: L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
+              { id: "stories", testid: "hub-stories", title: storiesLoud ? L.hubStoriesNext : L.hubStories, art: <HubTileArt face="stories" />, act: () => setTab("lectura") },
               { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => openGamesHub() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
               { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, quiet: L.hubEightyQuiet, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
@@ -8825,9 +8829,12 @@ export default function App() {
             return (
               <div style={{ margin: "6px 0 18px" }}>
                 <div data-testid="learn-hub-tiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                  {hubTiles.map((tile) => (
+                  {hubTiles.map((tile) => {
+                    const storiesFill = tile.id === "stories" && storiesLoud;
+                    const edge = `1.5px solid ${tile.id === "hoy" && hoyLoud ? D.green : D.line}`;
+                    return (
                     <button key={tile.id} data-testid={tile.testid} type="button" onClick={tile.act}
-                      data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : undefined}
+                      data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : tile.id === "stories" && storiesLoud ? "stories" : undefined}
                       data-hub-hoy-done={tile.id === "hoy" && hoyDone ? "1" : undefined}
                       style={{
                         display: "flex",
@@ -8838,15 +8845,26 @@ export default function App() {
                         ...(welcomeLine ? { height: "auto", minHeight: 168 } : { height: 168 }),
                         boxSizing: "border-box",
                         position: "relative",
-                        background: theme === "dark" ? D.card : HUB_CREAM,
-                        border: `1.5px solid ${tile.id === "hoy" && hoyLoud ? D.green : D.line}`,
                         boxShadow: tile.id === "hoy" && hoyLoud ? `0 0 0 2px ${D.green}33` : "none",
                         borderRadius: 18,
                         padding: "8px 8px 10px",
                         fontFamily: "inherit",
                         cursor: "pointer",
                         textAlign: "center",
-                        color: D.ink,
+                        ...(storiesFill
+                          ? {
+                              background: D.green,
+                              borderTop: "0",
+                              borderRight: "0",
+                              borderBottom: `4px solid ${D.greenDark}`,
+                              borderLeft: "0",
+                              color: LESSON_LIME_INK,
+                            }
+                          : {
+                              background: theme === "dark" ? D.card : HUB_CREAM,
+                              border: edge,
+                              color: D.ink,
+                            }),
                       }}>
                       {tile.id === "hoy" && (hoyDone || goalReached) && (
                         <span data-testid="hub-hoy-done" aria-hidden="true" style={{
@@ -8856,14 +8874,15 @@ export default function App() {
                       )}
                       <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
                       <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
-                      <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: D.ink, marginTop: 2 }}>{tile.title}</div>
+                      <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "stories" ? "hub-stories-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: tile.id === "stories" && storiesLoud ? LESSON_LIME_INK : D.ink, marginTop: 2 }}>{tile.title}</div>
                       {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, overflowWrap: "break-word", maxWidth: "100%" }}>{tile.quiet}</div>}
                       {tile.id === "hoy" && goalReached && (
                         <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}: {DAILY_GOAL}{"\u00a0"}XP.</div>
                       )}
                       </span>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
                 {streakView.line ? (
                   <p data-testid="streak-home-note" data-streak-status={streakView.status} style={{ margin: "2px 0 10px", padding: 0, border: "none", background: "none", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, overflowWrap: "break-word", maxWidth: "100%" }}>

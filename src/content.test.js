@@ -579,7 +579,7 @@ assert(!/come-back-tomorrow[^>]*cursor:\s*["']?pointer/.test(appSrc), "teaser ha
 assert(/come-back-tomorrow[^>]*pointerEvents:\s*["']none/.test(appSrc), "teaser is not a tap target");
 assert(!/come-back-tomorrow[^>]*borderBottom:\s*`4px/.test(appSrc), "teaser has no pressable 4px chrome");
 assert(!/come-back-tomorrow[^>]*border:\s*`2px solid/.test(appSrc), "teaser has no card border");
-assert(/learn-hub-tiles[\s\S]{0,4200}\{showLine && \(\s*<p data-testid="come-back-tomorrow"/.test(appSrc), "titled teaser sits outside the equal hub grid — not a CTA");
+assert(/learn-hub-tiles[\s\S]{0,5200}\{showLine && \(\s*<p data-testid="come-back-tomorrow"/.test(appSrc), "titled teaser sits outside the equal hub grid — not a CTA");
 assert(appSrc.includes("hoySceneForDay"), "Hoy day pick is shared");
 assert(appSrc.includes("nextDayKey(todayKey)"), "tomorrow Hoy uses the same day hash");
 assert(UI.es.paywallHeadline === "La historia sigue.", "UI.es.paywallHeadline George lock");
@@ -1442,11 +1442,17 @@ assert(appSrc.includes("{L.narrationLabel}"), "Lectura narration chrome uses L.n
 assert(appSrc.includes('from "./storyGloss.js"'), "Lectura gloss map is imported");
 assert(appSrc.includes("<GlossedText"), "story Qs use GlossedText");
 assert(appSrc.includes("<GlossWord"), "Lectura paragraphs use GlossWord for stamped lemmas");
-assert(appSrc.includes("hoyHubLoud"), "Hoy hub chrome stays loud after first win — not first-door hero");
-assert(appSrc.includes("const hoyLoud = hoyHubLoud({ todayScene })"), "Hoy is the only loud hub tile");
+assert(appSrc.includes("hoyHubLoud"), "open Hoy hub chrome stays loud — not first-door hero");
+assert(appSrc.includes("storiesHubLoud"), "Stories takes the loud tile after Hoy is ticked");
+assert(appSrc.includes("const hoyLoud = hoyHubLoud({ todayScene, todaySceneDone })"), "Hoy goes quiet once it is ticked");
+assert(appSrc.includes("const storiesLoud = storiesHubLoud({ todaySceneDone, firstStoryClaimed: storyClaimed })"), "Stories is loud only until the first Lectura claim");
 assert(appSrc.includes("const hoyDone = hoyHubDone({ todaySceneDone })"), "done Hoy keeps today’s-home check");
-assert(appSrc.includes('data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : undefined}'), "loud stroke attribute is Hoy-only");
-assert(appSrc.includes("tile.id === \"hoy\" && hoyLoud ? D.green : D.line"), "green border is Hoy-only; Sendero uses the quiet line stroke");
+assert(appSrc.includes('data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : tile.id === "stories" && storiesLoud ? "stories" : undefined}'), "only one hub tile carries the loud attribute");
+assert(appSrc.includes("tile.id === \"hoy\" && hoyLoud ? D.green : D.line"), "green border is open Hoy only; a ticked Hoy uses the quiet line");
+assert(/storiesFill[\s\S]{0,220}background: D\.green/.test(appSrc), "Stories loud fill is the existing lime token");
+assert(/storiesFill[\s\S]{0,400}borderBottom: `4px solid \$\{D\.greenDark\}`/.test(appSrc), "Stories loud lip is the existing greenDark token");
+assert(/storiesFill[\s\S]{0,500}color: LESSON_LIME_INK/.test(appSrc), "Stories loud label is the existing #1F3A1A ink");
+assert(appSrc.includes("title: storiesLoud ? L.hubStoriesNext : L.hubStories"), "Stories label swaps only while that tile is loud");
 assert(appSrc.includes('data-testid="hub-hoy-done"'), "done Hoy check is testable");
 assert(appSrc.includes('data-testid="lesson-scene-chip"'), "mid-lesson scene line is a quiet chip");
 assert(!/lesson-scene-chip[\s\S]{0,280}D\.gold/.test(appSrc), "scene chip has no yellow hero border");
@@ -1474,7 +1480,7 @@ assert(!hubTilesSrc.includes("hub-sobremesa"), "Sobremesa is not in the hub tile
 assert((hubTilesSrc.match(/\{ id: "/g) || []).length === 6, "Learn hub is a 6-tile grid");
 assert(!appSrc.includes('testid: "hub-sobremesa"'), "Sobremesa is not a hub tile");
 assert(appSrc.includes("title: L.hubHoy"), "Hoy tile label follows uiLang");
-assert(appSrc.includes("title: L.hubStories"), "Stories tile label follows uiLang");
+assert(appSrc.includes("L.hubStoriesNext : L.hubStories"), "Stories tile label follows uiLang until the next-story line");
 assert(appSrc.includes("title: L.hubGames"), "Games tile label follows uiLang");
 assert(hubTilesSrc.includes("act: () => openGamesHub()"), "Learn hub Games tile opens Games hub");
 assert(!hubTilesSrc.includes("startCubetas"), "Learn hub Games tile does not start Cubetas");
@@ -1493,6 +1499,8 @@ assert(UI.es.hoyPlanSell === "Un plan corto para hoy. Unos diez minutos. Luego p
 assert(UI.es.hoyPlanCta === "Empezar el plan" && UI.en.hoyPlanCta === "Start the plan", "Hoy plan CTA is George stamp");
 assert(UI.es.playScene === "Jugar la escena" && UI.en.playScene === "Play the scene", "scene step stays playScene");
 assert(UI.es.hubStories === "Cuentos" && UI.en.hubStories === "Stories", "Stories title follows uiLang");
+assert(UI.es.hubStoriesNext === "Sigue: tu primer cuento" && UI.en.hubStoriesNext === "Next: your first story", "after Hoy, Stories label is the next-story line");
+assert(!/[.。]$/.test(UI.es.hubStoriesNext) && !/[.。]$/.test(UI.en.hubStoriesNext), "next-story label has no period");
 assert(UI.es.hubGames === "Juegos" && UI.en.hubGames === "Games", "Games title follows uiLang");
 assert(UI.es.hubDoctor === "Doctora de frases" && UI.en.hubDoctor === "Phrase Doctor", "Phrase Doctor title follows uiLang");
 assert(UI.es.hubDoctor === UI.es.phraseDoctor && UI.en.hubDoctor === UI.en.phraseDoctor, "hub Phrase Doctor matches the door title");
