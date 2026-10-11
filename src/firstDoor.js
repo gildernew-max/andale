@@ -13,11 +13,24 @@ export function firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff }
 }
 
 /**
- * Hub 6-grid chrome: Hoy stays the only loud primary after first win / Continue free.
- * Not gated on first-door hero (Doctora handoff) — other five stay equal peers.
+ * Hub 6-grid chrome. One loud tile.
+ * Open Hoy is loud. Once Hoy is ticked, it goes quiet and Stories is loud
+ * until the first Lectura claim. A claim, or no scene and no tick, leaves
+ * every tile quiet. Not gated on first-door hero (Doctora handoff).
  */
-export function hoyHubLoud({ todayScene } = {}) {
-  return !!todayScene;
+export function hoyHubLoud({ todayScene, todaySceneDone } = {}) {
+  return !!todayScene && !todaySceneDone;
+}
+
+/** Stories takes the loud tile only after Hoy is ticked and before the first claim. */
+export function storiesHubLoud({ todaySceneDone, firstStoryClaimed } = {}) {
+  return !!todaySceneDone && !firstStoryClaimed;
+}
+
+/** A Lectura claim is a truthy `prog.stories` entry. A start (`lecturaStartedAt`) is not a claim. */
+export function firstLecturaClaimed({ stories } = {}) {
+  if (!stories || typeof stories !== "object" || Array.isArray(stories)) return false;
+  return Object.values(stories).some((value) => !!value);
 }
 
 /** Done Hoy still reads as today’s home — check-done, not a flattened peer. */
