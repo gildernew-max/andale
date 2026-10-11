@@ -123,12 +123,11 @@ describe("lectura next placement and advance scroll", () => {
     await waitFor(() => expect(screen.getByTestId("lectura-questions-header")).toBeTruthy());
     expect(screen.queryByTestId("lectura-advance")).toBeNull();
     const header = screen.getByTestId("lectura-questions-header");
-    expect(header.style.position).toBe("sticky");
-    expect(header.style.top).toBe("var(--lectura-brand-bottom, 0px)");
-    expect(document.documentElement.style.getPropertyValue("--lectura-brand-bottom")).toBe("72px");
+    expect(header.style.position).not.toBe("sticky");
+    expect(document.documentElement.style.getPropertyValue("--lectura-brand-bottom")).toBe("");
     expect(scrollY).toBe(lecturaQuestionsOpenScrollY({
-      headerTop: 1180, headerHeight: 80, q1Top: 1600, scrollY: 900, viewportTop: 72,
+      headerTop: 1180, scrollY: 900, viewportTop: 72,
     }));
-    expect(scrollY).toBe(900 + 1600 - (72 + 80));
+    expect(scrollY).toBe(900 + 1180 - 72);
   });
 });

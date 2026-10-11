@@ -6970,19 +6970,6 @@ export default function App() {
     });
   }, [wordSel, screen, wordSheetSpacer]);
 
-  // Stick the comprehension header just under the brand bar. The offset is the
-  // bar's measured bottom, kept off the React style so an answer re-render
-  // cannot snap it back to the top of the viewport.
-  useLayoutEffect(() => {
-    const header = lecturaQuestionsHeaderRef.current;
-    if (screen !== "story" || !header) {
-      document.documentElement.style.removeProperty("--lectura-brand-bottom");
-      return;
-    }
-    const brand = lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']"));
-    document.documentElement.style.setProperty("--lectura-brand-bottom", `${Math.max(0, brand)}px`);
-  }, [screen, paraIdx, theme]);
-
   // After the word-sheet close pass, so a spacer restore cannot put the
   // learner back at the bottom of the previous paragraph.
   useLayoutEffect(() => {
@@ -6994,8 +6981,7 @@ export default function App() {
     const headerBottom = lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']"));
     const paragraph = lecturaParagraphRef.current;
     const qHeader = lecturaQuestionsHeaderRef.current;
-    const q1 = lecturaQuestionsRef.current?.querySelector("[data-testid='story-q-prompt']");
-    if (!paragraph && !qHeader && !q1) return;
+    if (!paragraph && !qHeader) return;
     const nextY = paragraph
       ? lecturaAdvanceScrollY({
         paragraphTop: paragraph.getBoundingClientRect().top,
@@ -7003,9 +6989,7 @@ export default function App() {
         headerBottom,
       })
       : lecturaQuestionsOpenScrollY({
-        headerTop: qHeader?.getBoundingClientRect().top,
-        headerHeight: qHeader?.getBoundingClientRect().height,
-        q1Top: q1?.getBoundingClientRect().top,
+        headerTop: qHeader.getBoundingClientRect().top,
         scrollY: window.scrollY,
         viewportTop: headerBottom,
       });
@@ -7019,14 +7003,13 @@ export default function App() {
     const claim = lecturaClaimRef.current;
     if (!claim) return;
     const brand = lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']"));
-    const headH = lecturaQuestionsHeaderRef.current?.getBoundingClientRect().height || 0;
     const box = claim.getBoundingClientRect();
     const nextY = lecturaClaimScrollY({
       claimTop: box.top,
       claimBottom: box.bottom,
       scrollY: window.scrollY,
       viewportHeight: window.innerHeight,
-      viewportTop: brand + (Number.isFinite(headH) ? Math.max(0, headH) : 0),
+      viewportTop: brand,
     });
     if (Math.abs((Number(window.scrollY) || 0) - nextY) > 0.5) window.scrollTo(0, nextY);
   }, [screen, paraIdx, ansSel]);
@@ -12204,7 +12187,7 @@ export default function App() {
               ← {uiLang === "en" ? "Back to the story" : "Volver al cuento"}
             </Btn>
             <div style={{ borderTop: `2px solid ${D.line}`, marginTop: 12, paddingTop: 20 }}>
-              <div ref={lecturaQuestionsHeaderRef} data-testid="lectura-questions-header" style={{ position: "sticky", top: "var(--lectura-brand-bottom, 0px)", zIndex: 2, background: D.bg, display: "flow-root" }}>
+              <div ref={lecturaQuestionsHeaderRef} data-testid="lectura-questions-header">
 	              <h3 style={{ fontWeight: 900, fontSize: 19, margin: "0 0 4px" }}>{L.comprehension}</h3>
               <p style={{ fontSize: 13, fontWeight: 800, color: D.sub, margin: "0 0 16px" }}>
 	                {L.easyQuestions} <IcBolt size={13} /> 35 XP · {checkDone}/{checkpoints.length} {uiLang === "en" ? "checkpoints" : "pausas"} {claimed && <span style={{ color: limeText(D.okText, D) }}>— {uiLang === "en" ? "collectible unlocked" : "coleccionable desbloqueado"}</span>}

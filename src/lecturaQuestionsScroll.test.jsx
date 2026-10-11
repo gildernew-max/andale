@@ -1,7 +1,8 @@
 /**
- * QUESTIONS open parks the comprehension header and Q1 at the readable top.
- * After the last answer, CLAIM is fully inside the viewport. Checked at the
- * two phone sizes: 360×640 and 390×844.
+ * QUESTIONS open scrolls the comprehension header to just under the brand bar,
+ * with Q1 still in view. After the last answer, CLAIM sits fully above the
+ * fold with a 12px margin. The readable top is the brand bar only.
+ * Checked at 360×640 and 390×844.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
@@ -98,21 +99,18 @@ describe("lectura questions open and claim scroll", () => {
       const q1 = screen.getAllByTestId("story-q-prompt")[0];
       expect(header.textContent).toMatch(/Comprensión/);
       expect(q1.textContent).toMatch(/^1\./);
-      expect(header.style.position).toBe("sticky");
-      expect(header.style.background).toBeTruthy();
-      expect(header.style.top).toBe("var(--lectura-brand-bottom, 0px)");
-      expect(document.documentElement.style.getPropertyValue("--lectura-brand-bottom")).toBe(`${STICKY}px`);
+      expect(header.style.position).not.toBe("sticky");
+      expect(header.getAttribute("style") || "").not.toMatch(/background|z-index|zIndex/);
+      expect(document.documentElement.style.getPropertyValue("--lectura-brand-bottom")).toBe("");
       expect(scrollY).toBe(lecturaQuestionsOpenScrollY({
         headerTop: HEADER_DOC - 900,
-        headerHeight: HEADER_H,
-        q1Top: Q1_DOC - 900,
         scrollY: 900,
         viewportTop: STICKY,
       }));
 
-      expect(q1.getBoundingClientRect().top).toBe(STICKY + HEADER_H);
-      expect(q1.getBoundingClientRect().top).toBeLessThan(height);
-      expect(header.getBoundingClientRect().top).toBeLessThanOrEqual(STICKY);
+      expect(header.getBoundingClientRect().top).toBe(STICKY);
+      expect(q1.getBoundingClientRect().top).toBeGreaterThan(header.getBoundingClientRect().bottom);
+      expect(q1.getBoundingClientRect().bottom).toBeLessThanOrEqual(height);
       const back = screen.getByRole("button", { name: /Volver al cuento/ });
       expect(back.getBoundingClientRect().bottom).toBeLessThanOrEqual(STICKY);
       expect(screen.queryByTestId("lectura-claim")).toBeNull();
@@ -128,7 +126,7 @@ describe("lectura questions open and claim scroll", () => {
       const claim = await screen.findByTestId("lectura-claim");
       expect(claim.textContent).toMatch(/Reclamar/);
       const claimBox = claim.getBoundingClientRect();
-      const readableTop = STICKY + HEADER_H;
+      const readableTop = STICKY;
       expect(claimBox.top).toBeGreaterThanOrEqual(readableTop);
       expect(claimBox.bottom).toBe(height - 12);
       expect(claimBox.bottom - claimBox.top).toBe(CLAIM_H);

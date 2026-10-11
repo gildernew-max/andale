@@ -15,30 +15,16 @@ export function lecturaAdvanceScrollY({ paragraphTop, scrollY = 0, headerBottom 
 }
 
 /**
- * QUESTIONS open. The comprehension header sticks under the brand bar, and
- * Q1's top meets the bottom of that header. The back-to-story control sits
- * above the header and scrolls off.
+ * QUESTIONS open. The comprehension header's top meets the brand bar's bottom.
+ * Q1 stays in the page under that header. No stuck chrome.
  */
-export function lecturaQuestionsOpenScrollY({
-  headerTop,
-  headerHeight = 0,
-  q1Top,
-  scrollY = 0,
-  viewportTop = 0,
-} = {}) {
-  const y = Number.isFinite(Number(scrollY)) ? Number(scrollY) : 0;
-  const inset = Number.isFinite(Number(viewportTop)) ? Math.max(0, Number(viewportTop)) : 0;
-  const headH = Number.isFinite(Number(headerHeight)) ? Math.max(0, Number(headerHeight)) : 0;
-  const qTop = Number(q1Top);
-  const headTop = Number(headerTop);
-  if (Number.isFinite(qTop)) return Math.max(0, y + qTop - (inset + headH));
-  if (!Number.isFinite(headTop)) return Math.max(0, y);
-  return Math.max(0, y + headTop - inset);
+export function lecturaQuestionsOpenScrollY({ headerTop, scrollY = 0, viewportTop = 0 } = {}) {
+  return lecturaAdvanceScrollY({ paragraphTop: headerTop, scrollY, headerBottom: viewportTop });
 }
 
 /**
  * Once every question is answered, scroll so the claim block is fully inside
- * the readable viewport (under the stuck header, above the fold).
+ * the readable viewport. The readable top is the brand bar only.
  * Already fully visible: stay put. Taller than the readable area: pin its top.
  */
 export function lecturaClaimScrollY({
