@@ -7,6 +7,7 @@ import {
   dayKeyFromDate,
   firstDoorHero,
   firstLecturaClaimed,
+  hoyHubChecked,
   hoyHubDone,
   hoyHubLoud,
   storiesHubLoud,
@@ -54,6 +55,12 @@ assert(!storiesHubLoud({ todaySceneDone: true, firstStoryClaimed: true }), "a cl
 assert(!storiesHubLoud({ todaySceneDone: false, firstStoryClaimed: false }), "open Hoy keeps Stories quiet");
 assert(!storiesHubLoud({ todaySceneDone: false, firstStoryClaimed: true }), "a claim before Hoy does not loud Stories");
 assert(!storiesHubLoud({}), "empty args do not loud Stories");
+assert(hoyHubChecked({ goalReached: true }), "a first lesson at the daily goal draws the Hoy check");
+assert(hoyHubChecked({ todaySceneDone: true }), "a finished scene draws the Hoy check");
+assert(!hoyHubChecked({ todaySceneDone: false, goalReached: false }), "an open Hoy below the goal has no check");
+assert(!hoyHubLoud({ todayScene: { id: "taqueria" }, todaySceneDone: false, goalReached: true }), "a goal check drops Hoy's green outline");
+assert(storiesHubLoud({ todaySceneDone: false, goalReached: true, firstStoryClaimed: false }), "the goal check, with no scene mission, louds Stories");
+assert(!storiesHubLoud({ goalReached: true, firstStoryClaimed: true }), "a claim after the goal quiets Stories");
 assert(!firstLecturaClaimed({}), "empty progress has not claimed Lectura");
 assert(!firstLecturaClaimed({ stories: {} }), "an empty stories map is not a claim");
 assert(!firstLecturaClaimed({ stories: { "story-0": false } }), "a false entry is not a claim");
@@ -65,6 +72,9 @@ const loudCases = [
   { todayScene: { id: "taqueria" }, todaySceneDone: true, firstStoryClaimed: true },
   { todayScene: null, todaySceneDone: false, firstStoryClaimed: false },
   { todayScene: { id: "taqueria" }, todaySceneDone: false, firstStoryClaimed: true },
+  { todayScene: { id: "taqueria" }, todaySceneDone: false, goalReached: true, firstStoryClaimed: false },
+  { todayScene: { id: "taqueria" }, todaySceneDone: false, goalReached: true, firstStoryClaimed: true },
+  { todayScene: null, todaySceneDone: false, goalReached: true, firstStoryClaimed: false },
 ];
 for (const loudCase of loudCases) {
   const loud = [hoyHubLoud(loudCase), storiesHubLoud(loudCase)].filter(Boolean);

@@ -13,18 +13,26 @@ export function firstDoorHero({ todayScene, todaySceneDone, postDismissHandoff }
 }
 
 /**
- * Hub 6-grid chrome. One loud tile.
- * Open Hoy is loud. Once Hoy is ticked, it goes quiet and Stories is loud
- * until the first Lectura claim. A claim, or no scene and no tick, leaves
- * every tile quiet. Not gated on first-door hero (Doctora handoff).
+ * The check drawn on the Hoy tile. A finished scene, or today's XP at the goal.
+ * A first lesson writes the goal (xpToday), not a scene mission — that check is the tick.
  */
-export function hoyHubLoud({ todayScene, todaySceneDone } = {}) {
-  return !!todayScene && !todaySceneDone;
+export function hoyHubChecked({ todaySceneDone, goalReached } = {}) {
+  return !!todaySceneDone || !!goalReached;
 }
 
-/** Stories takes the loud tile only after Hoy is ticked and before the first claim. */
-export function storiesHubLoud({ todaySceneDone, firstStoryClaimed } = {}) {
-  return !!todaySceneDone && !firstStoryClaimed;
+/**
+ * Hub 6-grid chrome. One loud tile.
+ * Open Hoy is loud until the check shows. Then Hoy keeps the check and drops
+ * the green outline, and Stories is loud until the first Lectura claim.
+ * Not gated on first-door hero (Doctora handoff).
+ */
+export function hoyHubLoud({ todayScene, todaySceneDone, goalReached } = {}) {
+  return !!todayScene && !hoyHubChecked({ todaySceneDone, goalReached });
+}
+
+/** Stories takes the loud tile when Hoy's check is showing and no story is claimed. */
+export function storiesHubLoud({ todaySceneDone, goalReached, firstStoryClaimed } = {}) {
+  return hoyHubChecked({ todaySceneDone, goalReached }) && !firstStoryClaimed;
 }
 
 /** A Lectura claim is a truthy `prog.stories` entry. A start (`lecturaStartedAt`) is not a claim. */
