@@ -63,7 +63,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaQuestionsOpenScrollY, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_WIDTH, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
+import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_WIDTH, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
 import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -7017,11 +7017,14 @@ export default function App() {
     if (Math.abs((Number(window.scrollY) || 0) - nextY) > 0.5) window.scrollTo(0, nextY);
   }, [screen, paraIdx, wordSheetSpacer, lecturaAdvanceNonce]);
 
-  // Claim mounts under Q3. Pull the whole block above the fold once it exists.
+  // Claim mounts under Q3. After CLAIM, the XP-claimed card can grow past
+  // that fold. Pull the whole card back inside: 12px above the viewport
+  // bottom, and above a pinned NEXT/footer band and the safe-area inset.
   useLayoutEffect(() => {
     if (screen !== "story") return;
     const claim = lecturaClaimRef.current;
     if (!claim) return;
+    if (freshClaimId && !claim.isConnected) return;
     const brand = lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']"));
     const box = claim.getBoundingClientRect();
     const nextY = lecturaClaimScrollY({
@@ -7030,9 +7033,11 @@ export default function App() {
       scrollY: window.scrollY,
       viewportHeight: window.innerHeight,
       viewportTop: brand,
+      safeAreaBottom: lecturaSafeAreaBottom(),
+      bandTop: lecturaPinnedBandTop(window.innerHeight),
     });
     if (Math.abs((Number(window.scrollY) || 0) - nextY) > 0.5) window.scrollTo(0, nextY);
-  }, [screen, paraIdx, ansSel]);
+  }, [screen, paraIdx, ansSel, freshClaimId]);
 
   const releaseLecturaWin = (beat) => {
     if (!beat) return;

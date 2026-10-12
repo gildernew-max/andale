@@ -72,6 +72,10 @@ assert(lecturaClaimScrollY({ claimTop: 10, claimBottom: 40, scrollY: 0, viewport
 assert(lecturaClaimScrollY({ scrollY: 30, viewportHeight: 640 }) === 30, "a missing claim measure stays put");
 assert(lecturaClaimScrollY({ claimTop: 900, claimBottom: 990, scrollY: 200, viewportHeight: 640, viewportTop: 56 }) === 562, "640-tall fold still fits the claim with a 12px margin");
 assert(lecturaClaimScrollY({ claimTop: 900, claimBottom: 990, scrollY: 200, viewportHeight: 844, viewportTop: 56 }) === 358, "844-tall fold still fits the claim with a 12px margin");
+assert(lecturaClaimScrollY({ claimTop: 742.4, claimBottom: 834.4, scrollY: 1458, viewportHeight: 844, viewportTop: 56 }) === 1461, "a fractional overflow rounds up so the margin is not short of 12px");
+assert(lecturaClaimScrollY({ claimTop: 700, claimBottom: 790, scrollY: 100, viewportHeight: 640, viewportTop: 56, safeAreaBottom: 34 }) === 296, "the safe-area inset lifts the claim 12px above the home indicator");
+assert(lecturaClaimScrollY({ claimTop: 700, claimBottom: 790, scrollY: 100, viewportHeight: 640, viewportTop: 56, bandTop: 560 }) === 342, "a pinned NEXT or footer band keeps the claim 12px above the row");
+assert(lecturaClaimScrollY({ claimTop: 400, claimBottom: 490, scrollY: 80, viewportHeight: 844, viewportTop: 56, bandTop: 764, safeAreaBottom: 34 }) === 80, "a claim already clear of the band and the safe area stays put");
 
 const paraAt = appSrc.indexOf('data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"}');
 const advanceAt = appSrc.indexOf('data-testid="lectura-advance"');
@@ -82,6 +86,8 @@ assert(narrationAt > advanceAt && huntAt > narrationAt, "NEXT sits above narrati
 assert(appSrc.includes("lecturaAdvanceScrollY"), "advance scrolls with the readable-top math");
 assert(appSrc.includes("lecturaQuestionsOpenScrollY"), "QUESTIONS open scrolls the comprehension header");
 assert(appSrc.includes("lecturaClaimScrollY"), "a finished quiz scrolls the claim into view");
+assert(/\[screen, paraIdx, ansSel, freshClaimId\]/.test(appSrc), "a fresh claim remeasures the XP-claimed card");
+assert(appSrc.includes("lecturaSafeAreaBottom()") && appSrc.includes("lecturaPinnedBandTop(window.innerHeight)"), "the claimed card clears the safe area and any pinned NEXT or footer");
 assert(appSrc.includes('data-testid="lectura-questions-header"'), "comprehension header is the questions scroll target");
 assert(appSrc.includes('data-testid="lectura-claim"'), "claim block is the finished-quiz scroll target");
 assert(!appSrc.includes("--lectura-brand-bottom"), "questions header does not use a brand-bottom CSS var");
