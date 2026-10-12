@@ -63,19 +63,22 @@ function slots(node, acc = []) {
 }
 
 assert(ONBOARDING_TAPS === 7, "four screens: three choice CTAs plus the plan CTA, each choice preceded by its card");
-assert(ONBOARDING_CTA_BOTTOM === 14, "CTA sits 14px off the viewport bottom, the gap left by top 780 on an 844 frame");
+assert(ONBOARDING_CTA_BOTTOM === 16, "the button bottom edge sits 16px above the bottom safe area");
 assert(ONBOARDING_CTA_HEIGHT === 50, "single-line CTA block is 50px");
-assert(ONBOARDING_FRAME_WIDTH === 390 && ONBOARDING_FRAME_HEIGHT === 844, "the old pin was drawn on a 390×844 frame");
-const frameCta = onboardingCtaRect({ viewportHeight: ONBOARDING_FRAME_HEIGHT, viewportWidth: ONBOARDING_FRAME_WIDTH });
-assert(frameCta.top === 780 && frameCta.bottom === 830 && frameCta.withinViewport, "390×844 keeps the button where top 780 put it");
-const phoneCta = onboardingCtaRect({ viewportHeight: 640, viewportWidth: 360 });
-assert(phoneCta.withinViewport && phoneCta.top === 576 && phoneCta.bottom === 626, "360×640 keeps the CTA on screen");
-assert(780 + ONBOARDING_CTA_HEIGHT > 640, "the old top 780 pin was below a 640 screen");
+assert(ONBOARDING_CTA_CONTENT_GAP === 12, "the last content line stops 12px above the button top");
+assert(ONBOARDING_FRAME_WIDTH === 390 && ONBOARDING_FRAME_HEIGHT === 844, "the phone check includes a 390×844 frame");
+for (const viewport of [{ viewportWidth: 360, viewportHeight: 640 }, { viewportWidth: 390, viewportHeight: 844 }]) {
+  const pin = onboardingCtaRect(viewport);
+  assert(pin.withinViewport, `${viewport.viewportWidth}×${viewport.viewportHeight} keeps the CTA on screen`);
+  assert(pin.bottomGap === 16 && pin.bottom === viewport.viewportHeight - 16, `${viewport.viewportWidth}×${viewport.viewportHeight} button bottom is 16px above the viewport bottom`);
+  assert(pin.top === viewport.viewportHeight - 16 - ONBOARDING_CTA_HEIGHT, `${viewport.viewportWidth}×${viewport.viewportHeight} button top follows the 16px pin`);
+  assert(pin.contentGap === 12 && pin.lastContentBottom === pin.top - 12, `${viewport.viewportWidth}×${viewport.viewportHeight} last content line is 12px above the button top`);
+}
 const insetCta = onboardingCtaRect({ viewportHeight: 640, viewportWidth: 360, safeAreaBottom: 34 });
-assert(insetCta.withinViewport && insetCta.bottom === 640 - 14 - 34 && insetCta.top === 542, "a home-indicator inset still leaves the CTA on a 640 screen");
-assert(onboardingCtaBottomCss() === "calc(14px + env(safe-area-inset-bottom))", "bottom pin includes the safe area");
-assert(onboardingCtaClearanceCss() === "calc(64px + env(safe-area-inset-bottom))", "content clears the 50px button plus the 14px gap");
-assert(ONBOARDING_CTA_CONTENT_GAP === 12, "cards keep 12px of air above the CTA");
+assert(insetCta.withinViewport && insetCta.bottomGap === 16 + 34 && insetCta.contentGap === 12, "a home-indicator inset lifts the button and keeps the 12px content gap");
+assert(insetCta.bottom === 640 - 16 - 34 && insetCta.lastContentBottom === insetCta.top - 12, "safe area adds to the 16px bottom gap only");
+assert(onboardingCtaBottomCss() === "calc(16px + env(safe-area-inset-bottom))", "bottom pin is 16px plus the safe area");
+assert(onboardingCtaClearanceCss() === "calc(66px + env(safe-area-inset-bottom))", "the shell ends at the button top: 16px gap plus the 50px block");
 assert(ONBOARDING_LEVELS.join(",") === "beginner,some,conversation", "three named levels");
 assert(ONBOARDING_WHYS.join(",") === "travel,family,live,work,me", "five reasons");
 assert(ONBOARDING_GOALS.join(",") === "5,10,15,20", "daily goal is 5, 10, 15, or 20 minutes");

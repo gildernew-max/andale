@@ -12,6 +12,8 @@ import App from "./App.jsx";
 import Onboarding from "./Onboarding.jsx";
 import { installFlowHooks, STORAGE_KEY } from "./flowsHarness.jsx";
 import {
+  ONBOARDING_CTA_BOTTOM,
+  ONBOARDING_CTA_CONTENT_GAP,
   ONBOARDING_CTA_HEIGHT,
   ONBOARDING_FRAME_HEIGHT,
   ONBOARDING_FRAME_WIDTH,
@@ -55,12 +57,18 @@ function expectCtaInViewport(cta, viewport, { ready, theme }) {
   expect(cta.style.opacity).toBe("1");
 
   const rect = onboardingCtaRect({ viewportHeight: viewport.height, viewportWidth: viewport.width });
+  expect(onboardingCtaBottomCss()).toBe(`calc(${ONBOARDING_CTA_BOTTOM}px + env(safe-area-inset-bottom))`);
+  expect(ONBOARDING_CTA_BOTTOM).toBe(16);
   expect(rect.withinViewport).toBe(true);
-  expect(rect.top).toBeGreaterThanOrEqual(0);
-  expect(rect.bottom).toBeLessThanOrEqual(viewport.height);
+  expect(rect.bottomGap).toBe(16);
+  expect(rect.bottom).toBe(viewport.height - 16);
+  expect(rect.top).toBe(viewport.height - 16 - ONBOARDING_CTA_HEIGHT);
+  expect(rect.contentGap).toBe(12);
+  expect(ONBOARDING_CTA_CONTENT_GAP).toBe(12);
+  expect(rect.lastContentBottom).toBe(rect.top - 12);
   expect(rect.left).toBeGreaterThanOrEqual(0);
   expect(rect.right).toBeLessThanOrEqual(viewport.width);
-  expect(rect.height).toBeGreaterThanOrEqual(44);
+  expect(rect.height).toBe(ONBOARDING_CTA_HEIGHT);
   expect(rect.width).toBeGreaterThanOrEqual(44);
   const centerX = rect.left + rect.width / 2;
   const centerY = rect.top + rect.height / 2;
@@ -68,10 +76,6 @@ function expectCtaInViewport(cta, viewport, { ready, theme }) {
   expect(centerX).toBeLessThanOrEqual(viewport.width);
   expect(centerY).toBeGreaterThanOrEqual(0);
   expect(centerY).toBeLessThanOrEqual(viewport.height);
-  if (viewport.width === ONBOARDING_FRAME_WIDTH && viewport.height === ONBOARDING_FRAME_HEIGHT) {
-    expect(rect.top).toBe(780);
-    expect(rect.bottom).toBe(830);
-  }
 
   const shell = screen.getByTestId("onboarding");
   expect(shell.style.overflow).not.toBe("hidden");
@@ -79,7 +83,8 @@ function expectCtaInViewport(cta, viewport, { ready, theme }) {
   const scroll = screen.getByTestId("onboarding-scroll");
   expect(scroll.style.overflowY).toBe("auto");
   expect(scroll.contains(cta)).toBe(false);
-  expect(scroll.style.padding).toBe("76px 20px 12px");
+  expect(scroll.style.padding).toBe(`76px 20px ${ONBOARDING_CTA_CONTENT_GAP}px`);
+  expect(scroll.style.paddingBottom || scroll.style.padding.split(" ").pop()).toBe("12px");
 
   if (ready) {
     expect(cta.disabled).toBe(false);
@@ -126,10 +131,14 @@ describe("onboarding CTA stays on screen", () => {
     Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: prevH });
   });
 
-  it("the old top pin of 780 is below a 640px screen", () => {
-    expect(780 + ONBOARDING_CTA_HEIGHT).toBeGreaterThan(640);
-    expect(onboardingCtaRect({ viewportHeight: 640, viewportWidth: 360 }).withinViewport).toBe(true);
-    expect(onboardingCtaRect({ viewportHeight: 844, viewportWidth: 390 }).top).toBe(780);
+  it.each(VIEWPORTS)("button bottom is 16px above the safe area and content stops 12px above the button at $width×$height", (viewport) => {
+    const pin = onboardingCtaRect({ viewportHeight: viewport.height, viewportWidth: viewport.width });
+    expect(onboardingCtaBottomCss()).toBe("calc(16px + env(safe-area-inset-bottom))");
+    expect(pin.bottomGap).toBe(16);
+    expect(pin.bottom).toBe(viewport.height - 16);
+    expect(pin.contentGap).toBe(12);
+    expect(pin.lastContentBottom).toBe(pin.top - 12);
+    expect(pin.withinViewport).toBe(true);
   });
 
   it.each(VIEWPORTS)("level, why, goal, and plan CTAs are in the viewport and tappable at $width×$height", async (viewport) => {

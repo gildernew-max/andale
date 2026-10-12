@@ -9,15 +9,11 @@ export const ONBOARDING_GOALS = Object.freeze([5, 10, 15, 20]);
 /** Four screens. Each choice screen is a card tap plus the CTA. The plan is the CTA. */
 export const ONBOARDING_TAPS = 7;
 
-/**
- * Gap from the viewport bottom to the CTA's bottom edge, plus the home-indicator inset.
- * On a 390×844 frame the old absolute top of 780 and this button's 50px block left 14px (844 - 780 - 50).
- * A 360×640 phone put that same top 140px below the screen.
- */
-export const ONBOARDING_CTA_BOTTOM = 14;
+/** Button bottom edge sits this far above the bottom safe area at every viewport height. */
+export const ONBOARDING_CTA_BOTTOM = 16;
 /** Measured single-line block: 13px padding + 20px Nunito line + 13px padding + 4px lip. */
 export const ONBOARDING_CTA_HEIGHT = 50;
-/** Air between the last card and the pinned CTA so the card is not hidden behind it. */
+/** Space between the last content line and the button top once the column is scrolled to the end. */
 export const ONBOARDING_CTA_CONTENT_GAP = 12;
 export const ONBOARDING_FRAME_WIDTH = 390;
 export const ONBOARDING_FRAME_HEIGHT = 844;
@@ -50,7 +46,20 @@ export function onboardingCtaRect({
     && right <= viewportWidth
     && height > 0
     && right > left;
-  return { top, left, right, bottom, width: right - left, height, withinViewport };
+  const bottomGap = viewportHeight - bottom;
+  const lastContentBottom = top - ONBOARDING_CTA_CONTENT_GAP;
+  return {
+    top,
+    left,
+    right,
+    bottom,
+    width: right - left,
+    height,
+    withinViewport,
+    bottomGap,
+    contentGap: ONBOARDING_CTA_CONTENT_GAP,
+    lastContentBottom,
+  };
 }
 
 export const EASIEST_UNIT_ID = "subj1";
