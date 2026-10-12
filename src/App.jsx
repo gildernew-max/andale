@@ -64,7 +64,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
+import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
 import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, ONBOARDING_CTA_HEIGHT, onboardingCtaBottomCss, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -5297,6 +5297,7 @@ export default function App() {
   const wordSheetBoxRef = useRef(null);
   const wordSheetLock = useRef(false);
   const wordSheetCloseScrollRef = useRef(null);
+  const glossNextDismissRef = useRef(false);
   wordSheetBoxRef.current = wordSheetBox;
   const storyAudioUrlRef = useRef(null);
   const [storyAudioReady, setStoryAudioReady] = useState(false);
@@ -7174,7 +7175,23 @@ export default function App() {
     } catch (e) {}
   };
 
+  const dismissGlossOnNextTap = (event) => {
+    if (!wordSel) return;
+    const onSheet = event.currentTarget?.getAttribute?.("data-testid") === "word-sheet";
+    if (onSheet && event.target?.closest?.("button")) return;
+    const row = document.querySelector("[data-testid='lectura-advance']");
+    const nextBtn = row?.querySelectorAll("button")[1];
+    if (!nextBtn || !lecturaPointInRect(event.clientX, event.clientY, nextBtn.getBoundingClientRect())) return;
+    glossNextDismissRef.current = true;
+    setWordSel(null);
+    window.setTimeout(() => { glossNextDismissRef.current = false; }, 0);
+  };
+
   const advanceLectura = (idx) => {
+    if (glossNextDismissRef.current) {
+      glossNextDismissRef.current = false;
+      return;
+    }
     if (wordSel) return;
     stopNarration();
     setWordSel(null);
@@ -12024,7 +12041,7 @@ export default function App() {
         const sheetReaches = !!(wordSheetBox && wordSheetBox.reaches);
         const renderWordSheet = (anchored) => {
           const node = (
-          <div ref={wordSheetRef} data-testid="word-sheet" className={sheetReaches ? undefined : "pop"} style={sheetReaches ? { ...lecturaSheetReachStyle({ top: wordSheetBox.sheetTop, background: D.card, accent: sec.color }), visibility: wordSheetBox ? "visible" : "hidden", pointerEvents: wordSheetBox ? "auto" : "none" } : { visibility: wordSheetBox ? "visible" : "hidden", pointerEvents: wordSheetBox ? "auto" : "none", position: anchored ? "absolute" : "fixed", left: anchored ? (wordSheetBox ? wordSheetBox.anchorLeft : 0) : (wordSheetBox ? wordSheetBox.left : 8), width: wordSheetBox ? wordSheetBox.width : 320, bottom: anchored ? "calc(100% + 10px)" : (wordSheetBox ? wordSheetBox.bottom : 8), zIndex: LECTURA_WORD_SHEET_Z, boxSizing: "border-box", background: D.card, borderLeft: `2px solid ${D.line}`, borderRight: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: wordSheetBox ? wordSheetBox.maxHeight : "none", overflowY: "auto" }}>
+          <div ref={wordSheetRef} data-testid="word-sheet" onPointerUp={dismissGlossOnNextTap} className={sheetReaches ? undefined : "pop"} style={sheetReaches ? { ...lecturaSheetReachStyle({ top: wordSheetBox.sheetTop, background: D.card, accent: sec.color }), visibility: wordSheetBox ? "visible" : "hidden", pointerEvents: wordSheetBox ? "auto" : "none" } : { visibility: wordSheetBox ? "visible" : "hidden", pointerEvents: wordSheetBox ? "auto" : "none", position: anchored ? "absolute" : "fixed", left: anchored ? (wordSheetBox ? wordSheetBox.anchorLeft : 0) : (wordSheetBox ? wordSheetBox.left : 8), width: wordSheetBox ? wordSheetBox.width : 320, bottom: anchored ? "calc(100% + 10px)" : (wordSheetBox ? wordSheetBox.bottom : 8), zIndex: LECTURA_WORD_SHEET_Z, boxSizing: "border-box", background: D.card, borderLeft: `2px solid ${D.line}`, borderRight: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: wordSheetBox ? wordSheetBox.maxHeight : "none", overflowY: "auto" }}>
             <div ref={wordSheetContentRef} data-testid="word-sheet-body" style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
               <button onClick={() => speak(wordSel.display)} aria-label={uiLang === "en" ? "Listen to word" : "Escuchar palabra"}
                 style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "7px 9px", flexShrink: 0, lineHeight: 0 }}>
@@ -12184,7 +12201,7 @@ export default function App() {
             ); })}
 
             {paraIdx < story.paragraphs.length && (
-              <div data-testid="lectura-advance" className={wordSel ? "lectura-next-held" : undefined} style={{ ...lecturaNextPinStyle(D.bg, theme === "dark" ? D.line : undefined), pointerEvents: wordSel ? "none" : "auto", ...(wordSel && wordSheetBox && wordSheetBox.reaches === false ? { opacity: LECTURA_NEXT_HELD_OPACITY, transition: "none" } : null) }}>
+              <div data-testid="lectura-advance" onPointerUp={dismissGlossOnNextTap} className={wordSel ? "lectura-next-held" : undefined} style={{ ...lecturaNextPinStyle(D.bg, theme === "dark" ? D.line : undefined), pointerEvents: wordSel && wordSheetBox?.reaches !== false ? "none" : "auto", ...(wordSel && wordSheetBox && wordSheetBox.reaches === false ? { opacity: LECTURA_NEXT_HELD_OPACITY, transition: "none" } : null) }}>
                 <Btn outline disabled={paraIdx === 0} onClick={() => advanceLectura(paraIdx - 1)} style={{ flex: 1 }}>
                   ← {uiLang === "en" ? "Back" : "Anterior"}
                 </Btn>

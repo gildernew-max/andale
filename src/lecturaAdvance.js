@@ -299,6 +299,24 @@ export function lecturaStoryOpenTextTop(stillHeight = lecturaStillBandHeight()) 
   return LECTURA_STORY_OPEN_STILL_TOP + stillHeight + LECTURA_STILL_MARGIN_BOTTOM;
 }
 
+/** A Next tap dismisses an open gloss sheet inside this window. The sheet does not linger. */
+export const LECTURA_GLOSS_DISMISS_MS = 150;
+
+/** True when a viewport point lands on the Next button's box. */
+export function lecturaPointInRect(x, y, rect) {
+  const px = Number(x);
+  const py = Number(y);
+  if (!rect || !Number.isFinite(px) || !Number.isFinite(py)) return false;
+  const left = Number(rect.left);
+  const top = Number(rect.top);
+  const width = Number(rect.width);
+  const height = Number(rect.height);
+  const right = Number.isFinite(Number(rect.right)) ? Number(rect.right) : left + width;
+  const bottom = Number.isFinite(Number(rect.bottom)) ? Number(rect.bottom) : top + height;
+  if (![left, top, right, bottom].every((n) => Number.isFinite(n))) return false;
+  return px >= left && px < right && py >= top && py < bottom;
+}
+
 /**
  * True when the gloss sheet's stacking context paints above the pin,
  * so a tap on the sheet cannot land on NEXT.
