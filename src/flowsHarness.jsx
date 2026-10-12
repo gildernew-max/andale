@@ -448,7 +448,7 @@ export const assertFreeWinFlyAway = () => {
   expect(screen.queryByTestId("soft-paywall")).toBeNull();
 };
 
-/** Loud annual / quiet continue free. Locked words. One static Cenzontle. No price line until an amount is set. */
+/** Loud annual / quiet continue free. Locked words. One static Cenzontle. Annual price sits above the button. */
 export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const wall = screen.getByTestId("soft-paywall");
   const bird = screen.getByTestId("soft-paywall-cenzontle");
@@ -456,18 +456,20 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const body = screen.getByTestId("soft-paywall-body");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
   const copy = lang === "en"
-    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", annual: "Start annual plan", dismiss: "Continue free" }
-    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", annual: "Empezar plan anual", dismiss: "Seguir gratis" };
+    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.", annual: "Start annual plan", dismiss: "Continue free", price: "$39.99\u00A0a\u00A0year" }
+    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", annual: "Empezar plan anual", dismiss: "Seguir gratis", price: "US$39.99\u00A0al\u00A0año" };
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
   expect(body.textContent).toBe(copy.benefit);
+  expect(body.style.textWrap).toBe("");
   expect(annual.textContent).toBe(copy.annual);
-  expect(screen.queryByTestId("soft-paywall-annual-price")).toBeNull();
+  expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe(copy.price);
   expect(screen.queryByTestId("soft-paywall-annual-hold")).toBeNull();
   expect(wall.textContent).not.toMatch(/\[ANNUAL PRICE\]|\{price\}/);
   expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
   expect(dismiss.textContent).toBe(copy.dismiss);
   expect(annual.textContent).not.toMatch(/\$39\.99|\$6\.99/);
-  expect(wall.textContent).not.toMatch(/\$39\.99|\$6\.99|Vista previa|you won|Apple|Restore|Un mes|One month/);
+  expect(wall.textContent).not.toMatch(/\$6\.99|Vista previa|you won|Apple|Restore|Un mes|One month/);
+  expect(wall.textContent).toContain(copy.price);
   expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
   expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
   expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();

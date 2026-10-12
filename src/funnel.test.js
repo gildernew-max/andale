@@ -2,11 +2,14 @@ import {
   FUNNEL_EVENT,
   FUNNEL_EVENTS,
   FUNNEL_LOG,
+  PAYWALL_SEEN_SOURCE,
   PAYWALL_TAP,
   cenzontleBeatFromSession,
   daysSinceLastVisit,
   emitFunnelEvent,
+  paywallSeenSourceFor,
 } from "./funnel.js";
+import { PAYWALL_BIRD_TRIGGER, PAYWALL_SOURCE } from "./paywallHeadline.js";
 import { IAP_PRODUCTS } from "./purchase.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
@@ -159,14 +162,39 @@ assert(badChapter.storyId == null, "email-shaped chapter storyId is dropped");
 const seen = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, unlockedPrem: true }, bus);
 assert(seen.event === "paywall_seen", "paywall_seen names the event");
 assert(seen.unlockedPrem == null, "paywall_seen does not copy progress flags");
+assert(seen.source == null, "paywall_seen without a source stays event + at");
+assert(Object.keys(seen).sort().join(",") === "at,event", "paywall_seen without a source is event + at");
+
+for (const source of Object.values(PAYWALL_SEEN_SOURCE)) {
+  const row = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source, price: "$39.99" }, bus);
+  assert(row.source === source, `paywall_seen keeps ${source}`);
+  assert(row.price == null, "paywall_seen does not copy a price");
+  assert(Object.keys(row).sort().join(",") === "at,event,source", "paywall_seen with a source is event + at + source");
+}
+const junkSeen = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: "boot" }, bus);
+assert(junkSeen.source == null, "unknown paywall_seen source is dropped");
+assert(Object.keys(junkSeen).sort().join(",") === "at,event", "a dropped source leaves event + at");
+
+for (const trigger of Object.values(PAYWALL_SOURCE)) {
+  const mapped = paywallSeenSourceFor(trigger);
+  const expected = trigger === PAYWALL_BIRD_TRIGGER
+    ? PAYWALL_SEEN_SOURCE.win
+    : (trigger === PAYWALL_SOURCE.lockedStory ? PAYWALL_SEEN_SOURCE.lockedStory : PAYWALL_SEEN_SOURCE.timed);
+  assert(mapped === expected, `${trigger} maps to ${expected}`);
+}
+assert(paywallSeenSourceFor(PAYWALL_SEEN_SOURCE.win) === "win", "win stays win");
+assert(paywallSeenSourceFor(PAYWALL_SEEN_SOURCE.lockedStory) === "locked_story", "locked_story stays locked_story");
+assert(paywallSeenSourceFor("boot") === "timed", "an unnamed opener is timed");
 
 const tap = emitFunnelEvent({
   event: FUNNEL_EVENTS.paywallTap,
   choice: PAYWALL_TAP.continueFree,
   price: "$39.99",
+  source: "win",
 }, bus);
 assert(tap.choice === "continue_free", "continue-free tap is labeled");
 assert(tap.price == null, "tap does not keep a price");
+assert(tap.source == null, "paywall_tap does not copy source");
 
 const annual = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: "annual" }, bus);
 assert(annual.choice === "annual", "annual tap is labeled");
@@ -205,6 +233,7 @@ for (const event of [
     choice: "annual",
     storyId: "story-0",
     beat: "hoy",
+    source: "win",
   }, bus);
   assert(step.event === event, `${event} names the event`);
   assert(typeof step.at === "string" && step.at.includes("T"), `${event} carries an ISO timestamp`);

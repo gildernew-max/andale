@@ -19,6 +19,7 @@ export const PAYWALL_SOURCE = {
   lessonQuit: "lesson-quit",
   hearts: "hearts",
   rival: "rival",
+  lockedStory: "locked-story",
 };
 
 /** One config value for the Lectura cliffhanger bird that opens the story headline. */

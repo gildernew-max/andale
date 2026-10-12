@@ -6,9 +6,12 @@
  *  first_session_start / first_session_exercise1_correct / first_session_complete
  *  / day2_return are event + timestamp only. Once-per-device gating lives in
  *  firstSessionFunnel.js, not on this bus.
+ *  paywall_seen is event + timestamp, plus an allowlisted source
+ *  (win / locked_story / timed). Other events do not carry source.
  */
 
 import { dayKeyFromDate } from "./firstDoor.js";
+import { PAYWALL_BIRD_TRIGGER, PAYWALL_SOURCE } from "./paywallHeadline.js";
 
 export const FUNNEL_EVENT = "andale-funnel";
 export const FUNNEL_LOG = "__andaleFunnelLog";
@@ -36,6 +39,24 @@ export const PAYWALL_TAP = Object.freeze({
   monthly: "monthly",
   continueFree: "continue_free",
 });
+
+/** Allowlist for paywall_seen only. win = cliffhanger bird, locked_story = locked Lectura tap, timed = every other opener. */
+export const PAYWALL_SEEN_SOURCE = Object.freeze({
+  win: "win",
+  lockedStory: "locked_story",
+  timed: "timed",
+});
+
+/** Map a headline trigger onto the three paywall_seen sources. Unknown triggers are timed. */
+export function paywallSeenSourceFor(trigger) {
+  if (trigger === PAYWALL_SEEN_SOURCE.lockedStory || trigger === PAYWALL_SOURCE.lockedStory) {
+    return PAYWALL_SEEN_SOURCE.lockedStory;
+  }
+  if (trigger === PAYWALL_BIRD_TRIGGER || trigger === PAYWALL_SEEN_SOURCE.win) {
+    return PAYWALL_SEEN_SOURCE.win;
+  }
+  return PAYWALL_SEEN_SOURCE.timed;
+}
 
 const EVENTS = new Set(Object.values(FUNNEL_EVENTS));
 const TAPS = new Set(Object.values(PAYWALL_TAP));
@@ -100,8 +121,9 @@ function safeStoryId(id) {
  * and day2_return are event + timestamp only.
  * purchase is event + at + allowlisted plan / productId only.
  * open is event + at, plus daysSinceLast when it is an integer 0–365.
+ * paywall_seen is event + at, plus source when it is win, locked_story, or timed.
  */
-export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId, daysSinceLast } = {}, bus = eventBus()) {
+export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId, daysSinceLast, source } = {}, bus = eventBus()) {
   if (!EVENTS.has(event)) return null;
   const payload = { event, at: new Date().toISOString() };
   if (event === FUNNEL_EVENTS.open) {
@@ -121,6 +143,9 @@ export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId,
   if (event === FUNNEL_EVENTS.purchase) {
     if (PLANS.has(plan)) payload.plan = plan;
     if (PRODUCT_IDS.has(productId)) payload.productId = productId;
+  }
+  if (event === FUNNEL_EVENTS.paywallSeen && Object.values(PAYWALL_SEEN_SOURCE).includes(source)) {
+    payload.source = source;
   }
   if (bus) {
     bus[FUNNEL_LOG] = Array.isArray(bus[FUNNEL_LOG]) ? bus[FUNNEL_LOG] : [];

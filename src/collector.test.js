@@ -107,6 +107,79 @@ assert(sent.some((row) => JSON.parse(row.body).name === "lectura_chapter_done"),
 assert(sent.some((row) => JSON.parse(row.body).name === "paywall_tap"), "paywall tap is sent");
 assert(sent.find((row) => JSON.parse(row.body).name === "paywall_seen") && JSON.parse(sent.find((row) => JSON.parse(row.body).name === "paywall_seen").body).lang === "en", "paywall_seen keeps the English face");
 assert(sent.every((row) => !("daysSinceLast" in JSON.parse(row.body))), "daysSinceLast stays off events that are not open");
+assert(sent.every((row) => !("source" in JSON.parse(row.body))), "source stays off events shipped without one");
+
+const sourcePosts = [];
+for (const source of ["win", "locked_story", "timed"]) {
+  const result = await shipFunnelEvent({
+    event: FUNNEL_EVENTS.paywallSeen,
+    at: "2026-09-28T18:05:00.000Z",
+    source,
+    price: "$39.99",
+    storyId: "story-0",
+  }, {
+    endpoint,
+    lang: "es",
+    storage,
+    random: () => "device-anonymous-1",
+    beaconImpl: (_url, body) => {
+      sourcePosts.push(JSON.parse(body));
+      return true;
+    },
+    fetchImpl: async () => { throw new Error("fetch should not run"); },
+  });
+  assert(result.sent === true, `paywall_seen ${source} is sent`);
+}
+assert(sourcePosts.map((row) => row.source).join(",") === "win,locked_story,timed", "paywall_seen posts the allowlisted source");
+for (const row of sourcePosts) {
+  assert(Object.keys(row).sort().join(",") === "deviceId,lang,name,source,ts,type", "paywall_seen posted keys add source only");
+  assert(!("price" in row) && !("storyId" in row), "paywall_seen source row drops other extras");
+}
+const junkSource = [];
+await shipFunnelEvent({
+  event: FUNNEL_EVENTS.paywallSeen,
+  at: "2026-09-28T18:05:00.000Z",
+  source: "boot",
+}, {
+  endpoint,
+  lang: "es",
+  storage,
+  random: () => "device-anonymous-1",
+  beaconImpl: (_url, body) => {
+    junkSource.push(JSON.parse(body));
+    return true;
+  },
+  fetchImpl: async () => { throw new Error("fetch should not run"); },
+});
+assert(junkSource.length === 1 && !("source" in junkSource[0]), "an unknown paywall_seen source is not posted");
+const droppedSource = [];
+for (const name of [
+  FUNNEL_EVENTS.paywallTap,
+  FUNNEL_EVENTS.firstSessionStart,
+  FUNNEL_EVENTS.firstSessionExercise1Correct,
+  FUNNEL_EVENTS.firstSessionComplete,
+  FUNNEL_EVENTS.day2Return,
+]) {
+  await shipFunnelEvent({
+    event: name,
+    at: "2026-09-28T18:05:00.000Z",
+    source: "win",
+    choice: name === FUNNEL_EVENTS.paywallTap ? "annual" : undefined,
+  }, {
+    endpoint,
+    lang: "es",
+    storage,
+    random: () => "device-anonymous-1",
+    beaconImpl: (_url, body) => {
+      droppedSource.push(JSON.parse(body));
+      return true;
+    },
+    fetchImpl: async () => { throw new Error("fetch should not run"); },
+  });
+}
+assert(droppedSource.length === 5, "tap and first-session events still ship");
+assert(droppedSource.every((row) => !("source" in row)), "source stays off paywall_tap and the four first-session events");
+assert(droppedSource.every((row) => Object.keys(row).sort().join(",") === "deviceId,lang,name,ts,type"), "those rows stay type, name, lang, device id, ts");
 
 setCollectorEndpointOverride("https://override.example/open");
 const openStore = memoryStorage();
