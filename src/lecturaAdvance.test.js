@@ -1,7 +1,26 @@
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaQuestionsOpenScrollY, lecturaStickyHeaderBottom } from "./lecturaAdvance.js";
+import {
+  LECTURA_NEXT_BOTTOM,
+  LECTURA_NEXT_GAP,
+  LECTURA_NEXT_HEIGHT,
+  LECTURA_STILL_BAND_WIDTH,
+  LECTURA_STILL_CAP_HEIGHT,
+  LECTURA_STORY_OPEN_STILL_TOP,
+  lecturaAdvanceScrollY,
+  lecturaClaimScrollY,
+  lecturaLinesAboveNext,
+  lecturaNextBottomCss,
+  lecturaNextButtonTop,
+  lecturaNextClearanceCss,
+  lecturaNextPinStyle,
+  lecturaQuestionsOpenScrollY,
+  lecturaStillAtLeast16x9,
+  lecturaStillBandHeight,
+  lecturaStickyHeaderBottom,
+  lecturaStoryOpenTextTop,
+} from "./lecturaAdvance.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 const here = dirname(fileURLToPath(import.meta.url));
@@ -59,5 +78,31 @@ assert(appSrc.includes("advanceLectura(paraIdx - 1)"), "Back uses the same advan
 assert(/<Btn onClick=\{\(\) => advanceLectura\(paraIdx \+ 1\)\} style=\{\{ flex: 2 \}\}>/.test(appSrc), "NEXT keeps flex 2 and no extra style");
 assert(/<Btn outline disabled=\{paraIdx === 0\} onClick=\{\(\) => advanceLectura\(paraIdx - 1\)\} style=\{\{ flex: 1 \}\}>/.test(appSrc), "Back keeps flex 1 and outline");
 assert(/<nav aria-label=\{uiLang === "en" \? "Primary navigation" : "Navegación principal"\} style=\{\{ position: "fixed", bottom: 0,/.test(appSrc), "footer nav stays pinned to the bottom edge");
+
+const stillBand = lecturaStillBandHeight();
+assert(Math.abs(stillBand - 111) < 0.001, "16:9 crop of the old 148px cap is a 111px band");
+assert(stillBand < LECTURA_STILL_CAP_HEIGHT, "the story-open still is shorter than the old cap");
+assert(lecturaStillAtLeast16x9(LECTURA_STILL_BAND_WIDTH, stillBand), "the band is not thinner than 16:9");
+assert(!lecturaStillAtLeast16x9(LECTURA_STILL_BAND_WIDTH, stillBand - 1), "a shorter band would be thinner than 16:9");
+assert(lecturaNextBottomCss() === "calc(16px + env(safe-area-inset-bottom))", "NEXT uses the onboarding CTA bottom inset");
+assert(LECTURA_NEXT_BOTTOM === 16 && LECTURA_NEXT_GAP === 12, "NEXT pin keeps the 16px inset and 12px gap");
+assert(lecturaNextClearanceCss() === "calc(80px + env(safe-area-inset-bottom))", "story column clears the pin with the 12px gap");
+const pin = lecturaNextPinStyle("#15171C");
+assert(pin.position === "fixed" && pin.bottom === lecturaNextBottomCss() && pin.paddingTop === 12, "pin style matches the onboarding CTA");
+assert(pin.marginBottom === 0 && pin.display === "flex" && pin.gap === 10, "NEXT row keeps the button gap; margin would add to the 16px inset");
+assert(pin.background === "#15171C" && pin.boxShadow.includes("#15171C"), "pin mask uses the page color already on screen");
+const textTop = lecturaStoryOpenTextTop(stillBand);
+assert(Math.abs(textTop - (LECTURA_STORY_OPEN_STILL_TOP + stillBand + 12)) < 0.001, "paragraph text starts under the cropped still");
+for (const [width, height] of [[360, 640], [390, 844]]) {
+  const buttonTop = lecturaNextButtonTop(height);
+  assert(buttonTop > 0 && buttonTop + LECTURA_NEXT_HEIGHT === height - 16, `${width}x${height} NEXT sits 16px above the bottom`);
+  assert(lecturaLinesAboveNext({ textTop, viewportHeight: height }) >= 2, `${width}x${height} keeps at least two Spanish lines above NEXT`);
+}
+assert(appSrc.includes("lecturaNextPinStyle(D.bg)"), "NEXT row uses the shared pin");
+assert(appSrc.includes("lecturaNextClearanceCss()"), "story column pads for the pin");
+assert(appSrc.includes('aspectRatio: "16 / 9"'), "still crop is 16:9");
+assert(appSrc.includes("advanceLectura(paraIdx + 1)"), "NEXT click still advances");
+assert(appSrc.includes("lecturaAdvanceScrollY"), "advance scroll math is unchanged");
+assert(appSrc.includes("lecturaQuestionsOpenScrollY") && appSrc.includes("lecturaClaimScrollY"), "questions and claim scroll stay");
 
 console.log("ok: lectura advance scroll + NEXT placement");

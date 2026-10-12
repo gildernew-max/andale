@@ -60,7 +60,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaQuestionsOpenScrollY, lecturaStickyHeaderBottom } from "./lecturaAdvance.js";
+import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaQuestionsOpenScrollY, lecturaStickyHeaderBottom, LECTURA_STILL_BAND_WIDTH, LECTURA_STILL_MARGIN_BOTTOM } from "./lecturaAdvance.js";
 import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -11998,7 +11998,7 @@ export default function App() {
           </div>
         );
         return (
-          <div data-testid="story-reader" data-story-id={story.id} style={{ maxWidth: 600, margin: "0 auto", padding: "20px 20px 150px" }}>
+          <div data-testid="story-reader" data-story-id={story.id} style={{ maxWidth: 600, margin: "0 auto", padding: `20px 20px ${lecturaNextClearanceCss()}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
 	              <button type="button" onClick={() => { setWordSel(null); setPaywallSource(PAYWALL_SOURCE.storyClose); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -12037,14 +12037,14 @@ export default function App() {
             )}
 
             {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
-              <div key={pi} ref={lecturaParagraphRef} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 18, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
+              <div key={pi} ref={lecturaParagraphRef} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 8, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
                 <img
                   src={`${import.meta.env.BASE_URL}lectura/${story.id}/p${pi}.png`}
                   alt=""
                   aria-hidden="true"
                   data-testid={`lectura-still-${pi}`}
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
-                  style={{ display: "block", width: "auto", height: "auto", maxWidth: "100%", maxHeight: 148, margin: "0 auto 12px", borderRadius: 10 }}
+                  style={{ display: "block", width: "100%", maxWidth: LECTURA_STILL_BAND_WIDTH, aspectRatio: "16 / 9", height: "auto", objectFit: "cover", objectPosition: "center", margin: `0 auto ${LECTURA_STILL_MARGIN_BOTTOM}px`, borderRadius: 10 }}
                 />
                 <div style={{ display: "flex", gap: latamNarration ? 10 : 0 }}>
                 {latamNarration && (
@@ -12091,7 +12091,7 @@ export default function App() {
                 {checkpoints[pi] && (() => {
                   const sheetBlocksAnswers = !!(wordSel && wordSel.pi === pi);
                   return (
-                  <div data-testid="lectura-checkpoint" style={{ position: "relative", zIndex: sheetBlocksAnswers ? 31 : "auto", marginTop: 10 + wordSheetSpacer, marginLeft: latamNarration ? 48 : 0, border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
+                  <div data-testid="lectura-checkpoint" style={{ position: "relative", zIndex: sheetBlocksAnswers ? 31 : "auto", marginTop: 6 + wordSheetSpacer, marginLeft: latamNarration ? 48 : 0, border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
                     <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? limeText(D.okText, D) : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
                       {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
                     </div>
@@ -12115,7 +12115,7 @@ export default function App() {
             ); })}
 
             {paraIdx < story.paragraphs.length && (
-              <div data-testid="lectura-advance" style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+              <div data-testid="lectura-advance" style={lecturaNextPinStyle(D.bg)}>
                 <Btn outline disabled={paraIdx === 0} onClick={() => advanceLectura(paraIdx - 1)} style={{ flex: 1 }}>
                   ← {uiLang === "en" ? "Back" : "Anterior"}
                 </Btn>

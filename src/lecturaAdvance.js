@@ -1,8 +1,9 @@
 /**
  * Lectura NEXT / paragraph advance.
  * The new paragraph's top meets the sticky header's bottom — the top of the
- * readable area. The pinned footer is not part of this math.
+ * readable area. The pinned NEXT row is not part of this scroll math.
  */
+import { ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, onboardingCtaBottomCss } from "./onboarding.js";
 
 export function lecturaAdvanceScrollY({ paragraphTop, scrollY = 0, headerBottom = 0 } = {}) {
   const top = Number(paragraphTop);
@@ -69,4 +70,100 @@ export function lecturaStickyHeaderBottom(start) {
     node = node.parentElement;
   }
   return 0;
+}
+
+/** Same bottom inset and 12px content gap as the onboarding CTA pin. */
+export const LECTURA_NEXT_BOTTOM = ONBOARDING_CTA_BOTTOM;
+export const LECTURA_NEXT_GAP = ONBOARDING_CTA_CONTENT_GAP;
+/** Measured Lectura Btn row: 13px pad + Nunito 800 line + 13px pad + 4px lip. */
+export const LECTURA_NEXT_HEIGHT = 52;
+export const LECTURA_PARAGRAPH_FONT = 17;
+export const LECTURA_PARAGRAPH_LEADING = 1.75;
+
+/** 4:3 stills (1152×864) were capped at 148px tall. Story open keeps that width. */
+export const LECTURA_STILL_CAP_HEIGHT = 148;
+export const LECTURA_STILL_BAND_WIDTH = LECTURA_STILL_CAP_HEIGHT * (1152 / 864);
+/** Thinnest crop allowed. At the old cap width the band is exactly 111px tall. */
+export const LECTURA_STILL_BAND_RATIO = 16 / 9;
+export const LECTURA_STILL_MARGIN_BOTTOM = 12;
+
+/**
+ * Scroll-0 distance from the viewport top to the still on story open
+ * (sticky brand bar through the paragraph card's top border and padding).
+ * Measured at 360×640 and 390×844; the title does not wrap, so it matches.
+ */
+export const LECTURA_STORY_OPEN_STILL_TOP = 340.4;
+
+export function lecturaNextBottomCss() {
+  return onboardingCtaBottomCss();
+}
+
+/** Room under the story column so the last card can sit 12px above the pinned row. */
+export function lecturaNextClearanceCss() {
+  const px = LECTURA_NEXT_GAP + LECTURA_NEXT_HEIGHT + LECTURA_NEXT_BOTTOM;
+  return `calc(${px}px + env(safe-area-inset-bottom))`;
+}
+
+export function lecturaStillBandHeight(width = LECTURA_STILL_BAND_WIDTH) {
+  const w = Number(width);
+  if (!(w > 0)) return 0;
+  return (w * 9) / 16;
+}
+
+export function lecturaStillAtLeast16x9(width, height) {
+  const w = Number(width);
+  const h = Number(height);
+  if (!(w > 0) || !(h > 0)) return false;
+  return h + 0.01 >= (w * 9) / 16;
+}
+
+/** Top edge of the NEXT buttons. The 12px gap sits above this, inside the pin. */
+export function lecturaNextButtonTop(viewportHeight, safeAreaBottom = 0) {
+  const vh = Number(viewportHeight);
+  const safe = Number(safeAreaBottom);
+  if (!Number.isFinite(vh)) return 0;
+  const inset = LECTURA_NEXT_BOTTOM + (Number.isFinite(safe) ? Math.max(0, safe) : 0);
+  return vh - inset - LECTURA_NEXT_HEIGHT;
+}
+
+/** How many paragraph lines sit fully above the pin, leaving the 12px gap. */
+export function lecturaLinesAboveNext({
+  textTop,
+  viewportHeight,
+  safeAreaBottom = 0,
+  lineHeight = LECTURA_PARAGRAPH_FONT * LECTURA_PARAGRAPH_LEADING,
+} = {}) {
+  const limit = lecturaNextButtonTop(viewportHeight, safeAreaBottom) - LECTURA_NEXT_GAP;
+  const top = Number(textTop);
+  const line = Number(lineHeight);
+  if (!Number.isFinite(limit) || !Number.isFinite(top) || !(line > 0)) return 0;
+  return Math.max(0, Math.floor((limit - top) / line + 1e-9));
+}
+
+export function lecturaStoryOpenTextTop(stillHeight = lecturaStillBandHeight()) {
+  return LECTURA_STORY_OPEN_STILL_TOP + stillHeight + LECTURA_STILL_MARGIN_BOTTOM;
+}
+
+/**
+ * Page-colored pin. Button faces keep their own ink. Story content scrolls
+ * under this row and above it. Aligned to the 600px story column.
+ */
+export function lecturaNextPinStyle(background) {
+  const bottom = lecturaNextBottomCss();
+  return {
+    position: "fixed",
+    left: 0,
+    right: 0,
+    bottom,
+    zIndex: 11,
+    display: "flex",
+    gap: 10,
+    marginBottom: 0,
+    paddingTop: LECTURA_NEXT_GAP,
+    paddingLeft: "max(20px, calc(50% - 280px))",
+    paddingRight: "max(20px, calc(50% - 280px))",
+    background,
+    boxSizing: "border-box",
+    boxShadow: `0 ${bottom} 0 0 ${background}`,
+  };
 }

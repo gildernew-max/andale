@@ -4956,10 +4956,11 @@ assert(existsSync(join(repoRoot, "public", "lectura", "story-9", "MANIFEST.md"))
 const story9Cast = readFileSync(join(repoRoot, "public", "lectura", "story-9", "CAST.md"), "utf8");
 assert(/don Adán/.test(story9Cast) && /White hair/.test(story9Cast) && /Straw hat/.test(story9Cast) && /red sash/.test(story9Cast), "story-9 CAST locks white hair/mustache, straw hat, white shirt, red sash");
 assert(appSrc.includes("lectura/${story.id}/p${pi}.png"), "Lectura still src is public/lectura/{storyId}/pN.png");
-const lecturaStillStyle = appSrc.slice(appSrc.indexOf("lectura-still-"), appSrc.indexOf("lectura-still-") + 520);
-assert(lecturaStillStyle.includes('width: "auto"') && lecturaStillStyle.includes('height: "auto"') && lecturaStillStyle.includes("maxHeight: 148"), "Lectura still scales with its aspect ratio under a height cap");
-assert(lecturaStillStyle.includes("margin: \"0 auto 12px\"") && lecturaStillStyle.includes("borderRadius: 10"), "Lectura still stays centered with the same corner radius");
-assert(!/objectFit:\s*"cover"|objectPosition/.test(lecturaStillStyle), "Lectura still is not cropped");
+const lecturaStillStyle = appSrc.slice(appSrc.indexOf("lectura-still-"), appSrc.indexOf("lectura-still-") + 720);
+assert(lecturaStillStyle.includes('width: "100%"') && lecturaStillStyle.includes('height: "auto"') && lecturaStillStyle.includes("LECTURA_STILL_BAND_WIDTH") && lecturaStillStyle.includes('aspectRatio: "16 / 9"'), "Lectura still is a 16:9 band at the old cap width");
+assert(lecturaStillStyle.includes("LECTURA_STILL_MARGIN_BOTTOM") && lecturaStillStyle.includes("borderRadius: 10"), "Lectura still stays centered with the same corner radius");
+assert(/objectFit:\s*"cover"/.test(lecturaStillStyle) && /objectPosition:\s*"center"/.test(lecturaStillStyle), "Lectura still crops to the band and does not disappear");
+assert(!lecturaStillStyle.includes("display: \"none\""), "Lectura still style does not hide the image");
 for (const s of STORIES) {
   s.paragraphs.forEach((_, i) => {
     const stillPng = join(repoRoot, "public", "lectura", s.id, `p${i}.png`);

@@ -87,7 +87,7 @@ describe("lectura next placement and advance scroll", () => {
     expect(next.style.background).toMatch(/#58cc02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     expect(next.style.color).toMatch(/#fff(?:fff)?|white|rgb\(\s*255,\s*255,\s*255\s*\)/i);
     expect(next.style.borderBottom).toMatch(/4px solid/i);
-    expect(advance.style.marginBottom).toBe("10px");
+    expect(advance.style.marginBottom).toBe("0px");
     expect(scrollTo).not.toHaveBeenCalled();
     expect(scrollY).toBe(900);
 
