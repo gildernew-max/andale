@@ -5,12 +5,13 @@
  *
  *  Events already on the in-browser funnel bus go out as
  *  { type:'event', name, lang, deviceId, ts }.
- *  `open` may also include daysSinceLast (integer 0–365). Nothing else is added.
- *  The address is never on that row.
+ *  `open` may also include daysSinceLast (integer 0–365).
+ *  `paywall_seen` may also include source when it is win, locked_story, or timed.
+ *  Nothing else is added. The address is never on that row.
  *  Email submits go out as { type:'email', email, lang, source, ts }.
  */
 
-import { FUNNEL_EVENTS } from "./funnel.js";
+import { FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE } from "./funnel.js";
 
 function readEndpoint(env, name) {
   const value = env && env[name];
@@ -146,5 +147,9 @@ export async function shipFunnelEvent(detail, {
   };
   const daysSinceLast = openDaysSinceLast(detail);
   if (daysSinceLast != null) record.daysSinceLast = daysSinceLast;
+  const source = detail && detail.source;
+  if (name === FUNNEL_EVENTS.paywallSeen && Object.values(PAYWALL_SEEN_SOURCE).includes(source)) {
+    record.source = source;
+  }
   return postCollector(record, { endpoint: url, fetchImpl, beaconImpl });
 }

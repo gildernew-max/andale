@@ -27,9 +27,9 @@ import { watchWordSheetPlacement, wordSheetClose, wordSheetReveal } from "./word
 import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, annualPriceLine } from "./webPaywall.js";
+import { LOCKED_STORY_PAYWALL, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, annualPriceLine } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
-import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent } from "./funnel.js";
+import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent, paywallSeenSourceFor } from "./funnel.js";
 import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1, claimFirstSessionStart, isFirstExerciseCorrect, sessionOneFromProgress } from "./firstSessionFunnel.js";
 import { isWaitlistEmail } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
@@ -4627,7 +4627,7 @@ const UI = {
     paywallHeadline: "La historia sigue.",
     paywallHeadlineFallback: "Hay mucho más por leer.",
     paywallHeadlineNoStory: "Hay mucho por leer.",
-    paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
+    paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.",
     paywallAnnual: "Empezar plan anual",
     paywallAnnualHold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.",
     paywallPrice: "{price} al año",
@@ -4723,7 +4723,7 @@ const UI = {
     paywallHeadline: "The story goes on.",
     paywallHeadlineFallback: "There's much\u00A0more to read.",
     paywallHeadlineNoStory: "There's a lot to read.",
-    paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
+    paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.",
     paywallAnnual: "Start annual plan",
     paywallAnnualHold: "Annual plans aren't open yet. Keep reading free for now.",
     paywallPrice: "{price} a year",
@@ -5330,6 +5330,8 @@ export default function App() {
   }, []);
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
+  const [lockedStoryPaywall, setLockedStoryPaywall] = useState(false);
+  const paywallSeenKindRef = useRef(PAYWALL_SEEN_SOURCE.timed);
   const [paywallAnnualHold, setPaywallAnnualHold] = useState(false);
   const [lecturaCliffhanger, setLecturaCliffhanger] = useState(null);
   const [chapterBirdHandoff, setChapterBirdHandoff] = useState(false);
@@ -6850,6 +6852,11 @@ export default function App() {
     save({ gems: prog.gems - REFILL_COST, hearts: MAX_HEARTS, heartT: Date.now() });
   };
 
+  const openLockedStoryPaywall = () => {
+    if (!LOCKED_STORY_PAYWALL) return;
+    setLockedStoryPaywall(true);
+  };
+
   const openStory = (story) => {
     if (!isLecturaStoryOpen(STORIES, prog.stories, story?.id)) return;
     if (story?.id) {
@@ -7941,9 +7948,11 @@ export default function App() {
   const [paywallStillMiss, setPaywallStillMiss] = useState(false);
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
-  const showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue() || chapterBirdHandoff;
-  const paywallHeadlineSource = chapterBirdHandoff ? PAYWALL_BIRD_TRIGGER : paywallSource;
+  const showLockedStoryPaywall = LOCKED_STORY_PAYWALL && lockedStoryPaywall;
+  const showSoftPaywall = showLockedStoryPaywall || (paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue()) || chapterBirdHandoff;
+  const paywallHeadlineSource = showLockedStoryPaywall ? PAYWALL_SOURCE.lockedStory : (chapterBirdHandoff ? PAYWALL_BIRD_TRIGGER : paywallSource);
   const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource, lecturaStartedStored);
+  paywallSeenKindRef.current = paywallSeenSourceFor(paywallHeadlineSource);
   const paywallBodyType = { fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, lineHeight: 1.45 };
   const annualPriceText = annualPriceLine(L.paywallPrice);
   const paywallStillRel = paywallStillPath(storyView, paraIdx);
@@ -7974,7 +7983,7 @@ export default function App() {
   useEffect(() => {
     if (showSoftPaywall) {
       setSoftPaywall(true);
-      emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen });
+      emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: paywallSeenKindRef.current });
     } else {
       setSoftPaywall(false);
       setPaywallArmed(false);
@@ -8238,12 +8247,14 @@ export default function App() {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.continueFree });
     }
     const beat = lecturaCliffhanger;
+    const backToLectura = LOCKED_STORY_PAYWALL && lockedStoryPaywall;
     setChapterBirdHandoff(false);
+    setLockedStoryPaywall(false);
     setSoftPaywall(false);
     setPaywallAnnualHold(false);
     setPaywallArmed(false);
     setPostDismissHandoff(true);
-    setTab("camino");
+    setTab(backToLectura ? "lectura" : "camino");
     const showA2hs = shouldShowA2hsSheet({
       a2hsSeen: !!prog.a2hsSeen,
       freeDismiss: true,
@@ -8759,12 +8770,12 @@ export default function App() {
         ${theme === "dark" ? ".nametag { background:#1E2128; border-color:#2A2E36; color:#F6EFE4; }" : ""}
         @media (prefers-reduced-motion: reduce) { .bounce,.pop,.streak-pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track,.wordle-flip { animation:none !important; } }
         .node-btn { transition: transform .08s; }
-        .node-btn:hover:not(:disabled) { transform: scale(1.06); }
-        .node-btn:active:not(:disabled) { transform: translateY(3px); }
+        .node-btn:hover:not(:disabled):not([aria-disabled="true"]) { transform: scale(1.06); }
+        .node-btn:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(3px); }
         .choice-card { border:2px solid ${D.line}; border-bottom-width:4px; border-radius:14px; background:${D.card}; transition: background .1s, box-shadow .1s, border-color .1s; color:${D.ink}; box-sizing:border-box; min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
-        .choice-card:hover:not(:disabled) { background:${D.subtle}; }
+        .choice-card:hover:not(:disabled):not([aria-disabled="true"]) { background:${D.subtle}; }
         .choice-card[data-selected="true"],
-        .choice-card[data-selected="true"]:hover:not(:disabled) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
+        .choice-card[data-selected="true"]:hover:not(:disabled):not([aria-disabled="true"]) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
         .word-chip { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; width:max-content; min-width:min-content; max-width:none; flex:0 0 auto; white-space:nowrap; overflow:visible; text-overflow:unset; word-break:keep-all; overflow-wrap:normal; hyphens:manual; }
         .word-chip--phrase { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
         .memory-board { width:100%; max-width:none; margin:0; padding-left:${MEMORY_BOARD_PAD}px; padding-right:${MEMORY_BOARD_PAD}px; box-sizing:border-box; }
@@ -9155,10 +9166,10 @@ export default function App() {
                       const lockedSuffix = readable ? "" : (uiLang === "en" ? " (locked)" : " (cerrado)");
                       return (
                         <div style={{ position: "relative", margin: "14px 0 4px", zIndex: 1, textAlign: "center" }}>
-                          <button className="node-btn" data-testid={`camino-story-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable} onClick={() => openStory(story)}
+                          <button className="node-btn" data-testid={`camino-story-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable && !LOCKED_STORY_PAYWALL} aria-disabled={!readable && LOCKED_STORY_PAYWALL ? "true" : undefined} onClick={() => { if (readable) openStory(story); else openLockedStoryPaywall(); }}
 	                            aria-label={`${L.storyPrefix}: ${story.title}${lockedSuffix}`}
 	                            title={readable ? `${story.title} — ${L.storyTip}` : `${story.title}${lockedSuffix}`}
-                            style={{ width: 72, height: 72, borderRadius: 20, border: "none", cursor: readable ? "pointer" : "default", background: readable ? sec.color : D.lockGray, borderBottom: `7px solid ${readable ? sec.dark : (theme === "dark" ? D.line : "#CFCFCF")}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: readable ? "0 4px 10px rgba(0,0,0,.12)" : "none" }}>
+                            style={{ width: 72, height: 72, borderRadius: 20, border: "none", cursor: readable || LOCKED_STORY_PAYWALL ? "pointer" : "default", background: readable ? sec.color : D.lockGray, borderBottom: `7px solid ${readable ? sec.dark : (theme === "dark" ? D.line : "#CFCFCF")}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: readable ? "0 4px 10px rgba(0,0,0,.12)" : "none" }}>
                             {readable ? <IcBook size={34} /> : <IcLock size={30} />}
                           </button>
                           {readDone && (
@@ -9390,9 +9401,9 @@ export default function App() {
 	              const found = (prog.storyFinds?.[story.id] || []).length;
 	              const total = extra.keyWords?.length || 0;
 	              return (
-	                <button key={story.id} data-testid={`story-shelf-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable} onClick={() => openStory(story)} className="choice-card"
+	                <button key={story.id} data-testid={`story-shelf-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable && !LOCKED_STORY_PAYWALL} aria-disabled={!readable && LOCKED_STORY_PAYWALL ? "true" : undefined} onClick={() => { if (readable) openStory(story); else openLockedStoryPaywall(); }} className="choice-card"
 	                  aria-label={`${shelfTitle}${lockedSuffix}`}
-	                  style={{ textAlign: "left", padding: 15, cursor: readable ? "pointer" : "default", fontFamily: "inherit", background: theme === "dark" ? (claimed ? D.greenBg : D.card) : (claimed ? "#F3FBEA" : "#fff"), borderColor: theme === "dark" ? D.line : (claimed ? D.green : D.line), borderBottomColor: theme === "dark" ? D.line : (claimed ? D.green : D.line) }}>
+	                  style={{ textAlign: "left", padding: 15, cursor: readable || LOCKED_STORY_PAYWALL ? "pointer" : "default", fontFamily: "inherit", background: theme === "dark" ? (claimed ? D.greenBg : D.card) : (claimed ? "#F3FBEA" : "#fff"), borderColor: theme === "dark" ? D.line : (claimed ? D.green : D.line), borderBottomColor: theme === "dark" ? D.line : (claimed ? D.green : D.line) }}>
                   <div style={{ display: "flex", gap: 13, alignItems: "center" }}>
                     <div style={{ width: 52, height: 52, borderRadius: 15, background: sec.color, borderBottom: `5px solid ${sec.dark}`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <IcBook size={28} />
@@ -10501,7 +10512,7 @@ export default function App() {
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
             <div data-testid="soft-paywall-body" style={{ ...paywallBodyType, marginBottom: 8 }}>{L.paywallBody}</div>
             {annualPriceText ? (
-              <div data-testid="soft-paywall-annual-price" style={{ ...paywallBodyType, marginBottom: 12 }}>{annualPriceText}</div>
+              <div data-testid="soft-paywall-annual-price" style={{ ...paywallBodyType, color: theme === "dark" ? "#CDBBA6" : "#6B6258", textAlign: "center", marginBottom: 12 }}>{annualPriceText}</div>
             ) : null}
             <Btn data-testid="soft-paywall-annual" ink={LESSON_LIME_INK} onClick={tapPaywallAnnual} style={{ width: "100%" }}>{L.paywallAnnual}</Btn>
             {paywallAnnualHold ? (

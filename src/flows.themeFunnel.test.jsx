@@ -1338,6 +1338,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await awaitSoftPaywallAfterFirstWin();
     await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("paywall_seen")[0].name).toBeUndefined();
+    expect(funnelOf("paywall_seen").every((event) => event.source === "timed")).toBe(true);
 
     assertSoftPaywallAnnualPrimary("es");
     const annual = screen.getByTestId("soft-paywall-annual");
@@ -1713,8 +1714,9 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");
     expect(screen.getByTestId("soft-paywall-headline").style.textWrap).toBe("balance");
     expect(screen.getByTestId("soft-paywall-headline").style.letterSpacing).toBe("");
-    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.");
+    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.");
     expect(funnelOf("paywall_seen")).toHaveLength(1);
+    expect(funnelOf("paywall_seen")[0].source).toBe("win");
     expect(funnelOf("lectura_chapter_done")).toHaveLength(1);
     expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
     expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("Empezar plan anual");

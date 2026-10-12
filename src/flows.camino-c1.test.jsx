@@ -374,7 +374,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     }
   });
 
-  it("dark soft paywall title and prices are cream on #1E2128, not near-white on cream", async () => {
+  it("dark soft paywall title and body are cream on #1E2128; the price line is quiet ink", async () => {
     cleanup();
     seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false, lecturaStartedAt: 1 });
     await boot();
@@ -395,7 +395,11 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(wall.style.background).toMatch(/#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i);
     expect(headline.style.color).toMatch(cream);
     expect(headline.style.color).not.toMatch(nearWhite);
-    expect(screen.queryByTestId("soft-paywall-annual-price")).toBeNull();
+    const price = screen.getByTestId("soft-paywall-annual-price");
+    expect(price.textContent).toBe("US$39.99\u00A0al\u00A0año");
+    expect(price.style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
+    expect(price.style.color).not.toMatch(cream);
+    expect(price.style.textAlign).toBe("center");
     expect(body.style.color).toMatch(cream);
     expect(body.style.color).not.toMatch(nearWhite);
     expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
@@ -1262,8 +1266,8 @@ const FALLBACK_HEADLINE = {
   en: "There's much\u00A0more to read.",
 };
 const HOOK_BODY = {
-  es: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
-  en: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
+  es: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.",
+  en: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.",
 };
 
 const assertPaywallHeadline = (source, lang = "es") => {
@@ -1605,7 +1609,7 @@ describe("paywall headline follows the open source", () => {
 });
 
 describe("inert web paywall", () => {
-  it.each(["en", "es"])("hides an empty price and records an annual tap without a charge in %s", async (lang) => {
+  it.each(["en", "es"])("shows the annual price and records an annual tap without a charge in %s", async (lang) => {
     cleanup();
     seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
@@ -1629,7 +1633,7 @@ describe("inert web paywall", () => {
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     assertSoftPaywallAnnualPrimary(lang);
-    expect(screen.queryByTestId("soft-paywall-annual-price")).toBeNull();
+    expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe(lang === "en" ? "$39.99\u00A0a\u00A0year" : "US$39.99\u00A0al\u00A0año");
     expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\[ANNUAL PRICE\]|\{price\}/);
     expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");
@@ -1638,10 +1642,11 @@ describe("inert web paywall", () => {
     expect(screen.queryByTestId("soft-paywall-legal")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-restore")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\$|€|Apple|Restore|Restaurar|charged|cobra/);
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\$6\.99|€|Apple|Restore|Restaurar|charged|cobra|Un mes|One month/);
     expect(restoreCalls).toBe(0);
     expect(purchaseCalls).toBe(0);
     await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
+    expect(funnelOf("paywall_seen").every((event) => event.source === "timed")).toBe(true);
     expect(funnelOf("purchase")).toHaveLength(0);
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
@@ -1660,6 +1665,7 @@ describe("inert web paywall", () => {
     const names = window.__andaleFunnelLog.map((e) => e.event);
     expect(names.indexOf("paywall_seen")).toBeGreaterThanOrEqual(0);
     expect(names.indexOf("paywall_tap")).toBeGreaterThan(names.indexOf("paywall_seen"));
+    expect(funnelOf("paywall_tap").every((event) => event.source == null)).toBe(true);
     expect(names.includes("purchase")).toBe(false);
     window.removeEventListener("andale-purchase", onPurchase);
     delete window.__andaleIapEnv;

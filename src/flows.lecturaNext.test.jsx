@@ -48,12 +48,20 @@ describe("off-path Lectura on Learn home", () => {
     const locked = screen.getByTestId("story-shelf-story-4");
     expect(locked.getAttribute("data-locked")).toBe("true");
     expect(locked.getAttribute("aria-label")).toBe("Doña Lupe y el mole (cerrado)");
-    expect(locked.disabled).toBe(true);
+    expect(locked.disabled).toBe(false);
+    expect(locked.getAttribute("aria-disabled")).toBe("true");
     expect(screen.getByTestId("story-shelf-story-9").getAttribute("data-locked")).toBe("true");
     expect(screen.getByTestId("story-shelf-story-3").getAttribute("data-locked")).toBe("false");
     fireEvent.click(locked);
-    fireEvent.click(screen.getByTestId("story-shelf-story-9"));
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(screen.queryByTestId("story-reader")).toBeNull();
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    fireEvent.click(screen.getByTestId("story-shelf-story-9"));
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
 
     await user.click(screen.getByTestId("nav-camino"));
     await user.click(screen.getByTestId("lectura-next-story"));

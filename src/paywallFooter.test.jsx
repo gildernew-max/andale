@@ -146,7 +146,14 @@ describe("paywall card", () => {
       expect(norm(dismiss.style.color)).toBe(freeInk);
       expect(norm(dismiss.style.color)).not.toBe("#1f3a1a");
 
-      expect(screen.queryByTestId("soft-paywall-annual-price")).toBeNull();
+      const priceLine = uiLang === "en" ? "$39.99\u00A0a\u00A0year" : "US$39.99\u00A0al\u00A0año";
+      const price = screen.getByTestId("soft-paywall-annual-price");
+      expect(price.textContent).toBe(priceLine);
+      expect(price.style.fontSize).toBe("13.5px");
+      expect(price.style.fontWeight).toBe("700");
+      expect(price.style.textAlign).toBe("center");
+      expect(norm(price.style.color)).toBe(holdInk);
+      expect(price.compareDocumentPosition(year) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(screen.queryByTestId("soft-paywall-annual-hold")).toBeNull();
       expect(wall.textContent).not.toMatch(/\[ANNUAL PRICE\]|\{price\}/);
       expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
@@ -179,7 +186,8 @@ describe("paywall card", () => {
       expect(norm(year.style.color)).toBe("#1f3a1a");
       expect(year.style.animation || "").toBe("");
       expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-      expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\$|charged|cobra|Apple|Restore/);
+      expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\$6\.99|charged|cobra|Apple|Restore|Un mes|One month/);
+      expect(screen.getByTestId("soft-paywall").textContent).toContain(uiLang === "en" ? "$39.99\u00A0a\u00A0year" : "US$39.99\u00A0al\u00A0año");
       await user.click(screen.getByTestId("soft-paywall-dismiss"));
       await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
       expect((window.__andaleFunnelLog || []).some((event) => event.event === FUNNEL_EVENTS.paywallTap && event.choice === "continue_free")).toBe(true);

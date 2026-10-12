@@ -1,10 +1,23 @@
-/** Amount only. Null until a real price is set. Dropped into the locked "{price} a year" / "{price} al año" line. Not a charge. */
-export const ANNUAL_PRICE_PLACEHOLDER = null;
+/** One line. false = locked Lectura cards stay disabled and the tap does nothing. */
+export const LOCKED_STORY_PAYWALL = true;
+
+/** Amount only. Null hides the line. One assignment to clear or set. Not a charge. */
+export const ANNUAL_PRICE_PLACEHOLDER = "39.99";
+
+function pricedAmount(price, spanish) {
+  const raw = String(price).trim();
+  const bare = raw.replace(/^US\$/, "").replace(/^\$/, "");
+  if (!/^\d+(?:\.\d+)?$/.test(bare)) return raw;
+  return `${spanish ? "US$" : "$"}${bare}`;
+}
 
 /** Locked price line, or null when no amount is set so the card renders no price text. */
 export function annualPriceLine(template, price = ANNUAL_PRICE_PLACEHOLDER) {
   if (price == null || String(price).trim() === "") return null;
-  return String(template).replace("{price}", String(price));
+  const text = String(template);
+  const spanish = text.includes("año");
+  const line = text.replace("{price}", pricedAmount(price, spanish));
+  return line.replace(/ /g, "\u00A0");
 }
 
 /** Card bottom sits at least this many pixels above the safe area. */
