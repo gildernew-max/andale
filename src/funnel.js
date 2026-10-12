@@ -7,7 +7,8 @@
  *  / day2_return are event + timestamp only. Once-per-device gating lives in
  *  firstSessionFunnel.js, not on this bus.
  *  paywall_seen is event + timestamp, plus an allowlisted source
- *  (win / locked_story / timed). Other events do not carry source.
+ *  (win / locked_story / timed). tap_annual and tap_monthly are separate
+ *  events and carry that same source. Other events do not carry source.
  */
 
 import { dayKeyFromDate } from "./firstDoor.js";
@@ -23,6 +24,8 @@ export const FUNNEL_EVENTS = Object.freeze({
   lecturaChapterDone: "lectura_chapter_done",
   paywallSeen: "paywall_seen",
   paywallTap: "paywall_tap",
+  tapAnnual: "tap_annual",
+  tapMonthly: "tap_monthly",
   waitlistSubmit: "waitlist_submit",
   purchase: "purchase",
   firstWinSeen: "first-win-seen",
@@ -40,7 +43,7 @@ export const PAYWALL_TAP = Object.freeze({
   continueFree: "continue_free",
 });
 
-/** Allowlist for paywall_seen only. win = cliffhanger bird, locked_story = locked Lectura tap, timed = every other opener. */
+/** Allowlist for paywall_seen, tap_annual, and tap_monthly. win = cliffhanger bird, locked_story = locked Lectura tap, timed = every other opener. */
 export const PAYWALL_SEEN_SOURCE = Object.freeze({
   win: "win",
   lockedStory: "locked_story",
@@ -121,7 +124,8 @@ function safeStoryId(id) {
  * and day2_return are event + timestamp only.
  * purchase is event + at + allowlisted plan / productId only.
  * open is event + at, plus daysSinceLast when it is an integer 0–365.
- * paywall_seen is event + at, plus source when it is win, locked_story, or timed.
+ * paywall_seen, tap_annual, and tap_monthly are event + at, plus source when it
+ * is win, locked_story, or timed.
  */
 export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId, daysSinceLast, source } = {}, bus = eventBus()) {
   if (!EVENTS.has(event)) return null;
@@ -144,7 +148,10 @@ export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId,
     if (PLANS.has(plan)) payload.plan = plan;
     if (PRODUCT_IDS.has(productId)) payload.productId = productId;
   }
-  if (event === FUNNEL_EVENTS.paywallSeen && Object.values(PAYWALL_SEEN_SOURCE).includes(source)) {
+  if (
+    (event === FUNNEL_EVENTS.paywallSeen || event === FUNNEL_EVENTS.tapAnnual || event === FUNNEL_EVENTS.tapMonthly)
+    && Object.values(PAYWALL_SEEN_SOURCE).includes(source)
+  ) {
     payload.source = source;
   }
   if (bus) {

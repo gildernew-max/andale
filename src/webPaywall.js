@@ -23,8 +23,15 @@ export function annualPriceLine(template, price = ANNUAL_PRICE_PLACEHOLDER) {
 /** Card bottom sits at least this many pixels above the safe area. */
 export const PAYWALL_CARD_BOTTOM_INSET = 16;
 
-/** Continue free sits this many pixels under the annual button, or under the post-tap line once that line is up. */
+/** Monthly sits this many pixels under the annual button, or under the post-tap line once that line is up. */
+export const PAYWALL_MONTHLY_GAP = 12;
+
+/** Continue free sits this many pixels under the monthly button. */
 export const PAYWALL_FREE_GAP = 12;
 
-/** The post-tap line sits this many pixels under the annual button. */
+/** The free-line sits this many pixels under Continue free. Body type, one size down from 13.5. */
+export const PAYWALL_FREE_LINE_GAP = 8;
+export const PAYWALL_FREE_LINE_SIZE = 12;
+
+/** The post-tap line sits this many pixels under the annual button. Monthly uses the same slot. */
 export const PAYWALL_ANNUAL_HOLD_GAP = 8;

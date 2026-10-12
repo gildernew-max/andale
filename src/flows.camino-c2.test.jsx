@@ -935,7 +935,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\$6\.99|charged|won’t be charged|no se cobra|Un mes|One month/);
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/charged|won’t be charged|no se cobra|Un mes|One month/);
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(stored.unlockedPrem).not.toBe(true);
     expect(stored.paywallPlan).toBeFalsy();
@@ -948,7 +948,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     window.removeEventListener("andale-purchase", onPurchase);
   });
 
-  it("soft paywall has no monthly control and an annual tap does not unlock", async () => {
+  it("monthly is an outline tap that records tap_monthly and does not unlock", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     const events = [];
@@ -958,11 +958,14 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     assertSoftPaywallAnnualPrimary("es");
-    expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
-    await user.click(screen.getByTestId("soft-paywall-annual"));
-    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
-    expect(events).toHaveLength(0);
+    const monthly = screen.getByTestId("soft-paywall-monthly");
+    expect(monthly.textContent).toBe("US$6.99\u00A0al\u00A0mes");
+    await user.click(monthly);
+    await waitFor(() => expect(funnelOf("tap_monthly").some((e) => e.source === "timed")).toBe(true));
     expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
+    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("US$6.99\u00A0al\u00A0mes");
+    expect(screen.getByTestId("soft-paywall-monthly-hold").textContent).toBe("El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.");
+    expect(events).toHaveLength(0);
     expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();

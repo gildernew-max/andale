@@ -1345,6 +1345,10 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await user.click(annual);
     await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
     expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
+    expect(funnelOf("tap_annual").every((event) => event.source === "timed")).toBe(true);
+    await user.click(screen.getByTestId("soft-paywall-monthly"));
+    await waitFor(() => expect(funnelOf("tap_monthly").some((e) => e.source === "timed")).toBe(true));
+    expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-annual-hold").textContent).toBe("El plan anual aún no está disponible. Sigue leyendo gratis por ahora.");
     expect(screen.getByTestId("soft-paywall-annual-hold").style.marginTop).toBe("8px");
@@ -1728,6 +1732,10 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await user.click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
     expect(funnelOf("paywall_tap").filter((e) => e.choice === "annual")).toHaveLength(1);
+    expect(funnelOf("tap_annual").every((event) => event.source === "win")).toBe(true);
+    await user.click(screen.getByTestId("soft-paywall-monthly"));
+    await waitFor(() => expect(funnelOf("tap_monthly").some((e) => e.source === "win")).toBe(true));
+    expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
     expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);

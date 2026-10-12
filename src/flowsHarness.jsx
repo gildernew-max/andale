@@ -456,8 +456,8 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const body = screen.getByTestId("soft-paywall-body");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
   const copy = lang === "en"
-    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.", annual: "Start annual plan", dismiss: "Continue free", price: "$39.99\u00A0a\u00A0year" }
-    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", annual: "Empezar plan anual", dismiss: "Seguir gratis", price: "US$39.99\u00A0al\u00A0año" };
+    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.", annual: "Start annual plan", dismiss: "Continue free", price: "$39.99\u00A0a\u00A0year", monthly: "$6.99\u00A0a\u00A0month", freeLine: "Free: stories unlock one at a time, in order." }
+    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", annual: "Empezar plan anual", dismiss: "Seguir gratis", price: "US$39.99\u00A0al\u00A0año", monthly: "US$6.99\u00A0al\u00A0mes", freeLine: "Gratis: los cuentos se abren uno a uno, en orden." };
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
   expect(body.textContent).toBe(copy.benefit);
   expect(body.style.textWrap).toBe("");
@@ -468,9 +468,30 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
   expect(dismiss.textContent).toBe(copy.dismiss);
   expect(annual.textContent).not.toMatch(/\$39\.99|\$6\.99/);
-  expect(wall.textContent).not.toMatch(/\$6\.99|Vista previa|you won|Apple|Restore|Un mes|One month/);
+  expect(wall.textContent).not.toMatch(/Vista previa|you won|Apple|Restore|Un mes|One month/);
   expect(wall.textContent).toContain(copy.price);
-  expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
+  const monthly = screen.getByTestId("soft-paywall-monthly");
+  const freeLine = screen.getByTestId("soft-paywall-free-line");
+  expect(monthly.textContent).toBe(copy.monthly);
+  expect(monthly.textContent.includes(" ")).toBe(false);
+  expect(freeLine.textContent).toBe(copy.freeLine);
+  expect(monthly.className).not.toMatch(/duo-btn/);
+  expect(monthly.style.background).toBe("none");
+  expect(monthly.style.borderWidth).toBe("2px");
+  expect(monthly.style.borderStyle).toBe("solid");
+  expect(monthly.style.color).toMatch(/#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i);
+  expect(monthly.style.borderTopColor).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+  expect(monthly.style.marginTop).toBe("12px");
+  expect(monthly.style.width).toBe("100%");
+  expect(monthly.style.background).not.toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+  expect(freeLine.style.marginTop).toBe("8px");
+  expect(freeLine.style.fontSize).toBe("12px");
+  expect(freeLine.style.fontWeight).toBe("700");
+  expect(freeLine.style.textAlign).toBe("center");
+  expect(freeLine.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+  expect(annual.compareDocumentPosition(monthly) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(monthly.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(dismiss.compareDocumentPosition(freeLine) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
   expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();
   expect(bird.tagName).toBe("IMG");
