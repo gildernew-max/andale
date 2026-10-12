@@ -40,6 +40,8 @@ import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pick
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
+import { TypeAccentRow } from "./typeAccentRow.jsx";
+import { accentRowScrollDelta } from "./typeAccentRow.js";
 import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle, spanishKeyboardKeyStyle } from "./spanishKeyboard.js";
 import { bucketBodyColor, bucketTileStyle, gamesHubCardChrome, gamesHubFocusColor, hangmanLightEndChrome, letterSlotUnderline, letterSlotUnderlineWidth, memoryCardPaint, wordleActionKeyChrome } from "./sageChrome.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
@@ -1391,7 +1393,6 @@ const LEVELS = [[0, "Intermedio"], [100, "Turista"], [250, "Estudiante"], [500, 
 const levelOf = (xp) => { let i = 0; while (i < LEVELS.length - 1 && xp >= LEVELS[i + 1][0]) i++; return { idx: i, name: LEVELS[i][1], cur: LEVELS[i][0], next: LEVELS[i + 1] ? LEVELS[i + 1][0] : null }; };
 const levelLabel = (name, lang) => (lang === "en" && name === "Intermedio" ? "Intermediate" : name);
 const RAYO_SECS = { mc: 8, type: 15, transform: 25, order: 20, listen: 30, match: 60 };
-const ACCENTS = ["á", "é", "í", "ó", "ú", "ñ", "ü", "¿", "¡"];
 const answerTokens = (text) => String(text || "").trim().split(/\s+/).filter(Boolean);
 const CURATED_DISTRACTORS = {
   llueva: ["llueve", "llovió", "lloverá"],
@@ -4619,7 +4620,7 @@ const UI = {
     selfGrade: "¿QUÉ TAN BIEN LO SABÍAS?", storyTip: "Lee el párrafo. Toca una palabra solo si te frena.",
     wordOrderTip: "Orden distinto, mismo sentido. En formal, ambas valen.",
     comprehension: "Comprensión", easyQuestions: "Tres preguntas fáciles · hasta", xpClaimed: "XP ya reclamado", xpJustClaimed: "XP reclamados", claim: "Reclamar", saveCard: "Guardar tarjeta", inDeck: "Ya guardada",
-    completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel! Ahora eres",
+    completed: "¡Lección completada!", sectionPassed: "¡Sección superada!", levelUp: "¡Subiste de nivel!",
     impeccable: "¡IMPECABLE!", unlockedSection: "Toda la sección quedó desbloqueada con corona.", review: "Repasar",
     testFailed: "Esta vez no", testFailedDesc: "Tres errores, y el límite es dos. Quedaron en Repaso. Reintenta cuando quieras.",
     retryTest: "Reintentar examen", reviewErrors: "Repasar errores", outHearts: "¡Te quedaste sin vidas!", outHeartsDesc: "Practica tus errores para recuperar", practiceRecover: "Practicar y recuperar", toPath: "Al camino",
@@ -7460,6 +7461,30 @@ export default function App() {
     if (overflow > 0.5) body.scrollTop += overflow;
     return undefined;
   }, [screen, status, qi, theme, footerCapped, showWhy, typed, lessonResultPad]);
+
+  // Accent keys live in the scrolling lesson body. If a wrap leaves them
+  // crossing the pinned Comprobar / Check bar, scroll until the pad under
+  // the keys is the only thing touching that bar.
+  useLayoutEffect(() => {
+    const clearAccentRow = () => {
+      if (screen !== "lesson" || status !== "idle") return;
+      const body = lessonBodyRef.current;
+      const footer = lessonFooterRef.current;
+      const row = body?.querySelector("[data-testid='type-accent-keys']");
+      if (!body || !footer || !row) return;
+      const rowBox = row.getBoundingClientRect();
+      const footerBox = footer.getBoundingClientRect();
+      const delta = accentRowScrollDelta({
+        rowTop: rowBox.top,
+        rowBottom: rowBox.bottom,
+        footerTop: footerBox.top,
+      });
+      if (delta > 0) body.scrollTop += delta;
+    };
+    clearAccentRow();
+    window.addEventListener("resize", clearAccentRow);
+    return () => window.removeEventListener("resize", clearAccentRow);
+  }, [screen, status, qi, theme, q?.type]);
 
   // Drop leftover overlays when the view swaps so the first tap hits the new screen.
   useEffect(() => {
@@ -11041,13 +11066,11 @@ export default function App() {
                     </div>
                   </div>
                 )}
-                <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-                  {ACCENTS.map((ch) => (
-                    <button key={ch} onClick={() => insertChar(ch)} disabled={status !== "idle"} className="tile" style={{ padding: "4px 11px", fontSize: 15, ...(theme === "dark" ? darkLessonChipPaint({ used: false, wrong: false, D, cream: HUB_CREAM }) : null) }}>
-                      {ch}
-                    </button>
-                  ))}
-                </div>
+                <TypeAccentRow
+                  disabled={status !== "idle"}
+                  onInsert={insertChar}
+                  keyStyle={theme === "dark" ? darkLessonChipPaint({ used: false, wrong: false, D, cream: HUB_CREAM }) : null}
+                />
               </div>
             )}
 
@@ -12370,8 +12393,33 @@ export default function App() {
 	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
           {levelUp && !session.firstDoctora && (
-            <div className="pop" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: D.goldBg, border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 14, padding: "8px 18px", margin: "4px 0 8px", fontWeight: 900, color: D.goldDark }}>
-	              <IcBolt size={18} /> {L.levelUp} <span style={{ textTransform: "uppercase", letterSpacing: ".03em" }}>{levelLabel(levelUp, uiLang)}</span>
+            <div
+              data-testid="level-up-banner"
+              className="pop"
+              style={{
+                display: "inline-block",
+                maxWidth: "100%",
+                boxSizing: "border-box",
+                textAlign: "center",
+                background: D.goldBg,
+                border: `2px solid ${D.gold}`,
+                borderBottom: `4px solid ${D.goldDark}`,
+                borderRadius: 14,
+                padding: "8px 18px",
+                margin: "4px 0 8px",
+                fontWeight: 900,
+                color: D.goldDark,
+              }}
+            >
+              <span data-testid="level-up-text" style={{ display: "inline-flex", alignItems: "center", gap: 8, verticalAlign: "middle", whiteSpace: "nowrap" }}>
+                <IcBolt size={18} /> {L.levelUp}
+              </span>
+              <span
+                data-testid="level-up-chip"
+                style={{ display: "inline-block", verticalAlign: "middle", marginLeft: 8, textTransform: "uppercase", letterSpacing: ".03em", whiteSpace: "nowrap" }}
+              >
+                {levelLabel(levelUp, uiLang)}
+              </span>
             </div>
           )}
           <p style={{ color: D.sub, fontWeight: 700 }}>
