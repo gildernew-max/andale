@@ -309,27 +309,34 @@ describe("lectura gloss sheet blocks the pinned NEXT sliver", () => {
     expect(hit).not.toBe(next);
 
     const view = hit.ownerDocument.defaultView;
-    const started = performance.now();
-    act(() => {
-      hit.dispatchEvent(new view.PointerEvent("pointerup", {
-        bubbles: true,
-        cancelable: true,
-        clientX: center.x,
-        clientY: center.y,
-        pointerId: 1,
-        pointerType: "touch",
-        button: 0,
-      }));
-      next.dispatchEvent(new view.MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        clientX: center.x,
-        clientY: center.y,
-      }));
-    });
-
-    await waitFor(() => expect(screen.queryByTestId("word-sheet")).toBeNull(), { timeout: LECTURA_GLOSS_DISMISS_MS });
-    expect(performance.now() - started).toBeLessThan(LECTURA_GLOSS_DISMISS_MS);
+    vi.useFakeTimers();
+    let elapsed = 0;
+    try {
+      const started = performance.now();
+      act(() => {
+        hit.dispatchEvent(new view.PointerEvent("pointerup", {
+          bubbles: true,
+          cancelable: true,
+          clientX: center.x,
+          clientY: center.y,
+          pointerId: 1,
+          pointerType: "touch",
+          button: 0,
+        }));
+        next.dispatchEvent(new view.MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          clientX: center.x,
+          clientY: center.y,
+        }));
+      });
+      elapsed = performance.now() - started;
+      expect(screen.queryByTestId("word-sheet")).toBeNull();
+      expect(elapsed).toBeLessThan(LECTURA_GLOSS_DISMISS_MS);
+      act(() => { vi.runOnlyPendingTimers(); });
+    } finally {
+      vi.useRealTimers();
+    }
     expect(flores.style.backgroundColor).toBe("transparent");
     expect(screen.getByText(/Paragraph 1 \/ 6/)).toBeTruthy();
     expect(screen.queryByText(/Paragraph 2 \/ 6/)).toBeNull();
