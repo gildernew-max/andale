@@ -124,7 +124,26 @@ assert(lecturaStillObjectPosition("story-0", 0) === "center 28%", "story-0 page 
 assert(lecturaStillObjectPosition("story-0", 1) === "center 36%", "story-0 market page drops the crop onto the girl");
 assert(lecturaStillObjectPosition("story-0", 5) === "center 40%", "story-0 last page drops the crop onto the girl and the boy");
 assert(lecturaStillObjectPosition("story-0", 2) === "center 28%" && lecturaStillObjectPosition("story-0", 3) === "center 28%" && lecturaStillObjectPosition("story-0", 4) === "center 28%", "the other story-0 pages keep center 28%");
-assert(lecturaStillObjectPosition("story-3", 1) === "center 28%", "a story without overrides uses the default face lock");
+assert(lecturaStillObjectPosition("story-3", 1) === "center 28%", "an untouched page keeps the default face lock");
+const liftedFaces = {
+  "story-1": { 1: "center 22%", 3: "center 18%" },
+  "story-2": { 3: "center 18%" },
+  "story-3": { 2: "center 18%" },
+  "story-4": { 2: "center 18%" },
+  "story-5": { 3: "center 22%" },
+  "story-6": { 0: "center 22%", 4: "center 22%" },
+  "story-7": { 5: "center 22%" },
+  "story-8": { 4: "center 14%", 5: "center 22%" },
+  "story-9": { 2: "center 22%" },
+};
+for (let n = 1; n <= 9; n += 1) {
+  const id = `story-${n}`;
+  assert(LECTURA_STILL_FOCUS[id].length === 6, `${id} has a face lock on every page`);
+  for (let page = 0; page < 6; page += 1) {
+    const expected = liftedFaces[id][page] || "center 28%";
+    assert(lecturaStillObjectPosition(id, page) === expected, `${id} page ${page + 1} face lock is ${expected}`);
+  }
+}
 assert(LECTURA_STILL_MARGIN_BOTTOM === 8, "still margin under the band is 8px");
 assert(stillBand < LECTURA_STILL_CAP_HEIGHT, "the story-open still is shorter than the old 148px cap");
 assert(lecturaNextBottomCss() === "calc(16px + env(safe-area-inset-bottom))", "NEXT uses the onboarding CTA bottom inset");

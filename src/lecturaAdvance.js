@@ -161,8 +161,10 @@ export const LECTURA_STILL_CARD_TOP_INSET = 10;
 /** Paragraph-card corner. The band's top corners use it; the bottom corners stay square. */
 export const LECTURA_CARD_RADIUS = 16;
 /**
- * Per-page object-position. story-0 page 2 (market) and page 6 sit lower
- * than the default crop: 36% and 40% keep the low eyes and mouths in the band.
+ * Per-page object-position, set on the live 320×90 band.
+ * story-0 pages 2 and 6 sit lower than the default: 36% and 40%.
+ * A few later pages sit higher: 22%, 18%, or 14% keeps eyes and mouths in the band.
+ * Omitted pages stay at the default.
  */
 export const LECTURA_STILL_FOCUS = {
   "story-0": [
@@ -172,6 +174,78 @@ export const LECTURA_STILL_FOCUS = {
     "center 28%",
     "center 28%",
     "center 40%",
+  ],
+  "story-1": [
+    "center 28%",
+    "center 22%",
+    "center 28%",
+    "center 18%",
+    "center 28%",
+    "center 28%",
+  ],
+  "story-2": [
+    "center 28%",
+    "center 28%",
+    "center 28%",
+    "center 18%",
+    "center 28%",
+    "center 28%",
+  ],
+  "story-3": [
+    "center 28%",
+    "center 28%",
+    "center 18%",
+    "center 28%",
+    "center 28%",
+    "center 28%",
+  ],
+  "story-4": [
+    "center 28%",
+    "center 28%",
+    "center 18%",
+    "center 28%",
+    "center 28%",
+    "center 28%",
+  ],
+  "story-5": [
+    "center 28%",
+    "center 28%",
+    "center 28%",
+    "center 22%",
+    "center 28%",
+    "center 28%",
+  ],
+  "story-6": [
+    "center 22%",
+    "center 28%",
+    "center 28%",
+    "center 28%",
+    "center 22%",
+    "center 28%",
+  ],
+  "story-7": [
+    "center 28%",
+    "center 28%",
+    "center 28%",
+    "center 28%",
+    "center 28%",
+    "center 22%",
+  ],
+  "story-8": [
+    "center 28%",
+    "center 28%",
+    "center 28%",
+    "center 28%",
+    "center 14%",
+    "center 22%",
+  ],
+  "story-9": [
+    "center 28%",
+    "center 28%",
+    "center 22%",
+    "center 28%",
+    "center 28%",
+    "center 28%",
   ],
 };
 export const LECTURA_STILL_MARGIN_BOTTOM = 8;
