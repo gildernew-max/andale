@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useContext, createContext } from "react";
+import { createPortal } from "react-dom";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
 import { playSound as playGameSound } from "./playSound.js";
 import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
@@ -6986,7 +6987,7 @@ export default function App() {
         return Math.max(inner.offsetHeight, inner.scrollHeight) + Math.max(0, borderY);
       },
     });
-  }, [wordSel, screen, wordSheetSpacer]);
+  }, [wordSel, screen, wordSheetSpacer, wordSheetBox?.reaches]);
 
   // After the word-sheet close pass, so a spacer restore cannot put the
   // learner back at the bottom of the previous paragraph.
@@ -11984,7 +11985,8 @@ export default function App() {
         const cpOrder = storyShuffle?.storyId === story.id ? storyShuffle.checkpoints : null;
         const correct = story.questions.reduce((n, qq, i) => n + (isStoryChoiceCorrect(qq, ansSel[i], qOrder?.[i]) ? 1 : 0), 0);
         const sheetReaches = !!(wordSheetBox && wordSheetBox.reaches);
-        const renderWordSheet = (anchored) => (
+        const renderWordSheet = (anchored) => {
+          const node = (
           <div ref={wordSheetRef} data-testid="word-sheet" className={sheetReaches ? undefined : "pop"} style={sheetReaches ? { ...lecturaSheetReachStyle({ top: wordSheetBox.sheetTop, background: D.card, accent: sec.color }), visibility: wordSheetBox ? "visible" : "hidden", pointerEvents: wordSheetBox ? "auto" : "none" } : { visibility: wordSheetBox ? "visible" : "hidden", pointerEvents: wordSheetBox ? "auto" : "none", position: anchored ? "absolute" : "fixed", left: anchored ? (wordSheetBox ? wordSheetBox.anchorLeft : 0) : (wordSheetBox ? wordSheetBox.left : 8), width: wordSheetBox ? wordSheetBox.width : 320, bottom: anchored ? "calc(100% + 10px)" : (wordSheetBox ? wordSheetBox.bottom : 8), zIndex: LECTURA_WORD_SHEET_Z, boxSizing: "border-box", background: D.card, borderLeft: `2px solid ${D.line}`, borderRight: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: wordSheetBox ? wordSheetBox.maxHeight : "none", overflowY: "auto" }}>
             <div ref={wordSheetContentRef} data-testid="word-sheet-body" style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
               <button onClick={() => speak(wordSel.display)} aria-label={uiLang === "en" ? "Listen to word" : "Escuchar palabra"}
@@ -12024,7 +12026,9 @@ export default function App() {
               <button onClick={() => setWordSel(null)} aria-label={L.close} style={{ border: "none", background: "none", fontSize: 18, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", lineHeight: 1, minWidth: 44, minHeight: 44 }}>✕</button>
             </div>
           </div>
-        );
+          );
+          return sheetReaches ? createPortal(node, document.body) : node;
+        };
         return (
           <div data-testid="story-reader" data-story-id={story.id} style={{ maxWidth: 600, margin: "0 auto", padding: `20px 20px ${lecturaNextClearanceCss()}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>

@@ -21,6 +21,7 @@ import {
   lecturaNextPinStyle,
   lecturaNextRowTop,
   LECTURA_NEXT_Z,
+  LECTURA_SHEET_REACH_Z,
   LECTURA_WORD_SHEET_HOST_Z,
   LECTURA_WORD_SHEET_Z,
 } from "./lecturaAdvance.js";
@@ -166,7 +167,8 @@ describe("lectura NEXT pin clearance and main gating", () => {
     await waitFor(() => expect(sheet.style.visibility).toBe("visible"));
     const advance = screen.getByTestId("lectura-advance");
     const host = screen.getByTestId("lectura-checkpoint");
-    expect(Number(sheet.style.zIndex)).toBe(LECTURA_WORD_SHEET_Z);
+    expect(Number(sheet.style.zIndex)).toBe(LECTURA_SHEET_REACH_Z);
+    expect(Number(sheet.style.zIndex)).toBeGreaterThan(LECTURA_WORD_SHEET_HOST_Z);
     expect(Number(host.style.zIndex)).toBe(LECTURA_WORD_SHEET_HOST_Z);
     expect(Number(advance.style.zIndex)).toBe(LECTURA_NEXT_Z);
     expect(lecturaGlossBlocksNext(Number(host.style.zIndex), Number(advance.style.zIndex))).toBe(true);

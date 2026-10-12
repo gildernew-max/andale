@@ -83,6 +83,8 @@ export const LECTURA_NEXT_Z = 11;
 export const LECTURA_NEXT_HELD_OPACITY = 0.4;
 export const LECTURA_WORD_SHEET_Z = 30;
 export const LECTURA_WORD_SHEET_HOST_Z = 31;
+/** Portaled reach. Above the checkpoint host so the card paint is not trapped in that box. */
+export const LECTURA_SHEET_REACH_Z = 32;
 export const LECTURA_PARAGRAPH_FONT = 17;
 export const LECTURA_PARAGRAPH_LEADING = 1.75;
 
@@ -285,7 +287,7 @@ export function lecturaSheetReachStyle({ top, background, accent }) {
     top,
     bottom: 0,
     width: "100%",
-    zIndex: LECTURA_WORD_SHEET_Z,
+    zIndex: LECTURA_SHEET_REACH_Z,
     boxSizing: "border-box",
     background,
     backgroundImage: "none",

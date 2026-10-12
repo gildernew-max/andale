@@ -26,6 +26,7 @@ import {
   lecturaSheetTop,
   LECTURA_NEXT_HELD_OPACITY,
   LECTURA_NEXT_Z,
+  LECTURA_SHEET_REACH_Z,
   LECTURA_WORD_SHEET_HOST_Z,
   LECTURA_WORD_SHEET_Z,
   lecturaQuestionsOpenScrollY,
@@ -140,7 +141,8 @@ assert(reach.position === "fixed" && reach.left === 0 && reach.right === 0 && re
 assert(reach.top === floresTop && reach.background === "#FFFFFF" && reach.backgroundImage === "none", "the reach is the sheet card, from the definition down");
 assert(reach.borderTop === "3px solid #CE82FF" && reach.borderLeft === "none" && reach.borderRight === "none" && reach.borderBottom === "none", "the top accent stays and the sides stay flush");
 assert(reach.borderRadius === "14px 14px 0 0", "square bottom corners do not reveal the pin");
-assert(reach.zIndex === LECTURA_WORD_SHEET_Z && reach.pointerEvents === "auto", "the sheet takes the tap that used to hit the NEXT sliver");
+assert(reach.zIndex === LECTURA_SHEET_REACH_Z && LECTURA_SHEET_REACH_Z > LECTURA_WORD_SHEET_HOST_Z && reach.pointerEvents === "auto", "the reach paints above the checkpoint host and takes the NEXT tap");
+assert(appSrc.includes("createPortal(node, document.body)"), "the full-width sheet is not clipped by the story column");
 assert(LECTURA_NEXT_HELD_OPACITY === 0.4, "a sheet that cannot reach dims NEXT to 40%");
 assert(appSrc.includes("if (wordSel) return"), "an open gloss sheet makes advance a no-op");
 assert(appSrc.includes("lecturaSheetReachStyle"), "the open gloss sheet uses the full-width reach");
