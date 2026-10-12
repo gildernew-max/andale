@@ -12068,7 +12068,7 @@ export default function App() {
         };
         return (
           <div data-testid="story-reader" data-story-id={story.id} style={{ maxWidth: 600, margin: "0 auto", padding: `20px 20px ${lecturaNextClearanceCss()}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
 	              <button type="button" onClick={() => { setWordSel(null); setPaywallSource(PAYWALL_SOURCE.storyClose); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
@@ -12076,10 +12076,10 @@ export default function App() {
               </div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
-            <div data-testid="story-tip" style={{ display: "flex", gap: 8, alignItems: "center", margin: "4px 0 6px", background: D.subtle, borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 800, color: D.sub }}>
+            <div data-testid="story-tip" style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 8px", background: D.subtle, borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 800, color: D.sub }}>
 	              <IcBook size={16} color={sec.color} /> {L.storyTip}
             </div>
-            <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 6 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
               {[
                 { id: "story", l: uiLang === "en" ? "Story" : "Cuento" },
                 { id: "bilingual", l: uiLang === "en" ? "Bilingual" : "Bilingüe" },
@@ -12091,7 +12091,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <div data-testid="lectura-progress" style={{ display: "flex", gap: 5, alignItems: "center", margin: "0 0 6px" }}>
+            <div data-testid="lectura-progress" style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 8px" }}>
               {story.paragraphs.map((_, i) => (
                 <button key={i} onClick={() => advanceLectura(i)} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
                   style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : (theme === "dark" ? D.track : "#E8E8E8"), outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
@@ -12100,7 +12100,7 @@ export default function App() {
                 style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : (theme === "dark" ? D.track : "#E8E8E8"), color: paraIdx >= story.paragraphs.length ? "#fff" : (theme === "dark" ? D.ink : D.sub) }}>?</button>
             </div>
             {paraIdx < story.paragraphs.length && (
-              <div style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>
                 {uiLang === "en" ? "Paragraph" : "Párrafo"} {paraIdx + 1} / {story.paragraphs.length}
               </div>
             )}
@@ -12113,7 +12113,7 @@ export default function App() {
                   aria-hidden="true"
                   data-testid={`lectura-still-${pi}`}
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
-                  style={{ display: "block", width: "100%", maxWidth: LECTURA_STILL_BAND_WIDTH, aspectRatio: "16 / 9", height: "auto", objectFit: "cover", objectPosition: "center", margin: `0 auto ${LECTURA_STILL_MARGIN_BOTTOM}px`, borderRadius: 10 }}
+                  style={{ display: "block", width: "100%", maxWidth: LECTURA_STILL_BAND_WIDTH, aspectRatio: "16 / 9", height: "auto", objectFit: "cover", objectPosition: "center top", margin: `0 auto ${LECTURA_STILL_MARGIN_BOTTOM}px`, borderRadius: 10 }}
                 />
                 <div style={{ display: "flex", gap: latamNarration ? 10 : 0 }}>
                 {latamNarration && (

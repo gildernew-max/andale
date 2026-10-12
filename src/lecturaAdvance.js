@@ -145,14 +145,14 @@ export const LECTURA_STILL_CAP_HEIGHT = 148;
 export const LECTURA_STILL_BAND_WIDTH = 160;
 /** Thinnest crop allowed. The 160px band is exactly this ratio. */
 export const LECTURA_STILL_BAND_RATIO = 16 / 9;
-export const LECTURA_STILL_MARGIN_BOTTOM = 6;
+export const LECTURA_STILL_MARGIN_BOTTOM = 8;
 
 /**
  * Scroll-0 distance from the viewport top to the still on story open
  * (sticky brand bar through the paragraph card's top border and padding).
  * Measured at 360×640 and 390×844; the title block is the same height at both.
  */
-export const LECTURA_STORY_OPEN_STILL_TOP = 300.4;
+export const LECTURA_STORY_OPEN_STILL_TOP = 312.4;
 
 export function lecturaNextBottomCss() {
   return onboardingCtaBottomCss();

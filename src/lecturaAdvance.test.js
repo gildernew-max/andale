@@ -102,7 +102,7 @@ assert(/<nav aria-label=\{uiLang === "en" \? "Primary navigation" : "Navegación
 
 const stillBand = lecturaStillBandHeight();
 assert(LECTURA_STILL_BAND_WIDTH === 160, "story-open still is 160px wide");
-assert(LECTURA_STILL_MARGIN_BOTTOM === 6, "still margin under the band is 6px");
+assert(LECTURA_STILL_MARGIN_BOTTOM === 8, "still margin under the band is 8px");
 assert(Math.abs(stillBand - 90) < 0.001, "16:9 at 160px wide is a 90px band");
 assert(stillBand < LECTURA_STILL_CAP_HEIGHT, "the story-open still is shorter than the old 148px cap");
 assert(lecturaStillAtLeast16x9(LECTURA_STILL_BAND_WIDTH, stillBand), "the band is not thinner than 16:9");

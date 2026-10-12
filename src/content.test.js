@@ -4969,7 +4969,7 @@ assert(appSrc.includes("lectura/${story.id}/p${pi}.png"), "Lectura still src is 
 const lecturaStillStyle = appSrc.slice(appSrc.indexOf("lectura-still-"), appSrc.indexOf("lectura-still-") + 720);
 assert(lecturaStillStyle.includes('width: "100%"') && lecturaStillStyle.includes('height: "auto"') && lecturaStillStyle.includes("LECTURA_STILL_BAND_WIDTH") && lecturaStillStyle.includes('aspectRatio: "16 / 9"'), "Lectura still is a 16:9 band");
 assert(lecturaStillStyle.includes("LECTURA_STILL_MARGIN_BOTTOM") && lecturaStillStyle.includes("borderRadius: 10"), "Lectura still stays centered with the same corner radius");
-assert(/objectFit:\s*"cover"/.test(lecturaStillStyle) && /objectPosition:\s*"center"/.test(lecturaStillStyle), "Lectura still crops to the band and does not disappear");
+assert(/objectFit:\s*"cover"/.test(lecturaStillStyle) && /objectPosition:\s*"center top"/.test(lecturaStillStyle), "Lectura still is a 16:9 crop anchored at the top so faces stay in frame");
 assert(!lecturaStillStyle.includes("display: \"none\""), "Lectura still style does not hide the image");
 for (const s of STORIES) {
   s.paragraphs.forEach((_, i) => {
