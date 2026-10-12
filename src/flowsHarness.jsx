@@ -448,29 +448,29 @@ export const assertFreeWinFlyAway = () => {
   expect(screen.queryByTestId("soft-paywall")).toBeNull();
 };
 
-/** Loud annual / outline monthly / quietest continue free. George words. One static Cenzontle. */
+/** Loud annual / quiet continue free. Locked words. One static Cenzontle. No price line until an amount is set. */
 export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const wall = screen.getByTestId("soft-paywall");
   const bird = screen.getByTestId("soft-paywall-cenzontle");
   const annual = screen.getByTestId("soft-paywall-annual");
-  const monthly = screen.getByTestId("soft-paywall-monthly");
-  const honesty = screen.getByTestId("soft-paywall-honesty");
+  const body = screen.getByTestId("soft-paywall-body");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
   const copy = lang === "en"
-    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", annual: "One year", monthly: "One month", honesty: "Preview · you won\u2019t be charged yet", dismiss: "Continue free" }
-    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", annual: "Un año", monthly: "Un mes", honesty: "Vista previa · aún no se cobra", dismiss: "Seguir gratis" };
+    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", annual: "Start annual plan", dismiss: "Continue free" }
+    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", annual: "Empezar plan anual", dismiss: "Seguir gratis" };
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
-  expect(screen.getByTestId("soft-paywall-body").textContent).toBe(copy.benefit);
+  expect(body.textContent).toBe(copy.benefit);
   expect(annual.textContent).toBe(copy.annual);
-  expect(monthly.textContent).toBe(copy.monthly);
-  expect(honesty.textContent).toBe(copy.honesty);
-  expect(honesty.style.fontSize).toBe("11px");
-  expect(honesty.style.fontWeight).toBe("700");
-  expect(honesty.style.lineHeight).toBe("1.45");
-  expect(honesty.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+  expect(screen.queryByTestId("soft-paywall-annual-price")).toBeNull();
+  expect(screen.queryByTestId("soft-paywall-annual-hold")).toBeNull();
+  expect(wall.textContent).not.toMatch(/\[ANNUAL PRICE\]|\{price\}/);
+  expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
   expect(dismiss.textContent).toBe(copy.dismiss);
   expect(annual.textContent).not.toMatch(/\$39\.99|\$6\.99/);
-  expect(monthly.textContent).not.toMatch(/\$39\.99|\$6\.99/);
+  expect(wall.textContent).not.toMatch(/\$39\.99|\$6\.99|Vista previa|you won|Apple|Restore|Un mes|One month/);
+  expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
+  expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
+  expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();
   expect(bird.tagName).toBe("IMG");
   expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
   const still = screen.queryByTestId("soft-paywall-still");
@@ -505,38 +505,22 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(annual.className).toMatch(/duo-btn/);
   expect(annual.style.background).toMatch(/#58CC02|rgb\(88,\s*204,\s*2\)/i);
   expect(annual.style.borderBottom).toMatch(/4px solid/);
-  expect(monthly.className).toMatch(/duo-btn/);
-  expect(monthly.style.background).toMatch(cream);
-  expect(monthly.style.background).not.toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
-  expect(monthly.style.borderBottom).toMatch(/4px solid/);
   expect(dismiss.className).not.toMatch(/duo-btn/);
   expect(dismiss.style.background).toBe("none");
   expect(dismiss.style.padding).toBe("11px 0px");
   expect(dismiss.style.minHeight).toBe("44px");
   expect(dismiss.style.fontSize).toBe("15px");
-  expect(dismiss.style.fontWeight).toBe("700");
+  expect(dismiss.style.fontWeight).toBe("500");
+  expect(dismiss.style.marginTop).toBe("12px");
   expect(dismiss.style.borderBottom).not.toMatch(/4px/);
   expect(dismiss.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
-  const fine = screen.getByTestId("soft-paywall-disclosure");
-  expect(fine.style.fontSize).toBe("11px");
-  expect(fine.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
-  expect(screen.getByTestId("soft-paywall-terms").style.textDecoration).toMatch(/underline/);
-  const scroll = screen.getByTestId("soft-paywall-scroll");
-  const footer = screen.getByTestId("soft-paywall-footer");
-  expect(scroll.style.overflowY).toBe("auto");
-  expect(footer.contains(annual)).toBe(true);
-  expect(footer.contains(dismiss)).toBe(true);
-  expect(scroll.contains(annual)).toBe(false);
-  expect(scroll.contains(dismiss)).toBe(false);
-  expect(scroll.contains(monthly)).toBe(true);
-  expect(scroll.contains(honesty)).toBe(true);
-  expect(footer.style.gap).toBe("12px");
-  expect(footer.style.paddingBottom).toBe("calc(16px + env(safe-area-inset-bottom))");
-  expect(footer.style.flexShrink).toBe("0");
-  expect(scroll.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(wall.style.paddingBottom).toBe("calc(16px + env(safe-area-inset-bottom))");
+  expect(wall.style.overflow).toBe("hidden");
+  expect(screen.queryByTestId("soft-paywall-scroll")).toBeNull();
+  expect(screen.queryByTestId("soft-paywall-footer")).toBeNull();
+  expect(card.contains(annual)).toBe(true);
+  expect(card.contains(dismiss)).toBe(true);
   expect(annual.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(fine.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(honesty.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   const filled = [...wall.querySelectorAll("button.duo-btn")]
     .filter((el) => /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i.test(el.style.background));
   expect(filled).toHaveLength(1);
@@ -958,15 +942,7 @@ export const WALL_STRING_IDS = [
   "soft-paywall-headline",
   "soft-paywall-body",
   "soft-paywall-annual",
-  "soft-paywall-annual-price",
-  "soft-paywall-monthly",
-  "soft-paywall-monthly-price",
-  "soft-paywall-disclosure",
-  "soft-paywall-terms",
-  "soft-paywall-privacy",
-  "soft-paywall-restore",
   "soft-paywall-dismiss",
-  "soft-paywall-honesty",
 ];
 
 const originalSendBeacon = navigator.sendBeacon;

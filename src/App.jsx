@@ -9,7 +9,7 @@ import { drawLessonIndexes, questionByIndex } from "./replayBank.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { comeBackTomorrowLine, dayKeyFromDate, firstLecturaClaimed, hoyHubChecked, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, storiesHubLoud, streakAfterWin, todaySceneIdFromSession, xpCountedToday } from "./firstDoor.js";
-import { PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
+import { PAYWALL_BIRD_TRIGGER, PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { paywallStillPath } from "./paywallStill.js";
 import { buildColdFirstHoyQueue, coldFirstHoySceneBeats, isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
@@ -27,9 +27,7 @@ import { watchWordSheetPlacement, wordSheetClose, wordSheetReveal } from "./word
 import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
-import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
-import { BUTTON_PIN_GAP, ButtonPin } from "./ButtonPin.jsx";
+import { PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, annualPriceLine } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent } from "./funnel.js";
 import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1, claimFirstSessionStart, isFirstExerciseCorrect, sessionOneFromProgress } from "./firstSessionFunnel.js";
@@ -4630,7 +4628,9 @@ const UI = {
     paywallHeadlineFallback: "Hay mucho más por leer.",
     paywallHeadlineNoStory: "Hay mucho por leer.",
     paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
-    paywallAnnual: "Un año",
+    paywallAnnual: "Empezar plan anual",
+    paywallAnnualHold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.",
+    paywallPrice: "{price} al año",
     paywallMonthly: "Un mes",
     paywallHonesty: "Vista previa · aún no se cobra",
     paywallDismiss: "Seguir gratis",
@@ -4724,7 +4724,9 @@ const UI = {
     paywallHeadlineFallback: "There's much\u00A0more to read.",
     paywallHeadlineNoStory: "There's a lot to read.",
     paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
-    paywallAnnual: "One year",
+    paywallAnnual: "Start annual plan",
+    paywallAnnualHold: "Annual plans aren't open yet. Keep reading free for now.",
+    paywallPrice: "{price} a year",
     paywallMonthly: "One month",
     paywallHonesty: "Preview · you won\u2019t be charged yet",
     paywallDismiss: "Continue free",
@@ -5328,11 +5330,11 @@ export default function App() {
   }, []);
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
+  const [paywallAnnualHold, setPaywallAnnualHold] = useState(false);
   const [lecturaCliffhanger, setLecturaCliffhanger] = useState(null);
   const [chapterBirdHandoff, setChapterBirdHandoff] = useState(false);
   const [paywallSource, setPaywallSource] = useState(PAYWALL_SOURCE.boot);
   const [paywallArmed, setPaywallArmed] = useState(false);
-  const paywallBusyRef = useRef(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
   const [a2hsSheet, setA2hsSheet] = useState(false);
   const [bajioUnlockFlash, setBajioUnlockFlash] = useState(false);
@@ -7138,11 +7140,11 @@ export default function App() {
     if (shouldUseFirstSession({ done: prog.done, firstSessionDone: prog.firstSessionDone })) {
       if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
       setLecturaCliffhanger(null);
-      setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
+      setPaywallSource(PAYWALL_BIRD_TRIGGER);
       beginFirstSession(UNITS[0], SECTIONS[0], { fromLectura: true, level: prog.learnerLevel });
       return;
     }
-    setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
+    setPaywallSource(PAYWALL_BIRD_TRIGGER);
     setChapterBirdHandoff(true);
   };
 
@@ -7936,17 +7938,14 @@ export default function App() {
     lecturaStartedStored,
     winDays: prog.winDays,
   });
-  const canCharge = detectNativeIap();
-  const [storePrices, setStorePrices] = useState({ annual: null, monthly: null });
   const [paywallStillMiss, setPaywallStillMiss] = useState(false);
-  const [restoreStatus, setRestoreStatus] = useState(null);
-  const [restoreHold, setRestoreHold] = useState(false);
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
-  // A successful Restore tap holds the wall so the status line stays readable.
-  const showSoftPaywall = (paywallGate || restoreHold) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue() || chapterBirdHandoff;
-  const paywallHeadlineSource = chapterBirdHandoff ? PAYWALL_SOURCE.lecturaBirdHandoff : paywallSource;
+  const showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue() || chapterBirdHandoff;
+  const paywallHeadlineSource = chapterBirdHandoff ? PAYWALL_BIRD_TRIGGER : paywallSource;
   const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource, lecturaStartedStored);
+  const paywallBodyType = { fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, lineHeight: 1.45 };
+  const annualPriceText = annualPriceLine(L.paywallPrice);
   const paywallStillRel = paywallStillPath(storyView, paraIdx);
   const paywallStillSrc = paywallStillRel && !paywallStillMiss
     ? `${import.meta.env.BASE_URL}${paywallStillRel}`
@@ -7979,16 +7978,9 @@ export default function App() {
     } else {
       setSoftPaywall(false);
       setPaywallArmed(false);
+      setPaywallAnnualHold(false);
     }
   }, [showSoftPaywall]);
-  useEffect(() => {
-    if (!canCharge) return undefined;
-    let cancelled = false;
-    getProducts().then((prices) => {
-      if (!cancelled) setStorePrices(prices);
-    });
-    return () => { cancelled = true; };
-  }, [canCharge]);
   useEffect(() => {
     if (!showSoftPaywall) {
       setPaywallArmed(false);
@@ -8247,8 +8239,8 @@ export default function App() {
     }
     const beat = lecturaCliffhanger;
     setChapterBirdHandoff(false);
-    setRestoreHold(false);
     setSoftPaywall(false);
+    setPaywallAnnualHold(false);
     setPaywallArmed(false);
     setPostDismissHandoff(true);
     setTab("camino");
@@ -8261,60 +8253,10 @@ export default function App() {
     save({ paywallSeen: true, ...(showA2hs ? { a2hsSeen: true } : {}) });
     if (beat) releaseLecturaWin(beat);
   };
-  const buySoftPaywall = async (plan) => {
-    if (paywallBusyRef.current) return;
-    paywallBusyRef.current = true;
-    try {
-      emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: plan });
-      const result = await requestPurchase(plan);
-      if (result.status !== "success" || !result.charged) return;
-      const beat = lecturaCliffhanger;
-      setChapterBirdHandoff(false);
-      save((prev) => progressAfterPurchaseSuccess(prev, {
-        plan: result.plan,
-        productId: result.productId,
-      }));
-      setRestoreHold(false);
-      setSoftPaywall(false);
-      setPaywallArmed(false);
-      if (beat) releaseLecturaWin(beat);
-    } finally {
-      paywallBusyRef.current = false;
-    }
+  const tapPaywallAnnual = () => {
+    emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.annual });
+    setPaywallAnnualHold(true);
   };
-  const applyRestoredPurchase = (result) => {
-    if (result?.status !== "success" || !result.charged) return;
-    save((prev) => (prev.unlockedPrem ? prev : progressAfterPurchaseSuccess(prev, {
-      plan: result.plan,
-      productId: result.productId,
-    })));
-  };
-  const restoreSoftPaywall = async () => {
-    if (paywallBusyRef.current) return;
-    paywallBusyRef.current = true;
-    try {
-      const result = await restorePurchases();
-      applyRestoredPurchase(result);
-      const key = restoreStatusKey(result);
-      setRestoreStatus(key);
-      if (key === "success") setRestoreHold(true);
-    } finally {
-      paywallBusyRef.current = false;
-    }
-  };
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (!detectNativeIap()) return;
-      const result = await restorePurchases();
-      if (cancelled || result.status !== "success" || !result.charged) return;
-      save((prev) => (prev.unlockedPrem ? prev : progressAfterPurchaseSuccess(prev, {
-        plan: result.plan,
-        productId: result.productId,
-      })));
-    })();
-    return () => { cancelled = true; };
-  }, []);
   const dismissA2hs = () => {
     setA2hsSheet(false);
     save({ a2hsSeen: true });
@@ -8413,7 +8355,7 @@ export default function App() {
   const continueFromWin = () => {
     lecturaPaywallAfterWin.current = false;
     if (session?.lecturaPaywallAfterWin) {
-      setPaywallSource(PAYWALL_SOURCE.lecturaBirdHandoff);
+      setPaywallSource(PAYWALL_BIRD_TRIGGER);
       if (!prog.paywallSeen && !prog.unlockedPrem) setChapterBirdHandoff(true);
     } else {
       setPaywallSource(PAYWALL_SOURCE.winContinue);
@@ -10537,12 +10479,11 @@ export default function App() {
         );
       })()}
 
-      {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is opaque #1E2128 (no pop fade). Soft chrome parked. Trimmed 3.1.2 fine print sits under the plans. Annual and Continue free are pinned in the sheet footer; the rest scrolls above them. */}
+      {/* ---------- SOFT PAYWALL (web card; annual tap records paywall_tap and does not charge) ---------- */}
+      {/* Look lock: one static Cenzontle, locked words, loud annual, quiet Continue free. Light card is HUB_CREAM. Dark page is #15171C and the card is opaque #1E2128. */}
       {showSoftPaywall && (
-        <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", boxSizing: "border-box", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
-            <div data-testid="soft-paywall-scroll" style={{ flex: "1 1 auto", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", boxSizing: "border-box", padding: `22px 20px ${BUTTON_PIN_GAP}px` }}>
+        <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: theme === "dark" ? "#15171C" : "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", paddingTop: 16, paddingRight: 20, paddingBottom: `calc(${PAYWALL_CARD_BOTTOM_INSET}px + env(safe-area-inset-bottom))`, paddingLeft: 20, overflow: "hidden" }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
+          <div data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, maxWidth: 340, width: "100%", boxSizing: "border-box", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}`, padding: "16px 20px 14px" }}>
             {paywallStillSrc ? (
               <div data-testid="soft-paywall-still-frame" style={{ position: "relative", width: "calc(100% + 40px)", margin: "0 -20px 2px" }}>
                 <img
@@ -10558,44 +10499,18 @@ export default function App() {
               <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto" }} />
             )}
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
-            <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
-            <div style={{ display: "grid", gap: 9 }}>
-              <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
-              <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, ...(theme === "dark" ? { color: "#F6EFE4", border: "2px solid #4A5160", borderBottom: "4px solid #4A5160" } : {}) }}>{L.paywallMonthly}</Btn>
-              <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
-              <div data-testid="soft-paywall-disclosure" style={{ fontWeight: 700, fontSize: 11, color: theme === "dark" ? "#A0A4AB" : "#6B6258", lineHeight: 1.45 }}>
-                {disclosureLines(uiLang, storePrices).map((line, i) => (
-                  <p key={i} data-testid={`soft-paywall-disclosure-${i}`} style={{ margin: i === 0 ? "2px 0 0" : "6px 0 0", fontSize: 11, fontWeight: 700, lineHeight: 1.45 }}>
-                    {i === 0 && line.startsWith("Ándale Premium")
-                      ? <><strong>Ándale Premium</strong>{line.slice("Ándale Premium".length)}</>
-                      : line}
-                  </p>
-                ))}
-              </div>
-              <div data-testid="soft-paywall-legal" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#A0A4AB" : "#6B6258" }}>
-                <a data-testid="soft-paywall-terms" href={TERMS_OF_USE_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline" }}>{DISCLOSURE_LINKS[uiLang].terms}</a>
-                {" · "}
-                <a data-testid="soft-paywall-privacy" href={PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline" }}>{DISCLOSURE_LINKS[uiLang].privacy}</a>
-                {" · "}
-                <a data-testid="soft-paywall-restore" href="#restore" onClick={(event) => { event.preventDefault(); restoreSoftPaywall(); }} style={{ color: "inherit", textDecoration: "underline" }}>{DISCLOSURE_LINKS[uiLang].restore}</a>
-              </div>
-              {restoreStatus && (
-                <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#A0A4AB" : "#6B6258" }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
-              )}
-              {!canCharge && (
-              <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 11, color: theme === "dark" ? "#A0A4AB" : "#6B6258", lineHeight: 1.45 }}>
-                {L.paywallHonesty}
-              </div>
-              )}
-            </div>
-            </div>
-            <ButtonPin testId="soft-paywall-footer" style={{ padding: "0 20px", background: theme === "dark" ? "#1E2128" : HUB_CREAM }}>
-              <Btn data-testid="soft-paywall-annual" ink={LESSON_LIME_INK} onClick={() => buySoftPaywall("annual")} style={{ width: "100%" }}>{L.paywallAnnual}</Btn>
-              <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
-                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : "#6B6258", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
-                {L.paywallDismiss}
-              </button>
-            </ButtonPin>
+            <div data-testid="soft-paywall-body" style={{ ...paywallBodyType, marginBottom: 8 }}>{L.paywallBody}</div>
+            {annualPriceText ? (
+              <div data-testid="soft-paywall-annual-price" style={{ ...paywallBodyType, marginBottom: 12 }}>{annualPriceText}</div>
+            ) : null}
+            <Btn data-testid="soft-paywall-annual" ink={LESSON_LIME_INK} onClick={tapPaywallAnnual} style={{ width: "100%" }}>{L.paywallAnnual}</Btn>
+            {paywallAnnualHold ? (
+              <div data-testid="soft-paywall-annual-hold" style={{ ...paywallBodyType, color: theme === "dark" ? "#CDBBA6" : "#6B6258", marginTop: PAYWALL_ANNUAL_HOLD_GAP }}>{L.paywallAnnualHold}</div>
+            ) : null}
+            <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
+              style={{ display: "block", width: "100%", marginTop: PAYWALL_FREE_GAP, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#F6EFE4" : "#6B6258", fontFamily: "inherit", fontWeight: 500, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
+              {L.paywallDismiss}
+            </button>
           </div>
         </div>
       )}

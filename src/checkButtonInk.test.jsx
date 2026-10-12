@@ -243,9 +243,9 @@ describe("lesson Check and Continue ink", () => {
   });
 
   it.each([
-    ["light", "es", "Un año", "Seguir gratis", "#6b6258", "#6b6258"],
-    ["dark", "en", "One year", "Continue free", "#cdbba6", "#a0a4ab"],
-  ])("paywall ONE YEAR ink is #1F3A1A in %s %s", async (theme, uiLang, label, freeLabel, freeInk, fineInk) => {
+    ["light", "es", "Empezar plan anual", "Seguir gratis", "#6b6258"],
+    ["dark", "en", "Start annual plan", "Continue free", "#f6efe4"],
+  ])("paywall annual ink is #1F3A1A in %s %s", async (theme, uiLang, label, freeLabel, freeInk) => {
     cleanup();
     localStorage.clear();
     mockBrowser();
@@ -273,9 +273,6 @@ describe("lesson Check and Continue ink", () => {
     expect(norm(free.style.color)).toBe(freeInk);
     expect(norm(free.style.color)).not.toBe(INK);
     expect(free.style.background).toBe("none");
-
-    const fine = screen.getByTestId("soft-paywall-disclosure");
-    expect(norm(fine.style.color)).toBe(fineInk);
-    expect(norm(fine.style.color)).not.toBe(INK);
+    expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();
   });
 });

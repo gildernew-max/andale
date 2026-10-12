@@ -384,30 +384,25 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const darkCard = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
     const card = screen.getByTestId("soft-paywall-card");
     const headline = screen.getByTestId("soft-paywall-headline");
-    const annualPrice = screen.getByTestId("soft-paywall-annual-price");
-    const monthlyPrice = screen.getByTestId("soft-paywall-monthly-price");
+    const body = screen.getByTestId("soft-paywall-body");
+    const wall = screen.getByTestId("soft-paywall");
     expect(card.style.background).toMatch(darkCard);
     expect(card.style.background).not.toMatch(/rgba|hsla|\/\s*0?\.\d/);
     expect(card.style.opacity).toBe("1");
     expect(card.style.backdropFilter).toBe("none");
     expect(card.className).not.toMatch(/\bpop\b/);
     expect(card.style.background).not.toMatch(cream);
+    expect(wall.style.background).toMatch(/#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i);
     expect(headline.style.color).toMatch(cream);
     expect(headline.style.color).not.toMatch(nearWhite);
-    expect(annualPrice.style.color).toMatch(cream);
-    expect(annualPrice.style.color).not.toMatch(nearWhite);
-    expect(monthlyPrice.style.color).toMatch(cream);
-    expect(monthlyPrice.style.color).not.toMatch(nearWhite);
-    expect(screen.getByTestId("soft-paywall-monthly").style.background).toMatch(darkCard);
-    expect(screen.getByTestId("soft-paywall-monthly").style.color).toMatch(cream);
+    expect(screen.queryByTestId("soft-paywall-annual-price")).toBeNull();
+    expect(body.style.color).toMatch(cream);
+    expect(body.style.color).not.toMatch(nearWhite);
     expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
-    expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
-    const honesty = screen.getByTestId("soft-paywall-honesty");
-    expect(honesty.style.fontSize).toBe("11px");
-    expect(honesty.style.fontWeight).toBe("700");
-    expect(honesty.style.lineHeight).toBe("1.45");
-    expect(honesty.style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
-    expect(screen.getByTestId("soft-paywall-disclosure").style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(cream);
+    expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
   });
 
   it("cold first Hoy CONTINUE shows soft paywall once before idle home", async () => {
@@ -1328,8 +1323,8 @@ const clickClose = async (user, rootTestId) => {
 };
 
 const NO_STORY_HEADLINE = {
-  es: "Hay mucho por leer.",
-  en: "There's a lot to read.",
+  es: "Hay mucho más por leer.",
+  en: "There's much\u00A0more to read.",
 };
 const STARTED_HEADLINE = {
   es: "Hay mucho más por leer.",
@@ -1360,59 +1355,60 @@ const bootStoryStartWall = async (extra = {}) => {
 };
 
 describe("paywall headline depends on a stored story start", () => {
-  it("winDays 2 with no story shows the shorter line and not the cleared line", async () => {
+  it("winDays 2 with no story still uses the much-more line", async () => {
     const es = await bootStoryStartWall({ winDays: 2, uiLang: "es" });
     expect(es.parts["soft-paywall-headline"]).toBe(NO_STORY_HEADLINE.es);
-    expect(es.parts["soft-paywall-headline"]).not.toBe(STARTED_HEADLINE.es);
-    expect(es.card).not.toContain(STARTED_HEADLINE.es);
+    expect(es.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE.es);
     expect(es.card).not.toContain("La historia sigue.");
-    expect(es.parts["soft-paywall-honesty"]).toBe("Vista previa · aún no se cobra");
-    expect(es.parts["soft-paywall-annual-price"]).toMatch(/\$39\.99/);
-    expect(es.parts["soft-paywall-monthly-price"]).toMatch(/\$6\.99/);
+    expect(es.card).not.toContain("Hay mucho por leer.");
+    expect(es.parts["soft-paywall-annual"]).toBe("Empezar plan anual");
+    expect(es.card).not.toContain("[ANNUAL PRICE]");
+    expect(es.card).not.toContain("{price}");
     expect(es.parts["soft-paywall-dismiss"]).toBe("Seguir gratis");
 
     const en = await bootStoryStartWall({ winDays: 2, uiLang: "en" });
     expect(en.parts["soft-paywall-headline"]).toBe(NO_STORY_HEADLINE.en);
-    expect(en.parts["soft-paywall-headline"]).not.toBe(STARTED_HEADLINE.en);
-    expect(en.card).not.toContain(STARTED_HEADLINE.en);
+    expect(en.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE.en);
     expect(en.card).not.toContain("The story goes on.");
-    expect(en.parts["soft-paywall-honesty"]).toBe("Preview · you won\u2019t be charged yet");
-    expect(en.parts["soft-paywall-annual-price"]).toMatch(/\$39\.99/);
-    expect(en.parts["soft-paywall-monthly-price"]).toMatch(/\$6\.99/);
+    expect(en.card).not.toContain("There's a lot to read.");
+    expect(en.parts["soft-paywall-annual"]).toBe("Start annual plan");
+    expect(en.card).not.toContain("[ANNUAL PRICE]");
+    expect(en.card).not.toContain("{price}");
     expect(en.parts["soft-paywall-dismiss"]).toBe("Continue free");
   });
 
-  it("lecturaStartedAt or a claimed story keeps the cleared line", async () => {
+  it("lecturaStartedAt or a claimed story keeps the much-more line", async () => {
+    const shorter = { es: "Hay mucho por leer.", en: "There's a lot to read." };
+    const cliff = { es: "La historia sigue.", en: "The story goes on." };
     for (const lang of ["es", "en"]) {
       const byAt = await bootStoryStartWall({ uiLang: lang, lecturaStartedAt: 1 });
       expect(byAt.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE[lang]);
-      expect(byAt.parts["soft-paywall-headline"]).not.toBe(NO_STORY_HEADLINE[lang]);
+      expect(byAt.parts["soft-paywall-headline"]).not.toBe(shorter[lang]);
+      expect(byAt.parts["soft-paywall-headline"]).not.toBe(cliff[lang]);
 
       const byStory = await bootStoryStartWall({ uiLang: lang, stories: { "story-0": true } });
       expect(byStory.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE[lang]);
-      expect(byStory.parts["soft-paywall-headline"]).not.toBe(NO_STORY_HEADLINE[lang]);
+      expect(byStory.parts["soft-paywall-headline"]).not.toBe(shorter[lang]);
+      expect(byStory.parts["soft-paywall-headline"]).not.toBe(cliff[lang]);
     }
   });
 
-  it("the headline is the only wall string that differs", async () => {
+  it("a non-cliffhanger wall uses the much-more line whether or not a story started", async () => {
     for (const lang of ["es", "en"]) {
       const none = await bootStoryStartWall({ uiLang: lang, winDays: 2 });
       const started = await bootStoryStartWall({ uiLang: lang, lecturaStartedAt: 1 });
       const claimed = await bootStoryStartWall({ uiLang: lang, stories: { "story-0": true } });
       for (const id of WALL_STRING_IDS) {
         if (id === "soft-paywall-headline") {
-          expect(none.parts[id]).toBe(NO_STORY_HEADLINE[lang]);
+          expect(none.parts[id]).toBe(STARTED_HEADLINE[lang]);
           expect(started.parts[id]).toBe(STARTED_HEADLINE[lang]);
           expect(claimed.parts[id]).toBe(STARTED_HEADLINE[lang]);
-          expect(none.parts[id]).not.toBe(started.parts[id]);
-          continue;
         }
         expect(none.parts[id]).toBe(started.parts[id]);
         expect(none.parts[id]).toBe(claimed.parts[id]);
       }
-      const swap = (text, headline) => text.split(headline).join("HEADLINE");
-      expect(swap(none.card, NO_STORY_HEADLINE[lang])).toBe(swap(started.card, STARTED_HEADLINE[lang]));
-      expect(swap(none.card, NO_STORY_HEADLINE[lang])).toBe(swap(claimed.card, STARTED_HEADLINE[lang]));
+      expect(none.card).toBe(started.card);
+      expect(none.card).toBe(claimed.card);
     }
   });
 });
@@ -1608,334 +1604,68 @@ describe("paywall headline follows the open source", () => {
   });
 });
 
-const EN_DISCLOSURE = [
-  "Ándale Premium is an auto-renewing subscription: one year at $39.99 or one month at $6.99.",
-  "Payment is charged to your Apple ID when you confirm. It renews automatically at the same price unless you cancel at least 24 hours before the period ends; the renewal is charged within those 24 hours. Manage or cancel in Settings > Apple ID > Subscriptions.",
-];
-const ES_DISCLOSURE = [
-  "Ándale Premium es una suscripción con renovación automática: un año por $39.99 o un mes por $6.99.",
-  "El pago se carga a tu ID de Apple al confirmar. Se renueva sola al mismo precio, a menos que la canceles al menos 24 horas antes de que termine el periodo; la renovación se cobra dentro de esas 24 horas. Administra o cancela en Ajustes > ID de Apple > Suscripciones.",
-];
-
-const assertFinePrintMatchesButtons = (lang) => {
-  const annual = screen.getByTestId("soft-paywall-annual-price").textContent.split(" ")[0];
-  const monthly = screen.getByTestId("soft-paywall-monthly-price").textContent.split(" ")[0];
-  const lead = screen.getByTestId("soft-paywall-disclosure-0").textContent;
-  expect(lead).toContain(annual);
-  expect(lead).toContain(monthly);
-  const expected = lang === "en"
-    ? `Ándale Premium is an auto-renewing subscription: one year at ${annual} or one month at ${monthly}.`
-    : `Ándale Premium es una suscripción con renovación automática: un año por ${annual} o un mes por ${monthly}.`;
-  expect(lead).toBe(expected);
-  expect(screen.queryByTestId("soft-paywall-disclosure-2")).toBeNull();
-};
-
-describe("paywall 3.1.2 disclosure", () => {
-  it("renders EN prices, fine print, restore, and legal links without a purchase", async () => {
+describe("inert web paywall", () => {
+  it.each(["en", "es"])("hides an empty price and records an annual tap without a charge in %s", async (lang) => {
     cleanup();
-    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
-    delete window.__andaleIapEnv;
-    const user = userEvent.setup();
-    render(<App />);
-    await awaitSoftPaywallAfterFirstWin();
-    assertSoftPaywallAnnualPrimary("en");
-    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("One year");
-    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("One month");
-    expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("$39.99 / year");
-    expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("$6.99 / month");
-    const annual = screen.getByTestId("soft-paywall-annual");
-    const annualPrice = screen.getByTestId("soft-paywall-annual-price");
-    const monthly = screen.getByTestId("soft-paywall-monthly");
-    const monthlyPrice = screen.getByTestId("soft-paywall-monthly-price");
-    expect(screen.getByTestId("soft-paywall-scroll").contains(annualPrice)).toBe(true);
-    expect(screen.getByTestId("soft-paywall-scroll").contains(monthly)).toBe(true);
-    expect(screen.getByTestId("soft-paywall-footer").contains(annual)).toBe(true);
-    expect(annualPrice.compareDocumentPosition(monthly) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(monthly.compareDocumentPosition(monthlyPrice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    EN_DISCLOSURE.forEach((line, i) => {
-      expect(screen.getByTestId(`soft-paywall-disclosure-${i}`).textContent).toBe(line);
-    });
-    assertFinePrintMatchesButtons("en");
-    expect(screen.queryByText(ES_DISCLOSURE[0])).toBeNull();
-    const fine = screen.getByTestId("soft-paywall-disclosure");
-    expect(parseFloat(fine.style.fontSize)).toBeLessThan(parseFloat(annual.style.fontSize));
-    expect(parseFloat(annualPrice.style.fontSize)).toBeLessThan(parseFloat(annual.style.fontSize));
-    expect(screen.getByTestId("soft-paywall-legal").textContent).toBe("Terms of Use · Privacy Policy · Restore Purchases");
-    const terms = screen.getByTestId("soft-paywall-terms");
-    const privacy = screen.getByTestId("soft-paywall-privacy");
-    expect(terms.tagName).toBe("A");
-    expect(terms.getAttribute("href")).toBe("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/");
-    expect(terms.textContent).toBe("Terms of Use");
-    expect(privacy.tagName).toBe("A");
-    expect(privacy.getAttribute("href")).toBe("https://gildernew-max.github.io/andale/privacy.html");
-    expect(privacy.textContent).toBe("Privacy Policy");
-    const restore = screen.getByTestId("soft-paywall-restore");
-    expect(restore.tagName).toBe("A");
-    expect(restore.textContent).toBe("Restore Purchases");
-    expect(restore.closest("[data-testid='soft-paywall-legal']")).toBe(screen.getByTestId("soft-paywall-legal"));
-    expect(screen.getByTestId("soft-paywall-legal").querySelector("button")).toBeNull();
-    expect(screen.queryByTestId("soft-paywall-waitlist")).toBeNull();
-    expect(monthlyPrice.compareDocumentPosition(fine) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(fine.compareDocumentPosition(screen.getByTestId("soft-paywall-dismiss")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
-
-    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
-    expect(funnelOf("purchase")).toHaveLength(0);
-    await user.click(restore);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    expect(funnelOf("purchase")).toHaveLength(0);
-    expect(funnelOf("paywall_tap")).toHaveLength(0);
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
-
-    await user.click(annual);
-    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
-    expect(funnelOf("purchase")).toHaveLength(0);
-    expect(funnelOf("paywall_tap").every((e) => e.event === "paywall_tap")).toBe(true);
-    const names = window.__andaleFunnelLog.map((e) => e.event);
-    expect(names.indexOf("paywall_seen")).toBeGreaterThanOrEqual(0);
-    expect(names.indexOf("paywall_tap")).toBeGreaterThan(names.indexOf("paywall_seen"));
-    expect(names.includes("purchase")).toBe(false);
-  }, 15000);
-
-  it("renders ES prices, fine print, restore, and legal links", async () => {
-    cleanup();
-    seedProgress({ uiLang: "es", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
-    delete window.__andaleIapEnv;
-    render(<App />);
-    await awaitSoftPaywallAfterFirstWin();
-    assertSoftPaywallAnnualPrimary("es");
-    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("Un año");
-    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("Un mes");
-    expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("$39.99 al año");
-    expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("$6.99 al mes");
-    ES_DISCLOSURE.forEach((line, i) => {
-      expect(screen.getByTestId(`soft-paywall-disclosure-${i}`).textContent).toBe(line);
-    });
-    assertFinePrintMatchesButtons("es");
-    expect(screen.queryByText(EN_DISCLOSURE[0])).toBeNull();
-    expect(screen.getByTestId("soft-paywall-legal").textContent).toBe("Términos de uso · Política de privacidad · Restaurar compras");
-    expect(screen.getByTestId("soft-paywall-terms").getAttribute("href")).toBe("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/");
-    expect(screen.getByTestId("soft-paywall-terms").textContent).toBe("Términos de uso");
-    expect(screen.getByTestId("soft-paywall-privacy").getAttribute("href")).toBe("https://gildernew-max.github.io/andale/privacy.html");
-    expect(screen.getByTestId("soft-paywall-privacy").textContent).toBe("Política de privacidad");
-    const restore = screen.getByTestId("soft-paywall-restore");
-    expect(restore.tagName).toBe("A");
-    expect(restore.textContent).toBe("Restaurar compras");
-    expect(restore.closest("[data-testid='soft-paywall-legal']")).toBe(screen.getByTestId("soft-paywall-legal"));
-    expect(parseFloat(screen.getByTestId("soft-paywall-disclosure").style.fontSize)).toBeLessThan(parseFloat(screen.getByTestId("soft-paywall-annual").style.fontSize));
-    expect(screen.queryByTestId("soft-paywall-waitlist")).toBeNull();
-    expect(funnelOf("purchase")).toHaveLength(0);
-  }, 15000);
-
-  it("prefers StoreKit displayPrice and the restore link adds no purchase", async () => {
-    cleanup();
-    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
+    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
-    let restoreCalls = 0;
     let purchaseCalls = 0;
-    let allowRestore = false;
+    let restoreCalls = 0;
     window.__andaleNativePurchase = async () => {
       purchaseCalls += 1;
       return { status: "success", productId: "com.andale.app.premium.annual" };
     };
     window.__andaleNativeRestore = async () => {
       restoreCalls += 1;
-      if (!allowRestore) return { status: "failure", reason: "nothing_to_restore" };
-      return { status: "success", productId: "com.andale.app.premium.monthly" };
-    };
-    window.__andaleNativeGetProducts = async ({ productIds }) => ({
-      products: [
-        { id: productIds[0], displayPrice: "€39.99" },
-        { id: productIds[1], displayPrice: "€6.99" },
-      ],
-    });
-    const user = userEvent.setup();
-    render(<App />);
-    await awaitSoftPaywallAfterFirstWin();
-    await waitFor(() => expect(restoreCalls).toBeGreaterThanOrEqual(1));
-    expect(screen.queryByTestId("soft-paywall-waitlist")).toBeNull();
-    expect(screen.getByTestId("soft-paywall-restore").tagName).toBe("A");
-    expect(document.body.textContent).not.toMatch(/Tell me when the store opens|Avísame cuando abramos la tienda/);
-    expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Preview · you won\u2019t be charged yet|Vista previa · aún no se cobra/);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("€39.99 / year"));
-    expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("€6.99 / month");
-    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).toBe("Ándale Premium is an auto-renewing subscription: one year at €39.99 or one month at €6.99.");
-    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).not.toMatch(/\$3\.33/);
-    expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).toBe(EN_DISCLOSURE[1]);
-    assertFinePrintMatchesButtons("en");
-    expect(screen.getByTestId("soft-paywall-annual").className).toMatch(/duo-btn/);
-    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Continue free");
-    expect(screen.getByTestId("soft-paywall-dismiss").style.background).toBe("none");
-    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
-    expect(funnelOf("purchase")).toHaveLength(0);
-
-    expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
-    const restoresBeforeClick = restoreCalls;
-    allowRestore = true;
-    await user.click(screen.getByTestId("soft-paywall-restore"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status").textContent).toBe("Purchases restored."));
-    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(restoreCalls).toBeGreaterThan(restoresBeforeClick);
-    expect(purchaseCalls).toBe(0);
-    expect(funnelOf("purchase")).toHaveLength(0);
-    expect(funnelOf("paywall_tap")).toHaveLength(0);
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    expect(stored.unlockedPrem).toBe(true);
-    expect(stored.paywallPlan).toBe("monthly");
-    expect(stored.iapProductId).toBe("com.andale.app.premium.monthly");
-    const names = window.__andaleFunnelLog.map((e) => e.event);
-    expect(names.indexOf("paywall_seen")).toBeGreaterThanOrEqual(0);
-    expect(names.includes("purchase")).toBe(false);
-  }, 15000);
-
-  it("falls back to locked prices when getProducts fails", async () => {
-    cleanup();
-    seedProgress({ uiLang: "es", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
-    window.__andaleIapEnv = { isNative: true, platform: "ios" };
-    window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
-    window.__andaleNativeGetProducts = async () => {
-      throw new Error("store_down");
-    };
-    render(<App />);
-    await awaitSoftPaywallAfterFirstWin();
-    expect(screen.queryByTestId("soft-paywall-waitlist")).toBeNull();
-    expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-    expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("$39.99 al año");
-    expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("$6.99 al mes");
-    ES_DISCLOSURE.forEach((line, i) => {
-      expect(screen.getByTestId(`soft-paywall-disclosure-${i}`).textContent).toBe(line);
-    });
-    expect(screen.getByTestId("soft-paywall-restore").tagName).toBe("A");
-    expect(screen.getByTestId("soft-paywall-restore").textContent).toBe("Restaurar compras");
-    expect(funnelOf("purchase")).toHaveLength(0);
-  }, 15000);
-
-  const restoreFaces = {
-    en: {
-      success: "Purchases restored.",
-      empty: "No purchases to restore on this Apple ID.",
-      failure: "Couldn't reach the App Store. Try again.",
-      web: "Restore works in the iPhone app.",
-    },
-    es: {
-      success: "Compras restauradas.",
-      empty: "No hay compras que restaurar en este ID de Apple.",
-      failure: "No se pudo conectar con la App Store. Inténtalo de nuevo.",
-      web: "Restaurar compras funciona en la app para iPhone.",
-    },
-  };
-
-  const assertRestoreLine = (lang, key) => {
-    const line = screen.getByTestId("soft-paywall-restore-status");
-    const legal = screen.getByTestId("soft-paywall-legal");
-    const other = lang === "en" ? "es" : "en";
-    expect(line.textContent).toBe(restoreFaces[lang][key]);
-    expect(line.textContent).not.toBe(restoreFaces[other][key]);
-    expect(line.style.fontSize).toBe(legal.style.fontSize);
-    expect(line.style.fontWeight).toBe(legal.style.fontWeight);
-    expect(line.style.color).toBe(legal.style.color);
-    expect(legal.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(line.compareDocumentPosition(screen.getByTestId("soft-paywall-dismiss")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(line.querySelector("svg, img, button")).toBeNull();
-    expect(legal.contains(line)).toBe(false);
-    expect(funnelOf("purchase")).toHaveLength(0);
-  };
-
-  it.each(["en", "es"])("restore success shows one status line in %s and does not emit purchase", async (lang) => {
-    cleanup();
-    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
-    window.__andaleIapEnv = { isNative: true, platform: "ios" };
-    let allowRestore = false;
-    let restoreCalls = 0;
-    window.__andaleNativeRestore = async () => {
-      restoreCalls += 1;
-      if (!allowRestore) return { status: "failure", reason: "nothing_to_restore" };
       return { status: "success", productId: "com.andale.app.premium.annual" };
     };
-    const user = userEvent.setup();
-    render(<App />);
-    await awaitSoftPaywallAfterFirstWin();
-    await waitFor(() => expect(restoreCalls).toBeGreaterThanOrEqual(1));
-    expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
-    allowRestore = true;
-    await user.click(screen.getByTestId("soft-paywall-restore"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status")).toBeTruthy());
-    assertRestoreLine(lang, "success");
-    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    expect(stored.unlockedPrem).toBe(true);
-    expect(stored.paywallPlan).toBe("annual");
-  }, 15000);
-
-  it.each(["en", "es"])("restore with nothing to restore shows one status line in %s and does not emit purchase", async (lang) => {
-    cleanup();
-    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
-    window.__andaleIapEnv = { isNative: true, platform: "ios" };
-    window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
-    const user = userEvent.setup();
-    render(<App />);
-    await awaitSoftPaywallAfterFirstWin();
-    expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
-    await user.click(screen.getByTestId("soft-paywall-restore"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status")).toBeTruthy());
-    assertRestoreLine(lang, "empty");
-    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
-  }, 15000);
-
-  it.each(["en", "es"])("a failed store restore shows one status line in %s and does not emit purchase", async (lang) => {
-    cleanup();
-    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
-    window.__andaleIapEnv = { isNative: true, platform: "ios" };
-    window.__andaleNativeRestore = async () => {
-      throw new Error("store_down");
-    };
-    const user = userEvent.setup();
-    render(<App />);
-    await awaitSoftPaywallAfterFirstWin();
-    expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
-    await user.click(screen.getByTestId("soft-paywall-restore"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status")).toBeTruthy());
-    assertRestoreLine(lang, "failure");
-    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
-  }, 15000);
-
-  it.each(["en", "es"])("web restore shows the iPhone-app line in %s and does not emit purchase", async (lang) => {
-    cleanup();
-    seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
-    delete window.__andaleIapEnv;
-    const user = userEvent.setup();
-    render(<App />);
-    await awaitSoftPaywallAfterFirstWin();
-    expect(screen.queryByTestId("soft-paywall-restore-status")).toBeNull();
-    await user.click(screen.getByTestId("soft-paywall-restore"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall-restore-status")).toBeTruthy());
-    assertRestoreLine(lang, "web");
-    expect(screen.getByTestId("soft-paywall-restore-status").textContent).not.toBe(restoreFaces[lang].failure);
-    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
-    expect(funnelOf("paywall_tap")).toHaveLength(0);
-  }, 15000);
-
-  it("a partial StoreKit price list falls back to both locked prices", async () => {
-    cleanup();
-    seedProgress({ uiLang: "en", streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
-    window.__andaleIapEnv = { isNative: true, platform: "ios" };
-    window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
     window.__andaleNativeGetProducts = async () => ({
       products: [{ id: "com.andale.app.premium.annual", displayPrice: "€39.99" }],
     });
+    const purchases = [];
+    const onPurchase = (event) => purchases.push(event.detail);
+    window.addEventListener("andale-purchase", onPurchase);
+    const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
-    expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("$39.99 / year");
-    expect(screen.getByTestId("soft-paywall-monthly-price").textContent).toBe("$6.99 / month");
-    expect(screen.getByTestId("soft-paywall-disclosure-0").textContent).toBe(EN_DISCLOSURE[0]);
-    expect(screen.getByTestId("soft-paywall-disclosure-1").textContent).toBe(EN_DISCLOSURE[1]);
-    assertFinePrintMatchesButtons("en");
-    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/€/);
+    assertSoftPaywallAnnualPrimary(lang);
+    expect(screen.queryByTestId("soft-paywall-annual-price")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\[ANNUAL PRICE\]|\{price\}/);
+    expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");
+    expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-legal")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-restore")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\$|€|Apple|Restore|Restaurar|charged|cobra/);
+    expect(restoreCalls).toBe(0);
+    expect(purchaseCalls).toBe(0);
+    await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
+
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
+    expect(funnelOf("paywall_tap").filter((e) => e.choice === "annual")).toHaveLength(1);
+    expect(funnelOf("purchase")).toHaveLength(0);
+    expect(purchases).toHaveLength(0);
+    expect(purchaseCalls).toBe(0);
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(stored.unlockedPrem).not.toBe(true);
+    expect(stored.paywallPlan).toBeFalsy();
+    expect(stored.paywallSeen).not.toBe(true);
+    expect(stored.iapProductId).toBeFalsy();
+    const names = window.__andaleFunnelLog.map((e) => e.event);
+    expect(names.indexOf("paywall_seen")).toBeGreaterThanOrEqual(0);
+    expect(names.indexOf("paywall_tap")).toBeGreaterThan(names.indexOf("paywall_seen"));
+    expect(names.includes("purchase")).toBe(false);
+    window.removeEventListener("andale-purchase", onPurchase);
+    delete window.__andaleIapEnv;
+    delete window.__andaleNativePurchase;
+    delete window.__andaleNativeRestore;
+    delete window.__andaleNativeGetProducts;
   }, 15000);
 });
 
