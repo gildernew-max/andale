@@ -27,7 +27,7 @@ import { watchWordSheetPlacement, wordSheetClose, wordSheetReveal } from "./word
 import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { ANNUAL_PRICE_PLACEHOLDER, FREE_TIER_LIMIT_PLACEHOLDER, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP } from "./webPaywall.js";
+import { ANNUAL_PRICE_PLACEHOLDER, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent } from "./funnel.js";
 import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1, claimFirstSessionStart, isFirstExerciseCorrect, sessionOneFromProgress } from "./firstSessionFunnel.js";
@@ -4628,7 +4628,8 @@ const UI = {
     paywallHeadlineFallback: "Hay mucho más por leer.",
     paywallHeadlineNoStory: "Hay mucho por leer.",
     paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
-    paywallAnnual: "Un año",
+    paywallAnnual: "Empezar plan anual",
+    paywallPrice: "{price} al año",
     paywallMonthly: "Un mes",
     paywallHonesty: "Vista previa · aún no se cobra",
     paywallDismiss: "Seguir gratis",
@@ -4722,7 +4723,8 @@ const UI = {
     paywallHeadlineFallback: "There's much\u00A0more to read.",
     paywallHeadlineNoStory: "There's a lot to read.",
     paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
-    paywallAnnual: "One year",
+    paywallAnnual: "Start annual plan",
+    paywallPrice: "{price} a year",
     paywallMonthly: "One month",
     paywallHonesty: "Preview · you won\u2019t be charged yet",
     paywallDismiss: "Continue free",
@@ -10491,8 +10493,7 @@ export default function App() {
             )}
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
             <div data-testid="soft-paywall-body" style={{ ...paywallBodyType, marginBottom: 8 }}>{L.paywallBody}</div>
-            <div data-testid="soft-paywall-annual-price" style={paywallBodyType}>{ANNUAL_PRICE_PLACEHOLDER}</div>
-            <div data-testid="soft-paywall-free-limit" style={{ ...paywallBodyType, marginBottom: 12 }}>{FREE_TIER_LIMIT_PLACEHOLDER}</div>
+            <div data-testid="soft-paywall-annual-price" style={{ ...paywallBodyType, marginBottom: 12 }}>{L.paywallPrice.replace("{price}", ANNUAL_PRICE_PLACEHOLDER)}</div>
             <Btn data-testid="soft-paywall-annual" ink={LESSON_LIME_INK} onClick={tapPaywallAnnual} style={{ width: "100%" }}>{L.paywallAnnual}</Btn>
             <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
               style={{ display: "block", width: "100%", marginTop: PAYWALL_FREE_GAP, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#F6EFE4" : "#6B6258", fontFamily: "inherit", fontWeight: 500, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>

@@ -1711,7 +1711,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(funnelOf("paywall_seen")).toHaveLength(1);
     expect(funnelOf("lectura_chapter_done")).toHaveLength(1);
     expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
-    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("Un año");
+    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("Empezar plan anual");
     expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis");
     expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     expect(screen.getByTestId("soft-paywall-dismiss").style.background).toBe("none");

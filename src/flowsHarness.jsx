@@ -448,23 +448,22 @@ export const assertFreeWinFlyAway = () => {
   expect(screen.queryByTestId("soft-paywall")).toBeNull();
 };
 
-/** Loud annual / quiet continue free. Locked words. One static Cenzontle. Price is the placeholder. */
+/** Loud annual / quiet continue free. Locked words. One static Cenzontle. Price amount is the placeholder. */
 export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const wall = screen.getByTestId("soft-paywall");
   const bird = screen.getByTestId("soft-paywall-cenzontle");
   const annual = screen.getByTestId("soft-paywall-annual");
   const price = screen.getByTestId("soft-paywall-annual-price");
-  const limit = screen.getByTestId("soft-paywall-free-limit");
   const body = screen.getByTestId("soft-paywall-body");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
   const copy = lang === "en"
-    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", annual: "One year", dismiss: "Continue free" }
-    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", annual: "Un año", dismiss: "Seguir gratis" };
+    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.", annual: "Start annual plan", dismiss: "Continue free", price: "[ANNUAL PRICE] a year" }
+    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.", annual: "Empezar plan anual", dismiss: "Seguir gratis", price: "[ANNUAL PRICE] al año" };
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
   expect(body.textContent).toBe(copy.benefit);
   expect(annual.textContent).toBe(copy.annual);
-  expect(price.textContent).toBe("[ANNUAL PRICE]");
-  expect(limit.textContent).toBe("[FREE TIER LIMIT]");
+  expect(price.textContent).toBe(copy.price);
+  expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
   expect(price.style.fontSize).toBe(body.style.fontSize);
   expect(price.style.fontWeight).toBe(body.style.fontWeight);
   expect(price.style.fontSize).not.toBe("22px");
@@ -946,7 +945,6 @@ export const WALL_STRING_IDS = [
   "soft-paywall-body",
   "soft-paywall-annual",
   "soft-paywall-annual-price",
-  "soft-paywall-free-limit",
   "soft-paywall-dismiss",
 ];
 

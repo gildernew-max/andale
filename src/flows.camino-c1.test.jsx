@@ -1362,8 +1362,8 @@ describe("paywall headline depends on a stored story start", () => {
     expect(es.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE.es);
     expect(es.card).not.toContain("La historia sigue.");
     expect(es.card).not.toContain("Hay mucho por leer.");
-    expect(es.parts["soft-paywall-annual-price"]).toBe("[ANNUAL PRICE]");
-    expect(es.parts["soft-paywall-free-limit"]).toBe("[FREE TIER LIMIT]");
+    expect(es.parts["soft-paywall-annual"]).toBe("Empezar plan anual");
+    expect(es.parts["soft-paywall-annual-price"]).toBe("[ANNUAL PRICE] al año");
     expect(es.parts["soft-paywall-dismiss"]).toBe("Seguir gratis");
 
     const en = await bootStoryStartWall({ winDays: 2, uiLang: "en" });
@@ -1371,8 +1371,8 @@ describe("paywall headline depends on a stored story start", () => {
     expect(en.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE.en);
     expect(en.card).not.toContain("The story goes on.");
     expect(en.card).not.toContain("There's a lot to read.");
-    expect(en.parts["soft-paywall-annual-price"]).toBe("[ANNUAL PRICE]");
-    expect(en.parts["soft-paywall-free-limit"]).toBe("[FREE TIER LIMIT]");
+    expect(en.parts["soft-paywall-annual"]).toBe("Start annual plan");
+    expect(en.parts["soft-paywall-annual-price"]).toBe("[ANNUAL PRICE] a year");
     expect(en.parts["soft-paywall-dismiss"]).toBe("Continue free");
   });
 
@@ -1628,8 +1628,8 @@ describe("inert web paywall", () => {
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     assertSoftPaywallAnnualPrimary(lang);
-    expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe("[ANNUAL PRICE]");
-    expect(screen.getByTestId("soft-paywall-free-limit").textContent).toBe("[FREE TIER LIMIT]");
+    expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe(lang === "en" ? "[ANNUAL PRICE] a year" : "[ANNUAL PRICE] al año");
+    expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
     expect(screen.getByTestId("soft-paywall-annual-price").style.fontSize).toBe(screen.getByTestId("soft-paywall-body").style.fontSize);
     expect(screen.getByTestId("soft-paywall-annual-price").style.fontWeight).toBe("700");
     expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");

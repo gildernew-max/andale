@@ -1040,7 +1040,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(hubSnap.hoy).toMatch(/Hoy/);
     expect(hubSnap.hoy).toMatch(/Plan de hoy/);
     expect(hubSnap.sendero).toMatch(/Tu camino/);
-    expect(hubSnap.hoy + hubSnap.stories + hubSnap.games).not.toMatch(/Un año|Seguir gratis|Mexicanismos|Lección perfecta/);
+    expect(hubSnap.hoy + hubSnap.stories + hubSnap.games).not.toMatch(/Empezar plan anual|Seguir gratis|Mexicanismos|Lección perfecta/);
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
@@ -1054,7 +1054,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
-    expect(screen.getByTestId("learn-hub").textContent).not.toMatch(/La historia sigue\.|Hay mucho más por leer\.|Un año|Seguir gratis/);
+    expect(screen.getByTestId("learn-hub").textContent).not.toMatch(/La historia sigue\.|Hay mucho más por leer\.|Empezar plan anual|Seguir gratis/);
   });
 
   it("armed soft-paywall backdrop free-dismiss lands on post-dismiss-handoff", async () => {

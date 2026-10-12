@@ -10,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { dayKeyFromDate } from "./firstDoor.js";
 import { FUNNEL_EVENTS } from "./funnel.js";
-import { ANNUAL_PRICE_PLACEHOLDER, FREE_TIER_LIMIT_PLACEHOLDER } from "./webPaywall.js";
+import { ANNUAL_PRICE_PLACEHOLDER } from "./webPaywall.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -21,10 +21,10 @@ const VIEWPORTS = [
 ];
 
 const FACES = [
-  { theme: "light", uiLang: "en", annual: "One year", free: "Continue free", freeInk: "#6b6258", page: "" },
-  { theme: "light", uiLang: "es", annual: "Un año", free: "Seguir gratis", freeInk: "#6b6258", page: "" },
-  { theme: "dark", uiLang: "en", annual: "One year", free: "Continue free", freeInk: "#f6efe4", page: "#15171c" },
-  { theme: "dark", uiLang: "es", annual: "Un año", free: "Seguir gratis", freeInk: "#f6efe4", page: "#15171c" },
+  { theme: "light", uiLang: "en", annual: "Start annual plan", free: "Continue free", price: `${ANNUAL_PRICE_PLACEHOLDER} a year`, freeInk: "#6b6258", page: "" },
+  { theme: "light", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", price: `${ANNUAL_PRICE_PLACEHOLDER} al año`, freeInk: "#6b6258", page: "" },
+  { theme: "dark", uiLang: "en", annual: "Start annual plan", free: "Continue free", price: `${ANNUAL_PRICE_PLACEHOLDER} a year`, freeInk: "#f6efe4", page: "#15171c" },
+  { theme: "dark", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", price: `${ANNUAL_PRICE_PLACEHOLDER} al año`, freeInk: "#f6efe4", page: "#15171c" },
 ];
 
 const norm = (value) => {
@@ -101,8 +101,8 @@ describe("paywall card", () => {
   });
 
   it.each(VIEWPORTS.flatMap((viewport) => FACES.map((face) => ({ ...viewport, ...face }))))(
-    "$width×$height $theme $uiLang keeps One year and Continue free on the card",
-    async ({ width, height, theme, uiLang, annual, free, freeInk, page }) => {
+    "$width×$height $theme $uiLang keeps Start annual plan and Continue free on the card",
+    async ({ width, height, theme, uiLang, annual, free, price: priceLine, freeInk, page }) => {
       setViewport({ width, height });
       openPaywall({ theme, uiLang });
       const year = await screen.findByTestId("soft-paywall-annual");
@@ -148,8 +148,8 @@ describe("paywall card", () => {
       expect(norm(dismiss.style.color)).toBe(freeInk);
       expect(norm(dismiss.style.color)).not.toBe("#1f3a1a");
 
-      expect(price.textContent).toBe(ANNUAL_PRICE_PLACEHOLDER);
-      expect(screen.getByTestId("soft-paywall-free-limit").textContent).toBe(FREE_TIER_LIMIT_PLACEHOLDER);
+      expect(price.textContent).toBe(priceLine);
+      expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
       expect(price.style.fontSize).toBe("13.5px");
       expect(price.style.fontWeight).toBe("700");
       expect(price.style.fontSize).toBe(body.style.fontSize);
