@@ -5,6 +5,7 @@ import App from "./App.jsx";
 import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
 import * as flashDeck from "./flashDeck.js";
 import { onboardingCopy, onboardingLine, onboardingPlanLine } from "./onboardingCopy.js";
+import { onboardingCtaBottomCss } from "./onboarding.js";
 import {
   installFlowHooks,
   STORAGE_KEY,
@@ -31,11 +32,14 @@ describe("short onboarding", () => {
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level"));
     expect(screen.queryByTestId("splash")).toBeNull();
-    expect(screen.getByTestId("onboarding").style.overflow).toBe("hidden");
+    expect(screen.getByTestId("onboarding").style.overflow).not.toBe("hidden");
+    expect(screen.getByTestId("onboarding-scroll").style.overflowY).toBe("auto");
     expect(screen.queryByTestId("streak")).toBeNull();
     const cta = screen.getByTestId("onboarding-cta");
     expect(cta.disabled).toBe(true);
-    expect(cta.style.top).toBe("780px");
+    expect(cta.style.position).toBe("fixed");
+    expect(cta.style.bottom).toBe(onboardingCtaBottomCss());
+    expect(cta.style.top).toBe("");
     expect(cta.textContent).toBe(onboardingLine(onboardingCopy.ctaContinue, "en"));
     expect(cta.style.background).toMatch(/#E5E5E5|rgb\(\s*229,\s*229,\s*229\s*\)/i);
     expect(cta.style.color).toMatch(/#AFAFAF|rgb\(\s*175,\s*175,\s*175\s*\)/i);
@@ -80,7 +84,9 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding").querySelectorAll("button")).toHaveLength(1);
     expect(screen.getByTestId("onboarding-start").textContent).toBe(onboardingLine(onboardingCopy.planStart, "en"));
     expect(screen.getByTestId("onboarding-start").style.color).toMatch(/#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i);
-    expect(screen.getByTestId("onboarding-start").style.top).toBe("780px");
+    expect(screen.getByTestId("onboarding-start").style.position).toBe("fixed");
+    expect(screen.getByTestId("onboarding-start").style.bottom).toBe(onboardingCtaBottomCss());
+    expect(screen.getByTestId("onboarding-start").style.top).toBe("");
     expect(screen.getByTestId("onboarding-start").disabled).toBe(false);
     await tap(screen.getByTestId("onboarding-start"));
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));

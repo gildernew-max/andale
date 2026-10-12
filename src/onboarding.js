@@ -9,8 +9,49 @@ export const ONBOARDING_GOALS = Object.freeze([5, 10, 15, 20]);
 /** Four screens. Each choice screen is a card tap plus the CTA. The plan is the CTA. */
 export const ONBOARDING_TAPS = 7;
 
-/** CTA top edge on a 390×844 frame. */
-export const ONBOARDING_CTA_TOP = 780;
+/**
+ * Gap from the viewport bottom to the CTA's bottom edge, plus the home-indicator inset.
+ * On a 390×844 frame the old absolute top of 780 and this button's 50px block left 14px (844 - 780 - 50).
+ * A 360×640 phone put that same top 140px below the screen.
+ */
+export const ONBOARDING_CTA_BOTTOM = 14;
+/** Measured single-line block: 13px padding + 20px Nunito line + 13px padding + 4px lip. */
+export const ONBOARDING_CTA_HEIGHT = 50;
+/** Air between the last card and the pinned CTA so the card is not hidden behind it. */
+export const ONBOARDING_CTA_CONTENT_GAP = 12;
+export const ONBOARDING_FRAME_WIDTH = 390;
+export const ONBOARDING_FRAME_HEIGHT = 844;
+
+export function onboardingCtaBottomCss() {
+  return `calc(${ONBOARDING_CTA_BOTTOM}px + env(safe-area-inset-bottom))`;
+}
+
+/** Shell padding that keeps the scrolling column above the fixed CTA. */
+export function onboardingCtaClearanceCss() {
+  return `calc(${ONBOARDING_CTA_BOTTOM + ONBOARDING_CTA_HEIGHT}px + env(safe-area-inset-bottom))`;
+}
+
+/** Where the pinned CTA sits. safeAreaBottom is px (0 when env() is 0). */
+export function onboardingCtaRect({
+  viewportHeight,
+  viewportWidth,
+  safeAreaBottom = 0,
+  buttonHeight = ONBOARDING_CTA_HEIGHT,
+} = {}) {
+  const bottomInset = ONBOARDING_CTA_BOTTOM + Number(safeAreaBottom || 0);
+  const height = buttonHeight;
+  const top = viewportHeight - bottomInset - height;
+  const left = 20;
+  const right = viewportWidth - 20;
+  const bottom = top + height;
+  const withinViewport = top >= 0
+    && bottom <= viewportHeight
+    && left >= 0
+    && right <= viewportWidth
+    && height > 0
+    && right > left;
+  return { top, left, right, bottom, width: right - left, height, withinViewport };
+}
 
 export const EASIEST_UNIT_ID = "subj1";
 

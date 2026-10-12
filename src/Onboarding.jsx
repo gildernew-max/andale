@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import {
-  ONBOARDING_CTA_TOP,
+  ONBOARDING_CTA_CONTENT_GAP,
   ONBOARDING_GOALS,
   ONBOARDING_LEVELS,
   ONBOARDING_MINUTE_CHIP,
   ONBOARDING_PAINT,
   ONBOARDING_WHYS,
+  onboardingCtaBottomCss,
+  onboardingCtaClearanceCss,
 } from "./onboarding.js";
 import { onboardingCopy, onboardingLine, onboardingPlanLine } from "./onboardingCopy.js";
 
@@ -66,10 +68,11 @@ function OnboardingCta({ paint, ready, testId, label, onClick }) {
       disabled={!ready}
       onClick={() => { if (ready) onClick(); }}
       style={{
-        position: "absolute",
-        top: ONBOARDING_CTA_TOP,
+        position: "fixed",
+        bottom: onboardingCtaBottomCss(),
         left: 20,
         right: 20,
+        zIndex: 1,
         boxSizing: "border-box",
         fontFamily: "inherit",
         fontWeight: 800,
@@ -126,61 +129,72 @@ export default function Onboarding({ lang, theme = "light", step, goal, onLevel,
         zIndex: 45,
         background: paint.page,
         color: paint.ink,
-        overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         boxSizing: "border-box",
-        padding: "76px 20px 24px",
+        paddingBottom: onboardingCtaClearanceCss(),
       }}
     >
-      <h1 data-testid="onboarding-title" style={{ fontWeight: 900, fontSize: 26, lineHeight: 1.15, margin: levelStep ? "4px 0 6px" : "4px 0 14px" }}>{title}</h1>
-      {levelStep ? (
-        <p data-testid="onboarding-promise" style={levelPromiseStyle(theme)}>
-          {onboardingLine(onboardingCopy.levelPromise, lang)}
-        </p>
-      ) : null}
-      {step === "plan" ? (
-        <div>
-          <img
-            data-testid="onboarding-plan-bird"
-            src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
-            alt=""
-            width={120}
-            height={120}
-            aria-hidden="true"
-            style={{ display: "block", width: 120, height: 120, objectFit: "contain", margin: "8px auto 0" }}
-          />
-          <p data-testid="onboarding-plan-body" style={{ fontWeight: 700, fontSize: 18, lineHeight: 1.35, margin: "16px 0 0" }}>
-            {onboardingPlanLine(lang, goal)}
+      <div
+        data-testid="onboarding-scroll"
+        style={{
+          flex: "1 1 auto",
+          minHeight: 0,
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
+          boxSizing: "border-box",
+          padding: `76px 20px ${ONBOARDING_CTA_CONTENT_GAP}px`,
+        }}
+      >
+        <h1 data-testid="onboarding-title" style={{ fontWeight: 900, fontSize: 26, lineHeight: 1.15, margin: levelStep ? "4px 0 6px" : "4px 0 14px" }}>{title}</h1>
+        {levelStep ? (
+          <p data-testid="onboarding-promise" style={levelPromiseStyle(theme)}>
+            {onboardingLine(onboardingCopy.levelPromise, lang)}
           </p>
-        </div>
-      ) : step === "goal" ? (
-        <div style={{ display: "grid", gap: 10 }}>
-          {ONBOARDING_GOALS.map((count) => (
-            <ChoiceCard key={count} paint={paint} testId={`onboarding-goal-${count}`} selected={selectedId === count} onClick={() => setSelectedId(count)}>
-              <span style={{ display: "block", fontWeight: 900, fontSize: 17, lineHeight: 1.2 }}>{count} {ONBOARDING_MINUTE_CHIP}</span>
-              <span style={{ display: "block", fontWeight: 700, fontSize: 14, lineHeight: 1.3, marginTop: 3 }}>{onboardingLine(onboardingCopy.goals[count], lang)}</span>
-            </ChoiceCard>
-          ))}
-        </div>
-      ) : step === "why" ? (
-        <div style={{ display: "grid", gap: 10 }}>
-          {ONBOARDING_WHYS.map((id) => (
-            <ChoiceCard key={id} paint={paint} testId={`onboarding-why-${id}`} selected={selectedId === id} onClick={() => setSelectedId(id)}>
-              <span style={{ fontWeight: 900, fontSize: 17, lineHeight: 1.25 }}>{onboardingLine(onboardingCopy.whys[id], lang)}</span>
-            </ChoiceCard>
-          ))}
-        </div>
-      ) : (
-        <div style={{ display: "grid", gap: 10 }}>
-          {ONBOARDING_LEVELS.map((id) => (
-            <ChoiceCard key={id} paint={paint} testId={`onboarding-level-${id}`} selected={selectedId === id} onClick={() => setSelectedId(id)}>
-              <span style={{ display: "block", fontWeight: 900, fontSize: 17, lineHeight: 1.2 }}>{onboardingLine(onboardingCopy.levels[id].name, lang)}</span>
-              <span style={{ display: "block", fontWeight: 700, fontSize: 14, lineHeight: 1.3, marginTop: 3 }}>{onboardingLine(onboardingCopy.levels[id].desc, lang)}</span>
-            </ChoiceCard>
-          ))}
-        </div>
-      )}
+        ) : null}
+        {step === "plan" ? (
+          <div>
+            <img
+              data-testid="onboarding-plan-bird"
+              src={`${import.meta.env.BASE_URL}mascot/cenzontle.png`}
+              alt=""
+              width={120}
+              height={120}
+              aria-hidden="true"
+              style={{ display: "block", width: 120, height: 120, objectFit: "contain", margin: "8px auto 0" }}
+            />
+            <p data-testid="onboarding-plan-body" style={{ fontWeight: 700, fontSize: 18, lineHeight: 1.35, margin: "16px 0 0" }}>
+              {onboardingPlanLine(lang, goal)}
+            </p>
+          </div>
+        ) : step === "goal" ? (
+          <div style={{ display: "grid", gap: 10 }}>
+            {ONBOARDING_GOALS.map((count) => (
+              <ChoiceCard key={count} paint={paint} testId={`onboarding-goal-${count}`} selected={selectedId === count} onClick={() => setSelectedId(count)}>
+                <span style={{ display: "block", fontWeight: 900, fontSize: 17, lineHeight: 1.2 }}>{count} {ONBOARDING_MINUTE_CHIP}</span>
+                <span style={{ display: "block", fontWeight: 700, fontSize: 14, lineHeight: 1.3, marginTop: 3 }}>{onboardingLine(onboardingCopy.goals[count], lang)}</span>
+              </ChoiceCard>
+            ))}
+          </div>
+        ) : step === "why" ? (
+          <div style={{ display: "grid", gap: 10 }}>
+            {ONBOARDING_WHYS.map((id) => (
+              <ChoiceCard key={id} paint={paint} testId={`onboarding-why-${id}`} selected={selectedId === id} onClick={() => setSelectedId(id)}>
+                <span style={{ fontWeight: 900, fontSize: 17, lineHeight: 1.25 }}>{onboardingLine(onboardingCopy.whys[id], lang)}</span>
+              </ChoiceCard>
+            ))}
+          </div>
+        ) : (
+          <div style={{ display: "grid", gap: 10 }}>
+            {ONBOARDING_LEVELS.map((id) => (
+              <ChoiceCard key={id} paint={paint} testId={`onboarding-level-${id}`} selected={selectedId === id} onClick={() => setSelectedId(id)}>
+                <span style={{ display: "block", fontWeight: 900, fontSize: 17, lineHeight: 1.2 }}>{onboardingLine(onboardingCopy.levels[id].name, lang)}</span>
+                <span style={{ display: "block", fontWeight: 700, fontSize: 14, lineHeight: 1.3, marginTop: 3 }}>{onboardingLine(onboardingCopy.levels[id].desc, lang)}</span>
+              </ChoiceCard>
+            ))}
+          </div>
+        )}
+      </div>
       <OnboardingCta
         paint={paint}
         ready={ready}
