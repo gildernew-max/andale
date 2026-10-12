@@ -12131,7 +12131,7 @@ export default function App() {
                     }
                     return (
 	                      <span key={ti} onClick={(e) => { wordTapRef.current = e.currentTarget; if (hitKey) discoverStoryWord(story, hitKey); setWordReveal(storyMode !== "challenge"); setWordSel({ display: tok.replace(/[«»".,;:¡!¿?—()]/g, ""), clean, key: hitKey, ...def, sentence: para, pi, ti, x: e.clientX, y: e.clientY }); }}
-                        style={{ cursor: "pointer", borderRadius: 4, padding: "0 1px", background: isSel ? "#FFE9A8" : "transparent", borderBottom: known ? `2px dotted ${sec.color}66` : "none" }}>
+                        style={{ cursor: "pointer", borderRadius: 4, padding: "0 1px", background: isSel ? (theme === "dark" ? "#3A3324" : "#FFE9A8") : "transparent", borderBottom: theme === "dark" && isSel ? "none" : (known ? `2px dotted ${sec.color}66` : "none"), boxShadow: theme === "dark" && isSel ? "none" : undefined, color: theme === "dark" && isSel ? "#F6EFE4" : undefined, fontWeight: theme === "dark" && isSel ? 600 : undefined, textDecorationLine: theme === "dark" && isSel ? "underline" : undefined, textDecorationColor: theme === "dark" && isSel ? "#F2B33D" : undefined, textDecorationThickness: theme === "dark" && isSel ? "2px" : undefined }}>
                         {tok}
                       </span>
                     );
