@@ -145,9 +145,10 @@ export const LECTURA_STILL_CAP_HEIGHT = 148;
 export const LECTURA_STILL_BAND_HEIGHT = 90;
 /**
  * Face lock for the 284×90 phone band (4:3 stills are 1152×864).
- * 32% keeps eyes, mouth, and chin inside the cover crop on every story still.
+ * 28% keeps the tops of the heads and the chins inside the cover crop
+ * on every story still.
  */
-export const LECTURA_STILL_OBJECT_POSITION = "center 32%";
+export const LECTURA_STILL_OBJECT_POSITION = "center 28%";
 export const LECTURA_STILL_MARGIN_BOTTOM = 8;
 
 /**

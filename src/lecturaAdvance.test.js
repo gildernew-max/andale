@@ -103,7 +103,7 @@ assert(/<nav aria-label=\{uiLang === "en" \? "Primary navigation" : "Navegación
 const stillBand = lecturaStillBandHeight();
 assert(LECTURA_STILL_BAND_HEIGHT === 90, "story-open still is a 90px band");
 assert(stillBand === 90, "band height stays 90px at any column width");
-assert(LECTURA_STILL_OBJECT_POSITION === "center 32%", "the cover crop is locked on the faces");
+assert(LECTURA_STILL_OBJECT_POSITION === "center 28%", "the cover crop is locked on the faces");
 assert(LECTURA_STILL_MARGIN_BOTTOM === 8, "still margin under the band is 8px");
 assert(stillBand < LECTURA_STILL_CAP_HEIGHT, "the story-open still is shorter than the old 148px cap");
 assert(lecturaNextBottomCss() === "calc(16px + env(safe-area-inset-bottom))", "NEXT uses the onboarding CTA bottom inset");

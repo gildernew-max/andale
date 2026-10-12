@@ -129,7 +129,7 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
       expect(still.style.height).toBe("90px");
       expect(still.style.aspectRatio).toBe("");
       expect(still.style.objectFit).toBe("cover");
-      expect(still.style.objectPosition).toBe("center 32%");
+      expect(still.style.objectPosition).toBe("center 28%");
       expect(still.style.borderRadius).toBe("4px");
       expect(still.getAttribute("src")).toMatch(/lectura\/story-0\/p0\.png$/);
       const bandHeight = lecturaStillBandHeight();
@@ -164,7 +164,7 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
       expect(screen.getByTestId("lectura-paragraph").textContent).toMatch(/A finales de octubre/);
       expect(screen.getByTestId("lectura-advance").style.position).toBe("fixed");
       expect(screen.getByTestId("lectura-still-1").style.height).toBe("90px");
-      expect(screen.getByTestId("lectura-still-1").style.objectPosition).toBe("center 32%");
+      expect(screen.getByTestId("lectura-still-1").style.objectPosition).toBe("center 28%");
       expect(scrollY).toBe(lecturaAdvanceScrollY({ paragraphTop: 820, scrollY: 0, headerBottom: 72 }));
       expect(screen.queryByTestId("lectura-questions")).toBeNull();
       expect(screen.queryByTestId("lectura-claim")).toBeNull();
