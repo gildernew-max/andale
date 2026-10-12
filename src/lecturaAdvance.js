@@ -141,22 +141,47 @@ export const LECTURA_PARAGRAPH_LEADING = 1.75;
 
 /** Old 4:3 cap (1152×864 at 148px tall). The open band stays shorter than this. */
 export const LECTURA_STILL_CAP_HEIGHT = 148;
-/** Story-open still. Full column width, fixed 90px, cover-cropped onto the faces. */
+/** Story-open still. Full card width, fixed 90px, cover-cropped onto the faces. */
 export const LECTURA_STILL_BAND_HEIGHT = 90;
 /**
- * Face lock for the 284×90 phone band (4:3 stills are 1152×864).
- * 28% keeps the tops of the heads and the chins inside the cover crop
- * on every story still.
+ * Default face lock. A 320×90 card band shows 324px of a 1152×864 still.
+ * 28% keeps eyes and mouths in frame on the pages that are not overridden.
  */
 export const LECTURA_STILL_OBJECT_POSITION = "center 28%";
+/**
+ * Card padding 16px plus the 2px border. The band bleeds sideways by this
+ * much so a 360px viewport's 320px card is the still's width.
+ */
+export const LECTURA_STILL_CARD_INSET = 18;
+/**
+ * Card top padding 8px plus the 2px top border. The band uses this so it
+ * sits on the card's top edge, with no padding above or beside it.
+ */
+export const LECTURA_STILL_CARD_TOP_INSET = 10;
+/** Paragraph-card corner. The band's top corners use it; the bottom corners stay square. */
+export const LECTURA_CARD_RADIUS = 16;
+/**
+ * Per-page object-position. story-0 page 2 (market) and page 6 sit lower
+ * than the default crop: 36% and 40% keep the low eyes and mouths in the band.
+ */
+export const LECTURA_STILL_FOCUS = {
+  "story-0": [
+    "center 28%",
+    "center 36%",
+    "center 28%",
+    "center 28%",
+    "center 28%",
+    "center 40%",
+  ],
+};
 export const LECTURA_STILL_MARGIN_BOTTOM = 8;
 
 /**
- * Scroll-0 distance from the viewport top to the still on story open
- * (sticky brand bar through the paragraph card's top border and padding).
- * Measured at 360×640 and 390×844; the title block is the same height at both.
+ * Scroll-0 distance from the viewport top to the still on story open.
+ * The band is the card's top edge (no top padding above it).
+ * Measured at 360×640; the title block is the same height at 390×844.
  */
-export const LECTURA_STORY_OPEN_STILL_TOP = 312.4;
+export const LECTURA_STORY_OPEN_STILL_TOP = 302.4;
 
 export function lecturaNextBottomCss() {
   return onboardingCtaBottomCss();
@@ -186,6 +211,25 @@ export function lecturaNextRowTop(viewportHeight, safeAreaBottom = 0) {
 /** The band stays 90px at every column width. Width does not change the line count. */
 export function lecturaStillBandHeight() {
   return LECTURA_STILL_BAND_HEIGHT;
+}
+
+/** Border-box width of the still. contentWidth is the card's inner box. */
+export function lecturaStillOuterWidth(contentWidth) {
+  const w = Number(contentWidth);
+  if (!(w > 0)) return 0;
+  return w + LECTURA_STILL_CARD_INSET * 2;
+}
+
+/** Top corners follow the card. Bottom corners stay square where the band meets the text. */
+export function lecturaStillCornerRadius() {
+  return `${LECTURA_CARD_RADIUS}px ${LECTURA_CARD_RADIUS}px 0 0`;
+}
+
+/** Face lock for one still. Unknown pages keep the default. */
+export function lecturaStillObjectPosition(storyId, page) {
+  const row = LECTURA_STILL_FOCUS[storyId];
+  const focus = row && row[page];
+  return typeof focus === "string" && focus.length > 0 ? focus : LECTURA_STILL_OBJECT_POSITION;
 }
 
 /** Top edge of the NEXT buttons. The 12px gap sits above this, inside the pin. */

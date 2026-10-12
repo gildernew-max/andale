@@ -80,7 +80,7 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
   };
 
   for (const [width, height, theme] of [[390, 844, "dark"], [360, 640, "light"], [360, 640, "dark"]]) {
-    it(`shows NEXT, the 16:9 still, and the Spanish lines at ${width}x${height} ${theme}`, async () => {
+    it(`shows NEXT, the full-card still, and the Spanish lines at ${width}x${height} ${theme}`, async () => {
       const user = await bootParagraph1(width, height, theme);
       expect(window.innerWidth).toBe(width);
       expect(window.innerHeight).toBe(height);
@@ -124,13 +124,17 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
 
       const still = screen.getByTestId("lectura-still-0");
       expect(still.style.display).toBe("block");
-      expect(still.style.width).toBe("100%");
+      expect(still.style.width).toBe("calc(100% + 36px)");
       expect(still.style.maxWidth).toBe("");
       expect(still.style.height).toBe("90px");
       expect(still.style.aspectRatio).toBe("");
       expect(still.style.objectFit).toBe("cover");
       expect(still.style.objectPosition).toBe("center 28%");
-      expect(still.style.borderRadius).toBe("4px");
+      expect(still.style.marginTop).toBe("-10px");
+      expect(still.style.marginLeft).toBe("-18px");
+      expect(still.style.marginRight).toBe("-18px");
+      expect(still.style.borderRadius).toBe("16px 16px 0 0");
+      expect(screen.getByTestId("lectura-paragraph-first").style.borderRadius).toBe("16px");
       expect(still.getAttribute("src")).toMatch(/lectura\/story-0\/p0\.png$/);
       const bandHeight = lecturaStillBandHeight();
       expect(still.style.marginBottom).toBe("8px");
@@ -164,7 +168,8 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
       expect(screen.getByTestId("lectura-paragraph").textContent).toMatch(/A finales de octubre/);
       expect(screen.getByTestId("lectura-advance").style.position).toBe("fixed");
       expect(screen.getByTestId("lectura-still-1").style.height).toBe("90px");
-      expect(screen.getByTestId("lectura-still-1").style.objectPosition).toBe("center 28%");
+      expect(screen.getByTestId("lectura-still-1").style.objectPosition).toBe("center 36%");
+      expect(screen.getByTestId("lectura-still-1").style.width).toBe("calc(100% + 36px)");
       expect(scrollY).toBe(lecturaAdvanceScrollY({ paragraphTop: 820, scrollY: 0, headerBottom: 72 }));
       expect(screen.queryByTestId("lectura-questions")).toBeNull();
       expect(screen.queryByTestId("lectura-claim")).toBeNull();
