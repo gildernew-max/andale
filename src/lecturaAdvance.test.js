@@ -11,9 +11,13 @@ import {
   lecturaAdvanceScrollY,
   lecturaClaimScrollY,
   lecturaLinesAboveNext,
+  lecturaCheckpointAnswerClears,
+  lecturaCheckpointAnswerScrollY,
   lecturaNextBottomCss,
   lecturaNextButtonTop,
   lecturaNextClearanceCss,
+  lecturaNextClearancePx,
+  lecturaNextRowTop,
   lecturaNextPinStyle,
   lecturaQuestionsOpenScrollY,
   lecturaStillAtLeast16x9,
@@ -86,7 +90,26 @@ assert(lecturaStillAtLeast16x9(LECTURA_STILL_BAND_WIDTH, stillBand), "the band i
 assert(!lecturaStillAtLeast16x9(LECTURA_STILL_BAND_WIDTH, stillBand - 1), "a shorter band would be thinner than 16:9");
 assert(lecturaNextBottomCss() === "calc(16px + env(safe-area-inset-bottom))", "NEXT uses the onboarding CTA bottom inset");
 assert(LECTURA_NEXT_BOTTOM === 16 && LECTURA_NEXT_GAP === 12, "NEXT pin keeps the 16px inset and 12px gap");
-assert(lecturaNextClearanceCss() === "calc(80px + env(safe-area-inset-bottom))", "story column clears the pin with the 12px gap");
+assert(lecturaNextClearancePx() === 92, "page pad is the pin row plus 12px above it");
+assert(lecturaNextClearanceCss() === "calc(92px + env(safe-area-inset-bottom))", "story column clears the pin with 12px above the row");
+assert(lecturaNextRowTop(640) === 560 && lecturaNextRowTop(844) === 764, "pin row top sits 12px above the buttons");
+const answerOnPin = 1000;
+assert(lecturaCheckpointAnswerScrollY({ answerBottom: answerOnPin, scrollY: 0, viewportHeight: 640 }) === 452, "360x640 scroll parks the answer 12px above the row");
+assert(lecturaCheckpointAnswerClears({
+  answerDocBottom: answerOnPin,
+  documentHeight: answerOnPin + lecturaNextClearancePx(),
+  viewportHeight: 640,
+}), "padding alone lets the last checkpoint answer clear the pin at 360x640");
+assert(!lecturaCheckpointAnswerClears({
+  answerDocBottom: answerOnPin,
+  documentHeight: answerOnPin + lecturaNextClearancePx() - 12,
+  viewportHeight: 640,
+}), "12px less padding leaves the last answer under the pin");
+assert(lecturaCheckpointAnswerClears({
+  answerDocBottom: 1060.6,
+  documentHeight: 1511 - 80 + lecturaNextClearancePx(),
+  viewportHeight: 640,
+}), "story-0 paragraph 1 at 360x640 can scroll its last answer clear");
 const pin = lecturaNextPinStyle("#15171C");
 assert(pin.position === "fixed" && pin.bottom === lecturaNextBottomCss() && pin.paddingTop === 12, "pin style matches the onboarding CTA");
 assert(pin.marginBottom === 0 && pin.display === "flex" && pin.gap === 10, "NEXT row keeps the button gap; margin would add to the 16px inset");

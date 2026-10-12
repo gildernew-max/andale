@@ -98,10 +98,25 @@ export function lecturaNextBottomCss() {
   return onboardingCtaBottomCss();
 }
 
-/** Room under the story column so the last card can sit 12px above the pinned row. */
+/**
+ * Page pad under the story column. The pin row is gap + buttons + the 16px
+ * inset. One more gap lets the lowest box, including a checkpoint answer,
+ * scroll to 12px above that row instead of stopping flush with it.
+ */
+export function lecturaNextClearancePx(safeAreaBottom = 0) {
+  const safe = Number(safeAreaBottom);
+  const inset = Number.isFinite(safe) ? Math.max(0, safe) : 0;
+  return LECTURA_NEXT_GAP + LECTURA_NEXT_HEIGHT + LECTURA_NEXT_BOTTOM + LECTURA_NEXT_GAP + inset;
+}
+
 export function lecturaNextClearanceCss() {
-  const px = LECTURA_NEXT_GAP + LECTURA_NEXT_HEIGHT + LECTURA_NEXT_BOTTOM;
+  const px = lecturaNextClearancePx(0);
   return `calc(${px}px + env(safe-area-inset-bottom))`;
+}
+
+/** Top of the pinned row. The row's own 12px pad sits above the buttons. */
+export function lecturaNextRowTop(viewportHeight, safeAreaBottom = 0) {
+  return lecturaNextButtonTop(viewportHeight, safeAreaBottom) - LECTURA_NEXT_GAP;
 }
 
 export function lecturaStillBandHeight(width = LECTURA_STILL_BAND_WIDTH) {
@@ -124,6 +139,46 @@ export function lecturaNextButtonTop(viewportHeight, safeAreaBottom = 0) {
   if (!Number.isFinite(vh)) return 0;
   const inset = LECTURA_NEXT_BOTTOM + (Number.isFinite(safe) ? Math.max(0, safe) : 0);
   return vh - inset - LECTURA_NEXT_HEIGHT;
+}
+
+/**
+ * Scroll that parks a checkpoint answer 12px above the pinned row.
+ * answerBottom is a viewport coordinate. Already clear: stay put.
+ */
+export function lecturaCheckpointAnswerScrollY({
+  answerBottom,
+  scrollY = 0,
+  viewportHeight,
+  safeAreaBottom = 0,
+} = {}) {
+  const y = Number.isFinite(Number(scrollY)) ? Number(scrollY) : 0;
+  const bottom = Number(answerBottom);
+  const rowTop = lecturaNextRowTop(viewportHeight, safeAreaBottom);
+  if (!Number.isFinite(bottom) || !Number.isFinite(rowTop)) return Math.max(0, y);
+  const limit = rowTop - LECTURA_NEXT_GAP;
+  if (bottom <= limit) return Math.max(0, y);
+  return Math.max(0, y + bottom - limit);
+}
+
+/** True when max scroll can put the answer 12px above the pinned row. */
+export function lecturaCheckpointAnswerClears({
+  answerDocBottom,
+  documentHeight,
+  viewportHeight,
+  safeAreaBottom = 0,
+} = {}) {
+  const answer = Number(answerDocBottom);
+  const doc = Number(documentHeight);
+  const vh = Number(viewportHeight);
+  if (!Number.isFinite(answer) || !Number.isFinite(doc) || !Number.isFinite(vh)) return false;
+  const maxScroll = Math.max(0, doc - vh);
+  const y = lecturaCheckpointAnswerScrollY({
+    answerBottom: answer,
+    scrollY: 0,
+    viewportHeight: vh,
+    safeAreaBottom,
+  });
+  return y <= maxScroll + 0.5;
 }
 
 /** How many paragraph lines sit fully above the pin, leaving the 12px gap. */
