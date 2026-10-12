@@ -12088,8 +12088,8 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
 	              <button type="button" onClick={() => { setWordSel(null); setPaywallSource(PAYWALL_SOURCE.storyClose); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: limeText(sec.color, D) }}>{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
+                <div data-testid="story-reader-title" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{story.title}</div>
+                <div data-testid="story-reader-subtitle" style={{ fontSize: 13, fontWeight: 800, color: limeText(sec.color, D) }}>{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
               </div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>

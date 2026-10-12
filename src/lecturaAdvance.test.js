@@ -127,9 +127,9 @@ assert(lecturaStillObjectPosition("story-0", 2) === "center 28%" && lecturaStill
 assert(lecturaStillObjectPosition("story-3", 1) === "center 28%", "an untouched page keeps the default face lock");
 const liftedFaces = {
   "story-1": { 1: "center 22%", 3: "center 18%" },
-  "story-2": { 3: "center 18%" },
-  "story-3": { 2: "center 18%" },
-  "story-4": { 2: "center 18%" },
+  "story-2": { 0: "center 22%", 3: "center 18%", 4: "center 36%" },
+  "story-3": { 0: "center 40%", 2: "center 18%", 5: "center 40%" },
+  "story-4": { 1: "center 14%", 2: "center 18%" },
   "story-5": { 3: "center 22%" },
   "story-6": { 0: "center 22%", 4: "center 22%" },
   "story-7": { 5: "center 22%" },
