@@ -79,12 +79,8 @@ export const LECTURA_NEXT_GAP = ONBOARDING_CTA_CONTENT_GAP;
 export const LECTURA_NEXT_HEIGHT = 52;
 /** Pin stacking. The gloss sheet and its checkpoint host sit above this. */
 export const LECTURA_NEXT_Z = 11;
-/**
- * Page-colored band over the pin while a gloss sheet is open.
- * Above the pin, below the sheet (30) and the checkpoint host (31),
- * so the right-edge sliver cannot take a tap and the checkpoint stays put.
- */
-export const LECTURA_NEXT_COVER_Z = 12;
+/** NEXT ink while an open gloss sheet starts too low to cover the pin. */
+export const LECTURA_NEXT_HELD_OPACITY = 0.4;
 export const LECTURA_WORD_SHEET_Z = 30;
 export const LECTURA_WORD_SHEET_HOST_Z = 31;
 export const LECTURA_PARAGRAPH_FONT = 17;
@@ -253,22 +249,54 @@ export function lecturaNextPinHeightPx() {
 }
 
 /**
- * Solid page-color cover for the pinned row. Same fill as the pin, no
- * border, shadow, or extra chrome. It only exists while a gloss sheet is open.
+ * Viewport y of the definition's top edge. `bottom` is the distance from
+ * the viewport bottom to the definition's bottom edge.
  */
-export function lecturaNextCoverStyle(background) {
+export function lecturaSheetTop({ viewportHeight, bottom, height } = {}) {
+  const vh = Number(viewportHeight);
+  const edge = Number(bottom);
+  const h = Number(height);
+  if (!Number.isFinite(vh) || !Number.isFinite(edge) || !Number.isFinite(h)) return null;
+  return vh - edge - h;
+}
+
+/**
+ * Stretching the sheet downward covers the pinned row only when the
+ * definition already starts above that row. A top on or below the row
+ * leaves NEXT visible above the sheet.
+ */
+export function lecturaSheetCanReachBottom({ sheetTop, pinTop } = {}) {
+  if (sheetTop == null || pinTop == null) return false;
+  const top = Number(sheetTop);
+  const pin = Number(pinTop);
+  return Number.isFinite(top) && Number.isFinite(pin) && top < pin;
+}
+
+/**
+ * The gloss card from the definition's top through the bottom safe area.
+ * Sides are flush and the bottom corners are square, so the pin cannot
+ * show beside or below the sheet. The top accent stays.
+ */
+export function lecturaSheetReachStyle({ top, background, accent }) {
   return {
     position: "fixed",
     left: 0,
     right: 0,
+    top,
     bottom: 0,
-    height: `calc(${lecturaNextPinHeightPx()}px + env(safe-area-inset-bottom))`,
-    zIndex: LECTURA_NEXT_COVER_Z,
-    backgroundColor: background,
-    backgroundImage: "none",
+    width: "100%",
+    zIndex: LECTURA_WORD_SHEET_Z,
     boxSizing: "border-box",
-    boxShadow: "none",
-    border: "none",
+    background,
+    backgroundImage: "none",
+    borderLeft: "none",
+    borderRight: "none",
+    borderBottom: "none",
+    borderTop: `3px solid ${accent}`,
+    borderRadius: "14px 14px 0 0",
+    boxShadow: "0 8px 24px rgba(0,0,0,.16)",
+    maxHeight: "none",
+    overflowY: "auto",
     pointerEvents: "auto",
   };
 }

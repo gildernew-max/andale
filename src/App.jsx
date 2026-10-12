@@ -60,7 +60,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextCoverStyle, lecturaNextPinStyle, lecturaQuestionsOpenScrollY, lecturaStickyHeaderBottom, LECTURA_STILL_BAND_WIDTH, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
+import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaQuestionsOpenScrollY, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_WIDTH, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
 import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -6919,9 +6919,10 @@ export default function App() {
       const word = wordEl.getBoundingClientRect();
       const cp = checkpointAnswersRef.current?.getBoundingClientRect();
       const hasCp = !!(cp && cp.width > 0 && cp.height > 0);
-      const box = sheetEl.getBoundingClientRect();
+      const inner = wordSheetContentRef.current;
+      if (!inner) return;
       const borderY = sheetEl.offsetHeight - sheetEl.clientHeight;
-      const contentHeight = Math.max(box.height, sheetEl.scrollHeight + borderY);
+      const contentHeight = Math.max(inner.offsetHeight, inner.scrollHeight) + Math.max(0, borderY);
       let topInset = 0;
       let node = document.querySelector("[data-testid='brand-home']");
       while (node) {
@@ -6953,9 +6954,23 @@ export default function App() {
       const cardRect = cardEl?.getBoundingClientRect();
       const originLeft = cardRect ? cardRect.left + cardEl.clientLeft : cp.left;
       const anchorLeft = hasCp ? plan.frame.left - originLeft : plan.frame.left;
+      const sheetTop = lecturaSheetTop({
+        viewportHeight: window.innerHeight,
+        bottom: plan.frame.bottom,
+        height: plan.frame.maxHeight,
+      });
+      const safeProbe = document.createElement("div");
+      safeProbe.style.cssText = "position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom);pointer-events:none;visibility:hidden;";
+      document.body.appendChild(safeProbe);
+      const safeAreaBottom = safeProbe.getBoundingClientRect().height;
+      safeProbe.remove();
+      const reaches = lecturaSheetCanReachBottom({
+        sheetTop,
+        pinTop: lecturaNextRowTop(window.innerHeight, Number.isFinite(safeAreaBottom) ? safeAreaBottom : 0),
+      });
       setWordSheetBox((prev) => {
-        const next = { ...plan.frame, anchored: hasCp, anchorLeft };
-        if (prev && prev.left === next.left && prev.width === next.width && prev.bottom === next.bottom && prev.maxHeight === next.maxHeight && prev.backdropBottom === next.backdropBottom && prev.anchored === next.anchored && prev.anchorLeft === next.anchorLeft) return prev;
+        const next = { ...plan.frame, anchored: hasCp, anchorLeft, sheetTop, reaches };
+        if (prev && prev.left === next.left && prev.width === next.width && prev.bottom === next.bottom && prev.maxHeight === next.maxHeight && prev.backdropBottom === next.backdropBottom && prev.anchored === next.anchored && prev.anchorLeft === next.anchorLeft && prev.sheetTop === next.sheetTop && prev.reaches === next.reaches) return prev;
         return next;
       });
     };
@@ -6966,8 +6981,9 @@ export default function App() {
       readContentHeight: () => {
         const sheetEl = wordSheetRef.current;
         const inner = wordSheetContentRef.current;
-        if (!sheetEl) return 0;
-        return Math.max(sheetEl.scrollHeight, inner ? inner.offsetHeight : 0);
+        if (!inner) return 0;
+        const borderY = sheetEl ? sheetEl.offsetHeight - sheetEl.clientHeight : 0;
+        return Math.max(inner.offsetHeight, inner.scrollHeight) + Math.max(0, borderY);
       },
     });
   }, [wordSel, screen, wordSheetSpacer]);
@@ -8658,6 +8674,16 @@ export default function App() {
         .lesson-footer-scroll { scrollbar-width: none; -ms-overflow-style: none; }
         .lesson-footer-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
         .duo-btn:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px !important; }
+        .lectura-next-held .duo-btn,
+        .lectura-next-held .duo-btn:hover,
+        .lectura-next-held .duo-btn:active,
+        .lectura-next-held .duo-btn:active:not(:disabled) {
+          pointer-events: none;
+          transform: none !important;
+          filter: none !important;
+          border-bottom-width: 4px !important;
+          transition: none !important;
+        }
         .duo-btn { transition: transform .05s, filter .1s; }
         .duo-btn:hover:not(:disabled) { filter: brightness(1.05); }
         button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid ${D.blue}; outline-offset: 2px; }
@@ -11957,9 +11983,10 @@ export default function App() {
         const qOrder = storyShuffle?.storyId === story.id ? storyShuffle.questions : null;
         const cpOrder = storyShuffle?.storyId === story.id ? storyShuffle.checkpoints : null;
         const correct = story.questions.reduce((n, qq, i) => n + (isStoryChoiceCorrect(qq, ansSel[i], qOrder?.[i]) ? 1 : 0), 0);
+        const sheetReaches = !!(wordSheetBox && wordSheetBox.reaches);
         const renderWordSheet = (anchored) => (
-          <div ref={wordSheetRef} data-testid="word-sheet" className="pop" style={{ visibility: wordSheetBox ? "visible" : "hidden", pointerEvents: wordSheetBox ? "auto" : "none", position: anchored ? "absolute" : "fixed", left: anchored ? (wordSheetBox ? wordSheetBox.anchorLeft : 0) : (wordSheetBox ? wordSheetBox.left : 8), width: wordSheetBox ? wordSheetBox.width : 320, bottom: anchored ? "calc(100% + 10px)" : (wordSheetBox ? wordSheetBox.bottom : 8), zIndex: LECTURA_WORD_SHEET_Z, boxSizing: "border-box", background: D.card, border: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: wordSheetBox ? wordSheetBox.maxHeight : "none", overflowY: "auto" }}>
-            <div ref={wordSheetContentRef} style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
+          <div ref={wordSheetRef} data-testid="word-sheet" className={sheetReaches ? undefined : "pop"} style={sheetReaches ? { ...lecturaSheetReachStyle({ top: wordSheetBox.sheetTop, background: D.card, accent: sec.color }), visibility: wordSheetBox ? "visible" : "hidden", pointerEvents: wordSheetBox ? "auto" : "none" } : { visibility: wordSheetBox ? "visible" : "hidden", pointerEvents: wordSheetBox ? "auto" : "none", position: anchored ? "absolute" : "fixed", left: anchored ? (wordSheetBox ? wordSheetBox.anchorLeft : 0) : (wordSheetBox ? wordSheetBox.left : 8), width: wordSheetBox ? wordSheetBox.width : 320, bottom: anchored ? "calc(100% + 10px)" : (wordSheetBox ? wordSheetBox.bottom : 8), zIndex: LECTURA_WORD_SHEET_Z, boxSizing: "border-box", background: D.card, borderLeft: `2px solid ${D.line}`, borderRight: `2px solid ${D.line}`, borderBottom: `2px solid ${D.line}`, borderTop: `3px solid ${sec.color}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,.16)", maxHeight: wordSheetBox ? wordSheetBox.maxHeight : "none", overflowY: "auto" }}>
+            <div ref={wordSheetContentRef} data-testid="word-sheet-body" style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
               <button onClick={() => speak(wordSel.display)} aria-label={uiLang === "en" ? "Listen to word" : "Escuchar palabra"}
                 style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "7px 9px", flexShrink: 0, lineHeight: 0 }}>
                 <IcSpeaker size={18} color={"#1CB0F6"} />
@@ -12116,7 +12143,7 @@ export default function App() {
             ); })}
 
             {paraIdx < story.paragraphs.length && (
-              <div data-testid="lectura-advance" style={{ ...lecturaNextPinStyle(D.bg, theme === "dark" ? D.line : undefined), pointerEvents: wordSel ? "none" : "auto" }}>
+              <div data-testid="lectura-advance" className={wordSel ? "lectura-next-held" : undefined} style={{ ...lecturaNextPinStyle(D.bg, theme === "dark" ? D.line : undefined), pointerEvents: wordSel ? "none" : "auto", ...(wordSel && wordSheetBox && wordSheetBox.reaches === false ? { opacity: LECTURA_NEXT_HELD_OPACITY, transition: "none" } : null) }}>
                 <Btn outline disabled={paraIdx === 0} onClick={() => advanceLectura(paraIdx - 1)} style={{ flex: 1 }}>
                   ← {uiLang === "en" ? "Back" : "Anterior"}
                 </Btn>
@@ -12285,10 +12312,7 @@ export default function App() {
 
             {/* definition card — placed on open; a later scroll does not move the page back */}
             {wordSel && (
-              <div data-testid="lectura-next-cover" aria-hidden="true" style={lecturaNextCoverStyle(D.bg)} />
-            )}
-            {wordSel && (
-              <div onClick={() => setWordSel(null)} style={{ display: wordSheetBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: wordSheetBox ? wordSheetBox.backdropBottom : 0, zIndex: 29 }} />
+              <div onClick={() => setWordSel(null)} style={{ display: wordSheetBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: wordSheetBox ? (wordSheetBox.reaches ? Math.max(0, window.innerHeight - wordSheetBox.sheetTop) : wordSheetBox.backdropBottom) : 0, zIndex: 29 }} />
             )}
             {wordSel && !checkpoints[wordSel.pi] && renderWordSheet(false)}
           </div>

@@ -11,10 +11,9 @@ import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { mockBrowser } from "./flowsHarness.jsx";
 import {
-  LECTURA_NEXT_COVER_Z,
   LECTURA_NEXT_HEIGHT,
+  LECTURA_NEXT_HELD_OPACITY,
   lecturaNextButtonTop,
-  lecturaNextCoverStyle,
   lecturaNextPinHeightPx,
   lecturaNextRowTop,
 } from "./lecturaAdvance.js";
@@ -62,11 +61,52 @@ const box = (spec) => ({
 
 const contains = (rect, x, y) => x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
 
-const coverBox = (el) => {
-  const painted = lecturaNextCoverStyle("#F6EFE4");
-  const height = Number(String(el.style.height || painted.height).match(/([\d.]+)px/)?.[1]);
-  const top = VIEW_H - height;
-  return box({ left: 0, top, width: VIEW_W, height });
+const sheetBox = (el) => {
+  const top = Number.parseFloat(el.style.top);
+  if (el.style.position !== "fixed" || el.style.left !== "0px" || el.style.width !== "100%" || !Number.isFinite(top)) return null;
+  return box({ left: 0, top, width: VIEW_W, height: VIEW_H - top });
+};
+
+const stackingZ = (el) => {
+  const raw = el.style && el.style.zIndex;
+  const n = Number(raw);
+  return raw && raw !== "auto" && Number.isFinite(n) ? n : 0;
+};
+
+const isStackingContext = (el) => {
+  if (!el || el === document.body || el === document.documentElement) return true;
+  const pos = el.style && el.style.position;
+  if (pos !== "fixed" && pos !== "sticky" && pos !== "absolute" && pos !== "relative") return false;
+  const raw = el.style && el.style.zIndex;
+  const n = Number(raw);
+  if (pos === "fixed" || pos === "sticky") return true;
+  return !!(raw && raw !== "auto" && Number.isFinite(n));
+};
+
+const stackingContexts = (el) => {
+  const contexts = [];
+  let node = el;
+  while (node) {
+    if (isStackingContext(node)) contexts.push(node);
+    node = node.parentElement;
+  }
+  return contexts.reverse();
+};
+
+const paintsAbove = (a, b) => {
+  if (a === b) return false;
+  const ca = stackingContexts(a);
+  const cb = stackingContexts(b);
+  let i = 0;
+  while (ca[i] && ca[i] === cb[i]) i += 1;
+  const da = ca[i];
+  const db = cb[i];
+  if (!da) return false;
+  if (!db) return true;
+  const za = stackingZ(da);
+  const zb = stackingZ(db);
+  if (za !== zb) return za > zb;
+  return (da.compareDocumentPosition(db) & Node.DOCUMENT_POSITION_FOLLOWING) === 0;
 };
 
 describe("lectura gloss sheet blocks the pinned NEXT sliver", () => {
@@ -106,32 +146,21 @@ describe("lectura gloss sheet blocks the pinned NEXT sliver", () => {
       const id = this.getAttribute && this.getAttribute("data-testid");
       if (id === "lectura-advance") return box(ADVANCE_BOX);
       if (id === "lectura-checkpoint") return box(CHECKPOINT_BOX);
-      if (id === "lectura-next-cover") return coverBox(this);
+      if (id === "word-sheet") {
+        const reached = sheetBox(this);
+        if (reached) return reached;
+      }
       if (this.tagName === "BUTTON" && /Next/.test(this.textContent || "")) return box(NEXT_BOX);
       return realRect.call(this);
     };
     document.elementFromPoint = (x, y) => {
       const nodes = [...document.body.querySelectorAll("*")];
       let best = null;
-      let bestZ = -1;
-      let bestIndex = -1;
-      nodes.forEach((el, index) => {
+      nodes.forEach((el) => {
         if (el.style.pointerEvents === "none" || el.style.visibility === "hidden") return;
         const rect = el.getBoundingClientRect();
         if (!(rect.width > 0) || !(rect.height > 0) || !contains(rect, x, y)) return;
-        let node = el;
-        let z = 0;
-        while (node && node.nodeType === 1) {
-          const raw = node.style && node.style.zIndex;
-          const n = Number(raw);
-          if (raw && raw !== "auto" && Number.isFinite(n)) { z = n; break; }
-          node = node.parentElement;
-        }
-        if (z > bestZ || (z === bestZ && index >= bestIndex)) {
-          best = el;
-          bestZ = z;
-          bestIndex = index;
-        }
+        if (!best || paintsAbove(el, best)) best = el;
       });
       return best;
     };
@@ -174,15 +203,19 @@ describe("lectura gloss sheet blocks the pinned NEXT sliver", () => {
     const sheet = await screen.findByTestId("word-sheet");
     await waitFor(() => expect(sheet.style.visibility).toBe("visible"));
 
-    const cover = screen.getByTestId("lectura-next-cover");
-    const painted = lecturaNextCoverStyle("#F6EFE4");
-    expect(cover.style.position).toBe("fixed");
-    expect(cover.style.backgroundColor).toMatch(/#f6efe4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
-    expect(cover.style.backgroundImage).toBe("none");
-    expect(cover.style.boxShadow).toBe("none");
-    expect(cover.style.borderTopStyle || cover.style.borderStyle).not.toBe("solid");
-    expect(cover.style.zIndex).toBe(String(LECTURA_NEXT_COVER_Z));
-    expect(cover.style.height).toBe(painted.height);
+    expect(screen.queryByTestId("lectura-next-cover")).toBeNull();
+    expect(sheet.style.position).toBe("fixed");
+    expect(sheet.style.left).toBe("0px");
+    expect(sheet.style.right).toBe("0px");
+    expect(sheet.style.bottom).toBe("0px");
+    expect(sheet.style.width).toBe("100%");
+    expect(sheet.style.backgroundColor).toMatch(/#fff(?:fff)?|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    expect(sheet.style.borderBottomStyle).toBe("none");
+    expect(sheet.style.borderLeftStyle).toBe("none");
+    expect(sheet.style.borderRightStyle).toBe("none");
+    expect(Number.parseFloat(sheet.style.top)).toBeLessThan(lecturaNextRowTop(VIEW_H));
+    expect(screen.getByTestId("lectura-advance").style.opacity).not.toBe(String(LECTURA_NEXT_HELD_OPACITY));
+    expect(screen.getByTestId("lectura-advance").classList.contains("lectura-next-held")).toBe(true);
     expect(screen.getByRole("button", { name: "Next →" }).disabled).toBe(false);
 
     installHitTest();
@@ -202,21 +235,58 @@ describe("lectura gloss sheet blocks the pinned NEXT sliver", () => {
     expect(contains(rect, rightSliver.x, rightSliver.y)).toBe(true);
     expect(rowSliver.y).toBe(562);
 
-    for (const point of [rightSliver, topSliver, rowSliver]) {
+    for (const point of [rightSliver, topSliver, rowSliver, center]) {
       const hit = tap(point.x, point.y);
-      expect(hit).toBe(cover);
+      expect(hit).toBe(sheet);
       expect(hit).not.toBe(next);
       await stillParagraph1();
     }
-
-    const centerHit = tap(center.x, center.y);
-    expect(centerHit).not.toBe(next);
-    expect(centerHit.getAttribute("data-testid")).toBe("lectura-checkpoint");
-    await stillParagraph1();
 
     act(() => {
       next.dispatchEvent(new next.ownerDocument.defaultView.MouseEvent("click", { bubbles: true, cancelable: true }));
     });
     await stillParagraph1();
+  });
+
+  it("dims NEXT to 40% with no press when the sheet starts below the pin", async () => {
+    const prevOffset = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight");
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get() {
+        if (this.getAttribute && this.getAttribute("data-testid") === "word-sheet-body") return 40;
+        return prevOffset && typeof prevOffset.get === "function" ? prevOffset.get.call(this) : 0;
+      },
+    });
+    try {
+      const user = await boot();
+      const flores = [...document.querySelectorAll("span")].find((el) => el.textContent === "flores");
+      await user.click(flores);
+      const sheet = await screen.findByTestId("word-sheet");
+      await waitFor(() => expect(sheet.style.visibility).toBe("visible"));
+      expect(sheet.style.width).not.toBe("100%");
+      expect(sheet.style.bottom).not.toBe("0px");
+
+      const row = screen.getByTestId("lectura-advance");
+      expect(row.style.opacity).toBe(String(LECTURA_NEXT_HELD_OPACITY));
+      expect(row.style.transition).toBe("none");
+      expect(row.classList.contains("lectura-next-held")).toBe(true);
+      expect(screen.getByRole("button", { name: "Next →" }).disabled).toBe(false);
+
+      const next = screen.getByRole("button", { name: "Next →" });
+      act(() => {
+        next.dispatchEvent(new next.ownerDocument.defaultView.MouseEvent("click", { bubbles: true, cancelable: true }));
+      });
+      await stillParagraph1();
+
+      await user.click(sheet.querySelector("button[aria-label='Close']"));
+      await waitFor(() => expect(screen.queryByTestId("word-sheet")).toBeNull());
+      const restored = screen.getByTestId("lectura-advance");
+      expect(restored.style.opacity).toBe("");
+      expect(restored.style.transition).toBe("");
+      expect(restored.classList.contains("lectura-next-held")).toBe(false);
+      expect(JSON.parse(localStorage.getItem(LIVE_KEY)).paraIdx).toBe(0);
+    } finally {
+      if (prevOffset) Object.defineProperty(HTMLElement.prototype, "offsetHeight", prevOffset);
+    }
   });
 });

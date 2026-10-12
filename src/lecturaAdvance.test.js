@@ -19,10 +19,12 @@ import {
   lecturaNextClearancePx,
   lecturaNextRowTop,
   lecturaGlossBlocksNext,
-  lecturaNextCoverStyle,
   lecturaNextPinHeightPx,
   lecturaNextPinStyle,
-  LECTURA_NEXT_COVER_Z,
+  lecturaSheetCanReachBottom,
+  lecturaSheetReachStyle,
+  lecturaSheetTop,
+  LECTURA_NEXT_HELD_OPACITY,
   LECTURA_NEXT_Z,
   LECTURA_WORD_SHEET_HOST_Z,
   LECTURA_WORD_SHEET_Z,
@@ -124,14 +126,27 @@ assert(pin.backgroundColor === "#F6EFE4" && pin.backgroundImage === "none" && pi
 const darkPin = lecturaNextPinStyle("#15171C", "#2A2E36");
 assert(darkPin.backgroundColor === "#15171C" && darkPin.backgroundImage === "none" && darkPin.boxShadow === "none", "dark band is solid page color");
 assert(darkPin.borderTop === "1px solid #2A2E36" && darkPin.paddingTop === 11, "dark hairline replaces 1px of the gap so the row top stays put");
-assert(LECTURA_WORD_SHEET_Z > LECTURA_NEXT_COVER_Z && LECTURA_NEXT_COVER_Z > LECTURA_NEXT_Z && LECTURA_WORD_SHEET_HOST_Z > LECTURA_WORD_SHEET_Z, "gloss cover sits above the pin and under the sheet and checkpoint");
-const cover = lecturaNextCoverStyle("#F6EFE4");
-assert(cover.position === "fixed" && cover.bottom === 0 && cover.left === 0 && cover.right === 0, "the gloss cover spans the pinned row");
-assert(cover.height === `calc(${lecturaNextPinHeightPx()}px + env(safe-area-inset-bottom))` && lecturaNextPinHeightPx() === 80, "the cover is the pin, not a new band");
-assert(cover.backgroundColor === "#F6EFE4" && cover.backgroundImage === "none" && cover.boxShadow === "none" && cover.border === "none", "the cover is page color with no chrome");
-assert(cover.zIndex === LECTURA_NEXT_COVER_Z && cover.pointerEvents === "auto", "the cover takes the tap that used to hit the NEXT sliver");
+assert(lecturaNextPinHeightPx() === 80, "the pin row is gap + button + 16px inset");
+assert(LECTURA_WORD_SHEET_HOST_Z > LECTURA_WORD_SHEET_Z && LECTURA_WORD_SHEET_Z > LECTURA_NEXT_Z, "the gloss sheet and its checkpoint host sit above the pin");
+const floresTop = lecturaSheetTop({ viewportHeight: 640, bottom: 126.9, height: 205 });
+assert(Math.abs(floresTop - 308.1) < 0.001, "sheet top is the definition's top edge");
+assert(lecturaSheetCanReachBottom({ sheetTop: floresTop, pinTop: lecturaNextRowTop(640) }), "the 360x640 flores sheet starts above the pin and can cover it");
+assert(lecturaSheetCanReachBottom({ sheetTop: 308, pinTop: 560 }), "a sheet above the pin covers the row");
+assert(!lecturaSheetCanReachBottom({ sheetTop: 560, pinTop: 560 }), "a sheet that starts on the pin cannot cover it");
+assert(!lecturaSheetCanReachBottom({ sheetTop: 592, pinTop: 560 }), "a sheet below the pin leaves NEXT visible");
+assert(!lecturaSheetCanReachBottom({ sheetTop: null, pinTop: 560 }), "an unmeasured sheet does not claim the pin");
+const reach = lecturaSheetReachStyle({ top: floresTop, background: "#FFFFFF", accent: "#CE82FF" });
+assert(reach.position === "fixed" && reach.left === 0 && reach.right === 0 && reach.bottom === 0 && reach.width === "100%", "the open sheet runs full width to the viewport bottom");
+assert(reach.top === floresTop && reach.background === "#FFFFFF" && reach.backgroundImage === "none", "the reach is the sheet card, from the definition down");
+assert(reach.borderTop === "3px solid #CE82FF" && reach.borderLeft === "none" && reach.borderRight === "none" && reach.borderBottom === "none", "the top accent stays and the sides stay flush");
+assert(reach.borderRadius === "14px 14px 0 0", "square bottom corners do not reveal the pin");
+assert(reach.zIndex === LECTURA_WORD_SHEET_Z && reach.pointerEvents === "auto", "the sheet takes the tap that used to hit the NEXT sliver");
+assert(LECTURA_NEXT_HELD_OPACITY === 0.4, "a sheet that cannot reach dims NEXT to 40%");
 assert(appSrc.includes("if (wordSel) return"), "an open gloss sheet makes advance a no-op");
-assert(appSrc.includes("lecturaNextCoverStyle(D.bg)"), "the open gloss sheet paints the page color over NEXT");
+assert(appSrc.includes("lecturaSheetReachStyle"), "the open gloss sheet uses the full-width reach");
+assert(!appSrc.includes("lecturaNextCoverStyle") && !appSrc.includes("lectura-next-cover"), "the page-color cover is gone");
+assert(appSrc.includes("opacity: LECTURA_NEXT_HELD_OPACITY") && appSrc.includes('transition: "none"'), "dimmed NEXT returns to full ink with no fade");
+assert(appSrc.includes("lectura-next-held"), "an open sheet kills the NEXT press state");
 assert(lecturaGlossBlocksNext(LECTURA_WORD_SHEET_Z) && lecturaGlossBlocksNext(LECTURA_WORD_SHEET_HOST_Z), "an open gloss sheet takes the tap");
 assert(!lecturaGlossBlocksNext(LECTURA_NEXT_Z), "the pin does not block itself");
 assert(appSrc.includes("lecturaNextPinStyle(D.bg, theme === \"dark\" ? D.line : undefined)"), "dark NEXT row gets the D.line hairline");
