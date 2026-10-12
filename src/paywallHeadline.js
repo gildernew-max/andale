@@ -21,13 +21,14 @@ export const PAYWALL_SOURCE = {
   rival: "rival",
 };
 
+/** One config value for the Lectura cliffhanger bird that opens the story headline. */
+export const PAYWALL_BIRD_TRIGGER = PAYWALL_SOURCE.lecturaBirdHandoff;
+
 /**
- * Story headline only when the sheet opens from the Lectura hook Continuar.
- * Every other source uses the cleared fallback once a story start is stored,
- * and the shorter line when lecturaStartedFromProgress is false.
- * lecturaStarted is that same boolean the wall gate passes as lecturaStartedStored.
+ * Story headline only when the sheet opens from the Lectura cliffhanger bird.
+ * Every other path uses the much-more line. lecturaStarted is ignored.
  */
-export function paywallHeadlineFor(copy, source, lecturaStarted = false) {
-  if (source === PAYWALL_SOURCE.lecturaBirdHandoff) return copy?.paywallHeadline;
-  return lecturaStarted ? copy?.paywallHeadlineFallback : copy?.paywallHeadlineNoStory;
+export function paywallHeadlineFor(copy, source) {
+  if (source === PAYWALL_BIRD_TRIGGER) return copy?.paywallHeadline;
+  return copy?.paywallHeadlineFallback;
 }

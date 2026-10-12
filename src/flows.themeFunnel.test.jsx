@@ -1171,16 +1171,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const jeopardyBack = await screen.findByTestId("jeopardy-back");
     expect(outlinePaint(jeopardyBack).fill).toBe(darkFill);
     expect(outlinePaint(jeopardyBack).ink).toBe(cream);
-
-    cleanup();
-    localStorage.removeItem(LIVE_KEY);
-    markBajioUnlockFlashDue(false);
-    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false, bajioUnlockSeen: true, lecturaStartedAt: 1 });
-    render(<App />);
-    const monthly = await screen.findByTestId("soft-paywall-monthly");
-    expect(outlinePaint(monthly)).toMatchObject({ fill: darkFill, ink: cream, edge: "#4a5160", lip: "#4a5160" });
-    expect(monthly.style.borderTopWidth).toBe("2px");
-    expect(monthly.style.borderBottomWidth).toBe("4px");
   });
 
   it("an outline Btn follows a theme switch in the same visit", async () => {
@@ -1340,7 +1330,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(starts.every((e) => e.title == null && e.name == null)).toBe(true);
   });
 
-  it("paywall_seen and paywall_tap fire for annual, monthly, and continue-free", async () => {
+  it("paywall_seen and paywall_tap fire for annual and continue-free", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     const user = userEvent.setup();
@@ -1351,8 +1341,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
-    await user.click(screen.getByTestId("soft-paywall-monthly"));
-    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(true));
+    expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     assertSoftPaywallAnnualPrimary("es");
 
@@ -1380,29 +1369,36 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(funnelOf("purchase")).toHaveLength(0);
   }, 15000);
 
-  it("StoreKit cancel does not emit purchase", async () => {
+  it("annual tap does not call a native purchase hook", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
+    let purchaseCalls = 0;
     window.__andaleNativeRestore = async () => ({ status: "failure", reason: "nothing_to_restore" });
-    window.__andaleNativePurchase = async () => ({
-      status: "cancelled",
-      receipt: "receipt-body",
-      email: "dave@example.com",
-    });
+    window.__andaleNativePurchase = async () => {
+      purchaseCalls += 1;
+      return {
+        status: "cancelled",
+        receipt: "receipt-body",
+        email: "dave@example.com",
+      };
+    };
     const user = userEvent.setup();
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     await user.click(screen.getByTestId("soft-paywall-annual"));
-    await waitFor(() => expect(window.__andalePurchaseLog?.some((e) => e.reason === "user_cancelled")).toBe(true));
+    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
+    expect(purchaseCalls).toBe(0);
     expect(funnelOf("purchase")).toHaveLength(0);
-    expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/receipt-body|dave@example/);
+    delete window.__andaleIapEnv;
+    delete window.__andaleNativePurchase;
+    delete window.__andaleNativeRestore;
   });
 
-  it("conversion chain is open, first-Hoy win, Lectura, paywall, then purchase on success", async () => {
+  it("conversion chain is open, first-Hoy win, Lectura, paywall, then an inert annual tap", async () => {
     cleanup();
     seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
@@ -1464,11 +1460,9 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
     await user.click(screen.getByTestId("soft-paywall-annual"));
-    await waitFor(() => expect(funnelOf("purchase")).toHaveLength(1));
-    const bought = funnelOf("purchase")[0];
-    expect(bought.plan).toBe("annual");
-    expect(bought.productId).toBe("com.andale.app.premium.annual");
-    expect(Object.keys(bought).sort()).toEqual(["at", "event", "plan", "productId"]);
+    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
+    expect(funnelOf("purchase")).toHaveLength(0);
+    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/receipt-body|tx-9|dave@example|device-1|\$/);
     const names = window.__andaleFunnelLog.map((e) => e.event);
     const at = (name) => names.indexOf(name);
@@ -1476,7 +1470,8 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(at("cenzontle_complete")).toBeGreaterThan(at("open"));
     expect(at("lectura_start")).toBeGreaterThan(at("cenzontle_complete"));
     expect(at("paywall_seen")).toBeGreaterThan(at("lectura_start"));
-    expect(at("purchase")).toBeGreaterThan(at("paywall_seen"));
+    expect(at("paywall_tap")).toBeGreaterThan(at("paywall_seen"));
+    expect(at("purchase")).toBe(-1);
   });
 
   it("return home after Hoy win and Lectura start shows the soft paywall and does not emit purchase on web", async () => {
@@ -1533,11 +1528,10 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
-    await user.click(screen.getByTestId("soft-paywall-monthly"));
-    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(true));
+    expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
     expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall-honesty").textContent).toBe("Vista previa · aún no se cobra");
+    expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
     const names = window.__andaleFunnelLog.map((e) => e.event);
@@ -1613,8 +1607,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
 
     await user.click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
-    await user.click(screen.getByTestId("soft-paywall-monthly"));
-    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(true));
+    expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
     expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);

@@ -1,7 +1,7 @@
 /**
- * Annual and Continue free are pinned inside the paywall sheet.
- * Continue free's bottom edge is 16px above the bottom safe area.
- * The annual CTA sits 12px above that link. The rest of the sheet scrolls.
+ * Annual and Continue free sit in the card.
+ * The card bottom is at least 16px above the bottom safe area.
+ * Continue free sits 12px under annual. Nothing on the card scrolls.
  * Checked at 360×640 and 390×844, light and dark, English and Spanish.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -10,14 +10,7 @@ import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { dayKeyFromDate } from "./firstDoor.js";
 import { FUNNEL_EVENTS } from "./funnel.js";
-import {
-  BUTTON_PIN_BOTTOM,
-  BUTTON_PIN_GAP,
-  PAYWALL_ANNUAL_BLOCK,
-  PAYWALL_FREE_TAP,
-  buttonPinBottomCss,
-  paywallPinRects,
-} from "./ButtonPin.jsx";
+import { ANNUAL_PRICE_PLACEHOLDER, FREE_TIER_LIMIT_PLACEHOLDER } from "./webPaywall.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -28,10 +21,10 @@ const VIEWPORTS = [
 ];
 
 const FACES = [
-  { theme: "light", uiLang: "en", annual: "One year", free: "Continue free", freeInk: "#6b6258" },
-  { theme: "light", uiLang: "es", annual: "Un año", free: "Seguir gratis", freeInk: "#6b6258" },
-  { theme: "dark", uiLang: "en", annual: "One year", free: "Continue free", freeInk: "#cdbba6" },
-  { theme: "dark", uiLang: "es", annual: "Un año", free: "Seguir gratis", freeInk: "#cdbba6" },
+  { theme: "light", uiLang: "en", annual: "One year", free: "Continue free", freeInk: "#6b6258", page: "" },
+  { theme: "light", uiLang: "es", annual: "Un año", free: "Seguir gratis", freeInk: "#6b6258", page: "" },
+  { theme: "dark", uiLang: "en", annual: "One year", free: "Continue free", freeInk: "#f6efe4", page: "#15171c" },
+  { theme: "dark", uiLang: "es", annual: "Un año", free: "Seguir gratis", freeInk: "#f6efe4", page: "#15171c" },
 ];
 
 const norm = (value) => {
@@ -72,6 +65,7 @@ function setViewport({ width, height }) {
 function openPaywall({ theme, uiLang }) {
   localStorage.clear();
   delete window.__andaleFunnelLog;
+  delete window.__andalePurchaseLog;
   mockBrowser();
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     welcomed: true,
@@ -95,7 +89,7 @@ function openPaywall({ theme, uiLang }) {
   render(<App />);
 }
 
-describe("paywall footer pin", () => {
+describe("paywall card", () => {
   const prevW = window.innerWidth;
   const prevH = window.innerHeight;
 
@@ -106,57 +100,35 @@ describe("paywall footer pin", () => {
     Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: prevH });
   });
 
-  it.each(VIEWPORTS)("both controls sit inside $width×$height without a scroll", ({ width, height }) => {
-    const pin = paywallPinRects({ viewportHeight: height, viewportWidth: width });
-    expect(buttonPinBottomCss()).toBe("calc(16px + env(safe-area-inset-bottom))");
-    expect(BUTTON_PIN_BOTTOM).toBe(16);
-    expect(BUTTON_PIN_GAP).toBe(12);
-    expect(pin.withinViewport).toBe(true);
-    expect(pin.freeInset).toBe(16);
-    expect(pin.gap).toBe(12);
-    expect(pin.freeBottom - pin.freeTop).toBe(PAYWALL_FREE_TAP);
-    expect(pin.annualBottom - pin.annualTop).toBe(PAYWALL_ANNUAL_BLOCK);
-    expect(pin.freeTop - pin.annualBottom).toBe(12);
-    expect(pin.annualTop).toBeGreaterThanOrEqual(0);
-    expect(pin.freeBottom).toBeLessThanOrEqual(height);
-    expect(pin.left).toBeGreaterThanOrEqual(0);
-    expect(pin.right).toBeLessThanOrEqual(width);
-    expect(pin.width).toBeGreaterThanOrEqual(44);
-    const safe = paywallPinRects({ viewportHeight: height, viewportWidth: width, safeAreaBottom: 34 });
-    expect(safe.withinViewport).toBe(true);
-    expect(safe.freeInset).toBe(16 + 34);
-    expect(safe.gap).toBe(12);
-    expect(safe.freeBottom).toBeLessThan(pin.freeBottom);
-  });
-
   it.each(VIEWPORTS.flatMap((viewport) => FACES.map((face) => ({ ...viewport, ...face }))))(
-    "$width×$height $theme $uiLang keeps One year and Continue free on screen and tappable",
-    async ({ width, height, theme, uiLang, annual, free, freeInk }) => {
+    "$width×$height $theme $uiLang keeps One year and Continue free on the card",
+    async ({ width, height, theme, uiLang, annual, free, freeInk, page }) => {
       setViewport({ width, height });
       openPaywall({ theme, uiLang });
       const year = await screen.findByTestId("soft-paywall-annual");
       const dismiss = screen.getByTestId("soft-paywall-dismiss");
-      const scroll = screen.getByTestId("soft-paywall-scroll");
-      const footer = screen.getByTestId("soft-paywall-footer");
       const card = screen.getByTestId("soft-paywall-card");
+      const wall = screen.getByTestId("soft-paywall");
+      const price = screen.getByTestId("soft-paywall-annual-price");
+      const body = screen.getByTestId("soft-paywall-body");
 
       expect(year.textContent).toBe(annual);
       expect(dismiss.textContent).toBe(free);
-      expect(footer.contains(year)).toBe(true);
-      expect(footer.contains(dismiss)).toBe(true);
-      expect(scroll.contains(year)).toBe(false);
-      expect(scroll.contains(dismiss)).toBe(false);
-      expect(scroll.contains(screen.getByTestId("soft-paywall-monthly"))).toBe(true);
-      expect(scroll.contains(screen.getByTestId("soft-paywall-annual-price"))).toBe(true);
-      expect(scroll.style.overflowY).toBe("auto");
-      expect(scroll.style.padding).toBe(`22px 20px ${BUTTON_PIN_GAP}px`);
-      expect(card.style.overflow).toBe("hidden");
-      expect(card.style.display).toBe("flex");
-      expect(card.style.flexDirection).toBe("column");
-      expect(card.style.maxHeight).toBe("calc(100vh - 40px)");
-      expect(footer.style.gap).toBe("12px");
-      expect(footer.style.paddingBottom).toBe(buttonPinBottomCss());
-      expect(footer.style.flexShrink).toBe("0");
+      expect(card.contains(year)).toBe(true);
+      expect(card.contains(dismiss)).toBe(true);
+      expect(screen.queryByTestId("soft-paywall-scroll")).toBeNull();
+      expect(screen.queryByTestId("soft-paywall-footer")).toBeNull();
+      expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
+      expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
+      expect(wall.style.overflow).toBe("hidden");
+      expect(wall.style.paddingBottom).toBe("calc(16px + env(safe-area-inset-bottom))");
+      expect(wall.style.alignItems).toBe("center");
+      expect(wall.style.justifyContent).toBe("center");
+      if (page) expect(norm(wall.style.background)).toBe(page);
+      expect(card.style.maxHeight).toBe("");
+      expect(card.style.overflow).not.toBe("auto");
+      expect(card.style.overflowY).not.toBe("auto");
+      expect(dismiss.style.marginTop).toBe("12px");
       expect(year.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
       expect(year.disabled).toBe(false);
@@ -172,29 +144,36 @@ describe("paywall footer pin", () => {
       expect(dismiss.style.minHeight).toBe("44px");
       expect(dismiss.style.padding).toBe("11px 0px");
       expect(dismiss.style.fontSize).toBe("15px");
-      expect(dismiss.style.fontWeight).toBe("700");
+      expect(dismiss.style.fontWeight).toBe("500");
       expect(norm(dismiss.style.color)).toBe(freeInk);
       expect(norm(dismiss.style.color)).not.toBe("#1f3a1a");
 
-      const pin = paywallPinRects({ viewportHeight: height, viewportWidth: width });
-      expect(pin.withinViewport).toBe(true);
-      const annualCenterY = pin.annualTop + pin.annualBottom;
-      const freeCenterY = pin.freeTop + pin.freeBottom;
-      expect(annualCenterY / 2).toBeGreaterThanOrEqual(0);
-      expect(annualCenterY / 2).toBeLessThanOrEqual(height);
-      expect(freeCenterY / 2).toBeGreaterThanOrEqual(0);
-      expect(freeCenterY / 2).toBeLessThanOrEqual(height);
+      expect(price.textContent).toBe(ANNUAL_PRICE_PLACEHOLDER);
+      expect(screen.getByTestId("soft-paywall-free-limit").textContent).toBe(FREE_TIER_LIMIT_PLACEHOLDER);
+      expect(price.style.fontSize).toBe("13.5px");
+      expect(price.style.fontWeight).toBe("700");
+      expect(price.style.fontSize).toBe(body.style.fontSize);
+      expect(price.style.fontWeight).toBe(body.style.fontWeight);
+      expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");
+      expect(screen.getByTestId("soft-paywall-headline").style.fontWeight).toBe("900");
 
       const user = userEvent.setup();
+      const purchases = [];
+      const onPurchase = (event) => purchases.push(event.detail);
+      window.addEventListener("andale-purchase", onPurchase);
       await user.click(year);
       await waitFor(() => {
         const taps = (window.__andaleFunnelLog || []).filter((event) => event.event === FUNNEL_EVENTS.paywallTap && event.choice === "annual");
         expect(taps.length).toBeGreaterThan(0);
       });
-      expect(screen.getByTestId("soft-paywall-annual")).toBeTruthy();
-      expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe(uiLang === "en" ? "One month" : "Un mes");
+      expect(purchases).toHaveLength(0);
+      expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+      expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
+      expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\$|charged|cobra|Apple|Restore/);
       await user.click(screen.getByTestId("soft-paywall-dismiss"));
       await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+      expect((window.__andaleFunnelLog || []).some((event) => event.event === FUNNEL_EVENTS.paywallTap && event.choice === "continue_free")).toBe(true);
+      window.removeEventListener("andale-purchase", onPurchase);
     },
   );
 });
