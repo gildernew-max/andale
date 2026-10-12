@@ -11,6 +11,7 @@ import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { mockBrowser } from "./flowsHarness.jsx";
 import {
+  LECTURA_GLOSS_DISMISS_MS,
   LECTURA_NEXT_HEIGHT,
   LECTURA_NEXT_HELD_OPACITY,
   lecturaNextButtonTop,
@@ -288,5 +289,56 @@ describe("lectura gloss sheet blocks the pinned NEXT sliver", () => {
     } finally {
       if (prevOffset) Object.defineProperty(HTMLElement.prototype, "offsetHeight", prevOffset);
     }
+  });
+
+  it("closes the gloss on the first NEXT tap and advances on the second", async () => {
+    const user = await boot();
+    const flores = [...document.querySelectorAll("span")].find((el) => el.textContent === "flores");
+    expect(flores).toBeTruthy();
+    await user.click(flores);
+    const sheet = await screen.findByTestId("word-sheet");
+    await waitFor(() => expect(sheet.style.visibility).toBe("visible"));
+    expect(flores.style.backgroundColor).toMatch(/#ffe9a8|rgb\(\s*255,\s*233,\s*168\s*\)/i);
+
+    installHitTest();
+    const next = screen.getByRole("button", { name: "Next →" });
+    const rect = next.getBoundingClientRect();
+    const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    const hit = document.elementFromPoint(center.x, center.y);
+    expect(hit).toBe(sheet);
+    expect(hit).not.toBe(next);
+
+    const view = hit.ownerDocument.defaultView;
+    const started = performance.now();
+    act(() => {
+      hit.dispatchEvent(new view.PointerEvent("pointerup", {
+        bubbles: true,
+        cancelable: true,
+        clientX: center.x,
+        clientY: center.y,
+        pointerId: 1,
+        pointerType: "touch",
+        button: 0,
+      }));
+      next.dispatchEvent(new view.MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        clientX: center.x,
+        clientY: center.y,
+      }));
+    });
+
+    await waitFor(() => expect(screen.queryByTestId("word-sheet")).toBeNull(), { timeout: LECTURA_GLOSS_DISMISS_MS });
+    expect(performance.now() - started).toBeLessThan(LECTURA_GLOSS_DISMISS_MS);
+    expect(flores.style.backgroundColor).toBe("transparent");
+    expect(screen.getByText(/Paragraph 1 \/ 6/)).toBeTruthy();
+    expect(screen.queryByText(/Paragraph 2 \/ 6/)).toBeNull();
+    expect(JSON.parse(localStorage.getItem(LIVE_KEY)).paraIdx).toBe(0);
+
+    await act(async () => { await new Promise((resolve) => { setTimeout(resolve, 0); }); });
+    await user.click(next);
+    await waitFor(() => expect(screen.getByText(/Paragraph 2 \/ 6/)).toBeTruthy());
+    expect(screen.queryByText(/Paragraph 1 \/ 6/)).toBeNull();
+    expect(JSON.parse(localStorage.getItem(LIVE_KEY)).paraIdx).toBe(1);
   });
 });

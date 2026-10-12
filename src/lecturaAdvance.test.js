@@ -36,6 +36,8 @@ import {
   LECTURA_WORD_SHEET_HOST_Z,
   LECTURA_WORD_SHEET_Z,
   lecturaQuestionsOpenScrollY,
+  LECTURA_GLOSS_DISMISS_MS,
+  lecturaPointInRect,
   lecturaStillBandHeight,
   lecturaStillCornerRadius,
   lecturaStillObjectPosition,
@@ -172,6 +174,13 @@ assert(reach.zIndex === LECTURA_SHEET_REACH_Z && LECTURA_SHEET_REACH_Z > LECTURA
 assert(appSrc.includes("createPortal(node, document.body)"), "the full-width sheet is not clipped by the story column");
 assert(LECTURA_NEXT_HELD_OPACITY === 0.4, "a sheet that cannot reach dims NEXT to 40%");
 assert(appSrc.includes("if (wordSel) return"), "an open gloss sheet makes advance a no-op");
+assert(LECTURA_GLOSS_DISMISS_MS === 150, "a Next tap dismisses the gloss sheet within 150ms");
+const nextBox = { left: 152, top: 572, right: 340, bottom: 624, width: 188, height: 52 };
+assert(lecturaPointInRect(246, 598, nextBox), "the center of NEXT counts as a Next tap");
+assert(!lecturaPointInRect(20, 598, nextBox), "a point on Back is not a Next tap");
+assert(!lecturaPointInRect(340, 598, nextBox), "the right edge is outside the Next box");
+assert(appSrc.includes("onPointerUp={dismissGlossOnNextTap}"), "a tap on the covered NEXT dismisses the gloss sheet");
+assert(appSrc.includes("glossNextDismissRef.current"), "the same gesture cannot advance after it dismisses the sheet");
 assert(appSrc.includes("lecturaSheetReachStyle"), "the open gloss sheet uses the full-width reach");
 assert(!appSrc.includes("lecturaNextCoverStyle") && !appSrc.includes("lectura-next-cover"), "the page-color cover is gone");
 assert(appSrc.includes("opacity: LECTURA_NEXT_HELD_OPACITY") && appSrc.includes('transition: "none"'), "dimmed NEXT returns to full ink with no fade");
