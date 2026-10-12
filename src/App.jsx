@@ -64,7 +64,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_WIDTH, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
+import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_STILL_OBJECT_POSITION, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
 import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, ONBOARDING_CTA_HEIGHT, onboardingCtaBottomCss, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -12068,7 +12068,7 @@ export default function App() {
         };
         return (
           <div data-testid="story-reader" data-story-id={story.id} style={{ maxWidth: 600, margin: "0 auto", padding: `20px 20px ${lecturaNextClearanceCss()}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
 	              <button type="button" onClick={() => { setWordSel(null); setPaywallSource(PAYWALL_SOURCE.storyClose); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{uiLang === "en" ? (story.titleEn || story.title) : story.title}</div>
@@ -12076,10 +12076,10 @@ export default function App() {
               </div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
-            <div data-testid="story-tip" style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 18px", background: D.subtle, borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 800, color: D.sub }}>
+            <div data-testid="story-tip" style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 8px", background: D.subtle, borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 800, color: D.sub }}>
 	              <IcBook size={16} color={sec.color} /> {L.storyTip}
             </div>
-            <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
               {[
                 { id: "story", l: uiLang === "en" ? "Story" : "Cuento" },
                 { id: "bilingual", l: uiLang === "en" ? "Bilingual" : "Bilingüe" },
@@ -12091,7 +12091,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <div data-testid="lectura-progress" style={{ display: "flex", gap: 5, alignItems: "center", margin: "2px 0 14px" }}>
+            <div data-testid="lectura-progress" style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 8px" }}>
               {story.paragraphs.map((_, i) => (
                 <button key={i} onClick={() => advanceLectura(i)} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
                   style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : (theme === "dark" ? D.track : "#E8E8E8"), outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
@@ -12106,14 +12106,14 @@ export default function App() {
             )}
 
             {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
-              <div key={pi} ref={lecturaParagraphRef} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 8, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
+              <div key={pi} ref={lecturaParagraphRef} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 8, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "8px 16px 14px", background: D.card }}>
                 <img
                   src={`${import.meta.env.BASE_URL}lectura/${story.id}/p${pi}.png`}
                   alt=""
                   aria-hidden="true"
                   data-testid={`lectura-still-${pi}`}
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
-                  style={{ display: "block", width: "100%", maxWidth: LECTURA_STILL_BAND_WIDTH, aspectRatio: "16 / 9", height: "auto", objectFit: "cover", objectPosition: "center", margin: `0 auto ${LECTURA_STILL_MARGIN_BOTTOM}px`, borderRadius: 10 }}
+                  style={{ display: "block", width: "100%", height: LECTURA_STILL_BAND_HEIGHT, objectFit: "cover", objectPosition: LECTURA_STILL_OBJECT_POSITION, margin: `0 0 ${LECTURA_STILL_MARGIN_BOTTOM}px`, borderRadius: 4 }}
                 />
                 <div style={{ display: "flex", gap: latamNarration ? 10 : 0 }}>
                 {latamNarration && (

@@ -139,19 +139,24 @@ export const LECTURA_SHEET_REACH_Z = 32;
 export const LECTURA_PARAGRAPH_FONT = 17;
 export const LECTURA_PARAGRAPH_LEADING = 1.75;
 
-/** 4:3 stills (1152×864) were capped at 148px tall. Story open keeps that width. */
+/** Old 4:3 cap (1152×864 at 148px tall). The open band stays shorter than this. */
 export const LECTURA_STILL_CAP_HEIGHT = 148;
-export const LECTURA_STILL_BAND_WIDTH = LECTURA_STILL_CAP_HEIGHT * (1152 / 864);
-/** Thinnest crop allowed. At the old cap width the band is exactly 111px tall. */
-export const LECTURA_STILL_BAND_RATIO = 16 / 9;
-export const LECTURA_STILL_MARGIN_BOTTOM = 12;
+/** Story-open still. Full column width, fixed 90px, cover-cropped onto the faces. */
+export const LECTURA_STILL_BAND_HEIGHT = 90;
+/**
+ * Face lock for the 284×90 phone band (4:3 stills are 1152×864).
+ * 28% keeps the tops of the heads and the chins inside the cover crop
+ * on every story still.
+ */
+export const LECTURA_STILL_OBJECT_POSITION = "center 28%";
+export const LECTURA_STILL_MARGIN_BOTTOM = 8;
 
 /**
  * Scroll-0 distance from the viewport top to the still on story open
  * (sticky brand bar through the paragraph card's top border and padding).
- * Measured at 360×640 and 390×844; the title does not wrap, so it matches.
+ * Measured at 360×640 and 390×844; the title block is the same height at both.
  */
-export const LECTURA_STORY_OPEN_STILL_TOP = 340.4;
+export const LECTURA_STORY_OPEN_STILL_TOP = 312.4;
 
 export function lecturaNextBottomCss() {
   return onboardingCtaBottomCss();
@@ -178,17 +183,9 @@ export function lecturaNextRowTop(viewportHeight, safeAreaBottom = 0) {
   return lecturaNextButtonTop(viewportHeight, safeAreaBottom) - LECTURA_NEXT_GAP;
 }
 
-export function lecturaStillBandHeight(width = LECTURA_STILL_BAND_WIDTH) {
-  const w = Number(width);
-  if (!(w > 0)) return 0;
-  return (w * 9) / 16;
-}
-
-export function lecturaStillAtLeast16x9(width, height) {
-  const w = Number(width);
-  const h = Number(height);
-  if (!(w > 0) || !(h > 0)) return false;
-  return h + 0.01 >= (w * 9) / 16;
+/** The band stays 90px at every column width. Width does not change the line count. */
+export function lecturaStillBandHeight() {
+  return LECTURA_STILL_BAND_HEIGHT;
 }
 
 /** Top edge of the NEXT buttons. The 12px gap sits above this, inside the pin. */

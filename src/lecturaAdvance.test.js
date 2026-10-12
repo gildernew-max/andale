@@ -5,8 +5,10 @@ import {
   LECTURA_NEXT_BOTTOM,
   LECTURA_NEXT_GAP,
   LECTURA_NEXT_HEIGHT,
-  LECTURA_STILL_BAND_WIDTH,
+  LECTURA_STILL_BAND_HEIGHT,
+  LECTURA_STILL_OBJECT_POSITION,
   LECTURA_STILL_CAP_HEIGHT,
+  LECTURA_STILL_MARGIN_BOTTOM,
   LECTURA_STORY_OPEN_STILL_TOP,
   lecturaAdvanceScrollY,
   lecturaClaimScrollY,
@@ -30,7 +32,6 @@ import {
   LECTURA_WORD_SHEET_HOST_Z,
   LECTURA_WORD_SHEET_Z,
   lecturaQuestionsOpenScrollY,
-  lecturaStillAtLeast16x9,
   lecturaStillBandHeight,
   lecturaStickyHeaderBottom,
   lecturaStoryOpenTextTop,
@@ -100,10 +101,11 @@ assert(/<Btn outline disabled=\{paraIdx === 0\} onClick=\{\(\) => advanceLectura
 assert(/<nav aria-label=\{uiLang === "en" \? "Primary navigation" : "Navegación principal"\} style=\{\{ position: "fixed", bottom: 0,/.test(appSrc), "footer nav stays pinned to the bottom edge");
 
 const stillBand = lecturaStillBandHeight();
-assert(Math.abs(stillBand - 111) < 0.001, "16:9 crop of the old 148px cap is a 111px band");
-assert(stillBand < LECTURA_STILL_CAP_HEIGHT, "the story-open still is shorter than the old cap");
-assert(lecturaStillAtLeast16x9(LECTURA_STILL_BAND_WIDTH, stillBand), "the band is not thinner than 16:9");
-assert(!lecturaStillAtLeast16x9(LECTURA_STILL_BAND_WIDTH, stillBand - 1), "a shorter band would be thinner than 16:9");
+assert(LECTURA_STILL_BAND_HEIGHT === 90, "story-open still is a 90px band");
+assert(stillBand === 90, "band height stays 90px at any column width");
+assert(LECTURA_STILL_OBJECT_POSITION === "center 28%", "the cover crop is locked on the faces");
+assert(LECTURA_STILL_MARGIN_BOTTOM === 8, "still margin under the band is 8px");
+assert(stillBand < LECTURA_STILL_CAP_HEIGHT, "the story-open still is shorter than the old 148px cap");
 assert(lecturaNextBottomCss() === "calc(16px + env(safe-area-inset-bottom))", "NEXT uses the onboarding CTA bottom inset");
 assert(LECTURA_NEXT_BOTTOM === 16 && LECTURA_NEXT_GAP === 12, "NEXT pin keeps the 16px inset and 12px gap");
 assert(lecturaNextClearancePx() === 92, "page pad is the pin row plus 12px above it");
@@ -160,15 +162,17 @@ assert(!lecturaGlossBlocksNext(LECTURA_NEXT_Z), "the pin does not block itself")
 assert(appSrc.includes("lecturaNextPinStyle(D.bg, theme === \"dark\" ? D.line : undefined)"), "dark NEXT row gets the D.line hairline");
 assert(appSrc.includes("zIndex: LECTURA_WORD_SHEET_Z") && appSrc.includes("zIndex: sheetBlocksAnswers ? LECTURA_WORD_SHEET_HOST_Z : \"auto\""), "gloss sheet stacking uses the shared constants");
 const textTop = lecturaStoryOpenTextTop(stillBand);
-assert(Math.abs(textTop - (LECTURA_STORY_OPEN_STILL_TOP + stillBand + 12)) < 0.001, "paragraph text starts under the cropped still");
+assert(Math.abs(textTop - (LECTURA_STORY_OPEN_STILL_TOP + stillBand + LECTURA_STILL_MARGIN_BOTTOM)) < 0.001, "paragraph text starts under the cropped still");
+assert(lecturaLinesAboveNext({ textTop, viewportHeight: 640 }) >= 5, "360x640 keeps at least five Spanish lines above NEXT");
 for (const [width, height] of [[360, 640], [390, 844]]) {
   const buttonTop = lecturaNextButtonTop(height);
   assert(buttonTop > 0 && buttonTop + LECTURA_NEXT_HEIGHT === height - 16, `${width}x${height} NEXT sits 16px above the bottom`);
-  assert(lecturaLinesAboveNext({ textTop, viewportHeight: height }) >= 2, `${width}x${height} keeps at least two Spanish lines above NEXT`);
+  assert(lecturaLinesAboveNext({ textTop, viewportHeight: height }) >= (height === 640 ? 5 : 2), `${width}x${height} keeps Spanish lines above NEXT`);
 }
 assert(appSrc.includes("lecturaNextPinStyle(D.bg,"), "NEXT row uses the shared pin");
 assert(appSrc.includes("lecturaNextClearanceCss()"), "story column pads for the pin");
-assert(appSrc.includes('aspectRatio: "16 / 9"'), "still crop is 16:9");
+assert(appSrc.includes("height: LECTURA_STILL_BAND_HEIGHT") && appSrc.includes("objectPosition: LECTURA_STILL_OBJECT_POSITION"), "the story still is the 90px face band");
+assert(appSrc.includes('aspectRatio: "16 / 9"'), "the paywall still stays 16:9");
 assert(appSrc.includes("advanceLectura(paraIdx + 1)"), "NEXT click still advances");
 assert(appSrc.includes("lecturaAdvanceScrollY"), "advance scroll math is unchanged");
 assert(appSrc.includes("lecturaQuestionsOpenScrollY") && appSrc.includes("lecturaClaimScrollY"), "questions and claim scroll stay");
