@@ -36,7 +36,7 @@ import { isWaitlistEmail } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
-import { gatedLiftStoryQuiz, isStoryChoiceCorrect, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
+import { gatedLiftStoryQuiz, isStoryChoiceCorrect, lecturaCheckpointMissCount, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
@@ -65,7 +65,7 @@ import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHan
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_WIDTH, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
 import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
-import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
+import { CONTINUE_LABEL, firstLessonForLevel, ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, ONBOARDING_CTA_HEIGHT, onboardingCtaBottomCss, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
 import Onboarding from "./Onboarding.jsx";
 import { beginnerFirstQuestions, beginnerWhyLine, beginnerWinLine, BEGINNER_SESSION_TITLE } from "./beginnerFirstSession.js";
@@ -7060,7 +7060,9 @@ export default function App() {
       earnedGems: 10,
       ...(beat.streakBefore != null ? { streakBefore: beat.streakBefore } : {}),
     });
-    setLessonStats({ right: beat.correct, wrong: story.questions.length - beat.correct });
+    const questionMisses = Math.max(0, story.questions.length - (Number(beat.correct) || 0));
+    const checkpointMisses = Math.max(0, Number(beat.checkpointMisses) || 0);
+    setLessonStats({ right: beat.correct, wrong: questionMisses + checkpointMisses });
     setScreenQuip("");
     if (playStory0) {
         winBouncePlayed.current = true;
@@ -7069,7 +7071,7 @@ export default function App() {
     setScreen("done");
   };
 
-  const claimStory = (story, correct) => {
+  const claimStory = (story, correct, checkpointMisses = 0) => {
     if (prog.stories?.[story.id]) return;
     if (chapterDoneRef.current.has(story.id)) return;
     chapterDoneRef.current.add(story.id);
@@ -7117,6 +7119,7 @@ export default function App() {
     setLecturaCliffhanger({
       storyId: story.id,
       correct,
+      checkpointMisses: Math.max(0, Number(checkpointMisses) || 0),
       earned,
       playStory0,
       playLecturaWin,
@@ -12009,6 +12012,7 @@ export default function App() {
         const checkDone = Object.keys(checkState).length;
         const claimed = !!prog.stories?.[story.id];
         const answered = Object.keys(ansSel).length;
+        const checkpointMisses = lecturaCheckpointMissCount(checkState, checkpoints);
         const qOrder = storyShuffle?.storyId === story.id ? storyShuffle.questions : null;
         const cpOrder = storyShuffle?.storyId === story.id ? storyShuffle.checkpoints : null;
         const correct = story.questions.reduce((n, qq, i) => n + (isStoryChoiceCorrect(qq, ansSel[i], qOrder?.[i]) ? 1 : 0), 0);
@@ -12299,13 +12303,15 @@ export default function App() {
               })}
               {answered === story.questions.length && (
                 <div ref={lecturaClaimRef} data-testid="lectura-claim" className="pop" style={{ textAlign: "center", marginTop: 8 }}>
-                  <div style={{ fontWeight: 900, fontSize: 17, marginBottom: 10 }}>
-	                    {correct}/{story.questions.length} {uiLang === "en" ? "correct" : "correctas"} {correct === 3 ? "— ¡qué padre!" : ""}
+                  <div data-testid="lectura-score" style={{ fontWeight: 900, fontSize: 17, marginBottom: 10 }}>
+	                    {checkpointMisses > 0
+                      ? scoreCountClause(correct, story.questions.length - correct + checkpointMisses, uiLang)
+                      : <>{correct}/{story.questions.length} {uiLang === "en" ? "correct" : "correctas"} {correct === 3 ? "— ¡qué padre!" : ""}</>}
                   </div>
                   {claimed ? (
 	                    <Btn outline disabled>{freshClaimId === story.id ? L.xpJustClaimed : L.xpClaimed}</Btn>
                   ) : (
-	                    <Btn onClick={() => claimStory(story, correct)}>{L.claim} +{5 + correct * 10} XP · <IcGem size={14} /> 10</Btn>
+	                    <Btn onClick={() => claimStory(story, correct, checkpointMisses)}>{L.claim} +{5 + correct * 10} XP · <IcGem size={14} /> 10</Btn>
                   )}
                 </div>
               )}
@@ -12364,7 +12370,7 @@ export default function App() {
         const streakChip = streakChipLabel(prog.streak, uiLang);
         const popFirstStreak = shouldPopFirstStreak({ before: session.streakBefore, after: prog.streak });
         return (
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 20px", textAlign: "center", position: "relative" }}>
+        <div data-testid="lesson-win" style={{ maxWidth: 480, margin: "0 auto", paddingTop: 60, paddingLeft: 20, paddingRight: 20, paddingBottom: `calc(${ONBOARDING_CTA_BOTTOM + ONBOARDING_CTA_HEIGHT + ONBOARDING_CTA_CONTENT_GAP}px + env(safe-area-inset-bottom))`, textAlign: "center", position: "relative" }}>
           {!quietWin && !perchCard && <Confetti count={perfect ? 160 : 70} />}
           {perchCard && (
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
@@ -12448,7 +12454,7 @@ export default function App() {
           )}
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
-	            <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy ? LESSON_LIME_INK : undefined} onClick={continueFromWin}>{L.continue}</Btn>
+	            <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy ? LESSON_LIME_INK : undefined} onClick={continueFromWin} style={{ position: "fixed", left: 0, right: 0, width: "fit-content", marginLeft: "auto", marginRight: "auto", bottom: onboardingCtaBottomCss(), zIndex: 12 }}>{L.continue}</Btn>
           </div>
           {showFirstWinEmail && (
             <form

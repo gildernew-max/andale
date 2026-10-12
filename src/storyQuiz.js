@@ -19,6 +19,20 @@ export function isStoryLecturaDone(claimedStories, storyId) {
   return !!(storyId && claimedStories && claimedStories[storyId]);
 }
 
+/**
+ * Wrong checkpoint taps. An unanswered pause is not a miss.
+ * `checks` is `prog.storyChecks[storyId]` (index → chosen text).
+ */
+export function lecturaCheckpointMissCount(checks, checkpoints) {
+  const list = Array.isArray(checkpoints) ? checkpoints : [];
+  const map = checks && typeof checks === "object" ? checks : {};
+  return list.reduce((n, cp, idx) => {
+    const choice = map[idx] != null ? map[idx] : map[String(idx)];
+    if (choice == null || choice === "") return n;
+    return choice === cp?.a ? n : n + 1;
+  }, 0);
+}
+
 export function storyQuizEyebrow(lang) {
   return uiText(STORY_QUIZ_CUE, lang);
 }
