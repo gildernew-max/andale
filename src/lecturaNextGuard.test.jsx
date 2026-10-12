@@ -14,9 +14,15 @@ import App from "./App.jsx";
 import { mockBrowser } from "./flowsHarness.jsx";
 import {
   lecturaCheckpointAnswerClears,
+  lecturaGlossBlocksNext,
+  lecturaNextBottomCss,
   lecturaNextClearanceCss,
   lecturaNextClearancePx,
+  lecturaNextPinStyle,
   lecturaNextRowTop,
+  LECTURA_NEXT_Z,
+  LECTURA_WORD_SHEET_HOST_Z,
+  LECTURA_WORD_SHEET_Z,
 } from "./lecturaAdvance.js";
 
 const STORAGE_KEY = "andale-v3";
@@ -34,7 +40,7 @@ describe("lectura NEXT pin clearance and main gating", () => {
     localStorage.clear();
   });
 
-  const boot = async ({ paraIdx = 0, storyChecks, width = 360, height = 640 } = {}) => {
+  const boot = async ({ paraIdx = 0, storyChecks, width = 360, height = 640, theme = "light" } = {}) => {
     cleanup();
     localStorage.clear();
     mockBrowser({ voices: [{ lang: "es-MX", name: "Paulina" }] });
@@ -43,7 +49,7 @@ describe("lectura NEXT pin clearance and main gating", () => {
     Object.defineProperty(window, "innerHeight", { configurable: true, value: height });
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       welcomed: true, xp: 42, gems: 9, name: "Dave", contentVersion: 2, hearts: 5, uiLang: "en",
-      onboardingDone: true, firstSessionDone: true, paywallSeen: true, done: {}, theme: "light",
+      onboardingDone: true, firstSessionDone: true, paywallSeen: true, done: {}, theme,
       ...(storyChecks ? { storyChecks } : {}),
     }));
     localStorage.setItem(LIVE_KEY, JSON.stringify({
@@ -108,5 +114,70 @@ describe("lectura NEXT pin clearance and main gating", () => {
     await boot({ paraIdx: 5 });
     expect(screen.getByRole("button", { name: "Questions →" }).disabled).toBe(false);
     expect(screen.getByRole("button", { name: "← Back" }).disabled).toBe(false);
+  });
+
+  it("paints a solid page band at 360x640, with a hairline only in dark", async () => {
+    for (const theme of ["light", "dark"]) {
+      await boot({ theme });
+      expect(window.innerWidth).toBe(360);
+      expect(window.innerHeight).toBe(640);
+      expect(screen.getByTestId("app-shell").getAttribute("data-theme")).toBe(theme);
+      const advance = screen.getByTestId("lectura-advance");
+      const band = lecturaNextPinStyle(theme === "dark" ? "#15171C" : "#F6EFE4", theme === "dark" ? "#2A2E36" : undefined);
+      const rgb = (hex) => {
+        const h = hex.slice(1);
+        const n = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+        return `rgb(${n.join(", ")})`;
+      };
+      expect(advance.style.position).toBe("fixed");
+      expect(advance.style.bottom).toBe("0px");
+      expect(advance.style.paddingBottom).toBe(lecturaNextBottomCss());
+      expect([band.backgroundColor, rgb(band.backgroundColor)]).toContain(advance.style.backgroundColor);
+      expect(advance.style.backgroundImage).toBe("none");
+      expect(advance.style.boxShadow).toBe("none");
+      expect(advance.style.background).not.toMatch(/gradient/i);
+      expect(advance.style.paddingTop).toBe(`${band.paddingTop}px`);
+      expect(advance.style.zIndex).toBe(String(LECTURA_NEXT_Z));
+      if (theme === "dark") {
+        expect(advance.style.borderTopWidth).toBe("1px");
+        expect(advance.style.borderTopStyle).toBe("solid");
+        expect([`1px solid ${band.borderTop.slice(10)}`, `1px solid ${rgb(band.borderTop.slice(10))}`]).toContain(advance.style.borderTop);
+      } else {
+        expect(advance.style.borderTopStyle).toBe("none");
+        expect(band.borderTop).toBe("none");
+      }
+      const answers = [...screen.getByTestId("lectura-checkpoint-answers").querySelectorAll("button")];
+      expect(answers.at(-1).textContent).toBe("It only brings sadness");
+    }
+    expect(appSrc.includes("lecturaNextPinStyle(D.bg, theme === \"dark\" ? D.line : undefined)")).toBe(true);
+  });
+
+  it("stacks the open gloss sheet above NEXT so a tap on the sheet is not NEXT", async () => {
+    expect(lecturaGlossBlocksNext(LECTURA_WORD_SHEET_Z)).toBe(true);
+    expect(lecturaGlossBlocksNext(LECTURA_WORD_SHEET_HOST_Z)).toBe(true);
+    expect(LECTURA_WORD_SHEET_HOST_Z).toBeGreaterThan(LECTURA_WORD_SHEET_Z);
+    expect(LECTURA_WORD_SHEET_Z).toBeGreaterThan(LECTURA_NEXT_Z);
+
+    const user = await boot();
+    const flores = [...document.querySelectorAll("span")].find((el) => el.textContent === "flores");
+    expect(flores).toBeTruthy();
+    await user.click(flores);
+    const sheet = await screen.findByTestId("word-sheet");
+    await waitFor(() => expect(sheet.style.visibility).toBe("visible"));
+    const advance = screen.getByTestId("lectura-advance");
+    const host = screen.getByTestId("lectura-checkpoint");
+    expect(Number(sheet.style.zIndex)).toBe(LECTURA_WORD_SHEET_Z);
+    expect(Number(host.style.zIndex)).toBe(LECTURA_WORD_SHEET_HOST_Z);
+    expect(Number(advance.style.zIndex)).toBe(LECTURA_NEXT_Z);
+    expect(lecturaGlossBlocksNext(Number(host.style.zIndex), Number(advance.style.zIndex))).toBe(true);
+    expect(sheet.style.pointerEvents).toBe("auto");
+    expect(sheet.style.pointerEvents).not.toBe("none");
+
+    const next = screen.getByRole("button", { name: "Next →" });
+    expect(next.disabled).toBe(false);
+    const before = screen.getByTestId("lectura-paragraph-first").textContent;
+    await user.click(sheet);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toBe(before);
+    expect(screen.getByRole("button", { name: "Next →" }).disabled).toBe(false);
   });
 });

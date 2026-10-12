@@ -77,6 +77,10 @@ export const LECTURA_NEXT_BOTTOM = ONBOARDING_CTA_BOTTOM;
 export const LECTURA_NEXT_GAP = ONBOARDING_CTA_CONTENT_GAP;
 /** Measured Lectura Btn row: 13px pad + Nunito 800 line + 13px pad + 4px lip. */
 export const LECTURA_NEXT_HEIGHT = 52;
+/** Pin stacking. The gloss sheet and its checkpoint host sit above this. */
+export const LECTURA_NEXT_Z = 11;
+export const LECTURA_WORD_SHEET_Z = 30;
+export const LECTURA_WORD_SHEET_HOST_Z = 31;
 export const LECTURA_PARAGRAPH_FONT = 17;
 export const LECTURA_PARAGRAPH_LEADING = 1.75;
 
@@ -200,25 +204,39 @@ export function lecturaStoryOpenTextTop(stillHeight = lecturaStillBandHeight()) 
 }
 
 /**
- * Page-colored pin. Button faces keep their own ink. Story content scrolls
- * under this row and above it. Aligned to the 600px story column.
+ * True when the gloss sheet's stacking context paints above the pin,
+ * so a tap on the sheet cannot land on NEXT.
  */
-export function lecturaNextPinStyle(background) {
-  const bottom = lecturaNextBottomCss();
+export function lecturaGlossBlocksNext(sheetZ, pinZ = LECTURA_NEXT_Z) {
+  const sheet = Number(sheetZ);
+  const pin = Number(pinZ);
+  return Number.isFinite(sheet) && Number.isFinite(pin) && sheet > pin;
+}
+
+/**
+ * Solid page-color band. The box itself runs to the viewport edge, so the
+ * 16px inset is background, not a shadow. `line` is the dark hairline only.
+ * Button faces keep their own ink. Aligned to the 600px story column.
+ */
+export function lecturaNextPinStyle(background, line) {
+  const hairline = typeof line === "string" && line.length > 0;
   return {
     position: "fixed",
     left: 0,
     right: 0,
-    bottom,
-    zIndex: 11,
+    bottom: 0,
+    zIndex: LECTURA_NEXT_Z,
     display: "flex",
     gap: 10,
     marginBottom: 0,
-    paddingTop: LECTURA_NEXT_GAP,
+    paddingTop: hairline ? LECTURA_NEXT_GAP - 1 : LECTURA_NEXT_GAP,
+    paddingBottom: lecturaNextBottomCss(),
     paddingLeft: "max(20px, calc(50% - 280px))",
     paddingRight: "max(20px, calc(50% - 280px))",
-    background,
+    backgroundColor: background,
+    backgroundImage: "none",
     boxSizing: "border-box",
-    boxShadow: `0 ${bottom} 0 0 ${background}`,
+    boxShadow: "none",
+    borderTop: hairline ? `1px solid ${line}` : "none",
   };
 }

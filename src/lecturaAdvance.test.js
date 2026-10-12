@@ -18,7 +18,11 @@ import {
   lecturaNextClearanceCss,
   lecturaNextClearancePx,
   lecturaNextRowTop,
+  lecturaGlossBlocksNext,
   lecturaNextPinStyle,
+  LECTURA_NEXT_Z,
+  LECTURA_WORD_SHEET_HOST_Z,
+  LECTURA_WORD_SHEET_Z,
   lecturaQuestionsOpenScrollY,
   lecturaStillAtLeast16x9,
   lecturaStillBandHeight,
@@ -110,10 +114,18 @@ assert(lecturaCheckpointAnswerClears({
   documentHeight: 1511 - 80 + lecturaNextClearancePx(),
   viewportHeight: 640,
 }), "story-0 paragraph 1 at 360x640 can scroll its last answer clear");
-const pin = lecturaNextPinStyle("#15171C");
-assert(pin.position === "fixed" && pin.bottom === lecturaNextBottomCss() && pin.paddingTop === 12, "pin style matches the onboarding CTA");
+const pin = lecturaNextPinStyle("#F6EFE4");
+assert(pin.position === "fixed" && pin.bottom === 0 && pin.paddingBottom === lecturaNextBottomCss() && pin.paddingTop === 12, "the band reaches the viewport edge and keeps the 16px inset as padding");
 assert(pin.marginBottom === 0 && pin.display === "flex" && pin.gap === 10, "NEXT row keeps the button gap; margin would add to the 16px inset");
-assert(pin.background === "#15171C" && pin.boxShadow.includes("#15171C"), "pin mask uses the page color already on screen");
+assert(pin.backgroundColor === "#F6EFE4" && pin.backgroundImage === "none" && pin.boxShadow === "none" && pin.borderTop === "none", "light band is solid page color, no shadow, no gradient, no hairline");
+const darkPin = lecturaNextPinStyle("#15171C", "#2A2E36");
+assert(darkPin.backgroundColor === "#15171C" && darkPin.backgroundImage === "none" && darkPin.boxShadow === "none", "dark band is solid page color");
+assert(darkPin.borderTop === "1px solid #2A2E36" && darkPin.paddingTop === 11, "dark hairline replaces 1px of the gap so the row top stays put");
+assert(LECTURA_WORD_SHEET_Z > LECTURA_NEXT_Z && LECTURA_WORD_SHEET_HOST_Z > LECTURA_WORD_SHEET_Z, "gloss sheet and its host paint above the pin");
+assert(lecturaGlossBlocksNext(LECTURA_WORD_SHEET_Z) && lecturaGlossBlocksNext(LECTURA_WORD_SHEET_HOST_Z), "an open gloss sheet takes the tap");
+assert(!lecturaGlossBlocksNext(LECTURA_NEXT_Z), "the pin does not block itself");
+assert(appSrc.includes("lecturaNextPinStyle(D.bg, theme === \"dark\" ? D.line : undefined)"), "dark NEXT row gets the D.line hairline");
+assert(appSrc.includes("zIndex: LECTURA_WORD_SHEET_Z") && appSrc.includes("zIndex: sheetBlocksAnswers ? LECTURA_WORD_SHEET_HOST_Z : \"auto\""), "gloss sheet stacking uses the shared constants");
 const textTop = lecturaStoryOpenTextTop(stillBand);
 assert(Math.abs(textTop - (LECTURA_STORY_OPEN_STILL_TOP + stillBand + 12)) < 0.001, "paragraph text starts under the cropped still");
 for (const [width, height] of [[360, 640], [390, 844]]) {
@@ -121,7 +133,7 @@ for (const [width, height] of [[360, 640], [390, 844]]) {
   assert(buttonTop > 0 && buttonTop + LECTURA_NEXT_HEIGHT === height - 16, `${width}x${height} NEXT sits 16px above the bottom`);
   assert(lecturaLinesAboveNext({ textTop, viewportHeight: height }) >= 2, `${width}x${height} keeps at least two Spanish lines above NEXT`);
 }
-assert(appSrc.includes("lecturaNextPinStyle(D.bg)"), "NEXT row uses the shared pin");
+assert(appSrc.includes("lecturaNextPinStyle(D.bg,"), "NEXT row uses the shared pin");
 assert(appSrc.includes("lecturaNextClearanceCss()"), "story column pads for the pin");
 assert(appSrc.includes('aspectRatio: "16 / 9"'), "still crop is 16:9");
 assert(appSrc.includes("advanceLectura(paraIdx + 1)"), "NEXT click still advances");

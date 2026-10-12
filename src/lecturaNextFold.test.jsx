@@ -90,8 +90,21 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
 
       const advance = screen.getByTestId("lectura-advance");
       expect(advance.style.position).toBe("fixed");
-      expect(advance.style.bottom).toBe(lecturaNextBottomCss());
-      expect(advance.style.paddingTop).toBe("12px");
+      expect(advance.style.bottom).toBe("0px");
+      expect(advance.style.paddingBottom).toBe(lecturaNextBottomCss());
+      expect(advance.style.paddingTop).toBe(theme === "dark" ? "11px" : "12px");
+      expect(advance.style.boxShadow).toBe("none");
+      expect(advance.style.backgroundImage).toBe("none");
+      expect(advance.style.background).not.toMatch(/gradient/i);
+      if (theme === "dark") {
+        expect(advance.style.borderTopWidth).toBe("1px");
+        expect(advance.style.borderTopStyle).toBe("solid");
+        expect(advance.style.borderTopColor).toMatch(/#2a2e36|rgb\(\s*42,\s*46,\s*54\s*\)/i);
+        expect(advance.style.backgroundColor).toMatch(/#15171c|rgb\(\s*21,\s*23,\s*28\s*\)/i);
+      } else {
+        expect(advance.style.borderTopStyle).toBe("none");
+        expect(advance.style.backgroundColor).toMatch(/#f6efe4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
+      }
       expect(advance.style.marginBottom).toBe("0px");
       expect(advance.style.display).toBe("flex");
       const buttonTop = lecturaNextButtonTop(height);
