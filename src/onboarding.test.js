@@ -1,11 +1,15 @@
-import { readFileSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { migrateFirstSession } from "./firstSession.js";
 import {
   CONTINUE_LABEL,
   EASIEST_UNIT_ID,
-  ONBOARDING_CTA_TOP,
+  ONBOARDING_CTA_BOTTOM,
+  ONBOARDING_CTA_CONTENT_GAP,
+  ONBOARDING_CTA_HEIGHT,
+  ONBOARDING_FRAME_HEIGHT,
+  ONBOARDING_FRAME_WIDTH,
   ONBOARDING_GOALS,
   ONBOARDING_LEVELS,
   ONBOARDING_MINUTE_CHIP,
@@ -20,6 +24,9 @@ import {
   readLearnerLevel,
   readLearningWhy,
   shouldShowOnboarding,
+  onboardingCtaBottomCss,
+  onboardingCtaClearanceCss,
+  onboardingCtaRect,
 } from "./onboarding.js";
 import { onboardingCopy, onboardingLine, onboardingPlanLine } from "./onboardingCopy.js";
 
@@ -56,7 +63,22 @@ function slots(node, acc = []) {
 }
 
 assert(ONBOARDING_TAPS === 7, "four screens: three choice CTAs plus the plan CTA, each choice preceded by its card");
-assert(ONBOARDING_CTA_TOP === 780, "CTA top is y=780 on a 390×844 frame");
+assert(ONBOARDING_CTA_BOTTOM === 16, "the button bottom edge sits 16px above the bottom safe area");
+assert(ONBOARDING_CTA_HEIGHT === 50, "single-line CTA block is 50px");
+assert(ONBOARDING_CTA_CONTENT_GAP === 12, "the last content line stops 12px above the button top");
+assert(ONBOARDING_FRAME_WIDTH === 390 && ONBOARDING_FRAME_HEIGHT === 844, "the phone check includes a 390×844 frame");
+for (const viewport of [{ viewportWidth: 360, viewportHeight: 640 }, { viewportWidth: 390, viewportHeight: 844 }]) {
+  const pin = onboardingCtaRect(viewport);
+  assert(pin.withinViewport, `${viewport.viewportWidth}×${viewport.viewportHeight} keeps the CTA on screen`);
+  assert(pin.bottomGap === 16 && pin.bottom === viewport.viewportHeight - 16, `${viewport.viewportWidth}×${viewport.viewportHeight} button bottom is 16px above the viewport bottom`);
+  assert(pin.top === viewport.viewportHeight - 16 - ONBOARDING_CTA_HEIGHT, `${viewport.viewportWidth}×${viewport.viewportHeight} button top follows the 16px pin`);
+  assert(pin.contentGap === 12 && pin.lastContentBottom === pin.top - 12, `${viewport.viewportWidth}×${viewport.viewportHeight} last content line is 12px above the button top`);
+}
+const insetCta = onboardingCtaRect({ viewportHeight: 640, viewportWidth: 360, safeAreaBottom: 34 });
+assert(insetCta.withinViewport && insetCta.bottomGap === 16 + 34 && insetCta.contentGap === 12, "a home-indicator inset lifts the button and keeps the 12px content gap");
+assert(insetCta.bottom === 640 - 16 - 34 && insetCta.lastContentBottom === insetCta.top - 12, "safe area adds to the 16px bottom gap only");
+assert(onboardingCtaBottomCss() === "calc(16px + env(safe-area-inset-bottom))", "bottom pin is 16px plus the safe area");
+assert(onboardingCtaClearanceCss() === "calc(66px + env(safe-area-inset-bottom))", "the shell ends at the button top: 16px gap plus the 50px block");
 assert(ONBOARDING_LEVELS.join(",") === "beginner,some,conversation", "three named levels");
 assert(ONBOARDING_WHYS.join(",") === "travel,family,live,work,me", "five reasons");
 assert(ONBOARDING_GOALS.join(",") === "5,10,15,20", "daily goal is 5, 10, 15, or 20 minutes");
@@ -138,7 +160,11 @@ assert(uiSrc.includes('padding: selected ? "11px 13px" : "12px 14px"'), "the sel
 assert(ONBOARDING_PAINT.light.selectedEdge === "#2E7500", "light selected edge is #2E7500");
 assert(ONBOARDING_PAINT.dark.selectedEdge === "#58CC02", "dark selected edge is #58CC02");
 assert(uiSrc.includes("onStart()"), "the plan CTA starts the lesson");
-assert(uiSrc.includes("top: ONBOARDING_CTA_TOP"), "the CTA is pinned at y=780");
+assert(uiSrc.includes('position: "fixed"') && uiSrc.includes("bottom: onboardingCtaBottomCss()"), "the CTA is fixed to the viewport bottom");
+assert(uiSrc.includes("paddingBottom: onboardingCtaClearanceCss()"), "the shell reserves the CTA block");
+assert(uiSrc.includes('data-testid="onboarding-scroll"') && uiSrc.includes('overflowY: "auto"'), "content above the CTA scrolls");
+assert(!uiSrc.includes('overflow: "hidden"'), "the onboarding shell does not clip with overflow hidden");
+assert(!/top:\s*780\b/.test(uiSrc) && !uiSrc.includes("ONBOARDING_CTA_" + "TOP"), "the y=780 pin is gone");
 assert(appSrc.includes("shouldShowOnboarding(p)"), "the gate runs on the loaded save");
 assert(appSrc.includes("migrateFirstSession(p)"), "existing saves still migrate first");
 assert(appSrc.includes("firstLessonForLevel("), "the level chooses the first lesson");
@@ -221,6 +247,24 @@ for (const id of ONBOARDING_WHYS) {
 }
 for (const count of ONBOARDING_GOALS) {
   assert(!onboardingCopy.goals[count].en.includes(".") && !onboardingCopy.goals[count].es.includes("."), "goal options have no period");
+}
+
+const bannedTop = "ONBOARDING_CTA_" + "TOP";
+const topPin = new RegExp("top:\\s*" + "780\\b");
+function sourceFiles(folder, acc = []) {
+  for (const entry of readdirSync(folder, { withFileTypes: true })) {
+    const path = join(folder, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === "node_modules") continue;
+      sourceFiles(path, acc);
+    } else if (/\.(js|jsx)$/.test(entry.name)) acc.push(path);
+  }
+  return acc;
+}
+for (const file of sourceFiles(dir)) {
+  const text = readFileSync(file, "utf8");
+  assert(!text.includes(bannedTop), `${file} still exports or applies the y=780 CTA pin`);
+  assert(!topPin.test(text), `${file} still pins a CTA at top 780`);
 }
 
 console.log("onboarding.test.js: ok");

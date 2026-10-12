@@ -9,8 +9,58 @@ export const ONBOARDING_GOALS = Object.freeze([5, 10, 15, 20]);
 /** Four screens. Each choice screen is a card tap plus the CTA. The plan is the CTA. */
 export const ONBOARDING_TAPS = 7;
 
-/** CTA top edge on a 390×844 frame. */
-export const ONBOARDING_CTA_TOP = 780;
+/** Button bottom edge sits this far above the bottom safe area at every viewport height. */
+export const ONBOARDING_CTA_BOTTOM = 16;
+/** Measured single-line block: 13px padding + 20px Nunito line + 13px padding + 4px lip. */
+export const ONBOARDING_CTA_HEIGHT = 50;
+/** Space between the last content line and the button top once the column is scrolled to the end. */
+export const ONBOARDING_CTA_CONTENT_GAP = 12;
+export const ONBOARDING_FRAME_WIDTH = 390;
+export const ONBOARDING_FRAME_HEIGHT = 844;
+
+export function onboardingCtaBottomCss() {
+  return `calc(${ONBOARDING_CTA_BOTTOM}px + env(safe-area-inset-bottom))`;
+}
+
+/** Shell padding that keeps the scrolling column above the fixed CTA. */
+export function onboardingCtaClearanceCss() {
+  return `calc(${ONBOARDING_CTA_BOTTOM + ONBOARDING_CTA_HEIGHT}px + env(safe-area-inset-bottom))`;
+}
+
+/** Where the pinned CTA sits. safeAreaBottom is px (0 when env() is 0). */
+export function onboardingCtaRect({
+  viewportHeight,
+  viewportWidth,
+  safeAreaBottom = 0,
+  buttonHeight = ONBOARDING_CTA_HEIGHT,
+} = {}) {
+  const bottomInset = ONBOARDING_CTA_BOTTOM + Number(safeAreaBottom || 0);
+  const height = buttonHeight;
+  const top = viewportHeight - bottomInset - height;
+  const left = 20;
+  const right = viewportWidth - 20;
+  const bottom = top + height;
+  const withinViewport = top >= 0
+    && bottom <= viewportHeight
+    && left >= 0
+    && right <= viewportWidth
+    && height > 0
+    && right > left;
+  const bottomGap = viewportHeight - bottom;
+  const lastContentBottom = top - ONBOARDING_CTA_CONTENT_GAP;
+  return {
+    top,
+    left,
+    right,
+    bottom,
+    width: right - left,
+    height,
+    withinViewport,
+    bottomGap,
+    contentGap: ONBOARDING_CTA_CONTENT_GAP,
+    lastContentBottom,
+  };
+}
 
 export const EASIEST_UNIT_ID = "subj1";
 
