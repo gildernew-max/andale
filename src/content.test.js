@@ -4967,9 +4967,9 @@ const story9Cast = readFileSync(join(repoRoot, "public", "lectura", "story-9", "
 assert(/don Adán/.test(story9Cast) && /White hair/.test(story9Cast) && /Straw hat/.test(story9Cast) && /red sash/.test(story9Cast), "story-9 CAST locks white hair/mustache, straw hat, white shirt, red sash");
 assert(appSrc.includes("lectura/${story.id}/p${pi}.png"), "Lectura still src is public/lectura/{storyId}/pN.png");
 const lecturaStillStyle = appSrc.slice(appSrc.indexOf("lectura-still-"), appSrc.indexOf("lectura-still-") + 720);
-assert(lecturaStillStyle.includes('width: "100%"') && lecturaStillStyle.includes("height: LECTURA_STILL_BAND_HEIGHT") && !lecturaStillStyle.includes("LECTURA_STILL_BAND_WIDTH") && !lecturaStillStyle.includes("aspectRatio"), "Lectura still is a full-width 90px band");
-assert(lecturaStillStyle.includes("LECTURA_STILL_MARGIN_BOTTOM") && lecturaStillStyle.includes("borderRadius: 4"), "Lectura still margin is 8px and the corner radius is 4px");
-assert(/objectFit:\s*"cover"/.test(lecturaStillStyle) && /objectPosition:\s*LECTURA_STILL_OBJECT_POSITION/.test(lecturaStillStyle), "Lectura still covers the band and locks onto the faces");
+assert(lecturaStillStyle.includes("LECTURA_STILL_CARD_INSET * 2") && lecturaStillStyle.includes("height: LECTURA_STILL_BAND_HEIGHT") && !lecturaStillStyle.includes("LECTURA_STILL_BAND_WIDTH") && !lecturaStillStyle.includes("aspectRatio"), "Lectura still is a full-card 90px band");
+assert(lecturaStillStyle.includes("LECTURA_STILL_MARGIN_BOTTOM") && lecturaStillStyle.includes("LECTURA_STILL_CARD_INSET") && lecturaStillStyle.includes("borderRadius: 4"), "Lectura still margin is 8px, bleeds to the card edge, and the corner radius is 4px");
+assert(/objectFit:\s*"cover"/.test(lecturaStillStyle) && /objectPosition:\s*lecturaStillObjectPosition\(story\.id, pi\)/.test(lecturaStillStyle), "Lectura still covers the band and uses the per-page face lock");
 assert(!lecturaStillStyle.includes("display: \"none\""), "Lectura still style does not hide the image");
 for (const s of STORIES) {
   s.paragraphs.forEach((_, i) => {
