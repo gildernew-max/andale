@@ -51,8 +51,9 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     expect(price.style.fontSize).toBe("13.5px");
     expect(price.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
     expect(price.compareDocumentPosition(screen.getByTestId("soft-paywall-annual")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
-    expect(wall.textContent).not.toMatch(/\$6\.99|Un mes|One month/);
+    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("US$6.99\u00A0al\u00A0mes");
+    expect(screen.getByTestId("soft-paywall-free-line").textContent).toBe("Gratis: los cuentos se abren uno a uno, en orden.");
+    expect(wall.textContent).not.toMatch(/Un mes|One month/);
     await waitFor(() => {
       const seen = (window.__andaleFunnelLog || []).filter((event) => event.event === "paywall_seen");
       expect(seen.length).toBeGreaterThan(0);
@@ -79,6 +80,13 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     await screen.findByTestId("soft-paywall");
     expect(screen.queryByTestId("story-reader")).toBeNull();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
+    fireEvent.click(screen.getByTestId("soft-paywall-annual"));
+    await waitFor(() => expect((window.__andaleFunnelLog || []).some((event) => event.event === "tap_annual" && event.source === "locked_story")).toBe(true));
+    fireEvent.click(screen.getByTestId("soft-paywall-monthly"));
+    await waitFor(() => expect((window.__andaleFunnelLog || []).some((event) => event.event === "tap_monthly" && event.source === "locked_story")).toBe(true));
+    expect((window.__andaleFunnelLog || []).some((event) => event.event === "paywall_tap" && event.choice === "monthly")).toBe(false);
+    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("Empezar plan anual");
+    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("US$6.99\u00A0al\u00A0mes");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(screen.getByTestId("story-shelf-story-0")).toBeTruthy();
@@ -86,6 +94,27 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     await user.click(screen.getByTestId("story-shelf-story-0"));
     const reader = await screen.findByTestId("story-reader");
     expect(reader.getAttribute("data-story-id")).toBe("story-0");
+  });
+
+  it("continue free returns to the stories list and stays down until a new locked tap", async () => {
+    seedProgress({ uiLang: "en", ...ready });
+    const user = await boot();
+    await user.click(screen.getByTestId("nav-lectura"));
+    fireEvent.click(screen.getByTestId("story-shelf-story-1"));
+    await screen.findByTestId("soft-paywall");
+    await user.click(screen.getByTestId("soft-paywall-dismiss"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("story-shelf-story-1")).toBeTruthy();
+    document.dispatchEvent(new Event("visibilitychange"));
+    window.dispatchEvent(new Event("focus"));
+    window.dispatchEvent(new Event("pageshow"));
+    window.dispatchEvent(new Event("resize"));
+    await user.click(screen.getByTestId("lang-es"));
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.getByTestId("story-shelf-story-1")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("story-shelf-story-1"));
+    await screen.findByTestId("soft-paywall");
+    expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).toBe("locked-story");
   });
 
   it("an English locked tap uses the much-more line and the dollar price", async () => {

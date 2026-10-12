@@ -21,10 +21,10 @@ const VIEWPORTS = [
 ];
 
 const FACES = [
-  { theme: "light", uiLang: "en", annual: "Start annual plan", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", holdInk: "#6b6258", freeInk: "#6b6258", page: "" },
-  { theme: "light", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", holdInk: "#6b6258", freeInk: "#6b6258", page: "" },
-  { theme: "dark", uiLang: "en", annual: "Start annual plan", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", holdInk: "#cdbba6", freeInk: "#f6efe4", page: "#15171c" },
-  { theme: "dark", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", holdInk: "#cdbba6", freeInk: "#f6efe4", page: "#15171c" },
+  { theme: "light", uiLang: "en", annual: "Start annual plan", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", monthly: "$6.99\u00A0a\u00A0month", monthlyHold: "Monthly plans aren't open yet. Keep reading free for now.", freeLine: "Free: stories unlock one at a time, in order.", holdInk: "#6b6258", freeInk: "#6b6258", monthlyInk: "#1f3a1a", monthlyBorder: "#6b6258", page: "" },
+  { theme: "light", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", monthly: "US$6.99\u00A0al\u00A0mes", monthlyHold: "El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.", freeLine: "Gratis: los cuentos se abren uno a uno, en orden.", holdInk: "#6b6258", freeInk: "#6b6258", monthlyInk: "#1f3a1a", monthlyBorder: "#6b6258", page: "" },
+  { theme: "dark", uiLang: "en", annual: "Start annual plan", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", monthly: "$6.99\u00A0a\u00A0month", monthlyHold: "Monthly plans aren't open yet. Keep reading free for now.", freeLine: "Free: stories unlock one at a time, in order.", holdInk: "#cdbba6", freeInk: "#f6efe4", monthlyInk: "#f5efe6", monthlyBorder: "#cdbba6", page: "#15171c" },
+  { theme: "dark", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", monthly: "US$6.99\u00A0al\u00A0mes", monthlyHold: "El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.", freeLine: "Gratis: los cuentos se abren uno a uno, en orden.", holdInk: "#cdbba6", freeInk: "#f6efe4", monthlyInk: "#f5efe6", monthlyBorder: "#cdbba6", page: "#15171c" },
 ];
 
 const norm = (value) => {
@@ -102,7 +102,7 @@ describe("paywall card", () => {
 
   it.each(VIEWPORTS.flatMap((viewport) => FACES.map((face) => ({ ...viewport, ...face }))))(
     "$width×$height $theme $uiLang keeps Start annual plan and Continue free on the card",
-    async ({ width, height, theme, uiLang, annual, free, hold: holdLine, holdInk, freeInk, page }) => {
+    async ({ width, height, theme, uiLang, annual, free, hold: holdLine, monthly: monthlyLabel, monthlyHold: monthlyHoldLine, freeLine, holdInk, freeInk, monthlyInk, monthlyBorder, page }) => {
       setViewport({ width, height });
       openPaywall({ theme, uiLang });
       const year = await screen.findByTestId("soft-paywall-annual");
@@ -116,18 +116,36 @@ describe("paywall card", () => {
       expect(card.contains(dismiss)).toBe(true);
       expect(screen.queryByTestId("soft-paywall-scroll")).toBeNull();
       expect(screen.queryByTestId("soft-paywall-footer")).toBeNull();
-      expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
+      const monthly = screen.getByTestId("soft-paywall-monthly");
+      const note = screen.getByTestId("soft-paywall-free-line");
       expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
       expect(wall.style.overflow).toBe("hidden");
       expect(wall.style.paddingBottom).toBe("calc(16px + env(safe-area-inset-bottom))");
       expect(wall.style.alignItems).toBe("center");
       expect(wall.style.justifyContent).toBe("center");
       if (page) expect(norm(wall.style.background)).toBe(page);
-      expect(card.style.maxHeight).toBe("");
+      expect(card.style.maxHeight).toBe("100%");
       expect(card.style.overflow).not.toBe("auto");
       expect(card.style.overflowY).not.toBe("auto");
       expect(dismiss.style.marginTop).toBe("12px");
-      expect(year.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(monthly.style.marginTop).toBe("12px");
+      expect(note.style.marginTop).toBe("8px");
+      expect(note.textContent).toBe(freeLine);
+      expect(note.style.fontSize).toBe("12px");
+      expect(note.style.fontWeight).toBe("700");
+      expect(note.style.textAlign).toBe("center");
+      expect(norm(note.style.color)).toBe(holdInk);
+      expect(monthly.textContent).toBe(monthlyLabel);
+      expect(monthly.textContent.includes(" ")).toBe(false);
+      expect(monthly.style.background).toBe("none");
+      expect(monthly.style.width).toBe("100%");
+      expect(norm(monthly.style.color)).toBe(monthlyInk);
+      expect(norm(monthly.style.borderTopColor)).toBe(monthlyBorder);
+      expect(monthly.style.borderTopWidth).toBe("2px");
+      expect(norm(monthly.style.background)).not.toBe("#58cc02");
+      expect(year.compareDocumentPosition(monthly) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(monthly.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(dismiss.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
       expect(year.disabled).toBe(false);
       expect(year.style.pointerEvents).not.toBe("none");
@@ -179,15 +197,32 @@ describe("paywall card", () => {
       expect(norm(hold.style.color)).toBe(holdInk);
       expect(dismiss.style.marginTop).toBe("12px");
       expect(year.compareDocumentPosition(hold) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      expect(hold.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(hold.compareDocumentPosition(monthly) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(monthly.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(year.disabled).toBe(false);
       expect(year.style.pointerEvents).not.toBe("none");
       expect(norm(year.style.background)).toBe("#58cc02");
       expect(norm(year.style.color)).toBe("#1f3a1a");
       expect(year.style.animation || "").toBe("");
       expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-      expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\$6\.99|charged|cobra|Apple|Restore|Un mes|One month/);
+      expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/charged|cobra|Apple|Restore|Un mes|One month/);
       expect(screen.getByTestId("soft-paywall").textContent).toContain(uiLang === "en" ? "$39.99\u00A0a\u00A0year" : "US$39.99\u00A0al\u00A0año");
+      expect((window.__andaleFunnelLog || []).some((event) => event.event === FUNNEL_EVENTS.tapAnnual && event.source === "timed")).toBe(true);
+      expect(monthly.textContent).toBe(monthlyLabel);
+      expect(norm(monthly.style.color)).toBe(monthlyInk);
+      expect(norm(monthly.style.background)).not.toBe("#58cc02");
+      await user.click(monthly);
+      const monthHold = screen.getByTestId("soft-paywall-monthly-hold");
+      expect(monthHold.textContent).toBe(monthlyHoldLine);
+      expect(monthHold.style.marginTop).toBe(`${PAYWALL_ANNUAL_HOLD_GAP}px`);
+      expect(monthHold.style.fontSize).toBe("13.5px");
+      expect(monthHold.style.fontWeight).toBe("700");
+      expect(norm(monthHold.style.color)).toBe(holdInk);
+      expect(screen.getByTestId("soft-paywall-annual").textContent).toBe(annual);
+      expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe(monthlyLabel);
+      expect(norm(screen.getByTestId("soft-paywall-annual").style.background)).toBe("#58cc02");
+      expect((window.__andaleFunnelLog || []).filter((event) => event.event === "paywall_tap" && event.choice === "monthly")).toHaveLength(0);
+      expect((window.__andaleFunnelLog || []).some((event) => event.event === "tap_monthly" && event.source === "timed")).toBe(true);
       await user.click(screen.getByTestId("soft-paywall-dismiss"));
       await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
       expect((window.__andaleFunnelLog || []).some((event) => event.event === FUNNEL_EVENTS.paywallTap && event.choice === "continue_free")).toBe(true);

@@ -1,4 +1,4 @@
-import { ANNUAL_PRICE_PLACEHOLDER, LOCKED_STORY_PAYWALL, PAYWALL_ANNUAL_HOLD_GAP, annualPriceLine } from "./webPaywall.js";
+import { ANNUAL_PRICE_PLACEHOLDER, LOCKED_STORY_PAYWALL, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_MONTHLY_GAP, annualPriceLine } from "./webPaywall.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -32,5 +32,9 @@ assert(!enLine.includes(" "), "the English price line has no breaking space");
 assert(!esLine.includes(" "), "the Spanish price line has no breaking space");
 
 assert(PAYWALL_ANNUAL_HOLD_GAP === 8, "the post-tap line sits 8px under annual");
+assert(PAYWALL_MONTHLY_GAP === 12, "monthly sits 12px under annual");
+assert(PAYWALL_FREE_GAP === 12, "Continue free sits 12px under monthly");
+assert(PAYWALL_FREE_LINE_GAP === 8, "the free line sits 8px under Continue free");
+assert(PAYWALL_FREE_LINE_SIZE === 12, "the free line is one step down from 13.5");
 
 console.log("webPaywall.test.js ok");

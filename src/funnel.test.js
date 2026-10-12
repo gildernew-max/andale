@@ -22,6 +22,8 @@ assert(FUNNEL_EVENTS.lecturaStart === "lectura_start", "lectura_start is the sto
 assert(FUNNEL_EVENTS.lecturaChapterDone === "lectura_chapter_done", "lectura_chapter_done is the chapter complete");
 assert(FUNNEL_EVENTS.paywallSeen === "paywall_seen", "paywall_seen is the wall visible");
 assert(FUNNEL_EVENTS.paywallTap === "paywall_tap", "paywall_tap is the wall CTA");
+assert(FUNNEL_EVENTS.tapAnnual === "tap_annual", "tap_annual is the annual button");
+assert(FUNNEL_EVENTS.tapMonthly === "tap_monthly", "tap_monthly is the monthly button");
 assert(FUNNEL_EVENTS.waitlistSubmit === "waitlist_submit", "waitlist_submit is the notice submit");
 assert(FUNNEL_EVENTS.purchase === "purchase", "purchase is the StoreKit success step");
 assert(FUNNEL_EVENTS.firstWinSeen === "first-win-seen", "first-win-seen is the email card");
@@ -33,7 +35,7 @@ assert(FUNNEL_EVENTS.firstSessionComplete === "first_session_complete", "first_s
 assert(FUNNEL_EVENTS.day2Return === "day2_return", "day2_return is the later-day open");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "lectura_chapter_done", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "waitlist_submit"].join(","),
+    === ["cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "lectura_chapter_done", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "tap_annual", "tap_monthly", "waitlist_submit"].join(","),
   "funnel allowlist is the conversion chain plus lectura, paywall, waitlist, first-win email, and first-session measurement",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
@@ -202,6 +204,32 @@ const monthly = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: "mont
 assert(monthly.choice === "monthly", "monthly tap is labeled");
 const junkTap = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: "lifetime" }, bus);
 assert(junkTap.choice == null, "unknown tap choice is dropped");
+
+for (const source of Object.values(PAYWALL_SEEN_SOURCE)) {
+  const annualTap = emitFunnelEvent({
+    event: FUNNEL_EVENTS.tapAnnual,
+    source,
+    price: "$39.99",
+    choice: "annual",
+  }, bus);
+  assert(annualTap.event === "tap_annual" && annualTap.source === source, `tap_annual keeps ${source}`);
+  assert(annualTap.price == null && annualTap.choice == null, "tap_annual drops price and choice");
+  assert(Object.keys(annualTap).sort().join(",") === "at,event,source", "tap_annual is event + at + source");
+  const monthlyTap = emitFunnelEvent({
+    event: FUNNEL_EVENTS.tapMonthly,
+    source,
+    price: "$6.99",
+    choice: "monthly",
+  }, bus);
+  assert(monthlyTap.event === "tap_monthly" && monthlyTap.source === source, `tap_monthly keeps ${source}`);
+  assert(monthlyTap.price == null && monthlyTap.choice == null, "tap_monthly drops price and choice");
+  assert(Object.keys(monthlyTap).sort().join(",") === "at,event,source", "tap_monthly is event + at + source");
+}
+const junkAnnual = emitFunnelEvent({ event: FUNNEL_EVENTS.tapAnnual, source: "boot" }, bus);
+assert(junkAnnual.source == null, "tap_annual drops an unknown source");
+assert(Object.keys(junkAnnual).sort().join(",") === "at,event", "tap_annual without a source is event + at");
+const junkMonthly = emitFunnelEvent({ event: FUNNEL_EVENTS.tapMonthly, source: "boot" }, bus);
+assert(junkMonthly.source == null, "tap_monthly drops an unknown source");
 
 const notice = emitFunnelEvent({
   event: FUNNEL_EVENTS.waitlistSubmit,

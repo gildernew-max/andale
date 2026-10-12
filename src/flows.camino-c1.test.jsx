@@ -406,7 +406,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(cream);
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();
-    expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
+    const monthly = screen.getByTestId("soft-paywall-monthly");
+    expect(monthly.textContent).toBe("US$6.99\u00A0al\u00A0mes");
+    expect(monthly.style.background).toBe("none");
+    expect(monthly.style.color).toMatch(/#F5EFE6|rgb\(\s*245,\s*239,\s*230\s*\)/i);
+    expect(monthly.style.borderTopColor).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-free-line").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
   });
 
   it("cold first Hoy CONTINUE shows soft paywall once before idle home", async () => {
@@ -1637,12 +1642,12 @@ describe("inert web paywall", () => {
     expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\[ANNUAL PRICE\]|\{price\}/);
     expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");
-    expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
+    expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe(lang === "en" ? "$6.99\u00A0a\u00A0month" : "US$6.99\u00A0al\u00A0mes");
     expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-legal")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-restore")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\$6\.99|€|Apple|Restore|Restaurar|charged|cobra|Un mes|One month/);
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/€|Apple|Restore|Restaurar|charged|cobra|Un mes|One month/);
     expect(restoreCalls).toBe(0);
     expect(purchaseCalls).toBe(0);
     await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));

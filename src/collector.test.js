@@ -152,6 +152,35 @@ await shipFunnelEvent({
   fetchImpl: async () => { throw new Error("fetch should not run"); },
 });
 assert(junkSource.length === 1 && !("source" in junkSource[0]), "an unknown paywall_seen source is not posted");
+for (const name of [FUNNEL_EVENTS.tapAnnual, FUNNEL_EVENTS.tapMonthly]) {
+  const posted = [];
+  for (const source of ["win", "locked_story", "timed"]) {
+    const result = await shipFunnelEvent({
+      event: name,
+      at: "2026-09-28T18:05:00.000Z",
+      source,
+      price: "$6.99",
+      choice: "monthly",
+    }, {
+      endpoint,
+      lang: "es",
+      storage,
+      random: () => "device-anonymous-1",
+      beaconImpl: (_url, body) => {
+        posted.push(JSON.parse(body));
+        return true;
+      },
+      fetchImpl: async () => { throw new Error("fetch should not run"); },
+    });
+    assert(result.sent === true, `${name} ${source} is sent`);
+  }
+  assert(posted.map((row) => row.source).join(",") === "win,locked_story,timed", `${name} posts the allowlisted source`);
+  for (const row of posted) {
+    assert(row.name === name, `${name} posts its own event name`);
+    assert(Object.keys(row).sort().join(",") === "deviceId,lang,name,source,ts,type", `${name} posted keys add source only`);
+    assert(!("price" in row) && !("choice" in row), `${name} source row drops other extras`);
+  }
+}
 const droppedSource = [];
 for (const name of [
   FUNNEL_EVENTS.paywallTap,
