@@ -60,7 +60,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaQuestionsOpenScrollY, lecturaStickyHeaderBottom, LECTURA_STILL_BAND_WIDTH, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
+import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextCoverStyle, lecturaNextPinStyle, lecturaQuestionsOpenScrollY, lecturaStickyHeaderBottom, LECTURA_STILL_BAND_WIDTH, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
 import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -7148,6 +7148,7 @@ export default function App() {
   };
 
   const advanceLectura = (idx) => {
+    if (wordSel) return;
     stopNarration();
     setWordSel(null);
     lecturaAdvanceScrollRef.current = true;
@@ -12115,7 +12116,7 @@ export default function App() {
             ); })}
 
             {paraIdx < story.paragraphs.length && (
-              <div data-testid="lectura-advance" style={lecturaNextPinStyle(D.bg, theme === "dark" ? D.line : undefined)}>
+              <div data-testid="lectura-advance" style={{ ...lecturaNextPinStyle(D.bg, theme === "dark" ? D.line : undefined), pointerEvents: wordSel ? "none" : "auto" }}>
                 <Btn outline disabled={paraIdx === 0} onClick={() => advanceLectura(paraIdx - 1)} style={{ flex: 1 }}>
                   ← {uiLang === "en" ? "Back" : "Anterior"}
                 </Btn>
@@ -12283,6 +12284,9 @@ export default function App() {
             )}
 
             {/* definition card — placed on open; a later scroll does not move the page back */}
+            {wordSel && (
+              <div data-testid="lectura-next-cover" aria-hidden="true" style={lecturaNextCoverStyle(D.bg)} />
+            )}
             {wordSel && (
               <div onClick={() => setWordSel(null)} style={{ display: wordSheetBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: wordSheetBox ? wordSheetBox.backdropBottom : 0, zIndex: 29 }} />
             )}

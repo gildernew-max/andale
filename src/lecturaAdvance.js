@@ -79,6 +79,12 @@ export const LECTURA_NEXT_GAP = ONBOARDING_CTA_CONTENT_GAP;
 export const LECTURA_NEXT_HEIGHT = 52;
 /** Pin stacking. The gloss sheet and its checkpoint host sit above this. */
 export const LECTURA_NEXT_Z = 11;
+/**
+ * Page-colored band over the pin while a gloss sheet is open.
+ * Above the pin, below the sheet (30) and the checkpoint host (31),
+ * so the right-edge sliver cannot take a tap and the checkpoint stays put.
+ */
+export const LECTURA_NEXT_COVER_Z = 12;
 export const LECTURA_WORD_SHEET_Z = 30;
 export const LECTURA_WORD_SHEET_HOST_Z = 31;
 export const LECTURA_PARAGRAPH_FONT = 17;
@@ -238,5 +244,31 @@ export function lecturaNextPinStyle(background, line) {
     boxSizing: "border-box",
     boxShadow: "none",
     borderTop: hairline ? `1px solid ${line}` : "none",
+  };
+}
+
+/** Height of the pinned row, including the 16px inset and the safe area. */
+export function lecturaNextPinHeightPx() {
+  return LECTURA_NEXT_GAP + LECTURA_NEXT_HEIGHT + LECTURA_NEXT_BOTTOM;
+}
+
+/**
+ * Solid page-color cover for the pinned row. Same fill as the pin, no
+ * border, shadow, or extra chrome. It only exists while a gloss sheet is open.
+ */
+export function lecturaNextCoverStyle(background) {
+  return {
+    position: "fixed",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: `calc(${lecturaNextPinHeightPx()}px + env(safe-area-inset-bottom))`,
+    zIndex: LECTURA_NEXT_COVER_Z,
+    backgroundColor: background,
+    backgroundImage: "none",
+    boxSizing: "border-box",
+    boxShadow: "none",
+    border: "none",
+    pointerEvents: "auto",
   };
 }
