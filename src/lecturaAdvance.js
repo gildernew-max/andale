@@ -14,6 +14,43 @@ export function lecturaAdvanceScrollY({ paragraphTop, scrollY = 0, headerBottom 
   return Math.max(0, base + top - inset);
 }
 
+/**
+ * QUESTIONS open. The comprehension header's top meets the brand bar's bottom.
+ * Q1 stays in the page under that header. No stuck chrome.
+ */
+export function lecturaQuestionsOpenScrollY({ headerTop, scrollY = 0, viewportTop = 0 } = {}) {
+  return lecturaAdvanceScrollY({ paragraphTop: headerTop, scrollY, headerBottom: viewportTop });
+}
+
+/**
+ * Once every question is answered, scroll so the claim block is fully inside
+ * the readable viewport. The readable top is the brand bar only.
+ * Already fully visible: stay put. Taller than the readable area: pin its top.
+ */
+export function lecturaClaimScrollY({
+  claimTop,
+  claimBottom,
+  scrollY = 0,
+  viewportHeight,
+  viewportTop = 0,
+  bottomGap = 12,
+} = {}) {
+  const y = Number.isFinite(Number(scrollY)) ? Number(scrollY) : 0;
+  const top = Number(claimTop);
+  const bottom = Number(claimBottom);
+  const vh = Number(viewportHeight);
+  const inset = Number.isFinite(Number(viewportTop)) ? Math.max(0, Number(viewportTop)) : 0;
+  const gap = Number.isFinite(Number(bottomGap)) ? Math.max(0, Number(bottomGap)) : 0;
+  const floor = vh - gap;
+  if (!Number.isFinite(top) || !Number.isFinite(bottom) || !Number.isFinite(vh) || floor <= inset) return Math.max(0, y);
+  const height = bottom - top;
+  if (!(height > 0)) return Math.max(0, y);
+  if (height >= floor - inset) return Math.max(0, y + top - inset);
+  if (top < inset) return Math.max(0, y + top - inset);
+  if (bottom > floor) return Math.max(0, y + bottom - floor);
+  return Math.max(0, y);
+}
+
 /** Bottom edge of the sticky bar that holds the brand lockup, in viewport px. */
 export function lecturaStickyHeaderBottom(start) {
   let node = start || null;

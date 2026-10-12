@@ -4,6 +4,7 @@
  * pinned footer stay as they are.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { lecturaQuestionsOpenScrollY } from "./lecturaAdvance.js";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
@@ -48,10 +49,12 @@ describe("lectura next placement and advance scroll", () => {
     Object.defineProperty(window, "pageYOffset", { configurable: true, get: () => scrollY });
     realRect = HTMLElement.prototype.getBoundingClientRect;
     HTMLElement.prototype.getBoundingClientRect = function lecturaRect() {
-      if (this.style && this.style.position === "sticky") return rect(0, 72, 390);
       const id = this.getAttribute && this.getAttribute("data-testid");
       if (id === "lectura-paragraph" || id === "lectura-paragraph-first") return rect(820, 580);
+      if (id === "lectura-questions-header") return rect(1180, 80);
+      if (id === "story-q-prompt") return rect(1600, 48);
       if (id === "lectura-questions") return rect(1100, 640);
+      if (this.style && this.style.position === "sticky") return rect(0, 72, 390);
       return realRect.call(this);
     };
     const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation((x, y) => {
@@ -114,11 +117,17 @@ describe("lectura next placement and advance scroll", () => {
     expect(scrollY).toBe(afterBack + 820 - 72);
   });
 
-  it("scrolls the question block to the readable top from the questions advance", async () => {
+  it("scrolls the questions header and Q1 to the readable top from the questions advance", async () => {
     const { user } = await bootStory();
     await user.click(screen.getByRole("button", { name: "Preguntas" }));
-    await waitFor(() => expect(screen.getByTestId("lectura-questions")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("lectura-questions-header")).toBeTruthy());
     expect(screen.queryByTestId("lectura-advance")).toBeNull();
-    expect(scrollY).toBe(900 + 1100 - 72);
+    const header = screen.getByTestId("lectura-questions-header");
+    expect(header.style.position).not.toBe("sticky");
+    expect(document.documentElement.style.getPropertyValue("--lectura-brand-bottom")).toBe("");
+    expect(scrollY).toBe(lecturaQuestionsOpenScrollY({
+      headerTop: 1180, scrollY: 900, viewportTop: 72,
+    }));
+    expect(scrollY).toBe(900 + 1180 - 72);
   });
 });

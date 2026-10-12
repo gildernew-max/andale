@@ -60,7 +60,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { lecturaAdvanceScrollY, lecturaStickyHeaderBottom } from "./lecturaAdvance.js";
+import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaQuestionsOpenScrollY, lecturaStickyHeaderBottom } from "./lecturaAdvance.js";
 import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -5312,6 +5312,8 @@ export default function App() {
   const [lecturaAdvanceNonce, setLecturaAdvanceNonce] = useState(0);
   const lecturaParagraphRef = useRef(null);
   const lecturaQuestionsRef = useRef(null);
+  const lecturaQuestionsHeaderRef = useRef(null);
+  const lecturaClaimRef = useRef(null);
   const lecturaAdvanceScrollRef = useRef(false);
   const [voiceDead, setVoiceDead] = useState(false);
   useEffect(() => {
@@ -6978,17 +6980,41 @@ export default function App() {
       return;
     }
     if (!lecturaAdvanceScrollRef.current || wordSheetSpacer) return;
-    const el = lecturaParagraphRef.current || lecturaQuestionsRef.current;
-    if (!el) return;
     const headerBottom = lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']"));
-    const nextY = lecturaAdvanceScrollY({
-      paragraphTop: el.getBoundingClientRect().top,
-      scrollY: window.scrollY,
-      headerBottom,
-    });
+    const paragraph = lecturaParagraphRef.current;
+    const qHeader = lecturaQuestionsHeaderRef.current;
+    if (!paragraph && !qHeader) return;
+    const nextY = paragraph
+      ? lecturaAdvanceScrollY({
+        paragraphTop: paragraph.getBoundingClientRect().top,
+        scrollY: window.scrollY,
+        headerBottom,
+      })
+      : lecturaQuestionsOpenScrollY({
+        headerTop: qHeader.getBoundingClientRect().top,
+        scrollY: window.scrollY,
+        viewportTop: headerBottom,
+      });
     lecturaAdvanceScrollRef.current = false;
     if (Math.abs((Number(window.scrollY) || 0) - nextY) > 0.5) window.scrollTo(0, nextY);
   }, [screen, paraIdx, wordSheetSpacer, lecturaAdvanceNonce]);
+
+  // Claim mounts under Q3. Pull the whole block above the fold once it exists.
+  useLayoutEffect(() => {
+    if (screen !== "story") return;
+    const claim = lecturaClaimRef.current;
+    if (!claim) return;
+    const brand = lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']"));
+    const box = claim.getBoundingClientRect();
+    const nextY = lecturaClaimScrollY({
+      claimTop: box.top,
+      claimBottom: box.bottom,
+      scrollY: window.scrollY,
+      viewportHeight: window.innerHeight,
+      viewportTop: brand,
+    });
+    if (Math.abs((Number(window.scrollY) || 0) - nextY) > 0.5) window.scrollTo(0, nextY);
+  }, [screen, paraIdx, ansSel]);
 
   const releaseLecturaWin = (beat) => {
     if (!beat) return;
@@ -12164,10 +12190,12 @@ export default function App() {
               ← {uiLang === "en" ? "Back to the story" : "Volver al cuento"}
             </Btn>
             <div style={{ borderTop: `2px solid ${D.line}`, marginTop: 12, paddingTop: 20 }}>
+              <div ref={lecturaQuestionsHeaderRef} data-testid="lectura-questions-header">
 	              <h3 style={{ fontWeight: 900, fontSize: 19, margin: "0 0 4px" }}>{L.comprehension}</h3>
               <p style={{ fontSize: 13, fontWeight: 800, color: D.sub, margin: "0 0 16px" }}>
 	                {L.easyQuestions} <IcBolt size={13} /> 35 XP · {checkDone}/{checkpoints.length} {uiLang === "en" ? "checkpoints" : "pausas"} {claimed && <span style={{ color: limeText(D.okText, D) }}>— {uiLang === "en" ? "collectible unlocked" : "coleccionable desbloqueado"}</span>}
               </p>
+              </div>
               {story.questions.map((qq, i) => {
                 const shown = storyQuestionChoices(qq, qOrder?.[i]);
                 const sel = selectedStoryChoice(qq, ansSel[i], shown);
@@ -12210,7 +12238,7 @@ export default function App() {
                 );
               })}
               {answered === story.questions.length && (
-                <div className="pop" style={{ textAlign: "center", marginTop: 8 }}>
+                <div ref={lecturaClaimRef} data-testid="lectura-claim" className="pop" style={{ textAlign: "center", marginTop: 8 }}>
                   <div style={{ fontWeight: 900, fontSize: 17, marginBottom: 10 }}>
 	                    {correct}/{story.questions.length} {uiLang === "en" ? "correct" : "correctas"} {correct === 3 ? "— ¡qué padre!" : ""}
                   </div>
