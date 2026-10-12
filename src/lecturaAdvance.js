@@ -27,6 +27,9 @@ export function lecturaQuestionsOpenScrollY({ headerTop, scrollY = 0, viewportTo
  * Once every question is answered, scroll so the claim block is fully inside
  * the readable viewport. The readable top is the brand bar only.
  * Already fully visible: stay put. Taller than the readable area: pin its top.
+ * The floor is 12px above the viewport bottom. A safe-area inset and a pinned
+ * NEXT or footer band raise that floor so the block stays clear of both.
+ * A fractional overflow rounds up so the margin cannot land short of 12px.
  */
 export function lecturaClaimScrollY({
   claimTop,
@@ -35,6 +38,8 @@ export function lecturaClaimScrollY({
   viewportHeight,
   viewportTop = 0,
   bottomGap = 12,
+  safeAreaBottom = 0,
+  bandTop = null,
 } = {}) {
   const y = Number.isFinite(Number(scrollY)) ? Number(scrollY) : 0;
   const top = Number(claimTop);
@@ -42,14 +47,60 @@ export function lecturaClaimScrollY({
   const vh = Number(viewportHeight);
   const inset = Number.isFinite(Number(viewportTop)) ? Math.max(0, Number(viewportTop)) : 0;
   const gap = Number.isFinite(Number(bottomGap)) ? Math.max(0, Number(bottomGap)) : 0;
-  const floor = vh - gap;
+  const safe = Number.isFinite(Number(safeAreaBottom)) ? Math.max(0, Number(safeAreaBottom)) : 0;
+  let floor = vh - gap - safe;
+  if (bandTop != null && Number.isFinite(Number(bandTop))) floor = Math.min(floor, Number(bandTop) - gap);
   if (!Number.isFinite(top) || !Number.isFinite(bottom) || !Number.isFinite(vh) || floor <= inset) return Math.max(0, y);
   const height = bottom - top;
   if (!(height > 0)) return Math.max(0, y);
   if (height >= floor - inset) return Math.max(0, y + top - inset);
   if (top < inset) return Math.max(0, y + top - inset);
-  if (bottom > floor) return Math.max(0, y + bottom - floor);
+  if (bottom > floor) return Math.max(0, Math.ceil((y + bottom - floor) - 1e-9));
   return Math.max(0, y);
+}
+
+/** Pixels of env(safe-area-inset-bottom). Zero when the inset is unsupported. */
+export function lecturaSafeAreaBottom() {
+  if (typeof document === "undefined" || !document.body) return 0;
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom);pointer-events:none;visibility:hidden;";
+  document.body.appendChild(probe);
+  let px = 0;
+  try {
+    const cssH = getComputedStyle(probe).height || "";
+    const match = /^(\d+(\.\d+)?)px$/.exec(cssH);
+    px = match ? Number(match[1]) : probe.getBoundingClientRect().height;
+  } catch (e) {
+    px = 0;
+  }
+  probe.remove();
+  return Number.isFinite(px) ? Math.max(0, px) : 0;
+}
+
+/**
+ * Top of a pinned bottom band that would cover the claim card: the Lectura
+ * NEXT row, or the home footer. Null when neither is on screen.
+ */
+export function lecturaPinnedBandTop(viewportHeight) {
+  if (typeof document === "undefined") return null;
+  const vh = Number(viewportHeight);
+  const nodes = [
+    document.querySelector("[data-testid='lectura-advance']"),
+    document.querySelector("[data-testid='app-shell'] > nav"),
+  ];
+  let top = null;
+  for (const node of nodes) {
+    if (!node) continue;
+    let pos = "";
+    try { pos = getComputedStyle(node).position || ""; } catch (e) { pos = ""; }
+    if (!pos && node.style) pos = node.style.position || "";
+    if (pos !== "fixed" && pos !== "sticky" && pos !== "-webkit-sticky") continue;
+    const rect = node.getBoundingClientRect();
+    if (!Number.isFinite(rect.top) || !(rect.height > 0)) continue;
+    if (Number.isFinite(vh) && (rect.top >= vh || rect.bottom <= 0)) continue;
+    top = top == null ? rect.top : Math.min(top, rect.top);
+  }
+  return top;
 }
 
 /** Bottom edge of the sticky bar that holds the brand lockup, in viewport px. */

@@ -4,6 +4,7 @@ import {
   gatedLiftStoryQuiz,
   isStoryChoiceCorrect,
   isStoryLecturaDone,
+  lecturaCheckpointMissCount,
   liftStoryQuizItem,
   passageForStoryQuestion,
   pickCompletedStory,
@@ -156,5 +157,13 @@ assert(order.questions.length === 3 && order.checkpoints.length === 1, "session 
 assert(order.questions.every((list, i) => list[0] !== cerezas.questions[i].answer), "no comprehension Q keeps the authored answer first under rng 0");
 assert(order.questions.every((list, i) => list.includes(cerezas.questions[i].answer)), "every shuffled Q still has the answer");
 assert(order.checkpoints[0][0] !== "It visits once a year", "checkpoint choices shuffle too");
+
+const pauses = [{ a: "A museum" }, { a: "With an easel and mirror" }];
+assert(lecturaCheckpointMissCount(null, pauses) === 0, "missing checks are not misses");
+assert(lecturaCheckpointMissCount({}, pauses) === 0, "an unanswered checkpoint is not a miss");
+assert(lecturaCheckpointMissCount({ 0: "A museum" }, pauses) === 0, "a right checkpoint is not a miss");
+assert(lecturaCheckpointMissCount({ 0: "A hotel" }, pauses) === 1, "a wrong checkpoint is one miss");
+assert(lecturaCheckpointMissCount({ 0: "A hotel", 1: "With an easel and mirror" }, pauses) === 1, "a right checkpoint beside a miss stays one miss");
+assert(lecturaCheckpointMissCount({ "0": "A hotel" }, pauses) === 1, "a stored string index still counts as a miss");
 
 console.log("ok: story quiz Lectura gate + on-screen passage + choice shuffle");

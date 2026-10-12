@@ -20,6 +20,9 @@ const Q1_DOC = 1900;
 const BACK_DOC = 1400;
 const CLAIM_DOC = 3400;
 const CLAIM_H = 96;
+/** Header line plus the outline lip. Without a second scroll the card crosses the fold. */
+const CLAIMED_SHIFT = 36;
+const CLAIMED_GROWTH = 2;
 
 const rect = (top, height, width = 358) => ({
   x: 16, y: top, top, left: 16, right: 16 + width, bottom: top + height, width, height, toJSON() {},
@@ -42,13 +45,13 @@ describe("lectura questions open and claim scroll", () => {
     localStorage.clear();
   });
 
-  const bootLastParagraph = async (width, height) => {
+  const bootLastParagraph = async (width, height, uiLang = "es") => {
     cleanup();
     localStorage.clear();
     mockBrowser({ voices: [{ lang: "es-MX", name: "Paulina" }] });
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 404, headers: { get: () => "text/html" } })));
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      welcomed: true, xp: 42, gems: 9, name: "Dave", contentVersion: 2, hearts: 5, uiLang: "es",
+      welcomed: true, xp: 42, gems: 9, name: "Dave", contentVersion: 2, hearts: 5, uiLang,
       onboardingDone: true, firstSessionDone: true, paywallSeen: true, done: {}, theme: "light",
     }));
     localStorage.setItem(LIVE_KEY, JSON.stringify({
@@ -71,7 +74,13 @@ describe("lectura questions open and claim scroll", () => {
         const index = [...prompts].indexOf(this);
         return rect(Q1_DOC + index * 420 - y, 48, width);
       }
-      if (id === "lectura-claim") return rect(CLAIM_DOC - y, CLAIM_H, width);
+      if (id === "lectura-claim") {
+        const text = this.textContent || "";
+        const claimed = /XP reclamados|XP ya reclamado|XP already claimed|XP claimed/.test(text);
+        const doc = CLAIM_DOC + (claimed ? CLAIMED_SHIFT : 0);
+        const h = CLAIM_H + (claimed ? CLAIMED_GROWTH : 0);
+        return rect(doc - y, h, Math.max(0, width - 32));
+      }
       if (id === "lectura-paragraph" || id === "lectura-paragraph-first") return rect(820, 580, width);
       if (this.tagName === "BUTTON" && (this.textContent || "").includes("Volver al cuento")) return rect(BACK_DOC - y, 40, width);
       if (this.style && this.style.position === "sticky") return rect(0, STICKY, width);
@@ -82,7 +91,8 @@ describe("lectura questions open and claim scroll", () => {
     });
     const user = userEvent.setup();
     render(<App />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Preguntas →" })).toBeTruthy());
+    const questionsName = uiLang === "en" ? "Questions →" : "Preguntas →";
+    await waitFor(() => expect(screen.getByRole("button", { name: questionsName })).toBeTruthy());
     return user;
   };
 
@@ -139,5 +149,36 @@ describe("lectura questions open and claim scroll", () => {
       }));
       expect(screen.queryByTestId("soft-paywall")).toBeNull();
     });
+  }
+
+  for (const [width, height] of [[360, 640], [390, 844]]) {
+    for (const uiLang of ["es", "en"]) {
+      it(`keeps the XP-claimed card fully inside the viewport at ${width}x${height} (${uiLang})`, async () => {
+        const user = await bootLastParagraph(width, height, uiLang);
+        const questionsName = uiLang === "en" ? "Questions →" : "Preguntas →";
+        const claimName = uiLang === "en" ? /Claim/ : /Reclamar/;
+        const claimedName = uiLang === "en" ? /XP claimed/ : /XP reclamados/;
+        await user.click(screen.getByRole("button", { name: questionsName }));
+        const prompts = await screen.findAllByTestId("story-q-prompt");
+        expect(prompts).toHaveLength(3);
+        for (const prompt of prompts) {
+          await user.click(prompt.parentElement.querySelector("button.choice-card"));
+        }
+        const claim = await screen.findByTestId("lectura-claim");
+        expect(claim.textContent).toMatch(claimName);
+        const before = scrollY;
+        await user.click(screen.getByRole("button", { name: claimName }));
+        await waitFor(() => expect(claim.textContent).toMatch(claimedName));
+        const box = claim.getBoundingClientRect();
+        expect(scrollY).toBeGreaterThan(before);
+        expect(box.height).toBe(CLAIM_H + CLAIMED_GROWTH);
+        expect(box.top).toBeGreaterThanOrEqual(STICKY);
+        expect(box.left).toBeGreaterThanOrEqual(0);
+        expect(box.right).toBeLessThanOrEqual(width);
+        expect(box.bottom).toBeLessThanOrEqual(height);
+        expect(height - box.bottom).toBeGreaterThanOrEqual(12);
+        expect(screen.queryByTestId("soft-paywall")).toBeNull();
+      });
+    }
   }
 });
