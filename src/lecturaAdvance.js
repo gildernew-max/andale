@@ -141,10 +141,13 @@ export const LECTURA_PARAGRAPH_LEADING = 1.75;
 
 /** Old 4:3 cap (1152×864 at 148px tall). The open band stays shorter than this. */
 export const LECTURA_STILL_CAP_HEIGHT = 148;
-/** Story-open still. 160px wide at 16:9 is a 90px band, never thinner. */
-export const LECTURA_STILL_BAND_WIDTH = 160;
-/** Thinnest crop allowed. The 160px band is exactly this ratio. */
-export const LECTURA_STILL_BAND_RATIO = 16 / 9;
+/** Story-open still. Full column width, fixed 90px, cover-cropped onto the faces. */
+export const LECTURA_STILL_BAND_HEIGHT = 90;
+/**
+ * Face lock for the 284×90 phone band (4:3 stills are 1152×864).
+ * 32% keeps eyes, mouth, and chin inside the cover crop on every story still.
+ */
+export const LECTURA_STILL_OBJECT_POSITION = "center 32%";
 export const LECTURA_STILL_MARGIN_BOTTOM = 8;
 
 /**
@@ -179,17 +182,9 @@ export function lecturaNextRowTop(viewportHeight, safeAreaBottom = 0) {
   return lecturaNextButtonTop(viewportHeight, safeAreaBottom) - LECTURA_NEXT_GAP;
 }
 
-export function lecturaStillBandHeight(width = LECTURA_STILL_BAND_WIDTH) {
-  const w = Number(width);
-  if (!(w > 0)) return 0;
-  return (w * 9) / 16;
-}
-
-export function lecturaStillAtLeast16x9(width, height) {
-  const w = Number(width);
-  const h = Number(height);
-  if (!(w > 0) || !(h > 0)) return false;
-  return h + 0.01 >= (w * 9) / 16;
+/** The band stays 90px at every column width. Width does not change the line count. */
+export function lecturaStillBandHeight() {
+  return LECTURA_STILL_BAND_HEIGHT;
 }
 
 /** Top edge of the NEXT buttons. The 12px gap sits above this, inside the pin. */

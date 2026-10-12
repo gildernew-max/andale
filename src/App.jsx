@@ -64,7 +64,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_WIDTH, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
+import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_STILL_OBJECT_POSITION, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z } from "./lecturaAdvance.js";
 import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, ONBOARDING_CTA_HEIGHT, onboardingCtaBottomCss, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -12113,7 +12113,7 @@ export default function App() {
                   aria-hidden="true"
                   data-testid={`lectura-still-${pi}`}
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
-                  style={{ display: "block", width: "100%", maxWidth: LECTURA_STILL_BAND_WIDTH, aspectRatio: "16 / 9", height: "auto", objectFit: "cover", objectPosition: "center top", margin: `0 auto ${LECTURA_STILL_MARGIN_BOTTOM}px`, borderRadius: 10 }}
+                  style={{ display: "block", width: "100%", height: LECTURA_STILL_BAND_HEIGHT, objectFit: "cover", objectPosition: LECTURA_STILL_OBJECT_POSITION, margin: `0 0 ${LECTURA_STILL_MARGIN_BOTTOM}px`, borderRadius: 4 }}
                 />
                 <div style={{ display: "flex", gap: latamNarration ? 10 : 0 }}>
                 {latamNarration && (

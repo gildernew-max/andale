@@ -1,6 +1,6 @@
 /**
  * Story-0 paragraph 1 keeps NEXT on screen at 360×640 and 390×844.
- * The still crops to a 16:9 band, and NEXT is pinned like the onboarding CTA.
+ * The still is a full-width 90px face band, and NEXT is pinned like the onboarding CTA.
  * Advance still scrolls the next paragraph to the brand bar.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -14,7 +14,6 @@ import {
   lecturaLinesAboveNext,
   lecturaNextBottomCss,
   lecturaNextButtonTop,
-  lecturaStillAtLeast16x9,
   lecturaStillBandHeight,
   lecturaStoryOpenTextTop,
 } from "./lecturaAdvance.js";
@@ -125,16 +124,16 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
 
       const still = screen.getByTestId("lectura-still-0");
       expect(still.style.display).toBe("block");
-      expect(still.style.aspectRatio).toBe("16 / 9");
+      expect(still.style.width).toBe("100%");
+      expect(still.style.maxWidth).toBe("");
+      expect(still.style.height).toBe("90px");
+      expect(still.style.aspectRatio).toBe("");
       expect(still.style.objectFit).toBe("cover");
-      expect(still.style.objectPosition).toBe("center top");
-      expect(still.style.borderRadius).toBe("10px");
+      expect(still.style.objectPosition).toBe("center 32%");
+      expect(still.style.borderRadius).toBe("4px");
       expect(still.getAttribute("src")).toMatch(/lectura\/story-0\/p0\.png$/);
-      const bandWidth = parseFloat(still.style.maxWidth);
-      const bandHeight = lecturaStillBandHeight(bandWidth);
-      expect(still.style.maxWidth).toBe("160px");
+      const bandHeight = lecturaStillBandHeight();
       expect(still.style.marginBottom).toBe("8px");
-      expect(lecturaStillAtLeast16x9(bandWidth, bandHeight)).toBe(true);
       expect(bandHeight).toBe(90);
       expect(bandHeight).toBeLessThan(148);
       expect(screen.getByTestId("story-tip").style.marginTop).toBe("8px");
@@ -164,7 +163,8 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
       await waitFor(() => expect(screen.getByTestId("lectura-paragraph").textContent).not.toBe(first));
       expect(screen.getByTestId("lectura-paragraph").textContent).toMatch(/A finales de octubre/);
       expect(screen.getByTestId("lectura-advance").style.position).toBe("fixed");
-      expect(screen.getByTestId("lectura-still-1").style.aspectRatio).toBe("16 / 9");
+      expect(screen.getByTestId("lectura-still-1").style.height).toBe("90px");
+      expect(screen.getByTestId("lectura-still-1").style.objectPosition).toBe("center 32%");
       expect(scrollY).toBe(lecturaAdvanceScrollY({ paragraphTop: 820, scrollY: 0, headerBottom: 72 }));
       expect(screen.queryByTestId("lectura-questions")).toBeNull();
       expect(screen.queryByTestId("lectura-claim")).toBeNull();
