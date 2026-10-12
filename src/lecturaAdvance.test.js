@@ -6,7 +6,9 @@ import {
   LECTURA_NEXT_GAP,
   LECTURA_NEXT_HEIGHT,
   LECTURA_STILL_BAND_HEIGHT,
+  LECTURA_CARD_RADIUS,
   LECTURA_STILL_CARD_INSET,
+  LECTURA_STILL_CARD_TOP_INSET,
   LECTURA_STILL_FOCUS,
   LECTURA_STILL_OBJECT_POSITION,
   LECTURA_STILL_CAP_HEIGHT,
@@ -35,6 +37,7 @@ import {
   LECTURA_WORD_SHEET_Z,
   lecturaQuestionsOpenScrollY,
   lecturaStillBandHeight,
+  lecturaStillCornerRadius,
   lecturaStillObjectPosition,
   lecturaStillOuterWidth,
   lecturaStickyHeaderBottom,
@@ -109,6 +112,9 @@ assert(LECTURA_STILL_BAND_HEIGHT === 90, "story-open still is a 90px band");
 assert(stillBand === 90, "band height stays 90px at any column width");
 assert(LECTURA_STILL_OBJECT_POSITION === "center 28%", "the default cover crop stays center 28%");
 assert(LECTURA_STILL_CARD_INSET === 18, "the band bleeds through 16px padding and the 2px border");
+assert(LECTURA_STILL_CARD_TOP_INSET === 10, "the band cancels the 8px top padding and the 2px top border");
+assert(LECTURA_CARD_RADIUS === 16, "the band's top corners use the card's 16px radius");
+assert(lecturaStillCornerRadius() === "16px 16px 0 0", "bottom corners of the band stay square");
 assert(lecturaStillOuterWidth(284) === 320, "at 360px the still is the 320px card");
 assert(lecturaStillOuterWidth(314) === 350, "at 390px the still is the 350px card");
 assert(LECTURA_STILL_FOCUS["story-0"].length === 6, "story-0 has a face lock on every page");
@@ -185,7 +191,7 @@ for (const [width, height] of [[360, 640], [390, 844]]) {
 assert(appSrc.includes("lecturaNextPinStyle(D.bg,"), "NEXT row uses the shared pin");
 assert(appSrc.includes("lecturaNextClearanceCss()"), "story column pads for the pin");
 assert(appSrc.includes("height: LECTURA_STILL_BAND_HEIGHT") && appSrc.includes("objectPosition: lecturaStillObjectPosition(story.id, pi)"), "the story still is the 90px face band");
-assert(appSrc.includes("LECTURA_STILL_CARD_INSET"), "the still bleeds to the card edge");
+assert(appSrc.includes("LECTURA_STILL_CARD_INSET") && appSrc.includes("LECTURA_STILL_CARD_TOP_INSET") && appSrc.includes("borderRadius: lecturaStillCornerRadius()") && appSrc.includes("borderRadius: LECTURA_CARD_RADIUS"), "the still is the card's top edge and shares its corner radius");
 assert(appSrc.includes('aspectRatio: "16 / 9"'), "the paywall still stays 16:9");
 assert(appSrc.includes("advanceLectura(paraIdx + 1)"), "NEXT click still advances");
 assert(appSrc.includes("lecturaAdvanceScrollY"), "advance scroll math is unchanged");

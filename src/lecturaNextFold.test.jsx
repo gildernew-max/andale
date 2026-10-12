@@ -130,9 +130,11 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
       expect(still.style.aspectRatio).toBe("");
       expect(still.style.objectFit).toBe("cover");
       expect(still.style.objectPosition).toBe("center 28%");
+      expect(still.style.marginTop).toBe("-10px");
       expect(still.style.marginLeft).toBe("-18px");
       expect(still.style.marginRight).toBe("-18px");
-      expect(still.style.borderRadius).toBe("4px");
+      expect(still.style.borderRadius).toBe("16px 16px 0 0");
+      expect(screen.getByTestId("lectura-paragraph-first").style.borderRadius).toBe("16px");
       expect(still.getAttribute("src")).toMatch(/lectura\/story-0\/p0\.png$/);
       const bandHeight = lecturaStillBandHeight();
       expect(still.style.marginBottom).toBe("8px");

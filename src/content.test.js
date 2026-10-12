@@ -4966,9 +4966,9 @@ assert(existsSync(join(repoRoot, "public", "lectura", "story-9", "MANIFEST.md"))
 const story9Cast = readFileSync(join(repoRoot, "public", "lectura", "story-9", "CAST.md"), "utf8");
 assert(/don Adán/.test(story9Cast) && /White hair/.test(story9Cast) && /Straw hat/.test(story9Cast) && /red sash/.test(story9Cast), "story-9 CAST locks white hair/mustache, straw hat, white shirt, red sash");
 assert(appSrc.includes("lectura/${story.id}/p${pi}.png"), "Lectura still src is public/lectura/{storyId}/pN.png");
-const lecturaStillStyle = appSrc.slice(appSrc.indexOf("lectura-still-"), appSrc.indexOf("lectura-still-") + 720);
+const lecturaStillStyle = appSrc.slice(appSrc.indexOf("lectura-still-"), appSrc.indexOf("lectura-still-") + 900);
 assert(lecturaStillStyle.includes("LECTURA_STILL_CARD_INSET * 2") && lecturaStillStyle.includes("height: LECTURA_STILL_BAND_HEIGHT") && !lecturaStillStyle.includes("LECTURA_STILL_BAND_WIDTH") && !lecturaStillStyle.includes("aspectRatio"), "Lectura still is a full-card 90px band");
-assert(lecturaStillStyle.includes("LECTURA_STILL_MARGIN_BOTTOM") && lecturaStillStyle.includes("LECTURA_STILL_CARD_INSET") && lecturaStillStyle.includes("borderRadius: 4"), "Lectura still margin is 8px, bleeds to the card edge, and the corner radius is 4px");
+assert(lecturaStillStyle.includes("LECTURA_STILL_MARGIN_BOTTOM") && lecturaStillStyle.includes("LECTURA_STILL_CARD_TOP_INSET") && lecturaStillStyle.includes("lecturaStillCornerRadius()"), "Lectura still sits on the card top, keeps 8px under the band, and squares the bottom corners");
 assert(/objectFit:\s*"cover"/.test(lecturaStillStyle) && /objectPosition:\s*lecturaStillObjectPosition\(story\.id, pi\)/.test(lecturaStillStyle), "Lectura still covers the band and uses the per-page face lock");
 assert(!lecturaStillStyle.includes("display: \"none\""), "Lectura still style does not hide the image");
 for (const s of STORIES) {

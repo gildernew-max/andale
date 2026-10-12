@@ -154,6 +154,13 @@ export const LECTURA_STILL_OBJECT_POSITION = "center 28%";
  */
 export const LECTURA_STILL_CARD_INSET = 18;
 /**
+ * Card top padding 8px plus the 2px top border. The band uses this so it
+ * sits on the card's top edge, with no padding above or beside it.
+ */
+export const LECTURA_STILL_CARD_TOP_INSET = 10;
+/** Paragraph-card corner. The band's top corners use it; the bottom corners stay square. */
+export const LECTURA_CARD_RADIUS = 16;
+/**
  * Per-page object-position. story-0 page 2 (market) and page 6 sit lower
  * than the default crop: 36% and 40% keep the low eyes and mouths in the band.
  */
@@ -170,11 +177,11 @@ export const LECTURA_STILL_FOCUS = {
 export const LECTURA_STILL_MARGIN_BOTTOM = 8;
 
 /**
- * Scroll-0 distance from the viewport top to the still on story open
- * (sticky brand bar through the paragraph card's top border and padding).
- * Measured at 360×640 and 390×844; the title block is the same height at both.
+ * Scroll-0 distance from the viewport top to the still on story open.
+ * The band is the card's top edge (no top padding above it).
+ * Measured at 360×640; the title block is the same height at 390×844.
  */
-export const LECTURA_STORY_OPEN_STILL_TOP = 312.4;
+export const LECTURA_STORY_OPEN_STILL_TOP = 302.4;
 
 export function lecturaNextBottomCss() {
   return onboardingCtaBottomCss();
@@ -211,6 +218,11 @@ export function lecturaStillOuterWidth(contentWidth) {
   const w = Number(contentWidth);
   if (!(w > 0)) return 0;
   return w + LECTURA_STILL_CARD_INSET * 2;
+}
+
+/** Top corners follow the card. Bottom corners stay square where the band meets the text. */
+export function lecturaStillCornerRadius() {
+  return `${LECTURA_CARD_RADIUS}px ${LECTURA_CARD_RADIUS}px 0 0`;
 }
 
 /** Face lock for one still. Unknown pages keep the default. */
