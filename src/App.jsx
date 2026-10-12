@@ -12076,10 +12076,10 @@ export default function App() {
               </div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
             </div>
-            <div data-testid="story-tip" style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 18px", background: D.subtle, borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 800, color: D.sub }}>
+            <div data-testid="story-tip" style={{ display: "flex", gap: 8, alignItems: "center", margin: "4px 0 6px", background: D.subtle, borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 800, color: D.sub }}>
 	              <IcBook size={16} color={sec.color} /> {L.storyTip}
             </div>
-            <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 6 }}>
               {[
                 { id: "story", l: uiLang === "en" ? "Story" : "Cuento" },
                 { id: "bilingual", l: uiLang === "en" ? "Bilingual" : "Bilingüe" },
@@ -12091,7 +12091,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <div data-testid="lectura-progress" style={{ display: "flex", gap: 5, alignItems: "center", margin: "2px 0 14px" }}>
+            <div data-testid="lectura-progress" style={{ display: "flex", gap: 5, alignItems: "center", margin: "0 0 6px" }}>
               {story.paragraphs.map((_, i) => (
                 <button key={i} onClick={() => advanceLectura(i)} aria-label={uiLang === "en" ? `Paragraph ${i + 1}` : `Párrafo ${i + 1}`}
                   style={{ flex: 1, height: 9, borderRadius: 99, border: "none", cursor: "pointer", padding: 0, background: i < paraIdx ? sec.color : i === paraIdx ? sec.dark : (theme === "dark" ? D.track : "#E8E8E8"), outline: i === paraIdx ? `2px solid ${sec.color}55` : "none" }} />
@@ -12100,13 +12100,13 @@ export default function App() {
                 style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : (theme === "dark" ? D.track : "#E8E8E8"), color: paraIdx >= story.paragraphs.length ? "#fff" : (theme === "dark" ? D.ink : D.sub) }}>?</button>
             </div>
             {paraIdx < story.paragraphs.length && (
-              <div style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 4 }}>
                 {uiLang === "en" ? "Paragraph" : "Párrafo"} {paraIdx + 1} / {story.paragraphs.length}
               </div>
             )}
 
             {paraIdx < story.paragraphs.length && [story.paragraphs[paraIdx]].map((para) => { const pi = paraIdx; return (
-              <div key={pi} ref={lecturaParagraphRef} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 8, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "16px 16px 14px", background: D.card }}>
+              <div key={pi} ref={lecturaParagraphRef} data-testid={pi === 0 ? "lectura-paragraph-first" : "lectura-paragraph"} className="pop" style={{ marginBottom: 8, border: `2px solid ${D.line}`, borderBottom: `4px solid ${D.line}`, borderRadius: 16, padding: "8px 16px 14px", background: D.card }}>
                 <img
                   src={`${import.meta.env.BASE_URL}lectura/${story.id}/p${pi}.png`}
                   alt=""

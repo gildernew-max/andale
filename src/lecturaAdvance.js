@@ -139,19 +139,20 @@ export const LECTURA_SHEET_REACH_Z = 32;
 export const LECTURA_PARAGRAPH_FONT = 17;
 export const LECTURA_PARAGRAPH_LEADING = 1.75;
 
-/** 4:3 stills (1152×864) were capped at 148px tall. Story open keeps that width. */
+/** Old 4:3 cap (1152×864 at 148px tall). The open band stays shorter than this. */
 export const LECTURA_STILL_CAP_HEIGHT = 148;
-export const LECTURA_STILL_BAND_WIDTH = LECTURA_STILL_CAP_HEIGHT * (1152 / 864);
-/** Thinnest crop allowed. At the old cap width the band is exactly 111px tall. */
+/** Story-open still. 160px wide at 16:9 is a 90px band, never thinner. */
+export const LECTURA_STILL_BAND_WIDTH = 160;
+/** Thinnest crop allowed. The 160px band is exactly this ratio. */
 export const LECTURA_STILL_BAND_RATIO = 16 / 9;
-export const LECTURA_STILL_MARGIN_BOTTOM = 12;
+export const LECTURA_STILL_MARGIN_BOTTOM = 6;
 
 /**
  * Scroll-0 distance from the viewport top to the still on story open
  * (sticky brand bar through the paragraph card's top border and padding).
- * Measured at 360×640 and 390×844; the title does not wrap, so it matches.
+ * Measured at 360×640 and 390×844; the title block is the same height at both.
  */
-export const LECTURA_STORY_OPEN_STILL_TOP = 340.4;
+export const LECTURA_STORY_OPEN_STILL_TOP = 300.4;
 
 export function lecturaNextBottomCss() {
   return onboardingCtaBottomCss();

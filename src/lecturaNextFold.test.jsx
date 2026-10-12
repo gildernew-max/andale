@@ -80,8 +80,8 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
     return user;
   };
 
-  for (const [width, height, theme] of [[390, 844, "dark"], [360, 640, "light"]]) {
-    it(`shows NEXT, the still, and two Spanish lines at ${width}x${height} ${theme}`, async () => {
+  for (const [width, height, theme] of [[390, 844, "dark"], [360, 640, "light"], [360, 640, "dark"]]) {
+    it(`shows NEXT, the 16:9 still, and the Spanish lines at ${width}x${height} ${theme}`, async () => {
       const user = await bootParagraph1(width, height, theme);
       expect(window.innerWidth).toBe(width);
       expect(window.innerHeight).toBe(height);
@@ -132,9 +132,19 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
       expect(still.getAttribute("src")).toMatch(/lectura\/story-0\/p0\.png$/);
       const bandWidth = parseFloat(still.style.maxWidth);
       const bandHeight = lecturaStillBandHeight(bandWidth);
+      expect(still.style.maxWidth).toBe("160px");
+      expect(still.style.marginBottom).toBe("6px");
       expect(lecturaStillAtLeast16x9(bandWidth, bandHeight)).toBe(true);
+      expect(bandHeight).toBe(90);
       expect(bandHeight).toBeLessThan(148);
-      expect(bandHeight).toBeGreaterThan(0);
+      expect(screen.getByTestId("story-tip").style.marginTop).toBe("4px");
+      expect(screen.getByTestId("story-tip").style.marginBottom).toBe("6px");
+      expect(screen.getByRole("button", { name: "Story" }).parentElement.style.marginBottom).toBe("6px");
+      expect(screen.getByTestId("lectura-progress").style.marginTop).toBe("0px");
+      expect(screen.getByTestId("lectura-progress").style.marginBottom).toBe("6px");
+      expect(screen.getByText("Paragraph 1 / 6").style.marginBottom).toBe("4px");
+      expect(screen.getByTestId("lectura-paragraph-first").style.paddingTop).toBe("8px");
+      expect(screen.getByTestId("lectura-paragraph-first").style.paddingBottom).toBe("14px");
 
       const para = screen.getByTestId("lectura-paragraph-first");
       expect(para.textContent).toMatch(/Cuando yo era niña/);
@@ -142,7 +152,7 @@ describe("lectura paragraph 1 NEXT above the fold", () => {
       expect(copy.style.fontSize).toBe("17px");
       expect(copy.style.lineHeight).toBe("1.75");
       const textTop = lecturaStoryOpenTextTop(bandHeight);
-      expect(lecturaLinesAboveNext({ textTop, viewportHeight: height })).toBeGreaterThanOrEqual(2);
+      expect(lecturaLinesAboveNext({ textTop, viewportHeight: height })).toBeGreaterThanOrEqual(height === 640 ? 5 : 2);
 
       expect(screen.getByTestId("lectura-checkpoint").style.marginTop).toBe("6px");
       expect(para.style.marginBottom).toBe("8px");
