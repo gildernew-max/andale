@@ -1647,7 +1647,9 @@ describe("paywall 3.1.2 disclosure", () => {
     const annualPrice = screen.getByTestId("soft-paywall-annual-price");
     const monthly = screen.getByTestId("soft-paywall-monthly");
     const monthlyPrice = screen.getByTestId("soft-paywall-monthly-price");
-    expect(annual.compareDocumentPosition(annualPrice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId("soft-paywall-scroll").contains(annualPrice)).toBe(true);
+    expect(screen.getByTestId("soft-paywall-scroll").contains(monthly)).toBe(true);
+    expect(screen.getByTestId("soft-paywall-footer").contains(annual)).toBe(true);
     expect(annualPrice.compareDocumentPosition(monthly) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(monthly.compareDocumentPosition(monthlyPrice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     EN_DISCLOSURE.forEach((line, i) => {

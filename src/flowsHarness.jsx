@@ -521,8 +521,22 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(fine.style.fontSize).toBe("11px");
   expect(fine.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
   expect(screen.getByTestId("soft-paywall-terms").style.textDecoration).toMatch(/underline/);
+  const scroll = screen.getByTestId("soft-paywall-scroll");
+  const footer = screen.getByTestId("soft-paywall-footer");
+  expect(scroll.style.overflowY).toBe("auto");
+  expect(footer.contains(annual)).toBe(true);
+  expect(footer.contains(dismiss)).toBe(true);
+  expect(scroll.contains(annual)).toBe(false);
+  expect(scroll.contains(dismiss)).toBe(false);
+  expect(scroll.contains(monthly)).toBe(true);
+  expect(scroll.contains(honesty)).toBe(true);
+  expect(footer.style.gap).toBe("12px");
+  expect(footer.style.paddingBottom).toBe("calc(16px + env(safe-area-inset-bottom))");
+  expect(footer.style.flexShrink).toBe("0");
+  expect(scroll.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(annual.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(fine.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(dismiss.compareDocumentPosition(honesty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(honesty.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   const filled = [...wall.querySelectorAll("button.duo-btn")]
     .filter((el) => /#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i.test(el.style.background));
   expect(filled).toHaveLength(1);

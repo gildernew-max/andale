@@ -29,6 +29,7 @@ import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { detectNativeIap, getProducts, progressAfterPurchaseSuccess, requestPurchase, restorePurchases } from "./purchase.js";
 import { DISCLOSURE_LINKS, PRIVACY_POLICY_URL, TERMS_OF_USE_URL, disclosureLines, planPriceLine, restoreStatusKey, restoreStatusLine } from "./paywallDisclosure.js";
+import { BUTTON_PIN_GAP, ButtonPin } from "./ButtonPin.jsx";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent } from "./funnel.js";
 import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1, claimFirstSessionStart, isFirstExerciseCorrect, sessionOneFromProgress } from "./firstSessionFunnel.js";
@@ -10512,10 +10513,11 @@ export default function App() {
       })()}
 
       {/* ---------- SOFT PAYWALL (Brand CLEAR look; StoreKit 2 on iOS wrap, honest no-charge on web) ---------- */}
-      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is opaque #1E2128 (no pop fade). Soft chrome parked. Trimmed 3.1.2 fine print sits under the plans. */}
+      {/* Look lock: one static Cenzontle, George words, loud annual / outline monthly / quiet free. Light surface cream lock = Learn home HUB_CREAM. Dark sheet is opaque #1E2128 (no pop fade). Soft chrome parked. Trimmed 3.1.2 fine print sits under the plans. Annual and Continue free are pinned in the sheet footer; the rest scrolls above them. */}
       {showSoftPaywall && (
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, padding: "22px 20px", maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", overflowY: "auto", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
+          <div data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, maxWidth: 340, width: "100%", maxHeight: "calc(100vh - 40px)", boxSizing: "border-box", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}` }}>
+            <div data-testid="soft-paywall-scroll" style={{ flex: "1 1 auto", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", boxSizing: "border-box", padding: `22px 20px ${BUTTON_PIN_GAP}px` }}>
             {paywallStillSrc ? (
               <div data-testid="soft-paywall-still-frame" style={{ position: "relative", width: "calc(100% + 40px)", margin: "0 -20px 2px" }}>
                 <img
@@ -10533,7 +10535,6 @@ export default function App() {
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
             <div data-testid="soft-paywall-body" style={{ fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, marginBottom: 18, lineHeight: 1.45 }}>{L.paywallBody}</div>
             <div style={{ display: "grid", gap: 9 }}>
-              <Btn data-testid="soft-paywall-annual" ink={LESSON_LIME_INK} onClick={() => buySoftPaywall("annual")}>{L.paywallAnnual}</Btn>
               <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("annual", uiLang, storePrices.annual)}</div>
               <Btn outline color={MARK_INK} data-testid="soft-paywall-monthly" onClick={() => buySoftPaywall("monthly")} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, ...(theme === "dark" ? { color: "#F6EFE4", border: "2px solid #4A5160", borderBottom: "4px solid #4A5160" } : {}) }}>{L.paywallMonthly}</Btn>
               <div data-testid="soft-paywall-monthly-price" style={{ fontWeight: 800, fontSize: 12, color: theme === "dark" ? "#F6EFE4" : D.ink, lineHeight: 1.3, marginTop: -4 }}>{planPriceLine("monthly", uiLang, storePrices.monthly)}</div>
@@ -10556,16 +10557,20 @@ export default function App() {
               {restoreStatus && (
                 <div data-testid="soft-paywall-restore-status" style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.45, color: theme === "dark" ? "#A0A4AB" : "#6B6258" }}>{restoreStatusLine(uiLang, restoreStatus)}</div>
               )}
-              <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
-                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : "#6B6258", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
-                {L.paywallDismiss}
-              </button>
               {!canCharge && (
               <div data-testid="soft-paywall-honesty" style={{ fontWeight: 700, fontSize: 11, color: theme === "dark" ? "#A0A4AB" : "#6B6258", lineHeight: 1.45 }}>
                 {L.paywallHonesty}
               </div>
               )}
             </div>
+            </div>
+            <ButtonPin testId="soft-paywall-footer" style={{ padding: "0 20px", background: theme === "dark" ? "#1E2128" : HUB_CREAM }}>
+              <Btn data-testid="soft-paywall-annual" ink={LESSON_LIME_INK} onClick={() => buySoftPaywall("annual")} style={{ width: "100%" }}>{L.paywallAnnual}</Btn>
+              <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
+                style={{ display: "block", width: "100%", margin: 0, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : "#6B6258", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
+                {L.paywallDismiss}
+              </button>
+            </ButtonPin>
           </div>
         </div>
       )}
