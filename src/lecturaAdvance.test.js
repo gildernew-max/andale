@@ -133,7 +133,7 @@ const liftedFaces = {
   "story-5": { 3: "center 22%" },
   "story-6": { 0: "center 22%", 4: "center 22%" },
   "story-7": { 5: "center 22%" },
-  "story-8": { 4: "center 14%", 5: "center 24%" },
+  "story-8": { 4: "center 14%", 5: "center 26%" },
   "story-9": { 0: "center 24%", 2: "center 22%" },
 };
 for (let n = 1; n <= 9; n += 1) {

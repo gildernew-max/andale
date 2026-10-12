@@ -163,7 +163,7 @@ export const LECTURA_CARD_RADIUS = 16;
 /**
  * Per-page object-position, set on the live 320×90 band.
  * story-0 pages 2 and 6 sit lower than the default: 36% and 40%.
- * Some later pages sit higher (24%, 22%, 18%, 14%) or lower (36%, 40%)
+ * Some later pages sit higher (26%, 24%, 22%, 18%, 14%) or lower (36%, 40%)
  * so the 90px band keeps eyes and lips whole. Omitted pages stay at the default.
  */
 export const LECTURA_STILL_FOCUS = {
@@ -237,7 +237,7 @@ export const LECTURA_STILL_FOCUS = {
     "center 28%",
     "center 28%",
     "center 14%",
-    "center 24%",
+    "center 26%",
   ],
   "story-9": [
     "center 24%",
