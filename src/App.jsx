@@ -27,7 +27,7 @@ import { watchWordSheetPlacement, wordSheetClose, wordSheetReveal } from "./word
 import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { ANNUAL_PRICE_PLACEHOLDER, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP } from "./webPaywall.js";
+import { PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, annualPriceLine } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent } from "./funnel.js";
 import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1, claimFirstSessionStart, isFirstExerciseCorrect, sessionOneFromProgress } from "./firstSessionFunnel.js";
@@ -4629,6 +4629,7 @@ const UI = {
     paywallHeadlineNoStory: "Hay mucho por leer.",
     paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de lo básico.",
     paywallAnnual: "Empezar plan anual",
+    paywallAnnualHold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.",
     paywallPrice: "{price} al año",
     paywallMonthly: "Un mes",
     paywallHonesty: "Vista previa · aún no se cobra",
@@ -4724,6 +4725,7 @@ const UI = {
     paywallHeadlineNoStory: "There's a lot to read.",
     paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past the basics.",
     paywallAnnual: "Start annual plan",
+    paywallAnnualHold: "Annual plans aren't open yet. Keep reading free for now.",
     paywallPrice: "{price} a year",
     paywallMonthly: "One month",
     paywallHonesty: "Preview · you won\u2019t be charged yet",
@@ -5328,6 +5330,7 @@ export default function App() {
   }, []);
   const [heartsModal, setHeartsModal] = useState(false);
   const [softPaywall, setSoftPaywall] = useState(false);
+  const [paywallAnnualHold, setPaywallAnnualHold] = useState(false);
   const [lecturaCliffhanger, setLecturaCliffhanger] = useState(null);
   const [chapterBirdHandoff, setChapterBirdHandoff] = useState(false);
   const [paywallSource, setPaywallSource] = useState(PAYWALL_SOURCE.boot);
@@ -7942,6 +7945,7 @@ export default function App() {
   const paywallHeadlineSource = chapterBirdHandoff ? PAYWALL_BIRD_TRIGGER : paywallSource;
   const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource, lecturaStartedStored);
   const paywallBodyType = { fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, lineHeight: 1.45 };
+  const annualPriceText = annualPriceLine(L.paywallPrice);
   const paywallStillRel = paywallStillPath(storyView, paraIdx);
   const paywallStillSrc = paywallStillRel && !paywallStillMiss
     ? `${import.meta.env.BASE_URL}${paywallStillRel}`
@@ -7974,6 +7978,7 @@ export default function App() {
     } else {
       setSoftPaywall(false);
       setPaywallArmed(false);
+      setPaywallAnnualHold(false);
     }
   }, [showSoftPaywall]);
   useEffect(() => {
@@ -8235,6 +8240,7 @@ export default function App() {
     const beat = lecturaCliffhanger;
     setChapterBirdHandoff(false);
     setSoftPaywall(false);
+    setPaywallAnnualHold(false);
     setPaywallArmed(false);
     setPostDismissHandoff(true);
     setTab("camino");
@@ -8249,6 +8255,7 @@ export default function App() {
   };
   const tapPaywallAnnual = () => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.annual });
+    setPaywallAnnualHold(true);
   };
   const dismissA2hs = () => {
     setA2hsSheet(false);
@@ -10493,8 +10500,13 @@ export default function App() {
             )}
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
             <div data-testid="soft-paywall-body" style={{ ...paywallBodyType, marginBottom: 8 }}>{L.paywallBody}</div>
-            <div data-testid="soft-paywall-annual-price" style={{ ...paywallBodyType, marginBottom: 12 }}>{L.paywallPrice.replace("{price}", ANNUAL_PRICE_PLACEHOLDER)}</div>
+            {annualPriceText ? (
+              <div data-testid="soft-paywall-annual-price" style={{ ...paywallBodyType, marginBottom: 12 }}>{annualPriceText}</div>
+            ) : null}
             <Btn data-testid="soft-paywall-annual" ink={LESSON_LIME_INK} onClick={tapPaywallAnnual} style={{ width: "100%" }}>{L.paywallAnnual}</Btn>
+            {paywallAnnualHold ? (
+              <div data-testid="soft-paywall-annual-hold" style={{ ...paywallBodyType, color: theme === "dark" ? "#CDBBA6" : "#6B6258", marginTop: PAYWALL_ANNUAL_HOLD_GAP }}>{L.paywallAnnualHold}</div>
+            ) : null}
             <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
               style={{ display: "block", width: "100%", marginTop: PAYWALL_FREE_GAP, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#F6EFE4" : "#6B6258", fontFamily: "inherit", fontWeight: 500, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
               {L.paywallDismiss}

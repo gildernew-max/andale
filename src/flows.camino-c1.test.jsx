@@ -384,7 +384,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const darkCard = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
     const card = screen.getByTestId("soft-paywall-card");
     const headline = screen.getByTestId("soft-paywall-headline");
-    const annualPrice = screen.getByTestId("soft-paywall-annual-price");
+    const body = screen.getByTestId("soft-paywall-body");
     const wall = screen.getByTestId("soft-paywall");
     expect(card.style.background).toMatch(darkCard);
     expect(card.style.background).not.toMatch(/rgba|hsla|\/\s*0?\.\d/);
@@ -395,10 +395,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(wall.style.background).toMatch(/#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i);
     expect(headline.style.color).toMatch(cream);
     expect(headline.style.color).not.toMatch(nearWhite);
-    expect(annualPrice.style.color).toMatch(cream);
-    expect(annualPrice.style.color).not.toMatch(nearWhite);
-    expect(annualPrice.style.fontSize).toBe(screen.getByTestId("soft-paywall-body").style.fontSize);
-    expect(annualPrice.style.fontWeight).toBe(screen.getByTestId("soft-paywall-body").style.fontWeight);
+    expect(screen.queryByTestId("soft-paywall-annual-price")).toBeNull();
+    expect(body.style.color).toMatch(cream);
+    expect(body.style.color).not.toMatch(nearWhite);
     expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(cream);
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
@@ -1363,7 +1362,8 @@ describe("paywall headline depends on a stored story start", () => {
     expect(es.card).not.toContain("La historia sigue.");
     expect(es.card).not.toContain("Hay mucho por leer.");
     expect(es.parts["soft-paywall-annual"]).toBe("Empezar plan anual");
-    expect(es.parts["soft-paywall-annual-price"]).toBe("[ANNUAL PRICE] al año");
+    expect(es.card).not.toContain("[ANNUAL PRICE]");
+    expect(es.card).not.toContain("{price}");
     expect(es.parts["soft-paywall-dismiss"]).toBe("Seguir gratis");
 
     const en = await bootStoryStartWall({ winDays: 2, uiLang: "en" });
@@ -1372,7 +1372,8 @@ describe("paywall headline depends on a stored story start", () => {
     expect(en.card).not.toContain("The story goes on.");
     expect(en.card).not.toContain("There's a lot to read.");
     expect(en.parts["soft-paywall-annual"]).toBe("Start annual plan");
-    expect(en.parts["soft-paywall-annual-price"]).toBe("[ANNUAL PRICE] a year");
+    expect(en.card).not.toContain("[ANNUAL PRICE]");
+    expect(en.card).not.toContain("{price}");
     expect(en.parts["soft-paywall-dismiss"]).toBe("Continue free");
   });
 
@@ -1604,7 +1605,7 @@ describe("paywall headline follows the open source", () => {
 });
 
 describe("inert web paywall", () => {
-  it.each(["en", "es"])("shows the placeholder price and records an annual tap without a charge in %s", async (lang) => {
+  it.each(["en", "es"])("hides an empty price and records an annual tap without a charge in %s", async (lang) => {
     cleanup();
     seedProgress({ uiLang: lang, streak: 1, lastDay: localToday(), lecturaStartedAt: 1 });
     window.__andaleIapEnv = { isNative: true, platform: "ios" };
@@ -1628,10 +1629,9 @@ describe("inert web paywall", () => {
     render(<App />);
     await awaitSoftPaywallAfterFirstWin();
     assertSoftPaywallAnnualPrimary(lang);
-    expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe(lang === "en" ? "[ANNUAL PRICE] a year" : "[ANNUAL PRICE] al año");
+    expect(screen.queryByTestId("soft-paywall-annual-price")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
-    expect(screen.getByTestId("soft-paywall-annual-price").style.fontSize).toBe(screen.getByTestId("soft-paywall-body").style.fontSize);
-    expect(screen.getByTestId("soft-paywall-annual-price").style.fontWeight).toBe("700");
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/\[ANNUAL PRICE\]|\{price\}/);
     expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");
     expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();
