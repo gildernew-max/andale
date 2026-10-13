@@ -34,7 +34,7 @@ If you use TestFlight or the App Store build, Apple’s rules for those services
 
 If this page changes in a way that matters, the date at the top will change.
 
-<h2 id="correo-y-datos">Tu correo y tus datos</h2>
+<h2 id="correo-y-datos">What we count / Qué contamos</h2>
 
 We count which steps you reach (like finishing a lesson or seeing a plan) to improve Ándale. It's anonymous: a random ID for this device, and we don't store your name, email or IP address.
 

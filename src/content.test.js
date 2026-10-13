@@ -5209,7 +5209,7 @@ assert(privacyHtml.includes("We do not use third-party analytics in the app.") &
 assert(!privacyHtml.includes("Anonymous usage events") && !privacyMd.includes("Anonymous usage events"), "anonymous usage events section is gone");
 assert(!privacyHtml.includes("In builds where this is switched on") && !privacyMd.includes("In builds where this is switched on"), "old usage paragraph is gone");
 assert(privacyHtml.indexOf("<h2>What we do not collect</h2>") < privacyHtml.indexOf("<h2>Who else might see something</h2>"), "what we do not collect still sits above who else might see something");
-assert(privacyHtml.includes('<h2 id="correo-y-datos">Tu correo y tus datos</h2>') && privacyMd.includes('<h2 id="correo-y-datos">Tu correo y tus datos</h2>'), "correo-y-datos section is on the privacy page");
+assert(privacyHtml.includes('<h2 id="correo-y-datos">What we count / Qué contamos</h2>') && privacyMd.includes('<h2 id="correo-y-datos">What we count / Qué contamos</h2>'), "correo-y-datos heading is What we count / Qué contamos");
 const COUNT_NOTE_EN = "We count which steps you reach (like finishing a lesson or seeing a plan) to improve Ándale. It's anonymous: a random ID for this device, and we don't store your name, email or IP address.";
 const COUNT_NOTE_ES = "Contamos a qué pasos llegas (como terminar una lección o ver un plan) para mejorar Ándale. Es anónimo: un ID aleatorio de este dispositivo, y no guardamos tu nombre, correo ni dirección IP.";
 assert(privacyHtml.includes(COUNT_NOTE_EN) && privacyMd.includes(COUNT_NOTE_EN), "privacy EN count note");
