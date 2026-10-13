@@ -5189,8 +5189,10 @@ for (const page of ["privacy", "support", "disclaimer"]) {
   assert(md.includes("gildernew@gmail.com"), `${page}.md contact is gildernew@gmail.com`);
   assert(!html.includes("We are not publishing an inbox yet"), `${page}.html is not the August inbox-later copy`);
   if (page === "privacy") {
-    assert(html.includes("October 4, 2026"), "privacy.html date is October 4, 2026");
-    assert(md.includes("October 4, 2026"), "privacy.md date is October 4, 2026");
+    assert(html.includes("Last updated: October 13, 2026"), "privacy.html date is October 13, 2026");
+    assert(md.includes("Last updated: October 13, 2026"), "privacy.md date is October 13, 2026");
+    assert(html.includes("Última actualización: 13 de octubre de 2026"), "privacy.html Spanish date");
+    assert(md.includes("Última actualización: 13 de octubre de 2026"), "privacy.md Spanish date");
   } else {
     assert(html.includes("September 18, 2026"), `${page}.html date is George 2026-09-18`);
     assert(md.includes("September 18, 2026"), `${page}.md date is George 2026-09-18`);
@@ -5204,10 +5206,9 @@ assert(privacyHtml.includes("There is no Ándale account and no email gate to us
 assert(privacyHtml.includes("We do not keep a copy on our servers.") && privacyMd.includes("We do not keep a copy on our servers."), "privacy keeps the on-device sentence");
 assert(privacyHtml.includes("<h2>What we do not collect</h2>") && privacyMd.includes("## What we do not collect"), "privacy heading is the main line");
 assert(privacyHtml.includes("We do not use third-party analytics in the app.") && privacyMd.includes("We do not use third-party analytics in the app."), "analytics sentence is the main line");
-assert(privacyHtml.includes("<h2>Anonymous usage events</h2>"), "privacy.html has the anonymous usage events heading");
-assert(privacyHtml.includes("In builds where this is switched on, the app sends a small event when something happens, such as opening the app or reaching the paywall. Each event holds the event name, your language (Español or English), a random ID stored on your device, and a timestamp. When you open the app, that event also holds one more number: how many whole days it has been since you last practiced in the app, counted on your device’s calendar, up to 365. On your first visit there is no number. An event holds no name, no email, no location and no payment information. We do not record IP addresses ourselves; Google, which runs the spreadsheet that receives the events, may keep ordinary access logs under its own terms. The random ID is not linked to who you are, and clearing your site data or deleting the app gives you a new one. We use the events to see where learners stop and whether they come back, and for nothing else."), "privacy.html anonymous usage paragraph is George's text");
-assert(privacyMd.includes("## Anonymous usage events") && privacyMd.includes("In builds where this is switched on, the app sends a small event when something happens, such as opening the app or reaching the paywall. Each event holds the event name, your language (Español or English), a random ID stored on your device, and a timestamp. When you open the app, that event also holds one more number: how many whole days it has been since you last practiced in the app, counted on your device’s calendar, up to 365. On your first visit there is no number. An event holds no name, no email, no location and no payment information. We do not record IP addresses ourselves; Google, which runs the spreadsheet that receives the events, may keep ordinary access logs under its own terms. The random ID is not linked to who you are, and clearing your site data or deleting the app gives you a new one. We use the events to see where learners stop and whether they come back, and for nothing else."), "privacy.md anonymous usage paragraph is George's text");
-assert(privacyHtml.indexOf("<h2>What we do not collect</h2>") < privacyHtml.indexOf("<h2>Anonymous usage events</h2>") && privacyHtml.indexOf("<h2>Anonymous usage events</h2>") < privacyHtml.indexOf("<h2>Who else might see something</h2>"), "anonymous usage events sits after what we do not collect");
+assert(!privacyHtml.includes("Anonymous usage events") && !privacyMd.includes("Anonymous usage events"), "anonymous usage events section is gone");
+assert(!privacyHtml.includes("In builds where this is switched on") && !privacyMd.includes("In builds where this is switched on"), "old usage paragraph is gone");
+assert(privacyHtml.indexOf("<h2>What we do not collect</h2>") < privacyHtml.indexOf("<h2>Who else might see something</h2>"), "what we do not collect still sits above who else might see something");
 assert(privacyHtml.includes('<h2 id="correo-y-datos">Tu correo y tus datos</h2>') && privacyMd.includes('<h2 id="correo-y-datos">Tu correo y tus datos</h2>'), "correo-y-datos section is on the privacy page");
 const COUNT_NOTE_EN = "We count which steps you reach (like finishing a lesson or seeing a plan) to improve Ándale. It's anonymous: a random ID for this device, and we don't store your name, email or IP address.";
 const COUNT_NOTE_ES = "Contamos a qué pasos llegas (como terminar una lección o ver un plan) para mejorar Ándale. Es anónimo: un ID aleatorio de este dispositivo, y no guardamos tu nombre, correo ni dirección IP.";
