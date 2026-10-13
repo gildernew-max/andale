@@ -11230,7 +11230,7 @@ export default function App() {
                   <div style={{ fontSize: 11.5, fontWeight: 800, color: orderCream ? D_LIGHT.ink : HUB_CREAM }}>
                     {uiLang === "en" ? "Tap a placed word to move it." : "Toca una ficha colocada para moverla."}
                   </div>
-                  <button type="button" tabIndex={placed.length > 0 && status === "idle" ? 0 : -1} onClick={() => { if (!(placed.length > 0 && status === "idle")) return; setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: placed.length > 0 && status === "idle" ? "pointer" : "default", padding: "4px 0" }}>
+                  <button type="button" tabIndex={placed.length > 0 && status === "idle" ? 0 : -1} onMouseDown={(e) => { if (placed.length > 0 && status === "idle") e.preventDefault(); }} onClick={(e) => { if (!(placed.length > 0 && status === "idle")) return; if (document.activeElement === e.currentTarget) e.currentTarget.blur(); setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: placed.length > 0 && status === "idle" ? "pointer" : "default", padding: "4px 0" }}>
                     {uiLang === "en" ? "Clear" : "Borrar"}
                   </button>
                 </div>
@@ -11243,9 +11243,10 @@ export default function App() {
                         onClick={() => { if (used) unplaceOrderTile(t.id); }}>
                         <button type="button" data-tile-id={used ? undefined : t.id} data-testid={used ? undefined : "bank-tile"} className="tile"
                           disabled={status !== "idle"}
-                          aria-hidden={used}
+                          aria-hidden={used || undefined}
                           tabIndex={used ? -1 : 0}
-                          onClick={(e) => { e.stopPropagation(); if (!used) placeOrderTile(t.id); }}
+                          onMouseDown={(e) => { if (!used) e.preventDefault(); }}
+                          onClick={(e) => { e.stopPropagation(); if (used) return; if (document.activeElement === e.currentTarget) e.currentTarget.blur(); placeOrderTile(t.id); }}
                           style={{
                             visibility: used ? "hidden" : "visible",
                             pointerEvents: used ? "none" : "auto",

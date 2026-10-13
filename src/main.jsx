@@ -1,6 +1,8 @@
-import { Component, StrictMode } from 'react'
+import { Component, StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
+import FunnelCounts from './FunnelCounts.jsx'
+import { isFunnelHash } from './funnelCounts.js'
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -25,10 +27,20 @@ class ErrorBoundary extends Component {
   }
 }
 
+function Root() {
+  const [funnel, setFunnel] = useState(() => isFunnelHash(window.location.hash))
+  useEffect(() => {
+    const sync = () => setFunnel(isFunnelHash(window.location.hash))
+    window.addEventListener('hashchange', sync)
+    return () => window.removeEventListener('hashchange', sync)
+  }, [])
+  return funnel ? <FunnelCounts /> : <App />
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <Root />
     </ErrorBoundary>
   </StrictMode>,
 )
