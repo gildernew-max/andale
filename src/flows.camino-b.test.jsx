@@ -22,6 +22,7 @@ import {
   startHoyFromHub,
   clickHoySceneMc,
   localToday,
+  markLearnerDay,
   HOY_TITLES,
   expectedComeBack,
   assertHoyWinBird,
@@ -931,12 +932,15 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
       vi.setSystemTime(new Date(2026, 8, 5, 0, 1, 0));
       await vi.advanceTimersByTimeAsync(30000);
-      await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+      // The cap is checked when the card is armed. Midnight leaves an open card up.
+      expect(screen.getByTestId("soft-paywall")).toBeTruthy();
       expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).paywallSeen).not.toBe(true);
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      await user.click(screen.getByTestId("soft-paywall-dismiss"));
+      await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
       expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
-      expect(screen.getByTestId("hub-hoy").textContent).toMatch(/Hoy/);
-      expect(screen.queryByTestId("first-door-title")).toBeNull();
+      expect(screen.getByTestId("post-dismiss-handoff")).toBeTruthy();
       expect(document.body.textContent).not.toMatch(/La historia sigue\.|The story goes on\.|Hay mucho más por leer\.|There's much\u00A0more to read\./);
     } finally {
       vi.useRealTimers();
@@ -1151,6 +1155,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     })();
     cleanup();
     seedProgress({ streak: 0, lastDay: null });
+    markLearnerDay(2);
     const hoyMc = (prompt) => ({
       type: "mc",
       prompt,
@@ -1284,12 +1289,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("story-shelf-story-9").getAttribute("data-locked")).toBe("true");
     fireEvent.click(shelf2);
     expect(screen.queryByTestId("story-reader")).toBeNull();
-    await user.click(screen.getByTestId("soft-paywall-dismiss"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.getByTestId("locked-story-cap-line").textContent).toBe("Lee los cuentos anteriores para abrir este.");
     fireEvent.click(screen.getByTestId("story-shelf-story-9"));
     expect(screen.queryByTestId("story-reader")).toBeNull();
-    await user.click(screen.getByTestId("soft-paywall-dismiss"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.getByTestId("locked-story-cap-line").textContent).toBe("Lee los cuentos anteriores para abrir este.");
     await user.click(screen.getByTestId("story-shelf-story-0"));
     const reader = await screen.findByTestId("story-reader");
     expect(reader.getAttribute("data-story-id")).toBe("story-0");

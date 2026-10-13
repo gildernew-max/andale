@@ -58,10 +58,9 @@ describe("off-path Lectura on Learn home", () => {
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     fireEvent.click(screen.getByTestId("story-shelf-story-9"));
-    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByTestId("story-reader")).toBeNull();
-    await user.click(screen.getByTestId("soft-paywall-dismiss"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("locked-story-cap-line").textContent).toBe("Lee los cuentos anteriores para abrir este.");
 
     await user.click(screen.getByTestId("nav-camino"));
     await user.click(screen.getByTestId("lectura-next-story"));

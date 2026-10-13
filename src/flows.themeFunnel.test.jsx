@@ -31,7 +31,7 @@ import {
   localToday,
   assertSoftPaywallAnnualPrimary,
   awaitSoftPaywallAfterFirstWin,
-  awaitBajioFlashThenPaywall,
+  markLearnerDay,
   assertNoWallBeforeLectura,
   openStory0,
   openCaminoMore,
@@ -1338,16 +1338,16 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await awaitSoftPaywallAfterFirstWin();
     await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("paywall_seen")[0].name).toBeUndefined();
-    expect(funnelOf("paywall_seen").every((event) => event.source === "timed")).toBe(true);
+    expect(funnelOf("paywall_seen").every((event) => event.source === "win")).toBe(true);
 
     assertSoftPaywallAnnualPrimary("es");
     const annual = screen.getByTestId("soft-paywall-annual");
     await user.click(annual);
     await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
     expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
-    expect(funnelOf("tap_annual").every((event) => event.source === "timed")).toBe(true);
+    expect(funnelOf("tap_annual").every((event) => event.source === "win")).toBe(true);
     await user.click(screen.getByTestId("soft-paywall-monthly"));
-    await waitFor(() => expect(funnelOf("tap_monthly").some((e) => e.source === "timed")).toBe(true));
+    await waitFor(() => expect(funnelOf("tap_monthly").some((e) => e.source === "win")).toBe(true));
     expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-annual-hold").textContent).toBe("El plan anual aún no está disponible. Sigue leyendo gratis por ahora.");
@@ -1488,6 +1488,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
   it("return home after Hoy win and Lectura start shows the soft paywall and does not emit purchase on web", async () => {
     cleanup();
     seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    markLearnerDay(2);
     delete window.__andaleIapEnv;
     delete window.__andaleNativePurchase;
     const hoyMc = (prompt) => ({
@@ -1531,8 +1532,14 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(funnelOf("purchase")).toHaveLength(0);
 
     await user.click(screen.getByTestId("brand-home"));
-    await awaitBajioFlashThenPaywall();
+    await waitFor(() => expect(screen.getByTestId("bajio-unlock-flash")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull(), { timeout: 3000 });
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
+    // Home after Lectura no longer arms the card. A later win Continue does.
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
@@ -1557,6 +1564,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
   it("Learn home after Hoy does not show the soft paywall until lectura_start, then glow and wall, and web taps do not purchase", async () => {
     cleanup();
     seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    markLearnerDay(2);
     delete window.__andaleIapEnv;
     delete window.__andaleNativePurchase;
     const hoyMc = (prompt) => ({
@@ -1609,10 +1617,15 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
 
     await user.click(screen.getByTestId("brand-home"));
-    await awaitBajioFlashThenPaywall();
+    await waitFor(() => expect(screen.getByTestId("bajio-unlock-flash")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull(), { timeout: 3000 });
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
+    // Home after Lectura no longer arms the card. A later win Continue does.
+    await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
-    // The wall is in this commit. paywall_seen is emitted in the effect after it.
     await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
     expect(funnelOf("purchase")).toHaveLength(0);
 
@@ -1634,7 +1647,10 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
 
   it("Hoy win, then lectura_start, then the chapter cliffhanger hands off to the paywall bird", async () => {
     cleanup();
-    seedProgress({ streak: 0, lastDay: null, uiLang: "es" });
+    const yesterday = prevDayKey(localToday());
+    seedProgress({ streak: 0, lastDay: null, uiLang: "es", bajioUnlockSeen: true, firstActivityDay: yesterday });
+    localStorage.setItem("andale-first-activity", yesterday);
+    localStorage.removeItem("andale-paywall-shown");
     delete window.__andaleIapEnv;
     delete window.__andaleNativePurchase;
     const hoyMc = (prompt) => ({
@@ -1710,6 +1726,9 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
 
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(screen.queryByTestId("story-reader")).toBeNull());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    await user.click(screen.getByTestId("story-0-win-continue"));
     await waitFor(() => expect(screen.getByTestId("soft-paywall-cenzontle")).toBeTruthy());
     expect(firstSessionRoot()).toBeNull();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");

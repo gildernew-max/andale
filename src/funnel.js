@@ -7,8 +7,11 @@
  *  / day2_return are event + timestamp only. Once-per-device gating lives in
  *  firstSessionFunnel.js, not on this bus.
  *  paywall_seen is event + timestamp, plus an allowlisted source
- *  (win / locked_story / timed). tap_annual and tap_monthly are separate
- *  events and carry that same source. Other events do not carry source.
+ *  (win / locked_story / timed) and a learner day number (1 = first local
+ *  calendar day) when that number is a positive integer.
+ *  tap_annual and tap_monthly are separate events and carry that same source.
+ *  locked_story_capped is event + timestamp + that day number.
+ *  Other events do not carry source or day.
  */
 
 import { dayKeyFromDate } from "./firstDoor.js";
@@ -24,6 +27,7 @@ export const FUNNEL_EVENTS = Object.freeze({
   lecturaChapterDone: "lectura_chapter_done",
   paywallSeen: "paywall_seen",
   paywallTap: "paywall_tap",
+  lockedStoryCapped: "locked_story_capped",
   tapAnnual: "tap_annual",
   tapMonthly: "tap_monthly",
   waitlistSubmit: "waitlist_submit",
@@ -43,7 +47,7 @@ export const PAYWALL_TAP = Object.freeze({
   continueFree: "continue_free",
 });
 
-/** Allowlist for paywall_seen, tap_annual, and tap_monthly. win = cliffhanger bird, locked_story = locked Lectura tap, timed = every other opener. */
+/** Allowlist for paywall_seen, tap_annual, and tap_monthly. win = post-win continue and the cliffhanger bird, locked_story = locked Lectura tap, timed = every other opener. */
 export const PAYWALL_SEEN_SOURCE = Object.freeze({
   win: "win",
   lockedStory: "locked_story",
@@ -55,7 +59,11 @@ export function paywallSeenSourceFor(trigger) {
   if (trigger === PAYWALL_SEEN_SOURCE.lockedStory || trigger === PAYWALL_SOURCE.lockedStory) {
     return PAYWALL_SEEN_SOURCE.lockedStory;
   }
-  if (trigger === PAYWALL_BIRD_TRIGGER || trigger === PAYWALL_SEEN_SOURCE.win) {
+  if (
+    trigger === PAYWALL_BIRD_TRIGGER
+    || trigger === PAYWALL_SOURCE.winContinue
+    || trigger === PAYWALL_SEEN_SOURCE.win
+  ) {
     return PAYWALL_SEEN_SOURCE.win;
   }
   return PAYWALL_SEEN_SOURCE.timed;
@@ -73,6 +81,13 @@ const PRODUCT_IDS = new Set([
 const STORY_ID = /^story-[a-z0-9-]{1,32}$/i;
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 const DAYS_SINCE_LAST_CAP = 365;
+const LEARNER_DAY_CAP = 3650;
+
+function allowLearnerDay(value) {
+  if (typeof value !== "number" || !Number.isInteger(value)) return null;
+  if (value < 1 || value > LEARNER_DAY_CAP) return null;
+  return value;
+}
 
 function civilDayNumber(dayKey) {
   if (typeof dayKey !== "string" || !DAY_KEY.test(dayKey)) return null;
@@ -125,9 +140,10 @@ function safeStoryId(id) {
  * purchase is event + at + allowlisted plan / productId only.
  * open is event + at, plus daysSinceLast when it is an integer 0–365.
  * paywall_seen, tap_annual, and tap_monthly are event + at, plus source when it
- * is win, locked_story, or timed.
+ * is win, locked_story, or timed. paywall_seen also keeps day when it is an
+ * integer >= 1. locked_story_capped is event + at + that day.
  */
-export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId, daysSinceLast, source } = {}, bus = eventBus()) {
+export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId, daysSinceLast, source, day } = {}, bus = eventBus()) {
   if (!EVENTS.has(event)) return null;
   const payload = { event, at: new Date().toISOString() };
   if (event === FUNNEL_EVENTS.open) {
@@ -153,6 +169,10 @@ export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId,
     && Object.values(PAYWALL_SEEN_SOURCE).includes(source)
   ) {
     payload.source = source;
+  }
+  if (event === FUNNEL_EVENTS.paywallSeen || event === FUNNEL_EVENTS.lockedStoryCapped) {
+    const learnerDay = allowLearnerDay(day);
+    if (learnerDay != null) payload.day = learnerDay;
   }
   if (bus) {
     bus[FUNNEL_LOG] = Array.isArray(bus[FUNNEL_LOG]) ? bus[FUNNEL_LOG] : [];

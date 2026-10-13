@@ -16,6 +16,7 @@ import { WAITLIST_STORE_KEY } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_PRIVACY_LINK, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
 import { COLLECTOR_DEVICE_KEY, setCollectorEndpointOverride } from "./collector.js";
 import { PAYWALL_SOURCE } from "./paywallHeadline.js";
+import { PAYWALL_SHOWN_KEY } from "./paywallTrigger.js";
 import {
   installFlowHooks,
   STORAGE_KEY,
@@ -36,6 +37,7 @@ import {
   assertNoWallBeforeLectura,
   openStory0,
   lecturaThenBajioWall,
+  markLearnerDay,
   awaitCdmxFlashThenIdle,
   awaitCdmxFlashVisible,
   awaitOaxacaFlashThenIdle,
@@ -376,9 +378,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   it("dark soft paywall title and body are cream on #1E2128; the price line is quiet ink", async () => {
     cleanup();
-    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false, lecturaStartedAt: 1 });
-    await boot();
-    await waitFor(() => expect(screen.getByTestId("soft-paywall-card")).toBeTruthy());
+    seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false, lecturaStartedAt: 1, bajioUnlockSeen: true });
+    render(<App />);
+    await awaitSoftPaywallAfterFirstWin();
     const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
     const nearWhite = /#E8E8EA|#FFFFFF|rgb\(\s*232,\s*232,\s*234\s*\)|rgb\(\s*255,\s*255,\s*255\s*\)/i;
     const darkCard = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
@@ -418,6 +420,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     cleanup();
     localStorage.clear();
     seedColdFirstVisit();
+    markLearnerDay(2);
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("splash-start")).toBeTruthy());
@@ -492,6 +495,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("first streak-1 Eso shows Bajío unlock flash once, then existing paywall", async () => {
     cleanup();
     seedProgress({ streak: 0, lastDay: null });
+    markLearnerDay(2);
     const hoyMc = (prompt) => ({
       type: "mc",
       prompt,
@@ -570,9 +574,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
     await openStory0(replay);
     await replay.click(screen.getByTestId("brand-home"));
-    await awaitSoftPaywallAfterFirstWin();
+    await awaitHome();
     expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
-    assertSoftPaywallAnnualPrimary("es");
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
   it("CONTINUE after first streak-1 Eso cannot skip the Bajío flash onto the paywall", async () => {
@@ -582,6 +586,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       cleanup();
       localStorage.clear();
       seedColdFirstVisit();
+      markLearnerDay(2);
       markBajioUnlockFlashDue(false);
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
       render(
@@ -616,6 +621,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("Landlord WhatsApp first streak-1 CONTINUE shows Abierto before paywall", async () => {
     cleanup();
     seedProgress({ streak: 0, lastDay: null });
+    markLearnerDay(2);
     const landlordMc = (prompt) => ({
       type: "mc",
       prompt,
@@ -845,6 +851,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       cleanup();
       localStorage.clear();
       seedColdFirstVisit();
+      markLearnerDay(2);
       markBajioUnlockFlashDue(false);
       markCdmxUnlockFlashDue(false);
       markOaxacaUnlockFlashDue(false);
@@ -886,6 +893,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       vi.setSystemTime(new Date(2026, 8, 9, 12, 0, 0));
       localStorage.setItem(STORAGE_KEY, saved);
       localStorage.removeItem(LIVE_KEY);
+      // Day-2 already spent the shared cap. CDMX must not sit under a second card.
+      localStorage.setItem(PAYWALL_SHOWN_KEY, "2026-09-09");
       const day2 = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
       render(
         <StrictMode>
@@ -1350,15 +1359,34 @@ const bootStoryStartWall = async (extra = {}) => {
   cleanup();
   localStorage.clear();
   markBajioUnlockFlashDue(false);
+  const yesterday = prevDayKey(localToday());
   seedProgress({
     streak: 1,
     lastDay: localToday(),
     paywallSeen: false,
     bajioUnlockSeen: true,
     uiLang: "es",
+    firstActivityDay: yesterday,
     ...extra,
   });
+  localStorage.setItem("andale-first-activity", yesterday);
+  localStorage.removeItem("andale-paywall-shown");
+  localStorage.setItem(LIVE_KEY, JSON.stringify({
+    screen: "done",
+    tab: "camino",
+    lessonStats: { right: 1, wrong: 0 },
+    session: {
+      title: "Hola",
+      host: "luna",
+      questions: [{}],
+      awarded: true,
+      earnedXP: 10,
+      earnedGems: 1,
+    },
+  }));
+  const user = userEvent.setup();
   render(<App />);
+  await user.click(await screen.findByTestId("win-continue"));
   await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
   return wallStrings();
 };
@@ -1425,8 +1453,7 @@ describe("paywall headline depends on a stored story start", () => {
 describe("paywall headline follows the open source", () => {
   it("boot on the hub uses the fallback headline", async () => {
     await openPaywallFrom(null);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.boot);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("boot in English uses the English fallback headline", async () => {
@@ -1434,72 +1461,84 @@ describe("paywall headline follows the open source", () => {
     markBajioUnlockFlashDue(false);
     seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: false, bajioUnlockSeen: true, uiLang: "en", lecturaStartedAt: 1 });
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.boot, "en");
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("brand-home uses the fallback headline", async () => {
     const user = await openPaywallFrom(lessonLive("lesson"));
     await waitSurfaceClear("lesson-exit");
     await user.click(screen.getByTestId("brand-home"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.brandHome);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("win continue uses the fallback headline", async () => {
-    const user = await openPaywallFrom(lessonLive("done"), { streak: 0 });
-    await waitSurfaceClear("win-continue");
+    cleanup();
+    markBajioUnlockFlashDue(false);
+    const yesterday = prevDayKey(localToday());
+    localStorage.removeItem(LIVE_KEY);
+    seedProgress({
+      streak: 1,
+      lastDay: localToday(),
+      paywallSeen: false,
+      bajioUnlockSeen: true,
+      uiLang: "es",
+      lecturaStartedAt: 1,
+      firstActivityDay: yesterday,
+    });
+    localStorage.setItem("andale-first-activity", yesterday);
+    localStorage.removeItem("andale-paywall-shown");
+    localStorage.setItem(LIVE_KEY, JSON.stringify(lessonLive("done")));
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("win-continue")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("win-continue"));
     await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
     assertPaywallHeadline(PAYWALL_SOURCE.winContinue);
+    const seen = (window.__andaleFunnelLog || []).filter((event) => event.event === "paywall_seen");
+    expect(seen.some((event) => event.source === "win" && event.day >= 2)).toBe(true);
   });
 
   it("session close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "sessionClose" });
     await waitSurfaceClear("session-close-dismiss");
     await user.click(screen.getByTestId("session-close-dismiss"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.sessionClose);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("cubetas close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "cubetas", cubetasGame: startCubetasRun() });
     await waitSurfaceClear("cubetas-board");
     await clickClose(user, "cubetas-board");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.cubetas);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("hangman close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "ahorcado", ahorcado: startHangmanRun() });
     await waitSurfaceClear("hangman-board");
     await clickClose(user, "hangman-board");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.hangman);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("match pairs close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "matchPairs", matchGame: startMatchRun([["hola", "hi"], ["adiós", "bye"]]) });
     await waitSurfaceClear("match-pairs-screen");
     await clickClose(user, "match-pairs-screen");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.matchPairs);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("memory close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "memory", memoryGame: startMemoryRun() });
     await waitSurfaceClear("memory-board");
     await clickClose(user, "memory-board");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.memory);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("dialogue close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "dialogue" });
     await waitSurfaceClear("dialogue-board");
     await clickClose(user, "dialogue-board");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.dialogue);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("flashcard grade uses the fallback headline", async () => {
@@ -1525,16 +1564,14 @@ describe("paywall headline follows the open source", () => {
     await waitFor(() => expect(screen.getByTestId("flash-reveal")).toBeTruthy());
     await user.click(screen.getByTestId("flash-reveal"));
     await user.click(screen.getByTestId("flash-hard"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.flashcards);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("games hub close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "games" });
     await waitSurfaceClear("games-hub");
     await clickClose(user, "games-hub");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.gamesHub);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("snake close uses the fallback headline", async () => {
@@ -1548,32 +1585,28 @@ describe("paywall headline follows the open source", () => {
     });
     await waitSurfaceClear("snakes-board");
     await clickClose(user, "snakes-board");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.snake);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("safe-or-risky close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "safeRisky", safeGame: startSafeRiskyRun([SAFE_RISKY_MULTI_FIXTURE]) });
     await waitSurfaceClear("safe-risky-board");
     await clickClose(user, "safe-risky-board");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.safeRisky);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("jeopardy close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "jeopardy", jeopardy: startJeopardyRun() });
     await waitSurfaceClear("jeopardy-board");
     await clickClose(user, "jeopardy-board");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.jeopardy);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("story close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "story", storyId: "story-0", paraIdx: 0 });
     await waitSurfaceClear("story-reader");
     await clickClose(user, "story-reader");
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.storyClose);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("lesson quit uses the fallback headline", async () => {
@@ -1581,24 +1614,21 @@ describe("paywall headline follows the open source", () => {
     await waitSurfaceClear("lesson-exit");
     await user.click(screen.getByTestId("lesson-exit"));
     await user.click(screen.getByTestId("quit-without-save"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.lessonQuit);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("out of hearts uses the fallback headline", async () => {
     const user = await openPaywallFrom(lessonLive("failed"));
     await waitSurfaceClear("hearts-to-path");
     await user.click(screen.getByTestId("hearts-to-path"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.hearts);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("rival back uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "rivalIntro" });
     await waitSurfaceClear("rival-back");
     await user.click(screen.getByTestId("rival-back"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.rival);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
   it("rival done uses the fallback headline", async () => {
@@ -1608,8 +1638,7 @@ describe("paywall headline follows the open source", () => {
     });
     await waitSurfaceClear("rival-done-back");
     await user.click(screen.getByTestId("rival-done-back"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    assertPaywallHeadline(PAYWALL_SOURCE.rival);
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 });
 
@@ -1651,7 +1680,7 @@ describe("inert web paywall", () => {
     expect(restoreCalls).toBe(0);
     expect(purchaseCalls).toBe(0);
     await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
-    expect(funnelOf("paywall_seen").every((event) => event.source === "timed")).toBe(true);
+    expect(funnelOf("paywall_seen").every((event) => event.source === "win")).toBe(true);
     expect(funnelOf("purchase")).toHaveLength(0);
 
     await user.click(screen.getByTestId("soft-paywall-annual"));

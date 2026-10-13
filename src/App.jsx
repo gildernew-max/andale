@@ -30,6 +30,7 @@ import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { LOCKED_STORY_PAYWALL, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_MONTHLY_GAP, annualPriceLine } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent, paywallSeenSourceFor } from "./funnel.js";
+import { FIRST_ACTIVITY_KEY, LOCKED_CAP_FADE_MS, LOCKED_CAP_GAP_PX, LOCKED_CAP_INK, LOCKED_CAP_SIZE, LOCKED_STORY_CAP_LINE, PAYWALL_SHOWN_KEY, isPaywallMidFlow, learnerDayNumber, paywallOpenDecision, readPlainDay, resolveFirstActivityDay, resolvePaywallShownDay, writePlainDay } from "./paywallTrigger.js";
 import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1, claimFirstSessionStart, isFirstExerciseCorrect, sessionOneFromProgress } from "./firstSessionFunnel.js";
 import { isWaitlistEmail } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
@@ -5350,6 +5351,9 @@ export default function App() {
   const paywallStillFrameRef = useRef(null);
   const [lecturaCliffhanger, setLecturaCliffhanger] = useState(null);
   const [chapterBirdHandoff, setChapterBirdHandoff] = useState(false);
+  const [winPaywall, setWinPaywall] = useState(false);
+  const [lockedCapNote, setLockedCapNote] = useState(null);
+  const paywallShownEmitRef = useRef("");
   const [paywallSource, setPaywallSource] = useState(PAYWALL_SOURCE.boot);
   const [paywallArmed, setPaywallArmed] = useState(false);
   const [postDismissHandoff, setPostDismissHandoff] = useState(false);
@@ -5503,6 +5507,20 @@ export default function App() {
 	      if (needsOnboarding) merged = { ...merged, onboardingPending: true };
 	      // First visit keeps DEFAULT_UI_LANG (EN). Returning saves without uiLang stay ES.
 	      if (p && p.uiLang !== "en" && p.uiLang !== "es") merged = { ...merged, uiLang: "es" };
+      const dayStore = typeof window !== "undefined" ? window.localStorage : null;
+      const activityToday = todayStr();
+      const firstActivityDay = resolveFirstActivityDay({
+        keyValue: readPlainDay(dayStore, FIRST_ACTIVITY_KEY),
+        progressValue: merged.firstActivityDay,
+        today: activityToday,
+      });
+      if (firstActivityDay) {
+        writePlainDay(dayStore, FIRST_ACTIVITY_KEY, firstActivityDay);
+        merged.firstActivityDay = firstActivityDay;
+      }
+      const shownDay = resolvePaywallShownDay({ keyValue: readPlainDay(dayStore, PAYWALL_SHOWN_KEY) });
+      if (shownDay) merged.paywallShownDay = shownDay;
+      else delete merged.paywallShownDay;
 	      if (merged.mistakes?.length && !Object.keys(merged.srs || {}).length) {
 	        const srs = {};
 	        merged.mistakes.forEach((m) => { srs[`${m.u}|${m.i}`] = { ef: 2.5, reps: 0, interval: 0, due: Date.now() }; });
@@ -6870,13 +6888,55 @@ export default function App() {
     save({ gems: prog.gems - REFILL_COST, hearts: MAX_HEARTS, heartT: Date.now() });
   };
 
-  const openLockedStoryPaywall = () => {
-    if (!LOCKED_STORY_PAYWALL) return;
-    // A click that falls through Continue free is not a new tap.
+  const paywallDayContext = () => {
+    const store = typeof window !== "undefined" ? window.localStorage : null;
+    const today = todayStr();
+    const firstActivityDay = resolveFirstActivityDay({
+      keyValue: readPlainDay(store, FIRST_ACTIVITY_KEY),
+      progressValue: prog.firstActivityDay,
+      today,
+    });
+    return {
+      today,
+      dayNumber: learnerDayNumber(firstActivityDay, today),
+      shownDay: resolvePaywallShownDay({ keyValue: readPlainDay(store, PAYWALL_SHOWN_KEY) }),
+      unlockedPrem: !!prog.unlockedPrem,
+      paywallHold: !!prog.paywallHold,
+    };
+  };
+
+  const stampPaywallShown = (today) => {
+    writePlainDay(typeof window !== "undefined" ? window.localStorage : null, PAYWALL_SHOWN_KEY, today);
+    save({ paywallShownDay: today });
+  };
+
+  const armPostWinPaywall = (bird) => {
+    const ctx = paywallDayContext();
+    if (paywallOpenDecision({ source: "win", ...ctx }) !== "open") return;
     if (paywallDismissingRef.current) return;
     paywallDismissedRef.current = false;
     setPaywallDismissed(false);
+    setPaywallSource(bird ? PAYWALL_BIRD_TRIGGER : PAYWALL_SOURCE.winContinue);
+    setChapterBirdHandoff(!!bird);
+    setWinPaywall(true);
+    stampPaywallShown(ctx.today);
+  };
+
+  const openLockedStoryPaywall = (storyId, surface) => {
+    if (!LOCKED_STORY_PAYWALL) return;
+    // A click that falls through Continue free is not a new tap.
+    if (paywallDismissingRef.current) return;
+    const ctx = paywallDayContext();
+    if (paywallOpenDecision({ source: "locked_story", ...ctx }) === "capped") {
+      setLockedCapNote({ storyId, surface });
+      emitFunnelEvent({ event: FUNNEL_EVENTS.lockedStoryCapped, day: ctx.dayNumber });
+      return;
+    }
+    setLockedCapNote(null);
+    paywallDismissedRef.current = false;
+    setPaywallDismissed(false);
     setLockedStoryPaywall(true);
+    stampPaywallShown(ctx.today);
   };
 
   const openStory = (story) => {
@@ -7092,6 +7152,7 @@ export default function App() {
       earnedXP: beat.earned,
       earnedGems: 10,
       ...(beat.streakBefore != null ? { streakBefore: beat.streakBefore } : {}),
+      ...(beat.lecturaPaywallAfterWin ? { lecturaPaywallAfterWin: true } : {}),
     });
     const questionMisses = Math.max(0, story.questions.length - (Number(beat.correct) || 0));
     const checkpointMisses = Math.max(0, Number(beat.checkpointMisses) || 0);
@@ -7162,10 +7223,6 @@ export default function App() {
 
   const handoffCliffhangerToBird = () => {
     if (!lecturaCliffhanger) return;
-    if (prog.paywallSeen || prog.unlockedPrem) {
-      releaseLecturaWin(lecturaCliffhanger);
-      return;
-    }
     if (shouldUseFirstSession({ done: prog.done, firstSessionDone: prog.firstSessionDone })) {
       if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
       setLecturaCliffhanger(null);
@@ -7174,11 +7231,9 @@ export default function App() {
       return;
     }
     // Same-turn fall-through from Continue free must not reopen the wall.
+    // The cliffhanger leaves the reader. The card waits for Continue, and only on day 2+.
     if (paywallDismissingRef.current) return;
-    paywallDismissedRef.current = false;
-    setPaywallDismissed(false);
-    setPaywallSource(PAYWALL_BIRD_TRIGGER);
-    setChapterBirdHandoff(true);
+    releaseLecturaWin({ ...lecturaCliffhanger, lecturaPaywallAfterWin: true });
   };
 
   const discoverStoryWord = (story, key) => {
@@ -7974,8 +8029,9 @@ export default function App() {
   const [paywallStillMiss, setPaywallStillMiss] = useState(false);
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
-  const showLockedStoryPaywall = LOCKED_STORY_PAYWALL && lockedStoryPaywall;
-  const showSoftPaywall = !paywallDismissed && (showLockedStoryPaywall || (paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue()) || chapterBirdHandoff);
+  const showLockedStoryPaywall = LOCKED_STORY_PAYWALL && lockedStoryPaywall && !isPaywallMidFlow(screen);
+  const showWinPaywall = winPaywall && (screen === "home" || screen === "sessionClose") && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
+  const showSoftPaywall = !paywallDismissed && (showLockedStoryPaywall || showWinPaywall);
   const paywallHeadlineSource = showLockedStoryPaywall ? PAYWALL_SOURCE.lockedStory : (chapterBirdHandoff ? PAYWALL_BIRD_TRIGGER : paywallSource);
   const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource, lecturaStartedStored);
   paywallSeenKindRef.current = paywallSeenSourceFor(paywallHeadlineSource);
@@ -8009,7 +8065,18 @@ export default function App() {
   useEffect(() => {
     if (showSoftPaywall) {
       setSoftPaywall(true);
-      emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: paywallSeenKindRef.current });
+      const seenSource = paywallSeenKindRef.current;
+      const seenToday = todayStr();
+      const seenToken = `${seenSource}:${seenToday}`;
+      if (paywallShownEmitRef.current !== seenToken) {
+        paywallShownEmitRef.current = seenToken;
+        const seenFirst = resolveFirstActivityDay({
+          keyValue: readPlainDay(window.localStorage, FIRST_ACTIVITY_KEY),
+          progressValue: prog.firstActivityDay,
+          today: seenToday,
+        });
+        emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: seenSource, day: learnerDayNumber(seenFirst, seenToday) });
+      }
     } else {
       setSoftPaywall(false);
       setPaywallArmed(false);
@@ -8017,6 +8084,21 @@ export default function App() {
       setPaywallMonthlyHold(false);
     }
   }, [showSoftPaywall]);
+  useEffect(() => {
+    if (!lockedCapNote) return undefined;
+    let armed = false;
+    const clear = () => { if (armed) setLockedCapNote(null); };
+    const arm = setTimeout(() => {
+      armed = true;
+      window.addEventListener("scroll", clear, true);
+      window.addEventListener("pointerdown", clear, true);
+    }, 0);
+    return () => {
+      clearTimeout(arm);
+      window.removeEventListener("scroll", clear, true);
+      window.removeEventListener("pointerdown", clear, true);
+    };
+  }, [lockedCapNote]);
   useLayoutEffect(() => {
     if (!showSoftPaywall) return;
     const node = paywallAnnualRef.current;
@@ -8314,6 +8396,8 @@ export default function App() {
     setPaywallDismissed(true);
     setPaywallClickShield(true);
     setChapterBirdHandoff(false);
+    setWinPaywall(false);
+    setLockedCapNote(null);
     setLockedStoryPaywall(false);
     setSoftPaywall(false);
     setPaywallAnnualHold(false);
@@ -8438,13 +8522,9 @@ export default function App() {
   };
 
   const continueFromWin = () => {
+    const birdAfterWin = !!session?.lecturaPaywallAfterWin;
     lecturaPaywallAfterWin.current = false;
-    if (session?.lecturaPaywallAfterWin) {
-      setPaywallSource(PAYWALL_BIRD_TRIGGER);
-      if (!prog.paywallSeen && !prog.unlockedPrem && !paywallDismissedRef.current) setChapterBirdHandoff(true);
-    } else {
-      setPaywallSource(PAYWALL_SOURCE.winContinue);
-    }
+    armPostWinPaywall(birdAfterWin);
     const t = todayStr();
     const firstStreakEso = isFirstStreakEsoWin(session);
     const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
@@ -8771,6 +8851,7 @@ export default function App() {
         .bounce { animation: bounce 1.1s ease-in-out infinite; }
         @keyframes pop { 0%{opacity:.35} 100%{opacity:1} }
         .pop { animation: pop .15s ease; }
+        @keyframes lockedCapFade { from { opacity: 0 } to { opacity: 1 } }
         @keyframes streakPop { 0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)} }
         .pop.streak-pop { transform-origin:center; animation-name:pop, streakPop; animation-duration:.15s, 400ms; animation-timing-function:ease, ease-out; animation-delay:0ms, 200ms; animation-iteration-count:1, 1; animation-fill-mode:none, none; }
         @keyframes wiggle { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
@@ -9240,12 +9321,15 @@ export default function App() {
                       const lockedSuffix = readable ? "" : (uiLang === "en" ? " (locked)" : " (cerrado)");
                       return (
                         <div style={{ position: "relative", margin: "14px 0 4px", zIndex: 1, textAlign: "center" }}>
-                          <button className="node-btn" data-testid={`camino-story-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable && !LOCKED_STORY_PAYWALL} aria-disabled={!readable && LOCKED_STORY_PAYWALL ? "true" : undefined} onClick={() => { if (readable) openStory(story); else openLockedStoryPaywall(); }}
+                          <button className="node-btn" data-testid={`camino-story-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable && !LOCKED_STORY_PAYWALL} aria-disabled={!readable && LOCKED_STORY_PAYWALL ? "true" : undefined} onClick={() => { if (readable) openStory(story); else openLockedStoryPaywall(story.id, "camino"); }}
 	                            aria-label={`${L.storyPrefix}: ${story.title}${lockedSuffix}`}
 	                            title={readable ? `${story.title} — ${L.storyTip}` : `${story.title}${lockedSuffix}`}
                             style={{ width: 72, height: 72, borderRadius: 20, border: "none", cursor: readable || LOCKED_STORY_PAYWALL ? "pointer" : "default", background: readable ? sec.color : D.lockGray, borderBottom: `7px solid ${readable ? sec.dark : (theme === "dark" ? D.line : "#CFCFCF")}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: readable ? "0 4px 10px rgba(0,0,0,.12)" : "none" }}>
                             {readable ? <IcBook size={34} /> : <IcLock size={30} />}
                           </button>
+                          {lockedCapNote?.storyId === story.id && lockedCapNote?.surface === "camino" && (
+                            <div data-testid="locked-story-cap-line" style={{ marginTop: LOCKED_CAP_GAP_PX, fontWeight: 700, fontSize: LOCKED_CAP_SIZE, lineHeight: 1.45, color: LOCKED_CAP_INK[theme === "dark" ? "dark" : "light"], animation: `lockedCapFade ${LOCKED_CAP_FADE_MS}ms linear` }}>{LOCKED_STORY_CAP_LINE[uiLang === "en" ? "en" : "es"]}</div>
+                          )}
                           {readDone && (
                             <div style={{ position: "absolute", top: -10, right: "50%", marginRight: -46, transform: "rotate(15deg)", lineHeight: 0, filter: "drop-shadow(0 2px 2px rgba(0,0,0,.25))" }}><IcCrown size={24} /></div>
                           )}
@@ -9475,7 +9559,8 @@ export default function App() {
 	              const found = (prog.storyFinds?.[story.id] || []).length;
 	              const total = extra.keyWords?.length || 0;
 	              return (
-	                <button key={story.id} data-testid={`story-shelf-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable && !LOCKED_STORY_PAYWALL} aria-disabled={!readable && LOCKED_STORY_PAYWALL ? "true" : undefined} onClick={() => { if (readable) openStory(story); else openLockedStoryPaywall(); }} className="choice-card"
+	                <div key={story.id}>
+	                <button data-testid={`story-shelf-${story.id}`} data-locked={readable ? "false" : "true"} disabled={!readable && !LOCKED_STORY_PAYWALL} aria-disabled={!readable && LOCKED_STORY_PAYWALL ? "true" : undefined} onClick={() => { if (readable) openStory(story); else openLockedStoryPaywall(story.id, "shelf"); }} className="choice-card"
 	                  aria-label={`${shelfTitle}${lockedSuffix}`}
 	                  style={{ textAlign: "left", padding: 15, cursor: readable || LOCKED_STORY_PAYWALL ? "pointer" : "default", fontFamily: "inherit", background: theme === "dark" ? (claimed ? D.greenBg : D.card) : (claimed ? "#F3FBEA" : "#fff"), borderColor: theme === "dark" ? D.line : (claimed ? D.green : D.line), borderBottomColor: theme === "dark" ? D.line : (claimed ? D.green : D.line) }}>
                   <div style={{ display: "flex", gap: 13, alignItems: "center" }}>
@@ -9491,6 +9576,10 @@ export default function App() {
                     {claimed && <IcCrown size={26} />}
                   </div>
                 </button>
+                {lockedCapNote?.storyId === story.id && lockedCapNote?.surface === "shelf" && (
+                  <div data-testid="locked-story-cap-line" style={{ marginTop: LOCKED_CAP_GAP_PX, fontWeight: 700, fontSize: LOCKED_CAP_SIZE, lineHeight: 1.45, color: LOCKED_CAP_INK[theme === "dark" ? "dark" : "light"], animation: `lockedCapFade ${LOCKED_CAP_FADE_MS}ms linear` }}>{LOCKED_STORY_CAP_LINE[uiLang === "en" ? "en" : "es"]}</div>
+                )}
+                </div>
               );
             })}
           </div>

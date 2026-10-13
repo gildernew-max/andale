@@ -6,7 +6,8 @@ import { afterEach, beforeEach, expect, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
-import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey } from "./firstDoor.js";
+import { comeBackTomorrowLine, dayKeyFromDate, hoySceneForDay, hoyTitleForLang, nextDayKey, prevDayKey } from "./firstDoor.js";
+import { FIRST_ACTIVITY_KEY, PAYWALL_SHOWN_KEY } from "./paywallTrigger.js";
 import { IPHONE_SAFARI_UA } from "./a2hs.js";
 import { markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markCdmxUnlockFlashLive, markNorteUnlockFlashDue, markNorteUnlockFlashLive, markOaxacaUnlockFlashDue, markOaxacaUnlockFlashLive, markYucatanUnlockFlashDue, markYucatanUnlockFlashLive, recuerdosHasProgressFraction, recuerdosSurfaceHasCuts } from "./recuerdos.js";
 import { setSafeRiskyPackOverride } from "./safeRisky.js";
@@ -377,6 +378,20 @@ export const clickHoySceneMc = async (user) => {
 
 export const localToday = () => dayKeyFromDate(new Date());
 
+/** Plain day-1 anchor. day 2 is yesterday, so a win can open the card. */
+export const markLearnerDay = (day = 2) => {
+  let key = localToday();
+  for (let i = 1; i < day; i += 1) key = prevDayKey(key);
+  localStorage.setItem(FIRST_ACTIVITY_KEY, key);
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    const prog = JSON.parse(raw);
+    prog.firstActivityDay = key;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
+  }
+  return key;
+};
+
 /** Same nine Hoy titles, same day-hash as App TODAY_SCENES. Do not invent names. */
 export const HOY_TITLES = [
   { title: "Noche de faroles", titleEn: "Night of lanterns" },
@@ -602,17 +617,66 @@ export async function collectStoryLifts(user, { maxBeats = 8 } = {}) {
   return lifts;
 }
 
-/** Eso → Bajío glow beat → paywall. Skips wait when the glow already fired. */
+/** Card chrome: remount onto a day-2 win and tap Continue. Does not prove a home gate. */
 export const awaitSoftPaywallAfterFirstWin = async () => {
-  await waitFor(() => {
-    expect(screen.queryByTestId("bajio-unlock-flash") || screen.queryByTestId("soft-paywall")).toBeTruthy();
-  }, { timeout: 3000 });
-  if (screen.queryByTestId("bajio-unlock-flash")) {
-    expect(screen.queryByTestId("soft-paywall")).toBeNull();
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy(), { timeout: 3000 });
-  }
-  expect(screen.queryByTestId("bajio-unlock-flash")).toBeNull();
-  expect(screen.getByTestId("soft-paywall")).toBeTruthy();
+  if (screen.queryByTestId("soft-paywall")) return;
+  cleanup();
+  const raw = localStorage.getItem(STORAGE_KEY);
+  const prev = raw ? JSON.parse(raw) : {};
+  const yesterday = prevDayKey(localToday());
+  const stored = {
+    welcomed: true,
+    xp: 42,
+    gems: 9,
+    name: "Dave",
+    contentVersion: 2,
+    hearts: 5,
+    done: {},
+    onboardingDone: true,
+    firstSessionDone: true,
+    uiLang: "es",
+    ...prev,
+    firstActivityDay: yesterday,
+    bajioUnlockSeen: true,
+    streak: Math.max(Number(prev.streak) || 0, 1),
+    lastDay: prev.lastDay || localToday(),
+    paywallSeen: false,
+    unlockedPrem: false,
+    paywallHold: false,
+  };
+  delete stored.paywallShownDay;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+  localStorage.setItem(FIRST_ACTIVITY_KEY, yesterday);
+  localStorage.removeItem(PAYWALL_SHOWN_KEY);
+  // A Hoy walk in the same test arms the glow in sessionStorage. This remount
+  // wants the card, so that leftover due flag must not cover it.
+  markBajioUnlockFlashDue(false);
+  markBajioUnlockFlashLive(false);
+  markCdmxUnlockFlashDue(false);
+  markCdmxUnlockFlashLive(false);
+  markOaxacaUnlockFlashDue(false);
+  markOaxacaUnlockFlashLive(false);
+  markYucatanUnlockFlashDue(false);
+  markYucatanUnlockFlashLive(false);
+  markNorteUnlockFlashDue(false);
+  markNorteUnlockFlashLive(false);
+  localStorage.setItem(LIVE_KEY, JSON.stringify({
+    screen: "done",
+    tab: "camino",
+    lessonStats: { right: 1, wrong: 0 },
+    session: {
+      title: "Hola",
+      host: "luna",
+      questions: [{}],
+      awarded: true,
+      earnedXP: 10,
+      earnedGems: 1,
+    },
+  }));
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(await screen.findByTestId("win-continue"));
+  await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
 };
 
 /** First streak-1 Eso CONTINUE must show the glow. Fail if paywall lands first. */

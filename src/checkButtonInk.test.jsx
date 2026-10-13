@@ -12,6 +12,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { dayKeyFromDate } from "./firstDoor.js";
+import { awaitSoftPaywallAfterFirstWin } from "./flowsHarness.jsx";
 
 const appSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "App.jsx"), "utf8");
 const STORAGE_KEY = "andale-v3";
@@ -259,8 +260,8 @@ describe("lesson Check and Continue ink", () => {
       lastDay: dayKeyFromDate(new Date()),
     });
     localStorage.removeItem(LIVE_KEY);
-    render(<App />);
-    const annual = await screen.findByTestId("soft-paywall-annual");
+    await awaitSoftPaywallAfterFirstWin();
+    const annual = screen.getByTestId("soft-paywall-annual");
     expect(annual.textContent).toBe(label);
     expect(annual.disabled).toBe(false);
     expect(norm(annual.style.background)).toBe(LIME);

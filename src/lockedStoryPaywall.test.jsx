@@ -61,25 +61,6 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     });
     expect((window.__andaleFunnelLog || []).some((event) => event.event === "paywall_tap")).toBe(false);
 
-    await user.click(screen.getByTestId("soft-paywall-dismiss"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
-    expect(screen.getByTestId("story-shelf-story-1")).toBeTruthy();
-    const taps = (window.__andaleFunnelLog || []).filter((event) => event.event === "paywall_tap");
-    expect(taps).toHaveLength(1);
-    expect(taps[0].choice).toBe("continue_free");
-    expect(taps[0].source).toBeUndefined();
-
-    await user.click(screen.getByTestId("nav-camino"));
-    const node = screen.getByTestId("camino-story-story-1");
-    expect(node.disabled).toBe(false);
-    expect(node.getAttribute("aria-disabled")).toBe("true");
-    expect(node.getAttribute("data-locked")).toBe("true");
-    expect(node.getAttribute("aria-label")).toBe("Cuento: La casa azul (cerrado)");
-    expect(node.style.cursor).toBe("pointer");
-    fireEvent.click(node);
-    await screen.findByTestId("soft-paywall");
-    expect(screen.queryByTestId("story-reader")).toBeNull();
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
     fireEvent.click(screen.getByTestId("soft-paywall-annual"));
     await waitFor(() => expect((window.__andaleFunnelLog || []).some((event) => event.event === "tap_annual" && event.source === "locked_story")).toBe(true));
     fireEvent.click(screen.getByTestId("soft-paywall-monthly"));
@@ -89,6 +70,24 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("US$6.99\u00A0al\u00A0mes");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(screen.getByTestId("story-shelf-story-1")).toBeTruthy();
+    const taps = (window.__andaleFunnelLog || []).filter((event) => event.event === "paywall_tap");
+    const free = taps.filter((event) => event.choice === "continue_free");
+    expect(free).toHaveLength(1);
+    expect(free[0].source).toBeUndefined();
+
+    await user.click(screen.getByTestId("nav-camino"));
+    const node = screen.getByTestId("camino-story-story-1");
+    expect(node.disabled).toBe(false);
+    expect(node.getAttribute("aria-disabled")).toBe("true");
+    expect(node.getAttribute("data-locked")).toBe("true");
+    expect(node.getAttribute("aria-label")).toBe("Cuento: La casa azul (cerrado)");
+    expect(node.style.cursor).toBe("pointer");
+    fireEvent.click(node);
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+    expect(screen.getByTestId("locked-story-cap-line").textContent).toBe("Lee los cuentos anteriores para abrir este.");
+    await user.click(screen.getByTestId("nav-lectura"));
     expect(screen.getByTestId("story-shelf-story-0")).toBeTruthy();
 
     await user.click(screen.getByTestId("story-shelf-story-0"));
@@ -96,7 +95,7 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     expect(reader.getAttribute("data-story-id")).toBe("story-0");
   });
 
-  it("continue free returns to the stories list and stays down until a new locked tap", async () => {
+  it("continue free returns to the stories list and a same-day locked tap shows the quiet line", async () => {
     seedProgress({ uiLang: "en", ...ready });
     const user = await boot();
     await user.click(screen.getByTestId("nav-lectura"));
@@ -113,8 +112,9 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.getByTestId("story-shelf-story-1")).toBeTruthy();
     fireEvent.click(screen.getByTestId("story-shelf-story-1"));
-    await screen.findByTestId("soft-paywall");
-    expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).toBe("locked-story");
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.getByTestId("locked-story-cap-line").textContent).toBe("Lee los cuentos anteriores para abrir este.");
+    expect(screen.getByTestId("story-shelf-story-1").getAttribute("data-locked")).toBe("true");
   });
 
   it("an English locked tap uses the much-more line and the dollar price", async () => {

@@ -12,7 +12,6 @@ import {
   LIVE_KEY,
   seedProgress,
   awaitHome,
-  awaitSoftPaywallAfterFirstWin,
   openStory0,
   openCaminoMore,
 } from "./flowsHarness.jsx";
@@ -371,7 +370,8 @@ describe("short onboarding", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
     await openStory0(user);
     await user.click(screen.getByTestId("brand-home"));
-    await awaitSoftPaywallAfterFirstWin();
+    await awaitHome();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
     // Full beginner path + Lectura start + wall. CI already spends ~10 minutes on this file.
   }, 40000);
