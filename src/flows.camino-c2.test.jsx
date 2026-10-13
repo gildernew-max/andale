@@ -22,6 +22,7 @@ import {
   assertNoWallBeforeLectura,
   openStory0,
   lecturaThenBajioWall,
+  markLearnerDay,
   awaitYucatanFlashThenIdle,
   awaitYucatanFlashVisible,
   awaitNorteFlashThenIdle,
@@ -365,6 +366,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("Landlord WhatsApp first streak-1 CONTINUE still shows Bajío before paywall, not CDMX", async () => {
     cleanup();
     seedProgress({ streak: 0, lastDay: null });
+    markLearnerDay(2);
     const landlordMc = (prompt) => ({
       type: "mc",
       prompt,
@@ -419,6 +421,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("first streak-1 win CONTINUE dismiss free lands on Doctora CTA, not idle home", async () => {
     cleanup();
     seedProgress({ streak: 0, lastDay: null });
+    markLearnerDay(2);
     const hoyMc = (prompt) => ({
       type: "mc",
       prompt,
@@ -652,27 +655,16 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     assertNoWallBeforeLectura();
     await openStory0(user);
     await user.click(screen.getByTestId("brand-home"));
-    await awaitSoftPaywallAfterFirstWin();
     await awaitHome();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByText(/Vuelve mañana|Come back tomorrow/)).toBeNull();
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
-    await user.click(screen.getByTestId("soft-paywall-dismiss"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
-    const handoff = screen.getByTestId("post-dismiss-handoff");
-    expect(handoff).toBeTruthy();
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
-    expect(screen.getByTestId("hero-cta").textContent).not.toMatch(/Jugar la escena|Continuar|Subjuntivo/);
-    expect(handoff.textContent).not.toMatch(/Phrase Doctor/);
-    expect(screen.getByTestId("hub-phrase-doctor")).toBeTruthy();
-    expect(screen.getByTestId("hub-hoy")).toBeTruthy();
-    expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
+    expect(screen.queryByTestId("post-dismiss-handoff")).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE));
-    expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     expect(screen.queryByText(/Come back tomorrow for/)).toBeNull();
   });
@@ -802,8 +794,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(false);
 
     await user.click(screen.getByTestId("brand-home"));
-    await awaitSoftPaywallAfterFirstWin();
-    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(true);
+    await awaitHome();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(false);
   });
 
   it("a claimed story already in progress counts as started for the soft paywall", async () => {
@@ -811,14 +804,9 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     markBajioUnlockFlashDue(false);
     seedProgress({ streak: 1, lastDay: localToday(), stories: { "story-0": true } });
     render(<App />);
-    // The wall mounts in render; paywall_seen is emitted in the effect after
-    // that commit. Reading the funnel log in the same turn races the flush.
-    await screen.findByTestId("soft-paywall", {}, { timeout: 3000 });
-    await awaitSoftPaywallAfterFirstWin();
-    await waitFor(() => {
-      expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-      expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(true);
-    });
+    await awaitHome();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(false);
   });
 
   it("soft paywall does not render on splash or boot before a win", async () => {
@@ -961,7 +949,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const monthly = screen.getByTestId("soft-paywall-monthly");
     expect(monthly.textContent).toBe("US$6.99\u00A0al\u00A0mes");
     await user.click(monthly);
-    await waitFor(() => expect(funnelOf("tap_monthly").some((e) => e.source === "timed")).toBe(true));
+    await waitFor(() => expect(funnelOf("tap_monthly").some((e) => e.source === "win")).toBe(true));
     expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
     expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("US$6.99\u00A0al\u00A0mes");
     expect(screen.getByTestId("soft-paywall-monthly-hold").textContent).toBe("El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.");

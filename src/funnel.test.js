@@ -35,7 +35,7 @@ assert(FUNNEL_EVENTS.firstSessionComplete === "first_session_complete", "first_s
 assert(FUNNEL_EVENTS.day2Return === "day2_return", "day2_return is the later-day open");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "lectura_chapter_done", "lectura_start", "open", "paywall_seen", "paywall_tap", "purchase", "tap_annual", "tap_monthly", "waitlist_submit"].join(","),
+    === ["cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "lectura_chapter_done", "lectura_start", "locked_story_capped", "open", "paywall_seen", "paywall_tap", "purchase", "tap_annual", "tap_monthly", "waitlist_submit"].join(","),
   "funnel allowlist is the conversion chain plus lectura, paywall, waitlist, first-win email, and first-session measurement",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
@@ -179,11 +179,24 @@ assert(Object.keys(junkSeen).sort().join(",") === "at,event", "a dropped source 
 
 for (const trigger of Object.values(PAYWALL_SOURCE)) {
   const mapped = paywallSeenSourceFor(trigger);
-  const expected = trigger === PAYWALL_BIRD_TRIGGER
+  const expected = trigger === PAYWALL_BIRD_TRIGGER || trigger === PAYWALL_SOURCE.winContinue
     ? PAYWALL_SEEN_SOURCE.win
     : (trigger === PAYWALL_SOURCE.lockedStory ? PAYWALL_SEEN_SOURCE.lockedStory : PAYWALL_SEEN_SOURCE.timed);
   assert(mapped === expected, `${trigger} maps to ${expected}`);
 }
+const daySeen = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: "locked_story", day: 1 }, bus);
+assert(daySeen.day === 1, "paywall_seen keeps learner day 1");
+assert(Object.keys(daySeen).sort().join(",") === "at,day,event,source", "paywall_seen with day is event + at + source + day");
+const droppedDay = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: "win", day: 0 }, bus);
+assert(droppedDay.day == null, "day 0 is dropped");
+assert(Object.keys(droppedDay).sort().join(",") === "at,event,source", "a dropped day leaves event + at + source");
+const junkDay = emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: "win", day: 1.5 }, bus);
+assert(junkDay.day == null, "a non-integer day is dropped");
+const capped = emitFunnelEvent({ event: FUNNEL_EVENTS.lockedStoryCapped, day: 2, source: "win" }, bus);
+assert(capped.event === "locked_story_capped", "locked_story_capped names the event");
+assert(capped.day === 2, "locked_story_capped keeps the learner day");
+assert(capped.source == null, "locked_story_capped does not copy source");
+assert(Object.keys(capped).sort().join(",") === "at,day,event", "locked_story_capped is event + at + day");
 assert(paywallSeenSourceFor(PAYWALL_SEEN_SOURCE.win) === "win", "win stays win");
 assert(paywallSeenSourceFor(PAYWALL_SEEN_SOURCE.lockedStory) === "locked_story", "locked_story stays locked_story");
 assert(paywallSeenSourceFor("boot") === "timed", "an unnamed opener is timed");

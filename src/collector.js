@@ -8,6 +8,8 @@
  *  `open` may also include daysSinceLast (integer 0–365).
  *  `paywall_seen`, `tap_annual`, and `tap_monthly` may also include source
  *  when it is win, locked_story, or timed.
+ *  `paywall_seen` and `locked_story_capped` may also include day
+ *  (integer 1–3650, the learner's local calendar day).
  *  Nothing else is added. The address is never on that row.
  *  Email submits go out as { type:'email', email, lang, source, ts }.
  */
@@ -59,6 +61,15 @@ function openDaysSinceLast(detail) {
   if (!detail || detail.event !== FUNNEL_EVENTS.open) return null;
   const value = detail.daysSinceLast;
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 365) return null;
+  return value;
+}
+
+/** paywall_seen and locked_story_capped only. Same 1–3650 integer allowlist as the funnel bus. */
+function learnerDay(detail) {
+  if (!detail) return null;
+  if (detail.event !== FUNNEL_EVENTS.paywallSeen && detail.event !== FUNNEL_EVENTS.lockedStoryCapped) return null;
+  const value = detail.day;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 3650) return null;
   return value;
 }
 
@@ -155,5 +166,7 @@ export async function shipFunnelEvent(detail, {
   ) {
     record.source = source;
   }
+  const day = learnerDay(detail);
+  if (day != null) record.day = day;
   return postCollector(record, { endpoint: url, fetchImpl, beaconImpl });
 }

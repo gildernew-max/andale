@@ -235,9 +235,8 @@ describe("Stories is loud after Hoy until the first claim", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).stories?.["story-0"]).toBeFalsy();
 
     await user.click(screen.getByTestId("brand-home"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall")).toBeTruthy());
-    await user.click(screen.getByTestId("soft-paywall-dismiss"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.getByTestId("hub-stories").getAttribute("data-hub-loud")).toBe("stories");
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBeNull();
     expect(screen.getByTestId("hub-hoy").style.border).not.toMatch(LIME);

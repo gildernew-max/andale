@@ -130,7 +130,7 @@ export function comeBackTomorrowLine({ lang = "es", nextTitle, fallback } = {}) 
     : `Vuelve mañana por «${title}».`;
 }
 
-/** Home line after a first win today, or after today's scene is cleared. Hidden on day-2 return while the promised Hoy is the hero. Paywall still uses this gate. */
+/** Home line after a first win today, or after today's scene is cleared. Hidden on day-2 return while the promised Hoy is the hero. The soft paywall does not use this gate. */
 export function showComeBackTomorrow({ todaySceneDone, streak, lastDay, today } = {}) {
   if (isDay2Return({ streak, lastDay, today }) && !todaySceneDone) return false;
   if (todaySceneDone) return true;
@@ -222,29 +222,11 @@ export function lecturaStartedFromProgress({ lecturaStartedAt, stories } = {}) {
 }
 
 /**
- * Soft paywall once after first win: showComeBackTomorrow && !paywallSeen && !unlockedPrem && !splash.
- * Hook waits for home so Hoy celebration is first; Phrase Doctor Curarla has no done screen.
- * paywallHold: first-session hearts fail. The wall stays down until a later win clears it.
- * Allowed when a story start is stored, or winDays ≥ 2. One win day with no story stays held.
+ * Home / come-back no longer opens the soft paywall.
+ * A win opens after Continue on local day 2 or later.
+ * A locked Lectura tap can still open the card, including on day 1.
+ * Kept so call sites compile; it does not arm the card.
  */
-export function shouldShowSoftPaywall({
-  paywallSeen,
-  unlockedPrem,
-  todaySceneDone,
-  streak,
-  lastDay,
-  today,
-  screen = "home",
-  splash = false,
-  paywallHold = false,
-  lecturaStartedStored = false,
-  winDays,
-} = {}) {
-  if (paywallHold) return false;
-  if (paywallSeen) return false;
-  if (unlockedPrem) return false;
-  if (splash) return false;
-  if (screen !== "home") return false;
-  if (!showComeBackTomorrow({ todaySceneDone, streak, lastDay, today })) return false;
-  return !!lecturaStartedStored || effectiveWinDays({ winDays, lastDay, streak }) >= 2;
+export function shouldShowSoftPaywall() {
+  return false;
 }

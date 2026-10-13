@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
-import { dayKeyFromDate } from "./firstDoor.js";
+import { dayKeyFromDate, prevDayKey } from "./firstDoor.js";
 import { FUNNEL_EVENTS } from "./funnel.js";
 import { PAYWALL_ANNUAL_HOLD_GAP } from "./webPaywall.js";
 
@@ -62,11 +62,13 @@ function setViewport({ width, height }) {
   Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: height });
 }
 
-function openPaywall({ theme, uiLang }) {
+async function openPaywall({ theme, uiLang }) {
   localStorage.clear();
   delete window.__andaleFunnelLog;
   delete window.__andalePurchaseLog;
   mockBrowser();
+  const today = dayKeyFromDate(new Date());
+  const yesterday = prevDayKey(today);
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     welcomed: true,
     xp: 42,
@@ -80,13 +82,30 @@ function openPaywall({ theme, uiLang }) {
     bajioUnlockSeen: true,
     lecturaStartedAt: 1,
     streak: 1,
-    lastDay: dayKeyFromDate(new Date()),
+    lastDay: today,
+    firstActivityDay: yesterday,
     theme,
     uiLang,
     done: {},
   }));
-  localStorage.removeItem(LIVE_KEY);
+  localStorage.setItem("andale-first-activity", yesterday);
+  localStorage.removeItem("andale-paywall-shown");
+  localStorage.setItem(LIVE_KEY, JSON.stringify({
+    screen: "done",
+    tab: "camino",
+    lessonStats: { right: 1, wrong: 0 },
+    session: {
+      title: "Hola",
+      host: "luna",
+      questions: [{}],
+      awarded: true,
+      earnedXP: 10,
+      earnedGems: 1,
+    },
+  }));
+  const user = userEvent.setup();
   render(<App />);
+  await user.click(await screen.findByTestId("win-continue"));
 }
 
 describe("paywall card", () => {
@@ -104,7 +123,7 @@ describe("paywall card", () => {
     "$width×$height $theme $uiLang keeps Start annual plan and Continue free on the card",
     async ({ width, height, theme, uiLang, annual, free, hold: holdLine, monthly: monthlyLabel, monthlyHold: monthlyHoldLine, freeLine, holdInk, freeInk, monthlyInk, monthlyBorder, page }) => {
       setViewport({ width, height });
-      openPaywall({ theme, uiLang });
+      await openPaywall({ theme, uiLang });
       const year = await screen.findByTestId("soft-paywall-annual");
       const dismiss = screen.getByTestId("soft-paywall-dismiss");
       const card = screen.getByTestId("soft-paywall-card");
@@ -207,7 +226,7 @@ describe("paywall card", () => {
       expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
       expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/charged|cobra|Apple|Restore|Un mes|One month/);
       expect(screen.getByTestId("soft-paywall").textContent).toContain(uiLang === "en" ? "$39.99\u00A0a\u00A0year" : "US$39.99\u00A0al\u00A0año");
-      expect((window.__andaleFunnelLog || []).some((event) => event.event === FUNNEL_EVENTS.tapAnnual && event.source === "timed")).toBe(true);
+      expect((window.__andaleFunnelLog || []).some((event) => event.event === FUNNEL_EVENTS.tapAnnual && event.source === "win")).toBe(true);
       expect(monthly.textContent).toBe(monthlyLabel);
       expect(norm(monthly.style.color)).toBe(monthlyInk);
       expect(norm(monthly.style.background)).not.toBe("#58cc02");
@@ -222,7 +241,7 @@ describe("paywall card", () => {
       expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe(monthlyLabel);
       expect(norm(screen.getByTestId("soft-paywall-annual").style.background)).toBe("#58cc02");
       expect((window.__andaleFunnelLog || []).filter((event) => event.event === "paywall_tap" && event.choice === "monthly")).toHaveLength(0);
-      expect((window.__andaleFunnelLog || []).some((event) => event.event === "tap_monthly" && event.source === "timed")).toBe(true);
+      expect((window.__andaleFunnelLog || []).some((event) => event.event === "tap_monthly" && event.source === "win")).toBe(true);
       await user.click(screen.getByTestId("soft-paywall-dismiss"));
       await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
       expect((window.__andaleFunnelLog || []).some((event) => event.event === FUNNEL_EVENTS.paywallTap && event.choice === "continue_free")).toBe(true);

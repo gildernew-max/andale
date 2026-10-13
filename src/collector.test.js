@@ -152,6 +152,45 @@ await shipFunnelEvent({
   fetchImpl: async () => { throw new Error("fetch should not run"); },
 });
 assert(junkSource.length === 1 && !("source" in junkSource[0]), "an unknown paywall_seen source is not posted");
+
+const dayPosts = [];
+await shipFunnelEvent({
+  event: FUNNEL_EVENTS.paywallSeen,
+  at: "2026-09-28T18:05:00.000Z",
+  source: "locked_story",
+  day: 1,
+}, {
+  endpoint,
+  lang: "en",
+  storage,
+  random: () => "device-anonymous-1",
+  beaconImpl: (_url, body) => {
+    dayPosts.push(JSON.parse(body));
+    return true;
+  },
+  fetchImpl: async () => { throw new Error("fetch should not run"); },
+});
+await shipFunnelEvent({
+  event: FUNNEL_EVENTS.lockedStoryCapped,
+  at: "2026-09-28T18:05:00.000Z",
+  day: 2,
+  source: "win",
+}, {
+  endpoint,
+  lang: "es",
+  storage,
+  random: () => "device-anonymous-1",
+  beaconImpl: (_url, body) => {
+    dayPosts.push(JSON.parse(body));
+    return true;
+  },
+  fetchImpl: async () => { throw new Error("fetch should not run"); },
+});
+assert(dayPosts[0].day === 1 && dayPosts[0].source === "locked_story", "paywall_seen posts the learner day");
+assert(Object.keys(dayPosts[0]).sort().join(",") === "day,deviceId,lang,name,source,ts,type", "paywall_seen with a day adds that field");
+assert(dayPosts[1].name === "locked_story_capped" && dayPosts[1].day === 2, "locked_story_capped posts the learner day");
+assert(dayPosts[1].source == null, "locked_story_capped does not post source");
+assert(Object.keys(dayPosts[1]).sort().join(",") === "day,deviceId,lang,name,ts,type", "locked_story_capped posted keys are name and day");
 for (const name of [FUNNEL_EVENTS.tapAnnual, FUNNEL_EVENTS.tapMonthly]) {
   const posted = [];
   for (const source of ["win", "locked_story", "timed"]) {

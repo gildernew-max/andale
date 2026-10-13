@@ -834,7 +834,8 @@ assert(appSrc.includes("FUNNEL_EVENTS.lecturaChapterDone"), "lectura_chapter_don
 assert(appSrc.includes("shipFunnelEvent(ev?.detail, { lang: uiLang })"), "bus events ship only through the collector");
 assert(appSrc.includes("collectorEndpoint()"), "the card and the collector share one endpoint helper");
 assert(appSrc.includes("FUNNEL_EVENTS.paywallSeen"), "paywall_seen is wired");
-assert(/if \(showSoftPaywall\) \{\s*setSoftPaywall\(true\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallSeen, source: paywallSeenKindRef\.current \}\);/.test(appSrc), "paywall_seen fires when the wall becomes visible");
+assert(/if \(showSoftPaywall\) \{\s*setSoftPaywall\(true\);/.test(appSrc), "paywall_seen fires when the wall becomes visible");
+assert(/emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallSeen, source: seenSource, day: learnerDayNumber\(seenFirst, seenToday\) \}\)/.test(appSrc), "paywall_seen carries source and learner day");
 assert(appSrc.includes("FUNNEL_EVENTS.paywallTap"), "paywall_tap is wired");
 assert(appSrc.includes("emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.annual })"), "annual tap emits paywall_tap annual");
 assert(appSrc.includes("PAYWALL_TAP.continueFree"), "continue-free tap is labeled continue_free");
@@ -1000,7 +1001,8 @@ assert(appSrc.includes("isBajioUnlockFlashDue") && appSrc.includes("markBajioUnl
 assert(appSrc.includes("isFirstStreakEsoWin"), "CONTINUE uses the Eso win stamp, not only firstHoy");
 assert(/function isFirstStreakEsoWin[\s\S]{0,280}todaySceneId/.test(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "recuerdos.js"), "utf8")), "Hoy scene id (Landlord WhatsApp included) is an Eso win");
 assert(appSrc.includes("bajioUnlockSeen"), "Bajío unlock flash seen flag is persisted");
-assert(/showSoftPaywall = !paywallDismissed && \(showLockedStoryPaywall \|\| \(paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue\(\)\) \|\| chapterBirdHandoff\)/.test(appSrc), "paywall waits for the Bajío glow beat and stays down after Continue free");
+assert(/showSoftPaywall = !paywallDismissed && \(showLockedStoryPaywall \|\| showWinPaywall\)/.test(appSrc), "paywall is the post-win card or a locked-story tap, and stays down after Continue free");
+assert(/showWinPaywall = winPaywall && \(screen === "home" \|\| screen === "sessionClose"\) && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue\(\)/.test(appSrc), "win paywall waits for the Bajío glow and never paints on the win screen");
 assert(/if \(screen !== "home" \|\| bajioUnlockFlash\) return;\s*if \(!lecturaStartedRef\.current\) return;\s*if \(!bajioFlashPending && !isBajioUnlockFlashDue\(\)\) return;\s*setBajioFlashPending\(false\);\s*markBajioUnlockFlashDue\(true\);\s*setBajioUnlockFlash\(true\);/.test(appSrc), "home return starts a deferred Bajío glow only after lectura_start");
 assert(/const bajioHomeNow = willFlash && next === "home" && lecturaStartedRef\.current/.test(appSrc), "Hoy CONTINUE does not start the Bajío glow before lectura_start");
 assert(!/showSoftPaywall = paywallGate && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue\(\) && !/.test(appSrc), "paywall gate does not wait on CDMX, Oaxaca, Yucatán, or Norte");
