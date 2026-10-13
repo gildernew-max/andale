@@ -24,7 +24,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - name: Build site
+        env:
+          # Repo variable, or the secret if the variable is unset. Empty sends nothing.
+          VITE_COLLECTOR_ENDPOINT: ${{ vars.VITE_COLLECTOR_ENDPOINT || secrets.VITE_COLLECTOR_ENDPOINT }}
+        run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

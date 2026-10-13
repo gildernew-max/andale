@@ -1,19 +1,19 @@
 /** Optional collector. Empty URL sends nothing and mints no device id.
  *  Set VITE_COLLECTOR_ENDPOINT or VITE_FIRST_WIN_EMAIL_ENDPOINT at build
  *  time to the Apps Script web app. Both empty keeps the card and this
- *  collector off. This repo does not deploy that script.
+ *  collector off. The funnel script lives in apps-script/collector.gs.
+ *  This repo does not deploy that script.
  *
- *  Events already on the in-browser funnel bus go out as
- *  { type:'event', name, lang, deviceId, ts }.
- *  `open` may also include daysSinceLast (integer 0–365).
- *  `paywall_seen`, `tap_annual`, and `tap_monthly` may also include source
- *  when it is win, locked_story, or timed.
- *  `paywall_seen` and `locked_story_capped` may also include day
- *  (integer 1–3650, the learner's local calendar day).
- *  Nothing else is added. The address is never on that row.
- *  Email submits go out as { type:'email', email, lang, source, ts }.
+ *  Funnel events go out as exactly five fields:
+ *  { event, source, day, date, device_id }.
+ *  date is the device's local calendar day (YYYY-MM-DD).
+ *  source is win, locked_story, or timed, or "" .
+ *  day is an integer 1–3650, or "" .
+ *  Every other field on the bus event is dropped. The address is never sent.
+ *  Email submits still go out as { type:'email', email, lang, source, ts }.
  */
 
+import { dayKeyFromDate } from "./firstDoor.js";
 import { FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE } from "./funnel.js";
 
 function readEndpoint(env, name) {
@@ -45,31 +45,30 @@ export const COLLECTOR_DEVICE_KEY = "andale-device-id";
 
 const EVENT_NAMES = new Set(Object.values(FUNNEL_EVENTS));
 
-function postedAt(now, fallback) {
-  if (typeof now === "string" && now.trim()) return now.trim();
-  if (now instanceof Date) return now.toISOString();
-  if (typeof fallback === "string" && fallback.trim()) return fallback.trim();
-  return new Date().toISOString();
+const LEARNER_DAY_CAP = 3650;
+const SOURCES = new Set(Object.values(PAYWALL_SEEN_SOURCE));
+
+/** Local calendar day of the event. Same clock as the streak day key. */
+function localEventDate(now, fallback) {
+  let raw = "";
+  if (typeof now === "string" && now.trim()) raw = now.trim();
+  else if (now instanceof Date) raw = now.toISOString();
+  else if (typeof fallback === "string" && fallback.trim()) raw = fallback.trim();
+  const date = raw ? new Date(raw) : new Date();
+  const key = dayKeyFromDate(Number.isNaN(date.getTime()) ? new Date() : date);
+  return key || dayKeyFromDate(new Date());
 }
 
-function faceLang(lang) {
-  return lang === "en" ? "en" : "es";
+/** Allowlisted paywall source, or a blank so the key stays and junk does not. */
+function postedSource(detail) {
+  const source = detail && detail.source;
+  return SOURCES.has(source) ? source : "";
 }
 
-/** Open-only. Same 0–365 integer allowlist as the funnel bus. */
-function openDaysSinceLast(detail) {
-  if (!detail || detail.event !== FUNNEL_EVENTS.open) return null;
-  const value = detail.daysSinceLast;
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 365) return null;
-  return value;
-}
-
-/** paywall_seen and locked_story_capped only. Same 1–3650 integer allowlist as the funnel bus. */
-function learnerDay(detail) {
-  if (!detail) return null;
-  if (detail.event !== FUNNEL_EVENTS.paywallSeen && detail.event !== FUNNEL_EVENTS.lockedStoryCapped) return null;
-  const value = detail.day;
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 3650) return null;
+/** Learner day 1–3650, or a blank. Same bounds as the funnel bus. */
+function postedDay(detail) {
+  const value = detail && detail.day;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > LEARNER_DAY_CAP) return "";
   return value;
 }
 
@@ -83,23 +82,37 @@ function browserStorage() {
 }
 
 function defaultRandom() {
-  const cryptoRef = globalThis.crypto;
-  if (cryptoRef && typeof cryptoRef.randomUUID === "function") return cryptoRef.randomUUID();
-  return `dev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+  try {
+    const cryptoRef = globalThis.crypto;
+    if (cryptoRef && typeof cryptoRef.randomUUID === "function") return cryptoRef.randomUUID();
+  } catch {
+    /* no id, send nothing */
+  }
+  return "";
 }
 
-/** Anonymous id, created on the first send and reused. Not derived from an address. */
+/** Anonymous id from crypto.randomUUID, created on the first send and reused. */
 export function collectorDeviceId(storage, random = defaultRandom) {
   const existing = storage && typeof storage.getItem === "function" ? storage.getItem(COLLECTOR_DEVICE_KEY) : "";
   if (typeof existing === "string" && existing.trim()) return existing.trim();
-  const id = random();
-  if (storage && typeof storage.setItem === "function") storage.setItem(COLLECTOR_DEVICE_KEY, id);
+  let id = "";
+  try {
+    id = random();
+  } catch {
+    return "";
+  }
+  if (typeof id !== "string" || !id.trim()) return "";
+  id = id.trim();
+  if (storage && typeof storage.setItem === "function") {
+    try { storage.setItem(COLLECTOR_DEVICE_KEY, id); } catch { /* keep the id for this send */ }
+  }
   return id;
 }
 
 /**
- * text/plain body. sendBeacon when it accepts the call, otherwise fetch no-cors.
- * An empty endpoint does not call either.
+ * text/plain body. sendBeacon when it accepts the call, otherwise fetch
+ * keepalive, no-cors, text/plain. An empty endpoint does not call either.
+ * Failures stay inside this function.
  */
 export async function postCollector(record, {
   endpoint = collectorEndpoint(),
@@ -126,6 +139,7 @@ export async function postCollector(record, {
     await fetchImpl(url, {
       method: "POST",
       mode: "no-cors",
+      keepalive: true,
       headers: { "Content-Type": "text/plain" },
       body: text,
     });
@@ -135,38 +149,34 @@ export async function postCollector(record, {
   }
 }
 
-/** Forward one bus event. Empty endpoint sends nothing and does not mint a device id. */
+/** Forward one bus event. Empty endpoint sends nothing and does not mint a device id.
+ *  The body is only event, source, day, date, and device_id.
+ */
 export async function shipFunnelEvent(detail, {
   endpoint = collectorEndpoint(),
-  lang = "es",
   now,
   storage,
   fetchImpl,
   beaconImpl,
   random,
 } = {}) {
-  const url = typeof endpoint === "string" ? endpoint.trim() : "";
-  if (!url) return { ok: true, sent: false };
-  const store = storage === undefined ? browserStorage() : storage;
-  const name = detail && detail.event;
-  if (!EVENT_NAMES.has(name)) return { ok: false, sent: false };
-  const record = {
-    type: "event",
-    name,
-    lang: faceLang(lang),
-    deviceId: collectorDeviceId(store, random),
-    ts: postedAt(now, detail && detail.at),
-  };
-  const daysSinceLast = openDaysSinceLast(detail);
-  if (daysSinceLast != null) record.daysSinceLast = daysSinceLast;
-  const source = detail && detail.source;
-  if (
-    (name === FUNNEL_EVENTS.paywallSeen || name === FUNNEL_EVENTS.tapAnnual || name === FUNNEL_EVENTS.tapMonthly)
-    && Object.values(PAYWALL_SEEN_SOURCE).includes(source)
-  ) {
-    record.source = source;
+  try {
+    const url = typeof endpoint === "string" ? endpoint.trim() : "";
+    if (!url) return { ok: true, sent: false };
+    const name = detail && detail.event;
+    if (!EVENT_NAMES.has(name)) return { ok: false, sent: false };
+    const store = storage === undefined ? browserStorage() : storage;
+    const deviceId = collectorDeviceId(store, random);
+    if (!deviceId) return { ok: true, sent: false };
+    const record = {
+      event: name,
+      source: postedSource(detail),
+      day: postedDay(detail),
+      date: localEventDate(now, detail && detail.at),
+      device_id: deviceId,
+    };
+    return postCollector(record, { endpoint: url, fetchImpl, beaconImpl });
+  } catch {
+    return { ok: false, sent: false };
   }
-  const day = learnerDay(detail);
-  if (day != null) record.day = day;
-  return postCollector(record, { endpoint: url, fetchImpl, beaconImpl });
 }

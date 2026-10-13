@@ -36,6 +36,12 @@ If you use TestFlight or the App Store build, Apple’s rules for those services
 
 If this page changes in a way that matters, the date at the top will change.
 
+<h2 id="correo-y-datos">Tu correo y tus datos</h2>
+
+We count which steps you reach (like finishing a lesson or seeing a plan) to improve Ándale. It's anonymous: a random ID for this device, and we don't store your name, email or IP address.
+
+Contamos a qué pasos llegas (como terminar una lección o ver un plan) para mejorar Ándale. Es anónimo: un ID aleatorio de este dispositivo, y no guardamos tu nombre, correo ni dirección IP.
+
 ## Contact
 
 Privacy questions: gildernew@gmail.com
