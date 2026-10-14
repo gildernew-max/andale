@@ -26,9 +26,14 @@ assert(riskEn.displayStreak === 4 && riskEn.status === "at-risk", "EN yesterday 
 assert(riskEn.line === "Your 4-day streak ends tonight. Do one lesson to keep it.", "EN at-risk plural is George's sentence");
 
 const oneEs = view({ streak: 1, lastDay: yesterday });
-assert(oneEs.displayStreak === 1 && oneEs.line === "Tu racha de 1 día termina hoy. Haz una lección para mantenerla.", "ES n=1 keeps the lesson sentence");
+assert(oneEs.displayStreak === 2 && oneEs.status === "at-risk", "the first return shows the earned 2");
+assert(oneEs.line === "Tu racha de 2 días termina hoy. Haz una lección para mantenerla.", "ES first return uses the earned count in the lesson sentence");
 const oneEn = view({ streak: 1, lastDay: yesterday }, { lang: "en" });
-assert(oneEn.displayStreak === 1 && oneEn.line === "Your 1-day streak ends tonight. Do one lesson to keep it.", "EN n=1 keeps the lesson sentence");
+assert(oneEn.displayStreak === 2 && oneEn.line === "Your 2-day streak ends tonight. Do one lesson to keep it.", "EN first return uses the earned count");
+assert(view({ streak: 1, lastDay: yesterday }).displayStreak === 2, "the stored 1 is not what the flame shows");
+const stillStored = { streak: 1, lastDay: yesterday };
+view(stillStored);
+assert(stillStored.streak === 1 && stillStored.lastDay === yesterday, "showing 2 does not write the stored streak");
 
 assert(streakRepairBody(1, "es") === "Tu racha de 1 día está en peligro. Repárala con gemas antes de que termine el día.", "ES repair n=1 is 1 día");
 assert(streakRepairBody(5, "es") === "Tu racha de 5 días está en peligro. Repárala con gemas antes de que termine el día.", "ES repair n>=2 stays días");

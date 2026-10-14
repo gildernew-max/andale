@@ -1,5 +1,8 @@
 /** Display-only streak honesty. Does not write storage or change win math. */
 
+import { prevDayKey } from "./firstDoor.js";
+import { cdmxUnlockFlashStreak } from "./recuerdos.js";
+
 const DAY_MS = 86400000;
 
 function parseDayKey(key) {
@@ -83,6 +86,19 @@ function storedStreak(prog) {
 }
 
 /**
+ * The first time a stored 1 meets yesterday, the earn step already used by
+ * the CDMX glow calls that a 2. The flame, the Hoy caption, and the day-2
+ * card all read that earned count. A later at-risk day keeps the stored number.
+ * This does not write streak or lastDay.
+ */
+function displayedStreak(streak, lastDay, today) {
+  const yesterday = prevDayKey(today);
+  const earned = cdmxUnlockFlashStreak({ streak, lastDay, today, yesterday });
+  if (streak === 1 && earned === 2 && calendarGap(lastDay, today) === 1) return earned;
+  return streak;
+}
+
+/**
  * What the flame and the Learn note should show.
  * repairModal: the existing 2-day repair/freeze modal is on screen.
  * A same-day win, yesterday (at risk), a 2-day gap while that modal is up,
@@ -103,7 +119,8 @@ export function streakDisplay({ prog, today, repairModal = false, lang = "es" } 
     return { displayStreak: streak, status: "same", line: "" };
   }
   if (gap === 1) {
-    return { displayStreak: streak, status: "at-risk", line: streakAtRiskLine(streak, ui) };
+    const shown = displayedStreak(streak, prog?.lastDay, today);
+    return { displayStreak: shown, status: "at-risk", line: streakAtRiskLine(shown, ui) };
   }
   return { displayStreak: 0, status: "gone", line: streakGoneLine(ui) };
 }

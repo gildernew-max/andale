@@ -1,8 +1,9 @@
 /** Day-2 return card. Uses the existing streak earn rule and Lectura open
  *  rule. Does not write streak, lastDay, or the paywall day-2 trigger.
  *
- *  The stored streak is still 1 and lastDay is yesterday: cdmxUnlockFlashStreak
- *  already calls that a 2. That is the first time the streak hits 2.
+ *  The stored streak is still 1 and lastDay is yesterday. streakDisplay already
+ *  shows that as 2, the same earn step as the CDMX glow. That is the first
+ *  time the streak hits 2.
  *  A later visit, a same-day visit, or a missed day stays off this card.
  *
  *  The button target is the story they left unfinished, or the next story
@@ -11,10 +12,8 @@
  *  does not emit first_streak_seen.
  */
 
-import { prevDayKey } from "./firstDoor.js";
 import { isLecturaStoryOpen } from "./lecturaHandoff.js";
-import { cdmxUnlockFlashStreak } from "./recuerdos.js";
-import { calendarGap } from "./streakDisplay.js";
+import { streakDisplay } from "./streakDisplay.js";
 
 export const FIRST_STREAK_RETURN_KEY = "andale-first-streak-return";
 
@@ -164,15 +163,13 @@ export function firstStreakCopy({ lang, mode, title, columnPx } = {}) {
 }
 
 /**
- * Stored streak 1 and last activity yesterday. Same earn step as the
- * CDMX glow: yesterday rolls n to n + 1. Here that roll is 1 → 2.
+ * Stored streak 1 and last activity yesterday. The flame already shows 2
+ * for that day. A stored 2, a same-day visit, or a missed day does not.
  */
 export function firstStreakHitsTwo({ streak, lastDay, today } = {}) {
-  const yesterday = prevDayKey(today);
-  if (!yesterday) return false;
   const stored = Math.floor(Number(streak) || 0);
-  const earned = cdmxUnlockFlashStreak({ streak, lastDay, today, yesterday });
-  return stored === 1 && earned === 2 && calendarGap(lastDay, today) === 1;
+  const view = streakDisplay({ prog: { streak, lastDay }, today });
+  return stored === 1 && view.displayStreak === 2 && view.status === "at-risk";
 }
 
 function storyList(stories) {

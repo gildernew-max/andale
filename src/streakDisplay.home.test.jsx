@@ -78,11 +78,12 @@ describe("Learn home streak note", () => {
   it("uses the singular at-risk sentence at n=1 in ES and EN", async () => {
     homeSeed({ uiLang: "es", streak: 1, lastDay: prevDayKey(localToday()) });
     await openHome();
-    expect(note().textContent).toBe("Tu racha de 1 día termina hoy. Haz una lección para mantenerla.");
-    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^1/);
+    expect(note().textContent).toBe("Tu racha de 2 días termina hoy. Haz una lección para mantenerla.");
+    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^2/);
     const user = userEvent.setup();
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(note().textContent).toBe("Your 1-day streak ends tonight. Do one lesson to keep it."));
+    await waitFor(() => expect(note().textContent).toBe("Your 2-day streak ends tonight. Do one lesson to keep it."));
+    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^2/);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(1);
   });
 

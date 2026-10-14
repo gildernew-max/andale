@@ -43,6 +43,16 @@ describe("day-2 first streak return card", () => {
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBeNull();
     expect(screen.getByTestId("hub-hoy").style.border).toMatch(/#E5E5E5|rgb\(\s*229,\s*229,\s*229\s*\)/i);
     expect(screen.getByTestId("hub-hoy").style.border).not.toMatch(/58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
+    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^2/);
+    expect(screen.getByTestId("hub-hoy-quiet").textContent).toContain("Streak: 2 days.");
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(1);
+    expect(card.style.borderRadius).toBe(screen.getByTestId("hub-hoy").style.borderRadius);
+    const tileBorder = screen.getByTestId("hub-stories").style.border;
+    expect(card.style.borderTop).toBe(tileBorder);
+    expect(card.style.borderRight).toBe(tileBorder);
+    expect(card.style.borderBottom).toBe(tileBorder);
+    expect(card.style.borderLeft).toBe(tileBorder);
+    expect(card.style.borderRadius).toBe("18px");
     await waitFor(() => expect((window.__andaleFunnelLog || []).filter((event) => event.event === "first_streak_seen")).toHaveLength(1));
     expect(Object.keys((window.__andaleFunnelLog || []).find((event) => event.event === "first_streak_seen")).sort()).toEqual(["at", "event"]);
 
@@ -52,7 +62,20 @@ describe("day-2 first streak return card", () => {
     expect(screen.getByTestId("first-streak-title").textContent).toBe("La casa azul");
     expect(screen.getByTestId("first-streak-title").style.whiteSpace).toBe("nowrap");
     expect(screen.getByTestId("first-streak-continue").textContent).toBe("Empieza a leer");
+    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^2/);
+    expect(screen.getByTestId("hub-hoy-quiet").textContent).toContain("Racha: 2 días.");
     expect((window.__andaleFunnelLog || []).filter((event) => event.event === "first_streak_seen")).toHaveLength(1);
+
+    await user.click(screen.getByTestId("nav-perfil"));
+    await user.click(screen.getByRole("button", { name: /Oscuro/ }));
+    await user.click(screen.getByTestId("nav-camino"));
+    const darkCard = await screen.findByTestId("first-streak-return");
+    expect(darkCard.style.borderRadius).toBe("14px");
+    expect(darkCard.style.borderTop).toBe("");
+    expect(darkCard.style.borderRight).toBe("");
+    expect(darkCard.style.borderBottom).toBe("");
+    expect(darkCard.style.borderLeft).toBe("");
+    expect(screen.getByTestId("hub-hoy").style.borderRadius).toBe("18px");
 
     await user.click(screen.getByTestId("first-streak-continue"));
     const reader = await screen.findByTestId("story-reader");
