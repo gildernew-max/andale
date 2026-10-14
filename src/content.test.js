@@ -828,8 +828,13 @@ assert(/const daysSinceLast = daysSinceLastVisit\(readStoredLastDay\(\)\);\s*emi
 assert(appSrc.includes("completeCenzontleBeat"), "bird beat finish is a named handler");
 assert(appSrc.includes("onComplete={completeCenzontleBeat}"), "fly-away / WinBounce finish emit cenzontle_complete");
 assert(appSrc.includes("FUNNEL_EVENTS.cenzontleComplete"), "cenzontle_complete is wired");
-assert(appSrc.includes("FUNNEL_EVENTS.lecturaStart"), "lectura_start is wired");
-assert(appSrc.includes("openStory") && appSrc.includes("FUNNEL_EVENTS.lecturaStart"), "lectura_start fires from openStory");
+const lecturaStartSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "lecturaStartDay.js"), "utf8");
+assert(lecturaStartSrc.includes("FUNNEL_EVENTS.lecturaStart"), "lectura_start is wired through the day gate");
+assert(!lecturaStartSrc.includes("lecturaChapterDone") && !lecturaStartSrc.includes("paywallSeen") && !lecturaStartSrc.includes("paywallTap"), "the day gate does not touch Lectura win, paywall, or taps");
+assert(appSrc.includes("openStory") && appSrc.includes("emitLecturaStartOnce(story.id"), "lectura_start fires from openStory");
+assert(appSrc.includes("from \"./lecturaStartDay.js\""), "App uses the lectura start day gate");
+assert(/lecturaStartedRef\.current = true;\s*emitLecturaStartOnce\(story\.id, \{ storage: window\.localStorage, today: todayStr\(\) \}\);\s*save\(\(prev\) => \(prev\.lecturaStartedAt \? prev : \{ \.\.\.prev, lecturaStartedAt: Date\.now\(\) \}\)\)/.test(appSrc), "a repeat open still marks Lectura started; only the funnel event is once per story per local day");
+assert(!appSrc.slice(appSrc.indexOf("const claimStory =")).includes("emitLecturaStartOnce"), "chapter claim does not use the start-day gate");
 assert(appSrc.includes("FUNNEL_EVENTS.lecturaChapterDone"), "lectura_chapter_done stays on the story claim");
 assert(appSrc.includes("shipFunnelEvent(ev?.detail, { lang: uiLang })"), "bus events ship only through the collector");
 assert(appSrc.includes("collectorEndpoint()"), "the card and the collector share one endpoint helper");

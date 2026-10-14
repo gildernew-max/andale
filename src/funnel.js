@@ -6,6 +6,8 @@
  *  first_session_start / first_session_exercise1_correct / first_session_complete
  *  / day2_return are event + timestamp only. Once-per-device gating lives in
  *  firstSessionFunnel.js, not on this bus.
+ *  lectura_start is event + timestamp + storyId. Once per story per local
+ *  calendar day lives in lecturaStartDay.js, not on this bus.
  *  paywall_seen is event + timestamp, plus an allowlisted source
  *  (win / locked_story / timed) and a learner day number (1 = first local
  *  calendar day) when that number is a positive integer.
