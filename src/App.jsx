@@ -9111,7 +9111,7 @@ export default function App() {
                       <div data-testid="first-streak-headline" style={{ fontSize: 20, fontWeight: 700, color: D.ink, lineHeight: 1.2 }}>{firstStreakCard.headline}</div>
                     </div>
                     <div data-testid="first-streak-line" style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.35, color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}>
-                      {firstStreakCard.before}{firstStreakCard.title ? <i>{firstStreakCard.title}</i> : null}{firstStreakCard.after}
+                      {firstStreakCard.before}{firstStreakCard.title ? <i>{firstStreakCard.mode === "next" ? <span data-testid="first-streak-title" style={{ whiteSpace: "nowrap" }}>{firstStreakCard.title}</span> : firstStreakCard.title}</i> : null}{firstStreakCard.after}
                     </div>
                     <button type="button" data-testid="first-streak-continue" onClick={() => {
                       const story = STORIES.find((item) => item.id === firstStreakCard.storyId);

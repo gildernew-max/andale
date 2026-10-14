@@ -35,7 +35,9 @@ describe("day-2 first streak return card", () => {
     expect(card.getAttribute("data-mode")).toBe("next");
     expect(screen.getByTestId("first-streak-headline").textContent).toBe("2 days in a row.");
     expect(screen.getByTestId("first-streak-line").textContent).toBe("Your next story is ready: La casa azul.");
-    expect(screen.getByTestId("first-streak-line").querySelector("i").textContent).toBe("La casa azul");
+    const title = screen.getByTestId("first-streak-title");
+    expect(title.textContent).toBe("La casa azul");
+    expect(title.style.whiteSpace).toBe("nowrap");
     expect(screen.getByTestId("first-streak-continue").textContent).toBe("Start reading");
     expect(screen.getByTestId("first-streak-bird").getAttribute("width")).toBe("96");
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBeNull();
@@ -47,6 +49,8 @@ describe("day-2 first streak return card", () => {
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("first-streak-headline").textContent).toBe("2 días seguidos."));
     expect(screen.getByTestId("first-streak-line").textContent).toBe("Tu siguiente cuento está listo: La casa azul.");
+    expect(screen.getByTestId("first-streak-title").textContent).toBe("La casa azul");
+    expect(screen.getByTestId("first-streak-title").style.whiteSpace).toBe("nowrap");
     expect(screen.getByTestId("first-streak-continue").textContent).toBe("Empieza a leer");
     expect((window.__andaleFunnelLog || []).filter((event) => event.event === "first_streak_seen")).toHaveLength(1);
 
