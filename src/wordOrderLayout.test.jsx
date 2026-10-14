@@ -154,6 +154,10 @@ describe("word-order tile layout", () => {
     for (const word of ["le", "agradezco", "de"]) {
       await user.click(screen.getByRole("button", { name: word }));
     }
+    const focusInsideHidden = [...document.querySelectorAll("[aria-hidden='true']")].some((node) => (
+      node === document.activeElement || node.contains(document.activeElement)
+    ));
+    expect(focusInsideHidden).toBe(false);
 
     const placed = screen.getAllByTestId("placed-tile");
     expect(placed.map((el) => el.textContent.replace(/×/g, "").trim())).toEqual(["Le", "agradezco", "de"]);

@@ -12,6 +12,9 @@
  *  tap_annual and tap_monthly are separate events and carry that same source.
  *  locked_story_capped is event + timestamp + that day number.
  *  Other events do not carry source or day.
+ *  Each accepted event is also appended to localStorage key
+ *  `andale-funnel-log` on this device. That log is not sent anywhere.
+ *  The in-memory list `window.__andaleFunnelLog` is the same session only.
  */
 
 import { dayKeyFromDate } from "./firstDoor.js";
@@ -19,6 +22,9 @@ import { PAYWALL_BIRD_TRIGGER, PAYWALL_SOURCE } from "./paywallHeadline.js";
 
 export const FUNNEL_EVENT = "andale-funnel";
 export const FUNNEL_LOG = "__andaleFunnelLog";
+/** This device only. Same allowlisted payloads as the session log. */
+export const FUNNEL_STORE_KEY = "andale-funnel-log";
+const FUNNEL_STORE_CAP = 2000;
 
 export const FUNNEL_EVENTS = Object.freeze({
   open: "open",
@@ -125,13 +131,47 @@ function eventBus() {
   return typeof window !== "undefined" ? window : null;
 }
 
+function defaultFunnelStorage() {
+  try {
+    if (typeof localStorage !== "undefined") return localStorage;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/** Append one allowlisted payload. A full or blocked store leaves the session log alone. */
+export function rememberFunnelEvent(payload, storage) {
+  const store = storage === undefined ? defaultFunnelStorage() : storage;
+  if (!payload || !store || typeof store.getItem !== "function" || typeof store.setItem !== "function") return false;
+  try {
+    let list = [];
+    const raw = store.getItem(FUNNEL_STORE_KEY);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) list = parsed;
+      } catch {
+        list = [];
+      }
+    }
+    list.push(payload);
+    if (list.length > FUNNEL_STORE_CAP) list = list.slice(list.length - FUNNEL_STORE_CAP);
+    store.setItem(FUNNEL_STORE_KEY, JSON.stringify(list));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function safeStoryId(id) {
   return typeof id === "string" && STORY_ID.test(id) ? id : null;
 }
 
 /**
  * Tiny allowlisted payload. Never copies caller extras.
- * Local bus only: window.__andaleFunnelLog + CustomEvent. No network.
+ * This device only: window.__andaleFunnelLog + CustomEvent, and localStorage
+ * key andale-funnel-log. No network.
  * storyId / beat / choice are content labels only.
  * waitlist_submit, first-win-seen, email-submitted, and email-skipped
  * are event + timestamp only — never the email.
@@ -181,6 +221,7 @@ export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId,
       bus.dispatchEvent(new CustomEvent(FUNNEL_EVENT, { detail: payload }));
     }
   }
+  rememberFunnelEvent(payload);
   return payload;
 }
 
