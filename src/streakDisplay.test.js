@@ -2,8 +2,9 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { streakAfterWin } from "./firstDoor.js";
-import { calendarGap, streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
+import { calendarGap, streakAtRiskLine, streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
 import { contrastRatio } from "./spanishKeyboard.js";
+import { welcomeBackLine } from "./welcomeBack.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -19,16 +20,48 @@ assert(same.displayStreak === 4 && same.line === "" && same.status === "same", "
 
 const riskEs = view({ streak: 4, lastDay: yesterday });
 assert(riskEs.displayStreak === 4 && riskEs.status === "at-risk", "yesterday keeps the stored number");
-assert(riskEs.line === "Tu racha de 4 días termina hoy. Haz una lección para mantenerla.", "ES at-risk plural is George's sentence");
+assert(riskEs.line === "Tu racha de 4 días termina esta noche. Haz una lección para mantenerla.", "ES at-risk plural is George's sentence");
 
 const riskEn = view({ streak: 4, lastDay: yesterday }, { lang: "en" });
 assert(riskEn.displayStreak === 4 && riskEn.status === "at-risk", "EN yesterday stays at risk");
 assert(riskEn.line === "Your 4-day streak ends tonight. Do one lesson to keep it.", "EN at-risk plural is George's sentence");
 
 const oneEs = view({ streak: 1, lastDay: yesterday });
-assert(oneEs.displayStreak === 1 && oneEs.line === "Tu racha de 1 día termina hoy. Haz una lección para mantenerla.", "ES n=1 keeps the lesson sentence");
+assert(oneEs.displayStreak === 2 && oneEs.status === "at-risk", "the first return shows the earned 2");
+assert(oneEs.line === "Tu racha de 2 días termina esta noche. Haz una lección para mantenerla.", "ES first return uses the earned count in the lesson sentence");
 const oneEn = view({ streak: 1, lastDay: yesterday }, { lang: "en" });
-assert(oneEn.displayStreak === 1 && oneEn.line === "Your 1-day streak ends tonight. Do one lesson to keep it.", "EN n=1 keeps the lesson sentence");
+assert(oneEn.displayStreak === 2 && oneEn.line === "Your 2-day streak ends tonight. Do one lesson to keep it.", "EN first return uses the earned count");
+assert(oneEs.line.includes(String(oneEs.displayStreak)) && oneEn.line.includes(String(oneEn.displayStreak)), "the reminder uses the same number as the flame");
+assert(streakAtRiskLine(1, "es") === "Tu racha de 1 día termina esta noche. Haz una lección para mantenerla.", "ES reminder stays singular only at 1");
+assert(streakAtRiskLine(1, "en") === "Your 1-day streak ends tonight. Do one lesson to keep it.", "EN reminder stays the 1-day sentence only at 1");
+for (const n of [2, 3, 4, 11]) {
+  const es = streakAtRiskLine(n, "es");
+  const en = streakAtRiskLine(n, "en");
+  assert(es === `Tu racha de ${n} días termina esta noche. Haz una lección para mantenerla.`, `ES reminder ${n} is días`);
+  assert(!es.includes("1 día termina"), `ES reminder ${n} is not the singular sentence`);
+  assert(en === `Your ${n}-day streak ends tonight. Do one lesson to keep it.`, `EN reminder ${n} uses that count`);
+  assert(en.includes(`${n}-day streak`) && !en.includes("-days") && !en.includes(`${n}-days`), `EN reminder ${n} keeps the singular compound`);
+  assert(!en.startsWith("Your 1-day"), `EN reminder ${n} is not the 1-day sentence`);
+}
+assert(view({ streak: 1, lastDay: yesterday }).displayStreak === 2, "the stored 1 is not what the flame shows");
+const stillStored = { streak: 1, lastDay: yesterday };
+view(stillStored);
+assert(stillStored.streak === 1 && stillStored.lastDay === yesterday, "showing 2 does not write the stored streak");
+
+const lessonName = "Subjuntivo presente";
+const caption = (lang, streak) => welcomeBackLine({ lang, streak, lesson: lessonName });
+assert(caption("es", 1).includes("Racha: 1 día.") && !caption("es", 1).includes("días"), "ES 1 keeps día");
+assert(caption("en", 1).includes("Streak: 1 day.") && !caption("en", 1).includes("days"), "EN 1 keeps day");
+const earnedCaption = caption("es", oneEs.displayStreak);
+const earnedCaptionEn = caption("en", oneEn.displayStreak);
+assert(earnedCaption.includes("Racha: 2 días.") && !earnedCaption.includes("1 día") && !earnedCaption.includes("día."), "the earned 2 uses días, not día");
+assert(earnedCaptionEn.includes("Streak: 2 days.") && !earnedCaptionEn.includes("1 day") && !earnedCaptionEn.includes(" day."), "the earned 2 uses days, not day");
+for (const n of [2, 3, 4, 11]) {
+  const es = caption("es", n);
+  const en = caption("en", n);
+  assert(es.includes(`Racha: ${n} días.`) && !es.includes("día."), `ES ${n} is días`);
+  assert(en.includes(`Streak: ${n} days.`) && !en.includes(" day."), `EN ${n} is days`);
+}
 
 assert(streakRepairBody(1, "es") === "Tu racha de 1 día está en peligro. Repárala con gemas antes de que termine el día.", "ES repair n=1 is 1 día");
 assert(streakRepairBody(5, "es") === "Tu racha de 5 días está en peligro. Repárala con gemas antes de que termine el día.", "ES repair n>=2 stays días");
