@@ -20,7 +20,7 @@ assert(same.displayStreak === 4 && same.line === "" && same.status === "same", "
 
 const riskEs = view({ streak: 4, lastDay: yesterday });
 assert(riskEs.displayStreak === 4 && riskEs.status === "at-risk", "yesterday keeps the stored number");
-assert(riskEs.line === "Tu racha de 4 días termina hoy. Haz una lección para mantenerla.", "ES at-risk plural is George's sentence");
+assert(riskEs.line === "Tu racha de 4 días termina esta noche. Haz una lección para mantenerla.", "ES at-risk plural is George's sentence");
 
 const riskEn = view({ streak: 4, lastDay: yesterday }, { lang: "en" });
 assert(riskEn.displayStreak === 4 && riskEn.status === "at-risk", "EN yesterday stays at risk");
@@ -28,18 +28,19 @@ assert(riskEn.line === "Your 4-day streak ends tonight. Do one lesson to keep it
 
 const oneEs = view({ streak: 1, lastDay: yesterday });
 assert(oneEs.displayStreak === 2 && oneEs.status === "at-risk", "the first return shows the earned 2");
-assert(oneEs.line === "Tu racha de 2 días termina hoy. Haz una lección para mantenerla.", "ES first return uses the earned count in the lesson sentence");
+assert(oneEs.line === "Tu racha de 2 días termina esta noche. Haz una lección para mantenerla.", "ES first return uses the earned count in the lesson sentence");
 const oneEn = view({ streak: 1, lastDay: yesterday }, { lang: "en" });
 assert(oneEn.displayStreak === 2 && oneEn.line === "Your 2-day streak ends tonight. Do one lesson to keep it.", "EN first return uses the earned count");
 assert(oneEs.line.includes(String(oneEs.displayStreak)) && oneEn.line.includes(String(oneEn.displayStreak)), "the reminder uses the same number as the flame");
-assert(streakAtRiskLine(1, "es") === "Tu racha de 1 día termina hoy. Haz una lección para mantenerla.", "ES reminder stays singular only at 1");
+assert(streakAtRiskLine(1, "es") === "Tu racha de 1 día termina esta noche. Haz una lección para mantenerla.", "ES reminder stays singular only at 1");
 assert(streakAtRiskLine(1, "en") === "Your 1-day streak ends tonight. Do one lesson to keep it.", "EN reminder stays the 1-day sentence only at 1");
 for (const n of [2, 3, 4, 11]) {
   const es = streakAtRiskLine(n, "es");
   const en = streakAtRiskLine(n, "en");
-  assert(es === `Tu racha de ${n} días termina hoy. Haz una lección para mantenerla.`, `ES reminder ${n} is días`);
+  assert(es === `Tu racha de ${n} días termina esta noche. Haz una lección para mantenerla.`, `ES reminder ${n} is días`);
   assert(!es.includes("1 día termina"), `ES reminder ${n} is not the singular sentence`);
   assert(en === `Your ${n}-day streak ends tonight. Do one lesson to keep it.`, `EN reminder ${n} uses that count`);
+  assert(en.includes(`${n}-day streak`) && !en.includes("-days") && !en.includes(`${n}-days`), `EN reminder ${n} keeps the singular compound`);
   assert(!en.startsWith("Your 1-day"), `EN reminder ${n} is not the 1-day sentence`);
 }
 assert(view({ streak: 1, lastDay: yesterday }).displayStreak === 2, "the stored 1 is not what the flame shows");

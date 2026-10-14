@@ -26,7 +26,7 @@ export function calendarGap(lastDay, today) {
   return Math.round((to - from) / DAY_MS);
 }
 
-/** George lock. n = 1 uses día / 1-day and still asks for one lesson. */
+/** n = 1 uses día / 1-day. ES plural is días and "esta noche". EN stays "N-day", never "N-days". */
 export function streakAtRiskLine(count, lang) {
   const n = Number(count);
   if (!Number.isFinite(n) || n < 1) return "";
@@ -34,8 +34,8 @@ export function streakAtRiskLine(count, lang) {
     if (n === 1) return "Your 1-day streak ends tonight. Do one lesson to keep it.";
     return `Your ${n}-day streak ends tonight. Do one lesson to keep it.`;
   }
-  if (n === 1) return "Tu racha de 1 día termina hoy. Haz una lección para mantenerla.";
-  return `Tu racha de ${n} días termina hoy. Haz una lección para mantenerla.`;
+  if (n === 1) return "Tu racha de 1 día termina esta noche. Haz una lección para mantenerla.";
+  return `Tu racha de ${n} días termina esta noche. Haz una lección para mantenerla.`;
 }
 
 function streakCount(count) {

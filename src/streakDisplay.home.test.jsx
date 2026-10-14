@@ -54,7 +54,7 @@ describe("Learn home streak note", () => {
     homeSeed({ uiLang: "es", theme: "light", streak: 4, lastDay: yesterday });
     await openHome();
 
-    expect(note().textContent).toBe("Tu racha de 4 días termina hoy. Haz una lección para mantenerla.");
+    expect(note().textContent).toBe("Tu racha de 4 días termina esta noche. Haz una lección para mantenerla.");
     expect(note().getAttribute("data-streak-status")).toBe("at-risk");
     expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^4/);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(4);
@@ -78,7 +78,7 @@ describe("Learn home streak note", () => {
   it("uses the earned 2 in the at-risk reminder on the first return", async () => {
     homeSeed({ uiLang: "es", streak: 1, lastDay: prevDayKey(localToday()) });
     await openHome();
-    expect(note().textContent).toBe("Tu racha de 2 días termina hoy. Haz una lección para mantenerla.");
+    expect(note().textContent).toBe("Tu racha de 2 días termina esta noche. Haz una lección para mantenerla.");
     expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^2/);
     const user = userEvent.setup();
     await user.click(screen.getByTestId("lang-en"));
@@ -294,7 +294,7 @@ describe("welcome back on the Hoy caption", () => {
     expect(quiet().textContent).toBe("Qué bueno verte de nuevo. Racha: 3 días. Sigue donde quedaste: Subjuntivo presente.");
     expect(screen.getByTestId("hub-hoy-label").textContent).toBe("Hoy");
     expect(screen.getByTestId("hub-hoy").contains(quiet())).toBe(true);
-    expect(screen.getByTestId("streak-home-note").textContent).toBe("Tu racha de 3 días termina hoy. Haz una lección para mantenerla.");
+    expect(screen.getByTestId("streak-home-note").textContent).toBe("Tu racha de 3 días termina esta noche. Haz una lección para mantenerla.");
     expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^3/);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(3);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lastDay).toBe(yesterday);
