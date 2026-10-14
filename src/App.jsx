@@ -9105,7 +9105,7 @@ export default function App() {
             return (
               <div style={{ margin: "6px 0 18px" }}>
                 {firstStreakCard && (
-                  <div data-testid="first-streak-return" data-mode={firstStreakCard.mode} className="pop" style={{ background: theme === "dark" ? D.card : HUB_CREAM, borderRadius: theme === "dark" ? 14 : 18, ...(theme === "dark" ? {} : { borderTop: `1.5px solid ${D.line}`, borderRight: `1.5px solid ${D.line}`, borderBottom: `1.5px solid ${D.line}`, borderLeft: `1.5px solid ${D.line}`, boxSizing: "border-box" }), padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div data-testid="first-streak-return" data-mode={firstStreakCard.mode} className="pop" style={{ background: theme === "dark" ? D.card : "#FFFFFF", borderRadius: theme === "dark" ? 14 : 18, ...(theme === "dark" ? {} : { borderTop: "1.5px solid #E2D6C3", borderRight: "1.5px solid #E2D6C3", borderBottom: "1.5px solid #E2D6C3", borderLeft: "1.5px solid #E2D6C3", boxSizing: "border-box" }), padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
                       <LogoMark size={FIRST_STREAK_BIRD_PX} data-testid="first-streak-bird" />
                       <div data-testid="first-streak-headline" style={{ fontSize: 20, fontWeight: 700, color: D.ink, lineHeight: 1.2 }}>{firstStreakCard.headline}</div>

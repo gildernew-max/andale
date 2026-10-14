@@ -48,12 +48,14 @@ describe("day-2 first streak return card", () => {
     expect(screen.getByTestId("streak-home-note").textContent).toBe("Your 2-day streak ends tonight. Do one lesson to keep it.");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(1);
     expect(card.style.borderRadius).toBe(screen.getByTestId("hub-hoy").style.borderRadius);
-    const tileBorder = screen.getByTestId("hub-stories").style.border;
-    expect(card.style.borderTop).toBe(tileBorder);
-    expect(card.style.borderRight).toBe(tileBorder);
-    expect(card.style.borderBottom).toBe(tileBorder);
-    expect(card.style.borderLeft).toBe(tileBorder);
     expect(card.style.borderRadius).toBe("18px");
+    expect(card.style.backgroundColor).toMatch(/#FFFFFF|rgb\(\s*255,\s*255,\s*255\s*\)/i);
+    const creamBorder = /1\.5px solid (#E2D6C3|rgb\(\s*226,\s*214,\s*195\s*\))/i;
+    expect(card.style.borderTop).toMatch(creamBorder);
+    expect(card.style.borderRight).toMatch(creamBorder);
+    expect(card.style.borderBottom).toMatch(creamBorder);
+    expect(card.style.borderLeft).toMatch(creamBorder);
+    expect(screen.getByTestId("first-streak-continue").style.backgroundColor).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     await waitFor(() => expect((window.__andaleFunnelLog || []).filter((event) => event.event === "first_streak_seen")).toHaveLength(1));
     expect(Object.keys((window.__andaleFunnelLog || []).find((event) => event.event === "first_streak_seen")).sort()).toEqual(["at", "event"]);
 
@@ -73,6 +75,7 @@ describe("day-2 first streak return card", () => {
     await user.click(screen.getByTestId("nav-camino"));
     const darkCard = await screen.findByTestId("first-streak-return");
     expect(darkCard.style.borderRadius).toBe("14px");
+    expect(darkCard.style.backgroundColor).toMatch(/#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i);
     expect(darkCard.style.borderTop).toBe("");
     expect(darkCard.style.borderRight).toBe("");
     expect(darkCard.style.borderBottom).toBe("");
