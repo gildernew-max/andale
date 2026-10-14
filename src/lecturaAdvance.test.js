@@ -96,7 +96,7 @@ assert(narrationAt > advanceAt && huntAt > narrationAt, "NEXT sits above narrati
 assert(appSrc.includes("lecturaAdvanceScrollY"), "advance scrolls with the readable-top math");
 assert(appSrc.includes("lecturaQuestionsOpenScrollY"), "QUESTIONS open scrolls the comprehension header");
 assert(appSrc.includes("lecturaClaimScrollY"), "a finished quiz scrolls the claim into view");
-assert(/\[screen, paraIdx, ansSel, freshClaimId\]/.test(appSrc), "a fresh claim remeasures the XP-claimed card");
+assert(/\[screen, paraIdx, ansSel, freshClaimId, storyView, story0EndSpacer, story0EndScrollNonce\]/.test(appSrc), "a fresh claim remeasures the XP-claimed card");
 assert(appSrc.includes("lecturaSafeAreaBottom()") && appSrc.includes("lecturaPinnedBandTop(window.innerHeight)"), "the claimed card clears the safe area and any pinned NEXT or footer");
 assert(appSrc.includes('data-testid="lectura-questions-header"'), "comprehension header is the questions scroll target");
 assert(appSrc.includes('data-testid="lectura-claim"'), "claim block is the finished-quiz scroll target");

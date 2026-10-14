@@ -254,7 +254,7 @@ describe("Stories is loud after Hoy until the first claim", () => {
     await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
     await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
     await user.click(screen.getByRole("button", { name: /El olvido/ }));
-    await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await user.click(screen.getByTestId("lectura-claim-cta"));
     await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).stories?.["story-0"]).toBeTruthy();
 

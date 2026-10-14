@@ -6,7 +6,7 @@
 export const lecturaCliffhangers = {
   "story-0": {
     es: "Hay casas que no olvidan. ¿Conoces una que todavía espere a su dueña?",
-    en: "Some houses don\u2019t forget. Do you know one that\u2019s still waiting for its owner?",
+    en: "Some houses don\u2019t forget. Do you know one still waiting for its owner?",
   },
   "story-1": {
     es: "Ella pintó el mundo desde una cama. ¿Y si alguien viajara lejos solo para no moverse?",

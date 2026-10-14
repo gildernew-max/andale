@@ -156,6 +156,21 @@ export function shuffleStoryChoiceOrder(story, checkpoints = [], rng = Math.rand
   };
 }
 
+/** Spanish face for a checkpoint that has one. English stays the stored answer. */
+export function checkpointQuestionText(cp, uiLang) {
+  if (uiLang !== "en" && typeof cp?.qEs === "string" && cp.qEs.trim()) return cp.qEs;
+  return typeof cp?.q === "string" ? cp.q : "";
+}
+
+/** Label for one shuffled English choice. The stored value stays the English string. */
+export function checkpointChoiceLabel(cp, choice, uiLang) {
+  if (uiLang === "en" || !Array.isArray(cp?.choicesEs)) return choice;
+  const i = Array.isArray(cp?.choices) ? cp.choices.indexOf(choice) : -1;
+  if (i < 0) return choice;
+  const label = cp.choicesEs[i];
+  return typeof label === "string" && label ? label : choice;
+}
+
 /** Display list: session shuffle wins, then an attached shuffledChoices, then authored. */
 export function storyQuestionChoices(qq, shuffledList) {
   if (Array.isArray(shuffledList) && shuffledList.length) return shuffledList;

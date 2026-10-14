@@ -189,7 +189,7 @@ describe("first session before the paywall", () => {
     expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
   });
 
-  it("records xp, gems, and a single streak at the paywall for Sendero and Lectura", async () => {
+  it("records xp, gems, and a single streak for Sendero and for the story-0 claim", async () => {
     cleanup();
     freshEligible();
     const user = userEvent.setup();
@@ -219,12 +219,13 @@ describe("first session before the paywall", () => {
     expect(afterChapter.gems).toBe(10);
     expect(afterChapter.streak).toBe(1);
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
-    await user.click(await screen.findByTestId("win-continue"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toContain("lectura/story-1/p0.png");
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(document.querySelector("[data-first-session]")).toBeNull();
     const lectura = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    expect(lectura.xp).toBe(97);
-    expect(lectura.gems).toBe(25);
+    expect(lectura.xp).toBe(35);
+    expect(lectura.gems).toBe(10);
     expect(lectura.streak).toBe(1);
   }, 90000);
 

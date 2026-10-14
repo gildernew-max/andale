@@ -42,7 +42,7 @@ describe("first session before the paywall", () => {
     expect(firstSessionRoot().getAttribute("data-first-session")).toBe("1");
   }, 20000);
 
-  it("quitting a Lectura-started first session does not bird-handoff a later Sendero win", async () => {
+  it("story-0 Start reading opens La casa azul and a later Sendero win stays off the bird handoff", async () => {
     cleanup();
     freshEligible();
     const user = userEvent.setup();
@@ -50,16 +50,11 @@ describe("first session before the paywall", () => {
     await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
     await claimStory0(user);
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    expect(document.querySelector("[data-first-session]")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
-    await user.click(screen.getByTestId("lesson-exit"));
-    await user.click(screen.getByTestId("quit-without-save"));
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall") || screen.queryByTestId("nav-camino")).toBeTruthy());
-    if (screen.queryByTestId("soft-paywall")) {
-      expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).not.toBe("lectura-bird-handoff");
-      await user.click(screen.getByTestId("soft-paywall-dismiss"));
-      await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
-    }
+    await user.click(screen.getByRole("button", { name: /Cerrar/ }));
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
     await user.click(screen.getByTestId("nav-camino"));
     await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
     await user.click(screen.getByTestId("hub-sendero"));
@@ -70,7 +65,7 @@ describe("first session before the paywall", () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
   }, 60000);
 
-  it("Lectura with no hearts shows the hearts modal and does not start the first session", async () => {
+  it("story-0 Start reading with no hearts opens La casa azul and does not start the first session", async () => {
     cleanup();
     freshEligible({ hearts: 0 });
     const user = userEvent.setup();
@@ -78,11 +73,11 @@ describe("first session before the paywall", () => {
     await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
     await claimStory0(user);
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => expect(screen.getByTestId("hearts-modal")).toBeTruthy());
-    expect(screen.getByTestId("hearts-modal").textContent).toMatch(/Sin corazones/);
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    expect(screen.queryByTestId("hearts-modal")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(document.querySelector("[data-first-session]")).toBeNull();
-    expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy();
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toContain("lectura/story-1/p0.png");
   }, 30000);
 
   it("George's why and win lines render only for a first session, and nothing when null", async () => {

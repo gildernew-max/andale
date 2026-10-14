@@ -496,7 +496,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
   };
 
-  it("first story-0 Lectura (all pages) plays Cenzontle fly-away + ¡Eso! — no perch, no paywall", async () => {
+  it("first story-0 Lectura opens La casa azul at page 1 — no win, no paywall", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
     const user = await boot();
@@ -508,41 +508,23 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
     await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
     await user.click(screen.getByRole("button", { name: /El olvido/ }));
-    await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await user.click(screen.getByTestId("lectura-claim-cta"));
     await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe("Hay casas que no olvidan. ¿Conoces una que todavía espere a su dueña?"));
+    expect(screen.getByTestId("lectura-claim-cta").textContent).toBe("XP reclamados");
+    expect(screen.getByTestId("lectura-bird-handoff-cta").textContent).toBe("Empieza a leer");
+    expect(screen.queryByRole("button", { name: /^Continuar$/ })).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => {
-      expect(screen.getByTestId("story-0-win")).toBeTruthy();
-      expect(screen.getByTestId("win-fly-away")).toBeTruthy();
-    });
-    expect(screen.getByTestId("story-0-win").textContent).toBe("¡Eso!");
-    expect(screen.getByTestId("story-0-win-continue").style.color).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
-    expect(screen.getByRole("heading", { name: /^¡Eso!$/ })).toBeTruthy();
-    expect(screen.queryByTestId("lectura-handoff")).toBeNull();
-    await waitFor(() => expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).lecturaHandoffSeen).toBe(true));
-    assertFreeWinFlyAway();
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-1/p0.png`);
+    expect(screen.getByTestId("story-reader-title").textContent).toBe("La casa azul");
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/En el barrio de Coyoacán/);
+    expect(screen.queryByTestId("story-0-win")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
     expect(document.querySelectorAll(".jump").length).toBe(0);
     expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
-    assertCreamShell();
-    await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("story-0-win").textContent).toBe("That's it."));
-    expect(screen.getByRole("heading", { name: /^That's it\.$/ })).toBeTruthy();
-    assertFreeWinFlyAway();
-    await user.click(screen.getByTestId("story-0-win-continue"));
-    expect(screen.queryByTestId("soft-paywall")).toBeNull();
-    await awaitHome();
-    await user.click(screen.getByTestId("nav-lectura"));
-    const again = screen.getAllByRole("button", { name: /La noche en que vuelven/ });
-    await user.click(again[again.length - 1]);
-    await waitFor(() => expect(screen.getByTestId("lectura-still-0")).toBeTruthy());
-    await finishStoryPages(user);
-    expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0);
-    expect(screen.queryByTestId("story-0-beat")).toBeNull();
-    expect(screen.queryByTestId("story-0-win")).toBeNull();
-    expect(screen.queryByTestId("win-bounce")).toBeNull();
   });
 
   it("later Lectura stories show WinPerch static only — no 780ms beat", async () => {

@@ -1645,7 +1645,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
   }, 15000);
 
-  it("Hoy win, then lectura_start, then the chapter cliffhanger hands off to the paywall bird", async () => {
+  it("Hoy win, then lectura_start, then story-0 opens La casa azul at page 1", async () => {
     cleanup();
     const yesterday = prevDayKey(localToday());
     seedProgress({ streak: 0, lastDay: null, uiLang: "es", bajioUnlockSeen: true, firstActivityDay: yesterday });
@@ -1711,7 +1711,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
     await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
     await user.click(screen.getByRole("button", { name: /El olvido/ }));
-    await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+    await user.click(screen.getByTestId("lectura-claim-cta"));
 
     await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
     const done = funnelOf("lectura_chapter_done");
@@ -1719,53 +1719,32 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(done[0].storyId).toBe("story-0");
     expect(done[0].title).toBeUndefined();
     expect(screen.getByTestId("lectura-cliffhanger-line").textContent).toBe(lecturaCliffhangers["story-0"].es);
-    expect(screen.getByTestId("lectura-bird-handoff-cta").textContent).toBe("Continuar");
-    expect(screen.getByTestId("lectura-bird-handoff-cta").className).not.toMatch(/duo-btn/);
+    expect(screen.getByTestId("lectura-cliffhanger-next").textContent).toBe("Sigue: La casa azul");
+    expect(screen.getByTestId("lectura-bird-handoff-cta").textContent).toBe("Empieza a leer");
+    expect(screen.getByTestId("lectura-claim-cta").textContent).toBe("XP reclamados");
+    expect(screen.queryByRole("button", { name: /^Continuar$/ })).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(funnelOf("paywall_seen")).toHaveLength(0);
     expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
 
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => expect(screen.queryByTestId("story-reader")).toBeNull());
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-1/p0.png`);
+    expect(screen.getByTestId("story-reader-title").textContent).toBe("La casa azul");
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
-    await user.click(screen.getByTestId("story-0-win-continue"));
-    await waitFor(() => expect(screen.getByTestId("soft-paywall-cenzontle")).toBeTruthy());
+    expect(screen.queryByTestId("story-0-win")).toBeNull();
     expect(firstSessionRoot()).toBeNull();
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("La historia sigue.");
-    expect(screen.getByTestId("soft-paywall-headline").getAttribute("data-paywall-source")).toBe("lectura-bird-handoff");
-    expect(screen.getByTestId("soft-paywall-headline").style.fontWeight).toBe("900");
-    expect(screen.getByTestId("soft-paywall-headline").style.fontSize).toBe("22px");
-    expect(screen.getByTestId("soft-paywall-headline").style.textWrap).toBe("balance");
-    expect(screen.getByTestId("soft-paywall-headline").style.letterSpacing).toBe("");
-    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.");
-    expect(funnelOf("paywall_seen")).toHaveLength(1);
-    expect(funnelOf("paywall_seen")[0].source).toBe("win");
+    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(funnelOf("lectura_start").some((e) => e.storyId === "story-1")).toBe(true);
     expect(funnelOf("lectura_chapter_done")).toHaveLength(1);
-    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
-    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("Empezar plan anual");
-    expect(screen.getByTestId("soft-paywall-dismiss").textContent).toBe("Seguir gratis");
-    expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
-    expect(screen.getByTestId("soft-paywall-dismiss").style.background).toBe("none");
     expect(funnelOf("purchase")).toHaveLength(0);
-
-    await user.click(screen.getByTestId("soft-paywall-annual"));
-    await waitFor(() => expect(funnelOf("paywall_tap").some((e) => e.choice === "annual")).toBe(true));
-    expect(funnelOf("paywall_tap").filter((e) => e.choice === "annual")).toHaveLength(1);
-    expect(funnelOf("tap_annual").every((event) => event.source === "win")).toBe(true);
-    await user.click(screen.getByTestId("soft-paywall-monthly"));
-    await waitFor(() => expect(funnelOf("tap_monthly").some((e) => e.source === "win")).toBe(true));
-    expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
-    expect(funnelOf("purchase")).toHaveLength(0);
-    expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).unlockedPrem).not.toBe(true);
     const names = window.__andaleFunnelLog.map((e) => e.event);
     const at = (name) => names.indexOf(name);
     expect(at("open")).toBeGreaterThanOrEqual(0);
     expect(at("cenzontle_complete")).toBeGreaterThan(at("open"));
     expect(at("lectura_start")).toBeGreaterThan(at("cenzontle_complete"));
     expect(at("lectura_chapter_done")).toBeGreaterThan(at("lectura_start"));
-    expect(at("paywall_seen")).toBeGreaterThan(at("lectura_chapter_done"));
-    expect(at("paywall_tap")).toBeGreaterThan(at("paywall_seen"));
+    expect(at("paywall_seen")).toBe(-1);
     expect(at("purchase")).toBe(-1);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
   }, 30000);

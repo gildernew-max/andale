@@ -25,7 +25,7 @@ const ES = {
 };
 
 const EN = {
-  "story-0": "Some houses don\u2019t forget. Do you know one that\u2019s still waiting for its owner?",
+  "story-0": "Some houses don\u2019t forget. Do you know one still waiting for its owner?",
   "story-1": "She painted the world from a bed. What if someone traveled far just to avoid moving?",
   "story-2": "Don\u2019t assume only the earth hides something. What might be under a mask?",
   "story-3": "Every generation picks its own road. Or are there roads that pick you?",

@@ -11,6 +11,8 @@ import {
   selectedStoryChoice,
   shuffleChoices,
   shuffleStoryChoiceOrder,
+  checkpointChoiceLabel,
+  checkpointQuestionText,
   storyQuestionChoices,
   storyQuizCue,
   storyQuizCueLine,
@@ -165,5 +167,24 @@ assert(lecturaCheckpointMissCount({ 0: "A museum" }, pauses) === 0, "a right che
 assert(lecturaCheckpointMissCount({ 0: "A hotel" }, pauses) === 1, "a wrong checkpoint is one miss");
 assert(lecturaCheckpointMissCount({ 0: "A hotel", 1: "With an easel and mirror" }, pauses) === 1, "a right checkpoint beside a miss stays one miss");
 assert(lecturaCheckpointMissCount({ "0": "A hotel" }, pauses) === 1, "a stored string index still counts as a miss");
+
+const hope = {
+  q: "What does the narrator hope for?",
+  a: "To be remembered",
+  choices: ["To be remembered", "To leave Mexico", "To sell the house"],
+  qEs: "¿Qué espera el narrador?",
+  choicesEs: ["Que lo recuerden", "Irse de México", "Vender la casa"],
+};
+assert(checkpointQuestionText(hope, "es") === "¿Qué espera el narrador?", "checkpoint 6 ES question");
+assert(checkpointQuestionText(hope, "en") === "What does the narrator hope for?", "checkpoint 6 EN question stays English");
+assert(checkpointChoiceLabel(hope, "To leave Mexico", "es") === "Irse de México", "leave Mexico maps to Irse de México");
+assert(checkpointChoiceLabel(hope, "To sell the house", "es") === "Vender la casa", "sell the house maps to Vender la casa");
+assert(checkpointChoiceLabel(hope, "To be remembered", "es") === "Que lo recuerden", "to be remembered maps to Que lo recuerden");
+assert(checkpointChoiceLabel(hope, "To leave Mexico", "en") === "To leave Mexico", "EN choice label stays English");
+assert(checkpointChoiceLabel(hope, "To sell the house", "en") === "To sell the house", "EN sell label stays English");
+assert(checkpointChoiceLabel(hope, "To be remembered", "en") === "To be remembered", "EN remembered label stays English");
+const shuffledHope = ["To sell the house", "To be remembered", "To leave Mexico"];
+assert(shuffledHope.map((choice) => checkpointChoiceLabel(hope, choice, "es")).join("|") === "Vender la casa|Que lo recuerden|Irse de México", "Spanish labels follow the shuffled English choices");
+assert(checkpointQuestionText({ q: "What is the mood at the cemetery?" }, "es") === "What is the mood at the cemetery?", "checkpoints without a Spanish face stay as authored");
 
 console.log("ok: story quiz Lectura gate + on-screen passage + choice shuffle");
