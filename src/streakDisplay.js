@@ -87,8 +87,9 @@ function storedStreak(prog) {
 
 /**
  * The first time a stored 1 meets yesterday, the earn step already used by
- * the CDMX glow calls that a 2. The flame, the Hoy caption, and the day-2
- * card all read that earned count. A later at-risk day keeps the stored number.
+ * the CDMX glow calls that a 2. The flame, the Hoy caption, the at-risk
+ * reminder, and the day-2 card all read that earned count. A later at-risk
+ * day keeps the stored number.
  * This does not write streak or lastDay.
  */
 function displayedStreak(streak, lastDay, today) {

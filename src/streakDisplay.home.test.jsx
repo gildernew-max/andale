@@ -75,7 +75,7 @@ describe("Learn home streak note", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(4);
   });
 
-  it("uses the singular at-risk sentence at n=1 in ES and EN", async () => {
+  it("uses the earned 2 in the at-risk reminder on the first return", async () => {
     homeSeed({ uiLang: "es", streak: 1, lastDay: prevDayKey(localToday()) });
     await openHome();
     expect(note().textContent).toBe("Tu racha de 2 días termina hoy. Haz una lección para mantenerla.");

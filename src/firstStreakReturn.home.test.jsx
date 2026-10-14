@@ -45,6 +45,7 @@ describe("day-2 first streak return card", () => {
     expect(screen.getByTestId("hub-hoy").style.border).not.toMatch(/58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^2/);
     expect(screen.getByTestId("hub-hoy-quiet").textContent).toContain("Streak: 2 days.");
+    expect(screen.getByTestId("streak-home-note").textContent).toBe("Your 2-day streak ends tonight. Do one lesson to keep it.");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(1);
     expect(card.style.borderRadius).toBe(screen.getByTestId("hub-hoy").style.borderRadius);
     const tileBorder = screen.getByTestId("hub-stories").style.border;
@@ -64,6 +65,7 @@ describe("day-2 first streak return card", () => {
     expect(screen.getByTestId("first-streak-continue").textContent).toBe("Empieza a leer");
     expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^2/);
     expect(screen.getByTestId("hub-hoy-quiet").textContent).toContain("Racha: 2 días.");
+    expect(screen.getByTestId("streak-home-note").textContent).toBe("Tu racha de 2 días termina hoy. Haz una lección para mantenerla.");
     expect((window.__andaleFunnelLog || []).filter((event) => event.event === "first_streak_seen")).toHaveLength(1);
 
     await user.click(screen.getByTestId("nav-perfil"));

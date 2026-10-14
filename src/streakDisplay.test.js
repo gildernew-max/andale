@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { streakAfterWin } from "./firstDoor.js";
-import { calendarGap, streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
+import { calendarGap, streakAtRiskLine, streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
 import { contrastRatio } from "./spanishKeyboard.js";
 import { welcomeBackLine } from "./welcomeBack.js";
 
@@ -31,6 +31,17 @@ assert(oneEs.displayStreak === 2 && oneEs.status === "at-risk", "the first retur
 assert(oneEs.line === "Tu racha de 2 días termina hoy. Haz una lección para mantenerla.", "ES first return uses the earned count in the lesson sentence");
 const oneEn = view({ streak: 1, lastDay: yesterday }, { lang: "en" });
 assert(oneEn.displayStreak === 2 && oneEn.line === "Your 2-day streak ends tonight. Do one lesson to keep it.", "EN first return uses the earned count");
+assert(oneEs.line.includes(String(oneEs.displayStreak)) && oneEn.line.includes(String(oneEn.displayStreak)), "the reminder uses the same number as the flame");
+assert(streakAtRiskLine(1, "es") === "Tu racha de 1 día termina hoy. Haz una lección para mantenerla.", "ES reminder stays singular only at 1");
+assert(streakAtRiskLine(1, "en") === "Your 1-day streak ends tonight. Do one lesson to keep it.", "EN reminder stays the 1-day sentence only at 1");
+for (const n of [2, 3, 4, 11]) {
+  const es = streakAtRiskLine(n, "es");
+  const en = streakAtRiskLine(n, "en");
+  assert(es === `Tu racha de ${n} días termina hoy. Haz una lección para mantenerla.`, `ES reminder ${n} is días`);
+  assert(!es.includes("1 día termina"), `ES reminder ${n} is not the singular sentence`);
+  assert(en === `Your ${n}-day streak ends tonight. Do one lesson to keep it.`, `EN reminder ${n} uses that count`);
+  assert(!en.startsWith("Your 1-day"), `EN reminder ${n} is not the 1-day sentence`);
+}
 assert(view({ streak: 1, lastDay: yesterday }).displayStreak === 2, "the stored 1 is not what the flame shows");
 const stillStored = { streak: 1, lastDay: yesterday };
 view(stillStored);
