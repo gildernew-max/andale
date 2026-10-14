@@ -833,7 +833,7 @@ assert(lecturaStartSrc.includes("FUNNEL_EVENTS.lecturaStart"), "lectura_start is
 assert(!lecturaStartSrc.includes("lecturaChapterDone") && !lecturaStartSrc.includes("paywallSeen") && !lecturaStartSrc.includes("paywallTap"), "the day gate does not touch Lectura win, paywall, or taps");
 assert(appSrc.includes("openStory") && appSrc.includes("emitLecturaStartOnce(story.id"), "lectura_start fires from openStory");
 assert(appSrc.includes("from \"./lecturaStartDay.js\""), "App uses the lectura start day gate");
-assert(/lecturaStartedRef\.current = true;\s*emitLecturaStartOnce\(story\.id, \{ storage: window\.localStorage, today: todayStr\(\) \}\);\s*save\(\(prev\) => \(prev\.lecturaStartedAt \? prev : \{ \.\.\.prev, lecturaStartedAt: Date\.now\(\) \}\)\)/.test(appSrc), "a repeat open still marks Lectura started; only the funnel event is once per story per local day");
+assert(/lecturaStartedRef\.current = true;\s*emitLecturaStartOnce\(story\.id, \{ storage: window\.localStorage, today: todayStr\(\) \}\);\s*save\(\(prev\) => \(\{\s*\.\.\.prev,\s*lecturaOpenId: story\.id,\s*lecturaStartedAt: prev\.lecturaStartedAt \|\| Date\.now\(\),\s*\}\)\)/.test(appSrc), "a repeat open still marks Lectura started and remembers the open story; only the funnel event is once per story per local day");
 assert(!appSrc.slice(appSrc.indexOf("const claimStory =")).includes("emitLecturaStartOnce"), "chapter claim does not use the start-day gate");
 assert(appSrc.includes("FUNNEL_EVENTS.lecturaChapterDone"), "lectura_chapter_done stays on the story claim");
 assert(appSrc.includes("shipFunnelEvent(ev?.detail, { lang: uiLang })"), "bus events ship only through the collector");
@@ -1519,8 +1519,8 @@ assert(appSrc.includes("const hoyChecked = hoyHubChecked({ todaySceneDone, goalR
 assert(appSrc.includes("const hoyLoud = hoyHubLoud({ todayScene, todaySceneDone, goalReached })"), "a checked Hoy drops the green outline");
 assert(appSrc.includes("const storiesLoud = storiesHubLoud({ todaySceneDone, goalReached, firstStoryClaimed: storyClaimed })"), "Stories is loud on the Hoy check until the first Lectura claim");
 assert(appSrc.includes("const hoyDone = hoyHubDone({ todaySceneDone })"), "done Hoy keeps today’s-home check");
-assert(appSrc.includes('data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : tile.id === "stories" && storiesLoud ? "stories" : undefined}'), "only one hub tile carries the loud attribute");
-assert(appSrc.includes("tile.id === \"hoy\" && hoyLoud ? D.green : D.line"), "green border is open Hoy only; a ticked Hoy uses the quiet line");
+assert(appSrc.includes('data-hub-loud={tile.id === "hoy" && hoyLoud && !firstStreakCard ? "hoy" : tile.id === "stories" && storiesLoud && !firstStreakCard ? "stories" : undefined}'), "only one hub tile carries the loud attribute");
+assert(appSrc.includes("tile.id === \"hoy\" && hoyLoud && !firstStreakCard ? D.green : D.line"), "green border is open Hoy only; a ticked Hoy uses the quiet line");
 assert(appSrc.includes('tile.id === "hoy" && hoyChecked'), "the check stays when the outline drops");
 assert(appSrc.includes('storiesLoud ? openStory(nextUnreadStory(STORIES, prog.stories)) : setTab("lectura")'), "a loud Stories tap opens the first unread story; a quiet tap opens the library");
 assert(/storiesFill[\s\S]{0,220}background: D\.green/.test(appSrc), "Stories loud fill is the existing lime token");

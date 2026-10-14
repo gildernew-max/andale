@@ -33,9 +33,10 @@ assert(FUNNEL_EVENTS.firstSessionStart === "first_session_start", "first_session
 assert(FUNNEL_EVENTS.firstSessionExercise1Correct === "first_session_exercise1_correct", "first_session_exercise1_correct is exercise 1");
 assert(FUNNEL_EVENTS.firstSessionComplete === "first_session_complete", "first_session_complete is the session-one win");
 assert(FUNNEL_EVENTS.day2Return === "day2_return", "day2_return is the later-day open");
+assert(FUNNEL_EVENTS.firstStreakSeen === "first_streak_seen", "first_streak_seen is the day-2 return card");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "lectura_chapter_done", "lectura_start", "locked_story_capped", "open", "paywall_seen", "paywall_tap", "purchase", "tap_annual", "tap_monthly", "waitlist_submit"].join(","),
+    === ["cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "first_streak_seen", "lectura_chapter_done", "lectura_start", "locked_story_capped", "open", "paywall_seen", "paywall_tap", "purchase", "tap_annual", "tap_monthly", "waitlist_submit"].join(","),
   "funnel allowlist is the conversion chain plus lectura, paywall, waitlist, first-win email, and first-session measurement",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
@@ -266,6 +267,7 @@ for (const event of [
   FUNNEL_EVENTS.firstSessionExercise1Correct,
   FUNNEL_EVENTS.firstSessionComplete,
   FUNNEL_EVENTS.day2Return,
+  FUNNEL_EVENTS.firstStreakSeen,
 ]) {
   const step = emitFunnelEvent({
     event,

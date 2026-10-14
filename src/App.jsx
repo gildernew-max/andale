@@ -33,6 +33,7 @@ import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, cenzontl
 import { FIRST_ACTIVITY_KEY, LOCKED_CAP_FADE_MS, LOCKED_CAP_GAP_PX, LOCKED_CAP_INK, LOCKED_CAP_SIZE, LOCKED_STORY_CAP_LINE, PAYWALL_SHOWN_KEY, isPaywallMidFlow, learnerDayNumber, paywallOpenDecision, readPlainDay, resolveFirstActivityDay, resolvePaywallShownDay, writePlainDay } from "./paywallTrigger.js";
 import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1, claimFirstSessionStart, isFirstExerciseCorrect, sessionOneFromProgress } from "./firstSessionFunnel.js";
 import { emitLecturaStartOnce } from "./lecturaStartDay.js";
+import { FIRST_STREAK_BIRD_PX, dismissFirstStreakReturn, firstStreakReturn, presentFirstStreakReturn } from "./firstStreakReturn.js";
 import { isWaitlistEmail } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
@@ -6945,7 +6946,11 @@ export default function App() {
     if (story?.id) {
       lecturaStartedRef.current = true;
       emitLecturaStartOnce(story.id, { storage: window.localStorage, today: todayStr() });
-      save((prev) => (prev.lecturaStartedAt ? prev : { ...prev, lecturaStartedAt: Date.now() }));
+      save((prev) => ({
+        ...prev,
+        lecturaOpenId: story.id,
+        lecturaStartedAt: prev.lecturaStartedAt || Date.now(),
+      }));
     }
     const extra = STORY_EXTRAS[story?.id] || {};
     setStoryShuffle(shuffleStoryChoiceOrder(story, extra.checkpoints || []));
@@ -7206,6 +7211,7 @@ export default function App() {
         earnedFreeze: earnedFreeze ? t : prev.earnedFreeze,
         gems: (prev.gems || 0) + 10,
         stories: { ...(prev.stories || {}), [story.id]: true },
+        lecturaOpenId: story.id,
         coachStats: { ...(prev.coachStats || {}), rafa: ((prev.coachStats || {}).rafa || 0) + 1 },
         storyCollectibles: { ...(prev.storyCollectibles || {}), [story.id]: true },
       };
@@ -8056,6 +8062,58 @@ export default function App() {
     });
     if (day2.fire) emitFunnelEvent({ event: FUNNEL_EVENTS.day2Return });
   }, []);
+  const [firstStreakCard, setFirstStreakCard] = useState(null);
+  const [firstStreakViewport, setFirstStreakViewport] = useState(() => (typeof window !== "undefined" && window.innerWidth ? window.innerWidth : 390));
+  useEffect(() => {
+    const onResize = () => {
+      const width = window.innerWidth || 390;
+      setFirstStreakViewport((prev) => (prev === width ? prev : width));
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  useEffect(() => {
+    if (screen !== "lesson" || !firstStreakCard) return;
+    dismissFirstStreakReturn(window.localStorage);
+    setFirstStreakCard(null);
+  }, [screen, firstStreakCard]);
+  useEffect(() => {
+    if (screen !== "home" || tab !== "camino" || onboardingOpen || splashOpen) return;
+    const decision = firstStreakReturn({
+      stories: STORIES,
+      claimed: prog.stories,
+      lecturaOpenId: prog.lecturaOpenId,
+      lecturaStarted: !!prog.lecturaStartedAt,
+      streak: prog.streak,
+      lastDay: prog.lastDay,
+      today: todayKey,
+      lang: uiLang,
+      viewportWidth: firstStreakViewport,
+    });
+    const presented = presentFirstStreakReturn(window.localStorage, decision);
+    if (presented.fire) emitFunnelEvent({ event: FUNNEL_EVENTS.firstStreakSeen });
+    setFirstStreakCard((prev) => {
+      if (!presented.visible) return prev ? null : prev;
+      if (
+        prev
+        && prev.storyId === decision.storyId
+        && prev.mode === decision.mode
+        && prev.line === decision.line
+        && prev.button === decision.button
+        && prev.headline === decision.headline
+      ) return prev;
+      return {
+        mode: decision.mode,
+        storyId: decision.storyId,
+        headline: decision.headline,
+        button: decision.button,
+        before: decision.before,
+        title: decision.title,
+        after: decision.after,
+        line: decision.line,
+      };
+    });
+  }, [screen, tab, onboardingOpen, splashOpen, prog.stories, prog.lecturaOpenId, prog.lecturaStartedAt, prog.streak, prog.lastDay, todayKey, uiLang, firstStreakViewport]);
   useEffect(() => {
     const onFunnel = (ev) => {
       void shipFunnelEvent(ev?.detail, { lang: uiLang });
@@ -9046,13 +9104,30 @@ export default function App() {
             ];
             return (
               <div style={{ margin: "6px 0 18px" }}>
+                {firstStreakCard && (
+                  <div data-testid="first-streak-return" data-mode={firstStreakCard.mode} className="pop" style={{ background: theme === "dark" ? D.card : HUB_CREAM, borderRadius: 14, padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                      <LogoMark size={FIRST_STREAK_BIRD_PX} data-testid="first-streak-bird" />
+                      <div data-testid="first-streak-headline" style={{ fontSize: 20, fontWeight: 700, color: D.ink, lineHeight: 1.2 }}>{firstStreakCard.headline}</div>
+                    </div>
+                    <div data-testid="first-streak-line" style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.35, color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}>
+                      {firstStreakCard.before}{firstStreakCard.title ? <i>{firstStreakCard.mode === "next" ? <span data-testid="first-streak-title" style={{ whiteSpace: "nowrap" }}>{firstStreakCard.title}</span> : firstStreakCard.title}</i> : null}{firstStreakCard.after}
+                    </div>
+                    <button type="button" data-testid="first-streak-continue" onClick={() => {
+                      const story = STORIES.find((item) => item.id === firstStreakCard.storyId);
+                      dismissFirstStreakReturn(window.localStorage);
+                      setFirstStreakCard(null);
+                      if (story) openStory(story);
+                    }} style={{ width: "100%", background: "#58CC02", color: "#1F3A1A", border: "none", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 700, fontSize: 16, cursor: "pointer" }}>{firstStreakCard.button}</button>
+                  </div>
+                )}
                 <div data-testid="learn-hub-tiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   {hubTiles.map((tile) => {
-                    const storiesFill = tile.id === "stories" && storiesLoud;
-                    const edge = `1.5px solid ${tile.id === "hoy" && hoyLoud ? D.green : D.line}`;
+                    const storiesFill = tile.id === "stories" && storiesLoud && !firstStreakCard;
+                    const edge = `1.5px solid ${tile.id === "hoy" && hoyLoud && !firstStreakCard ? D.green : D.line}`;
                     return (
                     <button key={tile.id} data-testid={tile.testid} type="button" onClick={tile.act}
-                      data-hub-loud={tile.id === "hoy" && hoyLoud ? "hoy" : tile.id === "stories" && storiesLoud ? "stories" : undefined}
+                      data-hub-loud={tile.id === "hoy" && hoyLoud && !firstStreakCard ? "hoy" : tile.id === "stories" && storiesLoud && !firstStreakCard ? "stories" : undefined}
                       data-hub-hoy-done={tile.id === "hoy" && hoyDone ? "1" : undefined}
                       style={{
                         display: "flex",
@@ -9063,7 +9138,7 @@ export default function App() {
                         ...(welcomeLine ? { height: "auto", minHeight: 168 } : { height: 168 }),
                         boxSizing: "border-box",
                         position: "relative",
-                        boxShadow: tile.id === "hoy" && hoyLoud ? `0 0 0 2px ${D.green}33` : "none",
+                        boxShadow: tile.id === "hoy" && hoyLoud && !firstStreakCard ? `0 0 0 2px ${D.green}33` : "none",
                         borderRadius: 18,
                         padding: "8px 8px 10px",
                         fontFamily: "inherit",
@@ -9092,7 +9167,7 @@ export default function App() {
                       )}
                       <span data-testid={tile.id === "hoy" ? "hero-cta" : tile.id === "doctor" ? "first-door-alt" : undefined} style={{ display: "contents" }}>
                       <div aria-hidden="true" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>{tile.art}</div>
-                      <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "stories" ? "hub-stories-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: tile.id === "stories" && storiesLoud ? LESSON_LIME_INK : D.ink, marginTop: 2 }}>{tile.title}</div>
+                      <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "stories" ? "hub-stories-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: tile.id === "stories" && storiesLoud && !firstStreakCard ? LESSON_LIME_INK : D.ink, marginTop: 2 }}>{tile.title}</div>
                       {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, overflowWrap: "break-word", maxWidth: "100%" }}>{tile.quiet}</div>}
                       {tile.id === "hoy" && goalReached && (
                         <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}: {DAILY_GOAL}{"\u00a0"}XP.</div>

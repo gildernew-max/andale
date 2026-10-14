@@ -1,0 +1,190 @@
+import { prevDayKey } from "./firstDoor.js";
+import { FUNNEL_EVENTS, emitFunnelEvent } from "./funnel.js";
+import { shipFunnelEvent } from "./collector.js";
+import { isLecturaStoryOpen } from "./lecturaHandoff.js";
+import {
+  FIRST_STREAK_BUTTON,
+  FIRST_STREAK_FALLBACK,
+  FIRST_STREAK_HEADLINE,
+  FIRST_STREAK_RETURN_KEY,
+  dismissFirstStreakReturn,
+  firstStreakLineColumn,
+  firstStreakLinePx,
+  firstStreakReturn,
+  forgetFirstStreakReturnLive,
+  presentFirstStreakReturn,
+} from "./firstStreakReturn.js";
+
+const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
+
+const TODAY = "2026-10-14";
+const YESTERDAY = prevDayKey(TODAY);
+assert(YESTERDAY === "2026-10-13", "yesterday fixture");
+
+const STORIES = [
+  { id: "story-0", title: "La noche en que vuelven" },
+  { id: "story-1", title: "La casa azul" },
+  { id: "story-2", title: "Más allá de la playa" },
+];
+
+function memoryStorage() {
+  const data = {};
+  return {
+    data,
+    getItem(key) { return Object.prototype.hasOwnProperty.call(data, key) ? data[key] : null; },
+    setItem(key, value) { data[key] = String(value); },
+  };
+}
+
+function day2(extra = {}) {
+  return {
+    stories: STORIES,
+    claimed: { "story-0": true },
+    lecturaOpenId: "story-0",
+    streak: 1,
+    lastDay: YESTERDAY,
+    today: TODAY,
+    lang: "en",
+    viewportWidth: 390,
+    ...extra,
+  };
+}
+
+forgetFirstStreakReturnLive();
+
+assert(isLecturaStoryOpen(STORIES, { "story-0": true }, "story-1"), "claiming story-0 opens story-1 for free");
+assert(!isLecturaStoryOpen(STORIES, { "story-0": true }, "story-2"), "story-2 stays locked while story-1 is unread");
+assert(firstStreakLineColumn(360) === 304, "a 360px screen gives the line 304px");
+assert(firstStreakLineColumn(390) === 334, "a 390px screen gives the line 334px");
+
+const claimed = firstStreakReturn(day2());
+assert(claimed.show === true && claimed.mode === "next" && claimed.storyId === "story-1", "day 2 after a day-1 claim opens the next free story");
+assert(claimed.headline === FIRST_STREAK_HEADLINE.en, "EN headline");
+assert(claimed.line === "Your next story is ready: La casa azul.", "EN next line keeps the Spanish title");
+assert(claimed.title === "La casa azul" && claimed.before === "Your next story is ready: " && claimed.after === ".", "EN next line splits around the title");
+assert(claimed.button === FIRST_STREAK_BUTTON.next.en, "EN next button is Start reading");
+assert(!/[!¡]/.test(claimed.headline + claimed.line + claimed.button), "EN next copy has no exclamation");
+
+const claimedEs = firstStreakReturn(day2({ lang: "es" }));
+assert(claimedEs.headline === FIRST_STREAK_HEADLINE.es, "ES headline");
+assert(claimedEs.line === "Tu siguiente cuento está listo: La casa azul.", "ES next line");
+assert(claimedEs.title === "La casa azul", "ES next title stays Spanish");
+assert(claimedEs.button === FIRST_STREAK_BUTTON.next.es, "ES next button is Empieza a leer");
+assert(!/[!¡]/.test(claimedEs.headline + claimedEs.line + claimedEs.button), "ES next copy has no exclamation");
+
+const empty = firstStreakReturn(day2({ claimed: {}, lecturaOpenId: "", lecturaStarted: false }));
+assert(empty.show === false && empty.reason === "none", "no claim and no open story does not show");
+
+const sameDay = firstStreakReturn(day2({ lastDay: TODAY }));
+assert(sameDay.show === false && sameDay.reason === "streak", "a same-day visit does not show");
+
+const missed = firstStreakReturn(day2({ lastDay: "2026-10-12" }));
+assert(missed.show === false && missed.reason === "streak", "day 3 with day 2 missed does not show");
+
+const laterStreak = firstStreakReturn(day2({ streak: 2 }));
+assert(laterStreak.show === false, "a stored streak of 2 is not the first time it hits 2");
+
+const halfway = firstStreakReturn(day2({
+  claimed: {},
+  lecturaOpenId: "story-0",
+  viewportWidth: 800,
+}));
+assert(halfway.show === true && halfway.mode === "halfway" && halfway.storyId === "story-0", "a story left open is the halfway card");
+assert(halfway.fallback === false, "a wide column keeps the title");
+assert(halfway.line === "La noche en que vuelven is waiting where you left it.", "EN halfway line");
+assert(halfway.title === "La noche en que vuelven", "halfway title stays Spanish");
+assert(halfway.button === FIRST_STREAK_BUTTON.halfway.en, "EN halfway button is Keep reading");
+
+const halfwayEs = firstStreakReturn(day2({
+  claimed: {},
+  lecturaOpenId: "story-0",
+  lang: "es",
+  viewportWidth: 800,
+}));
+assert(halfwayEs.line === "La noche en que vuelven te espera donde lo dejaste.", "ES halfway line");
+assert(halfwayEs.button === FIRST_STREAK_BUTTON.halfway.es, "ES halfway button is Sigue leyendo");
+assert(!/[!¡]/.test(halfway.line + halfway.button + halfwayEs.line + halfwayEs.button), "halfway copy has no exclamation");
+
+const longTitle = firstStreakReturn(day2({
+  claimed: {},
+  lecturaOpenId: "story-0",
+  viewportWidth: 360,
+}));
+assert(longTitle.show === true && longTitle.fallback === true, "a long title on a 360px screen uses the fallback");
+assert(longTitle.line === FIRST_STREAK_FALLBACK.en && longTitle.title === "", "EN fallback drops the title");
+assert(firstStreakLinePx("La noche en que vuelven is waiting where you left it.") > firstStreakLineColumn(360), "the titled EN line is wider than the 360px column");
+
+const longTitleEs = firstStreakReturn(day2({
+  claimed: {},
+  lecturaOpenId: "story-0",
+  lang: "es",
+  viewportWidth: 360,
+}));
+assert(longTitleEs.fallback === true && longTitleEs.line === FIRST_STREAK_FALLBACK.es, "ES fallback line");
+
+const locked = firstStreakReturn(day2({
+  claimed: { "story-1": true },
+  lecturaOpenId: "story-1",
+}));
+assert(locked.show === false && locked.reason === "locked" && locked.storyId === "story-2", "a locked next story does not show");
+const lockedStore = memoryStorage();
+const lockedPresent = presentFirstStreakReturn(lockedStore, locked);
+assert(lockedPresent.fire === false && lockedPresent.visible === false, "a locked target does not emit");
+assert(lockedStore.data[FIRST_STREAK_RETURN_KEY] == null, "a locked target does not stamp seen");
+
+const onceStore = memoryStorage();
+forgetFirstStreakReturnLive();
+const first = presentFirstStreakReturn(onceStore, claimed);
+assert(first.fire === true && first.visible === true, "the first show emits");
+const again = presentFirstStreakReturn(onceStore, claimed);
+assert(again.fire === false && again.visible === true, "the same visit does not emit again");
+forgetFirstStreakReturnLive();
+const reloaded = presentFirstStreakReturn(onceStore, claimed);
+assert(reloaded.fire === false && reloaded.visible === false, "a later visit does not show the card again");
+
+const dismissStore = memoryStorage();
+forgetFirstStreakReturnLive();
+assert(presentFirstStreakReturn(dismissStore, claimed).fire === true, "dismiss fixture shows once");
+assert(dismissFirstStreakReturn(dismissStore) === true, "dismiss stamps the device");
+forgetFirstStreakReturnLive();
+const afterDismiss = presentFirstStreakReturn(dismissStore, claimed);
+assert(afterDismiss.visible === false && afterDismiss.fire === false, "button or lesson dismiss hides the card for good");
+
+const bus = { log: null, events: [], dispatchEvent() { return true; } };
+const seen = emitFunnelEvent({
+  event: FUNNEL_EVENTS.firstStreakSeen,
+  email: "ada@example.com",
+  storyId: "story-1",
+  source: "win",
+  day: 2,
+}, bus);
+assert(FUNNEL_EVENTS.firstStreakSeen === "first_streak_seen", "funnel name");
+assert(seen.event === "first_streak_seen", "first_streak_seen is on the bus");
+assert(Object.keys(seen).sort().join(",") === "at,event", "first_streak_seen payload is event + at");
+assert(seen.email == null && seen.storyId == null && seen.source == null && seen.day == null, "first_streak_seen drops extras");
+
+const posted = [];
+const shipStore = memoryStorage();
+const shipped = await shipFunnelEvent({
+  event: FUNNEL_EVENTS.firstStreakSeen,
+  at: "2026-10-14T15:00:00.000Z",
+  email: "ada@example.com",
+  storyId: "story-1",
+}, {
+  endpoint: "https://collector.example/exec",
+  storage: shipStore,
+  random: () => "device-streak-1",
+  beaconImpl: (_url, body) => {
+    posted.push(JSON.parse(body));
+    return true;
+  },
+  fetchImpl: async () => { throw new Error("fetch should not run"); },
+});
+assert(shipped.sent === true, "collector allowlist accepts first_streak_seen");
+assert(posted.length === 1, "one collector row");
+assert(Object.keys(posted[0]).sort().join(",") === "date,day,device_id,event,source", "first_streak_seen uses the five collector fields");
+assert(posted[0].event === "first_streak_seen" && posted[0].source === "" && posted[0].day === "", "blank source and day, same as the other plain events");
+assert(posted[0].device_id === "device-streak-1", "device id is kept");
+assert(!("email" in posted[0]) && !("storyId" in posted[0]), "collector drops the address and the story id");
+
+console.log("firstStreakReturn.test.js ok");

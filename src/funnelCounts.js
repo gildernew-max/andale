@@ -15,6 +15,7 @@ export const FUNNEL_COUNT_ROWS = Object.freeze([
   { id: "locked_story_capped", label: "Locked story capped" },
   { id: "tap_annual", label: "Tap annual" },
   { id: "tap_monthly", label: "Tap monthly" },
+  { id: "first_streak_seen", label: "First streak seen" },
 ]);
 
 const ROW_IDS = new Set(FUNNEL_COUNT_ROWS.map((row) => row.id));
@@ -44,6 +45,7 @@ export function funnelRowIds(event) {
   if (event.event === FUNNEL_EVENTS.lockedStoryCapped) return ["locked_story_capped"];
   if (event.event === FUNNEL_EVENTS.tapAnnual) return ["tap_annual"];
   if (event.event === FUNNEL_EVENTS.tapMonthly) return ["tap_monthly"];
+  if (event.event === FUNNEL_EVENTS.firstStreakSeen) return ["first_streak_seen"];
   if (event.event !== FUNNEL_EVENTS.paywallSeen) return [];
   if (event.source === PAYWALL_SEEN_SOURCE.win) return ["paywall_win"];
   if (event.source === PAYWALL_SEEN_SOURCE.timed) return ["paywall_timed"];
