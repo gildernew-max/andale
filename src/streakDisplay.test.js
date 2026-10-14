@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { streakAfterWin } from "./firstDoor.js";
 import { calendarGap, streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
 import { contrastRatio } from "./spanishKeyboard.js";
+import { welcomeBackLine } from "./welcomeBack.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -34,6 +35,21 @@ assert(view({ streak: 1, lastDay: yesterday }).displayStreak === 2, "the stored 
 const stillStored = { streak: 1, lastDay: yesterday };
 view(stillStored);
 assert(stillStored.streak === 1 && stillStored.lastDay === yesterday, "showing 2 does not write the stored streak");
+
+const lessonName = "Subjuntivo presente";
+const caption = (lang, streak) => welcomeBackLine({ lang, streak, lesson: lessonName });
+assert(caption("es", 1).includes("Racha: 1 día.") && !caption("es", 1).includes("días"), "ES 1 keeps día");
+assert(caption("en", 1).includes("Streak: 1 day.") && !caption("en", 1).includes("days"), "EN 1 keeps day");
+const earnedCaption = caption("es", oneEs.displayStreak);
+const earnedCaptionEn = caption("en", oneEn.displayStreak);
+assert(earnedCaption.includes("Racha: 2 días.") && !earnedCaption.includes("1 día") && !earnedCaption.includes("día."), "the earned 2 uses días, not día");
+assert(earnedCaptionEn.includes("Streak: 2 days.") && !earnedCaptionEn.includes("1 day") && !earnedCaptionEn.includes(" day."), "the earned 2 uses days, not day");
+for (const n of [2, 3, 4, 11]) {
+  const es = caption("es", n);
+  const en = caption("en", n);
+  assert(es.includes(`Racha: ${n} días.`) && !es.includes("día."), `ES ${n} is días`);
+  assert(en.includes(`Streak: ${n} days.`) && !en.includes(" day."), `EN ${n} is days`);
+}
 
 assert(streakRepairBody(1, "es") === "Tu racha de 1 día está en peligro. Repárala con gemas antes de que termine el día.", "ES repair n=1 is 1 día");
 assert(streakRepairBody(5, "es") === "Tu racha de 5 días está en peligro. Repárala con gemas antes de que termine el día.", "ES repair n>=2 stays días");
