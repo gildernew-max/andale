@@ -1,10 +1,13 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { dayKeyFromDate } from "./firstDoor.js";
 import { COLLECTOR_DEVICE_KEY, COLLECTOR_ENDPOINT, collectorEndpoint, setCollectorEndpointOverride, shipFunnelEvent } from "./collector.js";
-import { FUNNEL_EVENTS, daysSinceLastVisit } from "./funnel.js";
+import { FUNNEL_EVENTS } from "./funnel.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
+const here = dirname(fileURLToPath(import.meta.url));
+const FIVE = "date,day,device_id,event,source";
 
 assert(COLLECTOR_ENDPOINT === "", "collector stays off until a build endpoint is set");
 assert(collectorEndpoint() === "", "shared helper is empty when both build endpoints are empty");
@@ -45,6 +48,8 @@ for (const name of required.concat(FUNNEL_EVENTS.open)) {
     at: "2026-09-28T18:00:00.000Z",
     email: "ada@example.com",
     daysSinceLast: 1,
+    source: "win",
+    day: 2,
     streak: 3,
     xp: 10,
   }, {
@@ -59,6 +64,19 @@ for (const name of required.concat(FUNNEL_EVENTS.open)) {
 assert(beacons === 0 && fetches === 0, "empty endpoint calls neither sendBeacon nor fetch");
 assert(quiet.data[COLLECTOR_DEVICE_KEY] == null, "empty endpoint does not mint a device id");
 
+const blankEndpoint = memoryStorage();
+const blankResult = await shipFunnelEvent({
+  event: FUNNEL_EVENTS.open,
+  email: "ada@example.com",
+}, {
+  endpoint: "   ",
+  storage: blankEndpoint,
+  beaconImpl: () => { beacons += 1; return true; },
+  fetchImpl: async () => { fetches += 1; return { ok: true }; },
+});
+assert(blankResult.sent === false && beacons === 0 && fetches === 0, "a blank endpoint string sends nothing");
+assert(blankEndpoint.data[COLLECTOR_DEVICE_KEY] == null, "a blank endpoint does not mint a device id");
+
 const storage = memoryStorage();
 const sent = [];
 const endpoint = "https://script.google.com/macros/s/collector/exec";
@@ -70,11 +88,18 @@ for (const name of required) {
     storyId: "story-0",
     choice: "annual",
     daysSinceLast: 5,
+    lang: "en",
+    name: "Dave",
+    ip: "203.0.113.8",
+    userAgent: "Mozilla/5.0",
+    ts: "1999-01-01T00:00:00.000Z",
+    type: "email",
+    deviceId: "should-not-replace",
     streak: 2,
     xp: 40,
   }, {
     endpoint,
-    lang: name === FUNNEL_EVENTS.paywallSeen ? "en" : "es",
+    lang: "en",
     storage,
     random: () => "device-anonymous-1",
     beaconImpl: (url, body) => {
@@ -88,222 +113,87 @@ for (const name of required) {
 }
 assert(fetches === 0, "sendBeacon handles the event so fetch is not used");
 assert(beacons === required.length, "each required event is beaconed once");
-assert(storage.data[COLLECTOR_DEVICE_KEY] === "device-anonymous-1", "device id is stored");
+assert(storage.data[COLLECTOR_DEVICE_KEY] === "device-anonymous-1", "device id is stored under andale-device-id");
 
+const expectedDate = dayKeyFromDate(new Date("2026-09-28T18:05:00.000Z"));
 for (const row of sent) {
   assert(row.url === endpoint, "events hit the collector URL");
   const body = JSON.parse(row.body);
-  assert(body.type === "event", "event row type");
-  assert(required.includes(body.name), "event name is on the bus");
-  assert(body.deviceId === "device-anonymous-1", "event carries the anonymous device id");
-  assert(body.ts === "2026-09-28T18:05:00.000Z", "event ts comes from the bus");
-  assert(body.lang === "en" || body.lang === "es", "event lang is one face");
-  assert(!("email" in body), "event row has no email field");
+  assert(Object.keys(body).sort().join(",") === FIVE, "payload has exactly event, source, day, date, device_id");
+  assert(Object.keys(body).length === 5, "payload has five keys");
+  assert(required.includes(body.event), "event name is on the bus");
+  assert(body.device_id === "device-anonymous-1", "event carries the anonymous device id");
+  assert(body.date === expectedDate, "date is the local calendar day");
+  assert(/^\d{4}-\d{2}-\d{2}$/.test(body.date), "date is YYYY-MM-DD");
+  assert(body.source === "" && body.day === "", "events without an allowlisted source or day send blanks");
+  assert(!("email" in body) && !("lang" in body) && !("name" in body) && !("ts" in body) && !("type" in body), "stripped fields are absent");
+  assert(!("deviceId" in body) && !("daysSinceLast" in body) && !("storyId" in body) && !("ip" in body), "old and extra fields are absent");
   assert(!/@/.test(row.body), "event body has no address");
-  assert(Object.keys(body).sort().join(",") === "deviceId,lang,name,ts,type", "event row is type, name, lang, device id, ts");
+  assert(!row.body.includes("203.0.113.8"), "event body has no IP");
+  assert(!row.body.includes("Mozilla"), "event body has no user agent");
 }
-assert(sent.some((row) => JSON.parse(row.body).name === "lectura_start"), "Lectura open is sent");
-assert(sent.some((row) => JSON.parse(row.body).name === "lectura_chapter_done"), "Lectura chapter done is sent");
-assert(sent.some((row) => JSON.parse(row.body).name === "paywall_tap"), "paywall tap is sent");
-assert(sent.find((row) => JSON.parse(row.body).name === "paywall_seen") && JSON.parse(sent.find((row) => JSON.parse(row.body).name === "paywall_seen").body).lang === "en", "paywall_seen keeps the English face");
-assert(sent.every((row) => !("daysSinceLast" in JSON.parse(row.body))), "daysSinceLast stays off events that are not open");
-assert(sent.every((row) => !("source" in JSON.parse(row.body))), "source stays off events shipped without one");
+assert(sent.some((row) => JSON.parse(row.body).event === "lectura_start"), "Lectura open is sent");
+assert(sent.some((row) => JSON.parse(row.body).event === "lectura_chapter_done"), "Lectura chapter done is sent");
+assert(sent.some((row) => JSON.parse(row.body).event === "paywall_tap"), "paywall tap is sent");
 
-const sourcePosts = [];
-for (const source of ["win", "locked_story", "timed"]) {
-  const result = await shipFunnelEvent({
-    event: FUNNEL_EVENTS.paywallSeen,
-    at: "2026-09-28T18:05:00.000Z",
-    source,
-    price: "$39.99",
-    storyId: "story-0",
-  }, {
-    endpoint,
-    lang: "es",
-    storage,
-    random: () => "device-anonymous-1",
-    beaconImpl: (_url, body) => {
-      sourcePosts.push(JSON.parse(body));
-      return true;
-    },
-    fetchImpl: async () => { throw new Error("fetch should not run"); },
-  });
-  assert(result.sent === true, `paywall_seen ${source} is sent`);
-}
-assert(sourcePosts.map((row) => row.source).join(",") === "win,locked_story,timed", "paywall_seen posts the allowlisted source");
-for (const row of sourcePosts) {
-  assert(Object.keys(row).sort().join(",") === "deviceId,lang,name,source,ts,type", "paywall_seen posted keys add source only");
-  assert(!("price" in row) && !("storyId" in row), "paywall_seen source row drops other extras");
-}
-const junkSource = [];
-await shipFunnelEvent({
+const filled = [];
+const resultFilled = await shipFunnelEvent({
   event: FUNNEL_EVENTS.paywallSeen,
-  at: "2026-09-28T18:05:00.000Z",
-  source: "boot",
-}, {
-  endpoint,
-  lang: "es",
-  storage,
-  random: () => "device-anonymous-1",
-  beaconImpl: (_url, body) => {
-    junkSource.push(JSON.parse(body));
-    return true;
-  },
-  fetchImpl: async () => { throw new Error("fetch should not run"); },
-});
-assert(junkSource.length === 1 && !("source" in junkSource[0]), "an unknown paywall_seen source is not posted");
-
-const dayPosts = [];
-await shipFunnelEvent({
-  event: FUNNEL_EVENTS.paywallSeen,
-  at: "2026-09-28T18:05:00.000Z",
+  at: "2026-10-13T15:04:00.000Z",
   source: "locked_story",
-  day: 1,
+  day: 2,
+  email: "ada@example.com",
+  price: "$39.99",
+  storyId: "story-0",
+  daysSinceLast: 4,
 }, {
   endpoint,
   lang: "en",
   storage,
-  random: () => "device-anonymous-1",
+  random: () => "device-should-not-replace",
   beaconImpl: (_url, body) => {
-    dayPosts.push(JSON.parse(body));
+    filled.push(JSON.parse(body));
     return true;
   },
   fetchImpl: async () => { throw new Error("fetch should not run"); },
 });
+assert(resultFilled.sent === true, "paywall_seen with source and day is sent");
+assert(Object.keys(filled[0]).sort().join(",") === FIVE, "a filled row still has exactly five keys");
+assert(filled[0].event === "paywall_seen" && filled[0].source === "locked_story" && filled[0].day === 2, "source and day are the allowlisted values");
+assert(filled[0].date === dayKeyFromDate(new Date("2026-10-13T15:04:00.000Z")), "filled row date is local");
+assert(filled[0].device_id === "device-anonymous-1", "device id is reused");
+assert(!("email" in filled[0]) && !("price" in filled[0]) && !("daysSinceLast" in filled[0]), "extras stay off the filled row");
+
+const junk = [];
 await shipFunnelEvent({
-  event: FUNNEL_EVENTS.lockedStoryCapped,
-  at: "2026-09-28T18:05:00.000Z",
-  day: 2,
-  source: "win",
+  event: FUNNEL_EVENTS.paywallSeen,
+  at: "2026-10-13T15:04:00.000Z",
+  source: "boot",
+  day: 0,
 }, {
   endpoint,
-  lang: "es",
   storage,
   random: () => "device-anonymous-1",
   beaconImpl: (_url, body) => {
-    dayPosts.push(JSON.parse(body));
+    junk.push(JSON.parse(body));
     return true;
   },
   fetchImpl: async () => { throw new Error("fetch should not run"); },
 });
-assert(dayPosts[0].day === 1 && dayPosts[0].source === "locked_story", "paywall_seen posts the learner day");
-assert(Object.keys(dayPosts[0]).sort().join(",") === "day,deviceId,lang,name,source,ts,type", "paywall_seen with a day adds that field");
-assert(dayPosts[1].name === "locked_story_capped" && dayPosts[1].day === 2, "locked_story_capped posts the learner day");
-assert(dayPosts[1].source == null, "locked_story_capped does not post source");
-assert(Object.keys(dayPosts[1]).sort().join(",") === "day,deviceId,lang,name,ts,type", "locked_story_capped posted keys are name and day");
-for (const name of [FUNNEL_EVENTS.tapAnnual, FUNNEL_EVENTS.tapMonthly]) {
-  const posted = [];
-  for (const source of ["win", "locked_story", "timed"]) {
-    const result = await shipFunnelEvent({
-      event: name,
-      at: "2026-09-28T18:05:00.000Z",
-      source,
-      price: "$6.99",
-      choice: "monthly",
-    }, {
-      endpoint,
-      lang: "es",
-      storage,
-      random: () => "device-anonymous-1",
-      beaconImpl: (_url, body) => {
-        posted.push(JSON.parse(body));
-        return true;
-      },
-      fetchImpl: async () => { throw new Error("fetch should not run"); },
-    });
-    assert(result.sent === true, `${name} ${source} is sent`);
-  }
-  assert(posted.map((row) => row.source).join(",") === "win,locked_story,timed", `${name} posts the allowlisted source`);
-  for (const row of posted) {
-    assert(row.name === name, `${name} posts its own event name`);
-    assert(Object.keys(row).sort().join(",") === "deviceId,lang,name,source,ts,type", `${name} posted keys add source only`);
-    assert(!("price" in row) && !("choice" in row), `${name} source row drops other extras`);
-  }
-}
-const droppedSource = [];
-for (const name of [
-  FUNNEL_EVENTS.paywallTap,
-  FUNNEL_EVENTS.firstSessionStart,
-  FUNNEL_EVENTS.firstSessionExercise1Correct,
-  FUNNEL_EVENTS.firstSessionComplete,
-  FUNNEL_EVENTS.day2Return,
-]) {
-  await shipFunnelEvent({
-    event: name,
-    at: "2026-09-28T18:05:00.000Z",
-    source: "win",
-    choice: name === FUNNEL_EVENTS.paywallTap ? "annual" : undefined,
-  }, {
-    endpoint,
-    lang: "es",
-    storage,
-    random: () => "device-anonymous-1",
-    beaconImpl: (_url, body) => {
-      droppedSource.push(JSON.parse(body));
-      return true;
-    },
-    fetchImpl: async () => { throw new Error("fetch should not run"); },
-  });
-}
-assert(droppedSource.length === 5, "tap and first-session events still ship");
-assert(droppedSource.every((row) => !("source" in row)), "source stays off paywall_tap and the four first-session events");
-assert(droppedSource.every((row) => Object.keys(row).sort().join(",") === "deviceId,lang,name,ts,type"), "those rows stay type, name, lang, device id, ts");
+assert(junk.length === 1 && Object.keys(junk[0]).sort().join(",") === FIVE, "junk still posts exactly five keys");
+assert(junk[0].source === "" && junk[0].day === "", "an unknown source and a day outside 1–3650 are blank");
 
-setCollectorEndpointOverride("https://override.example/open");
-const openStore = memoryStorage();
-const openPosts = [];
-for (const [lastDay, today, days, label] of [
-  ["2026-10-04", "2026-10-04", 0, "same day"],
-  ["2026-10-03", "2026-10-04", 1, "yesterday"],
-  ["2026-09-29", "2026-10-04", 5, "five days ago"],
-]) {
-  const result = await shipFunnelEvent({
-    event: FUNNEL_EVENTS.open,
-    at: "2026-10-04T16:00:00.000Z",
-    daysSinceLast: daysSinceLastVisit(lastDay, today),
-    email: "ada@example.com",
-    streak: 4,
-    xp: 40,
-    storyId: "story-0",
-    userAgent: "Mozilla/5.0",
-  }, {
-    lang: "es",
-    storage: openStore,
-    random: () => "device-open-1",
-    beaconImpl: (_url, body) => {
-      openPosts.push(JSON.parse(body));
-      return true;
-    },
-    fetchImpl: async () => { throw new Error("fetch should not run"); },
-  });
-  assert(result.sent === true, `${label} open is sent on the test override endpoint`);
-  assert(daysSinceLastVisit(lastDay, today) === days, `${label} computes to ${days}`);
-}
-assert(openPosts.map((row) => row.daysSinceLast).join(",") === "0,1,5", "open carries same day, yesterday, and five days");
-for (const row of openPosts) {
-  assert(Object.keys(row).sort().join(",") === "daysSinceLast,deviceId,lang,name,ts,type", "open posted keys are exactly type, name, lang, deviceId, ts, daysSinceLast");
-  assert(row.type === "event" && row.name === "open" && row.lang === "es" && row.deviceId === "device-open-1" && row.ts === "2026-10-04T16:00:00.000Z", "open posted values");
-  assert(!("email" in row) && !("streak" in row) && !("xp" in row) && !("storyId" in row) && !("userAgent" in row), "open row has no other fields");
-}
-let firstVisit = null;
-const firstResult = await shipFunnelEvent({
-  event: FUNNEL_EVENTS.open,
-  at: "2026-10-04T16:01:00.000Z",
-  daysSinceLast: daysSinceLastVisit(null, "2026-10-04"),
+const unknown = await shipFunnelEvent({
+  event: "not_a_funnel_event",
   email: "ada@example.com",
 }, {
-  lang: "en",
-  storage: openStore,
-  beaconImpl: (_url, body) => {
-    firstVisit = JSON.parse(body);
-    return true;
-  },
-  fetchImpl: async () => { throw new Error("fetch should not run"); },
+  endpoint,
+  storage,
+  beaconImpl: () => { beacons += 1; return true; },
+  fetchImpl: async () => { fetches += 1; return { ok: true }; },
 });
-assert(firstResult.sent === true, "first visit open still sends when the override endpoint is set");
-assert(!("daysSinceLast" in firstVisit), "first visit omits daysSinceLast");
-assert(Object.keys(firstVisit).sort().join(",") === "deviceId,lang,name,ts,type", "first visit open keeps the base keys only");
-assert(openStore.data[COLLECTOR_DEVICE_KEY] === "device-open-1", "open reuses one device id once the endpoint is on");
+assert(unknown.sent === false, "an unknown event name is not sent");
+
 setCollectorEndpointOverride("");
 const forcedOff = memoryStorage();
 let forcedBeacons = 0;
@@ -321,18 +211,14 @@ assert(forcedOff.data[COLLECTOR_DEVICE_KEY] == null, "a blank override does not 
 setCollectorEndpointOverride(undefined);
 assert(collectorEndpoint() === "", "clearing the override leaves the build endpoint empty");
 
-const again = await shipFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, at: "2026-09-28T18:06:00.000Z" }, {
-  endpoint,
-  storage,
-  random: () => "device-should-not-replace",
-  beaconImpl: () => true,
-  fetchImpl: async () => { throw new Error("fetch should not run"); },
-});
-assert(again.sent === true, "a later event still sends");
-assert(storage.data[COLLECTOR_DEVICE_KEY] === "device-anonymous-1", "device id is reused");
-
 let fetched = null;
-const fallback = await shipFunnelEvent({ event: FUNNEL_EVENTS.emailSkipped, at: "2026-09-28T18:07:00.000Z", email: "ada@example.com" }, {
+const fallback = await shipFunnelEvent({
+  event: FUNNEL_EVENTS.emailSkipped,
+  at: "2026-09-28T18:07:00.000Z",
+  email: "ada@example.com",
+  source: "win",
+  day: 9,
+}, {
   endpoint,
   lang: "en",
   storage,
@@ -344,19 +230,97 @@ const fallback = await shipFunnelEvent({ event: FUNNEL_EVENTS.emailSkipped, at: 
   },
 });
 assert(fallback.sent === true, "a refused beacon falls back to fetch");
+assert(fetched.init.method === "POST", "fallback is POST");
 assert(fetched.init.mode === "no-cors", "fallback is no-cors");
+assert(fetched.init.keepalive === true, "fallback uses keepalive");
 assert(fetched.init.headers["Content-Type"] === "text/plain", "fallback is text/plain");
 const fallbackBody = JSON.parse(fetched.init.body);
-assert(fallbackBody.type === "event" && fallbackBody.name === "email-skipped", "fallback is the event");
+assert(Object.keys(fallbackBody).sort().join(",") === FIVE, "fallback payload has exactly five keys");
+assert(fallbackBody.event === "email-skipped" && fallbackBody.source === "win" && fallbackBody.day === 9, "fallback keeps the five fields");
 assert(!("email" in fallbackBody) && !/@/.test(fetched.init.body), "fallback event has no address");
 
-const collector = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "docs", "first-win-email-collector.gs"), "utf8");
-assert(/function doPost\s*\(\s*e\s*\)/.test(collector), "collector exposes doPost(e)");
-assert(collector.includes('sheetByName(ss, "emails")') && collector.includes('sheetByName(ss, "events")'), "tabs are emails and events");
-assert(collector.includes("insertSheet(name)"), "missing tabs are created");
-assert(collector.includes('appendRow([record.ts, record.email, record.lang, record.source])'), "emails tab row is timestamp, email, lang, source");
-assert(collector.includes('appendRow([record.ts, record.name, record.lang, record.deviceId])'), "events tab row is timestamp, name, lang, device id");
-const eventWrite = collector.slice(collector.indexOf('record.type === "event"'));
+const uuidStore = memoryStorage();
+let uuidCalls = 0;
+const cryptoRef = globalThis.crypto;
+const originalRandomUUID = cryptoRef.randomUUID.bind(cryptoRef);
+Object.defineProperty(cryptoRef, "randomUUID", {
+  configurable: true,
+  writable: true,
+  value: () => {
+    uuidCalls += 1;
+    return "11111111-1111-4111-8111-111111111111";
+  },
+});
+const minted = await shipFunnelEvent({
+  event: FUNNEL_EVENTS.open,
+  at: "2026-10-13T12:00:00.000Z",
+  email: "ada@example.com",
+}, {
+  endpoint,
+  storage: uuidStore,
+  beaconImpl: () => true,
+  fetchImpl: async () => { throw new Error("fetch should not run"); },
+});
+const reused = await shipFunnelEvent({
+  event: FUNNEL_EVENTS.paywallTap,
+  at: "2026-10-13T12:05:00.000Z",
+}, {
+  endpoint,
+  storage: uuidStore,
+  beaconImpl: () => true,
+  fetchImpl: async () => { throw new Error("fetch should not run"); },
+});
+Object.defineProperty(cryptoRef, "randomUUID", {
+  configurable: true,
+  writable: true,
+  value: originalRandomUUID,
+});
+assert(minted.sent === true && reused.sent === true, "a real device id can send");
+assert(uuidCalls === 1, "crypto.randomUUID runs once");
+assert(uuidStore.data[COLLECTOR_DEVICE_KEY] === "11111111-1111-4111-8111-111111111111", "the uuid is kept in andale-device-id");
+
+const brokenId = memoryStorage();
+let brokenBeacons = 0;
+Object.defineProperty(cryptoRef, "randomUUID", {
+  configurable: true,
+  writable: true,
+  value: () => { throw new Error("no random"); },
+});
+const broken = await shipFunnelEvent({
+  event: FUNNEL_EVENTS.open,
+  email: "ada@example.com",
+}, {
+  endpoint,
+  storage: brokenId,
+  beaconImpl: () => { brokenBeacons += 1; return true; },
+  fetchImpl: async () => { brokenBeacons += 1; return { ok: true }; },
+});
+Object.defineProperty(cryptoRef, "randomUUID", {
+  configurable: true,
+  writable: true,
+  value: originalRandomUUID,
+});
+assert(broken.sent === false && brokenBeacons === 0, "a failed randomUUID sends nothing");
+assert(brokenId.data[COLLECTOR_DEVICE_KEY] == null, "a failed randomUUID stores nothing");
+
+const emailScript = readFileSync(join(here, "..", "docs", "first-win-email-collector.gs"), "utf8");
+assert(/function doPost\s*\(\s*e\s*\)/.test(emailScript), "email collector exposes doPost(e)");
+assert(emailScript.includes('sheetByName(ss, "emails")') && emailScript.includes('sheetByName(ss, "events")'), "tabs are emails and events");
+assert(emailScript.includes("insertSheet(name)"), "missing tabs are created");
+assert(emailScript.includes('appendRow([record.ts, record.email, record.lang, record.source])'), "emails tab row is timestamp, email, lang, source");
+assert(emailScript.includes('appendRow([record.ts, record.name, record.lang, record.deviceId])'), "events tab row is timestamp, name, lang, device id");
+const eventWrite = emailScript.slice(emailScript.indexOf('record.type === "event"'));
 assert(!eventWrite.includes("record.email"), "events tab write does not touch the address");
 
-console.log("ok: collector — empty endpoint sends nothing; a set endpoint ships events without the address.");
+const script = readFileSync(join(here, "..", "apps-script", "collector.gs"), "utf8");
+const readme = readFileSync(join(here, "..", "apps-script", "README.md"), "utf8");
+assert(/function doPost\s*\(\s*e\s*\)/.test(script), "funnel collector exposes doPost(e)");
+assert(script.includes('appendRow([') && script.includes("record.event") && script.includes("record.device_id"), "doPost appends the event row");
+assert(script.includes("received_at") && script.includes('"event"') && script.includes('"source"') && script.includes('"day"') && script.includes('"date"') && script.includes('"device_id"'), "columns are received_at, event, source, day, date, device_id");
+assert(!/Logger\.|console\.|getHeaders|e\.parameter|REMOTE_ADDR|userIp|remoteAddress/i.test(script), "the script does not log IP or headers");
+assert(!script.includes("record.email") && !script.includes("parsed.email"), "the funnel script does not read an address");
+assert(readme.includes("Extensions > Apps Script"), "readme names the Apps Script menu");
+assert(readme.includes("Execute as: Me") && readme.includes("Anyone"), "readme says run as me, anyone can access");
+assert(readme.includes("VITE_COLLECTOR_ENDPOINT"), "readme names the Pages variable");
+
+console.log("ok: collector — empty endpoint sends nothing; a set endpoint posts exactly five fields.");

@@ -1,6 +1,8 @@
 # Privacy — Ándale
 
-Last updated: October 4, 2026
+Last updated: October 13, 2026
+
+Última actualización: 13 de octubre de 2026
 
 Ándale is español mexicano real, for people past the basics. This page covers the web app at https://gildernew-max.github.io/andale/ and the iOS app when it is on the App Store or TestFlight.
 
@@ -18,10 +20,6 @@ We do not run ads. We do not sell data. We do not use third-party analytics in t
 
 Purchases (if any) go through Apple. Apple handles payment data under Apple’s privacy policy. We do not receive your full payment card number.
 
-## Anonymous usage events
-
-In builds where this is switched on, the app sends a small event when something happens, such as opening the app or reaching the paywall. Each event holds the event name, your language (Español or English), a random ID stored on your device, and a timestamp. When you open the app, that event also holds one more number: how many whole days it has been since you last practiced in the app, counted on your device’s calendar, up to 365. On your first visit there is no number. An event holds no name, no email, no location and no payment information. We do not record IP addresses ourselves; Google, which runs the spreadsheet that receives the events, may keep ordinary access logs under its own terms. The random ID is not linked to who you are, and clearing your site data or deleting the app gives you a new one. We use the events to see where learners stop and whether they come back, and for nothing else.
-
 ## Who else might see something
 
 The web app is hosted on GitHub Pages. GitHub may keep ordinary hosting logs (time, IP, page). That is their service, not a profile we build.
@@ -35,6 +33,12 @@ If you use TestFlight or the App Store build, Apple’s rules for those services
 ## Changes
 
 If this page changes in a way that matters, the date at the top will change.
+
+<h2 id="correo-y-datos">What we count / Qué contamos</h2>
+
+We count which steps you reach (like finishing a lesson or seeing a plan) to improve Ándale. It's anonymous: a random ID for this device, and we don't store your name, email or IP address.
+
+Contamos a qué pasos llegas (como terminar una lección o ver un plan) para mejorar Ándale. Es anónimo: un ID aleatorio de este dispositivo, y no guardamos tu nombre, correo ni dirección IP.
 
 ## Contact
 

@@ -143,10 +143,11 @@ for (const event of [
   });
   assert(result.sent === true, `${event} ships on the collector path`);
 }
-assert(posted.map((row) => row.name).join(",") === "first_session_start,first_session_exercise1_correct,first_session_complete,day2_return", "collector keeps the four names");
+assert(posted.map((row) => row.event).join(",") === "first_session_start,first_session_exercise1_correct,first_session_complete,day2_return", "collector keeps the four names");
 for (const row of posted) {
-  assert(Object.keys(row).sort().join(",") === "deviceId,lang,name,ts,type", `${row.name} row has no extra fields`);
-  assert(!("email" in row) && !("daysSinceLast" in row), `${row.name} row has no address or day gap`);
+  assert(Object.keys(row).sort().join(",") === "date,day,device_id,event,source", `${row.event} row is the five collector fields`);
+  assert(!("email" in row) && !("daysSinceLast" in row) && !("name" in row) && !("lang" in row), `${row.event} row has no address, day gap, or old fields`);
+  assert(row.device_id === "device-session-1" && row.source === "" && row.day === "", `${row.event} keeps the device id and blank source and day`);
 }
 assert(shipStore.data["andale-device-id"] === "device-session-1", "the four events share one device id");
 

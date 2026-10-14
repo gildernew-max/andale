@@ -127,6 +127,15 @@ describe("perfil problem report", () => {
     const soporte = screen.getByRole("link", { name: "Soporte" });
     expect(link.textContent).toBe(label);
     expect(link.parentElement).toBe(soporte.parentElement);
+    const countNote = screen.getByTestId("settings-count-note");
+    expect(countNote.parentElement).toBe(soporte.parentElement);
+    expect(countNote.tagName).toBe("A");
+    expect(countNote.getAttribute("href")).toMatch(/privacy\.html#correo-y-datos$/);
+    expect(countNote.textContent).toBe(uiLang === "en" ? "What we count" : "Qué contamos");
+    expect(countNote.style.fontSize).toBe(soporte.style.fontSize);
+    expect(countNote.style.fontWeight).toBe(soporte.style.fontWeight);
+    expect(countNote.style.textDecoration).toBe(soporte.style.textDecoration);
+    expect(norm(countNote.style.color)).toBe(norm(soporte.style.color));
     expect(link.style.fontSize).toBe(soporte.style.fontSize);
     expect(link.style.fontWeight).toBe(soporte.style.fontWeight);
     expect(link.style.textDecoration).toBe(soporte.style.textDecoration);

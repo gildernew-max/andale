@@ -10257,6 +10257,7 @@ export default function App() {
           <div data-testid="perfil-footer" style={{ marginTop: 28, display: "flex", flexWrap: "wrap", gap: 20, justifyContent: "center", maxWidth: "100%" }}>
             <a href={`${import.meta.env.BASE_URL}privacy.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Privacidad</a>
             <a href={`${import.meta.env.BASE_URL}support.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Soporte</a>
+            <a data-testid="settings-count-note" href={`${import.meta.env.BASE_URL}privacy.html#correo-y-datos`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>{uiLang === "en" ? "What we count" : "Qué contamos"}</a>
             <a data-testid="report-problem" href={problemReportMailto(uiLang, theme, tab)} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>{uiLang === "en" ? "Report a problem" : "Reportar un problema"}</a>
           </div>
         </div>
