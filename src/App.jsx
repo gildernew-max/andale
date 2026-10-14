@@ -38,7 +38,7 @@ import { isWaitlistEmail } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
-import { gatedLiftStoryQuiz, isStoryChoiceCorrect, lecturaCheckpointMissCount, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
+import { checkpointChoiceLabel, checkpointQuestionText, gatedLiftStoryQuiz, isStoryChoiceCorrect, lecturaCheckpointMissCount, passageForStoryQuestion, pickCompletedStory, selectedStoryChoice, shuffleStoryChoiceOrder, storyQuestionChoices, storyQuizCue, storyQuizCueLine, storyQuizEyebrow, storyQuizPassage } from "./storyQuiz.js";
 import { choiceChipIndexForKey, choiceChipKeyForIndex } from "./choiceChipKeys.js";
 import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
@@ -3966,7 +3966,7 @@ const STORY_EXTRAS = {
       { q: "What does the family build on November 1?", a: "An ofrenda", choices: ["An ofrenda", "A boat", "A market stall"] },
       { q: "What is the mood at the cemetery?", a: "Warm and communal", choices: ["Warm and communal", "Silent and empty", "Angry"] },
       { q: "What is the only true death?", a: "Forgetting", choices: ["Forgetting", "Old age", "The cemetery"] },
-      { q: "What does the narrator hope for?", a: "To be remembered", choices: ["To be remembered", "To leave Mexico", "To sell the house"] },
+      { q: "What does the narrator hope for?", a: "To be remembered", choices: ["To be remembered", "To leave Mexico", "To sell the house"], qEs: "¿Qué espera el narrador?", choicesEs: ["Que lo recuerden", "Irse de México", "Vender la casa"] },
     ],
   },
   "story-1": {
@@ -5325,6 +5325,8 @@ export default function App() {
   const [confirmExit, setConfirmExit] = useState(false);
   const [paraIdx, setParaIdx] = useState(0);
   const [lecturaAdvanceNonce, setLecturaAdvanceNonce] = useState(0);
+  const [story0EndSpacer, setStory0EndSpacer] = useState(0);
+  const [story0EndScrollNonce, setStory0EndScrollNonce] = useState(0);
   const lecturaParagraphRef = useRef(null);
   const lecturaQuestionsRef = useRef(null);
   const lecturaQuestionsHeaderRef = useRef(null);
@@ -7119,12 +7121,40 @@ export default function App() {
   // Claim mounts under Q3. After CLAIM, the XP-claimed card can grow past
   // that fold. Pull the whole card back inside: 12px above the viewport
   // bottom, and above a pinned NEXT/footer band and the safe-area inset.
+  // Story-0 pins the score line under the brand bar so the next-story card
+  // and its button stay in the same fold.
   useLayoutEffect(() => {
+    if (screen !== "story" || storyView?.id !== "story-0") {
+      if (story0EndSpacer) setStory0EndSpacer(0);
+    }
     if (screen !== "story") return;
     const claim = lecturaClaimRef.current;
     if (!claim) return;
     if (freshClaimId && !claim.isConnected) return;
     const brand = lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']"));
+    if (storyView?.id === "story-0") {
+      const score = claim.querySelector("[data-testid='lectura-score']");
+      if (score) {
+        const scoreBox = score.getBoundingClientRect();
+        const nextY = lecturaAdvanceScrollY({
+          paragraphTop: scoreBox.top,
+          scrollY: window.scrollY,
+          headerBottom: brand,
+        });
+        const scrollHeight = document.scrollingElement ? document.scrollingElement.scrollHeight : document.documentElement.scrollHeight;
+        const maxY = Math.max(0, scrollHeight - window.innerHeight);
+        const shortfall = Math.ceil(nextY - maxY);
+        if (shortfall > 1 && story0EndSpacer < 4000) {
+          const nextSpacer = Math.min(4000, story0EndSpacer + shortfall);
+          if (nextSpacer !== story0EndSpacer) {
+            setStory0EndSpacer(nextSpacer);
+            return;
+          }
+        }
+        if (Math.abs((Number(window.scrollY) || 0) - nextY) > 0.5) window.scrollTo(0, nextY);
+        return;
+      }
+    }
     const box = claim.getBoundingClientRect();
     const nextY = lecturaClaimScrollY({
       claimTop: box.top,
@@ -7136,7 +7166,7 @@ export default function App() {
       bandTop: lecturaPinnedBandTop(window.innerHeight),
     });
     if (Math.abs((Number(window.scrollY) || 0) - nextY) > 0.5) window.scrollTo(0, nextY);
-  }, [screen, paraIdx, ansSel, freshClaimId]);
+  }, [screen, paraIdx, ansSel, freshClaimId, storyView, story0EndSpacer, story0EndScrollNonce]);
 
   const releaseLecturaWin = (beat) => {
     if (!beat) return;
@@ -7226,6 +7256,13 @@ export default function App() {
       playLecturaWin,
       streakBefore,
     });
+  };
+
+  const openStory0Sequel = () => {
+    const next = STORIES.find((item) => item.id === "story-1");
+    if (!next) return;
+    setLecturaCliffhanger(null);
+    openStory(next);
   };
 
   const handoffCliffhangerToBird = () => {
@@ -12358,7 +12395,7 @@ export default function App() {
                   return (
                   <div data-testid="lectura-checkpoint" style={{ position: "relative", zIndex: sheetBlocksAnswers ? LECTURA_WORD_SHEET_HOST_Z : "auto", marginTop: 6 + wordSheetSpacer, marginLeft: latamNarration ? 48 : 0, border: `2px solid ${checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, borderRadius: 12, padding: "9px 11px", background: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? D.okBg : D.badBg) : (theme === "dark" ? "#1E2128" : "#fff") }}>
                     <div style={{ fontSize: 12, fontWeight: 900, color: checkState[pi] ? (checkState[pi] === checkpoints[pi].a ? limeText(D.okText, D) : D.badText) : (theme === "dark" ? "#CDBBA6" : D.sub), marginBottom: 6 }}>
-                      {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpoints[pi].q}
+                      {uiLang === "en" ? "Checkpoint" : "Pausa rápida"} {pi + 1}: {checkpointQuestionText(checkpoints[pi], uiLang)}
                     </div>
                     <div ref={checkpointAnswersRef} data-testid="lectura-checkpoint-answers" style={{ position: "relative", zIndex: "auto", pointerEvents: "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {storyQuestionChoices(checkpoints[pi], cpOrder?.[pi]).map((choice) => {
@@ -12367,7 +12404,7 @@ export default function App() {
                         return (
                         <button key={choice} disabled={!!checkState[pi]} onClick={() => { if (sheetBlocksAnswers) { setWordSel(null); return; } answerStoryCheckpoint(story, pi, choice, checkpoints[pi].a); }}
                           style={{ border: `1.5px solid ${marked ? (choice === checkpoints[pi].a ? D.green : D.red) : (theme === "dark" ? "#4A5160" : D.line)}`, background: marked ? (theme === "dark" ? "#1E2128" : "#fff") : (theme === "dark" ? "#1E2128" : "#F7F7F7"), borderRadius: 9, padding: "5px 8px", fontFamily: "inherit", fontSize: 11.5, fontWeight: 900, cursor: checkState[pi] || sheetBlocksAnswers ? "default" : "pointer", pointerEvents: "auto", color: marked && choice !== checkpoints[pi].a ? D.badText : (theme === "dark" ? "#F6EFE4" : D.ink) }}>
-                          {choice}
+                          {checkpointChoiceLabel(checkpoints[pi], choice, uiLang)}
                         </button>
                         );
                       })}
@@ -12509,7 +12546,17 @@ export default function App() {
                       ? scoreCountClause(correct, story.questions.length - correct + checkpointMisses, uiLang)
                       : <>{correct}/{story.questions.length} {uiLang === "en" ? "correct" : "correctas"} {correct === 3 ? "— ¡qué padre!" : ""}</>}
                   </div>
-                  {claimed ? (
+                  {story.id === "story-0" ? (
+                    <button
+                      type="button"
+                      data-testid="lectura-claim-cta"
+                      disabled={claimed}
+                      onClick={() => { if (!claimed) claimStory(story, correct, checkpointMisses); }}
+                      style={{ background: "#FFFFFF", color: "#58A700", borderTop: "1.5px solid #E2D6C3", borderRight: "1.5px solid #E2D6C3", borderBottom: "1.5px solid #E2D6C3", borderLeft: "1.5px solid #E2D6C3", borderRadius: 999, padding: "8px 16px", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.2, cursor: claimed ? "default" : "pointer" }}
+                    >
+                      {claimed ? (freshClaimId === story.id ? L.xpJustClaimed : L.xpClaimed) : <>+{5 + correct * 10} XP · 💎10</>}
+                    </button>
+                  ) : claimed ? (
 	                    <Btn outline disabled>{freshClaimId === story.id ? L.xpJustClaimed : L.xpClaimed}</Btn>
                   ) : (
 	                    <Btn onClick={() => claimStory(story, correct, checkpointMisses)}>{L.claim} +{5 + correct * 10} XP · <IcGem size={14} /> 10</Btn>
@@ -12519,7 +12566,7 @@ export default function App() {
             </div>
             </div>)}
 
-            {lecturaCliffhanger?.storyId === story.id && (
+            {lecturaCliffhanger?.storyId === story.id && story.id !== "story-0" && (
               <div data-testid="lectura-cliffhanger" data-story-id={story.id} style={{ marginTop: 16, marginLeft: -16, marginRight: -16, background: theme === "dark" ? "#1E2128" : HUB_CREAM, borderRadius: 14, padding: "14px 10px 12px" }}>
                 <p data-testid="lectura-cliffhanger-line" style={{ margin: "0 0 12px", fontSize: 17, fontWeight: 700, lineHeight: 1.55, color: D.ink }}>
                   {lecturaCliffhangerLine(story.id, uiLang)}
@@ -12547,6 +12594,36 @@ export default function App() {
                   </button>
                 </div>
               </div>
+            )}
+
+            {lecturaCliffhanger?.storyId === story.id && story.id === "story-0" && (
+              <div data-testid="lectura-cliffhanger" data-story-id={story.id} className="pop" style={{ marginTop: 12, background: theme === "dark" ? "#1E2128" : "#FFFFFF", borderRadius: theme === "dark" ? 14 : 18, ...(theme === "dark" ? {} : { borderTop: "1.5px solid #E2D6C3", borderRight: "1.5px solid #E2D6C3", borderBottom: "1.5px solid #E2D6C3", borderLeft: "1.5px solid #E2D6C3", boxSizing: "border-box" }), padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                <img
+                  src={`${import.meta.env.BASE_URL}lectura/story-1/p0.png`}
+                  alt=""
+                  aria-hidden="true"
+                  data-testid="lectura-next-still"
+                  onLoad={() => setStory0EndScrollNonce((n) => n + 1)}
+                  style={{ display: "block", width: "100%", aspectRatio: "16 / 9", objectFit: "cover", objectPosition: lecturaStillObjectPosition("story-1", 0), borderRadius: 10, background: "#E2D6C3" }}
+                />
+                <p data-testid="lectura-cliffhanger-line" style={{ margin: 0, fontSize: 16, fontWeight: 500, lineHeight: 1.35, color: D.ink }}>
+                  {lecturaCliffhangerLine(story.id, uiLang)}
+                </p>
+                <p data-testid="lectura-cliffhanger-next" style={{ margin: 0, fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: D.ink }}>
+                  {uiLang === "en" ? "Next: " : "Sigue: "}<i style={{ fontStyle: "italic" }}>La casa azul</i>
+                </p>
+                <button
+                  type="button"
+                  data-testid="lectura-bird-handoff-cta"
+                  onClick={openStory0Sequel}
+                  style={{ width: "100%", height: 52, boxSizing: "border-box", background: "#58CC02", color: "#1F3A1A", border: "none", borderRadius: 14, padding: 0, fontFamily: "inherit", fontWeight: 700, fontSize: 16, cursor: "pointer" }}
+                >
+                  {uiLang === "en" ? "Start reading" : "Empieza a leer"}
+                </button>
+              </div>
+            )}
+            {story.id === "story-0" && answered === story.questions.length && story0EndSpacer > 0 && (
+              <div data-testid="lectura-end-spacer" style={{ height: story0EndSpacer }} />
             )}
 
             {/* definition card — placed on open; a later scroll does not move the page back */}

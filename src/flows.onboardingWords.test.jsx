@@ -392,7 +392,7 @@ describe("words audit strings", () => {
     await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
     await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
     await user.click(screen.getByRole("button", { name: /El olvido/ }));
-    await user.click(screen.getByRole("button", { name: /^(Reclamar|Claim)/ }));
+    await user.click(screen.getByTestId("lectura-claim-cta"));
     await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger-line")).toBeTruthy());
   };
 
@@ -408,7 +408,10 @@ describe("words audit strings", () => {
     const esCta = screen.getByTestId("lectura-bird-handoff-cta");
     expect(esLine.textContent).toBe(lecturaCliffhangers["story-0"].es);
     expect(esLine.textContent).not.toBe(lecturaCliffhangers["story-0"].en);
-    expect(esCta.textContent).toBe("Continuar");
+    expect(esCta.textContent).toBe("Empieza a leer");
+    expect(screen.getByTestId("lectura-cliffhanger-next").textContent).toBe("Sigue: La casa azul");
+    expect(screen.getByTestId("lectura-cliffhanger-next").querySelector("i").textContent).toBe("La casa azul");
+    expect(screen.getByTestId("lectura-cliffhanger-next").querySelector("i").style.fontStyle).toBe("italic");
     expect(esLine.compareDocumentPosition(esCta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     await user.click(screen.getByTestId("lang-en"));
@@ -416,7 +419,8 @@ describe("words audit strings", () => {
     const enLine = screen.getByTestId("lectura-cliffhanger-line");
     expect(enLine.textContent).not.toBe(lecturaCliffhangers["story-0"].es);
     expect(enLine.textContent).not.toMatch(/[¿¡]/);
-    expect(screen.getByTestId("lectura-bird-handoff-cta").textContent).toBe("Continue");
+    expect(screen.getByTestId("lectura-cliffhanger-next").textContent).toBe("Next: La casa azul");
+    expect(screen.getByTestId("lectura-bird-handoff-cta").textContent).toBe("Start reading");
     expect(enLine.compareDocumentPosition(screen.getByTestId("lectura-bird-handoff-cta")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   }, 30000);
 

@@ -9,7 +9,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { mockBrowser } from "./flowsHarness.jsx";
-import { lecturaClaimScrollY, lecturaQuestionsOpenScrollY } from "./lecturaAdvance.js";
+import { lecturaAdvanceScrollY, lecturaQuestionsOpenScrollY } from "./lecturaAdvance.js";
 
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -74,11 +74,12 @@ describe("lectura questions open and claim scroll", () => {
         const index = [...prompts].indexOf(this);
         return rect(Q1_DOC + index * 420 - y, 48, width);
       }
-      if (id === "lectura-claim") {
-        const text = this.textContent || "";
+      if (id === "lectura-claim" || id === "lectura-score") {
+        const claim = id === "lectura-claim" ? this : this.closest("[data-testid='lectura-claim']");
+        const text = (claim && claim.textContent) || "";
         const claimed = /XP reclamados|XP ya reclamado|XP already claimed|XP claimed/.test(text);
         const doc = CLAIM_DOC + (claimed ? CLAIMED_SHIFT : 0);
-        const h = CLAIM_H + (claimed ? CLAIMED_GROWTH : 0);
+        const h = id === "lectura-score" ? 28 : CLAIM_H + (claimed ? CLAIMED_GROWTH : 0);
         return rect(doc - y, h, Math.max(0, width - 32));
       }
       if (id === "lectura-paragraph" || id === "lectura-paragraph-first") return rect(820, 580, width);
@@ -134,18 +135,19 @@ describe("lectura questions open and claim scroll", () => {
         await user.click(choice);
       }
       const claim = await screen.findByTestId("lectura-claim");
-      expect(claim.textContent).toMatch(/Reclamar/);
+      expect(claim.textContent).toMatch(/\+35 XP · 💎10/);
+      expect(claim.textContent).not.toMatch(/Reclamar/);
+      const score = screen.getByTestId("lectura-score");
       const claimBox = claim.getBoundingClientRect();
       const readableTop = STICKY;
+      expect(score.getBoundingClientRect().top).toBe(readableTop);
       expect(claimBox.top).toBeGreaterThanOrEqual(readableTop);
-      expect(claimBox.bottom).toBe(height - 12);
+      expect(claimBox.bottom).toBeLessThanOrEqual(height);
       expect(claimBox.bottom - claimBox.top).toBe(CLAIM_H);
-      expect(scrollY).toBe(lecturaClaimScrollY({
-        claimTop: CLAIM_DOC - openScroll,
-        claimBottom: CLAIM_DOC + CLAIM_H - openScroll,
+      expect(scrollY).toBe(lecturaAdvanceScrollY({
+        paragraphTop: CLAIM_DOC - openScroll,
         scrollY: openScroll,
-        viewportHeight: height,
-        viewportTop: readableTop,
+        headerBottom: readableTop,
       }));
       expect(screen.queryByTestId("soft-paywall")).toBeNull();
     });
@@ -156,8 +158,7 @@ describe("lectura questions open and claim scroll", () => {
       it(`keeps the XP-claimed card fully inside the viewport at ${width}x${height} (${uiLang})`, async () => {
         const user = await bootLastParagraph(width, height, uiLang);
         const questionsName = uiLang === "en" ? "Questions →" : "Preguntas →";
-        const claimName = uiLang === "en" ? /Claim/ : /Reclamar/;
-        const claimedName = uiLang === "en" ? /XP claimed/ : /XP reclamados/;
+        const claimedName = uiLang === "en" ? /^XP claimed$/ : /^XP reclamados$/;
         await user.click(screen.getByRole("button", { name: questionsName }));
         const prompts = await screen.findAllByTestId("story-q-prompt");
         expect(prompts).toHaveLength(3);
@@ -165,13 +166,15 @@ describe("lectura questions open and claim scroll", () => {
           await user.click(prompt.parentElement.querySelector("button.choice-card"));
         }
         const claim = await screen.findByTestId("lectura-claim");
-        expect(claim.textContent).toMatch(claimName);
+        expect(claim.textContent).toMatch(/\+35 XP · 💎10/);
         const before = scrollY;
-        await user.click(screen.getByRole("button", { name: claimName }));
-        await waitFor(() => expect(claim.textContent).toMatch(claimedName));
+        await user.click(screen.getByTestId("lectura-claim-cta"));
+        await waitFor(() => expect(screen.getByTestId("lectura-claim-cta").textContent).toMatch(claimedName));
         const box = claim.getBoundingClientRect();
+        const score = screen.getByTestId("lectura-score");
         expect(scrollY).toBeGreaterThan(before);
         expect(box.height).toBe(CLAIM_H + CLAIMED_GROWTH);
+        expect(score.getBoundingClientRect().top).toBe(STICKY);
         expect(box.top).toBeGreaterThanOrEqual(STICKY);
         expect(box.left).toBeGreaterThanOrEqual(0);
         expect(box.right).toBeLessThanOrEqual(width);

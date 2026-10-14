@@ -1019,7 +1019,7 @@ export const claimStory0 = async (user) => {
   await user.click(screen.getByRole("button", { name: /El olor del cempasúchil/ }));
   await user.click(screen.getByRole("button", { name: /En el panteón de la isla de Janitzio/ }));
   await user.click(screen.getByRole("button", { name: /El olvido/ }));
-  await user.click(screen.getByRole("button", { name: /Reclamar|Claim/ }));
+  await user.click(screen.getByTestId("lectura-claim-cta"));
   await waitFor(() => expect(screen.getByTestId("lectura-cliffhanger")).toBeTruthy());
 };
 

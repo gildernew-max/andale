@@ -296,6 +296,13 @@ assert(!story2Extra.en.some((line) => /narrator|\bhe learns\b|\bhe now understan
 assert(story2Extra.checkpoints[1].q === "Who changes Sofía and Mateo's plan?", "checkpoint 2 is couple, not narrator");
 assert(story2Extra.checkpoints[1].a === "Don Arturo", "checkpoint 2 answer stays Don Arturo");
 assert(story2Extra.checkpoints[5].q === "What do Sofía and Mateo learn?", "checkpoint 6 is couple");
+const story0Pause6 = story0Extra.checkpoints[5];
+assert(story0Pause6.q === "What does the narrator hope for?", "checkpoint 6 EN question");
+assert(story0Pause6.a === "To be remembered", "checkpoint 6 EN answer");
+assert(story0Pause6.choices.join("|") === "To be remembered|To leave Mexico|To sell the house", "checkpoint 6 EN choices stay in authored order");
+assert(story0Pause6.qEs === "¿Qué espera el narrador?", "checkpoint 6 ES question");
+assert(story0Pause6.choicesEs.join("|") === "Que lo recuerden|Irse de México|Vender la casa", "checkpoint 6 ES labels follow the English choice index");
+assert(story0Extra.checkpoints.slice(0, 5).every((cp) => cp.qEs == null && cp.choicesEs == null), "only checkpoint 6 has a Spanish face");
 assert(story2Extra.checkpoints[0].choices[0] !== story2Extra.checkpoints[0].a, "story-2 checkpoint choices are shuffled on the wire");
 assert(!story2Extra.checkpoints.some((cp) => /narrator/i.test(cp.q)), "no narrator checkpoint on story-2");
 
