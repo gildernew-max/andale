@@ -39,6 +39,7 @@ assert(
 assert(funnelRowIds({ event: FUNNEL_EVENTS.lockedStoryCapped, day: 1 }).join(",") === "locked_story_capped", "capped row");
 assert(funnelRowIds({ event: FUNNEL_EVENTS.tapAnnual, source: "win" }).join(",") === "tap_annual", "annual row");
 assert(funnelRowIds({ event: FUNNEL_EVENTS.tapMonthly, source: "locked_story" }).join(",") === "tap_monthly", "monthly row");
+assert(funnelRowIds({ event: FUNNEL_EVENTS.firstStreakSeen }).join(",") === "first_streak_seen", "first streak seen row");
 assert(funnelRowIds({ event: FUNNEL_EVENTS.open }).length === 0, "open is not a count row");
 assert(funnelRowIds({ event: FUNNEL_EVENTS.paywallSeen, source: "boot" }).length === 0, "a dropped source is not a row");
 
@@ -55,6 +56,7 @@ const counts = funnelDayCounts([
   { event: "locked_story_capped", at: atLocal(2026, 10, 13, 16), day: 1 },
   { event: "tap_annual", at: atLocal(2026, 10, 13, 16), source: "locked_story" },
   { event: "tap_monthly", at: atLocal(2026, 10, 13, 16), source: "win" },
+  { event: "first_streak_seen", at: atLocal(2026, 10, 13, 16) },
   { event: "lectura_start", at: atLocal(2026, 10, 12, 18), storyId: "story-1" },
   { event: "open", at: atLocal(2026, 10, 11, 18) },
   { event: "paywall_seen", at: "not-a-date", source: "win", day: 2 },

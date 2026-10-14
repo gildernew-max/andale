@@ -4,8 +4,8 @@
  *  `open` may also carry daysSinceLast: whole local calendar days since
  *  stored lastDay, 0–365. Missing lastDay omits the field.
  *  first_session_start / first_session_exercise1_correct / first_session_complete
- *  / day2_return are event + timestamp only. Once-per-device gating lives in
- *  firstSessionFunnel.js, not on this bus.
+ *  / day2_return / first_streak_seen are event + timestamp only. Once-per-device
+ *  gating lives in firstSessionFunnel.js and firstStreakReturn.js, not on this bus.
  *  lectura_start is event + timestamp + storyId. Once per story per local
  *  calendar day lives in lecturaStartDay.js, not on this bus.
  *  paywall_seen is event + timestamp, plus an allowlisted source
@@ -47,6 +47,7 @@ export const FUNNEL_EVENTS = Object.freeze({
   firstSessionExercise1Correct: "first_session_exercise1_correct",
   firstSessionComplete: "first_session_complete",
   day2Return: "day2_return",
+  firstStreakSeen: "first_streak_seen",
 });
 
 export const PAYWALL_TAP = Object.freeze({
@@ -178,7 +179,7 @@ function safeStoryId(id) {
  * waitlist_submit, first-win-seen, email-submitted, and email-skipped
  * are event + timestamp only — never the email.
  * first_session_start, first_session_exercise1_correct, first_session_complete,
- * and day2_return are event + timestamp only.
+ * day2_return, and first_streak_seen are event + timestamp only.
  * purchase is event + at + allowlisted plan / productId only.
  * open is event + at, plus daysSinceLast when it is an integer 0–365.
  * paywall_seen, tap_annual, and tap_monthly are event + at, plus source when it
