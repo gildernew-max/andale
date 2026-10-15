@@ -7060,7 +7060,7 @@ export default function App() {
       wordSheetLock.current = false;
       const cardEl = hasCp ? checkpointAnswersRef.current?.closest("[data-testid='lectura-checkpoint']") : null;
       const cardRect = cardEl?.getBoundingClientRect();
-      const originLeft = cardRect ? cardRect.left + cardEl.clientLeft : cp.left;
+      const originLeft = hasCp ? (cardRect ? cardRect.left + cardEl.clientLeft : cp.left) : 0;
       const anchorLeft = hasCp ? plan.frame.left - originLeft : plan.frame.left;
       const sheetTop = lecturaSheetTop({
         viewportHeight: window.innerHeight,
