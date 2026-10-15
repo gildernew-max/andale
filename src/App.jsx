@@ -5258,6 +5258,11 @@ function HangmanEmphasis({ text }) {
   ));
 }
 
+/** Dark story-0 claim pill. Swap these three; light stays white / #E2D6C3 / #58A700. */
+const STORY0_CLAIM_DARK_FILL = "#1E2128";
+const STORY0_CLAIM_DARK_BORDER = "#3A3F49";
+const STORY0_CLAIM_DARK_TEXT = "#58CC02";
+
 export default function App() {
   /* Theme: a saved prog.theme of light or dark is persisted. With no saved
      choice the phone decides and that derived value is not written back.
@@ -12250,6 +12255,10 @@ export default function App() {
         const checkDone = Object.keys(checkState).length;
         const claimed = !!prog.stories?.[story.id];
         const answered = Object.keys(ansSel).length;
+        const story0ClaimFill = theme === "dark" ? STORY0_CLAIM_DARK_FILL : "#FFFFFF";
+        const story0ClaimInk = theme === "dark" ? STORY0_CLAIM_DARK_TEXT : "#58A700";
+        const story0ClaimBorder = `1.5px solid ${theme === "dark" ? STORY0_CLAIM_DARK_BORDER : "#E2D6C3"}`;
+        const story0ClaimAgain = uiLang === "en" ? L.xpClaimed : "XP ya reclamados";
         const checkpointMisses = lecturaCheckpointMissCount(checkState, checkpoints);
         const qOrder = storyShuffle?.storyId === story.id ? storyShuffle.questions : null;
         const cpOrder = storyShuffle?.storyId === story.id ? storyShuffle.checkpoints : null;
@@ -12552,9 +12561,9 @@ export default function App() {
                       data-testid="lectura-claim-cta"
                       disabled={claimed}
                       onClick={() => { if (!claimed) claimStory(story, correct, checkpointMisses); }}
-                      style={{ background: "#FFFFFF", color: "#58A700", borderTop: "1.5px solid #E2D6C3", borderRight: "1.5px solid #E2D6C3", borderBottom: "1.5px solid #E2D6C3", borderLeft: "1.5px solid #E2D6C3", borderRadius: 999, padding: "8px 16px", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.2, cursor: claimed ? "default" : "pointer" }}
+                      style={{ background: story0ClaimFill, color: story0ClaimInk, borderTop: story0ClaimBorder, borderRight: story0ClaimBorder, borderBottom: story0ClaimBorder, borderLeft: story0ClaimBorder, borderRadius: 999, padding: "8px 16px", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.2, cursor: claimed ? "default" : "pointer" }}
                     >
-                      {claimed ? (freshClaimId === story.id ? L.xpJustClaimed : L.xpClaimed) : <>+{5 + correct * 10} XP · 💎10</>}
+                      {claimed ? (freshClaimId === story.id ? L.xpJustClaimed : story0ClaimAgain) : <>+{5 + correct * 10} XP · 💎10</>}
                     </button>
                   ) : claimed ? (
 	                    <Btn outline disabled>{freshClaimId === story.id ? L.xpJustClaimed : L.xpClaimed}</Btn>
@@ -12596,7 +12605,7 @@ export default function App() {
               </div>
             )}
 
-            {lecturaCliffhanger?.storyId === story.id && story.id === "story-0" && (
+            {story.id === "story-0" && paraIdx >= story.paragraphs.length && answered === story.questions.length && (
               <div data-testid="lectura-cliffhanger" data-story-id={story.id} className="pop" style={{ marginTop: 12, background: theme === "dark" ? "#1E2128" : "#FFFFFF", borderRadius: theme === "dark" ? 14 : 18, ...(theme === "dark" ? {} : { borderTop: "1.5px solid #E2D6C3", borderRight: "1.5px solid #E2D6C3", borderBottom: "1.5px solid #E2D6C3", borderLeft: "1.5px solid #E2D6C3", boxSizing: "border-box" }), padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                 <img
                   src={`${import.meta.env.BASE_URL}lectura/story-1/p0.png`}
