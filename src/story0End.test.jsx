@@ -74,7 +74,7 @@ describe("story-0 end screen", () => {
     expect(appSrc).toContain('theme === "dark" ? STORY0_CLAIM_DARK_FILL : "#FFFFFF"');
     expect(appSrc).toContain('theme === "dark" ? STORY0_CLAIM_DARK_TEXT : "#58A700"');
     expect(appSrc).toContain('theme === "dark" ? STORY0_CLAIM_DARK_BORDER : "#E2D6C3"');
-    expect(appSrc).toContain('uiLang === "en" ? L.xpClaimed : "XP ya reclamados"');
+    expect(appSrc).toContain('uiLang === "en" ? "XP already claimed" : "XP ya reclamados"');
     const pill = appSrc.slice(appSrc.indexOf('data-testid="lectura-claim-cta"'), appSrc.indexOf('data-testid="lectura-claim-cta"') + 800);
     expect(pill).toContain("story0ClaimFill");
     expect(pill).toContain("story0ClaimInk");

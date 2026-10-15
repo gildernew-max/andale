@@ -12258,7 +12258,7 @@ export default function App() {
         const story0ClaimFill = theme === "dark" ? STORY0_CLAIM_DARK_FILL : "#FFFFFF";
         const story0ClaimInk = theme === "dark" ? STORY0_CLAIM_DARK_TEXT : "#58A700";
         const story0ClaimBorder = `1.5px solid ${theme === "dark" ? STORY0_CLAIM_DARK_BORDER : "#E2D6C3"}`;
-        const story0ClaimAgain = uiLang === "en" ? L.xpClaimed : "XP ya reclamados";
+        const story0ClaimAgain = uiLang === "en" ? "XP already claimed" : "XP ya reclamados";
         const checkpointMisses = lecturaCheckpointMissCount(checkState, checkpoints);
         const qOrder = storyShuffle?.storyId === story.id ? storyShuffle.questions : null;
         const cpOrder = storyShuffle?.storyId === story.id ? storyShuffle.checkpoints : null;
