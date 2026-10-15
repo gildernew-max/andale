@@ -302,7 +302,52 @@ assert(story0Pause6.a === "To be remembered", "checkpoint 6 EN answer");
 assert(story0Pause6.choices.join("|") === "To be remembered|To leave Mexico|To sell the house", "checkpoint 6 EN choices stay in authored order");
 assert(story0Pause6.qEs === "¿Qué espera el narrador?", "checkpoint 6 ES question");
 assert(story0Pause6.choicesEs.join("|") === "Que lo recuerden|Irse de México|Vender la casa", "checkpoint 6 ES labels follow the English choice index");
-assert(story0Extra.checkpoints.slice(0, 5).every((cp) => cp.qEs == null && cp.choicesEs == null), "only checkpoint 6 has a Spanish face");
+const story1Extra = STORY_EXTRAS["story-1"];
+const checkpointFaces = {
+  "story-0": [
+    { q: "What does the grandmother believe about death?", a: "It visits once a year", choices: ["It visits once a year", "It never returns", "It only brings sadness"], qEs: "¿Qué cree la abuela sobre la muerte?", choicesEs: ["Viene de visita una vez al año", "Nunca regresa", "Solo trae tristeza"] },
+    { q: "Which item guides the dead by scent?", a: "Cempasúchil", choices: ["Cempasúchil", "Sugar skulls", "Tequila"], qEs: "¿Qué guía a los muertos con su aroma?", choicesEs: ["Cempasúchil", "Calaveritas de azúcar", "Tequila"] },
+    { q: "What does the family build on November 1?", a: "An ofrenda", choices: ["An ofrenda", "A boat", "A market stall"], qEs: "¿Qué arma la familia el 1 de noviembre?", choicesEs: ["Una ofrenda", "Una lancha", "Un puesto en el mercado"] },
+    { q: "What is the mood at the cemetery?", a: "Warm and communal", choices: ["Warm and communal", "Silent and empty", "Angry"], qEs: "¿Cómo es el ambiente en el panteón?", choicesEs: ["Cálido y familiar", "Silencioso y vacío", "Tenso"] },
+    { q: "What is the only true death?", a: "Forgetting", choices: ["Forgetting", "Old age", "The cemetery"], qEs: "¿Cuál es la única muerte verdadera?", choicesEs: ["El olvido", "La vejez", "El panteón"] },
+    { q: "What does the narrator hope for?", a: "To be remembered", choices: ["To be remembered", "To leave Mexico", "To sell the house"], qEs: "¿Qué espera el narrador?", choicesEs: ["Que lo recuerden", "Irse de México", "Vender la casa"] },
+  ],
+  "story-1": [
+    { q: "What is the Casa Azul today?", a: "A museum", choices: ["A museum", "A hotel", "A school"], qEs: "¿Qué es hoy la Casa Azul?", choicesEs: ["Un museo", "Un hotel", "Una escuela"] },
+    { q: "How did Frida paint while immobilized?", a: "With an easel and mirror", choices: ["With an easel and mirror", "On a bus", "In Diego's studio"], qEs: "¿Cómo pintaba Frida cuando no podía moverse?", choicesEs: ["Con un caballete y un espejo", "En un camión", "En el estudio de Diego"] },
+    { q: "Which room still has the mirror?", a: "Her bedroom", choices: ["Her bedroom", "The kitchen", "The patio"], qEs: "¿Qué cuarto todavía tiene el espejo?", choicesEs: ["Su recámara", "La cocina", "El patio"] },
+    { q: "Who was Diego Rivera?", a: "A muralist", choices: ["A muralist", "A doctor", "A photographer"], qEs: "¿Quién era Diego Rivera?", choicesEs: ["Un muralista", "Un médico", "Un fotógrafo"] },
+    { q: "Which animals appear in the story?", a: "Spider monkeys and xolos", choices: ["Spider monkeys and xolos", "Horses and cats", "Parrots only"], qEs: "¿Qué animales aparecen en el cuento?", choicesEs: ["Monos araña y xolos", "Caballos y gatos", "Solo pericos"] },
+    { q: "What final phrase does the story emphasize?", a: "Viva la vida", choices: ["Viva la vida", "Casa Azul", "Adiós"], qEs: "¿Qué frase final destaca el cuento?" },
+  ],
+  "story-2": [
+    { q: "What was the original plan?", a: "Stay on the beach", choices: ["Visit ruins", "Stay on the beach", "Take Spanish classes"], qEs: "¿Cuál era el plan original?", choicesEs: ["Visitar ruinas", "Quedarse en la playa", "Tomar clases de español"] },
+    { q: "Who changes Sofía and Mateo's plan?", a: "Don Arturo", choices: ["A hotel manager", "A lifeguard", "Don Arturo"], qEs: "¿Quién cambia el plan de Sofía y Mateo?", choicesEs: ["Un gerente de hotel", "Un salvavidas", "Don Arturo"] },
+    { q: "What is a cenote?", a: "A natural freshwater sinkhole", choices: ["A pyramid", "A natural freshwater sinkhole", "A beach club"], qEs: "¿Qué es un cenote?", choicesEs: ["Una pirámide", "Un pozo natural de agua dulce", "Un club de playa"] },
+    { q: "Why does the cenote feel magical?", a: "Clear water and sunbeams", choices: ["Loud music", "Colored lights", "Clear water and sunbeams"], qEs: "¿Por qué el cenote se siente mágico?", choicesEs: ["Por la música fuerte", "Por las luces de colores", "Por el agua clara y los rayos de sol"] },
+    { q: "Why is Kukulcán a calendar?", a: "It has 365 steps", choices: ["It has twelve rooms", "It has 365 steps", "It shows the moon"], qEs: "¿Por qué Kukulcán es un calendario?", choicesEs: ["Tiene doce cuartos", "Tiene 365 escalones", "Muestra la luna"] },
+    { q: "What do Sofía and Mateo learn?", a: "There is a deeper Mexico beneath the beach", choices: ["The beach is boring", "There is a deeper Mexico beneath the beach", "Cancún has no history"], qEs: "¿Qué aprenden Sofía y Mateo?", choicesEs: ["Que la playa es aburrida", "Que hay un México más profundo debajo de la playa", "Que Cancún no tiene historia"] },
+  ],
+};
+for (const [storyId, wantList] of Object.entries(checkpointFaces)) {
+  const gotList = STORY_EXTRAS[storyId].checkpoints;
+  assert(gotList.length === wantList.length, `${storyId} still has six checkpoints`);
+  wantList.forEach((want, i) => {
+    const got = gotList[i];
+    const label = `${storyId} checkpoint ${i + 1}`;
+    assert(got.q === want.q, `${label} EN question stays`);
+    assert(got.a === want.a, `${label} answer string stays`);
+    assert(got.choices.join("|") === want.choices.join("|"), `${label} EN option order stays`);
+    assert(got.qEs === want.qEs, `${label} ES question`);
+    if (want.choicesEs) {
+      assert(got.choicesEs.join("|") === want.choicesEs.join("|"), `${label} ES labels follow the English choice index`);
+      assert(got.choices.indexOf(got.a) === want.choices.indexOf(want.a), `${label} correct answer index stays`);
+    } else {
+      assert(got.choicesEs == null, `${label} options stay as authored in both languages`);
+    }
+  });
+}
+assert(story1Extra.checkpoints[5].choices.join("|") === "Viva la vida|Casa Azul|Adiós", "story-1 checkpoint 6 options are unchanged");
 assert(story2Extra.checkpoints[0].choices[0] !== story2Extra.checkpoints[0].a, "story-2 checkpoint choices are shuffled on the wire");
 assert(!story2Extra.checkpoints.some((cp) => /narrator/i.test(cp.q)), "no narrator checkpoint on story-2");
 

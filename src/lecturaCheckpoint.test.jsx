@@ -13,6 +13,11 @@ const LIVE_KEY = "andale-v3-live";
 const CORRECT = "It visits once a year";
 const WRONG = "It never returns";
 const OTHER = "It only brings sadness";
+const LABEL = {
+  [CORRECT]: "Viene de visita una vez al año",
+  [WRONG]: "Nunca regresa",
+  [OTHER]: "Solo trae tristeza",
+};
 
 const norm = (value) => {
   const s = String(value || "").trim().toLowerCase();
@@ -69,7 +74,8 @@ const boot = async (theme) => {
   await waitFor(() => expect(screen.getByTestId("lectura-checkpoint-answers")).toBeTruthy());
 };
 
-const choice = (label) => {
+const choice = (stored) => {
+  const label = LABEL[stored];
   const el = [...screen.getByTestId("lectura-checkpoint-answers").querySelectorAll("button")]
     .find((btn) => btn.textContent === label);
   expect(el, label).toBeTruthy();
@@ -97,6 +103,8 @@ describe("lectura checkpoint answer paint", () => {
     for (const theme of ["light", "dark"]) {
       const look = looks[theme];
       await boot(theme);
+      expect(screen.getByTestId("lectura-checkpoint").textContent).toMatch(/Pausa rápida 1: ¿Qué cree la abuela sobre la muerte\?/);
+      expect(screen.getByTestId("lectura-checkpoint").textContent).not.toMatch(/What does the grandmother/);
       expect(paint(choice(CORRECT))).toEqual(look.idle);
       expect(paint(choice(WRONG))).toEqual(look.idle);
       expect(paint(choice(OTHER))).toEqual(look.idle);
