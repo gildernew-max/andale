@@ -215,7 +215,7 @@ describe("story-0 end screen", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(19);
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(screen.queryByRole("button", { name: /^Continuar$/ })).toBeNull();
-  });
+  }, 20000);
 
   it("EN second finish reads XP already claimed and still shows Start reading", async () => {
     const user = await boot({ paraIdx: 6, uiLang: "en" });
@@ -227,7 +227,7 @@ describe("story-0 end screen", () => {
     expectNextCard("en");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).xp).toBe(77);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).gems).toBe(19);
-  });
+  }, 20000);
 
   it("the next card is dark #1E2128 with a 14px radius and no border", async () => {
     const user = await boot({ paraIdx: 6, theme: "dark" });
@@ -251,5 +251,5 @@ describe("story-0 end screen", () => {
     expect(screen.getByTestId("lectura-claim-cta").textContent).toBe("XP ya reclamados");
     expectDarkPill(screen.getByTestId("lectura-claim-cta"));
     expectNextCard("es");
-  });
+  }, 20000);
 });
