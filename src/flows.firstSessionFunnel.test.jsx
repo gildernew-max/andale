@@ -78,7 +78,7 @@ describe("first-session measurement events", () => {
   it("fires first_session_complete once on the win and not on a remount", async () => {
     const user = userEvent.setup();
     await startOnboarding(user);
-    for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
+    for (let i = 0; i < 3; i++) await answerFirstSessionBeat(user);
     await waitFor(() => expect(screen.getByTestId("win-continue")).toBeTruthy());
     expect(names("first_session_start")).toEqual(["first_session_start"]);
     expect(names("first_session_exercise1_correct")).toEqual(["first_session_exercise1_correct"]);
