@@ -200,6 +200,23 @@ describe("story-0 end screen", () => {
     expect(screen.queryByTestId("story-0-win")).toBeNull();
   });
 
+  it("La casa azul opened from the end card scrolls to the top; a shelf open does not", async () => {
+    const user = await boot({ paraIdx: 6 });
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    await answerStory0(user);
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    expect(scrollTo).toHaveBeenCalledWith(0, 0);
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/En el barrio de Coyoacán/);
+    // Re-opening story-1 from the shelf is not the sequel path.
+    await user.click(screen.getByRole("button", { name: /^(Cerrar|Close)$/ }));
+    await waitFor(() => expect(screen.getByTestId("story-shelf-story-1")).toBeTruthy());
+    scrollTo.mockClear();
+    await user.click(screen.getByTestId("story-shelf-story-1"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    expect(scrollTo).not.toHaveBeenCalledWith(0, 0);
+  });
+
   it("EN: one tap on Start reading opens La casa azul before the claim pill is touched", async () => {
     const user = await boot({ paraIdx: 6, uiLang: "en" });
     await answerStory0(user);
