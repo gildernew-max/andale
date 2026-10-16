@@ -101,6 +101,29 @@ describe("first-lesson win: one button into Lectura", () => {
     expect(screen.getByTestId("win-continue").textContent).toBe("Continuar");
   }, 60000);
 
+  it("label follows the hub-line rule: story-0 claimed gives the next-story label, ES and EN (unclaimed keeps first-story labels, tests above)", async () => {
+    cleanup();
+    freshEligible();
+    const user = userEvent.setup();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
+    await claimStory0(user);
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    await user.click(screen.getByRole("button", { name: /Cerrar/ }));
+    await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
+    await user.click(screen.getByTestId("nav-camino"));
+    await finishFirstLesson(user);
+    const cta = screen.getByTestId("first-story-cta");
+    expect(cta.textContent).toBe("Leer el siguiente cuento");
+    expect(cta.getAttribute("data-story-id")).toBe("story-1");
+    expect(cta.textContent.endsWith(".")).toBe(false);
+    await user.click(screen.getByTestId("lang-en"));
+    await waitFor(() => expect(screen.getByTestId("first-story-cta").textContent).toBe("Read the next story"));
+    expect(screen.getByTestId("win-continue").style.fontSize).toBe("15px");
+    expect(screen.getByTestId("win-continue").style.minHeight).toBe("44px");
+  }, 90000);
+
   it("source: the button reuses openStory and the Lectura gate, adds no event name", () => {
     const src = readFileSync(join(process.cwd(), "src", "App.jsx"), "utf8");
     const fn = src.slice(src.indexOf("const openFirstStoryFromWin"), src.indexOf("const goLearnHome"));
@@ -112,5 +135,8 @@ describe("first-lesson win: one button into Lectura", () => {
     expect(cont).toContain("setScreen(next)");
     expect(src).toContain('readFirstStory: "Leer mi primer cuento"');
     expect(src).toContain('readFirstStory: "Read my first story"');
+    expect(src).toContain('readNextStory: "Leer el siguiente cuento"');
+    expect(src).toContain('readNextStory: "Read the next story"');
+    expect(src).toContain("firstLecturaClaimed({ stories: prog.stories }) ? L.readNextStory : L.readFirstStory");
   });
 });
