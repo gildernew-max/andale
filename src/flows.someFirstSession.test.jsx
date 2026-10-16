@@ -9,6 +9,7 @@ import {
   seedProgress,
   firstSessionRoot,
   answerFirstSessionBeat,
+  waitFirstSessionTapReady,
   funnelOf,
   pickOnboarding,
   startOnboarding,
@@ -42,11 +43,12 @@ describe("I know some first session", () => {
     await startSomeLesson(user);
     expect(firstSessionRoot().getAttribute("data-beginner-first")).toBe("0");
     expect(firstSessionRoot().getAttribute("data-qtype")).toBe("mc");
-    expect(firstSessionRoot().getAttribute("data-count")).toBe("5");
+    expect(firstSessionRoot().getAttribute("data-count")).toBe("3");
     expect(document.body.textContent).toContain(ONDA_PROMPT);
     expect(document.body.textContent).not.toContain(MARISOL_PROMPT);
     expect(choiceLabels().slice().sort()).toEqual(["al rato", "mande", "onda", "padre"]);
-    expect(screen.getByTestId("lesson-check").textContent).toBe("Check");
+    // A first-session multiple choice checks on the tap, so there is no Check button to press.
+    expect(screen.queryByTestId("lesson-check")).toBeNull();
     expect(funnelOf("first_session_start").map((row) => row.event)).toEqual(["first_session_start"]);
 
     await answerFirstSessionBeat(user);
@@ -57,8 +59,8 @@ describe("I know some first session", () => {
     expect(funnelOf("first_session_exercise1_correct").map((row) => row.event)).toEqual(["first_session_exercise1_correct"]);
 
     const wrong = [...document.querySelectorAll(".choice-card")].find((el) => !el.textContent.includes("tiene"));
+    await waitFirstSessionTapReady();
     await user.click(wrong);
-    await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe(firstSessionWords[0].why.en));
   }, 20000);
 
@@ -75,7 +77,7 @@ describe("I know some first session", () => {
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
     await startOnboarding(user);
     await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
-    expect(firstSessionRoot().getAttribute("data-count")).toBe("5");
+    expect(firstSessionRoot().getAttribute("data-count")).toBe("3");
     expect(document.body.textContent).toContain(MARISOL_PROMPT);
     expect(document.body.textContent).not.toContain(ONDA_PROMPT);
     expect(funnelOf("first_session_start")).toHaveLength(1);
@@ -95,7 +97,7 @@ describe("I know some first session", () => {
     await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
     await user.click(screen.getByTestId("hub-sendero"));
     await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
-    expect(screen.getByTestId("path-sheet").textContent).toMatch(/5 challenges/);
+    expect(screen.getByTestId("path-sheet").textContent).toMatch(/3 challenges/);
     await user.click(screen.getByRole("button", { name: /Start · \+XP/ }));
     await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBe("mc"));
     expect(document.body.textContent).toContain(ONDA_PROMPT);
@@ -116,7 +118,7 @@ describe("I know some first session", () => {
     await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
     await user.click(screen.getByTestId("hub-sendero"));
     await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
-    expect(screen.getByTestId("path-sheet").textContent).toMatch(/5 challenges/);
+    expect(screen.getByTestId("path-sheet").textContent).toMatch(/3 challenges/);
     await user.click(screen.getByRole("button", { name: /Start · \+XP/ }));
     await waitFor(() => expect(document.body.textContent).toContain(MARISOL_PROMPT));
     expect(document.body.textContent).not.toContain(ONDA_PROMPT);
