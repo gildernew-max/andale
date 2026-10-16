@@ -14,6 +14,8 @@ import {
   localToday,
   seedProgress,
   STORAGE_KEY,
+  pickOnboarding,
+  startOnboarding,
 } from "./flowsHarness.jsx";
 
 installFlowHooks();
@@ -189,16 +191,13 @@ describe("Stories is loud after Hoy until the first claim", () => {
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("onboarding-level-some")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-level-some"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-level-some");
     await waitFor(() => expect(screen.getByTestId("onboarding-why-live")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-why-live"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-why-live");
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-10")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-goal-10"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-goal-10");
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-start"));
+    await startOnboarding(user);
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
     for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
     await user.click(await screen.findByTestId("win-continue"));
