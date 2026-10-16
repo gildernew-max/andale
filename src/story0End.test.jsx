@@ -181,6 +181,34 @@ describe("story-0 end screen", () => {
     expect(screen.queryByTestId("story-0-win")).toBeNull();
   });
 
+  it("one tap on Empieza a leer opens La casa azul before the claim pill is touched", async () => {
+    const user = await boot({ paraIdx: 6 });
+    await answerStory0(user);
+    expect(screen.getByTestId("lectura-claim-cta").textContent).toBe("+35 XP · 💎10");
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).stories?.["story-0"]).toBeUndefined();
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    expect(screen.getByTestId("story-reader-title").textContent).toBe("La casa azul");
+    expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/En el barrio de Coyoacán/);
+    // The tap also banks the story-0 XP, once.
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(saved.stories["story-0"]).toBe(true);
+    expect(saved.xp).toBe(77);
+    expect(saved.gems).toBe(19);
+    expect(saved.lecturaOpenId).toBe("story-1");
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(screen.queryByTestId("story-0-win")).toBeNull();
+  });
+
+  it("EN: one tap on Start reading opens La casa azul before the claim pill is touched", async () => {
+    const user = await boot({ paraIdx: 6, uiLang: "en" });
+    await answerStory0(user);
+    await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
+    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    expect(screen.getByTestId("story-reader-title").textContent).toBe("La casa azul");
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).stories["story-0"]).toBe(true);
+  });
+
   it("EN claim reads XP claimed and the button reads Start reading", async () => {
     const user = await boot({ paraIdx: 6, uiLang: "en" });
     await screen.findAllByTestId("story-q-prompt");
