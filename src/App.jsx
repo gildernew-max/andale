@@ -6954,8 +6954,9 @@ export default function App() {
     stampPaywallShown(ctx.today);
   };
 
-  const openStory = (story) => {
-    if (!isLecturaStoryOpen(STORIES, prog.stories, story?.id)) return;
+  const openStory = (story, { justClaimedId } = {}) => {
+    const claimedForGate = justClaimedId ? { ...prog.stories, [justClaimedId]: true } : prog.stories;
+    if (!isLecturaStoryOpen(STORIES, claimedForGate, story?.id)) return;
     if (story?.id) {
       lecturaStartedRef.current = true;
       emitLecturaStartOnce(story.id, { storage: window.localStorage, today: todayStr() });
@@ -7269,11 +7270,15 @@ export default function App() {
     });
   };
 
-  const openStory0Sequel = () => {
+  // One tap opens La casa azul. story-1 stays closed until story-0's XP is
+  // claimed, so a tap before the claim pill claims it first, then opens.
+  const openStory0Sequel = (story, correct, checkpointMisses = 0) => {
     const next = STORIES.find((item) => item.id === "story-1");
     if (!next) return;
+    const claimNow = !!story?.id && !prog.stories?.[story.id];
+    if (claimNow) claimStory(story, correct, checkpointMisses);
     setLecturaCliffhanger(null);
-    openStory(next);
+    openStory(next, claimNow ? { justClaimedId: story.id } : undefined);
   };
 
   const handoffCliffhangerToBird = () => {
@@ -12631,7 +12636,7 @@ export default function App() {
                 <button
                   type="button"
                   data-testid="lectura-bird-handoff-cta"
-                  onClick={openStory0Sequel}
+                  onClick={() => openStory0Sequel(story, correct, checkpointMisses)}
                   style={{ width: "100%", height: 52, boxSizing: "border-box", background: "#58CC02", color: "#1F3A1A", border: "none", borderRadius: 14, padding: 0, fontFamily: "inherit", fontWeight: 700, fontSize: 16, cursor: "pointer" }}
                 >
                   {uiLang === "en" ? "Start reading" : "Empieza a leer"}
