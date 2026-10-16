@@ -5343,6 +5343,7 @@ export default function App() {
   const lecturaQuestionsHeaderRef = useRef(null);
   const lecturaClaimRef = useRef(null);
   const lecturaAdvanceScrollRef = useRef(false);
+  const story0SequelTopRef = useRef(false);
   const [voiceDead, setVoiceDead] = useState(false);
   useEffect(() => {
     const onDead = () => setVoiceDead(true);
@@ -7278,8 +7279,18 @@ export default function App() {
     const claimNow = !!story?.id && !prog.stories?.[story.id];
     if (claimNow) claimStory(story, correct, checkpointMisses);
     setLecturaCliffhanger(null);
+    story0SequelTopRef.current = true;
     openStory(next, claimNow ? { justClaimedId: story.id } : undefined);
   };
+
+  // La casa azul opened from the story-0 end card starts at page 1, not at
+  // the end card's scroll position. Only that path sets the ref.
+  useLayoutEffect(() => {
+    if (!story0SequelTopRef.current) return;
+    if (screen !== "story" || storyView?.id !== "story-1") return;
+    story0SequelTopRef.current = false;
+    window.scrollTo(0, 0);
+  }, [screen, storyView]);
 
   const handoffCliffhangerToBird = () => {
     if (!lecturaCliffhanger) return;
