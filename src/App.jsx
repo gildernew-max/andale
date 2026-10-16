@@ -4975,14 +4975,18 @@ const LetterBoard = ({ D, theme = "light", layout, onLayoutChange, picked = [], 
   );
 };
 
+/** Tap target height. The group takes a matching negative margin so the row keeps its old height. */
+const LANG_TOGGLE_MIN_HEIGHT = 44;
+const LANG_TOGGLE_MARGIN_Y = -(LANG_TOGGLE_MIN_HEIGHT - 24) / 2;
+
 const LangToggle = ({ uiLang, D, onPick, style }) => (
   <div data-testid="lang-toggle" role="group"
     aria-label={uiLang === "en" ? "Interface language" : "Idioma de la interfaz"}
-    style={{ display: "inline-flex", alignItems: "center", gap: 5, flexShrink: 0, ...style }}>
+    style={{ display: "inline-flex", alignItems: "center", gap: 5, flexShrink: 0, margin: `${LANG_TOGGLE_MARGIN_Y}px 0`, ...style }}>
     <button type="button" data-testid="lang-es" aria-pressed={uiLang === "es"} aria-label="Español"
       onClick={() => onPick("es")}
       style={{
-        border: "none", background: "none", fontFamily: "inherit", padding: "6px 1px", cursor: "pointer",
+        border: "none", background: "none", fontFamily: "inherit", padding: "6px 1px", cursor: "pointer", minHeight: LANG_TOGGLE_MIN_HEIGHT,
         fontWeight: uiLang === "es" ? 900 : 700, fontSize: 12, letterSpacing: ".04em", lineHeight: 1,
         color: uiLang === "es" ? D.ink : D.sub,
       }}>ES</button>
@@ -4990,7 +4994,7 @@ const LangToggle = ({ uiLang, D, onPick, style }) => (
     <button type="button" data-testid="lang-en" aria-pressed={uiLang === "en"} aria-label="English"
       onClick={() => onPick("en")}
       style={{
-        border: "none", background: "none", fontFamily: "inherit", padding: "6px 1px", cursor: "pointer",
+        border: "none", background: "none", fontFamily: "inherit", padding: "6px 1px", cursor: "pointer", minHeight: LANG_TOGGLE_MIN_HEIGHT,
         fontWeight: uiLang === "en" ? 900 : 700, fontSize: 12, letterSpacing: ".04em", lineHeight: 1,
         color: uiLang === "en" ? D.ink : D.sub,
       }}>EN</button>
