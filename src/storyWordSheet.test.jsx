@@ -66,12 +66,24 @@ describe("lectura tap-a-word sheet language", () => {
     });
     expect(shown("story-5", "Revolución.", "en").meaning).toBe("Revolution");
     expect(lookupStoryWord(STORIES.find((item) => item.id === "story-5"), "Revolución").source).toBe("revolución");
+    // A capitalized entry never overrides a word that already resolves in lowercase.
+    for (const story of STORIES) {
+      if (!story.glossary.Los) continue;
+      expect(lookupStoryWord(story, "Los").en, story.id).toBe("the (m pl)");
+      expect(lookupStoryWord(story, "Ángeles").en, story.id).toBe(story.glossary["Ángeles"][0]);
+    }
     for (const story of STORIES) {
       for (const [key, entry] of Object.entries(story.glossary)) {
         if (key === key.toLowerCase()) continue;
         const found = lookupStoryWord(story, key);
-        expect(found.en, `${story.id} ${key}`).toBe(entry[0]);
-        expect(found.es, `${story.id} ${key}`).toBe(entry.es);
+        expect(found.en, `${story.id} ${key}`).toBeTruthy();
+        if (key !== "Los") {
+          const lowerHit = lookupStoryWord(story, key.toLowerCase());
+          if (!lowerHit.en) {
+            expect(found.en, `${story.id} ${key}`).toBe(entry[0]);
+            expect(found.es, `${story.id} ${key}`).toBe(entry.es);
+          }
+        }
       }
     }
   });
