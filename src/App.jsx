@@ -3252,6 +3252,11 @@ const cleanStoryToken = (raw) => raw.toLowerCase().replace(/[^a-záéíóúüñ]
 export const lookupStoryWord = (story, raw) => {
   const clean = cleanStoryToken(raw);
   if (!clean) return null;
+  const exact = String(raw).replace(/[^A-Za-záéíóúüñÁÉÍÓÚÜÑ]/g, "");
+  if (exact && exact !== clean) {
+    const gp = story.glossary[exact];
+    if (gp) return { en: gp[0], note: gp[1], es: gp.es, esNote: gp.esNote, source: clean };
+  }
   const candidates = [
     clean,
     LOOKUP_ALIASES[clean],
