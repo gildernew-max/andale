@@ -6,8 +6,8 @@ export const ONBOARDING_WHYS = Object.freeze(["travel", "family", "live", "work"
 export const ONBOARDING_MINUTE_CHIP = "min";
 export const ONBOARDING_GOALS = Object.freeze([5, 10, 15, 20]);
 
-/** Four screens. Each choice screen is a card tap plus the CTA. The plan is the CTA. */
-export const ONBOARDING_TAPS = 7;
+/** Four screens. Each choice screen advances on the card tap. The plan is the Start button. */
+export const ONBOARDING_TAPS = 4;
 
 /** Button bottom edge sits this far above the bottom safe area at every viewport height. */
 export const ONBOARDING_CTA_BOTTOM = 16;
