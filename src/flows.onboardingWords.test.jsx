@@ -17,6 +17,7 @@ import {
   pickOnboarding,
   startOnboarding,
   waitOnboardingReady,
+  waitFirstSessionTapReady,
 } from "./flowsHarness.jsx";
 
 installFlowHooks();
@@ -81,7 +82,7 @@ describe("short onboarding", () => {
     await tap(screen.getByTestId("onboarding-start"));
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
     expect(taps).toBe(4);
-    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
+    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("3");
     expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(saved.learnerLevel).toBe("conversation");
@@ -142,7 +143,7 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding-plan-body").textContent).toBe(onboardingPlanLine("en", 10));
     await startOnboarding(user);
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-beginner-first")).toBe("0"));
-    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
+    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("3");
     expect(document.body.textContent).toContain("—¡Hola, Memo! ¿Qué ___? Hacía mucho que no te veía.");
     expect(document.body.textContent).not.toMatch(/Es obvio que Marisol/);
     expect(document.body.textContent).not.toMatch(/good morning/);
@@ -308,17 +309,16 @@ describe("short onboarding", () => {
     await startOnboarding(user);
     await waitFor(() => expect(document.querySelector("[data-beginner-first]")?.getAttribute("data-beginner-first")).toBe("1"));
     const wrong = screen.getAllByTestId("choice-card").find((el) => el.textContent.includes("Buenas noches"));
+    await waitFirstSessionTapReady();
     await user.click(wrong);
-    await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe(
       `"Buenos días" is what you say in the morning, until about midday. "Buenas noches" is for the night.`,
     ));
     await user.click(screen.getByRole("button", { name: /^Continue$/ }));
+    // Three questions: Buenos días (just missed), the Build, ¿Cuánto cuesta?. The chip beats are not in the first lesson.
     const beats = [
-      { type: "type", tile: "gusto", prompt: "Mucho ___." },
       { type: "order", tiles: ["un", "café,", "por", "favor"], prompt: `Build: "A coffee, please."` },
       { type: "mc", choice: "¿Cuánto cuesta?", prompt: `How do you ask "How much is it?"` },
-      { type: "type", tile: "llamas", prompt: "¿Cómo te ___?" },
     ];
     for (const beat of beats) {
       await waitFor(() => expect(document.querySelector("[data-qtype]")?.getAttribute("data-qtype")).toBe(beat.type));
@@ -326,6 +326,7 @@ describe("short onboarding", () => {
       if (beat.choice) {
         const cards = screen.getAllByTestId("choice-card").map((el) => el.textContent.replace(/^\d+/, ""));
         expect(cards).toEqual(["¿Dónde está?", "¿Cómo estás?", "¿Qué hora es?", "¿Cuánto cuesta?"]);
+        await waitFirstSessionTapReady();
         await user.click(screen.getAllByTestId("choice-card").find((el) => el.textContent.includes(beat.choice)));
       } else if (beat.tile) {
         await user.click(screen.getAllByTestId("bank-tile").find((el) => el.textContent.trim() === beat.tile));
@@ -336,7 +337,7 @@ describe("short onboarding", () => {
           await user.click(tile);
         }
       }
-      await user.click(screen.getByTestId("lesson-check"));
+      if (!beat.choice) await user.click(screen.getByTestId("lesson-check"));
       await user.click(screen.getByRole("button", { name: /^Continue$/ }));
     }
     await waitFor(() => expect(screen.getByTestId("first-session-win-line").textContent).toBe(
