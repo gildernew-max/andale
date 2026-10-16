@@ -12393,7 +12393,7 @@ export default function App() {
                       );
                     }
                     return (
-	                      <span key={ti} onClick={(e) => { wordTapRef.current = e.currentTarget; if (hitKey) discoverStoryWord(story, hitKey); setWordReveal(storyMode !== "challenge"); setWordSel({ display: tok.replace(/[«»".,;:¡!¿?—()]/g, ""), clean, key: hitKey, ...def, sentence: para, pi, ti, x: e.clientX, y: e.clientY }); }}
+	                      <span key={ti} data-lectura-word="1" onClick={(e) => { wordTapRef.current = e.currentTarget; if (hitKey) discoverStoryWord(story, hitKey); setWordReveal(storyMode !== "challenge"); setWordSel({ display: tok.replace(/[«»".,;:¡!¿?—()]/g, ""), clean, key: hitKey, ...def, sentence: para, pi, ti, x: e.clientX, y: e.clientY }); }}
                         style={{ cursor: "pointer", borderRadius: 4, padding: "0 1px", background: isSel ? (theme === "dark" ? "#3A3324" : "#FFE9A8") : "transparent", borderBottom: theme === "dark" && isSel ? "none" : (known ? `2px dotted ${sec.color}66` : "none"), boxShadow: theme === "dark" && isSel ? "none" : undefined, color: theme === "dark" && isSel ? "#F6EFE4" : undefined, fontWeight: theme === "dark" && isSel ? 600 : undefined, textDecorationLine: theme === "dark" && isSel ? "underline" : undefined, textDecorationColor: theme === "dark" && isSel ? "#F2B33D" : undefined, textDecorationThickness: theme === "dark" && isSel ? "2px" : undefined }}>
                         {tok}
                       </span>
@@ -12644,7 +12644,7 @@ export default function App() {
 
             {/* definition card — placed on open; a later scroll does not move the page back */}
             {wordSel && (
-              <div onClick={() => setWordSel(null)} style={{ display: wordSheetBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: wordSheetBox ? (wordSheetBox.reaches ? Math.max(0, window.innerHeight - wordSheetBox.sheetTop) : wordSheetBox.backdropBottom) : 0, zIndex: 29 }} />
+              <div onClick={(e) => { const hit = document.elementsFromPoint(e.clientX, e.clientY).find((el) => el.getAttribute?.("data-lectura-word")); if (hit && hit !== wordTapRef.current) { hit.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: e.clientX, clientY: e.clientY })); } else { setWordSel(null); } }} style={{ display: wordSheetBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: wordSheetBox ? (wordSheetBox.reaches ? Math.max(0, window.innerHeight - wordSheetBox.sheetTop) : wordSheetBox.backdropBottom) : 0, zIndex: 29 }} />
             )}
             {wordSel && !checkpoints[wordSel.pi] && renderWordSheet(false)}
           </div>
