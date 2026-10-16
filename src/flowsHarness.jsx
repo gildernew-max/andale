@@ -1078,3 +1078,20 @@ export function installFlowHooks() {
     mockA2hsEnv({ userAgent: JSDOM_UA, standalone: false });
   });
 }
+
+/** Onboarding ignores taps for a beat after each screen appears (double-tap guard). Wait for it. */
+export const waitOnboardingReady = () => waitFor(() => {
+  expect(document.querySelector('[data-testid="onboarding"]')?.getAttribute("data-input-ready")).toBe("true");
+});
+
+/** One card tap. Choice screens advance on the pick, so there is no Continue to press. */
+export const pickOnboarding = async (user, testId) => {
+  await waitOnboardingReady();
+  await user.click(screen.getByTestId(testId));
+};
+
+/** The plan screen's Start button. */
+export const startOnboarding = async (user) => {
+  await waitOnboardingReady();
+  await user.click(screen.getByTestId("onboarding-start"));
+};
