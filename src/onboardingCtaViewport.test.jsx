@@ -10,7 +10,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import Onboarding from "./Onboarding.jsx";
-import { installFlowHooks, STORAGE_KEY } from "./flowsHarness.jsx";
+import { installFlowHooks, pickOnboarding, startOnboarding, STORAGE_KEY, waitOnboardingReady } from "./flowsHarness.jsx";
 import {
   ONBOARDING_CTA_BOTTOM,
   ONBOARDING_CTA_CONTENT_GAP,
@@ -30,10 +30,10 @@ const VIEWPORTS = [
 ];
 
 const STEPS = [
-  { step: "level", card: "onboarding-level-some", cta: "onboarding-cta" },
-  { step: "why", card: "onboarding-why-live", cta: "onboarding-cta" },
-  { step: "goal", card: "onboarding-goal-10", cta: "onboarding-cta" },
-  { step: "plan", card: null, cta: "onboarding-start" },
+  { step: "level", card: "onboarding-level-some" },
+  { step: "why", card: "onboarding-why-live" },
+  { step: "goal", card: "onboarding-goal-10" },
+  { step: "plan", card: null },
 ];
 
 function setViewport({ width, height }) {
@@ -141,7 +141,7 @@ describe("onboarding CTA stays on screen", () => {
     expect(pin.withinViewport).toBe(true);
   });
 
-  it.each(VIEWPORTS)("level, why, goal, and plan CTAs are in the viewport and tappable at $width×$height", async (viewport) => {
+  it.each(VIEWPORTS)("level, why, and goal have no Continue and advance on the pick; the plan Start is in the viewport at $width×$height", async (viewport) => {
     setViewport(viewport);
     const user = userEvent.setup();
     for (const theme of ["light", "dark"]) {
@@ -155,15 +155,20 @@ describe("onboarding CTA stays on screen", () => {
             onAdvance={(name) => advanced.push(name)}
           />,
         );
-        const cta = screen.getByTestId(spec.cta);
         expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe(spec.step);
-        expectCtaInViewport(cta, viewport, { ready: spec.step === "plan", theme });
+        await waitOnboardingReady();
         if (spec.card) {
+          expect(screen.queryByTestId("onboarding-cta")).toBeNull();
+          expect(screen.queryByTestId("onboarding-start")).toBeNull();
+          expect(screen.getByTestId("onboarding").style.paddingBottom).toBe(onboardingCtaBottomCss());
+          expect(screen.getByTestId("onboarding-scroll").style.overflowY).toBe("auto");
           await user.click(screen.getByTestId(spec.card));
-          expectCtaInViewport(screen.getByTestId(spec.cta), viewport, { ready: true, theme });
+          await waitFor(() => expect(advanced).toEqual([spec.step]));
+        } else {
+          expectCtaInViewport(screen.getByTestId("onboarding-start"), viewport, { ready: true, theme });
+          await user.click(screen.getByTestId("onboarding-start"));
+          expect(advanced).toEqual([spec.step]);
         }
-        await user.click(screen.getByTestId(spec.cta));
-        expect(advanced).toEqual([spec.step]);
       }
     }
   });
@@ -176,26 +181,20 @@ describe("onboarding CTA stays on screen", () => {
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level"));
 
-    expectCtaInViewport(screen.getByTestId("onboarding-cta"), viewport, { ready: false, theme: "light" });
-    await user.click(screen.getByTestId("onboarding-level-conversation"));
-    expectCtaInViewport(screen.getByTestId("onboarding-cta"), viewport, { ready: true, theme: "light" });
-    await user.click(screen.getByTestId("onboarding-cta"));
+    expect(screen.queryByTestId("onboarding-cta")).toBeNull();
+    await pickOnboarding(user, "onboarding-level-conversation");
 
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("why"));
-    expectCtaInViewport(screen.getByTestId("onboarding-cta"), viewport, { ready: false, theme: "light" });
-    await user.click(screen.getByTestId("onboarding-why-travel"));
-    expectCtaInViewport(screen.getByTestId("onboarding-cta"), viewport, { ready: true, theme: "light" });
-    await user.click(screen.getByTestId("onboarding-cta"));
+    expect(screen.queryByTestId("onboarding-cta")).toBeNull();
+    await pickOnboarding(user, "onboarding-why-travel");
 
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("goal"));
-    expectCtaInViewport(screen.getByTestId("onboarding-cta"), viewport, { ready: false, theme: "light" });
-    await user.click(screen.getByTestId("onboarding-goal-15"));
-    expectCtaInViewport(screen.getByTestId("onboarding-cta"), viewport, { ready: true, theme: "light" });
-    await user.click(screen.getByTestId("onboarding-cta"));
+    expect(screen.queryByTestId("onboarding-cta")).toBeNull();
+    await pickOnboarding(user, "onboarding-goal-15");
 
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("plan"));
     expectCtaInViewport(screen.getByTestId("onboarding-start"), viewport, { ready: true, theme: "light" });
-    await user.click(screen.getByTestId("onboarding-start"));
+    await startOnboarding(user);
 
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
     expect(screen.queryByTestId("onboarding")).toBeNull();
