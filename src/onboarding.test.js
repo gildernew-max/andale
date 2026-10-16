@@ -62,7 +62,7 @@ function slots(node, acc = []) {
   return acc;
 }
 
-assert(ONBOARDING_TAPS === 7, "four screens: three choice CTAs plus the plan CTA, each choice preceded by its card");
+assert(ONBOARDING_TAPS === 4, "four screens: each choice advances on its card tap, plus the plan Start button");
 assert(ONBOARDING_CTA_BOTTOM === 16, "the button bottom edge sits 16px above the bottom safe area");
 assert(ONBOARDING_CTA_HEIGHT === 50, "single-line CTA block is 50px");
 assert(ONBOARDING_CTA_CONTENT_GAP === 12, "the last content line stops 12px above the button top");
@@ -148,20 +148,22 @@ const onboardingRender = appSrc.slice(appSrc.indexOf("<Onboarding"), appSrc.inde
 assert(onboardingRender.includes("lang={uiLang}"), "App passes the live language into the screen");
 assert(!/>[^<]*[A-Za-zÁÉÍÓÚáéíóúñ]{3,}/.test(onboardingRender), "App does not put screen words on the onboarding element");
 assert(uiSrc.includes('from "./onboardingCopy.js"'), "the screen reads onboardingCopy.js");
-assert(uiSrc.includes("onLevel(selectedId)"), "the CTA continues with the chosen level");
-assert(uiSrc.includes("onWhy(selectedId)"), "the CTA continues with the chosen reason");
-assert(uiSrc.includes("onGoal(selectedId)"), "the CTA continues with the chosen minutes");
-assert(uiSrc.includes("setSelectedId(id)") && uiSrc.includes("setSelectedId(count)"), "a card tap selects and does not advance");
-assert(!uiSrc.includes("setTimeout"), "a card tap does not advance on a timer");
+assert(uiSrc.includes("onLevel(id)"), "a level pick continues with the chosen level");
+assert(uiSrc.includes("onWhy(id)"), "a reason pick continues with the chosen reason");
+assert(uiSrc.includes("onGoal(id)"), "a minutes pick continues with the chosen minutes");
+assert(uiSrc.includes("choose(id)") && uiSrc.includes("choose(count)"), "a card tap picks and advances");
+assert(!uiSrc.includes("onboarding-cta") && !uiSrc.includes("ctaContinue"), "the choice screens have no Continue button");
+assert(uiSrc.includes("ONBOARDING_SETTLE_MS") && uiSrc.includes("pickedRef.current === step"), "one screen takes one pick and ignores taps while it settles");
+assert(uiSrc.includes("export const HINT_PX = 15;"), "card hints are 15px");
 assert(uiSrc.includes('data-testid="onboarding-check"'), "the selected card shows a check");
 assert(uiSrc.includes("2px solid ${paint.accent}"), "an unselected card keeps the sage edge");
 assert(uiSrc.includes("3px solid ${paint.selectedEdge}"), "a selected card uses a 3px picked edge");
 assert(uiSrc.includes('padding: selected ? "11px 13px" : "12px 14px"'), "the selected card trims 1px of padding so the 3px edge does not grow the card");
 assert(ONBOARDING_PAINT.light.selectedEdge === "#2E7500", "light selected edge is #2E7500");
 assert(ONBOARDING_PAINT.dark.selectedEdge === "#58CC02", "dark selected edge is #58CC02");
-assert(uiSrc.includes("onStart()"), "the plan CTA starts the lesson");
+assert(uiSrc.includes("onStart()"), "the plan Start button starts the lesson");
 assert(uiSrc.includes('position: "fixed"') && uiSrc.includes("bottom: onboardingCtaBottomCss()"), "the CTA is fixed to the viewport bottom");
-assert(uiSrc.includes("paddingBottom: onboardingCtaClearanceCss()"), "the shell reserves the CTA block");
+assert(uiSrc.includes("onboardingCtaClearanceCss()"), "the plan screen reserves the Start block");
 assert(uiSrc.includes('data-testid="onboarding-scroll"') && uiSrc.includes('overflowY: "auto"'), "content above the CTA scrolls");
 assert(!uiSrc.includes('overflow: "hidden"'), "the onboarding shell does not clip with overflow hidden");
 assert(!/top:\s*780\b/.test(uiSrc) && !uiSrc.includes("ONBOARDING_CTA_" + "TOP"), "the y=780 pin is gone");

@@ -15,6 +15,8 @@ import {
   openStory0,
   freshEligible,
   claimStory0,
+  pickOnboarding,
+  startOnboarding,
 } from "./flowsHarness.jsx";
 
 installFlowHooks();
@@ -172,16 +174,13 @@ describe("first session before the paywall", () => {
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("onboarding-level-conversation")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-level-conversation"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-level-conversation");
     await waitFor(() => expect(screen.getByTestId("onboarding-why-work")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-why-work"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-why-work");
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-10")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-goal-10"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-goal-10");
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-start"));
+    await startOnboarding(user);
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
     expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(false);

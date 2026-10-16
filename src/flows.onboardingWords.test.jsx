@@ -14,16 +14,16 @@ import {
   awaitHome,
   openStory0,
   openCaminoMore,
+  pickOnboarding,
+  startOnboarding,
+  waitOnboardingReady,
 } from "./flowsHarness.jsx";
 
 installFlowHooks();
 
 describe("short onboarding", () => {
   const onboardingText = (lang) => screen.getByTestId("onboarding").textContent;
-  const choose = async (user, id) => {
-    await user.click(screen.getByTestId(id));
-    await user.click(screen.getByTestId("onboarding-cta"));
-  };
+  const choose = pickOnboarding;
 
   it("a fresh save shows onboarding and reaches a non-beginner lesson", async () => {
     localStorage.clear();
@@ -34,14 +34,9 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding").style.overflow).not.toBe("hidden");
     expect(screen.getByTestId("onboarding-scroll").style.overflowY).toBe("auto");
     expect(screen.queryByTestId("streak")).toBeNull();
-    const cta = screen.getByTestId("onboarding-cta");
-    expect(cta.disabled).toBe(true);
-    expect(cta.style.position).toBe("fixed");
-    expect(cta.style.bottom).toBe(onboardingCtaBottomCss());
-    expect(cta.style.top).toBe("");
-    expect(cta.textContent).toBe(onboardingLine(onboardingCopy.ctaContinue, "en"));
-    expect(cta.style.background).toMatch(/#E5E5E5|rgb\(\s*229,\s*229,\s*229\s*\)/i);
-    expect(cta.style.color).toMatch(/#AFAFAF|rgb\(\s*175,\s*175,\s*175\s*\)/i);
+    expect(screen.queryByTestId("onboarding-cta")).toBeNull();
+    expect(screen.queryByTestId("onboarding-start")).toBeNull();
+    expect(screen.getByTestId("onboarding").querySelectorAll("button:not([data-testid^='lang-']):not([data-testid='brand-home'])")).toHaveLength(3);
     expect(screen.getByTestId("onboarding-level-beginner").textContent).toBe(
       `${onboardingLine(onboardingCopy.levels.beginner.name, "en")}${onboardingLine(onboardingCopy.levels.beginner.desc, "en")}`,
     );
@@ -49,23 +44,18 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding-level-conversation").textContent).toContain(onboardingLine(onboardingCopy.levels.conversation.name, "en"));
     let taps = 0;
     const tap = async (el) => { taps += 1; await user.click(el); };
+    await waitOnboardingReady();
     await tap(screen.getByTestId("onboarding-level-conversation"));
-    expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level");
     expect(screen.getByTestId("onboarding-check")).toBeTruthy();
-    expect(screen.getByTestId("onboarding-cta").disabled).toBe(false);
-    expect(screen.getByTestId("onboarding-cta").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
-    expect(screen.getByTestId("onboarding-cta").style.color).toMatch(/#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i);
-    expect(screen.getByTestId("onboarding-cta").style.borderBottom).toMatch(/#46A302|rgb\(\s*70,\s*163,\s*2\s*\)/i);
-    await tap(screen.getByTestId("onboarding-cta"));
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("why"));
     expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.whyTitle, "en"));
     expect(screen.queryByTestId("onboarding-promise")).toBeNull();
     for (const id of ["travel", "family", "live", "work", "me"]) {
       expect(screen.getByTestId(`onboarding-why-${id}`).textContent).toBe(onboardingLine(onboardingCopy.whys[id], "en"));
     }
-    expect(screen.getByTestId("onboarding-cta").disabled).toBe(true);
+    expect(screen.queryByTestId("onboarding-cta")).toBeNull();
+    await waitOnboardingReady();
     await tap(screen.getByTestId("onboarding-why-travel"));
-    await tap(screen.getByTestId("onboarding-cta"));
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("goal"));
     expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.goalTitle, "en"));
     for (const count of [5, 10, 15, 20]) {
@@ -73,8 +63,8 @@ describe("short onboarding", () => {
     }
     expect(screen.queryByTestId("onboarding-goal-note")).toBeNull();
     expect(onboardingText("en")).not.toMatch(/Profile|Perfil/);
+    await waitOnboardingReady();
     await tap(screen.getByTestId("onboarding-goal-15"));
-    await tap(screen.getByTestId("onboarding-cta"));
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("plan"));
     expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.planTitle, "en"));
     expect(screen.getByTestId("onboarding-plan-body").textContent).toBe(onboardingPlanLine("en", 15));
@@ -87,9 +77,10 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding-start").style.bottom).toBe(onboardingCtaBottomCss());
     expect(screen.getByTestId("onboarding-start").style.top).toBe("");
     expect(screen.getByTestId("onboarding-start").disabled).toBe(false);
+    await waitOnboardingReady();
     await tap(screen.getByTestId("onboarding-start"));
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
-    expect(taps).toBe(7);
+    expect(taps).toBe(4);
     expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
     expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -109,19 +100,20 @@ describe("short onboarding", () => {
     await waitFor(() => expect(screen.getByTestId("onboarding-level-beginner")).toBeTruthy());
     let taps = 0;
     const tap = async (el) => { taps += 1; await user.click(el); };
+    await waitOnboardingReady();
     await tap(screen.getByTestId("onboarding-level-beginner"));
-    await tap(screen.getByTestId("onboarding-cta"));
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("why"));
+    await waitOnboardingReady();
     await tap(screen.getByTestId("onboarding-why-family"));
-    await tap(screen.getByTestId("onboarding-cta"));
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("goal"));
+    await waitOnboardingReady();
     await tap(screen.getByTestId("onboarding-goal-5"));
-    await tap(screen.getByTestId("onboarding-cta"));
     await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("plan"));
     expect(screen.getByTestId("onboarding-plan-body").textContent).toBe("5 minutes a day: one short lesson, then a story in Lectura.");
+    await waitOnboardingReady();
     await tap(screen.getByTestId("onboarding-start"));
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-beginner-first")).toBe("1"));
-    expect(taps).toBe(7);
+    expect(taps).toBe(4);
     expect(screen.queryByTestId("story-reader")).toBeNull();
     expect(document.body.textContent).toContain(`Which one means "good morning"?`);
     const cards = screen.getAllByTestId("choice-card").map((el) => el.textContent.replace(/^\d+/, ""));
@@ -148,7 +140,7 @@ describe("short onboarding", () => {
     await choose(user, "onboarding-goal-10");
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
     expect(screen.getByTestId("onboarding-plan-body").textContent).toBe(onboardingPlanLine("en", 10));
-    await user.click(screen.getByTestId("onboarding-start"));
+    await startOnboarding(user);
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-beginner-first")).toBe("0"));
     expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
     expect(document.body.textContent).toContain("—¡Hola, Memo! ¿Qué ___? Hacía mucho que no te veía.");
@@ -179,23 +171,20 @@ describe("short onboarding", () => {
     expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.beginner.name, "es"));
     expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.beginner.desc, "es"));
     expect(onboardingText("es")).toContain(onboardingLine(onboardingCopy.levels.conversation.desc, "es"));
-    await user.click(screen.getByTestId("onboarding-level-some"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-level-some");
     await waitFor(() => expect(screen.getByTestId("onboarding-why-family").textContent).toBe(onboardingLine(onboardingCopy.whys.family, "es")));
     expect(screen.queryByTestId("onboarding-promise")).toBeNull();
-    expect(screen.getByTestId("onboarding-cta").textContent).toBe(onboardingLine(onboardingCopy.ctaContinue, "es"));
+    expect(screen.queryByTestId("onboarding-cta")).toBeNull();
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("onboarding-why-family").textContent).toBe(onboardingLine(onboardingCopy.whys.family, "en")));
-    await user.click(screen.getByTestId("onboarding-why-family"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-why-family");
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-10").textContent).toBe(`10 min${onboardingLine(onboardingCopy.goals[10], "en")}`));
     expect(screen.queryByTestId("onboarding-goal-note")).toBeNull();
     expect(onboardingText("en")).not.toMatch(/Profile|Perfil/);
     await user.click(screen.getByTestId("lang-es"));
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-20").textContent).toBe(`20 min${onboardingLine(onboardingCopy.goals[20], "es")}`));
     expect(onboardingText("es")).not.toMatch(/Profile|Perfil/);
-    await user.click(screen.getByTestId("onboarding-goal-10"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-goal-10");
     await waitFor(() => expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.planTitle, "es")));
     expect(screen.queryByTestId("onboarding-promise")).toBeNull();
     expect(screen.getByTestId("onboarding-plan-body").textContent).toBe(onboardingPlanLine("es", 10));
@@ -205,13 +194,12 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding-plan-body").textContent).toBe(onboardingPlanLine("en", 10));
   });
 
-  it("a selected level card shows the check and stays until the CTA", async () => {
+  it("a picked level card shows the check, then the screen advances by itself", async () => {
     localStorage.clear();
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("onboarding-level-beginner")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-cta"));
-    expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level");
+    await waitOnboardingReady();
     await user.click(screen.getByTestId("onboarding-level-beginner"));
     const card = screen.getByTestId("onboarding-level-beginner");
     expect(card.getAttribute("data-selected")).toBe("true");
@@ -222,9 +210,7 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding-level-some").style.border).toMatch(/2px solid (#6F7757|rgb\(\s*111,\s*119,\s*87\s*\))/i);
     expect(screen.getByTestId("onboarding-level-some").style.padding).toBe("12px 14px");
     expect(screen.getByTestId("onboarding-level-some").style.background).toBe(card.style.background);
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("level");
-    expect(screen.getByTestId("onboarding-cta").disabled).toBe(false);
+    await waitFor(() => expect(screen.getByTestId("onboarding").getAttribute("data-step")).toBe("why"));
   });
 
   it("existing saves with a marker, a resume, or a finished lesson skip onboarding", async () => {
@@ -292,11 +278,10 @@ describe("short onboarding", () => {
     expect(screen.getByTestId("onboarding").style.color).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
     expect(screen.getByTestId("onboarding-title").textContent).toBe(onboardingLine(onboardingCopy.whyTitle, "es"));
     expect(screen.queryByTestId("onboarding-promise")).toBeNull();
-    expect(screen.getByTestId("onboarding-cta").disabled).toBe(true);
-    expect(screen.getByTestId("onboarding-cta").style.background).toMatch(/#2A2E36|rgb\(\s*42,\s*46,\s*54\s*\)/i);
-    expect(screen.getByTestId("onboarding-cta").style.color).toMatch(/#6B7078|rgb\(\s*107,\s*112,\s*120\s*\)/i);
+    expect(screen.queryByTestId("onboarding-cta")).toBeNull();
     expect(screen.queryByTestId("splash")).toBeNull();
     const user = userEvent.setup();
+    await waitOnboardingReady();
     await user.click(screen.getByTestId("onboarding-why-live"));
     const picked = screen.getByTestId("onboarding-why-live");
     expect(picked.getAttribute("data-selected")).toBe("true");
@@ -320,7 +305,7 @@ describe("short onboarding", () => {
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-5")).toBeTruthy());
     await choose(user, "onboarding-goal-5");
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-start"));
+    await startOnboarding(user);
     await waitFor(() => expect(document.querySelector("[data-beginner-first]")?.getAttribute("data-beginner-first")).toBe("1"));
     const wrong = screen.getAllByTestId("choice-card").find((el) => el.textContent.includes("Buenas noches"));
     await user.click(wrong);
