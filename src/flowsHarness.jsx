@@ -314,6 +314,13 @@ export const continueBtn = () => screen.getByRole("button", { name: /^Continuar$
 
 export const firstSessionRoot = () => document.querySelector("[data-first-session]");
 
+/** The first lesson ignores taps for a beat after each question appears (double-tap guard). Wait for it. */
+export const waitFirstSessionTapReady = () => new Promise((resolve) => setTimeout(resolve, 380));
+
+/**
+ * One first-session beat with correct answers. A multiple-choice tap checks on the spot,
+ * so it has no CHECK tap; chip and Build beats still tap CHECK. Returns the taps used.
+ */
 export const answerFirstSessionBeat = async (user) => {
   await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
   const type = firstSessionRoot().getAttribute("data-qtype");
@@ -324,22 +331,25 @@ export const answerFirstSessionBeat = async (user) => {
     const want = body.includes("Es obvio") ? "tiene" : body.includes("Memo") ? "onda" : "vengas";
     const card = [...document.querySelectorAll(".choice-card")].find((el) => el.textContent.includes(want));
     expect(card, want).toBeTruthy();
+    await waitFirstSessionTapReady();
     await tap(card);
+    await waitFor(() => expect(screen.getByRole("button", { name: /^(Continuar|Continue)$/ })).toBeTruthy());
   } else if (type === "type") {
     const want = body.includes("Ojalá") ? "llueva" : "salga";
     const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() === want);
     expect(tile, want).toBeTruthy();
     await tap(tile);
+    await tap(screen.getByTestId("lesson-check"));
   } else if (type === "order") {
     for (const word of ["dudo", "que", "sea", "verdad"]) {
       const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim().toLowerCase() === word);
       expect(tile, word).toBeTruthy();
       await tap(tile);
     }
+    await tap(screen.getByTestId("lesson-check"));
   } else {
     throw new Error(`unexpected first-session type ${type}`);
   }
-  await tap(screen.getByTestId("lesson-check"));
   await tap(screen.getByRole("button", { name: /^(Continuar|Continue)$/ }));
   return taps;
 };
@@ -352,16 +362,19 @@ export const missFirstSessionBeat = async (user) => {
     const avoid = body.includes("Es obvio") ? "tiene" : body.includes("Memo") ? "onda" : "vengas";
     const card = [...document.querySelectorAll(".choice-card")].find((el) => !el.textContent.includes(avoid));
     expect(card).toBeTruthy();
+    await waitFirstSessionTapReady();
     await user.click(card);
+    await waitFor(() => expect(screen.getByRole("button", { name: /^(Continuar|Continue)$/ })).toBeTruthy());
   } else if (type === "type") {
     const avoid = body.includes("Ojalá") ? "llueva" : "salga";
     const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() !== avoid);
     expect(tile).toBeTruthy();
     await user.click(tile);
+    await user.click(screen.getByTestId("lesson-check"));
   } else {
     await user.click(screen.getAllByTestId("bank-tile")[0]);
+    await user.click(screen.getByTestId("lesson-check"));
   }
-  await user.click(screen.getByTestId("lesson-check"));
   await user.click(screen.getByRole("button", { name: /^(Continuar|Continue)$/ }));
 };
 
