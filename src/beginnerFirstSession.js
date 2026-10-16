@@ -1,6 +1,7 @@
 /**
  * Zero-start first session for the beginner level only.
- * Same five-beat shape as the existing first session: mc, type, order, mc, type.
+ * Five authored beats (mc, type, order, mc, type); the first lesson plays three:
+ * «Buenos días» (mc), the Build «Un café, por favor» (order), «¿Cuánto cuesta?» (mc).
  * Multiple-choice stays in the authored order. The other levels keep subj1.
  */
 
@@ -101,9 +102,19 @@ export function beginnerWinLine(lang) {
   return filled(lang === "en" ? BEGINNER_WIN.en : BEGINNER_WIN.es);
 }
 
-/** Fresh question objects for the existing first-session prep (shuffle, chips, XP). */
+/** Authored beats the first lesson plays: Buenos días, the Build, ¿Cuánto cuesta?. The two chip beats are cut. */
+export const BEGINNER_PICKED_BEATS = Object.freeze([0, 2, 3]);
+
+/** Fresh question objects for the existing first-session prep (shuffle, chips, XP). Each keeps its authored index in _i. */
 export function beginnerFirstQuestions() {
-  return BEGINNER_FIRST_SESSION.map((q, i) => ({
+  return BEGINNER_PICKED_BEATS.map((i) => beginnerQuestionAt(i));
+}
+
+/** One authored beat by its index (0-4). A saved five-question resume still finds its old chip beats here. */
+export function beginnerQuestionAt(i) {
+  const q = BEGINNER_FIRST_SESSION[i];
+  if (!q) return null;
+  return ({
     type: q.type,
     prompt: q.prompt,
     note: q.note,
@@ -115,7 +126,7 @@ export function beginnerFirstQuestions() {
     fixedChoices: q.type === "mc",
     _u: "_beginner",
     _i: i,
-  }));
+  });
 }
 
 /**
