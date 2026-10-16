@@ -1,23 +1,35 @@
 /**
  * First lesson for a learner with no completed unit.
  * Not the 12-challenge Sendero unit (11 questions + match).
- * Five existing beats, three existing types, fewest taps that still teach:
- *   mc    — one tap, the contrast (indicative trap + a real subjunctive)
- *   type  — one-word chip, the form itself (no sentence keyboard)
- *   order — short tile sentence, syntax without dictation or matching
- * Listen, transform, and match stay on the full unit after this session.
+ * Three questions, two existing types, fewest taps that still teach:
+ *   mc    — one tap checks it, the contrast (indicative trap + a real subjunctive)
+ *   order — short tile sentence, syntax without dictation or matching (stays)
+ * The one-word chip (type) beats were cut from the first lesson; they stay in
+ * the full unit. Listen, transform, and match also stay on the full unit.
  */
 
-export const FIRST_SESSION_COUNT = 5;
+export const FIRST_SESSION_COUNT = 3;
 
-/** Stable picks from subj1. Indexes are the authored question list, not a shuffle. */
-export const FIRST_SESSION_MIX = Object.freeze([
+/** The authored five beats. Why lines (firstSessionWords) and saved resumes are keyed to this list. */
+export const FIRST_SESSION_AUTHORED_MIX = Object.freeze([
   { unitId: "subj1", index: 3, type: "mc" },
   { unitId: "subj1", index: 1, type: "type" },
   { unitId: "subj1", index: 8, type: "order" },
   { unitId: "subj1", index: 0, type: "mc" },
   { unitId: "subj1", index: 4, type: "type" },
 ]);
+
+/** Authored beats the three-question lesson plays, in the existing order: mc, order, mc. */
+export const FIRST_SESSION_PICKED_BEATS = Object.freeze([0, 2, 3]);
+
+/** Stable picks from subj1. Indexes are the authored question list, not a shuffle. */
+export const FIRST_SESSION_MIX = Object.freeze(FIRST_SESSION_PICKED_BEATS.map((beat) => FIRST_SESSION_AUTHORED_MIX[beat]));
+
+/** Authored beat (0-4) of a subj1 first-session question, or -1 when it is not one of them. */
+export function firstSessionBeatOf(q) {
+  if (!q || typeof q !== "object") return -1;
+  return FIRST_SESSION_AUTHORED_MIX.findIndex((pick) => pick.unitId === q._u && pick.index === q._i);
+}
 
 /** Careful read + answer, one correct try. Used for the time estimate, not a stopwatch. */
 export const CAREFUL_ANSWER_SECONDS = Object.freeze({
@@ -101,7 +113,7 @@ export function findOndaBankQuestion(units) {
   return { ...bank[bankIndex], _u: "mex", _i: authored + bankIndex };
 }
 
-/** "I know some" only. Onda opens, Marisol is second, and the last old beat is left off so the session stays five. */
+/** "I know some" only. Onda opens, Marisol is second, and the last pick is left off so the session stays at three. */
 export function someFirstSessionQuestions(units) {
   const onda = findOndaBankQuestion(units);
   const rest = firstSessionQuestions(units);
@@ -109,7 +121,7 @@ export function someFirstSessionQuestions(units) {
   return [onda, ...rest.slice(0, -1)];
 }
 
-/** Sheet count. "some" follows its own list; every other level stays on the five-beat session. */
+/** Sheet count. "some" follows its own list; every other level stays on the three-question session. */
 export function firstSessionChallengeCount(level, units) {
   if (level === "some") return someFirstSessionQuestions(units).length;
   return FIRST_SESSION_COUNT;
