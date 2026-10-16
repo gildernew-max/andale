@@ -4660,6 +4660,7 @@ const UI = {
     hubStories: "Cuentos",
     hubStoriesNext: "Sigue: tu primer cuento",
     readFirstStory: "Leer mi primer cuento",
+    readNextStory: "Leer el siguiente cuento",
     hubGames: "Juegos",
     hubDoctor: "Doctora de frases",
     hubEighty: "80/20",
@@ -4760,6 +4761,7 @@ const UI = {
     hubStories: "Stories",
     hubStoriesNext: "Next: your first story",
     readFirstStory: "Read my first story",
+    readNextStory: "Read the next story",
     hubGames: "Games",
     hubDoctor: "Phrase Doctor",
     hubEighty: "80/20",
@@ -12789,12 +12791,12 @@ export default function App() {
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
 	            {firstStoryCta ? (
               <div data-testid="first-story-bar" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 12, background: D.bg, paddingTop: 8, paddingBottom: onboardingCtaBottomCss(), display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                <Btn data-testid="first-story-cta" data-story-id={lecturaHandoffStory.id} ink={LESSON_LIME_INK} onClick={openFirstStoryFromWin} style={{ maxWidth: "calc(100vw - 40px)" }}>{L.readFirstStory}</Btn>
+                <Btn data-testid="first-story-cta" data-story-id={lecturaHandoffStory.id} ink={LESSON_LIME_INK} onClick={openFirstStoryFromWin} style={{ maxWidth: "calc(100vw - 40px)" }}>{firstLecturaClaimed({ stories: prog.stories }) ? L.readNextStory : L.readFirstStory}</Btn>
                 <button
                   type="button"
                   data-testid={continueTestId || "win-continue"}
                   onClick={() => continueFromWin()}
-                  style={{ background: "transparent", border: "none", minHeight: 44, minWidth: 44, padding: "0 16px", fontFamily: "inherit", fontWeight: 700, fontSize: 14, lineHeight: 1.35, textDecoration: "underline", cursor: "pointer", color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}
+                  style={{ background: "transparent", border: "none", minHeight: 44, minWidth: 44, padding: "0 16px", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.35, textDecoration: "underline", cursor: "pointer", color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}
                 >
                   {L.continue}
                 </button>
