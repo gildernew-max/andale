@@ -19,7 +19,7 @@ const finishFirstLesson = async (user) => {
   await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
   await user.click(screen.getByTestId("hub-sendero"));
   await user.click(screen.getByRole("button", { name: /· \+XP/ }));
-  for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
+  for (let i = 0; i < 3; i++) await answerFirstSessionBeat(user);
   await waitFor(() => expect(screen.getByTestId("win-continue")).toBeTruthy());
 };
 
