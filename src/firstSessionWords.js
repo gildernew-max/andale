@@ -1,6 +1,7 @@
 /**
  * George fills these. null renders nothing — do not invent learner-facing copy here.
- * Beats are keyed by first-session index (0–4), not by the subj1 question index.
+ * Beats are keyed by the authored first-session beat (0–4), not by the subj1 question index or the position in the
+ * three-question lesson. firstSessionBeatOf(q) in firstSession.js finds the beat of the question on screen.
  */
 export const firstSessionWords = {
   0: { why: { en: `"Es obvio que" states a fact, so the verb stays plain: tiene.`, es: `«Es obvio que» afirma un hecho, así que el verbo va normal: tiene.` } },
@@ -19,13 +20,6 @@ export function firstSessionWhyLine(beat, lang) {
   const slot = firstSessionWords[beat]?.why;
   if (!slot) return null;
   return filled(lang === "en" ? slot.en : slot.es);
-}
-
-/** "I know some" prepends the onda bank item, so the existing why lines stay on their exercises. */
-export function someFirstSessionWhyLine(beat, lang) {
-  const n = Number(beat);
-  if (!Number.isInteger(n) || n < 1) return null;
-  return firstSessionWhyLine(n - 1, lang);
 }
 
 export function firstSessionWinLine(lang) {
