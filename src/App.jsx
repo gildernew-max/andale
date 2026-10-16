@@ -4659,6 +4659,7 @@ const UI = {
     hoyPlanCta: "Empezar el plan",
     hubStories: "Cuentos",
     hubStoriesNext: "Sigue: tu primer cuento",
+    readFirstStory: "Leer mi primer cuento",
     hubGames: "Juegos",
     hubDoctor: "Doctora de frases",
     hubEighty: "80/20",
@@ -4758,6 +4759,7 @@ const UI = {
     hoyPlanCta: "Start the plan",
     hubStories: "Stories",
     hubStoriesNext: "Next: your first story",
+    readFirstStory: "Read my first story",
     hubGames: "Games",
     hubDoctor: "Phrase Doctor",
     hubEighty: "80/20",
@@ -7287,11 +7289,12 @@ export default function App() {
     openStory(next, claimNow ? { justClaimedId: story.id } : undefined);
   };
 
-  // La casa azul opened from the story-0 end card starts at page 1, not at
-  // the end card's scroll position. Only that path sets the ref.
+  // A story opened from the story-0 end card, or from the first-lesson win
+  // button, starts at page 1, not at the previous screen's scroll position.
+  // Only those two paths set the ref.
   useLayoutEffect(() => {
     if (!story0SequelTopRef.current) return;
-    if (screen !== "story" || storyView?.id !== "story-1") return;
+    if (screen !== "story" || !storyView?.id) return;
     story0SequelTopRef.current = false;
     window.scrollTo(0, 0);
   }, [screen, storyView]);
@@ -8648,7 +8651,7 @@ export default function App() {
     }
   };
 
-  const continueFromWin = () => {
+  const continueFromWin = ({ toStory = null } = {}) => {
     const birdAfterWin = !!session?.lecturaPaywallAfterWin;
     lecturaPaywallAfterWin.current = false;
     armPostWinPaywall(birdAfterWin);
@@ -8771,8 +8774,22 @@ export default function App() {
       setNorteFlashPending(true);
       norteFlashNextRef.current = next;
     }
-    setScreen(next);
-    if (next === "home") setTab("camino");
+    // First-lesson win button: same save and paywall arming as CONTINUE, then the
+    // open unread story at page 1. An unlock glow still lands on home first.
+    const glowPending = willFlash || willCdmxFlash || willOaxacaFlash || willYucatanFlash || willNorteFlash;
+    if (toStory && next === "home" && !glowPending && isLecturaStoryOpen(STORIES, prog.stories, toStory.id)) {
+      story0SequelTopRef.current = true;
+      setTab("camino");
+      openStory(toStory);
+    } else {
+      setScreen(next);
+      if (next === "home") setTab("camino");
+    }
+  };
+
+  const openFirstStoryFromWin = () => {
+    const story = lecturaHandoffTarget(STORIES, prog.stories);
+    continueFromWin({ toStory: story });
   };
 
   /** Brand CLEAR: one tap on the header lockup lands on Learn home (6-card hub + Sendero/path). Not Perfil, Lectura, last lesson, Camino-legacy-only, or splash. */
@@ -12681,10 +12698,12 @@ export default function App() {
         const perchCard = firstWin || isSenderoLesson(session);
         const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : session.lecturaWin ? "lectura-win" : undefined;
         const continueTestId = session.firstHoy ? "hoy-win-continue" : session.firstDoctora ? "doctora-win-continue" : session.firstStory0 ? "story-0-win-continue" : session.lecturaWin ? "lectura-win-continue" : undefined;
+        // First-lesson win with an open unread story: one lime button into Lectura, CONTINUE stays as the quiet way home.
+        const firstStoryCta = firstWin && !quietWin && !!lecturaHandoffStory;
         const streakChip = streakChipLabel(prog.streak, uiLang);
         const popFirstStreak = shouldPopFirstStreak({ before: session.streakBefore, after: prog.streak });
         return (
-        <div data-testid="lesson-win" style={{ maxWidth: 480, margin: "0 auto", paddingTop: 60, paddingLeft: 20, paddingRight: 20, paddingBottom: `calc(${ONBOARDING_CTA_BOTTOM + ONBOARDING_CTA_HEIGHT + ONBOARDING_CTA_CONTENT_GAP}px + env(safe-area-inset-bottom))`, textAlign: "center", position: "relative" }}>
+        <div data-testid="lesson-win" style={{ maxWidth: 480, margin: "0 auto", paddingTop: 60, paddingLeft: 20, paddingRight: 20, paddingBottom: `calc(${ONBOARDING_CTA_BOTTOM + ONBOARDING_CTA_HEIGHT + ONBOARDING_CTA_CONTENT_GAP + (firstStoryCta ? 54 : 0)}px + env(safe-area-inset-bottom))`, textAlign: "center", position: "relative" }}>
           {!quietWin && !perchCard && <Confetti count={perfect ? 160 : 70} />}
           {perchCard && (
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
@@ -12768,7 +12787,21 @@ export default function App() {
           )}
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
 	            {dueCount > 0 && <Btn color={D.blue} dark={D.blueDark} onClick={() => startReview()}>{L.review} ({dueCount})</Btn>}
-	            <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy ? LESSON_LIME_INK : undefined} onClick={continueFromWin} style={{ position: "fixed", left: 0, right: 0, width: "fit-content", marginLeft: "auto", marginRight: "auto", bottom: onboardingCtaBottomCss(), zIndex: 12 }}>{L.continue}</Btn>
+	            {firstStoryCta ? (
+              <div data-testid="first-story-bar" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 12, background: D.bg, paddingTop: 8, paddingBottom: onboardingCtaBottomCss(), display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                <Btn data-testid="first-story-cta" data-story-id={lecturaHandoffStory.id} ink={LESSON_LIME_INK} onClick={openFirstStoryFromWin} style={{ maxWidth: "calc(100vw - 40px)" }}>{L.readFirstStory}</Btn>
+                <button
+                  type="button"
+                  data-testid={continueTestId || "win-continue"}
+                  onClick={() => continueFromWin()}
+                  style={{ background: "transparent", border: "none", minHeight: 44, minWidth: 44, padding: "0 16px", fontFamily: "inherit", fontWeight: 700, fontSize: 14, lineHeight: 1.35, textDecoration: "underline", cursor: "pointer", color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}
+                >
+                  {L.continue}
+                </button>
+              </div>
+            ) : (
+	            <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy ? LESSON_LIME_INK : undefined} onClick={() => continueFromWin()} style={{ position: "fixed", left: 0, right: 0, width: "fit-content", marginLeft: "auto", marginRight: "auto", bottom: onboardingCtaBottomCss(), zIndex: 12 }}>{L.continue}</Btn>
+            )}
           </div>
           {showFirstWinEmail && (
             <form
