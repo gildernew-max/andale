@@ -3252,11 +3252,6 @@ const cleanStoryToken = (raw) => raw.toLowerCase().replace(/[^a-záéíóúüñ]
 export const lookupStoryWord = (story, raw) => {
   const clean = cleanStoryToken(raw);
   if (!clean) return null;
-  const exact = String(raw).replace(/[^A-Za-záéíóúüñÁÉÍÓÚÜÑ]/g, "");
-  if (exact && exact !== clean) {
-    const gp = story.glossary[exact];
-    if (gp) return { en: gp[0], note: gp[1], es: gp.es, esNote: gp.esNote, source: clean };
-  }
   const candidates = [
     clean,
     LOOKUP_ALIASES[clean],
@@ -3268,6 +3263,12 @@ export const lookupStoryWord = (story, raw) => {
     if (g) return { en: g[0], note: g[1], es: g.es, esNote: g.esNote, source: key };
     if (COMMON_WORDS[key]) return { en: COMMON_WORDS[key], source: key };
     if (EXTRA_STORY_WORDS[key]) return { en: EXTRA_STORY_WORDS[key][0], note: EXTRA_STORY_WORDS[key][1], source: key };
+  }
+  // Capitalized glossary entries (Tijuana, Revolución, ...) never match the lowercased token; try the exact case last.
+  const exact = String(raw).replace(/[^A-Za-záéíóúüñÁÉÍÓÚÜÑ]/g, "");
+  if (exact && exact !== clean) {
+    const gp = story.glossary[exact];
+    if (gp) return { en: gp[0], note: gp[1], es: gp.es, esNote: gp.esNote, source: clean };
   }
   return { en: null };
 };
