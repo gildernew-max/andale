@@ -139,7 +139,7 @@ describe("lectura checkpoint answer paint", () => {
     await user.click(flores);
     const sheet = await screen.findByTestId("word-sheet");
     await waitFor(() => expect(sheet.style.visibility).toBe("visible"));
-    expect(screen.getByTestId("word-sheet-translation").textContent).toMatch(/flowers/);
+    expect(screen.getByTestId("word-sheet-translation").textContent).toMatch(/plantas con pétalos de colores/);
     expect(sheet.textContent).toMatch(/flores/);
     expect(sheet.querySelector("button[aria-label='Escuchar palabra']").style.pointerEvents).not.toBe("none");
     expect(sheet.querySelector("button[aria-label='Cerrar']").style.pointerEvents).not.toBe("none");

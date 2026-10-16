@@ -12,6 +12,23 @@
  * is not a reason to plan again.
  */
 
+/**
+ * English keeps the stored meaning and note.
+ * Spanish uses the parallel es / esNote fields.
+ * A missing Spanish meaning falls back to English.
+ * A missing Spanish note shows nothing.
+ */
+export function wordSheetCopy(word, uiLang) {
+  const en = word && typeof word.en === "string" ? word.en : "";
+  const note = word && typeof word.note === "string" ? word.note : "";
+  if (uiLang === "es") {
+    const es = word && typeof word.es === "string" ? word.es : "";
+    const esNote = word && typeof word.esNote === "string" ? word.esNote : "";
+    return { meaning: es || en, note: esNote };
+  }
+  return { meaning: en, note };
+}
+
 export function wordSheetFrame({
   viewportHeight = 0,
   viewportWidth = 0,

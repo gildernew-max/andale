@@ -174,6 +174,6 @@ assert(guardAt >= 0 && answerAt > guardAt, "the sheet guard runs before an answe
 const guard = between.slice(guardAt, answerAt);
 assert(guard.includes("setWordSel(null)") && guard.includes("return"), "a checkpoint tap closes the gloss sheet and does not answer");
 assert(appSrc.includes('pointerEvents: wordSheetBox ? "auto" : "none"'), "an unplaced sheet does not take taps");
-assert(appSrc.includes('flores: ["flowers"]'), "flores keeps a translation line on the word sheet");
+assert(/flores:\s*Object\.assign\(\["flowers"\]/.test(appSrc), "flores keeps a translation line on the word sheet");
 
 console.log("ok: word sheet stops above checkpoint buttons and below the tapped word");

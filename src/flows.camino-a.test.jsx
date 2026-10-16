@@ -452,10 +452,11 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       el.textContent === "cempasúchil" && el.style.cursor === "pointer");
     expect(storyWord).toBeTruthy();
     await user.click(storyWord);
-    await waitFor(() => expect(screen.getByText(/Mexican marigold/i)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/flor naranja del Día de Muertos/i)).toBeTruthy());
     expect(document.body.textContent).not.toMatch(/definición pendiente|definition coming soon/i);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("story-tip").textContent).toMatch(/Read the paragraph\. Tap a word only if it stops you\./));
+    expect(screen.getByTestId("word-sheet-translation").textContent).toMatch(/Mexican marigold/);
   });
 
   it("Lectura Wave A stills resolve via BASE_URL for story-0 p3, story-1, and story-2", async () => {
