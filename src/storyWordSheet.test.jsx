@@ -58,4 +58,21 @@ describe("lectura tap-a-word sheet language", () => {
       note: "keep",
     });
   });
+
+  it("finds proper-noun entries when the tapped word is capitalized", () => {
+    expect(shown("story-5", "Revolución", "es")).toEqual({
+      meaning: "nombre de una avenida famosa de Tijuana",
+      note: "",
+    });
+    expect(shown("story-5", "Revolución.", "en").meaning).toBe("Revolution");
+    expect(lookupStoryWord(STORIES.find((item) => item.id === "story-5"), "Revolución").source).toBe("revolución");
+    for (const story of STORIES) {
+      for (const [key, entry] of Object.entries(story.glossary)) {
+        if (key === key.toLowerCase()) continue;
+        const found = lookupStoryWord(story, key);
+        expect(found.en, `${story.id} ${key}`).toBe(entry[0]);
+        expect(found.es, `${story.id} ${key}`).toBe(entry.es);
+      }
+    }
+  });
 });
