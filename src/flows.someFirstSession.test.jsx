@@ -10,6 +10,8 @@ import {
   firstSessionRoot,
   answerFirstSessionBeat,
   funnelOf,
+  pickOnboarding,
+  startOnboarding,
 } from "./flowsHarness.jsx";
 
 installFlowHooks();
@@ -24,16 +26,13 @@ const startSomeLesson = async (user) => {
   render(<App />);
   await waitFor(() => expect(screen.getByTestId("onboarding-level-some")).toBeTruthy());
   expect(screen.getByTestId("onboarding-level-some").textContent).toContain("I know some");
-  await user.click(screen.getByTestId("onboarding-level-some"));
-  await user.click(screen.getByTestId("onboarding-cta"));
+  await pickOnboarding(user, "onboarding-level-some");
   await waitFor(() => expect(screen.getByTestId("onboarding-why-live")).toBeTruthy());
-  await user.click(screen.getByTestId("onboarding-why-live"));
-  await user.click(screen.getByTestId("onboarding-cta"));
+  await pickOnboarding(user, "onboarding-why-live");
   await waitFor(() => expect(screen.getByTestId("onboarding-goal-10")).toBeTruthy());
-  await user.click(screen.getByTestId("onboarding-goal-10"));
-  await user.click(screen.getByTestId("onboarding-cta"));
+  await pickOnboarding(user, "onboarding-goal-10");
   await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
-  await user.click(screen.getByTestId("onboarding-start"));
+  await startOnboarding(user);
   await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
 };
 
@@ -68,16 +67,13 @@ describe("I know some first session", () => {
     localStorage.clear();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("onboarding-level-conversation")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-level-conversation"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-level-conversation");
     await waitFor(() => expect(screen.getByTestId("onboarding-why-travel")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-why-travel"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-why-travel");
     await waitFor(() => expect(screen.getByTestId("onboarding-goal-5")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-goal-5"));
-    await user.click(screen.getByTestId("onboarding-cta"));
+    await pickOnboarding(user, "onboarding-goal-5");
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
-    await user.click(screen.getByTestId("onboarding-start"));
+    await startOnboarding(user);
     await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
     expect(firstSessionRoot().getAttribute("data-count")).toBe("5");
     expect(document.body.textContent).toContain(MARISOL_PROMPT);
