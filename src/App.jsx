@@ -12638,7 +12638,7 @@ export default function App() {
 
             {/* definition card — placed on open; a later scroll does not move the page back */}
             {wordSel && (
-              <div onClick={(e) => { const hit = document.elementsFromPoint(e.clientX, e.clientY).find((el) => el.getAttribute?.("data-lectura-word")); if (hit) { hit.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: e.clientX, clientY: e.clientY })); } else { setWordSel(null); } }} style={{ display: wordSheetBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: wordSheetBox ? (wordSheetBox.reaches ? Math.max(0, window.innerHeight - wordSheetBox.sheetTop) : wordSheetBox.backdropBottom) : 0, zIndex: 29 }} />
+              <div onClick={(e) => { const hit = document.elementsFromPoint(e.clientX, e.clientY).find((el) => el.getAttribute?.("data-lectura-word")); if (hit && hit !== wordTapRef.current) { hit.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: e.clientX, clientY: e.clientY })); } else { setWordSel(null); } }} style={{ display: wordSheetBox ? "block" : "none", position: "fixed", top: 0, left: 0, right: 0, bottom: wordSheetBox ? (wordSheetBox.reaches ? Math.max(0, window.innerHeight - wordSheetBox.sheetTop) : wordSheetBox.backdropBottom) : 0, zIndex: 29 }} />
             )}
             {wordSel && !checkpoints[wordSel.pi] && renderWordSheet(false)}
           </div>
