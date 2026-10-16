@@ -66,12 +66,12 @@ import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, should
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { lecturaAdvanceScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
-import { firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
+import { firstSessionBeatOf, firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, ONBOARDING_CTA_HEIGHT, onboardingCtaBottomCss, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
-import Onboarding from "./Onboarding.jsx";
-import { beginnerFirstQuestions, beginnerWhyLine, beginnerWinLine, BEGINNER_SESSION_TITLE } from "./beginnerFirstSession.js";
-import { firstSessionWhyLine, firstSessionWinLine, someFirstSessionWhyLine } from "./firstSessionWords.js";
+import Onboarding, { ONBOARDING_SETTLE_MS } from "./Onboarding.jsx";
+import { beginnerFirstQuestions, beginnerQuestionAt, beginnerWhyLine, beginnerWinLine, BEGINNER_SESSION_TITLE } from "./beginnerFirstSession.js";
+import { firstSessionWhyLine, firstSessionWinLine } from "./firstSessionWords.js";
 import { HoyWinBird, WinBounce, WinPerch } from "./WinBounce.jsx";
 import { CenzontleFlyAway } from "./PaywallFlyAway.jsx";
 import { advanceSafeRiskyItem, applySafeRiskyTap, isSafeRiskyCorrect, safeRiskyAnswerLabel, safeRiskyCorrectKeys, safeRiskyIsRevealed, safeRiskyTappedCorrect, safeRiskyTappedWrong, startSafeRiskyRun } from "./safeRisky.js";
@@ -5674,7 +5674,7 @@ export default function App() {
       const beginnerResume = firstSnap.order.some((o) => o.u === "_beginner");
       const qs = firstSnap.order.map((o) => {
         if (o.u === "_beginner") {
-          const src = beginnerFirstQuestions()[o.i];
+          const src = beginnerQuestionAt(o.i);
           return src ? { ...src } : null;
         }
         const src = UNITS.find((x) => x.id === o.u);
@@ -6590,12 +6590,30 @@ export default function App() {
     return live != null ? live : typed;
   };
 
-  const check = () => {
+  // First session only: a multiple-choice tap checks the answer on the spot.
+  // Other lessons and the Build / chip questions keep the CHECK button.
+  const tapCheckMc = !!(session?.firstSession && q?.type === "mc");
+  // Taps are ignored for 350 ms after a first-session question appears, so a
+  // double tap on Continue cannot land on the next question's cards.
+  const tapSettleUntilRef = useRef(0);
+  useEffect(() => {
+    tapSettleUntilRef.current = session?.firstSession ? Date.now() + ONBOARDING_SETTLE_MS : 0;
+  }, [session?.questions, session?.firstSession, qi]);
+
+  const pickChoice = (idx) => {
+    if (!tapCheckMc) { setSelected(idx); return; }
+    if (status !== "idle") return;
+    if (Date.now() < tapSettleUntilRef.current) return;
+    setSelected(idx);
+    check(idx);
+  };
+
+  const check = (picked = null) => {
     if (!q || status !== "idle") return;
     let r;
     let tip = false;
     let missText = "";
-    if (q.type === "mc") { if (selected == null) return; r = q.shuffledChoices[selected] === q.answer ? "correct" : "wrong"; }
+    if (q.type === "mc") { const pick = Number.isInteger(picked) ? picked : selected; if (pick == null) return; r = q.shuffledChoices[pick] === q.answer ? "correct" : "wrong"; }
     else if (q.type === "order") {
       if (!placed.length) return;
       const built = placed.map((id) => q.shuffledWords.find((t) => t.id === id).w).join(" ");
@@ -6877,7 +6895,12 @@ export default function App() {
       coachStats[coachKey] = (coachStats[coachKey] || 0) + 1;
       const patch = {
         xp: (prev.xp || 0) + earned,
-        streak, lastDay: t, xpToday: xpToday + earned, done, missions,
+        streak, lastDay: t,
+        // The five-question first lesson always cleared the 40 XP daily goal (47 to 62 XP), which is what
+        // checks Hoy and makes the story tile loud. Three questions pay 22 to 37, so a finished first
+        // lesson still counts as the day's goal. Total xp stays what was earned.
+        xpToday: session.firstSession ? Math.max(xpToday + earned, DAILY_GOAL) : xpToday + earned,
+        done, missions,
         gems: (prev.gems || 0) + gemsEarned,
         perfects: (prev.perfects || 0) + (lessonStats.wrong === 0 ? 1 : 0),
         resume: null, coachStats, freezes,
@@ -7904,7 +7927,7 @@ export default function App() {
         return;
       }
 	      if (!q) return;
-      if (status === "idle" && q.type === "mc") { const n = parseInt(e.key, 10); if (n >= 1 && n <= q.shuffledChoices.length) setSelected(n - 1); }
+      if (status === "idle" && q.type === "mc") { const n = parseInt(e.key, 10); if (n >= 1 && n <= q.shuffledChoices.length) pickChoice(n - 1); }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -8011,12 +8034,12 @@ export default function App() {
     repairModal: !!streakRepair,
     lang: uiLang,
   });
-  const firstSessionWhy = session?.firstSession
+  // Why lines are keyed to the authored beat of the question on screen, so the
+  // three-question lesson (and an older saved five-question resume) show the right one.
+  const firstSessionWhy = session?.firstSession && q
     ? (session.beginnerFirst
-      ? beginnerWhyLine(qi, uiLang)
-      : session.someFirst
-        ? someFirstSessionWhyLine(qi, uiLang)
-        : firstSessionWhyLine(qi, uiLang))
+      ? beginnerWhyLine(q._i, uiLang)
+      : firstSessionWhyLine(firstSessionBeatOf(q), uiLang))
     : null;
   const firstSessionWin = session?.beginnerFirst ? beginnerWinLine(uiLang) : firstSessionWinLine(uiLang);
   const L = UI[uiLang];
@@ -9075,6 +9098,14 @@ export default function App() {
         .node-btn:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(3px); }
         .choice-card { border:2px solid ${D.line}; border-bottom-width:4px; border-radius:14px; background:${D.card}; transition: background .1s, box-shadow .1s, border-color .1s; color:${D.ink}; box-sizing:border-box; min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
         .choice-card:hover:not(:disabled):not([aria-disabled="true"]) { background:${D.subtle}; }
+        /* Short phones (360x640): four first-lesson answers plus the pinned bar did not fit, so the
+           fourth card sat half under the bar. Tighter spacing on that one screen type, short viewports only. */
+        @media (max-height: 700px) {
+          [data-first-session="1"][data-qtype="mc"] [data-testid="lesson-body"] { padding-top: 10px !important; }
+          [data-first-session="1"][data-qtype="mc"] .lesson-head-row { margin-bottom: 12px !important; }
+          [data-first-session="1"][data-qtype="mc"] .lesson-mc-grid { gap: 8px !important; }
+          [data-first-session="1"][data-qtype="mc"] .lesson-mc-grid .choice-card { padding-top: 10px !important; padding-bottom: 10px !important; }
+        }
         .choice-card[data-selected="true"],
         .choice-card[data-selected="true"]:hover:not(:disabled):not([aria-disabled="true"]) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
         .word-chip { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; width:max-content; min-width:min-content; max-width:none; flex:0 0 auto; white-space:nowrap; overflow:visible; text-overflow:unset; word-break:keep-all; overflow-wrap:normal; hyphens:manual; }
@@ -11100,7 +11131,7 @@ export default function App() {
             </div>
           )}
           {burst > 0 && status !== "idle" && status !== "wrong" && inter && <Confetti key={`burst-${burst}`} count={28} />}
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 26 }}>
+          <div className="lesson-head-row" style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 26 }}>
             <button type="button" data-testid="lesson-exit" onClick={() => setConfirmExit(true)} aria-label={uiLang === "en" ? "Exit lesson" : "Salir de la lección"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: orderCream ? D_LIGHT.ink : orderDark ? HUB_CREAM : D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div data-testid="lesson-progress" data-pct={pct} style={{ flex: 1, height: 16, background: D.line, borderRadius: 99, overflow: "hidden" }}>
               <div data-testid="lesson-progress-fill" style={{ width: `${pct}%`, height: "100%", background: D.green, borderRadius: 99, transition: "width .25s", position: "relative", overflow: "hidden" }}>
@@ -11243,7 +11274,7 @@ export default function App() {
 
             {/* answer area */}
             {q.type === "mc" && (
-              <div style={{ display: "grid", gap: 10 }}>
+              <div className="lesson-mc-grid" style={{ display: "grid", gap: 10 }}>
                 {q.shuffledChoices.map((c, idx) => {
                   const isSel = selected === idx;
                   const showState = status !== "idle";
@@ -11259,7 +11290,7 @@ export default function App() {
                   const paint = hoyDark ? hoyListenChoicePaint(hoyListenChoiceTone({ showState, isSel, isAns }), D, HUB_CREAM) : null;
                   if (paint) { bg = paint.fill; bd = paint.border; col = paint.text; badgeCol = paint.badge; }
                   return (
-                    <button key={idx} type="button" className="choice-card" data-testid="choice-card" data-selected={isSel ? "true" : undefined} aria-pressed={isSel} disabled={showState} onClick={() => setSelected(idx)}
+                    <button key={idx} type="button" className="choice-card" data-testid="choice-card" data-selected={isSel ? "true" : undefined} aria-pressed={isSel} disabled={showState} onClick={() => pickChoice(idx)}
                       style={{ textAlign: "left", padding: "13px 15px", fontSize: 16, fontWeight: 700, cursor: showState ? "default" : "pointer", display: "flex", gap: 12, alignItems: "center", background: bg, borderColor: bd, color: col, fontFamily: "inherit", borderBottomColor: bd, borderWidth: paint?.edge, borderBottomWidth: paint?.edge, boxShadow: hoyDark ? "none" : (isSel && !showState ? `0 0 0 3px ${D.blue}` : undefined) }}>
                       <span data-testid={`mc-option-${idx}`} hidden />
                       {showState && isSel && !isAns ? <span data-testid="mc-option-wrong" hidden /> : null}
@@ -11525,7 +11556,7 @@ export default function App() {
                     </div>
                   );
                 })()}
-	                {status === "idle" && (q.type === "match" ? L.matchInstruction : L.enterCheck)}
+	                {status === "idle" && !tapCheckMc && (q.type === "match" ? L.matchInstruction : L.enterCheck)}
               </div>
                 </div>
               </div>
@@ -11533,7 +11564,8 @@ export default function App() {
                 footerCapped ? (
                 <div data-testid="lesson-footer-actions" style={{ flexShrink: 0, width: "100%", boxSizing: "border-box", padding: "12px 20px 14px" }}>
                 {status === "idle" ? (
-	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} disabled={lessonCheckEmpty} onClick={check} style={{ width: "100%", flexShrink: 0, ...emptyCheckPaint(theme, lessonCheckEmpty) }}>{L.check}</Btn>
+	                  tapCheckMc ? <Btn data-testid="lesson-check-space" aria-hidden="true" tabIndex={-1} disabled style={{ width: "100%", flexShrink: 0, visibility: "hidden" }}>{L.check}</Btn>
+	                  : <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} disabled={lessonCheckEmpty} onClick={() => check()} style={{ width: "100%", flexShrink: 0, ...emptyCheckPaint(theme, lessonCheckEmpty) }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
 	                    <div style={{ fontSize: 11, fontWeight: 900, color: limeText(D.okText, D), marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
@@ -11549,7 +11581,8 @@ export default function App() {
                 </div>
                 ) : (
                 status === "idle" ? (
-	                  <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} disabled={lessonCheckEmpty} onClick={check} style={{ flexShrink: 0, marginTop: "auto", ...emptyCheckPaint(theme, lessonCheckEmpty) }}>{L.check}</Btn>
+	                  tapCheckMc ? <Btn data-testid="lesson-check-space" aria-hidden="true" tabIndex={-1} disabled style={{ flexShrink: 0, marginTop: "auto", visibility: "hidden" }}>{L.check}</Btn>
+	                  : <Btn data-testid="lesson-check" ink={LESSON_LIME_INK} disabled={lessonCheckEmpty} onClick={() => check()} style={{ flexShrink: 0, marginTop: "auto", ...emptyCheckPaint(theme, lessonCheckEmpty) }}>{L.check}</Btn>
                 ) : session.review && (status === "correct" || status === "almost") ? (
                   <div style={{ flexShrink: 0, textAlign: "center" }}>
 	                    <div style={{ fontSize: 11, fontWeight: 900, color: limeText(D.okText, D), marginBottom: 5, letterSpacing: ".04em" }}>{L.selfGrade} · +{status === "almost" ? 3 : 4} XP</div>
