@@ -7,6 +7,8 @@ import {
   acceptBeginnerAnswer,
   beginnerFace,
   beginnerFirstQuestions,
+  beginnerQuestionAt,
+  BEGINNER_PICKED_BEATS,
   beginnerWhyLine,
   beginnerWinLine,
 } from "./beginnerFirstSession.js";
@@ -111,8 +113,17 @@ const ex3 = BEGINNER_FIRST_SESSION[2];
 assert(!ex3.words.includes("quiero") && ex3.words.includes("de"), "quiero is out and de is in the bank");
 assert(["Un", "café,", "por", "favor"].join(" ") === ex3.answer, "the authored tiles join to the answer");
 
-const questions = beginnerFirstQuestions();
-assert(questions.map((q) => q.type).join(",") === "mc,type,order,mc,type", "prepped list keeps the order");
+const questions = [0, 1, 2, 3, 4].map((i) => beginnerQuestionAt(i));
+assert(beginnerQuestionAt(5) == null && beginnerQuestionAt(-1) == null, "no beat past the five authored ones");
+assert(questions.map((q) => q.type).join(",") === "mc,type,order,mc,type", "the five authored beats keep their order (a saved five-question resume still finds them)");
+const played = beginnerFirstQuestions();
+assert(BEGINNER_PICKED_BEATS.join(",") === "0,2,3", "the first lesson plays beats 0, 2 and 3");
+assert(played.length === 3 && played.map((q) => q.type).join(",") === "mc,order,mc", "the first lesson is mc, Build, mc");
+assert(played.map((q) => beginnerFace(q.answer, "es")).join("|") === "Buenos días|Un café, por favor|¿Cuánto cuesta?", "the three are Buenos días, the coffee Build and ¿Cuánto cuesta?");
+assert(played.every((q) => q._u === "_beginner") && played.map((q) => q._i).join(",") === "0,2,3", "played beats keep their authored index");
+assert(played.map((q) => beginnerWhyLine(q._i, "en")).join("|") === [EX1_WHY_EN, EX3_WHY_EN, EX4_WHY_EN].join("|"), "each played beat keeps its own why line");
+assert(!played.some((q) => q.type === "type"), "the chip beats are not in the first lesson");
+assert(appSrc.includes("beginnerQuestionAt(o.i)"), "a saved resume rebuilds its beats by authored index");
 assert(questions.every((q, i) => q._u === "_beginner" && q._i === i), "beginner beats are not subj1 indexes");
 assert(questions[0].fixedChoices === true && questions[3].fixedChoices === true, "both multiple-choice beats are fixed");
 assert(appSrc.includes("p.fixedChoices ? p.choices.slice() : shuffle(p.choices)"), "fixed multiple choice is not shuffled");
@@ -147,7 +158,7 @@ assert(/stripe|paypal|revenuecat/i.test(beginnerSrc) === false, "no payment prov
 assert(!beginnerSrc.includes("story-0"), "the beginner session is not story-0");
 assert(!gateSrc.includes("story-0"), "onboarding no longer routes to story-0");
 assert(appSrc.includes("beginnerFirst: !!beginner"), "the win line can tell a beginner session from the old one");
-assert(appSrc.includes("firstSessionWhyLine(qi, uiLang)"), "the old why line still serves the other levels");
+assert(appSrc.includes("firstSessionWhyLine(firstSessionBeatOf(q), uiLang)"), "the old why line still serves the other levels, keyed by the question on screen");
 assert(appSrc.includes("firstSessionWinLine(uiLang)"), "the old win line still serves the other levels");
 assert(appSrc.includes("learnerLevel === \"beginner\""), "a stored beginner level keeps this session on the next open");
 

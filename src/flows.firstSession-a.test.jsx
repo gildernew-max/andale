@@ -11,6 +11,7 @@ import {
   firstSessionRoot,
   answerFirstSessionBeat,
   missFirstSessionBeat,
+  waitFirstSessionTapReady,
   localToday,
   openStory0,
   freshEligible,
@@ -22,7 +23,7 @@ import {
 installFlowHooks();
 
 describe("first session before the paywall", () => {
-  it("a learner with no completed lessons gets 5 exercises, then a win, and the wall stays down", async () => {
+  it("a learner with no completed lessons gets 3 exercises, then a win, and the wall stays down", async () => {
     cleanup();
     seedProgress({ streak: 0, lastDay: null, hearts: 5, uiLang: "es", bajioUnlockSeen: true, firstSessionDone: false });
     const user = userEvent.setup();
@@ -32,28 +33,25 @@ describe("first session before the paywall", () => {
     const tap = async (el) => { taps += 1; await user.click(el); };
     await tap(screen.getByTestId("hub-sendero"));
     await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
-    expect(screen.getByTestId("path-sheet").textContent).toMatch(/5 retos/);
+    expect(screen.getByTestId("path-sheet").textContent).toMatch(/3 retos/);
     expect(screen.getByTestId("path-sheet").textContent).not.toMatch(/12 retos/);
     await tap(screen.getByRole("button", { name: /Empezar · \+XP/ }));
     await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-first-session")).toBe("1"));
-    expect(Number(firstSessionRoot().getAttribute("data-count"))).toBe(5);
+    expect(Number(firstSessionRoot().getAttribute("data-count"))).toBe(3);
     expect(screen.getByTestId("lesson-progress").getAttribute("data-pct")).toBe("0");
     const seen = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBeTruthy());
       seen.push(firstSessionRoot().getAttribute("data-qtype"));
-      if (i === 2) expect(screen.getByTestId("lesson-progress").getAttribute("data-pct")).toBe("40");
-      if (i === 4) {
+      if (i === 1) expect(screen.getByTestId("lesson-progress").getAttribute("data-pct")).toBe("33");
+      if (i === 2) {
         const type = firstSessionRoot().getAttribute("data-qtype");
         const body = document.body.textContent;
-        if (type === "type") {
-          const tile = [...screen.getAllByTestId("bank-tile")].find((el) => el.textContent.trim() === "salga");
-          await tap(tile);
-        } else {
-          throw new Error(`expected the last beat to be type, got ${type}`);
-        }
-        expect(body).toMatch(/Te llamo cuando/);
-        await tap(screen.getByTestId("lesson-check"));
+        if (type !== "mc") throw new Error(`expected the last beat to be mc, got ${type}`);
+        expect(body).toMatch(/Espero que/);
+        const card = [...document.querySelectorAll(".choice-card")].find((el) => el.textContent.includes("vengas"));
+        await waitFirstSessionTapReady();
+        await tap(card);
         await waitFor(() => expect(screen.getByTestId("lesson-progress").getAttribute("data-pct")).toBe("100"));
         expect(screen.queryByTestId("soft-paywall")).toBeNull();
         await tap(screen.getByRole("button", { name: /^Continuar$/ }));
@@ -61,7 +59,7 @@ describe("first session before the paywall", () => {
         taps += await answerFirstSessionBeat(user);
       }
     }
-    expect(seen).toEqual(["mc", "type", "order", "mc", "type"]);
+    expect(seen).toEqual(["mc", "order", "mc"]);
     await waitFor(() => expect(screen.getByTestId("win-continue")).toBeTruthy());
     expect(screen.getByRole("heading", { name: /¡Lección completada!/ })).toBeTruthy();
     expect(screen.getByTestId("win-earned-xp")).toBeTruthy();
@@ -72,7 +70,8 @@ describe("first session before the paywall", () => {
     await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect((window.__andaleFunnelLog || []).some((e) => e.event === "paywall_seen")).toBe(false);
-    expect(taps).toBe(21);
+    // Sendero, Empezar, mc (pick, Continue), Build (4 tiles, Check, Continue), mc (pick, Continue), win Continue.
+    expect(taps).toBe(13);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).done?._first).toBeUndefined();
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).done?.subj1 || 0).toBe(0);
@@ -93,15 +92,16 @@ describe("first session before the paywall", () => {
     expect(Number(document.querySelector("[data-count]").getAttribute("data-count"))).toBe(12);
   });
 
-  it("five wrong answers in the first session show Review and recover and no paywall", async () => {
+  it("running out of hearts in the first session shows Review and recover and no paywall (three misses on three hearts)", async () => {
     cleanup();
-    seedProgress({ streak: 0, lastDay: null, hearts: 5, uiLang: "es", bajioUnlockSeen: true, firstSessionDone: false });
+    // Three questions can cost three hearts, so this learner starts on three.
+    seedProgress({ streak: 0, lastDay: null, hearts: 3, uiLang: "es", bajioUnlockSeen: true, firstSessionDone: false });
     const user = userEvent.setup();
     render(<App />);
     await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
     await user.click(screen.getByTestId("hub-sendero"));
     await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
-    for (let i = 0; i < 5; i++) await missFirstSessionBeat(user);
+    for (let i = 0; i < 3; i++) await missFirstSessionBeat(user);
     await waitFor(() => expect(screen.getByTestId("out-of-lives")).toBeTruthy());
     expect(screen.getByTestId("out-of-lives").textContent).toBe("¡Te quedaste sin vidas!");
     expect(screen.getByTestId("review-and-recover").textContent).toMatch(/Practicar y recuperar/);
@@ -157,7 +157,7 @@ describe("first session before the paywall", () => {
       await user.click(screen.getByTestId("hub-sendero"));
       await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
       expect(screen.getByTestId("path-sheet").textContent).toMatch(/12 retos/);
-      expect(screen.getByTestId("path-sheet").textContent).not.toMatch(/5 retos/);
+      expect(screen.getByTestId("path-sheet").textContent).not.toMatch(/3 retos/);
       expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(true);
       cleanup();
     };
@@ -169,7 +169,7 @@ describe("first session before the paywall", () => {
     await openSheet();
   });
 
-  it("empty storage is eligible for the 5-exercise session", async () => {
+  it("empty storage is eligible for the 3-exercise session", async () => {
     localStorage.clear();
     const user = userEvent.setup();
     render(<App />);
@@ -182,7 +182,7 @@ describe("first session before the paywall", () => {
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
     await startOnboarding(user);
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
-    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("5");
+    expect(document.querySelector("[data-count]").getAttribute("data-count")).toBe("3");
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionDone).toBe(false);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).firstSessionArmed).toBe(true);
     expect(document.body.textContent).toMatch(/Es obvio que Marisol/);
@@ -196,7 +196,7 @@ describe("first session before the paywall", () => {
     await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
     await user.click(screen.getByTestId("hub-sendero"));
     await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
-    for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
+    for (let i = 0; i < 3; i++) await answerFirstSessionBeat(user);
     await user.click(await screen.findByTestId("win-continue"));
     await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
@@ -205,7 +205,8 @@ describe("first session before the paywall", () => {
     await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     const sendero = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    expect(sendero.xp).toBe(62);
+    // Three correct answers (10 + 10 + 12 for the Build) plus the 5 XP flawless bonus.
+    expect(sendero.xp).toBe(37);
     expect(sendero.gems).toBe(15);
     expect(sendero.streak).toBe(1);
     cleanup();

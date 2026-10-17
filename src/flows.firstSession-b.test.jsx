@@ -10,6 +10,7 @@ import {
   continueBtn,
   firstSessionRoot,
   answerFirstSessionBeat,
+  waitFirstSessionTapReady,
   freshEligible,
   claimStory0,
 } from "./flowsHarness.jsx";
@@ -26,7 +27,7 @@ describe("first session before the paywall", () => {
     await user.click(screen.getByTestId("hub-sendero"));
     await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
     await answerFirstSessionBeat(user);
-    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBe("type"));
+    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBe("order"));
     await user.click(screen.getByTestId("lesson-exit"));
     await user.click(screen.getByTestId("save-and-quit"));
     await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
@@ -36,8 +37,8 @@ describe("first session before the paywall", () => {
     expect(saved.firstSessionDone).not.toBe(true);
     await user.click(screen.getByTestId("hub-sendero"));
     await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
-    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBe("type"));
-    expect(document.body.textContent).toMatch(/Ojalá que no/);
+    await waitFor(() => expect(firstSessionRoot()?.getAttribute("data-qtype")).toBe("order"));
+    expect(document.body.textContent).toMatch(/I doubt that it/);
     expect(document.body.textContent).not.toMatch(/Es obvio que Marisol/);
     expect(firstSessionRoot().getAttribute("data-first-session")).toBe("1");
   }, 20000);
@@ -59,7 +60,7 @@ describe("first session before the paywall", () => {
     await waitFor(() => expect(screen.getByTestId("hub-sendero")).toBeTruthy());
     await user.click(screen.getByTestId("hub-sendero"));
     await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
-    for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
+    for (let i = 0; i < 3; i++) await answerFirstSessionBeat(user);
     await waitFor(() => expect(screen.getByTestId("win-continue")).toBeTruthy());
     expect(screen.getByRole("heading", { name: /¡Lección completada!/ }).getAttribute("data-lectura-paywall")).toBe("0");
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
@@ -97,8 +98,8 @@ describe("first session before the paywall", () => {
       await user.click(screen.getByTestId("hub-sendero"));
       await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
       const wrong = [...document.querySelectorAll(".choice-card")].find((el) => !el.textContent.includes("tiene"));
+      await waitFirstSessionTapReady();
       await user.click(wrong);
-      await user.click(screen.getByTestId("lesson-check"));
       await waitFor(() => expect(screen.getByTestId("first-session-why").textContent).toBe("«Es obvio que» se queda en indicativo."));
       const whyLine = screen.getByTestId("first-session-why");
       expect(whyLine.textContent).toMatch(/«Es obvio que»/);
@@ -167,8 +168,8 @@ describe("first session before the paywall", () => {
       await user.click(screen.getByTestId("hub-sendero"));
       await user.click(screen.getByRole("button", { name: /Empezar · \+XP/ }));
       const wrongAgain = [...document.querySelectorAll(".choice-card")].find((el) => !el.textContent.includes("tiene"));
+      await waitFirstSessionTapReady();
       await user.click(wrongAgain);
-      await user.click(screen.getByTestId("lesson-check"));
       await waitFor(() => expect(screen.getByTestId("practice-quip")).toBeTruthy());
       expect(screen.queryByTestId("first-session-why")).toBeNull();
     } finally {

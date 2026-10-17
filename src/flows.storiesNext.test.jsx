@@ -199,7 +199,7 @@ describe("Stories is loud after Hoy until the first claim", () => {
     await waitFor(() => expect(screen.getByTestId("onboarding-start")).toBeTruthy());
     await startOnboarding(user);
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
-    for (let i = 0; i < 5; i++) await answerFirstSessionBeat(user);
+    for (let i = 0; i < 3; i++) await answerFirstSessionBeat(user);
     await user.click(await screen.findByTestId("win-continue"));
     await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
 
@@ -208,6 +208,7 @@ describe("Stories is loud after Hoy until the first claim", () => {
     expect(saved.firstSessionDone).toBe(true);
     expect(saved.missions?.[`scene-${today}`]).toBeUndefined();
     expect(saved.xpToday).toBeGreaterThanOrEqual(40);
+    expect(saved.xp).toBe(37);
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
 
     const stories = screen.getByTestId("hub-stories");
