@@ -22,7 +22,7 @@ import { JEOPARDY_CAT_LABEL, JEOPARDY_CATEGORY_IDS, JEOPARDY_HOWTO, JEOPARDY_QUI
 import { MEMORY_BANK, MEMORY_HOWTO, MEMORY_QUIET, MEMORY_TITLE, memoryRegionChip, memoryTitle } from "./memory.js";
 import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
 import { PAYWALL_BIRD_TRIGGER, PAYWALL_SOURCE } from "./paywallHeadline.js";
-import { ANNUAL_PRICE_PLACEHOLDER, LOCKED_STORY_PAYWALL, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_GAP, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT } from "./webPaywall.js";
+import { ANNUAL_PRICE_PLACEHOLDER, LOCKED_STORY_PAYWALL, paywallStillMaxHeight, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_GAP, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT } from "./webPaywall.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
 import { COLLECTOR_ENDPOINT, collectorEndpoint } from "./collector.js";
 import { FIRST_WIN_EMAIL_CTA, FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_INVITE, FIRST_WIN_EMAIL_PLACEHOLDER, FIRST_WIN_EMAIL_PRIVACY, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SKIP, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
@@ -765,6 +765,12 @@ assert(!/soft-paywall-scroll|soft-paywall-footer|ButtonPin|soft-paywall-honesty|
 assert(PAYWALL_CARD_BOTTOM_INSET === 16, "the card bottom inset is 16px");
 assert(PAYWALL_FREE_GAP === 12, "Continue free sits 12px under monthly");
 assert(PAYWALL_MONTHLY_GAP === 12, "monthly sits 12px under annual");
+// 360x640 still path: the plans-aren't-open lines shrink the still frame to 78px but the 140px image stayed full height over the headline.
+assert(paywallStillMaxHeight({ frameHeight: 78, imgHeight: 140 }) === 78, "a still taller than its shrunk frame is capped to the frame");
+assert(paywallStillMaxHeight({ frameHeight: 140, imgHeight: 140 }) === null, "a still that fits is left alone");
+assert(paywallStillMaxHeight({ frameHeight: 30, imgHeight: 140 }) === 48, "the still never goes under 48px");
+assert(paywallStillMaxHeight({}) === null, "missing measures change nothing");
+assert(appSrc.includes("paywallStillMaxHeight({ frameHeight: frame.getBoundingClientRect().height"), "the paywall layout effect keeps the still inside its frame");
 assert(PAYWALL_FREE_LINE_GAP === 8, "the free line sits 8px under Continue free");
 assert(PAYWALL_FREE_LINE_SIZE === 12, "the free line is body type one size down from 13.5");
 assert(paywallLayout.includes("paddingBottom: `calc(${PAYWALL_CARD_BOTTOM_INSET}px + env(safe-area-inset-bottom))`"), "the card bottom is at least 16px above the safe area");
