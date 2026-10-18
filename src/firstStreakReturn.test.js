@@ -10,6 +10,9 @@ import {
   dismissFirstStreakReturn,
   firstStreakLineColumn,
   firstStreakLinePx,
+  firstStreakCopy,
+  firstStreakDestination,
+  firstStreakHitsTwo,
   firstStreakReturn,
   forgetFirstStreakReturnLive,
   presentFirstStreakReturn,
@@ -50,6 +53,17 @@ function day2(extra = {}) {
   };
 }
 
+// The streak gate is dark now (the flame no longer projects a 2 on day 2), so the story-picking
+// and copy halves are exercised without it. firstStreakReturn itself must stay hidden: see the gate tests below.
+function afterGate({ stories, claimed, lecturaOpenId, lecturaStarted = false, lang, viewportWidth }) {
+  const column = firstStreakLineColumn(viewportWidth);
+  const dest = firstStreakDestination({ stories, claimed, lecturaOpenId, lecturaStarted });
+  if (dest.kind === "locked") return { show: false, reason: "locked", storyId: dest.story?.id || "" };
+  if (dest.kind !== "halfway" && dest.kind !== "next") return { show: false, reason: "none" };
+  const copy = firstStreakCopy({ lang, mode: dest.kind, title: dest.story.title, columnPx: column });
+  return { show: true, reason: dest.kind, mode: dest.kind, storyId: dest.story.id, lang, column, ...copy };
+}
+
 forgetFirstStreakReturnLive();
 
 assert(isLecturaStoryOpen(STORIES, { "story-0": true }, "story-1"), "claiming story-0 opens story-1 for free");
@@ -57,7 +71,20 @@ assert(!isLecturaStoryOpen(STORIES, { "story-0": true }, "story-2"), "story-2 st
 assert(firstStreakLineColumn(360) === 304, "a 360px screen gives the line 304px");
 assert(firstStreakLineColumn(390) === 334, "a 390px screen gives the line 334px");
 
-const claimed = firstStreakReturn(day2());
+// The gate: nothing earned reaches 2 before a win, so the card never shows on the return day.
+assert(firstStreakHitsTwo({ streak: 1, lastDay: YESTERDAY, today: TODAY }) === false, "a stored 1 with yesterday is not a 2, nothing is projected");
+for (const streak of [0, 1, 2, 3]) {
+  for (const lastDay of [TODAY, YESTERDAY, "2026-10-12"]) {
+    const decision = firstStreakReturn(day2({ streak, lastDay }));
+    assert(decision.show === false && decision.reason === "streak", `streak ${streak} with lastDay ${lastDay} never shows the 2 days card`);
+  }
+}
+const darkStore = memoryStorage();
+forgetFirstStreakReturnLive();
+assert(presentFirstStreakReturn(darkStore, firstStreakReturn(day2())).fire === false, "the dark card emits nothing");
+assert(darkStore.data[FIRST_STREAK_RETURN_KEY] == null, "the dark card stamps nothing");
+
+const claimed = afterGate(day2());
 assert(claimed.show === true && claimed.mode === "next" && claimed.storyId === "story-1", "day 2 after a day-1 claim opens the next free story");
 assert(claimed.headline === FIRST_STREAK_HEADLINE.en, "EN headline");
 assert(claimed.line === "Your next story is ready: La casa azul.", "EN next line keeps the Spanish title");
@@ -65,14 +92,14 @@ assert(claimed.title === "La casa azul" && claimed.before === "Your next story i
 assert(claimed.button === FIRST_STREAK_BUTTON.next.en, "EN next button is Start reading");
 assert(!/[!¡]/.test(claimed.headline + claimed.line + claimed.button), "EN next copy has no exclamation");
 
-const claimedEs = firstStreakReturn(day2({ lang: "es" }));
+const claimedEs = afterGate(day2({ lang: "es" }));
 assert(claimedEs.headline === FIRST_STREAK_HEADLINE.es, "ES headline");
 assert(claimedEs.line === "Tu siguiente cuento está listo: La casa azul.", "ES next line");
 assert(claimedEs.title === "La casa azul", "ES next title stays Spanish");
 assert(claimedEs.button === FIRST_STREAK_BUTTON.next.es, "ES next button is Empieza a leer");
 assert(!/[!¡]/.test(claimedEs.headline + claimedEs.line + claimedEs.button), "ES next copy has no exclamation");
 
-const empty = firstStreakReturn(day2({ claimed: {}, lecturaOpenId: "", lecturaStarted: false }));
+const empty = afterGate(day2({ claimed: {}, lecturaOpenId: "", lecturaStarted: false }));
 assert(empty.show === false && empty.reason === "none", "no claim and no open story does not show");
 
 const sameDay = firstStreakReturn(day2({ lastDay: TODAY }));
@@ -84,7 +111,7 @@ assert(missed.show === false && missed.reason === "streak", "day 3 with day 2 mi
 const laterStreak = firstStreakReturn(day2({ streak: 2 }));
 assert(laterStreak.show === false, "a stored streak of 2 is not the first time it hits 2");
 
-const halfway = firstStreakReturn(day2({
+const halfway = afterGate(day2({
   claimed: {},
   lecturaOpenId: "story-0",
   viewportWidth: 800,
@@ -95,7 +122,7 @@ assert(halfway.line === "La noche en que vuelven is waiting where you left it.",
 assert(halfway.title === "La noche en que vuelven", "halfway title stays Spanish");
 assert(halfway.button === FIRST_STREAK_BUTTON.halfway.en, "EN halfway button is Keep reading");
 
-const halfwayEs = firstStreakReturn(day2({
+const halfwayEs = afterGate(day2({
   claimed: {},
   lecturaOpenId: "story-0",
   lang: "es",
@@ -105,7 +132,7 @@ assert(halfwayEs.line === "La noche en que vuelven te espera donde lo dejaste.",
 assert(halfwayEs.button === FIRST_STREAK_BUTTON.halfway.es, "ES halfway button is Sigue leyendo");
 assert(!/[!¡]/.test(halfway.line + halfway.button + halfwayEs.line + halfwayEs.button), "halfway copy has no exclamation");
 
-const longTitle = firstStreakReturn(day2({
+const longTitle = afterGate(day2({
   claimed: {},
   lecturaOpenId: "story-0",
   viewportWidth: 360,
@@ -114,7 +141,7 @@ assert(longTitle.show === true && longTitle.fallback === true, "a long title on 
 assert(longTitle.line === FIRST_STREAK_FALLBACK.en && longTitle.title === "", "EN fallback drops the title");
 assert(firstStreakLinePx("La noche en que vuelven is waiting where you left it.") > firstStreakLineColumn(360), "the titled EN line is wider than the 360px column");
 
-const longTitleEs = firstStreakReturn(day2({
+const longTitleEs = afterGate(day2({
   claimed: {},
   lecturaOpenId: "story-0",
   lang: "es",
@@ -122,7 +149,7 @@ const longTitleEs = firstStreakReturn(day2({
 }));
 assert(longTitleEs.fallback === true && longTitleEs.line === FIRST_STREAK_FALLBACK.es, "ES fallback line");
 
-const locked = firstStreakReturn(day2({
+const locked = afterGate(day2({
   claimed: { "story-1": true },
   lecturaOpenId: "story-1",
 }));
