@@ -4657,7 +4657,7 @@ const UI = {
     playScene: "Jugar la escena",
     hubHoy: "Hoy",
     hubHoyQuiet: "Plan de hoy",
-    hubGoalDone: "Meta de hoy cumplida",
+    hubGoalDone: "Meta de hoy cumplida.",
     hoyPlanEyebrow: "HOY · ~10 MIN",
     hoyPlanSell: "Un plan corto para hoy. Unos diez minutos. Luego paras.",
     hoyPlanCta: "Empezar el plan",
@@ -4758,7 +4758,7 @@ const UI = {
     playScene: "Play the scene",
     hubHoy: "Hoy",
     hubHoyQuiet: "Today's plan",
-    hubGoalDone: "Today\u2019s goal done",
+    hubGoalDone: "Daily goal reached.",
     hoyPlanEyebrow: "TODAY · ~10 MIN",
     hoyPlanSell: "A short plan for today. About ten minutes. Then you stop.",
     hoyPlanCta: "Start the plan",
@@ -9308,7 +9308,7 @@ export default function App() {
                       <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "stories" ? "hub-stories-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: tile.id === "stories" && storiesLoud && !firstStreakCard ? LESSON_LIME_INK : D.ink, marginTop: 2 }}>{tile.title}</div>
                       {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, overflowWrap: "break-word", maxWidth: "100%" }}>{tile.quiet}</div>}
                       {tile.id === "hoy" && goalReached && (
-                        <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}: {DAILY_GOAL}{"\u00a0"}XP.</div>
+                        <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}</div>
                       )}
                       </span>
                     </button>
