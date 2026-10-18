@@ -27,7 +27,7 @@ import { watchWordSheetPlacement, wordSheetClose, wordSheetCopy, wordSheetReveal
 import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { LOCKED_STORY_PAYWALL, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_MONTHLY_GAP, annualPriceLine } from "./webPaywall.js";
+import { LOCKED_STORY_PAYWALL, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT, PAYWALL_MONTHLY_GAP, annualPriceLine } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent, paywallSeenSourceFor } from "./funnel.js";
 import { FIRST_ACTIVITY_KEY, LOCKED_CAP_FADE_MS, LOCKED_CAP_GAP_PX, LOCKED_CAP_INK, LOCKED_CAP_SIZE, LOCKED_STORY_CAP_LINE, PAYWALL_SHOWN_KEY, isPaywallMidFlow, learnerDayNumber, paywallOpenDecision, readPlainDay, resolveFirstActivityDay, resolvePaywallShownDay, writePlainDay } from "./paywallTrigger.js";
@@ -5369,7 +5369,6 @@ export default function App() {
   const paywallSeenKindRef = useRef(PAYWALL_SEEN_SOURCE.timed);
   const [paywallAnnualHold, setPaywallAnnualHold] = useState(false);
   const [paywallMonthlyHold, setPaywallMonthlyHold] = useState(false);
-  const [paywallMonthlyHeight, setPaywallMonthlyHeight] = useState(0);
   const paywallAnnualRef = useRef(null);
   const paywallCardRef = useRef(null);
   const paywallStillFrameRef = useRef(null);
@@ -8256,18 +8255,12 @@ export default function App() {
   }, [lockedCapNote]);
   useLayoutEffect(() => {
     if (!showSoftPaywall) return;
-    const node = paywallAnnualRef.current;
-    const h = node?.getBoundingClientRect?.().height || 0;
-    if (h > 0) setPaywallMonthlyHeight((prev) => (prev === h ? prev : h));
-  }, [showSoftPaywall, uiLang, theme]);
-  useLayoutEffect(() => {
-    if (!showSoftPaywall) return;
     const card = paywallCardRef.current;
     const frame = paywallStillFrameRef.current;
     const img = frame?.querySelector?.("[data-testid='soft-paywall-still']");
     if (!card || !frame || !img) return;
     img.style.maxHeight = "";
-    img.style.width = "100%";
+    img.style.width = "auto";
     const overlay = card.parentElement;
     const overlayStyle = overlay ? getComputedStyle(overlay) : null;
     const padTop = parseFloat(overlayStyle?.paddingTop) || 0;
@@ -8281,7 +8274,7 @@ export default function App() {
       img.style.maxHeight = `${next}px`;
       img.style.width = "auto";
     }
-  }, [showSoftPaywall, uiLang, theme, paywallAnnualHold, paywallMonthlyHold, paywallStillSrc, paywallMonthlyHeight]);
+  }, [showSoftPaywall, uiLang, theme, paywallAnnualHold, paywallMonthlyHold, paywallStillSrc]);
   useEffect(() => {
     if (!paywallClickShield) return undefined;
     const clear = setTimeout(() => setPaywallClickShield(false), 0);
@@ -10854,16 +10847,16 @@ export default function App() {
         <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: theme === "dark" ? "#15171C" : "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", paddingTop: 16, paddingRight: 20, paddingBottom: `calc(${PAYWALL_CARD_BOTTOM_INSET}px + env(safe-area-inset-bottom))`, paddingLeft: 20, overflow: "hidden" }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
           <div ref={paywallCardRef} data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, maxWidth: 340, width: "100%", maxHeight: "100%", minHeight: 0, display: "flex", flexDirection: "column", boxSizing: "border-box", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}`, padding: "16px 20px 14px" }}>
             {paywallStillSrc ? (
-              <div ref={paywallStillFrameRef} data-testid="soft-paywall-still-frame" style={{ position: "relative", flex: "0 1 auto", minHeight: 48, width: "calc(100% + 40px)", margin: "0 -20px 2px", display: "flex", justifyContent: "center" }}>
+              <div ref={paywallStillFrameRef} data-testid="soft-paywall-still-frame" style={{ position: "relative", flex: "0 1 auto", minHeight: 48, width: "100%", margin: "0 0 2px", display: "flex", justifyContent: "center" }}>
                 <div style={{ position: "relative", maxWidth: "100%", maxHeight: "100%", lineHeight: 0 }}>
                   <img
                     data-testid="soft-paywall-still"
                     src={paywallStillSrc}
                     alt=""
                     onError={() => setPaywallStillMiss(true)}
-                    style={{ display: "block", width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 16, border: "none" }}
+                    style={{ display: "block", height: PAYWALL_STILL_HEIGHT, width: "auto", maxWidth: "100%", maxHeight: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 16, border: "none" }}
                   />
-                  <LogoMark size={48} data-testid="soft-paywall-cenzontle" style={{ position: "absolute", right: 8, bottom: -8, display: "block", width: 48, height: 48, objectFit: "contain" }} />
+                  <LogoMark size={PAYWALL_BIRD_SIZE} data-testid="soft-paywall-cenzontle" style={{ position: "absolute", right: 8, bottom: -8, display: "block", width: PAYWALL_BIRD_SIZE, height: PAYWALL_BIRD_SIZE, objectFit: "contain" }} />
                 </div>
               </div>
             ) : (
@@ -10871,11 +10864,14 @@ export default function App() {
             )}
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", flexShrink: 0, color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
             <div data-testid="soft-paywall-body" style={{ ...paywallBodyType, marginBottom: 8, flexShrink: 0 }}>{L.paywallBody}</div>
-            {annualPriceText ? (
-              <div data-testid="soft-paywall-annual-price" style={{ ...paywallBodyType, color: theme === "dark" ? "#CDBBA6" : "#6B6258", textAlign: "center", marginBottom: 12, flexShrink: 0 }}>{annualPriceText}</div>
-            ) : null}
-            <div ref={paywallAnnualRef} style={{ width: "100%", flexShrink: 0 }}>
-              <Btn data-testid="soft-paywall-annual" ink={LESSON_LIME_INK} onClick={tapPaywallAnnual} style={{ width: "100%" }}>{L.paywallAnnual}</Btn>
+            <div ref={paywallAnnualRef} style={{ width: "100%", flexShrink: 0, marginTop: 4 }}>
+              <button type="button" className="duo-btn" data-testid="soft-paywall-annual" onClick={tapPaywallAnnual}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, width: "100%", height: PAYWALL_ANNUAL_HEIGHT, boxSizing: "border-box", padding: "0 16px", background: PAYWALL_LIME, border: "none", borderRadius: 16, color: LESSON_LIME_INK, fontFamily: "inherit", textAlign: "center", cursor: "pointer" }}>
+                <span data-testid="soft-paywall-annual-label" style={{ fontWeight: 800, fontSize: 13, lineHeight: 1.2, letterSpacing: ".06em", textTransform: "uppercase", color: LESSON_LIME_INK }}>{L.paywallAnnual}</span>
+                {annualPriceText ? (
+                  <span data-testid="soft-paywall-annual-price" style={{ fontWeight: 900, fontSize: 30, lineHeight: 1.1, color: LESSON_LIME_INK }}>{annualPriceText}</span>
+                ) : null}
+              </button>
             </div>
             {paywallAnnualHold ? (
               <div data-testid="soft-paywall-annual-hold" style={{ ...paywallBodyType, color: theme === "dark" ? "#CDBBA6" : "#6B6258", marginTop: PAYWALL_ANNUAL_HOLD_GAP, flexShrink: 0 }}>{L.paywallAnnualHold}</div>
@@ -10884,11 +10880,11 @@ export default function App() {
               <div data-testid="soft-paywall-monthly-hold" style={{ ...paywallBodyType, color: theme === "dark" ? "#CDBBA6" : "#6B6258", marginTop: PAYWALL_ANNUAL_HOLD_GAP, flexShrink: 0 }}>{L.paywallMonthlyHold}</div>
             ) : null}
             <button type="button" data-testid="soft-paywall-monthly" onClick={tapPaywallMonthly}
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", boxSizing: "border-box", flexShrink: 0, height: paywallMonthlyHeight > 0 ? paywallMonthlyHeight : undefined, marginTop: PAYWALL_MONTHLY_GAP, padding: paywallMonthlyHeight > 0 ? 0 : "13px 24px", background: "none", border: `2px solid ${theme === "dark" ? "#CDBBA6" : "#6B6258"}`, borderRadius: 14, color: theme === "dark" ? "#F5EFE6" : "#1F3A1A", fontFamily: "inherit", fontWeight: 800, fontSize: 15, lineHeight: 1.2, textTransform: "none", letterSpacing: "0", cursor: "pointer" }}>
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", boxSizing: "border-box", flexShrink: 0, height: PAYWALL_MONTHLY_HEIGHT, marginTop: PAYWALL_MONTHLY_GAP, padding: 0, background: "none", border: `2px solid ${theme === "dark" ? "#CDBBA6" : "#1F3A1A"}`, borderRadius: 16, color: theme === "dark" ? "#F6EFE4" : "#1F3A1A", fontFamily: "inherit", fontWeight: 800, fontSize: 20, lineHeight: 1.2, textTransform: "none", letterSpacing: "0", cursor: "pointer" }}>
               {L.paywallMonthlyLabel}
             </button>
             <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
-              style={{ display: "block", width: "100%", flexShrink: 0, marginTop: PAYWALL_FREE_GAP, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#F6EFE4" : "#6B6258", fontFamily: "inherit", fontWeight: 500, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
+              style={{ display: "block", width: "100%", flexShrink: 0, marginTop: PAYWALL_FREE_GAP, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : "#6B6258", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
               {L.paywallDismiss}
             </button>
             <div data-testid="soft-paywall-free-line" style={{ fontWeight: 700, fontSize: PAYWALL_FREE_LINE_SIZE, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : "#6B6258", textAlign: "center", marginTop: PAYWALL_FREE_LINE_GAP, flexShrink: 0 }}>{L.paywallFreeLine}</div>
