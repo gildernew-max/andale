@@ -75,15 +75,15 @@ describe("Learn home streak note", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(4);
   });
 
-  it("uses the earned 2 in the at-risk reminder on the first return", async () => {
+  it("uses the earned 1, not a projected 2, in the at-risk reminder on the first return", async () => {
     homeSeed({ uiLang: "es", streak: 1, lastDay: prevDayKey(localToday()) });
     await openHome();
-    expect(note().textContent).toBe("Tu racha de 2 días termina esta noche. Haz una lección para mantenerla.");
-    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^2/);
+    expect(note().textContent).toBe("Tu racha de 1 día termina esta noche. Haz una lección para mantenerla.");
+    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^1/);
     const user = userEvent.setup();
     await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(note().textContent).toBe("Your 2-day streak ends tonight. Do one lesson to keep it."));
-    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^2/);
+    await waitFor(() => expect(note().textContent).toBe("Your 1-day streak ends tonight. Do one lesson to keep it."));
+    expect(screen.getByTestId("streak").textContent.replace(/\s+/g, " ").trim()).toMatch(/^1/);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).streak).toBe(1);
   });
 

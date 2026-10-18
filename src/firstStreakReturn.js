@@ -163,8 +163,9 @@ export function firstStreakCopy({ lang, mode, title, columnPx } = {}) {
 }
 
 /**
- * Stored streak 1 and last activity yesterday. The flame already shows 2
- * for that day. A stored 2, a same-day visit, or a missed day does not.
+ * Stored streak 1 and last activity yesterday, when the flame shows 2. The flame now shows only the
+ * earned stored number (1 on that day), so this is false until a later change gives the card a new trigger.
+ * A stored 2, a same-day visit, or a missed day never matched.
  */
 export function firstStreakHitsTwo({ streak, lastDay, today } = {}) {
   const stored = Math.floor(Number(streak) || 0);
