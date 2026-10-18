@@ -172,7 +172,7 @@ assert(appSrc.includes("from \"./PaywallFlyAway.jsx\""), "App imports paywall fl
 assert(appSrc.includes("CenzontleFlyAway"), "App imports the shared fly-away");
 assert(!/<PaywallFlyAway/.test(paywallLayout), "paywall does not fly the bird");
 assert(/<LogoMark size=\{44\} data-testid="soft-paywall-cenzontle"/.test(paywallLayout), "centered Cenzontle stays when there is no still");
-assert(/<LogoMark size=\{48\} data-testid="soft-paywall-cenzontle"/.test(paywallLayout), "perched Cenzontle is 48px on the still");
+assert(/<LogoMark size=\{PAYWALL_BIRD_SIZE\} data-testid="soft-paywall-cenzontle"/.test(paywallLayout), "perched Cenzontle is 48px on the still");
 assert((paywallLayout.match(/<PaywallFlyAway/g) || []).length === 0, "no fly-away on the wall");
 assert((paywallLayout.match(/<LogoMark/g) || []).length === 2, "perch and centered fallback; one renders");
 assert(!/animation|paywall-fly|soft-paywall-cenzontle-wing/.test(paywallLayout), "no animation on the wall");
@@ -189,7 +189,7 @@ assert(!/Enroll|enroll|\$99/.test(doneSlice), "free win fly-away does not open E
 assert(flySrc.includes("export function CenzontleFlyAway"), "one shared fly-away component");
 assert(flySrc.includes('surface = "paywall"'), "paywall is the default surface");
 assert(flySrc.includes("<CenzontleFlyAway surface=\"paywall\" />") || flySrc.includes("<CenzontleFlyAway surface=\"paywall\"/>"), "PaywallFlyAway is the paywall mount of the shared motion");
-assert(/<Btn data-testid="soft-paywall-annual"/.test(paywallLayout), "loud annual stays the filled Btn");
+assert(/<button type="button" className="duo-btn" data-testid="soft-paywall-annual"/.test(paywallLayout), "loud annual stays the one filled lime card");
 assert(/<button type="button" data-testid="soft-paywall-dismiss"/.test(paywallLayout), "quiet Continue free stays text");
 
 console.log("ok: Cenzontle fly-away — viewport-clear exit before fade; soft chrome parked.");
