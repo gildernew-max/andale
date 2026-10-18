@@ -211,20 +211,21 @@ describe("word-order tile layout", () => {
     expect(getComputedStyle(hint).visibility).toBe("hidden");
     expect(hint.textContent).toContain("Toca una ficha colocada para moverla.");
     expect(screen.queryByRole("button", { name: "Borrar" })).toBeNull();
-    expect(row.style.minHeight).toBe("124px");
+    expect(row.style.minHeight).toBe("128px");
     const cssText = [...document.querySelectorAll("style")].map((el) => el.textContent).join("\n");
-    expect(cssText).toMatch(/\.order-answer-row > \.tile, \.order-tile-bank \.tile \{ line-height: 22px; \}/);
+    expect(cssText).toMatch(/\.order-answer-row > \.tile, \.order-tile-bank \.tile \{ line-height: 22px; padding-top: 10px; padding-bottom: 10px; min-height: 48px; min-width: 48px; box-sizing: border-box; \}/);
+    expect(cssText).toMatch(/\.order-tile-bank \.tile-slot \{ min-height: 48px; \}/);
 
     await user.click(screen.getByRole("button", { name: "dudo" }));
     expect(getComputedStyle(screen.getByTestId("order-move-hint")).visibility).toBe("visible");
     expect(screen.getByRole("button", { name: "Borrar" })).toBeTruthy();
-    expect(screen.getByTestId("order-answer-row").style.minHeight).toBe("124px");
+    expect(screen.getByTestId("order-answer-row").style.minHeight).toBe("128px");
 
     await user.click(screen.getByTestId("lesson-check"));
     await waitFor(() => expect(getComputedStyle(screen.getByTestId("order-move-hint")).visibility).toBe("hidden"));
     expect(screen.getByTestId("order-move-hint").textContent).toContain("Borrar");
     expect(screen.queryByRole("button", { name: "Borrar" })).toBeNull();
-    expect(screen.getByTestId("order-answer-row").style.minHeight).toBe("124px");
+    expect(screen.getByTestId("order-answer-row").style.minHeight).toBe("128px");
   });
 
   it("keeps fill-in Clear in the header so the chip row does not grow when it shows", async () => {
@@ -299,5 +300,113 @@ describe("word-order tile layout", () => {
     expect(getComputedStyle(screen.getByTestId("order-move-hint")).visibility).toBe("visible");
     expect(screen.getByTestId("lang-en").style.color).toMatch(/#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i);
     expect(document.body.style.background).toMatch(page);
+  });
+});
+
+describe("word-order tile size, Undo, and the checked state", () => {
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+  });
+
+  const BUILD = () => orderQuestion(
+    ["Un", "café,", "por", "favor", "una", "de"],
+    "Un café, por favor",
+    "Construye: “A coffee, please.”",
+  );
+  const placedText = () => screen.queryAllByTestId("placed-tile").map((el) => el.textContent.replace(/×/g, "").trim());
+
+  it("keeps every Build tile and its bank slot at least 48px tall and 48px wide", async () => {
+    const user = userEvent.setup();
+    await openOrder(BUILD());
+    const bank = screen.getByTestId("order-tile-bank");
+    const slots = [...bank.querySelectorAll("[data-tile-slot]")];
+    slots.forEach((slot) => expect(getComputedStyle(slot).minHeight).toBe("48px"));
+    const check = (tile) => {
+      const css = getComputedStyle(tile);
+      expect(css.minHeight).toBe("48px");
+      expect(css.minWidth).toBe("48px");
+      expect(css.paddingTop).toBe("10px");
+      expect(css.paddingBottom).toBe("10px");
+      expect(css.boxSizing).toBe("border-box");
+    };
+    screen.getAllByTestId("bank-tile").forEach(check);
+    await user.click(screen.getByRole("button", { name: "un" }));
+    screen.getAllByTestId("placed-tile").forEach(check);
+    expect(screen.getByTestId("order-answer-row").style.minHeight).toBe("128px");
+  });
+
+  it("Undo takes back the last placed word one at a time, into its own bank slot", async () => {
+    const user = userEvent.setup();
+    await openOrder(BUILD());
+    const undo = screen.getByTestId("order-undo");
+    expect(undo.textContent).toBe("Deshacer");
+    expect(getComputedStyle(screen.getByTestId("order-move-hint")).visibility).toBe("hidden");
+    const slotsBefore = screen.getByTestId("order-tile-bank").querySelectorAll("[data-tile-slot]").length;
+
+    for (const w of ["un", "café,", "por"]) await user.click(screen.getByRole("button", { name: w }));
+    expect(placedText()).toEqual(["Un", "café,", "por"]);
+
+    await user.click(screen.getByTestId("order-undo"));
+    expect(placedText()).toEqual(["Un", "café,"]);
+    expect(screen.getAllByTestId("bank-tile").map((el) => el.textContent)).toContain("por");
+    expect(screen.getByTestId("order-tile-bank").querySelectorAll("[data-tile-slot]")).toHaveLength(slotsBefore);
+
+    await user.click(screen.getByTestId("order-undo"));
+    await user.click(screen.getByTestId("order-undo"));
+    expect(placedText()).toEqual([]);
+    expect(getComputedStyle(screen.getByTestId("order-move-hint")).visibility).toBe("hidden");
+    await user.click(screen.getByTestId("order-undo"));
+    expect(placedText()).toEqual([]);
+    expect(screen.getAllByTestId("bank-tile")).toHaveLength(6);
+  });
+
+  it("Undo clears a pending hole so the next word goes on the end", async () => {
+    const user = userEvent.setup();
+    await openOrder(BUILD());
+    for (const w of ["un", "café,", "por"]) await user.click(screen.getByRole("button", { name: w }));
+    await user.click(screen.getAllByTestId("placed-tile")[1]);
+    expect(placedText()).toEqual(["Un", "por"]);
+    await user.click(screen.getByTestId("order-undo"));
+    expect(placedText()).toEqual(["Un"]);
+    await user.click(screen.getByRole("button", { name: "favor" }));
+    expect(placedText()).toEqual(["Un", "favor"]);
+  });
+
+  it("says Undo in English and keeps Clear", async () => {
+    const user = userEvent.setup();
+    await openOrder(BUILD(), { uiLang: "en" });
+    expect(screen.getByTestId("order-undo").textContent).toBe("Undo");
+    await user.click(screen.getByRole("button", { name: "un" }));
+    expect(screen.getByRole("button", { name: "Clear" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+    expect(placedText()).toEqual([]);
+  });
+
+  it("Undo is gone after CHECK and a wrong answer paints red at full strength in light", async () => {
+    const user = userEvent.setup();
+    await openOrder(BUILD());
+    for (const w of ["café,", "un", "por", "favor"]) await user.click(screen.getByRole("button", { name: w }));
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(getComputedStyle(screen.getByTestId("order-move-hint")).visibility).toBe("hidden"));
+    expect(screen.getByTestId("order-undo").tabIndex).toBe(-1);
+    await user.click(screen.getByTestId("order-undo"));
+    expect(placedText()).toEqual(["Café,", "un", "por", "favor"]);
+    for (const tile of screen.getAllByTestId("placed-tile")) {
+      expect(tile.style.opacity).toBe("1");
+      expect(tile.style.background).toMatch(/#FFDFE0|rgb\(\s*255,\s*223,\s*224\s*\)/i);
+      expect(tile.style.borderTopColor).toMatch(/#EA2B2B|#FF4B4B|rgb\(\s*(234,\s*43,\s*43|255,\s*75,\s*75)\s*\)/i);
+    }
+  });
+
+  it("a right answer keeps the built row at full strength in light", async () => {
+    const user = userEvent.setup();
+    await openOrder(BUILD());
+    for (const w of ["un", "café,", "por", "favor"]) await user.click(screen.getByRole("button", { name: w }));
+    await user.click(screen.getByTestId("lesson-check"));
+    await waitFor(() => expect(screen.getAllByTestId("placed-tile")[0].style.opacity).toBe("1"));
+    for (const tile of screen.getAllByTestId("placed-tile")) {
+      expect(tile.style.background).toMatch(/#D7FFB8|rgb\(\s*215,\s*255,\s*184\s*\)/i);
+    }
   });
 });

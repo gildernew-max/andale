@@ -2756,10 +2756,14 @@ const MemoryTeach = ({ entry, uiLang, D }) => {
 
 /** Brand CLEAR 2026-09-20 size lock — 167's 96/20 still read as a strip. Soft chrome parked. */
 const MEMORY_CARD_MIN = 140;
-/** Order tile line box. With padding 9+9 and border 2+4 the tile is 46px, matching the drawn chip. */
+/** Order tile line box. With padding 10+10 and border 2+4 the tile is 48px, the touch-target floor. */
 const ORDER_TILE_LINE = 22;
+/** Undo and Clear sit in the reserved hint row. The 44px hit area spills into the row's own margins (negative margin), so the row stays 23px and nothing moves. */
+const orderHintBtn = { border: "none", background: "none", fontFamily: "inherit", fontWeight: 900, fontSize: 11, padding: "14px 8px", margin: "-14px 0", minHeight: 44, minWidth: 44, boxSizing: "border-box" };
+const ORDER_TILE_PAD = 10;
+const ORDER_TILE_HEIGHT = ORDER_TILE_LINE + ORDER_TILE_PAD * 2 + 2 + 4;
 /** Two tile rows, the 8px wrap gap, and the answer row's 10+10 padding plus 2+2 borders. */
-const ORDER_ANSWER_MIN_HEIGHT = (ORDER_TILE_LINE + 9 + 9 + 2 + 4) * 2 + 8 + 10 + 10 + 2 + 2;
+const ORDER_ANSWER_MIN_HEIGHT = ORDER_TILE_HEIGHT * 2 + 8 + 10 + 10 + 2 + 2;
 const MEMORY_CARD_TYPE = 26;
 const MEMORY_CARD_MARK = 54;
 /** Width lock only — 169's 480 column + 8px pad + UA body margin still read as a center strip. */
@@ -4653,7 +4657,7 @@ const UI = {
     playScene: "Jugar la escena",
     hubHoy: "Hoy",
     hubHoyQuiet: "Plan de hoy",
-    hubGoalDone: "Meta de hoy cumplida",
+    hubGoalDone: "Meta de hoy cumplida.",
     hoyPlanEyebrow: "HOY · ~10 MIN",
     hoyPlanSell: "Un plan corto para hoy. Unos diez minutos. Luego paras.",
     hoyPlanCta: "Empezar el plan",
@@ -4754,7 +4758,7 @@ const UI = {
     playScene: "Play the scene",
     hubHoy: "Hoy",
     hubHoyQuiet: "Today's plan",
-    hubGoalDone: "Today\u2019s goal done",
+    hubGoalDone: "Daily goal reached.",
     hoyPlanEyebrow: "TODAY · ~10 MIN",
     hoyPlanSell: "A short plan for today. About ten minutes. Then you stop.",
     hoyPlanCta: "Start the plan",
@@ -7584,6 +7588,13 @@ export default function App() {
     setPlaceAt(null);
   };
 
+  // Undo takes back the last placed word. Same rules as tapping it: idle only, and no hole is left to fill.
+  const undoOrderTile = () => {
+    if (status !== "idle") return;
+    setPlaceAt(null);
+    setPlaced((p) => p.slice(0, -1));
+  };
+
   const unplaceOrderTile = (id) => {
     if (status !== "idle") return;
     const idx = placed.indexOf(id);
@@ -7668,7 +7679,9 @@ export default function App() {
     }
     const choiceSlots = [...body.querySelectorAll("[data-tile-slot]")].filter((el) => el.querySelector("[data-testid='choice-chip-key']"));
     const cards = [...body.querySelectorAll("[data-testid='choice-card']")];
-    const targets = choiceSlots.length ? choiceSlots : cards;
+    // Build: after a check the result panel covers the lower rows, so keep the built answer above it.
+    const orderRow = body.querySelector("[data-testid='order-answer-row']");
+    const targets = orderRow ? [orderRow] : (choiceSlots.length ? choiceSlots : cards);
     if (!targets.length) return undefined;
     let bottom = 0;
     targets.forEach((el) => {
@@ -9105,6 +9118,12 @@ export default function App() {
           [data-first-session="1"][data-qtype="mc"] .lesson-head-row { margin-bottom: 12px !important; }
           [data-first-session="1"][data-qtype="mc"] .lesson-mc-grid { gap: 8px !important; }
           [data-first-session="1"][data-qtype="mc"] .lesson-mc-grid .choice-card { padding-top: 10px !important; padding-bottom: 10px !important; }
+          /* Build: 48px tiles plus the Undo row need the same room back on a 640 tall phone. */
+          [data-qtype="order"] [data-testid="lesson-body"] { padding-top: 10px !important; }
+          [data-qtype="order"] .lesson-head-row { margin-bottom: 12px !important; }
+          [data-qtype="order"] .lesson-q-block { margin-bottom: 8px !important; }
+          [data-qtype="order"] .lesson-q-title { margin-bottom: 8px !important; }
+          [data-qtype="order"] .order-hint-row { margin-bottom: 6px !important; }
         }
         .choice-card[data-selected="true"],
         .choice-card[data-selected="true"]:hover:not(:disabled):not([aria-disabled="true"]) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
@@ -9124,7 +9143,8 @@ export default function App() {
         .tile-row { justify-content:flex-start; align-items:center; }
         .tile-slot { display:flex; flex:0 0 auto; width:max-content; max-width:100%; min-width:min-content; min-height:2.55rem; }
         .tile-slot .tile, .tile-row > .tile { flex:0 0 auto; width:max-content; min-width:min-content; max-width:100%; white-space:nowrap; }
-        .order-answer-row > .tile, .order-tile-bank .tile { line-height: ${ORDER_TILE_LINE}px; }
+        .order-answer-row > .tile, .order-tile-bank .tile { line-height: ${ORDER_TILE_LINE}px; padding-top: ${ORDER_TILE_PAD}px; padding-bottom: ${ORDER_TILE_PAD}px; min-height: ${ORDER_TILE_HEIGHT}px; min-width: 48px; box-sizing: border-box; }
+        .order-tile-bank .tile-slot { min-height: ${ORDER_TILE_HEIGHT}px; }
         /* TAP AN ANSWER chips share .tile with word-order tiles. A phrase must wrap inside the card; order tiles stay one word. */
         .tile-slot:has([data-testid="choice-chip-key"]) { flex:0 1 auto; width:min(100%, max-content); min-width:0; max-width:100%; }
         .tile-slot:has([data-testid="choice-chip-key"]) > .tile { flex:0 1 auto; width:min(100%, max-content); min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
@@ -9288,7 +9308,7 @@ export default function App() {
                       <div data-testid={tile.id === "eighty" ? "eighty-twenty-label" : tile.id === "hoy" ? "hub-hoy-label" : tile.id === "stories" ? "hub-stories-label" : tile.id === "sendero" ? "hub-sendero-label" : undefined} style={{ fontWeight: 900, fontSize: 13.5, lineHeight: 1.15, color: tile.id === "stories" && storiesLoud && !firstStreakCard ? LESSON_LIME_INK : D.ink, marginTop: 2 }}>{tile.title}</div>
                       {tile.quiet && <div data-testid={tile.id === "hoy" ? "hub-hoy-quiet" : tile.id === "sendero" ? "hub-sendero-quiet" : tile.id === "eighty" ? "hub-eighty-quiet" : undefined} style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, overflowWrap: "break-word", maxWidth: "100%" }}>{tile.quiet}</div>}
                       {tile.id === "hoy" && goalReached && (
-                        <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}: {DAILY_GOAL}{"\u00a0"}XP.</div>
+                        <div data-testid="hub-hoy-goal" style={{ fontWeight: 800, fontSize: 11, lineHeight: 1.2, color: D.sub, marginTop: 2, maxWidth: "100%" }}>{L.hubGoalDone}</div>
                       )}
                       </span>
                     </button>
@@ -11242,8 +11262,8 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              <div style={{ marginBottom: 18 }}>
-                <h2 style={{ fontWeight: 900, fontSize: 22, margin: "0 0 14px" }}>
+              <div className="lesson-q-block" style={{ marginBottom: 18 }}>
+                <h2 className="lesson-q-title" style={{ fontWeight: 900, fontSize: 22, margin: "0 0 14px" }}>
 	                  {q.type === "order" ? L.buildSentence : q.type === "type" ? L.completeSentence : L.chooseCorrect}
                 </h2>
                 {storyQuizPassage(q) ? (
@@ -11413,7 +11433,12 @@ export default function App() {
                         aria-label={`${label}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                         onClick={() => unplaceOrderTile(id)}
                         style={orderCream
-                          ? { background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink }
+                          ? (status === "wrong"
+                            // Checked, light: a disabled tile faded to 30% and never showed it was wrong. Same red as a missed choice card.
+                            ? { background: D.badBg, borderColor: D.red, borderBottomColor: D.red, color: D.badText, opacity: 1 }
+                            : status !== "idle"
+                              ? { background: D.okBg, borderColor: D.green, borderBottomColor: D.green, color: limeText(D.okText, D), opacity: 1 }
+                              : { background: HUB_CREAM, borderColor: D_LIGHT.line, borderBottomColor: D_LIGHT.line, color: D_LIGHT.ink })
                           : darkLessonChipPaint({ used: true, wrong: status === "wrong", D, cream: HUB_CREAM })}>
                         {label}
                         <span aria-hidden="true" style={{ marginLeft: 6, opacity: 0.5, fontWeight: 900 }}>×</span>
@@ -11421,13 +11446,18 @@ export default function App() {
                     );
                   })}
                 </div>
-                <div data-testid="order-move-hint" aria-hidden={placed.length > 0 && status === "idle" ? undefined : true} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12, visibility: placed.length > 0 && status === "idle" ? "visible" : "hidden" }}>
+                <div className="order-hint-row" data-testid="order-move-hint" aria-hidden={placed.length > 0 && status === "idle" ? undefined : true} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 12, visibility: placed.length > 0 && status === "idle" ? "visible" : "hidden" }}>
                   <div style={{ fontSize: 11.5, fontWeight: 800, color: orderCream ? D_LIGHT.ink : HUB_CREAM }}>
                     {uiLang === "en" ? "Tap a placed word to move it." : "Toca una ficha colocada para moverla."}
                   </div>
-                  <button type="button" tabIndex={placed.length > 0 && status === "idle" ? 0 : -1} onMouseDown={(e) => { if (placed.length > 0 && status === "idle") e.preventDefault(); }} onClick={(e) => { if (!(placed.length > 0 && status === "idle")) return; if (document.activeElement === e.currentTarget) e.currentTarget.blur(); setPlaced([]); setPlaceAt(null); }} style={{ border: "none", background: "none", color: orderCream ? D_LIGHT.ink : HUB_CREAM, fontFamily: "inherit", fontWeight: 900, fontSize: 11, cursor: placed.length > 0 && status === "idle" ? "pointer" : "default", padding: "4px 0" }}>
-                    {uiLang === "en" ? "Clear" : "Borrar"}
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                    <button type="button" data-testid="order-undo" tabIndex={placed.length > 0 && status === "idle" ? 0 : -1} onMouseDown={(e) => { if (placed.length > 0 && status === "idle") e.preventDefault(); }} onClick={(e) => { if (!(placed.length > 0 && status === "idle")) return; if (document.activeElement === e.currentTarget) e.currentTarget.blur(); undoOrderTile(); }} style={{ ...orderHintBtn, color: orderCream ? D_LIGHT.ink : HUB_CREAM, cursor: placed.length > 0 && status === "idle" ? "pointer" : "default" }}>
+                      {uiLang === "en" ? "Undo" : "Deshacer"}
+                    </button>
+                    <button type="button" tabIndex={placed.length > 0 && status === "idle" ? 0 : -1} onMouseDown={(e) => { if (placed.length > 0 && status === "idle") e.preventDefault(); }} onClick={(e) => { if (!(placed.length > 0 && status === "idle")) return; if (document.activeElement === e.currentTarget) e.currentTarget.blur(); setPlaced([]); setPlaceAt(null); }} style={{ ...orderHintBtn, color: orderCream ? D_LIGHT.ink : HUB_CREAM, cursor: placed.length > 0 && status === "idle" ? "pointer" : "default" }}>
+                      {uiLang === "en" ? "Clear" : "Borrar"}
+                    </button>
+                  </div>
                 </div>
                 <div className="tile-bank order-tile-bank" data-testid="order-tile-bank">
                   {q.shuffledWords.map((t) => {
