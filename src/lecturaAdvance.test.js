@@ -15,6 +15,7 @@ import {
   LECTURA_STILL_MARGIN_BOTTOM,
   LECTURA_STORY_OPEN_STILL_TOP,
   lecturaAdvanceScrollY,
+  lecturaClaimNextScrollY,
   lecturaClaimScrollY,
   lecturaLinesAboveNext,
   lecturaCheckpointAnswerClears,
@@ -96,7 +97,8 @@ assert(narrationAt > advanceAt && huntAt > narrationAt, "NEXT sits above narrati
 assert(appSrc.includes("lecturaAdvanceScrollY"), "advance scrolls with the readable-top math");
 assert(appSrc.includes("lecturaQuestionsOpenScrollY"), "QUESTIONS open scrolls the comprehension header");
 assert(appSrc.includes("lecturaClaimScrollY"), "a finished quiz scrolls the claim into view");
-assert(/\[screen, paraIdx, ansSel, freshClaimId, storyView, story0EndSpacer, story0EndScrollNonce\]/.test(appSrc), "a fresh claim remeasures the XP-claimed card");
+assert(appSrc.includes("lecturaClaimNextScrollY"), "a claim with a next-step card scrolls that card into view");
+assert(/\[screen, paraIdx, ansSel, freshClaimId, storyView, story0EndSpacer, story0EndScrollNonce, lecturaCliffhanger\]/.test(appSrc), "a fresh claim remeasures the XP-claimed card");
 assert(appSrc.includes("lecturaSafeAreaBottom()") && appSrc.includes("lecturaPinnedBandTop(window.innerHeight)"), "the claimed card clears the safe area and any pinned NEXT or footer");
 assert(appSrc.includes('data-testid="lectura-questions-header"'), "comprehension header is the questions scroll target");
 assert(appSrc.includes('data-testid="lectura-claim"'), "claim block is the finished-quiz scroll target");
@@ -226,3 +228,10 @@ assert(appSrc.includes("lecturaAdvanceScrollY"), "advance scroll math is unchang
 assert(appSrc.includes("lecturaQuestionsOpenScrollY") && appSrc.includes("lecturaClaimScrollY"), "questions and claim scroll stay");
 
 console.log("ok: lectura advance scroll + NEXT placement");
+
+// After CLAIM the cliffhanger card (Continue) mounts under the claim. 360x640 and 390x844 both left it off-screen.
+const claimView = { claimTop: 420, claimBottom: 510, scrollY: 1789, viewportHeight: 640, viewportTop: 56 };
+assert(lecturaClaimNextScrollY({ ...claimView, nextBottom: undefined }) === lecturaClaimScrollY(claimView), "no next-step card: same as the claim scroll");
+assert(lecturaClaimNextScrollY({ ...claimView, nextBottom: 720 }) === 1789 + 720 - (640 - 12), "the next-step card bottom lands on the 12px floor");
+assert(lecturaClaimNextScrollY({ ...claimView, nextBottom: 560 }) === 1789, "a card already inside the fold does not move the page");
+assert(lecturaClaimNextScrollY({ ...claimView, claimTop: 60, claimBottom: 150, nextBottom: 900 }) === 1789 + 60 - 56, "the claim top never scrolls above the brand bar");
