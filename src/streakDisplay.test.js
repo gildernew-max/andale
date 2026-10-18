@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { streakAfterWin } from "./firstDoor.js";
 import { calendarGap, streakAtRiskLine, streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
 import { contrastRatio } from "./spanishKeyboard.js";
-import { welcomeBackLine } from "./welcomeBack.js";
+import { hasLessonToPickUp, welcomeBackLine } from "./welcomeBack.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -52,6 +52,11 @@ const lessonName = "Subjuntivo presente";
 const caption = (lang, streak) => welcomeBackLine({ lang, streak, lesson: lessonName });
 assert(caption("es", 1).includes("Racha: 1 día.") && !caption("es", 1).includes("días"), "ES 1 keeps día");
 assert(caption("en", 1).includes("Streak: 1 day.") && !caption("en", 1).includes("days"), "EN 1 keeps day");
+assert(welcomeBackLine({ lang: "es", streak: 2, lesson: lessonName, pickUp: false }) === "Qué bueno verte de nuevo. Racha: 2 días.", "nothing to pick up: ES caption is hello and streak only");
+assert(welcomeBackLine({ lang: "en", streak: 2, lesson: lessonName, pickUp: false }) === "Good to see you again. Streak: 2 days.", "nothing to pick up: EN caption is hello and streak only");
+assert(!welcomeBackLine({ lang: "es", streak: 2, lesson: lessonName, pickUp: false }).includes("Sigue donde quedaste"), "no pick-up clause when nothing was started");
+assert(hasLessonToPickUp({ resume: { unitId: "subj1" } }) && hasLessonToPickUp({ done: { subj1: 1 } }), "a resume or a finished unit has a lesson to pick up");
+assert(!hasLessonToPickUp({ done: {}, resume: null, firstSessionDone: true }) && !hasLessonToPickUp({}), "first lesson only: nothing to pick up");
 const earnedCaption = caption("es", oneEs.displayStreak);
 const earnedCaptionEn = caption("en", oneEn.displayStreak);
 assert(earnedCaption.includes("Racha: 2 días.") && !earnedCaption.includes("1 día") && !earnedCaption.includes("día."), "the earned 2 uses días, not día");

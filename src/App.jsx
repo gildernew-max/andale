@@ -19,7 +19,7 @@ import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { STREAK_FLAME, shouldPopFirstStreak, streakChipLabel, streakLabelColor } from "./streakChip.js";
 import { streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
-import { shouldShowWelcomeBack, welcomeBackLine } from "./welcomeBack.js";
+import { hasLessonToPickUp, shouldShowWelcomeBack, welcomeBackLine } from "./welcomeBack.js";
 import { winNumeralColor } from "./winNumeral.js";
 import { scoreCountClause } from "./scoreLine.js";
 import { probeAudioFile, storyAudioUrl } from "./storyAudio.js";
@@ -9211,7 +9211,7 @@ export default function App() {
               ? uiText(BEGINNER_SESSION_TITLE, uiLang)
               : (pathUnit?.title || "");
             const welcomeLine = shouldShowWelcomeBack({ prog, today: todayKey })
-              ? welcomeBackLine({ lang: uiLang, streak: streakView.displayStreak, lesson: resumeLesson })
+              ? welcomeBackLine({ lang: uiLang, streak: streakView.displayStreak, lesson: resumeLesson, pickUp: hasLessonToPickUp(prog) })
               : "";
             const openPath = () => {
               if (!pathUnit) return;
