@@ -30,15 +30,26 @@ function streakSentence(count, lang) {
 /**
  * One caption. `streak` is the number already on the flame (0 drops the streak sentence).
  * `lesson` is the resume / next-lesson title the home already shows. Empty if that name is missing.
+ * `pickUp: false` is for a learner with nothing to pick up (only the first lesson done, no saved
+ * resume): the Hoy tile opens today's plan, so the caption must not name another lesson.
+ * It keeps the same two existing sentences: hello and streak.
  */
-export function welcomeBackLine({ lang = "es", streak = 0, lesson = "" } = {}) {
+export function welcomeBackLine({ lang = "es", streak = 0, lesson = "", pickUp = true } = {}) {
   const name = typeof lesson === "string" ? lesson.trim() : "";
-  if (!name) return "";
   const en = lang === "en";
   const hello = en ? "Good to see you again." : "Qué bueno verte de nuevo.";
-  const pickUp = en
+  const streakBit = streakSentence(streak, en ? "en" : "es");
+  if (pickUp === false) return streakBit ? `${hello} ${streakBit}` : hello;
+  if (!name) return "";
+  const pickUpLine = en
     ? `Pick up where you left off: ${name}.`
     : `Sigue donde quedaste: ${name}.`;
-  const streakBit = streakSentence(streak, en ? "en" : "es");
-  return streakBit ? `${hello} ${streakBit} ${pickUp}` : `${hello} ${pickUp}`;
+  return streakBit ? `${hello} ${streakBit} ${pickUpLine}` : `${hello} ${pickUpLine}`;
+}
+
+/** True once the learner has a saved resume or has finished a unit: there is a lesson to pick up. */
+export function hasLessonToPickUp(prog) {
+  const resume = prog?.resume;
+  if (resume && typeof resume === "object" && !Array.isArray(resume) && resume.unitId) return true;
+  return Object.values(prog?.done || {}).some((n) => Number(n) > 0);
 }
