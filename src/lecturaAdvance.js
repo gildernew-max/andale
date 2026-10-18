@@ -59,6 +59,30 @@ export function lecturaClaimScrollY({
   return Math.max(0, y);
 }
 
+/**
+ * After CLAIM on a story whose next step (the cliffhanger card with its Continue button) mounts
+ * under the claim block: keep the claim visible as the claim scroll above does, then scroll
+ * further down only as far as it takes to bring the card's bottom to the same 12px floor. The
+ * claim's top never goes above the readable top. Without a card it is exactly lecturaClaimScrollY.
+ */
+export function lecturaClaimNextScrollY({ nextBottom, ...claim } = {}) {
+  const base = lecturaClaimScrollY(claim);
+  const y = Number.isFinite(Number(claim.scrollY)) ? Number(claim.scrollY) : 0;
+  const top = Number(claim.claimTop);
+  const bottom = Number(nextBottom);
+  const vh = Number(claim.viewportHeight);
+  if (!Number.isFinite(bottom) || !Number.isFinite(top) || !Number.isFinite(vh)) return base;
+  const inset = Number.isFinite(Number(claim.viewportTop)) ? Math.max(0, Number(claim.viewportTop)) : 0;
+  const gap = Number.isFinite(Number(claim.bottomGap)) ? Math.max(0, Number(claim.bottomGap)) : 12;
+  const safe = Number.isFinite(Number(claim.safeAreaBottom)) ? Math.max(0, Number(claim.safeAreaBottom)) : 0;
+  let floor = vh - gap - safe;
+  if (claim.bandTop != null && Number.isFinite(Number(claim.bandTop))) floor = Math.min(floor, Number(claim.bandTop) - gap);
+  if (floor <= inset) return base;
+  const want = Math.ceil((y + bottom - floor) - 1e-9);
+  const cap = Math.max(0, y + top - inset);
+  return Math.max(base, Math.min(want, cap));
+}
+
 /** Pixels of env(safe-area-inset-bottom). Zero when the inset is unsupported. */
 export function lecturaSafeAreaBottom() {
   if (typeof document === "undefined" || !document.body) return 0;
