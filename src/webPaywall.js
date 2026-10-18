@@ -44,3 +44,17 @@ export const PAYWALL_BIRD_SIZE = 48;
 export const PAYWALL_LIME = "#58CC02";
 export const PAYWALL_ANNUAL_HEIGHT = 96;
 export const PAYWALL_MONTHLY_HEIGHT = 64;
+
+/**
+ * The cleared story still sits in a frame that shrinks when the card runs out of room (the
+ * "plans aren't open yet" lines grow the card). The image keeps its own height unless it is
+ * capped, so it spilled out of the shrunk frame over the headline. Returns the max height that
+ * keeps the image inside its frame, or null when it already fits. Never below minHeight.
+ */
+export function paywallStillMaxHeight({ frameHeight, imgHeight, minHeight = 48 } = {}) {
+  const frame = Number(frameHeight);
+  const img = Number(imgHeight);
+  if (!Number.isFinite(frame) || !Number.isFinite(img) || !(frame > 0)) return null;
+  if (img <= frame + 1) return null;
+  return Math.max(Number(minHeight) || 0, Math.floor(frame));
+}
