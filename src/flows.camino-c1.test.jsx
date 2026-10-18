@@ -376,7 +376,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     }
   });
 
-  it("dark soft paywall title and body are cream on #1E2128; the price line is quiet ink", async () => {
+  it("dark soft paywall title and body are cream on #1E2128; the billed total is ink on the lime card", async () => {
     cleanup();
     seedProgress({ theme: "dark", uiLang: "es", streak: 1, lastDay: localToday(), paywallSeen: false, lecturaStartedAt: 1, bajioUnlockSeen: true });
     render(<App />);
@@ -399,19 +399,20 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(headline.style.color).not.toMatch(nearWhite);
     const price = screen.getByTestId("soft-paywall-annual-price");
     expect(price.textContent).toBe("US$39.99\u00A0al\u00A0año");
-    expect(price.style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
-    expect(price.style.color).not.toMatch(cream);
-    expect(price.style.textAlign).toBe("center");
+    expect(price.style.color).toMatch(/#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i);
+    expect(price.style.fontSize).toBe("30px");
+    expect(price.style.fontWeight).toBe("900");
     expect(body.style.color).toMatch(cream);
     expect(body.style.color).not.toMatch(nearWhite);
     expect(screen.getByTestId("soft-paywall-annual").style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
-    expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(cream);
+    expect(screen.getByTestId("soft-paywall-dismiss").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-dismiss").style.color).not.toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();
     const monthly = screen.getByTestId("soft-paywall-monthly");
     expect(monthly.textContent).toBe("US$6.99\u00A0al\u00A0mes");
     expect(monthly.style.background).toBe("none");
-    expect(monthly.style.color).toMatch(/#F5EFE6|rgb\(\s*245,\s*239,\s*230\s*\)/i);
+    expect(monthly.style.color).toMatch(cream);
     expect(monthly.style.borderTopColor).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
     expect(screen.getByTestId("soft-paywall-free-line").style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
   });
@@ -1398,7 +1399,7 @@ describe("paywall headline depends on a stored story start", () => {
     expect(es.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE.es);
     expect(es.card).not.toContain("La historia sigue.");
     expect(es.card).not.toContain("Hay mucho por leer.");
-    expect(es.parts["soft-paywall-annual"]).toBe("Empezar plan anual");
+    expect(es.parts["soft-paywall-annual-label"]).toBe("Empezar plan anual");
     expect(es.card).not.toContain("[ANNUAL PRICE]");
     expect(es.card).not.toContain("{price}");
     expect(es.parts["soft-paywall-dismiss"]).toBe("Seguir gratis");
@@ -1408,7 +1409,7 @@ describe("paywall headline depends on a stored story start", () => {
     expect(en.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE.en);
     expect(en.card).not.toContain("The story goes on.");
     expect(en.card).not.toContain("There's a lot to read.");
-    expect(en.parts["soft-paywall-annual"]).toBe("Start annual plan");
+    expect(en.parts["soft-paywall-annual-label"]).toBe("Start annual plan");
     expect(en.card).not.toContain("[ANNUAL PRICE]");
     expect(en.card).not.toContain("{price}");
     expect(en.parts["soft-paywall-dismiss"]).toBe("Continue free");

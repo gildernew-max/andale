@@ -489,13 +489,16 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
   expect(body.textContent).toBe(copy.benefit);
   expect(body.style.textWrap).toBe("");
-  expect(annual.textContent).toBe(copy.annual);
+  expect(screen.getByTestId("soft-paywall-annual-label").textContent).toBe(copy.annual);
+  expect(annual.textContent).toBe(copy.annual + copy.price);
+  expect(annual.contains(screen.getByTestId("soft-paywall-annual-price"))).toBe(true);
   expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe(copy.price);
   expect(screen.queryByTestId("soft-paywall-annual-hold")).toBeNull();
   expect(wall.textContent).not.toMatch(/\[ANNUAL PRICE\]|\{price\}/);
   expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
   expect(dismiss.textContent).toBe(copy.dismiss);
-  expect(annual.textContent).not.toMatch(/\$39\.99|\$6\.99/);
+  expect(screen.getByTestId("soft-paywall-annual-label").textContent).not.toMatch(/\$39\.99|\$6\.99/);
+  expect(wall.textContent).not.toMatch(/12\s*[x×]|83\.88|3\.33|\d\s*%|was \$/i);
   expect(wall.textContent).not.toMatch(/Vista previa|you won|Apple|Restore|Un mes|One month/);
   expect(wall.textContent).toContain(copy.price);
   const monthly = screen.getByTestId("soft-paywall-monthly");
@@ -508,7 +511,7 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(monthly.style.borderWidth).toBe("2px");
   expect(monthly.style.borderStyle).toBe("solid");
   expect(monthly.style.color).toMatch(/#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i);
-  expect(monthly.style.borderTopColor).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
+  expect(monthly.style.borderTopColor).toMatch(/#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i);
   expect(monthly.style.marginTop).toBe("12px");
   expect(monthly.style.width).toBe("100%");
   expect(monthly.style.background).not.toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
@@ -555,13 +558,15 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(card.style.background).not.toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
   expect(annual.className).toMatch(/duo-btn/);
   expect(annual.style.background).toMatch(/#58CC02|rgb\(88,\s*204,\s*2\)/i);
-  expect(annual.style.borderBottom).toMatch(/4px solid/);
+  expect(annual.style.borderBottom).not.toMatch(/4px/);
+  expect(annual.style.height).toBe("96px");
+  expect(annual.style.borderRadius).toBe("16px");
   expect(dismiss.className).not.toMatch(/duo-btn/);
   expect(dismiss.style.background).toBe("none");
   expect(dismiss.style.padding).toBe("11px 0px");
   expect(dismiss.style.minHeight).toBe("44px");
   expect(dismiss.style.fontSize).toBe("15px");
-  expect(dismiss.style.fontWeight).toBe("500");
+  expect(dismiss.style.fontWeight).toBe("700");
   expect(dismiss.style.marginTop).toBe("12px");
   expect(dismiss.style.borderBottom).not.toMatch(/4px/);
   expect(dismiss.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
@@ -1041,7 +1046,7 @@ export const funnelOf = (name) => (window.__andaleFunnelLog || []).filter((e) =>
 export const WALL_STRING_IDS = [
   "soft-paywall-headline",
   "soft-paywall-body",
-  "soft-paywall-annual",
+  "soft-paywall-annual-label",
   "soft-paywall-dismiss",
 ];
 

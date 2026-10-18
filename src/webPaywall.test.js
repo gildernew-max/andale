@@ -38,3 +38,9 @@ assert(PAYWALL_FREE_LINE_GAP === 8, "the free line sits 8px under Continue free"
 assert(PAYWALL_FREE_LINE_SIZE === 12, "the free line is one step down from 13.5");
 
 console.log("webPaywall.test.js ok");
+
+{
+  const m = await import("./webPaywall.js");
+  assert(m.PAYWALL_STILL_HEIGHT === 140 && m.PAYWALL_BIRD_SIZE === 48, "still is 140px with a 48px bird");
+  assert(m.PAYWALL_LIME === "#58CC02" && m.PAYWALL_ANNUAL_HEIGHT === 96 && m.PAYWALL_MONTHLY_HEIGHT === 64, "annual card is lime 96px; monthly is 64px");
+}

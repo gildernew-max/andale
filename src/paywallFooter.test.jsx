@@ -21,10 +21,10 @@ const VIEWPORTS = [
 ];
 
 const FACES = [
-  { theme: "light", uiLang: "en", annual: "Start annual plan", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", monthly: "$6.99\u00A0a\u00A0month", monthlyHold: "Monthly plans aren't open yet. Keep reading free for now.", freeLine: "Free: stories unlock one at a time, in order.", holdInk: "#6b6258", freeInk: "#6b6258", monthlyInk: "#1f3a1a", monthlyBorder: "#6b6258", page: "" },
-  { theme: "light", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", monthly: "US$6.99\u00A0al\u00A0mes", monthlyHold: "El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.", freeLine: "Gratis: los cuentos se abren uno a uno, en orden.", holdInk: "#6b6258", freeInk: "#6b6258", monthlyInk: "#1f3a1a", monthlyBorder: "#6b6258", page: "" },
-  { theme: "dark", uiLang: "en", annual: "Start annual plan", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", monthly: "$6.99\u00A0a\u00A0month", monthlyHold: "Monthly plans aren't open yet. Keep reading free for now.", freeLine: "Free: stories unlock one at a time, in order.", holdInk: "#cdbba6", freeInk: "#f6efe4", monthlyInk: "#f5efe6", monthlyBorder: "#cdbba6", page: "#15171c" },
-  { theme: "dark", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", monthly: "US$6.99\u00A0al\u00A0mes", monthlyHold: "El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.", freeLine: "Gratis: los cuentos se abren uno a uno, en orden.", holdInk: "#cdbba6", freeInk: "#f6efe4", monthlyInk: "#f5efe6", monthlyBorder: "#cdbba6", page: "#15171c" },
+  { theme: "light", uiLang: "en", annual: "Start annual plan", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", monthly: "$6.99\u00A0a\u00A0month", monthlyHold: "Monthly plans aren't open yet. Keep reading free for now.", freeLine: "Free: stories unlock one at a time, in order.", holdInk: "#6b6258", freeInk: "#6b6258", monthlyInk: "#1f3a1a", monthlyBorder: "#1f3a1a", page: "" },
+  { theme: "light", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", monthly: "US$6.99\u00A0al\u00A0mes", monthlyHold: "El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.", freeLine: "Gratis: los cuentos se abren uno a uno, en orden.", holdInk: "#6b6258", freeInk: "#6b6258", monthlyInk: "#1f3a1a", monthlyBorder: "#1f3a1a", page: "" },
+  { theme: "dark", uiLang: "en", annual: "Start annual plan", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", monthly: "$6.99\u00A0a\u00A0month", monthlyHold: "Monthly plans aren't open yet. Keep reading free for now.", freeLine: "Free: stories unlock one at a time, in order.", holdInk: "#cdbba6", freeInk: "#cdbba6", monthlyInk: "#f6efe4", monthlyBorder: "#cdbba6", page: "#15171c" },
+  { theme: "dark", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", monthly: "US$6.99\u00A0al\u00A0mes", monthlyHold: "El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.", freeLine: "Gratis: los cuentos se abren uno a uno, en orden.", holdInk: "#cdbba6", freeInk: "#cdbba6", monthlyInk: "#f6efe4", monthlyBorder: "#cdbba6", page: "#15171c" },
 ];
 
 const norm = (value) => {
@@ -129,7 +129,7 @@ describe("paywall card", () => {
       const card = screen.getByTestId("soft-paywall-card");
       const wall = screen.getByTestId("soft-paywall");
 
-      expect(year.textContent).toBe(annual);
+      expect(screen.getByTestId("soft-paywall-annual-label").textContent).toBe(annual);
       expect(dismiss.textContent).toBe(free);
       expect(card.contains(year)).toBe(true);
       expect(card.contains(dismiss)).toBe(true);
@@ -169,6 +169,12 @@ describe("paywall card", () => {
       expect(year.disabled).toBe(false);
       expect(year.style.pointerEvents).not.toBe("none");
       expect(year.style.width).toBe("100%");
+      expect(year.style.height).toBe("96px");
+      expect(year.style.borderRadius).toBe("16px");
+      expect(monthly.style.height).toBe("64px");
+      expect(monthly.style.borderRadius).toBe("16px");
+      expect(wall.querySelectorAll("button[style*=\"background: rgb(88, 204, 2)\"]")).toHaveLength(1);
+      expect(wall.textContent).not.toMatch(/12\s*[x×]|83\.88|3\.33|\d\s*%|was \$/i);
       expect(norm(year.style.background)).toBe("#58cc02");
       expect(norm(year.style.color)).toBe("#1f3a1a");
       expect(dismiss.disabled).toBe(false);
@@ -179,18 +185,17 @@ describe("paywall card", () => {
       expect(dismiss.style.minHeight).toBe("44px");
       expect(dismiss.style.padding).toBe("11px 0px");
       expect(dismiss.style.fontSize).toBe("15px");
-      expect(dismiss.style.fontWeight).toBe("500");
+      expect(dismiss.style.fontWeight).toBe("700");
       expect(norm(dismiss.style.color)).toBe(freeInk);
       expect(norm(dismiss.style.color)).not.toBe("#1f3a1a");
 
       const priceLine = uiLang === "en" ? "$39.99\u00A0a\u00A0year" : "US$39.99\u00A0al\u00A0año";
       const price = screen.getByTestId("soft-paywall-annual-price");
       expect(price.textContent).toBe(priceLine);
-      expect(price.style.fontSize).toBe("13.5px");
-      expect(price.style.fontWeight).toBe("700");
-      expect(price.style.textAlign).toBe("center");
-      expect(norm(price.style.color)).toBe(holdInk);
-      expect(price.compareDocumentPosition(year) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(price.style.fontSize).toBe("30px");
+      expect(price.style.fontWeight).toBe("900");
+      expect(norm(price.style.color)).toBe("#1f3a1a");
+      expect(year.contains(price)).toBe(true);
       expect(screen.queryByTestId("soft-paywall-annual-hold")).toBeNull();
       expect(wall.textContent).not.toMatch(/\[ANNUAL PRICE\]|\{price\}/);
       expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
@@ -237,7 +242,7 @@ describe("paywall card", () => {
       expect(monthHold.style.fontSize).toBe("13.5px");
       expect(monthHold.style.fontWeight).toBe("700");
       expect(norm(monthHold.style.color)).toBe(holdInk);
-      expect(screen.getByTestId("soft-paywall-annual").textContent).toBe(annual);
+      expect(screen.getByTestId("soft-paywall-annual-label").textContent).toBe(annual);
       expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe(monthlyLabel);
       expect(norm(screen.getByTestId("soft-paywall-annual").style.background)).toBe("#58cc02");
       expect((window.__andaleFunnelLog || []).filter((event) => event.event === "paywall_tap" && event.choice === "monthly")).toHaveLength(0);

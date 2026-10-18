@@ -46,11 +46,10 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     const price = screen.getByTestId("soft-paywall-annual-price");
     expect(price.textContent).toBe(ES_PRICE);
     expect(price.textContent.includes(" ")).toBe(false);
-    expect(price.style.textAlign).toBe("center");
-    expect(price.style.fontWeight).toBe("700");
-    expect(price.style.fontSize).toBe("13.5px");
-    expect(price.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
-    expect(price.compareDocumentPosition(screen.getByTestId("soft-paywall-annual")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(price.style.fontWeight).toBe("900");
+    expect(price.style.fontSize).toBe("30px");
+    expect(price.style.color).toMatch(/#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-annual").contains(price)).toBe(true);
     expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("US$6.99\u00A0al\u00A0mes");
     expect(screen.getByTestId("soft-paywall-free-line").textContent).toBe("Gratis: los cuentos se abren uno a uno, en orden.");
     expect(wall.textContent).not.toMatch(/Un mes|One month/);
@@ -66,7 +65,7 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     fireEvent.click(screen.getByTestId("soft-paywall-monthly"));
     await waitFor(() => expect((window.__andaleFunnelLog || []).some((event) => event.event === "tap_monthly" && event.source === "locked_story")).toBe(true));
     expect((window.__andaleFunnelLog || []).some((event) => event.event === "paywall_tap" && event.choice === "monthly")).toBe(false);
-    expect(screen.getByTestId("soft-paywall-annual").textContent).toBe("Empezar plan anual");
+    expect(screen.getByTestId("soft-paywall-annual-label").textContent).toBe("Empezar plan anual");
     expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("US$6.99\u00A0al\u00A0mes");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
@@ -130,7 +129,7 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     const price = screen.getByTestId("soft-paywall-annual-price");
     expect(price.textContent).toBe(EN_PRICE);
     expect(price.textContent.includes(" ")).toBe(false);
-    expect(price.style.color).toMatch(/#CDBBA6|rgb\(\s*205,\s*187,\s*166\s*\)/i);
-    expect(price.style.textAlign).toBe("center");
+    expect(price.style.color).toMatch(/#1F3A1A|rgb\(\s*31,\s*58,\s*26\s*\)/i);
+    expect(screen.getByTestId("soft-paywall-annual").contains(price)).toBe(true);
   });
 });

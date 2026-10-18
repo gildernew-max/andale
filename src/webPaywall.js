@@ -35,3 +35,12 @@ export const PAYWALL_FREE_LINE_SIZE = 12;
 
 /** The post-tap line sits this many pixels under the annual button. Monthly uses the same slot. */
 export const PAYWALL_ANNUAL_HOLD_GAP = 8;
+
+/** Still above the headline: 140px tall at 16:9. One static 48px Cenzontle perches on its bottom-right corner. */
+export const PAYWALL_STILL_HEIGHT = 140;
+export const PAYWALL_BIRD_SIZE = 48;
+
+/** The annual card is the only filled element: lime, whole card tappable, 96px. Monthly is outlined at 64px. */
+export const PAYWALL_LIME = "#58CC02";
+export const PAYWALL_ANNUAL_HEIGHT = 96;
+export const PAYWALL_MONTHLY_HEIGHT = 64;
