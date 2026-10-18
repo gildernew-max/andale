@@ -27,7 +27,7 @@ import { watchWordSheetPlacement, wordSheetClose, wordSheetCopy, wordSheetReveal
 import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { LOCKED_STORY_PAYWALL, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT, PAYWALL_MONTHLY_GAP, annualPriceLine } from "./webPaywall.js";
+import { LOCKED_STORY_PAYWALL, paywallStillMaxHeight, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT, PAYWALL_MONTHLY_GAP, annualPriceLine } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent, paywallSeenSourceFor } from "./funnel.js";
 import { FIRST_ACTIVITY_KEY, LOCKED_CAP_FADE_MS, LOCKED_CAP_GAP_PX, LOCKED_CAP_INK, LOCKED_CAP_SIZE, LOCKED_STORY_CAP_LINE, PAYWALL_SHOWN_KEY, isPaywallMidFlow, learnerDayNumber, paywallOpenDecision, readPlainDay, resolveFirstActivityDay, resolvePaywallShownDay, writePlainDay } from "./paywallTrigger.js";
@@ -8304,6 +8304,11 @@ export default function App() {
     if (overflow > 1) {
       const next = Math.max(48, img.getBoundingClientRect().height - overflow);
       img.style.maxHeight = `${next}px`;
+      img.style.width = "auto";
+    }
+    const fit = paywallStillMaxHeight({ frameHeight: frame.getBoundingClientRect().height, imgHeight: img.getBoundingClientRect().height });
+    if (fit != null) {
+      img.style.maxHeight = `${fit}px`;
       img.style.width = "auto";
     }
   }, [showSoftPaywall, uiLang, theme, paywallAnnualHold, paywallMonthlyHold, paywallStillSrc]);
