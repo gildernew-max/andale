@@ -7693,6 +7693,25 @@ export default function App() {
     return undefined;
   }, [screen, status, qi, theme, footerCapped, showWhy, typed, lessonResultPad]);
 
+  // Build, after CHECK: the red or green panel is a flow sibling under the lesson body, so the
+  // body is only as tall as what the panel leaves. The effect above scrolls the built answer
+  // clear of the panel once, but a later scroll back to the top used to park the last row of
+  // wrapped tiles beneath it. Every scroll of the body re-clears it, so the built answer is
+  // never hidden. Scrolling down (more room) is untouched. A row taller than the visible body
+  // is left alone, otherwise its top could never be reached.
+  const keepBuildAnswerClear = () => {
+    if (screen !== "lesson" || status === "idle") return;
+    const body = lessonBodyRef.current;
+    const footer = lessonFooterRef.current;
+    const orderRow = body?.querySelector("[data-testid='order-answer-row']");
+    if (!body || !footer || !orderRow) return;
+    const rowBox = orderRow.getBoundingClientRect();
+    const bodyBox = body.getBoundingClientRect();
+    if (!(rowBox.height > 0) || rowBox.height > bodyBox.height - 16) return;
+    const overflow = rowBox.bottom - (footer.getBoundingClientRect().top - 8);
+    if (overflow > 0.5) body.scrollTop += overflow;
+  };
+
   // Accent keys live in the scrolling lesson body. If a wrap leaves them
   // crossing the pinned Comprobar / Check bar, scroll until the pad under
   // the keys is the only thing touching that bar.
@@ -11138,7 +11157,7 @@ export default function App() {
       {/* ---------- LESSON ---------- */}
       {screen === "lesson" && q && (
         <div data-testid={orderCream ? "order-cream-page" : orderDark ? "order-dark-page" : "lesson-shell"} data-count={session.questions.length} data-first-session={session.firstSession ? "1" : "0"} data-beginner-first={session.firstSession ? (session.beginnerFirst ? "1" : "0") : undefined} data-cold-first-hoy={session.coldFirstHoy ? "1" : undefined} data-qtype={q.type} style={{ flex: "1 1 auto", minHeight: 0, width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", overflow: "hidden", ...(orderCream ? { background: HUB_CREAM, color: D_LIGHT.ink } : orderDark ? { background: D.bg, color: HUB_CREAM } : null) }}>
-        <div ref={lessonBodyRef} data-testid="lesson-body" style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 0", position: "relative", flex: "1 1 0%", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", background: D.bg }}>
+        <div ref={lessonBodyRef} data-testid="lesson-body" onScroll={keepBuildAnswerClear} style={{ maxWidth: 600, width: "100%", margin: "0 auto", boxSizing: "border-box", padding: "20px 20px 0", position: "relative", flex: "1 1 0%", minHeight: 0, overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", background: D.bg }}>
           <div data-testid="lesson-result-pad" style={{ paddingBottom: lessonResultPad }}>
           {/* Praise and combo confetti both stamp Date.now(). A shared key leaves the word mounted after CONTINUE. */}
           {inter && (status === "correct" || status === "almost") && (
