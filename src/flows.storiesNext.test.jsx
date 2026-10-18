@@ -97,7 +97,7 @@ describe("Stories is loud after Hoy until the first claim", () => {
     expect(hoy.style.boxShadow).not.toMatch(LIME);
     expect(stories.style.background).toMatch(LIME);
     expect(screen.getByTestId("hub-stories-label").textContent).toBe(NEXT.en);
-    expect(screen.getByTestId("hub-hoy-goal").textContent).toBe("Today\u2019s goal done: 40\u00a0XP.");
+    expect(screen.getByTestId("hub-hoy-goal").textContent).toBe("Daily goal reached.");
   });
 
   it("a new day after an earlier claim leaves Hoy outlined and Stories quiet", async () => {
@@ -223,7 +223,7 @@ describe("Stories is loud after Hoy until the first claim", () => {
     expect(stories.style.borderBottom).toMatch(LIP);
     expect(screen.getByTestId("hub-stories-label").textContent).toBe(NEXT.en);
     expect(screen.getByTestId("hub-stories-label").style.color).toMatch(INK);
-    expect(screen.getByTestId("hub-hoy-goal").textContent).toBe("Today\u2019s goal done: 40\u00a0XP.");
+    expect(screen.getByTestId("hub-hoy-goal").textContent).toBe("Daily goal reached.");
     expect(screen.getByTestId("door-meta").textContent).toMatch(new RegExp(`Goal:\\s*${saved.xpToday}/40 XP`));
 
     await user.click(stories);
