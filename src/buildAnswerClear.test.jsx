@@ -97,38 +97,33 @@ describe("Build keeps every placed tile above the result panel", () => {
       act(() => { body.scrollTop = 0; fireEvent.scroll(body); });
       expect(rowBottom(body)).toBeLessThanOrEqual(limit);
       expect(body.scrollTop).toBeGreaterThan(0);
+
+      if (lang !== "es") return;
+      // Scrolling further down is not pulled back.
+      const settled = body.scrollTop;
+      act(() => { body.scrollTop = settled + 60; fireEvent.scroll(body); });
+      expect(body.scrollTop).toBe(settled + 60);
+
+      // A row taller than the visible body is left alone so its top stays reachable.
+      ROW.height = BODY.height;
+      try {
+        act(() => { body.scrollTop = 0; fireEvent.scroll(body); });
+        expect(body.scrollTop).toBe(0);
+      } finally {
+        ROW.height = 128;
+      }
+
+      // Panel and answer row stay in normal flow, the row inside the scrolling body.
+      const footer = screen.getByTestId("lesson-footer");
+      const row = screen.getByTestId("order-answer-row");
+      expect(body.contains(row)).toBe(true);
+      expect(body.contains(footer)).toBe(false);
+      expect(body.nextElementSibling).toBe(footer);
+      for (const el of [footer, row, body]) {
+        expect(getComputedStyle(el).position).not.toBe("absolute");
+        expect(getComputedStyle(el).position).not.toBe("fixed");
+      }
+      expect(screen.getByTestId("lesson-result-pad").contains(row)).toBe(true);
     });
   }
-
-  it("lets the body scroll further down without pulling it back", async () => {
-    const { body } = await openAndCheckWrong("es");
-    const settled = body.scrollTop;
-    act(() => { body.scrollTop = settled + 60; fireEvent.scroll(body); });
-    expect(body.scrollTop).toBe(settled + 60);
-  });
-
-  it("leaves a row taller than the visible body alone so its top stays reachable", async () => {
-    const { body } = await openAndCheckWrong("es");
-    ROW.height = BODY.height; // taller than body minus the margin
-    try {
-      act(() => { body.scrollTop = 0; fireEvent.scroll(body); });
-      expect(body.scrollTop).toBe(0);
-    } finally {
-      ROW.height = 128;
-    }
-  });
-
-  it("keeps the panel and the answer row in normal flow, the row inside the scrolling body", async () => {
-    const { body } = await openAndCheckWrong("es");
-    const footer = screen.getByTestId("lesson-footer");
-    const row = screen.getByTestId("order-answer-row");
-    expect(body.contains(row)).toBe(true);
-    expect(body.contains(footer)).toBe(false);
-    expect(body.nextElementSibling).toBe(footer);
-    for (const el of [footer, row, body]) {
-      expect(getComputedStyle(el).position).not.toBe("absolute");
-      expect(getComputedStyle(el).position).not.toBe("fixed");
-    }
-    expect(screen.getByTestId("lesson-result-pad").contains(row)).toBe(true);
-  });
 });
