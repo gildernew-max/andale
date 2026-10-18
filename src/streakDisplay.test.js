@@ -27,10 +27,10 @@ assert(riskEn.displayStreak === 4 && riskEn.status === "at-risk", "EN yesterday 
 assert(riskEn.line === "Your 4-day streak ends tonight. Do one lesson to keep it.", "EN at-risk plural is George's sentence");
 
 const oneEs = view({ streak: 1, lastDay: yesterday });
-assert(oneEs.displayStreak === 2 && oneEs.status === "at-risk", "the first return shows the earned 2");
-assert(oneEs.line === "Tu racha de 2 días termina esta noche. Haz una lección para mantenerla.", "ES first return uses the earned count in the lesson sentence");
+assert(oneEs.displayStreak === 1 && oneEs.status === "at-risk", "the first return shows the earned 1, not a projected 2");
+assert(oneEs.line === "Tu racha de 1 día termina esta noche. Haz una lección para mantenerla.", "ES first return uses the earned 1 in the lesson sentence");
 const oneEn = view({ streak: 1, lastDay: yesterday }, { lang: "en" });
-assert(oneEn.displayStreak === 2 && oneEn.line === "Your 2-day streak ends tonight. Do one lesson to keep it.", "EN first return uses the earned count");
+assert(oneEn.displayStreak === 1 && oneEn.line === "Your 1-day streak ends tonight. Do one lesson to keep it.", "EN first return uses the earned 1");
 assert(oneEs.line.includes(String(oneEs.displayStreak)) && oneEn.line.includes(String(oneEn.displayStreak)), "the reminder uses the same number as the flame");
 assert(streakAtRiskLine(1, "es") === "Tu racha de 1 día termina esta noche. Haz una lección para mantenerla.", "ES reminder stays singular only at 1");
 assert(streakAtRiskLine(1, "en") === "Your 1-day streak ends tonight. Do one lesson to keep it.", "EN reminder stays the 1-day sentence only at 1");
@@ -43,7 +43,11 @@ for (const n of [2, 3, 4, 11]) {
   assert(en.includes(`${n}-day streak`) && !en.includes("-days") && !en.includes(`${n}-days`), `EN reminder ${n} keeps the singular compound`);
   assert(!en.startsWith("Your 1-day"), `EN reminder ${n} is not the 1-day sentence`);
 }
-assert(view({ streak: 1, lastDay: yesterday }).displayStreak === 2, "the stored 1 is not what the flame shows");
+assert(view({ streak: 1, lastDay: yesterday }).displayStreak === 1, "the flame never shows more than the stored streak");
+for (const n of [1, 2, 3, 7]) {
+  assert(view({ streak: n, lastDay: yesterday }).displayStreak === n, `stored ${n} with yesterday shows ${n}, no projection`);
+  assert(view({ streak: n, lastDay: today }).displayStreak === n, `stored ${n} with a win today shows ${n}`);
+}
 const stillStored = { streak: 1, lastDay: yesterday };
 view(stillStored);
 assert(stillStored.streak === 1 && stillStored.lastDay === yesterday, "showing 2 does not write the stored streak");
@@ -59,8 +63,8 @@ assert(hasLessonToPickUp({ resume: { unitId: "subj1" } }) && hasLessonToPickUp({
 assert(!hasLessonToPickUp({ done: {}, resume: null, firstSessionDone: true }) && !hasLessonToPickUp({}), "first lesson only: nothing to pick up");
 const earnedCaption = caption("es", oneEs.displayStreak);
 const earnedCaptionEn = caption("en", oneEn.displayStreak);
-assert(earnedCaption.includes("Racha: 2 días.") && !earnedCaption.includes("1 día") && !earnedCaption.includes("día."), "the earned 2 uses días, not día");
-assert(earnedCaptionEn.includes("Streak: 2 days.") && !earnedCaptionEn.includes("1 day") && !earnedCaptionEn.includes(" day."), "the earned 2 uses days, not day");
+assert(earnedCaption.includes("Racha: 1 día.") && !earnedCaption.includes("días"), "the earned 1 uses día, not días");
+assert(earnedCaptionEn.includes("Streak: 1 day.") && !earnedCaptionEn.includes("days"), "the earned 1 uses day, not days");
 for (const n of [2, 3, 4, 11]) {
   const es = caption("es", n);
   const en = caption("en", n);
