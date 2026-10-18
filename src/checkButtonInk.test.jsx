@@ -147,9 +147,9 @@ describe("lesson Check and Continue ink", () => {
     expect((appSrc.match(/data-testid="lesson-check" ink=\{LESSON_LIME_INK\}/g) || []).length).toBe(2);
     expect(appSrc).toContain('const WRONG_CONTINUE_INK = "#3A1A1A"');
     expect((appSrc.match(/ink=\{status === "wrong" \? WRONG_CONTINUE_INK : LESSON_LIME_INK\}/g) || []).length).toBe(2);
-    expect((appSrc.match(/data-testid="soft-paywall-annual" ink=\{LESSON_LIME_INK\}/g) || []).length).toBe(1);
-    const annual = appSrc.slice(appSrc.indexOf('data-testid="soft-paywall-annual"'), appSrc.indexOf('data-testid="soft-paywall-annual"') + 160);
-    expect(annual).toContain("ink={LESSON_LIME_INK}");
+    const annual = appSrc.slice(appSrc.indexOf('data-testid="soft-paywall-annual"'), appSrc.indexOf('data-testid="soft-paywall-annual"') + 700);
+    expect(annual).toContain("color: LESSON_LIME_INK");
+    expect(annual).toContain("background: PAYWALL_LIME");
     expect(appSrc).not.toContain('data-testid="soft-paywall-monthly" ink=');
     expect(appSrc).not.toContain('data-testid="soft-paywall-dismiss" ink=');
   });
@@ -245,7 +245,7 @@ describe("lesson Check and Continue ink", () => {
 
   it.each([
     ["light", "es", "Empezar plan anual", "Seguir gratis", "#6b6258"],
-    ["dark", "en", "Start annual plan", "Continue free", "#f6efe4"],
+    ["dark", "en", "Start annual plan", "Continue free", "#cdbba6"],
   ])("paywall annual ink is #1F3A1A in %s %s", async (theme, uiLang, label, freeLabel, freeInk) => {
     cleanup();
     localStorage.clear();
@@ -262,11 +262,12 @@ describe("lesson Check and Continue ink", () => {
     localStorage.removeItem(LIVE_KEY);
     await awaitSoftPaywallAfterFirstWin();
     const annual = screen.getByTestId("soft-paywall-annual");
-    expect(annual.textContent).toBe(label);
+    expect(screen.getByTestId("soft-paywall-annual-label").textContent).toBe(label);
+    expect(norm(screen.getByTestId("soft-paywall-annual-label").style.color)).toBe(INK);
+    expect(norm(screen.getByTestId("soft-paywall-annual-price").style.color)).toBe(INK);
     expect(annual.disabled).toBe(false);
     expect(norm(annual.style.background)).toBe(LIME);
     expect(norm(annual.style.color)).toBe(INK);
-    expect(norm(annual.style.borderBottom)).toBe(LIP);
     expect(contrastRatio(norm(annual.style.color), LIME)).toBeGreaterThanOrEqual(4.5);
 
     const free = screen.getByTestId("soft-paywall-dismiss");
