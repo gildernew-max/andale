@@ -39,6 +39,7 @@ export const FUNNEL_EVENTS = Object.freeze({
   tapAnnual: "tap_annual",
   tapMonthly: "tap_monthly",
   waitlistSubmit: "waitlist_submit",
+  reserveSubmit: "reserve_submit",
   purchase: "purchase",
   firstWinSeen: "first-win-seen",
   emailSubmitted: "email-submitted",
@@ -181,12 +182,13 @@ function safeStoryId(id) {
  * first_session_start, first_session_exercise1_correct, first_session_complete,
  * day2_return, and first_streak_seen are event + timestamp only.
  * purchase is event + at + allowlisted plan / productId only.
+ * reserve_submit is event + at + plan "annual" + price 39.99 only — never the email.
  * open is event + at, plus daysSinceLast when it is an integer 0–365.
  * paywall_seen, tap_annual, and tap_monthly are event + at, plus source when it
  * is win, locked_story, or timed. paywall_seen also keeps day when it is an
  * integer >= 1. locked_story_capped is event + at + that day.
  */
-export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId, daysSinceLast, source, day } = {}, bus = eventBus()) {
+export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId, price, daysSinceLast, source, day } = {}, bus = eventBus()) {
   if (!EVENTS.has(event)) return null;
   const payload = { event, at: new Date().toISOString() };
   if (event === FUNNEL_EVENTS.open) {
@@ -202,6 +204,10 @@ export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId,
   }
   if (event === FUNNEL_EVENTS.paywallTap && TAPS.has(choice)) {
     payload.choice = choice;
+  }
+  if (event === FUNNEL_EVENTS.reserveSubmit) {
+    if (plan === "annual") payload.plan = "annual";
+    if (price === 39.99) payload.price = 39.99;
   }
   if (event === FUNNEL_EVENTS.purchase) {
     if (PLANS.has(plan)) payload.plan = plan;

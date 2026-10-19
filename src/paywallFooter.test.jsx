@@ -21,10 +21,10 @@ const VIEWPORTS = [
 ];
 
 const FACES = [
-  { theme: "light", uiLang: "en", annual: "Start annual plan", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", monthly: "$6.99\u00A0a\u00A0month", monthlyHold: "Monthly plans aren't open yet. Keep reading free for now.", freeLine: "Free: stories unlock one at a time, in order.", holdInk: "#6b6258", freeInk: "#6b6258", monthlyInk: "#1f3a1a", monthlyBorder: "#1f3a1a", page: "" },
-  { theme: "light", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", monthly: "US$6.99\u00A0al\u00A0mes", monthlyHold: "El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.", freeLine: "Gratis: los cuentos se abren uno a uno, en orden.", holdInk: "#6b6258", freeInk: "#6b6258", monthlyInk: "#1f3a1a", monthlyBorder: "#1f3a1a", page: "" },
-  { theme: "dark", uiLang: "en", annual: "Start annual plan", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", monthly: "$6.99\u00A0a\u00A0month", monthlyHold: "Monthly plans aren't open yet. Keep reading free for now.", freeLine: "Free: stories unlock one at a time, in order.", holdInk: "#cdbba6", freeInk: "#cdbba6", monthlyInk: "#f6efe4", monthlyBorder: "#cdbba6", page: "#15171c" },
-  { theme: "dark", uiLang: "es", annual: "Empezar plan anual", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", monthly: "US$6.99\u00A0al\u00A0mes", monthlyHold: "El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.", freeLine: "Gratis: los cuentos se abren uno a uno, en orden.", holdInk: "#cdbba6", freeInk: "#cdbba6", monthlyInk: "#f6efe4", monthlyBorder: "#cdbba6", page: "#15171c" },
+  { theme: "light", uiLang: "en", annual: "FOUNDING ANNUAL", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", monthly: "$6.99\u00A0a\u00A0month", monthlyHold: "Monthly plans aren't open yet. Keep reading free for now.", freeLine: "Free: stories unlock one at a time, in order.", holdInk: "#6b6258", freeInk: "#6b6258", monthlyInk: "#1f3a1a", monthlyBorder: "#1f3a1a", page: "" },
+  { theme: "light", uiLang: "es", annual: "PLAN ANUAL FUNDADOR", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", monthly: "US$6.99\u00A0al\u00A0mes", monthlyHold: "El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.", freeLine: "Gratis: los cuentos se abren uno a uno, en orden.", holdInk: "#6b6258", freeInk: "#6b6258", monthlyInk: "#1f3a1a", monthlyBorder: "#1f3a1a", page: "" },
+  { theme: "dark", uiLang: "en", annual: "FOUNDING ANNUAL", free: "Continue free", hold: "Annual plans aren't open yet. Keep reading free for now.", monthly: "$6.99\u00A0a\u00A0month", monthlyHold: "Monthly plans aren't open yet. Keep reading free for now.", freeLine: "Free: stories unlock one at a time, in order.", holdInk: "#cdbba6", freeInk: "#cdbba6", monthlyInk: "#f6efe4", monthlyBorder: "#cdbba6", page: "#15171c" },
+  { theme: "dark", uiLang: "es", annual: "PLAN ANUAL FUNDADOR", free: "Seguir gratis", hold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", monthly: "US$6.99\u00A0al\u00A0mes", monthlyHold: "El plan mensual aún no está disponible. Sigue leyendo gratis por ahora.", freeLine: "Gratis: los cuentos se abren uno a uno, en orden.", holdInk: "#cdbba6", freeInk: "#cdbba6", monthlyInk: "#f6efe4", monthlyBorder: "#cdbba6", page: "#15171c" },
 ];
 
 const norm = (value) => {
@@ -169,7 +169,7 @@ describe("paywall card", () => {
       expect(year.disabled).toBe(false);
       expect(year.style.pointerEvents).not.toBe("none");
       expect(year.style.width).toBe("100%");
-      expect(year.style.height).toBe("96px");
+      expect(year.style.minHeight).toBe("96px");
       expect(year.style.borderRadius).toBe("16px");
       expect(monthly.style.height).toBe("64px");
       expect(monthly.style.borderRadius).toBe("16px");
@@ -213,14 +213,9 @@ describe("paywall card", () => {
       });
       expect(purchases).toHaveLength(0);
       expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-      const hold = screen.getByTestId("soft-paywall-annual-hold");
-      expect(hold.textContent).toBe(holdLine);
-      expect(hold.style.marginTop).toBe(`${PAYWALL_ANNUAL_HOLD_GAP}px`);
-      expect(hold.style.fontSize).toBe("13.5px");
-      expect(hold.style.fontWeight).toBe("700");
-      expect(norm(hold.style.color)).toBe(holdInk);
+      const hold = screen.getByTestId("soft-paywall-reserve-form");
+      expect(screen.queryByTestId("soft-paywall-annual-hold")).toBeNull();
       expect(dismiss.style.marginTop).toBe("12px");
-      expect(year.compareDocumentPosition(hold) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(hold.compareDocumentPosition(monthly) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(monthly.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(year.disabled).toBe(false);
@@ -229,7 +224,7 @@ describe("paywall card", () => {
       expect(norm(year.style.color)).toBe("#1f3a1a");
       expect(year.style.animation || "").toBe("");
       expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-      expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/charged|cobra|Apple|Restore|Un mes|One month/);
+      expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Apple|Restore|Un mes|One month/);
       expect(screen.getByTestId("soft-paywall").textContent).toContain(uiLang === "en" ? "$39.99\u00A0a\u00A0year" : "US$39.99\u00A0al\u00A0año");
       expect((window.__andaleFunnelLog || []).some((event) => event.event === FUNNEL_EVENTS.tapAnnual && event.source === "win")).toBe(true);
       expect(monthly.textContent).toBe(monthlyLabel);
@@ -242,9 +237,9 @@ describe("paywall card", () => {
       expect(monthHold.style.fontSize).toBe("13.5px");
       expect(monthHold.style.fontWeight).toBe("700");
       expect(norm(monthHold.style.color)).toBe(holdInk);
-      expect(screen.getByTestId("soft-paywall-annual-label").textContent).toBe(annual);
+      expect(screen.getByTestId("soft-paywall-reserve-form").contains(screen.getByTestId("soft-paywall-annual-price"))).toBe(true);
       expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe(monthlyLabel);
-      expect(norm(screen.getByTestId("soft-paywall-annual").style.background)).toBe("#58cc02");
+      expect(norm(screen.getByTestId("soft-paywall-reserve-submit").style.background)).toBe("#58cc02");
       expect((window.__andaleFunnelLog || []).filter((event) => event.event === "paywall_tap" && event.choice === "monthly")).toHaveLength(0);
       expect((window.__andaleFunnelLog || []).some((event) => event.event === "tap_monthly" && event.source === "win")).toBe(true);
       await user.click(screen.getByTestId("soft-paywall-dismiss"));

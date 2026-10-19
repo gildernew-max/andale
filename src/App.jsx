@@ -35,6 +35,7 @@ import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1,
 import { emitLecturaStartOnce } from "./lecturaStartDay.js";
 import { FIRST_STREAK_BIRD_PX, dismissFirstStreakReturn, firstStreakReturn, presentFirstStreakReturn } from "./firstStreakReturn.js";
 import { isWaitlistEmail } from "./waitlist.js";
+import { reserveWords, submitReserve, reserveStartStep, RESERVE_STEP, RESERVE_PLAN, RESERVE_PRICE } from "./reserveAnnual.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
@@ -5378,6 +5379,8 @@ export default function App() {
   const paywallDismissingRef = useRef(false);
   const paywallSeenKindRef = useRef(PAYWALL_SEEN_SOURCE.timed);
   const [paywallAnnualHold, setPaywallAnnualHold] = useState(false);
+  const [reserveStep, setReserveStep] = useState(RESERVE_STEP.closed);
+  const [reserveEmail, setReserveEmail] = useState("");
   const [paywallMonthlyHold, setPaywallMonthlyHold] = useState(false);
   const paywallAnnualRef = useRef(null);
   const paywallCardRef = useRef(null);
@@ -8324,11 +8327,14 @@ export default function App() {
         });
         emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: seenSource, day: learnerDayNumber(seenFirst, seenToday) });
       }
+      setReserveStep(reserveStartStep());
     } else {
       setSoftPaywall(false);
       setPaywallArmed(false);
       setPaywallAnnualHold(false);
       setPaywallMonthlyHold(false);
+      setReserveStep(RESERVE_STEP.closed);
+      setReserveEmail("");
     }
   }, [showSoftPaywall]);
   useEffect(() => {
@@ -8376,7 +8382,7 @@ export default function App() {
     };
     fitStill();
     return watchPaywallStillResize({ target: overlay, onResize: fitStill });
-  }, [showSoftPaywall, uiLang, theme, paywallAnnualHold, paywallMonthlyHold, paywallStillSrc]);
+  }, [showSoftPaywall, uiLang, theme, paywallAnnualHold, paywallMonthlyHold, paywallStillSrc, reserveStep]);
   useEffect(() => {
     if (!paywallClickShield) return undefined;
     const clear = setTimeout(() => setPaywallClickShield(false), 0);
@@ -8670,7 +8676,15 @@ export default function App() {
   const tapPaywallAnnual = () => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.annual });
     emitFunnelEvent({ event: FUNNEL_EVENTS.tapAnnual, source: paywallSeenKindRef.current });
-    setPaywallAnnualHold(true);
+    setReserveStep(RESERVE_STEP.open);
+  };
+  const submitReserveAnnual = (e) => {
+    if (e && typeof e.preventDefault === "function") e.preventDefault();
+    const next = submitReserve(reserveEmail);
+    setReserveStep(next);
+    if (next === RESERVE_STEP.done) {
+      emitFunnelEvent({ event: FUNNEL_EVENTS.reserveSubmit, plan: RESERVE_PLAN, price: RESERVE_PRICE });
+    }
   };
   const tapPaywallMonthly = () => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.tapMonthly, source: paywallSeenKindRef.current });
@@ -10983,18 +10997,60 @@ export default function App() {
             )}
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", flexShrink: 0, color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
             <div data-testid="soft-paywall-body" style={{ ...paywallBodyType, marginBottom: 8, flexShrink: 0 }}>{L.paywallBody}</div>
-            <div ref={paywallAnnualRef} style={{ width: "100%", flexShrink: 0, marginTop: 4 }}>
-              <button type="button" className="duo-btn" data-testid="soft-paywall-annual" onClick={tapPaywallAnnual}
-                style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, width: "100%", height: PAYWALL_ANNUAL_HEIGHT, boxSizing: "border-box", padding: "0 16px", background: PAYWALL_LIME, border: "none", borderRadius: 16, color: LESSON_LIME_INK, fontFamily: "inherit", textAlign: "center", cursor: "pointer" }}>
-                <span data-testid="soft-paywall-annual-label" style={{ fontWeight: 800, fontSize: 13, lineHeight: 1.2, letterSpacing: ".06em", textTransform: "uppercase", color: LESSON_LIME_INK }}>{L.paywallAnnual}</span>
-                {annualPriceText ? (
-                  <span data-testid="soft-paywall-annual-price" style={{ fontWeight: 900, fontSize: 30, lineHeight: 1.1, color: LESSON_LIME_INK }}>{annualPriceText}</span>
-                ) : null}
-              </button>
-            </div>
-            {paywallAnnualHold ? (
-              <div data-testid="soft-paywall-annual-hold" style={{ ...paywallBodyType, color: theme === "dark" ? "#CDBBA6" : "#6B6258", marginTop: PAYWALL_ANNUAL_HOLD_GAP, flexShrink: 0 }}>{L.paywallAnnualHold}</div>
-            ) : null}
+            {(() => {
+              /* Founding annual card, No face page Oct 19. A default, B open, C bad email, D reserved. Never charges. */
+              const rw = reserveWords(uiLang);
+              const dark = theme === "dark";
+              const quiet = dark ? "#CDBBA6" : "#6B6258";
+              const ink = dark ? "#F6EFE4" : "#1F3A1A";
+              if (reserveStep === RESERVE_STEP.done) {
+                return (
+                  <div ref={paywallAnnualRef} data-testid="soft-paywall-reserved" role="status" style={{ width: "100%", flexShrink: 0, marginTop: 4, boxSizing: "border-box", padding: "12px 16px", borderRadius: 16, border: `2px solid ${dark ? "#CDBBA6" : "#1F3A1A"}`, textAlign: "center" }}>
+                    <div data-testid="soft-paywall-reserved-title" style={{ fontWeight: 900, fontSize: 20, lineHeight: 1.2, color: ink }}>{rw.doneTitle}</div>
+                    <div data-testid="soft-paywall-reserved-line" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.4, color: quiet, marginTop: 4 }}>{rw.doneLine}</div>
+                    <button type="button" data-testid="soft-paywall-reserved-keep" onClick={() => dismissSoftPaywall()}
+                      style={{ display: "block", width: "100%", minHeight: 44, marginTop: 2, padding: 0, background: "none", border: "none", color: quiet, fontFamily: "inherit", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>{rw.keepReading}</button>
+                  </div>
+                );
+              }
+              if (reserveStep === RESERVE_STEP.closed) {
+                return (
+                  <div ref={paywallAnnualRef} style={{ width: "100%", flexShrink: 0, marginTop: 4 }}>
+                    <button type="button" className="duo-btn" data-testid="soft-paywall-annual" onClick={tapPaywallAnnual}
+                      style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, width: "100%", minHeight: PAYWALL_ANNUAL_HEIGHT, boxSizing: "border-box", padding: "10px 16px", background: PAYWALL_LIME, border: "none", borderRadius: 16, color: LESSON_LIME_INK, fontFamily: "inherit", textAlign: "center", cursor: "pointer" }}>
+                      <span data-testid="soft-paywall-annual-label" style={{ fontWeight: 800, fontSize: 13, lineHeight: 1.2, letterSpacing: ".06em", textTransform: "uppercase", color: LESSON_LIME_INK }}>{rw.label}</span>
+                      {annualPriceText ? (
+                        <span data-testid="soft-paywall-annual-price" style={{ fontWeight: 900, fontSize: 30, lineHeight: 1.1, color: LESSON_LIME_INK }}>{annualPriceText}</span>
+                      ) : null}
+                      <span data-testid="soft-paywall-annual-action" style={{ fontWeight: 800, fontSize: 15, lineHeight: 1.2, color: LESSON_LIME_INK }}>{rw.action}</span>
+                      <span data-testid="soft-paywall-annual-small" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2, color: LESSON_LIME_INK }}>{rw.small}</span>
+                    </button>
+                    <div data-testid="soft-paywall-saving" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.4, color: quiet, marginTop: 6 }}>{rw.saving}</div>
+                  </div>
+                );
+              }
+              const invalid = reserveStep === RESERVE_STEP.invalid;
+              return (
+                <form ref={paywallAnnualRef} data-testid="soft-paywall-reserve-form" noValidate onSubmit={submitReserveAnnual}
+                  style={{ width: "100%", flexShrink: 0, marginTop: 4, boxSizing: "border-box", padding: "6px 12px 8px", borderRadius: 16, border: `2px solid ${dark ? "#CDBBA6" : "#1F3A1A"}`, textAlign: "center" }}>
+                  {annualPriceText ? (
+                    <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1, color: ink }}>{annualPriceText}</div>
+                  ) : null}
+                  <input data-testid="soft-paywall-reserve-email" type="email" inputMode="email" autoComplete="email" autoFocus
+                    aria-label={rw.placeholder} aria-invalid={invalid ? "true" : undefined} placeholder={rw.placeholder}
+                    value={reserveEmail}
+                    onFocus={(e) => { try { e.target.scrollIntoView({ block: "nearest" }); } catch { /* jsdom */ } }}
+                    onChange={(e) => { setReserveEmail(e.target.value); if (invalid) setReserveStep(RESERVE_STEP.open); }}
+                    style={{ display: "block", width: "100%", height: 48, marginTop: 6, boxSizing: "border-box", padding: "0 12px", borderRadius: 12, border: `2px solid ${dark ? "#CDBBA6" : "#1F3A1A"}`, background: dark ? "#15171C" : "#F6EFE4", color: ink, fontFamily: "inherit", fontSize: 16, fontWeight: 700 }} />
+                  {invalid ? (
+                    <div data-testid="soft-paywall-reserve-error" role="alert" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: ink, marginTop: 2 }}>{rw.error}</div>
+                  ) : null}
+                  <div data-testid="soft-paywall-reserve-note" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: quiet, marginTop: 2 }}>{rw.note}</div>
+                  <button type="submit" className="duo-btn" data-testid="soft-paywall-reserve-submit"
+                    style={{ display: "block", width: "100%", height: 48, marginTop: 6, padding: 0, borderRadius: 16, border: "none", background: PAYWALL_LIME, color: LESSON_LIME_INK, fontFamily: "inherit", fontWeight: 900, fontSize: 17, cursor: "pointer" }}>{rw.submit}</button>
+                </form>
+              );
+            })()}
             {paywallMonthlyHold ? (
               <div data-testid="soft-paywall-monthly-hold" style={{ ...paywallBodyType, color: theme === "dark" ? "#CDBBA6" : "#6B6258", marginTop: PAYWALL_ANNUAL_HOLD_GAP, flexShrink: 0 }}>{L.paywallMonthlyHold}</div>
             ) : null}

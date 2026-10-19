@@ -724,7 +724,7 @@ const paywallLayout = appSrc.slice(appSrc.indexOf('data-testid="soft-paywall"'),
 assert(/<button type="button" className="duo-btn" data-testid="soft-paywall-annual"/.test(paywallLayout), "annual is one whole-card button");
 assert(/data-testid="soft-paywall-annual"[\s\S]{0,700}background: PAYWALL_LIME/.test(paywallLayout), "annual card is lime");
 assert(/data-testid="soft-paywall-annual"[\s\S]{0,700}borderRadius: 16/.test(paywallLayout), "annual card radius is 16");
-assert(/data-testid="soft-paywall-annual"[\s\S]{0,700}height: PAYWALL_ANNUAL_HEIGHT/.test(paywallLayout), "annual card is 96px");
+assert(/data-testid="soft-paywall-annual"[\s\S]{0,700}minHeight: PAYWALL_ANNUAL_HEIGHT/.test(paywallLayout), "annual card is at least 96px");
 assert(!/<Btn(?=[\s>])/.test(paywallLayout), "the wall has no Btn: the annual card is the only filled element");
 assert(/data-testid="soft-paywall-annual"[\s\S]{0,700}color: LESSON_LIME_INK/.test(paywallLayout), "annual card ink is #1F3A1A");
 assert(!/soft-paywall-annual-price[\s\S]{0,200}(#6B6258|#CDBBA6|paywallBodyType)/.test(paywallLayout), "the billed total is ink on lime, not quiet ink");
@@ -755,8 +755,8 @@ assert(paywallLayout.indexOf("soft-paywall-cenzontle") < paywallLayout.indexOf("
 assert(paywallLayout.indexOf("soft-paywall-headline") < paywallLayout.indexOf("soft-paywall-body"), "title sits above the benefit");
 assert(paywallLayout.indexOf("soft-paywall-body") < paywallLayout.indexOf("data-testid=\"soft-paywall-annual\""), "the annual card sits under the benefit");
 assert(paywallLayout.indexOf("soft-paywall-annual-label") < paywallLayout.indexOf("soft-paywall-annual-price"), "the label sits above the billed total inside the card");
-assert(paywallLayout.indexOf("soft-paywall-annual-price") < paywallLayout.indexOf("soft-paywall-annual-hold"), "the post-tap line sits under annual");
-assert(paywallLayout.indexOf("soft-paywall-annual-hold") < paywallLayout.indexOf("soft-paywall-monthly"), "monthly sits under the post-tap slot");
+assert(paywallLayout.indexOf("soft-paywall-annual-price") < paywallLayout.indexOf("soft-paywall-reserve-email"), "the reserve field opens in the annual slot");
+assert(paywallLayout.indexOf("soft-paywall-reserve-submit") < paywallLayout.indexOf("soft-paywall-monthly"), "monthly sits under the reserve slot");
 assert(paywallLayout.indexOf("data-testid=\"soft-paywall-monthly\"") < paywallLayout.indexOf("soft-paywall-dismiss"), "Continue free sits under monthly");
 assert(paywallLayout.indexOf("soft-paywall-dismiss") < paywallLayout.indexOf("soft-paywall-free-line"), "the free line sits under Continue free");
 assert(!/soft-paywall-free-limit|FREE_TIER_LIMIT/.test(paywallLayout + appSrc), "the web card has no free-tier line");
@@ -813,10 +813,10 @@ assert(!/soft-paywall-body[\s\S]{0,160}textWrap/.test(paywallLayout), "paywall b
 assert(PAYWALL_ANNUAL_HOLD_GAP === 8, "the post-tap line sits 8px under annual");
 assert(paywallLayout.includes("marginTop: PAYWALL_ANNUAL_HOLD_GAP"), "the post-tap line uses the 8px gap");
 assert(paywallLayout.includes('theme === "dark" ? "#CDBBA6" : "#6B6258"'), "the post-tap line is #6B6258 in light and #CDBBA6 in dark");
-assert(/soft-paywall-annual-hold[\s\S]{0,180}paywallBodyType/.test(paywallLayout), "the post-tap line uses body type");
-assert(paywallLayout.includes("{paywallAnnualHold ? ("), "the post-tap line is hidden until annual is tapped");
-assert(appSrc.includes("setPaywallAnnualHold(true)"), "annual tap shows the hold line");
-assert(/const tapPaywallAnnual = \(\) => \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallTap, choice: PAYWALL_TAP\.annual \}\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.tapAnnual, source: paywallSeenKindRef\.current \}\);\s*setPaywallAnnualHold\(true\);\s*\};/.test(appSrc), "annual tap records paywall_tap and tap_annual and does not change the button");
+assert(/soft-paywall-monthly-hold[\s\S]{0,180}paywallBodyType/.test(paywallLayout), "the monthly post-tap line uses body type");
+assert(paywallLayout.includes("{paywallMonthlyHold ? ("), "the monthly post-tap line is hidden until monthly is tapped");
+assert(!appSrc.includes("setPaywallAnnualHold(true)"), "annual tap opens the reserve field, not the hold line");
+assert(/const tapPaywallAnnual = \(\) => \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallTap, choice: PAYWALL_TAP\.annual \}\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.tapAnnual, source: paywallSeenKindRef\.current \}\);\s*setReserveStep\(RESERVE_STEP\.open\);\s*\};/.test(appSrc), "annual tap records paywall_tap and tap_annual and opens the reserve field; nothing charges");
 assert(/const tapPaywallMonthly = \(\) => \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.tapMonthly, source: paywallSeenKindRef\.current \}\);\s*setPaywallMonthlyHold\(true\);\s*\};/.test(appSrc), "monthly tap records tap_monthly and does not change the button");
 assert(!/PAYWALL_TAP\.monthly/.test(appSrc), "monthly is not a paywall_tap choice");
 assert(/<LogoMark size=\{44\} data-testid="soft-paywall-cenzontle"/.test(paywallLayout), "no-still Cenzontle stays the centered 44px mark");
@@ -5300,7 +5300,7 @@ const privacyHtml = readFileSync(join(repoRoot, "public", "privacy.html"), "utf8
 const privacyMd = readFileSync(join(repoRoot, "privacy.md"), "utf8");
 const supportHtml = readFileSync(join(repoRoot, "public", "support.html"), "utf8");
 const supportMd = readFileSync(join(repoRoot, "support.md"), "utf8");
-assert(privacyHtml.includes("There is no Ándale account and no email gate to use the app.") && privacyMd.includes("There is no Ándale account and no email gate to use the app."), "privacy keeps the no-account line");
+assert(privacyHtml.includes("There is no Ándale account. You can use the app without giving your email. Reserving is optional.") && privacyMd.includes("There is no Ándale account. You can use the app without giving your email. Reserving is optional."), "privacy keeps the no-account line");
 assert(privacyHtml.includes("We do not keep a copy on our servers.") && privacyMd.includes("We do not keep a copy on our servers."), "privacy keeps the on-device sentence");
 assert(privacyHtml.includes("<h2>What we do not collect</h2>") && privacyMd.includes("## What we do not collect"), "privacy heading is the main line");
 assert(privacyHtml.includes("We do not use third-party analytics in the app.") && privacyMd.includes("We do not use third-party analytics in the app."), "analytics sentence is the main line");

@@ -1350,8 +1350,8 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     await waitFor(() => expect(funnelOf("tap_monthly").some((e) => e.source === "win")).toBe(true));
     expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(screen.getByTestId("soft-paywall-annual-hold").textContent).toBe("El plan anual aún no está disponible. Sigue leyendo gratis por ahora.");
-    expect(screen.getByTestId("soft-paywall-annual-hold").style.marginTop).toBe("8px");
+    expect(screen.getByTestId("soft-paywall-reserve-form")).toBeTruthy();
+    expect(screen.queryByTestId("soft-paywall-annual-hold")).toBeNull();
     expect(screen.getByTestId("soft-paywall-dismiss").style.marginTop).toBe("12px");
     expect(annual.disabled).toBe(false);
     expect(annual.style.background).toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);

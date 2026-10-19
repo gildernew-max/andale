@@ -244,8 +244,8 @@ describe("lesson Check and Continue ink", () => {
   });
 
   it.each([
-    ["light", "es", "Empezar plan anual", "Seguir gratis", "#6b6258"],
-    ["dark", "en", "Start annual plan", "Continue free", "#cdbba6"],
+    ["light", "es", "PLAN ANUAL FUNDADOR", "Seguir gratis", "#6b6258"],
+    ["dark", "en", "FOUNDING ANNUAL", "Continue free", "#cdbba6"],
   ])("paywall annual ink is #1F3A1A in %s %s", async (theme, uiLang, label, freeLabel, freeInk) => {
     cleanup();
     localStorage.clear();
