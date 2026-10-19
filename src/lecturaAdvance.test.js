@@ -15,6 +15,7 @@ import {
   LECTURA_STILL_MARGIN_BOTTOM,
   LECTURA_STORY_OPEN_STILL_TOP,
   lecturaAdvanceScrollY,
+  lecturaParagraphArrivalTop,
   homeArrivalScrollY,
   lecturaClaimNextScrollY,
   lecturaClaimScrollY,
@@ -244,3 +245,13 @@ assert(homeArrivalScrollY({ pending: true, screen: "done", scrollY: 20 }) === nu
 assert(homeArrivalScrollY({}) === null, "no input changes nothing");
 assert(appSrc.includes("if (next === \"home\") homeAfterWinTopRef.current = true;"), "win CONTINUE marks the Home arrival");
 assert(appSrc.includes("homeArrivalScrollY({ pending: true, screen, scrollY: window.scrollY })"), "Home applies the top reset once on arrival");
+// Cold walk 7coi: after NEXT the card top met the header, so «Párrafo n / N» sat 24px under it.
+assert(lecturaParagraphArrivalTop({ paragraphTop: 300, counterLift: 24 }) === 268, "the counter lands 8px under the header with the card below it");
+assert(lecturaAdvanceScrollY({ paragraphTop: lecturaParagraphArrivalTop({ paragraphTop: 302.4, counterLift: 24 }), scrollY: 0, headerBottom: 56 }) === 302.4 - 24 - 8 - 56, "360x640: counter top = header bottom + 8");
+assert(lecturaParagraphArrivalTop({ paragraphTop: 300, counterLift: 0 }) === 300, "no measured counter (jsdom, no layout): card top as before");
+assert(lecturaParagraphArrivalTop({ paragraphTop: 300, counterLift: null }) === 300, "no counter element: card top as before");
+assert(lecturaParagraphArrivalTop({ paragraphTop: 300, counterLift: 400 }) === 300, "an implausible lift is ignored");
+assert(lecturaParagraphArrivalTop({ paragraphTop: 300, counterLift: 24, gap: 0 }) === 276, "gap is adjustable");
+assert(Number.isNaN(lecturaParagraphArrivalTop({ paragraphTop: Number.NaN, counterLift: 24 })), "a bad card measure stays bad so the advance keeps the current scroll");
+assert(appSrc.includes("counterLift: lecturaCounterRef.current ? paragraph.offsetTop - lecturaCounterRef.current.offsetTop : null"), "the advance scroll lands on the paragraph counter");
+assert(appSrc.includes("<div ref={lecturaCounterRef} style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>"), "the counter row carries the arrival ref and keeps its style");
