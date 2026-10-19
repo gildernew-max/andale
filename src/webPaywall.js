@@ -58,3 +58,27 @@ export function paywallStillMaxHeight({ frameHeight, imgHeight, minHeight = 48 }
   if (img <= frame + 1) return null;
   return Math.max(Number(minHeight) || 0, Math.floor(frame));
 }
+
+/**
+ * Re-runs the still fit whenever the viewport changes while the paywall is open (resize, rotation,
+ * or the fixed overlay changing size). Runs on the spot so the image never paints a stale height.
+ * Returns the cleanup that drops every listener and the observer. No-op without a window.
+ */
+export function watchPaywallStillResize({ win = typeof window !== "undefined" ? window : null, target = null, onResize } = {}) {
+  if (!win || typeof win.addEventListener !== "function" || typeof onResize !== "function") return () => {};
+  let live = true;
+  const run = () => { if (live) onResize(); };
+  let observer = null;
+  if (target && typeof win.ResizeObserver === "function") {
+    observer = new win.ResizeObserver(run);
+    observer.observe(target);
+  }
+  win.addEventListener("resize", run);
+  win.addEventListener("orientationchange", run);
+  return () => {
+    live = false;
+    if (observer) observer.disconnect();
+    win.removeEventListener("resize", run);
+    win.removeEventListener("orientationchange", run);
+  };
+}
