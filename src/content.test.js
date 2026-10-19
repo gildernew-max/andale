@@ -5300,7 +5300,7 @@ const privacyHtml = readFileSync(join(repoRoot, "public", "privacy.html"), "utf8
 const privacyMd = readFileSync(join(repoRoot, "privacy.md"), "utf8");
 const supportHtml = readFileSync(join(repoRoot, "public", "support.html"), "utf8");
 const supportMd = readFileSync(join(repoRoot, "support.md"), "utf8");
-assert(privacyHtml.includes("There is no Ándale account and no email gate to use the app.") && privacyMd.includes("There is no Ándale account and no email gate to use the app."), "privacy keeps the no-account line");
+assert(privacyHtml.includes("There is no Ándale account. You can use the app without giving your email. Reserving is optional.") && privacyMd.includes("There is no Ándale account. You can use the app without giving your email. Reserving is optional."), "privacy keeps the no-account line");
 assert(privacyHtml.includes("We do not keep a copy on our servers.") && privacyMd.includes("We do not keep a copy on our servers."), "privacy keeps the on-device sentence");
 assert(privacyHtml.includes("<h2>What we do not collect</h2>") && privacyMd.includes("## What we do not collect"), "privacy heading is the main line");
 assert(privacyHtml.includes("We do not use third-party analytics in the app.") && privacyMd.includes("We do not use third-party analytics in the app."), "analytics sentence is the main line");

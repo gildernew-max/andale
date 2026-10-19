@@ -8,11 +8,17 @@ Last updated: October 13, 2026
 
 ## What stays on your device
 
-There is no Ándale account and no email gate to use the app.
+There is no Ándale account. You can use the app without giving your email. Reserving is optional.
+
+Puedes usar la app sin dar tu correo. Reservar es opcional.
 
 Progress lives on your device: XP, streak, gems, hearts, lessons finished, flashcards, theme, Español/English, the name you type at the door if you type one, and which voice you picked. That is stored locally (for example as `andale-v3`). Clear site data or delete the app and it is gone. We do not keep a copy on our servers.
 
 Readings use the voices already on your device. We do not record you and we do not upload audio.
+
+If you reserve founding annual, the email you type is saved only on this device. It never reaches us, and we don't share it.
+
+Si reservas el plan anual de fundador, el correo que escribes se guarda solo en este dispositivo. No nos llega ni lo compartimos.
 
 ## What we do not collect
 
