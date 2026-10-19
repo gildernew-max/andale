@@ -65,7 +65,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { homeArrivalScrollY, lecturaAdvanceScrollY, lecturaParagraphArrivalTop, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
+import { comprensionFitStep, comprensionNextFitLevel, homeArrivalScrollY, lecturaAdvanceScrollY, lecturaParagraphArrivalTop, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
 import { firstSessionBeatOf, firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, ONBOARDING_CTA_HEIGHT, onboardingCtaBottomCss, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -5349,6 +5349,8 @@ export default function App() {
   const [paraIdx, setParaIdx] = useState(0);
   const [lecturaAdvanceNonce, setLecturaAdvanceNonce] = useState(0);
   const [story0EndSpacer, setStory0EndSpacer] = useState(0);
+  const [comprensionFit, setComprensionFit] = useState({ key: "", level: 0 });
+  const qFit = comprensionFitStep(comprensionFit.level);
   const [story0EndScrollNonce, setStory0EndScrollNonce] = useState(0);
   const lecturaParagraphRef = useRef(null);
   const lecturaCounterRef = useRef(null);
@@ -7169,6 +7171,38 @@ export default function App() {
     lecturaAdvanceScrollRef.current = false;
     if (Math.abs((Number(window.scrollY) || 0) - nextY) > 0.5) window.scrollTo(0, nextY);
   }, [screen, paraIdx, wordSheetSpacer, lecturaAdvanceNonce]);
+
+  // Comprensión fit: on a short phone Q1's 4th choice can sit below the fold. Step the spacing,
+  // then the quote, until it fits under the header. Runs before paint; at most three passes.
+  useLayoutEffect(() => {
+    if (screen !== "story") return undefined;
+    const header = lecturaQuestionsHeaderRef.current;
+    if (!header) return undefined;
+    const key = `${storyView?.id || ""}|${prog.uiLang === "en" ? "en" : "es"}|${window.innerWidth}x${window.innerHeight}`;
+    if (comprensionFit.key !== key) {
+      setComprensionFit({ key, level: 0 });
+      return undefined;
+    }
+    const prompt = header.parentElement && header.parentElement.querySelector("[data-testid='story-q-prompt']");
+    const choices = prompt && prompt.nextElementSibling ? prompt.nextElementSibling.querySelectorAll("button") : [];
+    const last = choices.length ? choices[choices.length - 1] : null;
+    if (!last) return undefined;
+    const next = comprensionNextFitLevel({
+      level: comprensionFit.level,
+      headerTop: header.getBoundingClientRect().top,
+      lastChoiceBottom: last.getBoundingClientRect().bottom,
+      viewportTop: lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']")),
+      viewportHeight: window.innerHeight,
+    });
+    if (next !== comprensionFit.level) setComprensionFit({ key, level: next });
+    const onResize = () => setComprensionFit((f) => (f.key ? { key: "", level: 0 } : f));
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, [screen, paraIdx, storyView, prog.uiLang, comprensionFit]);
 
   // Claim mounts under Q3. After CLAIM, the XP-claimed card can grow past
   // that fold. Pull the whole card back inside: 12px above the viewport
@@ -12653,7 +12687,7 @@ export default function App() {
             <div style={{ borderTop: `2px solid ${D.line}`, marginTop: 12, paddingTop: 20 }}>
               <div ref={lecturaQuestionsHeaderRef} data-testid="lectura-questions-header">
 	              <h3 style={{ fontWeight: 900, fontSize: 19, margin: "0 0 4px" }}>{L.comprehension}</h3>
-              <p style={{ fontSize: 13, fontWeight: 800, color: D.sub, margin: "0 0 16px" }}>
+              <p style={{ fontSize: 13, fontWeight: 800, color: D.sub, margin: `0 0 ${qFit.headerGap}px` }}>
 	                {L.easyQuestions} <IcBolt size={13} /> 35 XP · {checkDone}/{checkpoints.length} {uiLang === "en" ? "checkpoints" : "pausas"} {claimed && <span style={{ color: limeText(D.okText, D) }}>— {uiLang === "en" ? "collectible unlocked" : "coleccionable desbloqueado"}</span>}
               </p>
               </div>
@@ -12665,15 +12699,15 @@ export default function App() {
                 return (
                   <div key={i} style={{ marginBottom: 18 }}>
                     {passage ? (
-                      <div data-testid="story-quiz-passage" style={{ border: `2px solid ${D.line}`, borderRadius: 14, padding: "12px 14px", background: D.subtle, margin: "0 0 10px" }}>
-                        <div data-testid="story-quiz-cue" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".06em", color: D.sub, marginBottom: 6 }}>{storyQuizEyebrow(uiLang)}</div>
-                        <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.55 }}>
+                      <div data-testid="story-quiz-passage" style={{ border: `2px solid ${D.line}`, borderRadius: 14, padding: qFit.quotePad, background: D.subtle, margin: `0 0 ${qFit.quoteGap}px` }}>
+                        <div data-testid="story-quiz-cue" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".06em", color: D.sub, marginBottom: qFit.cueGap }}>{storyQuizEyebrow(uiLang)}</div>
+                        <div style={{ fontSize: qFit.quoteSize, fontWeight: 700, lineHeight: qFit.quoteLine }}>
                           <GlossedText text={passage} uiLang={uiLang} D={D} accent={sec.color} />
                         </div>
                       </div>
                     ) : null}
-                    <div data-testid="story-q-prompt" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: 8 }}>{i + 1}. <GlossedText text={qq.prompt} uiLang={uiLang} D={D} accent={sec.color} /></div>
-                    <div style={{ display: "grid", gap: 8 }}>
+                    <div data-testid="story-q-prompt" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: qFit.promptGap }}>{i + 1}. <GlossedText text={qq.prompt} uiLang={uiLang} D={D} accent={sec.color} /></div>
+                    <div style={{ display: "grid", gap: qFit.choiceGap }}>
                       {shown.map((c) => {
                         const isAns = c === qq.answer;
                         let bg = "#fff", bd = D.line, col = D.ink;
@@ -12683,7 +12717,7 @@ export default function App() {
                         return (
                           <button key={c} className="choice-card" disabled={done}
                             onClick={() => { setAnsSel({ ...ansSel, [i]: c }); beep(isAns ? "ok" : "bad"); }}
-                            style={{ textAlign: "left", padding: "11px 14px", fontSize: 14.5, fontWeight: 700, fontFamily: "inherit", cursor: done ? "default" : "pointer", background: bg, borderColor: bd, borderBottomColor: bd, color: col }}>
+                            style={{ textAlign: "left", padding: `${qFit.choicePadY}px 14px`, fontSize: 14.5, fontWeight: 700, fontFamily: "inherit", cursor: done ? "default" : "pointer", background: bg, borderColor: bd, borderBottomColor: bd, color: col }}>
                             <GlossedText text={c} uiLang={uiLang} D={D} accent={sec.color} />
                           </button>
                         );

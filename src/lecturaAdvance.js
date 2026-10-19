@@ -538,3 +538,39 @@ export function homeArrivalScrollY({ pending, screen, scrollY } = {}) {
   if (!pending || screen !== "home") return null;
   return (Number(scrollY) || 0) > 0.5 ? 0 : null;
 }
+
+/**
+ * Comprensión fit on short phones. On arrival the «Comprensión» header sits under the brand bar
+ * (#315). Q1 shows its «Según el cuento» quote, the prompt and four choices. At 360×640 a long
+ * quote pushed the 4th choice below the fold. Each step frees space in this order: spacing first,
+ * then the quote's line height, then the quote's size. Choice and question type never shrink,
+ * choices keep a 44px+ tap target, and the quote is never clamped. Step 0 is the layout as it was.
+ */
+export const COMPRENSION_FIT_STEPS = Object.freeze([
+  Object.freeze({ headerGap: 16, quotePad: "12px 14px", quoteGap: 10, cueGap: 6, quoteSize: 15, quoteLine: 1.55, promptGap: 8, choiceGap: 8, choicePadY: 11 }),
+  Object.freeze({ headerGap: 8, quotePad: "8px 14px", quoteGap: 8, cueGap: 4, quoteSize: 15, quoteLine: 1.55, promptGap: 6, choiceGap: 6, choicePadY: 10 }),
+  Object.freeze({ headerGap: 8, quotePad: "8px 12px", quoteGap: 8, cueGap: 4, quoteSize: 14, quoteLine: 1.4, promptGap: 6, choiceGap: 6, choicePadY: 10 }),
+  Object.freeze({ headerGap: 8, quotePad: "8px 12px", quoteGap: 8, cueGap: 4, quoteSize: 13, quoteLine: 1.3, promptGap: 6, choiceGap: 6, choicePadY: 10 }),
+]);
+
+/** The step's styles. Out-of-range or bad input is step 0. */
+export function comprensionFitStep(level) {
+  const n = Number(level);
+  return COMPRENSION_FIT_STEPS[Number.isInteger(n) && n > 0 && n < COMPRENSION_FIT_STEPS.length ? n : 0];
+}
+
+/**
+ * The next step to try. With the header under the brand bar, Q1 fits when its last choice ends
+ * at least `gap` px above the viewport bottom. Fits, last step, or no layout: stay.
+ */
+export function comprensionNextFitLevel({ level = 0, headerTop, lastChoiceBottom, viewportTop = 0, viewportHeight, gap = 8 } = {}) {
+  const cur = Number.isInteger(Number(level)) && Number(level) > 0 ? Math.min(Number(level), COMPRENSION_FIT_STEPS.length - 1) : 0;
+  const top = Number(headerTop);
+  const bottom = Number(lastChoiceBottom);
+  const vh = Number(viewportHeight);
+  if (![top, bottom, vh].every(Number.isFinite) || !(vh > 0) || !(bottom > top)) return cur;
+  const inset = Number.isFinite(Number(viewportTop)) ? Math.max(0, Number(viewportTop)) : 0;
+  const room = vh - inset - (Number.isFinite(Number(gap)) ? Math.max(0, Number(gap)) : 0);
+  if (bottom - top <= room + 0.5) return cur;
+  return Math.min(cur + 1, COMPRENSION_FIT_STEPS.length - 1);
+}
