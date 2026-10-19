@@ -8713,6 +8713,15 @@ export default function App() {
     }
   };
 
+  // Home after a win screen's CONTINUE starts at scroll 0 (the win screen's own scroll must not carry over).
+  useLayoutEffect(() => {
+    if (!homeAfterWinTopRef.current || screen !== "home") return undefined;
+    homeAfterWinTopRef.current = false;
+    const top = homeArrivalScrollY({ pending: true, screen, scrollY: window.scrollY });
+    if (top != null) window.scrollTo(0, top);
+    return undefined;
+  }, [screen]);
+
   const continueFromWin = ({ toStory = null } = {}) => {
     const birdAfterWin = !!session?.lecturaPaywallAfterWin;
     lecturaPaywallAfterWin.current = false;
@@ -8849,14 +8858,6 @@ export default function App() {
       if (next === "home") setTab("camino");
     }
   };
-
-  // Home after a win screen's CONTINUE starts at scroll 0 (the win screen's own scroll must not carry over).
-  useLayoutEffect(() => {
-    if (!homeAfterWinTopRef.current || screen !== "home") return;
-    homeAfterWinTopRef.current = false;
-    const top = homeArrivalScrollY({ pending: true, screen, scrollY: window.scrollY });
-    if (top != null) window.scrollTo(0, top);
-  }, [screen]);
 
   const openFirstStoryFromWin = () => {
     const story = lecturaHandoffTarget(STORIES, prog.stories);
