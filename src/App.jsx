@@ -65,7 +65,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { lecturaAdvanceScrollY, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
+import { homeArrivalScrollY, lecturaAdvanceScrollY, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
 import { firstSessionBeatOf, firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, ONBOARDING_CTA_HEIGHT, onboardingCtaBottomCss, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -5356,6 +5356,7 @@ export default function App() {
   const lecturaClaimRef = useRef(null);
   const lecturaAdvanceScrollRef = useRef(false);
   const story0SequelTopRef = useRef(false);
+  const homeAfterWinTopRef = useRef(false);
   const [voiceDead, setVoiceDead] = useState(false);
   useEffect(() => {
     const onDead = () => setVoiceDead(true);
@@ -8712,6 +8713,15 @@ export default function App() {
     }
   };
 
+  // Home after a win screen's CONTINUE starts at scroll 0 (the win screen's own scroll must not carry over).
+  useLayoutEffect(() => {
+    if (!homeAfterWinTopRef.current || screen !== "home") return undefined;
+    homeAfterWinTopRef.current = false;
+    const top = homeArrivalScrollY({ pending: true, screen, scrollY: window.scrollY });
+    if (top != null) window.scrollTo(0, top);
+    return undefined;
+  }, [screen]);
+
   const continueFromWin = ({ toStory = null } = {}) => {
     const birdAfterWin = !!session?.lecturaPaywallAfterWin;
     lecturaPaywallAfterWin.current = false;
@@ -8843,6 +8853,7 @@ export default function App() {
       setTab("camino");
       openStory(toStory);
     } else {
+      if (next === "home") homeAfterWinTopRef.current = true;
       setScreen(next);
       if (next === "home") setTab("camino");
     }
