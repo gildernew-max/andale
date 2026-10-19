@@ -17,6 +17,9 @@ import {
   lecturaAdvanceScrollY,
   lecturaParagraphArrivalTop,
   homeArrivalScrollY,
+  COMPRENSION_FIT_STEPS,
+  comprensionFitStep,
+  comprensionNextFitLevel,
   lecturaClaimNextScrollY,
   lecturaClaimScrollY,
   lecturaLinesAboveNext,
@@ -255,3 +258,34 @@ assert(lecturaParagraphArrivalTop({ paragraphTop: 300, counterLift: 24, gap: 0 }
 assert(Number.isNaN(lecturaParagraphArrivalTop({ paragraphTop: Number.NaN, counterLift: 24 })), "a bad card measure stays bad so the advance keeps the current scroll");
 assert(appSrc.includes("counterLift: lecturaCounterRef.current ? paragraph.offsetTop - lecturaCounterRef.current.offsetTop : null"), "the advance scroll lands on the paragraph counter");
 assert(appSrc.includes("<div ref={lecturaCounterRef} style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>"), "the counter row carries the arrival ref and keeps its style");
+// Comprensión at 360x640: Q1's 4th choice ended 38-172px below the fold (long «Según el cuento» quote).
+{
+  const base = COMPRENSION_FIT_STEPS[0];
+  assert(base.headerGap === 16 && base.quotePad === "12px 14px" && base.quoteGap === 10 && base.cueGap === 6 && base.quoteSize === 15 && base.quoteLine === 1.55 && base.promptGap === 8 && base.choiceGap === 8 && base.choicePadY === 11, "step 0 is the layout as shipped");
+  for (const step of COMPRENSION_FIT_STEPS) {
+    assert(step.choicePadY * 2 + 26 >= 44, "every step keeps a 44px+ choice tap target (measured: pad 11 = 48px, pad 10 = 46px)");
+    assert(step.quoteSize >= 13 && step.quoteLine >= 1.3, "the quote never drops under 13px / 1.3");
+  }
+  for (let i = 1; i < COMPRENSION_FIT_STEPS.length; i++) {
+    const a = COMPRENSION_FIT_STEPS[i - 1], b = COMPRENSION_FIT_STEPS[i];
+    assert(b.quoteSize <= a.quoteSize && b.quoteLine <= a.quoteLine && b.headerGap <= a.headerGap && b.choicePadY <= a.choicePadY, "each step only tightens");
+  }
+  assert(COMPRENSION_FIT_STEPS[1].quoteSize === 15 && COMPRENSION_FIT_STEPS[1].quoteLine === 1.55, "spacing goes first; type is untouched in step 1");
+  assert(comprensionFitStep(0) === base && comprensionFitStep(-1) === base && comprensionFitStep(9) === base && comprensionFitStep("x") === base, "bad input is step 0");
+  assert(comprensionFitStep(3).quoteSize === 13, "step 3 is the last step");
+  const v = { viewportTop: 56, viewportHeight: 640 };
+  assert(comprensionNextFitLevel({ ...v, level: 0, headerTop: 56.4, lastChoiceBottom: 695.9 }) === 1, "story 0 EN: 56px under the fold steps up");
+  assert(comprensionNextFitLevel({ ...v, level: 0, headerTop: 56.2, lastChoiceBottom: 811.9 }) === 1, "story 1 EN: 172px under the fold steps up");
+  assert(comprensionNextFitLevel({ ...v, level: 2, headerTop: 56, lastChoiceBottom: 56 + 547.3 }) === 2, "fits with 8px to spare: stay");
+  assert(comprensionNextFitLevel({ ...v, level: 2, headerTop: 56, lastChoiceBottom: 56 + 612 }) === 3, "still under the fold: next step");
+  assert(comprensionNextFitLevel({ ...v, level: 3, headerTop: 56, lastChoiceBottom: 900 }) === 3, "the last step is the floor");
+  assert(comprensionNextFitLevel({ viewportTop: 56, viewportHeight: 844, level: 0, headerTop: 56, lastChoiceBottom: 56 + 670.3 }) === 0, "390x844 story 1 fits as shipped: no change");
+  assert(comprensionNextFitLevel({ ...v, level: 1, headerTop: 56, lastChoiceBottom: 56 + 576 }) === 1, "exactly 8px above the fold fits");
+  assert(comprensionNextFitLevel({ ...v, level: 1, headerTop: 56, lastChoiceBottom: 56 + 577 }) === 2, "7px above the fold does not");
+  assert(comprensionNextFitLevel({ ...v, level: 0, headerTop: Number.NaN, lastChoiceBottom: 700 }) === 0, "no layout: stay");
+  assert(comprensionNextFitLevel({}) === 0, "no input: step 0");
+  assert(appSrc.includes("const qFit = comprensionFitStep(comprensionFit.level);"), "the render reads the fitted step");
+  assert(appSrc.includes("<div style={{ fontSize: qFit.quoteSize, fontWeight: 700, lineHeight: qFit.quoteLine }}>"), "the quote is never clamped: no max height or overflow on it");
+  assert(appSrc.includes('<div data-testid="story-q-prompt" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: qFit.promptGap }}>'), "question type stays 15.5px");
+  assert(appSrc.includes('padding: `${qFit.choicePadY}px 14px`, fontSize: 14.5, fontWeight: 700'), "choice type stays 14.5px");
+}
