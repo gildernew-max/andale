@@ -923,7 +923,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(funnelOf("purchase")).toHaveLength(0);
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/charged|won’t be charged|no se cobra|Un mes|One month/);
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/won’t be charged|Un mes|One month/);
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
     expect(stored.unlockedPrem).not.toBe(true);
     expect(stored.paywallPlan).toBeFalsy();

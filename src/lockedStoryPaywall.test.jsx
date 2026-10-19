@@ -65,7 +65,7 @@ describe("locked Lectura tap opens the much-more paywall", () => {
     fireEvent.click(screen.getByTestId("soft-paywall-monthly"));
     await waitFor(() => expect((window.__andaleFunnelLog || []).some((event) => event.event === "tap_monthly" && event.source === "locked_story")).toBe(true));
     expect((window.__andaleFunnelLog || []).some((event) => event.event === "paywall_tap" && event.choice === "monthly")).toBe(false);
-    expect(screen.getByTestId("soft-paywall-annual-label").textContent).toBe("Empezar plan anual");
+    expect(screen.getByTestId("soft-paywall-reserve-form")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("US$6.99\u00A0al\u00A0mes");
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());

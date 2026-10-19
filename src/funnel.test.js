@@ -36,8 +36,8 @@ assert(FUNNEL_EVENTS.day2Return === "day2_return", "day2_return is the later-day
 assert(FUNNEL_EVENTS.firstStreakSeen === "first_streak_seen", "first_streak_seen is the day-2 return card");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "first_streak_seen", "lectura_chapter_done", "lectura_start", "locked_story_capped", "open", "paywall_seen", "paywall_tap", "purchase", "tap_annual", "tap_monthly", "waitlist_submit"].join(","),
-  "funnel allowlist is the conversion chain plus lectura, paywall, waitlist, first-win email, and first-session measurement",
+    === ["cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "first_streak_seen", "lectura_chapter_done", "lectura_start", "locked_story_capped", "open", "paywall_seen", "paywall_tap", "purchase", "reserve_submit", "tap_annual", "tap_monthly", "waitlist_submit"].join(","),
+  "funnel allowlist is the conversion chain plus lectura, paywall, waitlist, first-win email, and first-session measurement, plus reserve_submit",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
 assert(PAYWALL_TAP.monthly === "monthly", "monthly tap label");

@@ -484,13 +484,13 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const body = screen.getByTestId("soft-paywall-body");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
   const copy = lang === "en"
-    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.", annual: "Start annual plan", dismiss: "Continue free", price: "$39.99\u00A0a\u00A0year", monthly: "$6.99\u00A0a\u00A0month", freeLine: "Free: stories unlock one at a time, in order." }
-    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", annual: "Empezar plan anual", dismiss: "Seguir gratis", price: "US$39.99\u00A0al\u00A0año", monthly: "US$6.99\u00A0al\u00A0mes", freeLine: "Gratis: los cuentos se abren uno a uno, en orden." };
+    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.", annual: "FOUNDING ANNUAL", action: "Reserve my spot", small: "Nothing is charged today.", dismiss: "Continue free", price: "$39.99\u00A0a\u00A0year", monthly: "$6.99\u00A0a\u00A0month", freeLine: "Free: stories unlock one at a time, in order." }
+    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", annual: "PLAN ANUAL FUNDADOR", action: "Reservar mi lugar", small: "Hoy no se cobra nada.", dismiss: "Seguir gratis", price: "US$39.99\u00A0al\u00A0año", monthly: "US$6.99\u00A0al\u00A0mes", freeLine: "Gratis: los cuentos se abren uno a uno, en orden." };
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
   expect(body.textContent).toBe(copy.benefit);
   expect(body.style.textWrap).toBe("");
   expect(screen.getByTestId("soft-paywall-annual-label").textContent).toBe(copy.annual);
-  expect(annual.textContent).toBe(copy.annual + copy.price);
+  expect(annual.textContent).toBe(copy.annual + copy.price + copy.action + copy.small);
   expect(annual.contains(screen.getByTestId("soft-paywall-annual-price"))).toBe(true);
   expect(screen.getByTestId("soft-paywall-annual-price").textContent).toBe(copy.price);
   expect(screen.queryByTestId("soft-paywall-annual-hold")).toBeNull();
@@ -559,7 +559,7 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(annual.className).toMatch(/duo-btn/);
   expect(annual.style.background).toMatch(/#58CC02|rgb\(88,\s*204,\s*2\)/i);
   expect(annual.style.borderBottom).not.toMatch(/4px/);
-  expect(annual.style.height).toBe("96px");
+  expect(annual.style.minHeight).toBe("96px");
   expect(annual.style.borderRadius).toBe("16px");
   expect(dismiss.className).not.toMatch(/duo-btn/);
   expect(dismiss.style.background).toBe("none");

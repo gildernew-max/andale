@@ -1399,7 +1399,7 @@ describe("paywall headline depends on a stored story start", () => {
     expect(es.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE.es);
     expect(es.card).not.toContain("La historia sigue.");
     expect(es.card).not.toContain("Hay mucho por leer.");
-    expect(es.parts["soft-paywall-annual-label"]).toBe("Empezar plan anual");
+    expect(es.parts["soft-paywall-annual-label"]).toBe("PLAN ANUAL FUNDADOR");
     expect(es.card).not.toContain("[ANNUAL PRICE]");
     expect(es.card).not.toContain("{price}");
     expect(es.parts["soft-paywall-dismiss"]).toBe("Seguir gratis");
@@ -1409,7 +1409,7 @@ describe("paywall headline depends on a stored story start", () => {
     expect(en.parts["soft-paywall-headline"]).toBe(STARTED_HEADLINE.en);
     expect(en.card).not.toContain("The story goes on.");
     expect(en.card).not.toContain("There's a lot to read.");
-    expect(en.parts["soft-paywall-annual-label"]).toBe("Start annual plan");
+    expect(en.parts["soft-paywall-annual-label"]).toBe("FOUNDING ANNUAL");
     expect(en.card).not.toContain("[ANNUAL PRICE]");
     expect(en.card).not.toContain("{price}");
     expect(en.parts["soft-paywall-dismiss"]).toBe("Continue free");
@@ -1677,7 +1677,7 @@ describe("inert web paywall", () => {
     expect(screen.queryByTestId("soft-paywall-legal")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-restore")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
-    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/€|Apple|Restore|Restaurar|charged|cobra|Un mes|One month/);
+    expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/€|Apple|Restore|Restaurar|Un mes|One month/);
     expect(restoreCalls).toBe(0);
     expect(purchaseCalls).toBe(0);
     await waitFor(() => expect(funnelOf("paywall_seen").length).toBeGreaterThan(0));
