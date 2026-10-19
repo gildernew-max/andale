@@ -192,6 +192,11 @@ describe("monthly hold line", () => {
     await user.click(screen.getByTestId("soft-paywall-monthly"));
     const hold = screen.getByTestId("soft-paywall-monthly-hold");
     expect(hold.textContent).toBe(w.monthlyHold);
+    expect(w.monthlyHold).toBe(uiLang === "en" ? "Monthly isn't open yet. Reserve annual." : "El mensual aún no abre. Aparta el anual.");
+    // One line at 360×640: jsdom has no layout, so this guards the budget (≤44 chars at 13px bold in the ~312px slot)
+    // and asserts equal box height; the Chrome frames (shoot3-monthly.mjs) measure the real pixels.
+    expect(w.monthlyHold.length).toBeLessThanOrEqual(44);
+    expect(hold.getBoundingClientRect().height).toBe(saving.getBoundingClientRect().height);
     expect(screen.queryByTestId("soft-paywall-saving")).toBeNull();
     expect(hold.parentElement).toBe(screen.getByTestId("soft-paywall-annual").parentElement);
     expect({ fontSize: hold.style.fontSize, fontWeight: hold.style.fontWeight, marginTop: hold.style.marginTop }).toEqual(savingStyle);

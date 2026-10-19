@@ -952,7 +952,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(funnelOf("tap_monthly").some((e) => e.source === "win")).toBe(true));
     expect(funnelOf("paywall_tap").some((e) => e.choice === "monthly")).toBe(false);
     expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe("US$6.99\u00A0al\u00A0mes");
-    expect(screen.getByTestId("soft-paywall-monthly-hold").textContent).toBe("El plan mensual aún no está abierto. Puedes apartar el anual hoy.");
+    expect(screen.getByTestId("soft-paywall-monthly-hold").textContent).toBe("El mensual aún no abre. Aparta el anual.");
     expect(screen.queryByTestId("soft-paywall-saving")).toBeNull();
     expect(events).toHaveLength(0);
     expect(funnelOf("purchase")).toHaveLength(0);
