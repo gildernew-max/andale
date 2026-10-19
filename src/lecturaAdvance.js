@@ -574,3 +574,48 @@ export function comprensionNextFitLevel({ level = 0, headerTop, lastChoiceBottom
   if (bottom - top <= room + 0.5) return cur;
   return Math.min(cur + 1, COMPRENSION_FIT_STEPS.length - 1);
 }
+
+/**
+ * A resize, rotation or ES/EN switch can reflow the page above the Comprensión header, so the header
+ * drifts off the brand bar while the fit step is re-measured (Codex P2 on #360). While Q1 is still
+ * open, put the header back under the brand bar before measuring. Returns the scroll target, or
+ * null when there is nothing to do: no pending re-align, Q1 already answered, no layout, or the
+ * header is already in place.
+ */
+export function comprensionRealignScrollY({ pending, q1Answered, headerTop, scrollY = 0, viewportTop = 0 } = {}) {
+  if (!pending || q1Answered) return null;
+  const top = Number(headerTop);
+  if (!Number.isFinite(top)) return null;
+  const y = lecturaQuestionsOpenScrollY({ headerTop: top, scrollY, viewportTop });
+  return Math.abs(y - (Number(scrollY) || 0)) > 0.5 ? y : null;
+}
+
+/** True when the header box changed size (width from a resize, height from a reflow). */
+export function comprensionHeaderResized(prev, next) {
+  if (!prev || !next) return false;
+  return Math.abs((Number(prev.width) || 0) - (Number(next.width) || 0)) > 0.5
+    || Math.abs((Number(prev.height) || 0) - (Number(next.height) || 0)) > 0.5;
+}
+
+/**
+ * Re-measure the Comprensión fit on resize, as watchPaywallStillResize does for the paywall still:
+ * a ResizeObserver on the header plus window resize and orientationchange. Returns the cleanup.
+ */
+export function watchComprensionFit({ win = typeof window !== "undefined" ? window : null, target = null, onResize } = {}) {
+  if (!win || typeof win.addEventListener !== "function" || typeof onResize !== "function") return () => {};
+  let live = true;
+  const run = () => { if (live) onResize(); };
+  let observer = null;
+  if (target && typeof win.ResizeObserver === "function") {
+    observer = new win.ResizeObserver(run);
+    observer.observe(target);
+  }
+  win.addEventListener("resize", run);
+  win.addEventListener("orientationchange", run);
+  return () => {
+    live = false;
+    if (observer) observer.disconnect();
+    win.removeEventListener("resize", run);
+    win.removeEventListener("orientationchange", run);
+  };
+}

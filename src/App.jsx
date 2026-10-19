@@ -65,7 +65,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { comprensionFitStep, comprensionNextFitLevel, homeArrivalScrollY, lecturaAdvanceScrollY, lecturaParagraphArrivalTop, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
+import { comprensionFitStep, comprensionHeaderResized, comprensionNextFitLevel, comprensionRealignScrollY, watchComprensionFit, homeArrivalScrollY, lecturaAdvanceScrollY, lecturaParagraphArrivalTop, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
 import { firstSessionBeatOf, firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, ONBOARDING_CTA_HEIGHT, onboardingCtaBottomCss, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -5350,6 +5350,8 @@ export default function App() {
   const [lecturaAdvanceNonce, setLecturaAdvanceNonce] = useState(0);
   const [story0EndSpacer, setStory0EndSpacer] = useState(0);
   const [comprensionFit, setComprensionFit] = useState({ key: "", level: 0 });
+  const comprensionRealignRef = useRef(false);
+  const comprensionHeaderSizeRef = useRef(null);
   const qFit = comprensionFitStep(comprensionFit.level);
   const [story0EndScrollNonce, setStory0EndScrollNonce] = useState(0);
   const lecturaParagraphRef = useRef(null);
@@ -7174,15 +7176,28 @@ export default function App() {
 
   // Comprensión fit: on a short phone Q1's 4th choice can sit below the fold. Step the spacing,
   // then the quote, until it fits under the header. Runs before paint; at most three passes.
+  // A resize, rotation or ES/EN switch resets the step and, while Q1 is open, puts the header back
+  // under the brand bar before measuring (the page above it can reflow).
   useLayoutEffect(() => {
     if (screen !== "story") return undefined;
     const header = lecturaQuestionsHeaderRef.current;
     if (!header) return undefined;
-    const key = `${storyView?.id || ""}|${prog.uiLang === "en" ? "en" : "es"}|${window.innerWidth}x${window.innerHeight}`;
+    const fitKey = () => `${storyView?.id || ""}|${prog.uiLang === "en" ? "en" : "es"}|${window.innerWidth}x${window.innerHeight}`;
+    const key = fitKey();
     if (comprensionFit.key !== key) {
+      if (comprensionFit.key && comprensionFit.key.split("|")[0] === (storyView?.id || "")) comprensionRealignRef.current = true;
       setComprensionFit({ key, level: 0 });
       return undefined;
     }
+    const viewportTop = lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']"));
+    const realignY = comprensionRealignScrollY({
+      pending: comprensionRealignRef.current,
+      q1Answered: ansSel[0] != null,
+      headerTop: header.getBoundingClientRect().top,
+      scrollY: window.scrollY,
+      viewportTop,
+    });
+    if (realignY != null) window.scrollTo(0, realignY);
     const prompt = header.parentElement && header.parentElement.querySelector("[data-testid='story-q-prompt']");
     const choices = prompt && prompt.nextElementSibling ? prompt.nextElementSibling.querySelectorAll("button") : [];
     const last = choices.length ? choices[choices.length - 1] : null;
@@ -7191,18 +7206,23 @@ export default function App() {
       level: comprensionFit.level,
       headerTop: header.getBoundingClientRect().top,
       lastChoiceBottom: last.getBoundingClientRect().bottom,
-      viewportTop: lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']")),
+      viewportTop,
       viewportHeight: window.innerHeight,
     });
     if (next !== comprensionFit.level) setComprensionFit({ key, level: next });
-    const onResize = () => setComprensionFit((f) => (f.key ? { key: "", level: 0 } : f));
-    window.addEventListener("resize", onResize);
-    window.addEventListener("orientationchange", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("orientationchange", onResize);
+    else comprensionRealignRef.current = false;
+    const box = header.getBoundingClientRect();
+    comprensionHeaderSizeRef.current = { width: box.width, height: box.height };
+    const onResize = () => {
+      const now = header.getBoundingClientRect();
+      const size = { width: now.width, height: now.height };
+      if (fitKey() === key && !comprensionHeaderResized(comprensionHeaderSizeRef.current, size)) return;
+      comprensionHeaderSizeRef.current = size;
+      comprensionRealignRef.current = true;
+      setComprensionFit((f) => (f.key ? { key: "", level: 0 } : f));
     };
-  }, [screen, paraIdx, storyView, prog.uiLang, comprensionFit]);
+    return watchComprensionFit({ target: header, onResize });
+  }, [screen, paraIdx, storyView, prog.uiLang, comprensionFit, ansSel]);
 
   // Claim mounts under Q3. After CLAIM, the XP-claimed card can grow past
   // that fold. Pull the whole card back inside: 12px above the viewport

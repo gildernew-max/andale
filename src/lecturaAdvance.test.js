@@ -20,6 +20,9 @@ import {
   COMPRENSION_FIT_STEPS,
   comprensionFitStep,
   comprensionNextFitLevel,
+  comprensionRealignScrollY,
+  comprensionHeaderResized,
+  watchComprensionFit,
   lecturaClaimNextScrollY,
   lecturaClaimScrollY,
   lecturaLinesAboveNext,
@@ -288,4 +291,53 @@ assert(appSrc.includes("<div ref={lecturaCounterRef} style={{ fontSize: 12, font
   assert(appSrc.includes("<div style={{ fontSize: qFit.quoteSize, fontWeight: 700, lineHeight: qFit.quoteLine }}>"), "the quote is never clamped: no max height or overflow on it");
   assert(appSrc.includes('<div data-testid="story-q-prompt" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: qFit.promptGap }}>'), "question type stays 15.5px");
   assert(appSrc.includes('padding: `${qFit.choicePadY}px 14px`, fontSize: 14.5, fontWeight: 700'), "choice type stays 14.5px");
+}
+// Codex P2 on #360: a resize, rotation or ES/EN switch reflows the page above the Comprensión header.
+// Re-measure the fit and, while Q1 is open, put the header back under the brand bar first.
+{
+  assert(comprensionRealignScrollY({ pending: true, q1Answered: false, headerTop: 98, scrollY: 465, viewportTop: 56 }) === 465 + 98 - 56, "header pushed down 42px by a reflow: scroll it back under the brand bar");
+  assert(comprensionRealignScrollY({ pending: true, q1Answered: false, headerTop: 20, scrollY: 465, viewportTop: 56 }) === 429, "header pulled up under the brand bar: scroll it back down");
+  assert(comprensionRealignScrollY({ pending: true, q1Answered: false, headerTop: 56.2, scrollY: 465, viewportTop: 56 }) === null, "already in place: no scroll");
+  assert(comprensionRealignScrollY({ pending: false, q1Answered: false, headerTop: 98, scrollY: 465, viewportTop: 56 }) === null, "no layout change: arrival is untouched");
+  assert(comprensionRealignScrollY({ pending: true, q1Answered: true, headerTop: -400, scrollY: 1300, viewportTop: 56 }) === null, "Q1 answered: the learner has moved on, leave the scroll alone");
+  assert(comprensionRealignScrollY({ pending: true, headerTop: Number.NaN, scrollY: 465, viewportTop: 56 }) === null, "no layout: no scroll");
+  assert(comprensionRealignScrollY({}) === null, "no input: nothing");
+  assert(comprensionHeaderResized({ width: 328, height: 48 }, { width: 358, height: 48 }), "a wider header is a resize");
+  assert(comprensionHeaderResized({ width: 328, height: 48 }, { width: 328, height: 66 }), "a taller header (EN subline wraps) is a reflow");
+  assert(!comprensionHeaderResized({ width: 328, height: 48 }, { width: 328.3, height: 48.2 }), "sub-pixel noise is not a resize");
+  assert(!comprensionHeaderResized(null, { width: 328, height: 48 }), "no earlier size: not a resize");
+  // A layout change resets the step and the fit climbs again from the new numbers.
+  const v360 = { viewportTop: 56, viewportHeight: 640 };
+  let lv = 0;
+  for (const h of [755.8, 719.8, 645.3]) lv = comprensionNextFitLevel({ ...v360, level: lv, headerTop: 56, lastChoiceBottom: 56 + h });
+  assert(lv === 3, "360x640 story 1 EN climbs to step 3");
+  assert(comprensionNextFitLevel({ viewportTop: 56, viewportHeight: 844, level: 0, headerTop: 56, lastChoiceBottom: 56 + 670.3 }) === 0, "after a resize to 390x844 the reset step 0 fits and stays");
+  assert(comprensionFitStep(lv).quoteSize >= 13 && COMPRENSION_FIT_STEPS.every((st) => st.quoteSize >= 13), "the quote never goes below 13px");
+  assert(comprensionNextFitLevel({ viewportTop: 56, viewportHeight: 360, level: 3, headerTop: 56, lastChoiceBottom: 56 + 520 }) === 3, "640x360 landscape cannot fit: the last step is the floor, never smaller");
+  const calls = [];
+  const listeners = {};
+  let observed = null;
+  let disconnected = 0;
+  const fakeWin = {
+    addEventListener: (type, fn) => { listeners[type] = fn; },
+    removeEventListener: (type, fn) => { if (listeners[type] === fn) delete listeners[type]; },
+    ResizeObserver: function (cb) { this.observe = (el) => { observed = { el, cb }; }; this.disconnect = () => { disconnected += 1; }; },
+  };
+  const headerEl = { id: "header" };
+  const stop = watchComprensionFit({ win: fakeWin, target: headerEl, onResize: () => calls.push(1) });
+  assert(typeof listeners.resize === "function" && typeof listeners.orientationchange === "function", "resize and orientationchange are both watched");
+  assert(observed && observed.el === headerEl, "the Comprensión header is observed");
+  listeners.resize();
+  listeners.orientationchange();
+  observed.cb();
+  assert(calls.length === 3, "each resize, rotation and header size change re-measures");
+  stop();
+  assert(!listeners.resize && !listeners.orientationchange && disconnected === 1, "leaving Comprensión drops every listener and the observer");
+  observed.cb();
+  assert(calls.length === 3, "a late observer callback after cleanup does nothing");
+  assert(typeof watchComprensionFit({ win: null, onResize: () => {} }) === "function", "no window is a safe no-op");
+  assert(appSrc.includes("return watchComprensionFit({ target: header, onResize });"), "the fit effect re-measures on resize and cleans up");
+  assert(appSrc.includes("if (comprensionFit.key && comprensionFit.key.split(\"|\")[0] === (storyView?.id || \"\")) comprensionRealignRef.current = true;"), "an ES/EN switch on the same story re-aligns before re-measuring");
+  assert(appSrc.includes("q1Answered: ansSel[0] != null,"), "re-align only while Q1 is open");
+  assert(appSrc.includes("}, [screen, paraIdx, storyView, prog.uiLang, comprensionFit, ansSel]);"), "the fit effect re-runs on language and answer changes");
 }
