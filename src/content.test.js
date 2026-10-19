@@ -22,7 +22,7 @@ import { JEOPARDY_CAT_LABEL, JEOPARDY_CATEGORY_IDS, JEOPARDY_HOWTO, JEOPARDY_QUI
 import { MEMORY_BANK, MEMORY_HOWTO, MEMORY_QUIET, MEMORY_TITLE, memoryRegionChip, memoryTitle } from "./memory.js";
 import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
 import { PAYWALL_BIRD_TRIGGER, PAYWALL_SOURCE } from "./paywallHeadline.js";
-import { ANNUAL_PRICE_PLACEHOLDER, LOCKED_STORY_PAYWALL, paywallStillMaxHeight, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_GAP, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT } from "./webPaywall.js";
+import { ANNUAL_PRICE_PLACEHOLDER, LOCKED_STORY_PAYWALL, paywallStillMaxHeight, watchPaywallStillResize, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_GAP, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT } from "./webPaywall.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
 import { COLLECTOR_ENDPOINT, collectorEndpoint } from "./collector.js";
 import { FIRST_WIN_EMAIL_CTA, FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_INVITE, FIRST_WIN_EMAIL_PLACEHOLDER, FIRST_WIN_EMAIL_PRIVACY, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SKIP, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
@@ -771,6 +771,33 @@ assert(paywallStillMaxHeight({ frameHeight: 140, imgHeight: 140 }) === null, "a 
 assert(paywallStillMaxHeight({ frameHeight: 30, imgHeight: 140 }) === 48, "the still never goes under 48px");
 assert(paywallStillMaxHeight({}) === null, "missing measures change nothing");
 assert(appSrc.includes("paywallStillMaxHeight({ frameHeight: frame.getBoundingClientRect().height"), "the paywall layout effect keeps the still inside its frame");
+// Codex P2 on PR 356: the cap was measured once, so a resize or rotation with the paywall open left a stale image height.
+{
+  const calls = [];
+  const listeners = {};
+  let observed = null;
+  let disconnected = 0;
+  const fakeWin = {
+    addEventListener: (type, fn) => { listeners[type] = fn; },
+    removeEventListener: (type, fn) => { if (listeners[type] === fn) delete listeners[type]; },
+    ResizeObserver: function (cb) { this.cb = cb; this.observe = (el) => { observed = { el, cb }; }; this.disconnect = () => { disconnected += 1; }; },
+  };
+  const overlayEl = { id: "overlay" };
+  const stop = watchPaywallStillResize({ win: fakeWin, target: overlayEl, onResize: () => calls.push(1) });
+  assert(typeof listeners.resize === "function" && typeof listeners.orientationchange === "function", "resize and orientationchange are both watched");
+  assert(observed && observed.el === overlayEl, "the fixed overlay is observed");
+  listeners.resize();
+  listeners.orientationchange();
+  observed.cb();
+  assert(calls.length === 3, "each resize, rotation and overlay size change re-runs the still fit");
+  stop();
+  assert(!listeners.resize && !listeners.orientationchange && disconnected === 1, "closing the paywall drops every listener and the observer");
+  listeners.resize = () => {};
+  observed.cb();
+  assert(calls.length === 3, "a late observer callback after cleanup does nothing");
+  assert(typeof watchPaywallStillResize({ win: null, onResize: () => {} }) === "function", "no window is a safe no-op");
+}
+assert(appSrc.includes("return watchPaywallStillResize({ target: overlay, onResize: fitStill });"), "the paywall layout effect re-measures on resize and cleans up on close");
 assert(PAYWALL_FREE_LINE_GAP === 8, "the free line sits 8px under Continue free");
 assert(PAYWALL_FREE_LINE_SIZE === 12, "the free line is body type one size down from 13.5");
 assert(paywallLayout.includes("paddingBottom: `calc(${PAYWALL_CARD_BOTTOM_INSET}px + env(safe-area-inset-bottom))`"), "the card bottom is at least 16px above the safe area");
