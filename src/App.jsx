@@ -65,7 +65,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { homeArrivalScrollY, lecturaAdvanceScrollY, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
+import { homeArrivalScrollY, lecturaAdvanceScrollY, lecturaParagraphArrivalTop, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
 import { firstSessionBeatOf, firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, ONBOARDING_CTA_HEIGHT, onboardingCtaBottomCss, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -5351,6 +5351,7 @@ export default function App() {
   const [story0EndSpacer, setStory0EndSpacer] = useState(0);
   const [story0EndScrollNonce, setStory0EndScrollNonce] = useState(0);
   const lecturaParagraphRef = useRef(null);
+  const lecturaCounterRef = useRef(null);
   const lecturaQuestionsRef = useRef(null);
   const lecturaQuestionsHeaderRef = useRef(null);
   const lecturaClaimRef = useRef(null);
@@ -7153,7 +7154,10 @@ export default function App() {
     if (!paragraph && !qHeader) return;
     const nextY = paragraph
       ? lecturaAdvanceScrollY({
-        paragraphTop: paragraph.getBoundingClientRect().top,
+        paragraphTop: lecturaParagraphArrivalTop({
+          paragraphTop: paragraph.getBoundingClientRect().top,
+          counterLift: lecturaCounterRef.current ? paragraph.offsetTop - lecturaCounterRef.current.offsetTop : null,
+        }),
         scrollY: window.scrollY,
         headerBottom,
       })
@@ -12488,7 +12492,7 @@ export default function App() {
                 style={{ width: 26, height: 18, borderRadius: 9, border: "none", cursor: "pointer", padding: 0, fontSize: 10, fontWeight: 900, fontFamily: "inherit", background: paraIdx >= story.paragraphs.length ? sec.dark : (theme === "dark" ? D.track : "#E8E8E8"), color: paraIdx >= story.paragraphs.length ? "#fff" : (theme === "dark" ? D.ink : D.sub) }}>?</button>
             </div>
             {paraIdx < story.paragraphs.length && (
-              <div style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>
+              <div ref={lecturaCounterRef} style={{ fontSize: 12, fontWeight: 900, color: D.sub, marginBottom: 8 }}>
                 {uiLang === "en" ? "Paragraph" : "Párrafo"} {paraIdx + 1} / {story.paragraphs.length}
               </div>
             )}

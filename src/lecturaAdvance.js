@@ -16,6 +16,22 @@ export function lecturaAdvanceScrollY({ paragraphTop, scrollY = 0, headerBottom 
 }
 
 /**
+ * Where a new paragraph arrives. The «Paragraph n / N» counter sits just above the card; landing
+ * the card top on the header bottom tucked the counter under the header. counterLift is the
+ * counter's distance above the card (card offsetTop minus counter offsetTop). When it is known the
+ * arrival target moves up by that much plus an 8px gap under the header, so the counter and the
+ * first line both show. Without a counter (or no layout) it is the card top, as before.
+ */
+export function lecturaParagraphArrivalTop({ paragraphTop, counterLift, gap = 8 } = {}) {
+  const top = Number(paragraphTop);
+  if (!Number.isFinite(top)) return top;
+  const lift = Number(counterLift);
+  if (!Number.isFinite(lift) || !(lift > 0) || lift > 120) return top;
+  const pad = Number.isFinite(Number(gap)) ? Math.max(0, Number(gap)) : 0;
+  return top - lift - pad;
+}
+
+/**
  * QUESTIONS open. The comprehension header's top meets the brand bar's bottom.
  * Q1 stays in the page under that header. No stuck chrome.
  */
