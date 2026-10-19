@@ -590,11 +590,14 @@ export function comprensionRealignScrollY({ pending, q1Answered, headerTop, scro
   return Math.abs(y - (Number(scrollY) || 0)) > 0.5 ? y : null;
 }
 
-/** True when the header box changed size (width from a resize, height from a reflow). */
+/**
+ * True when the header box changed width (a resize or rotation the window events can miss).
+ * Height is left out on purpose: the header grows by a line when the story is claimed
+ * («— coleccionable desbloqueado»), and that must not reset the fit under the claim card.
+ */
 export function comprensionHeaderResized(prev, next) {
   if (!prev || !next) return false;
-  return Math.abs((Number(prev.width) || 0) - (Number(next.width) || 0)) > 0.5
-    || Math.abs((Number(prev.height) || 0) - (Number(next.height) || 0)) > 0.5;
+  return Math.abs((Number(prev.width) || 0) - (Number(next.width) || 0)) > 0.5;
 }
 
 /**

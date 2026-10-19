@@ -303,7 +303,7 @@ assert(appSrc.includes("<div ref={lecturaCounterRef} style={{ fontSize: 12, font
   assert(comprensionRealignScrollY({ pending: true, headerTop: Number.NaN, scrollY: 465, viewportTop: 56 }) === null, "no layout: no scroll");
   assert(comprensionRealignScrollY({}) === null, "no input: nothing");
   assert(comprensionHeaderResized({ width: 328, height: 48 }, { width: 358, height: 48 }), "a wider header is a resize");
-  assert(comprensionHeaderResized({ width: 328, height: 48 }, { width: 328, height: 66 }), "a taller header (EN subline wraps) is a reflow");
+  assert(!comprensionHeaderResized({ width: 328, height: 48 }, { width: 328, height: 66 }), "the claim line growing the header is not a resize (keeps the claim card in place)");
   assert(!comprensionHeaderResized({ width: 328, height: 48 }, { width: 328.3, height: 48.2 }), "sub-pixel noise is not a resize");
   assert(!comprensionHeaderResized(null, { width: 328, height: 48 }), "no earlier size: not a resize");
   // A layout change resets the step and the fit climbs again from the new numbers.
