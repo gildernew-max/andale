@@ -15,6 +15,7 @@ import {
   LECTURA_STILL_MARGIN_BOTTOM,
   LECTURA_STORY_OPEN_STILL_TOP,
   lecturaAdvanceScrollY,
+  homeArrivalScrollY,
   lecturaClaimNextScrollY,
   lecturaClaimScrollY,
   lecturaLinesAboveNext,
@@ -235,3 +236,11 @@ assert(lecturaClaimNextScrollY({ ...claimView, nextBottom: undefined }) === lect
 assert(lecturaClaimNextScrollY({ ...claimView, nextBottom: 720 }) === 1789 + 720 - (640 - 12), "the next-step card bottom lands on the 12px floor");
 assert(lecturaClaimNextScrollY({ ...claimView, nextBottom: 560 }) === 1789, "a card already inside the fold does not move the page");
 assert(lecturaClaimNextScrollY({ ...claimView, claimTop: 60, claimBottom: 150, nextBottom: 900 }) === 1789 + 60 - 56, "the claim top never scrolls above the brand bar");
+// Home after a win CONTINUE lands at scroll 0 (360x640: the win screen scrolled 20px and Home inherited it).
+assert(homeArrivalScrollY({ pending: true, screen: "home", scrollY: 20 }) === 0, "a pending win-to-Home arrival resets a scrolled page to the top");
+assert(homeArrivalScrollY({ pending: true, screen: "home", scrollY: 0 }) === null, "already at the top: nothing to move");
+assert(homeArrivalScrollY({ pending: false, screen: "home", scrollY: 20 }) === null, "launch and tab switches are not pending, so their scroll is untouched");
+assert(homeArrivalScrollY({ pending: true, screen: "done", scrollY: 20 }) === null, "only the Home screen resets");
+assert(homeArrivalScrollY({}) === null, "no input changes nothing");
+assert(appSrc.includes("if (next === \"home\") homeAfterWinTopRef.current = true;"), "win CONTINUE marks the Home arrival");
+assert(appSrc.includes("homeArrivalScrollY({ pending: true, screen, scrollY: window.scrollY })"), "Home applies the top reset once on arrival");

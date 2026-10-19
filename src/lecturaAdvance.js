@@ -510,3 +510,15 @@ export function lecturaSheetReachStyle({ top, background, accent }) {
     pointerEvents: "auto",
   };
 }
+
+/**
+ * Home after a win screen's CONTINUE lands at the top. The win screen can be a few pixels taller
+ * than a short phone, and the window keeps that scroll when Home mounts, which tucks the top of
+ * the first tile row under the sticky header. Returns 0 when a win-to-Home arrival is pending and
+ * the page is not already at the top, else null (leave the scroll alone). Other arrivals (launch,
+ * tab switch) never set the pending flag.
+ */
+export function homeArrivalScrollY({ pending, screen, scrollY } = {}) {
+  if (!pending || screen !== "home") return null;
+  return (Number(scrollY) || 0) > 0.5 ? 0 : null;
+}
