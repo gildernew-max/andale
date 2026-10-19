@@ -231,12 +231,7 @@ describe("paywall card", () => {
       expect(norm(monthly.style.color)).toBe(monthlyInk);
       expect(norm(monthly.style.background)).not.toBe("#58cc02");
       await user.click(monthly);
-      const monthHold = screen.getByTestId("soft-paywall-monthly-hold");
-      expect(monthHold.textContent).toBe(monthlyHoldLine);
-      expect(monthHold.style.marginTop).toBe(`${PAYWALL_ANNUAL_HOLD_GAP}px`);
-      expect(monthHold.style.fontSize).toBe("13.5px");
-      expect(monthHold.style.fontWeight).toBe("700");
-      expect(norm(monthHold.style.color)).toBe(holdInk);
+      expect(screen.queryByTestId("soft-paywall-monthly-hold")).toBeNull();
       expect(screen.getByTestId("soft-paywall-reserve-form").contains(screen.getByTestId("soft-paywall-annual-price"))).toBe(true);
       expect(screen.getByTestId("soft-paywall-monthly").textContent).toBe(monthlyLabel);
       expect(norm(screen.getByTestId("soft-paywall-reserve-submit").style.background)).toBe("#58cc02");

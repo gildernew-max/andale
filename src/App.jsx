@@ -8676,6 +8676,7 @@ export default function App() {
   const tapPaywallAnnual = () => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.annual });
     emitFunnelEvent({ event: FUNNEL_EVENTS.tapAnnual, source: paywallSeenKindRef.current });
+    setPaywallMonthlyHold(false);
     setReserveStep(RESERVE_STEP.open);
   };
   const submitReserveAnnual = (e) => {
@@ -11028,7 +11029,11 @@ export default function App() {
                       <span data-testid="soft-paywall-annual-action" style={{ fontWeight: 800, fontSize: 15, lineHeight: 1.2, color: LESSON_LIME_INK }}>{rw.action}</span>
                       <span data-testid="soft-paywall-annual-small" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2, color: LESSON_LIME_INK }}>{rw.small}</span>
                     </button>
-                    <div data-testid="soft-paywall-saving" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.4, color: quiet, marginTop: 6 }}>{rw.saving}</div>
+                    {paywallMonthlyHold ? (
+                      <div data-testid="soft-paywall-monthly-hold" role="status" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.4, color: quiet, marginTop: 6 }}>{rw.monthlyHold}</div>
+                    ) : (
+                      <div data-testid="soft-paywall-saving" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.4, color: quiet, marginTop: 6 }}>{rw.saving}</div>
+                    )}
                   </div>
                 );
               }
@@ -11054,9 +11059,6 @@ export default function App() {
                 </form>
               );
             })()}
-            {paywallMonthlyHold ? (
-              <div data-testid="soft-paywall-monthly-hold" style={{ ...paywallBodyType, color: theme === "dark" ? "#CDBBA6" : "#6B6258", marginTop: PAYWALL_ANNUAL_HOLD_GAP, flexShrink: 0 }}>{L.paywallMonthlyHold}</div>
-            ) : null}
             <button type="button" data-testid="soft-paywall-monthly" onClick={tapPaywallMonthly}
               style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", boxSizing: "border-box", flexShrink: 0, height: PAYWALL_MONTHLY_HEIGHT, marginTop: PAYWALL_MONTHLY_GAP, padding: 0, background: "none", border: `2px solid ${theme === "dark" ? "#CDBBA6" : "#1F3A1A"}`, borderRadius: 16, color: theme === "dark" ? "#F6EFE4" : "#1F3A1A", fontFamily: "inherit", fontWeight: 800, fontSize: 20, lineHeight: 1.2, textTransform: "none", letterSpacing: "0", cursor: "pointer" }}>
               {L.paywallMonthlyLabel}
