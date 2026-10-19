@@ -484,8 +484,8 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const body = screen.getByTestId("soft-paywall-body");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
   const copy = lang === "en"
-    ? { title: "There's much\u00A0more to read.", benefit: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.", annual: "FOUNDING ANNUAL", action: "Reserve my spot", small: "Nothing is charged today.", dismiss: "Continue free", price: "$39.99\u00A0a\u00A0year", monthly: "$6.99\u00A0a\u00A0month", freeLine: "Free: stories unlock one at a time, in order." }
-    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", annual: "PLAN ANUAL FUNDADOR", action: "Reservar mi lugar", small: "Hoy no se cobra nada.", dismiss: "Seguir gratis", price: "US$39.99\u00A0al\u00A0año", monthly: "US$6.99\u00A0al\u00A0mes", freeLine: "Gratis: los cuentos se abren uno a uno, en orden." };
+    ? { title: "There's much\u00A0more to read.", benefit: "Every story. Real Mexican Spanish, past\u00A0the\u00A0basics.", annual: "FOUNDING ANNUAL", action: "Reserve my spot", small: "Nothing is charged today.", dismiss: "Continue free", price: "$39.99\u00A0a\u00A0year", monthly: "$6.99\u00A0a\u00A0month", freeLine: "Free: stories unlock one at a time, in order." }
+    : { title: "Hay mucho más por leer.", benefit: "Todas las historias. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", annual: "PLAN ANUAL FUNDADOR", action: "Reservar mi lugar", small: "Hoy no se cobra nada.", dismiss: "Seguir gratis", price: "US$39.99\u00A0al\u00A0año", monthly: "US$6.99\u00A0al\u00A0mes", freeLine: "Gratis: los cuentos se abren uno a uno, en orden." };
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
   expect(body.textContent).toBe(copy.benefit);
   expect(body.style.textWrap).toBe("");
@@ -516,7 +516,7 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(monthly.style.width).toBe("100%");
   expect(monthly.style.background).not.toMatch(/#58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
   expect(freeLine.style.marginTop).toBe("8px");
-  expect(freeLine.style.fontSize).toBe("12px");
+  expect(freeLine.style.fontSize).toBe("11px");
   expect(freeLine.style.fontWeight).toBe("700");
   expect(freeLine.style.textAlign).toBe("center");
   expect(freeLine.style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);

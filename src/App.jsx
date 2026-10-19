@@ -4641,7 +4641,7 @@ const UI = {
     paywallHeadline: "La historia sigue.",
     paywallHeadlineFallback: "Hay mucho más por leer.",
     paywallHeadlineNoStory: "Hay mucho por leer.",
-    paywallBody: "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.",
+    paywallBody: "Todas las historias. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.",
     paywallAnnual: "Empezar plan anual",
     paywallAnnualHold: "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.",
     paywallPrice: "{price} al año",
@@ -4742,7 +4742,7 @@ const UI = {
     paywallHeadline: "The story goes on.",
     paywallHeadlineFallback: "There's much\u00A0more to read.",
     paywallHeadlineNoStory: "There's a lot to read.",
-    paywallBody: "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.",
+    paywallBody: "Every story. Real Mexican Spanish, past\u00A0the\u00A0basics.",
     paywallAnnual: "Start annual plan",
     paywallAnnualHold: "Annual plans aren't open yet. Keep reading free for now.",
     paywallPrice: "{price} a year",
@@ -9120,6 +9120,9 @@ export default function App() {
         .lesson-footer-cap { max-height: 60vh; max-height: 60dvh; }
         .lesson-footer-scroll { scrollbar-width: none; -ms-overflow-style: none; }
         .lesson-footer-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
+        .reserve-email { outline: none; }
+        .reserve-email:focus-visible { outline: 2px solid #1F3A1A; outline-offset: 2px; }
+        .reserve-email.dark:focus-visible { outline-color: #F6EFE4; }
         .duo-btn:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px !important; }
         .lectura-next-held .duo-btn,
         .lectura-next-held .duo-btn:hover,
@@ -11036,7 +11039,7 @@ export default function App() {
                   {annualPriceText ? (
                     <div data-testid="soft-paywall-annual-price" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1, color: ink }}>{annualPriceText}</div>
                   ) : null}
-                  <input data-testid="soft-paywall-reserve-email" type="email" inputMode="email" autoComplete="email" autoFocus
+                  <input data-testid="soft-paywall-reserve-email" className={dark ? "reserve-email dark" : "reserve-email"} type="email" inputMode="email" autoComplete="email" autoFocus
                     aria-label={rw.placeholder} aria-invalid={invalid ? "true" : undefined} placeholder={rw.placeholder}
                     value={reserveEmail}
                     onFocus={(e) => { try { e.target.scrollIntoView({ block: "nearest" }); } catch { /* jsdom */ } }}

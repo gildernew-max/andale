@@ -35,7 +35,7 @@ assert(PAYWALL_ANNUAL_HOLD_GAP === 8, "the post-tap line sits 8px under annual")
 assert(PAYWALL_MONTHLY_GAP === 12, "monthly sits 12px under annual");
 assert(PAYWALL_FREE_GAP === 12, "Continue free sits 12px under monthly");
 assert(PAYWALL_FREE_LINE_GAP === 8, "the free line sits 8px under Continue free");
-assert(PAYWALL_FREE_LINE_SIZE === 12, "the free line is one step down from 13.5");
+assert(PAYWALL_FREE_LINE_SIZE === 11, "the free line is two steps down from 13.5");
 
 console.log("webPaywall.test.js ok");
 

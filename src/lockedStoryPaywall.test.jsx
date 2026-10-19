@@ -5,8 +5,8 @@ import { installFlowHooks, seedProgress, boot, localToday } from "./flowsHarness
 
 installFlowHooks();
 
-const ES_BODY = "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.";
-const EN_BODY = "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.";
+const ES_BODY = "Todas las historias. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.";
+const EN_BODY = "Every story. Real Mexican Spanish, past\u00A0the\u00A0basics.";
 const ES_PRICE = "US$39.99\u00A0al\u00A0año";
 const EN_PRICE = "$39.99\u00A0a\u00A0year";
 

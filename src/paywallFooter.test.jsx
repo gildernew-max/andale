@@ -150,7 +150,7 @@ describe("paywall card", () => {
       expect(monthly.style.marginTop).toBe("12px");
       expect(note.style.marginTop).toBe("8px");
       expect(note.textContent).toBe(freeLine);
-      expect(note.style.fontSize).toBe("12px");
+      expect(note.style.fontSize).toBe("11px");
       expect(note.style.fontWeight).toBe("700");
       expect(note.style.textAlign).toBe("center");
       expect(norm(note.style.color)).toBe(holdInk);
