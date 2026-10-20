@@ -4,17 +4,17 @@
  *  collector off. The funnel script lives in apps-script/collector.gs.
  *  This repo does not deploy that script.
  *
- *  Funnel events go out as exactly five fields:
- *  { event, source, day, date, device_id }.
+ *  Only two events ever leave the device: paywall_seen and reserve_submit.
+ *  Each goes out as exactly three fields: { event, date, device }.
  *  date is the device's local calendar day (YYYY-MM-DD).
- *  source is win, locked_story, or timed, or "" .
- *  day is an integer 1–3650, or "" .
- *  Every other field on the bus event is dropped. The address is never sent.
+ *  device is a random id made on this device.
+ *  Every other event stays on the device. Every other field is dropped.
+ *  The address is never sent.
  *  Email submits still go out as { type:'email', email, lang, source, ts }.
  */
 
 import { dayKeyFromDate } from "./firstDoor.js";
-import { FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE } from "./funnel.js";
+import { FUNNEL_EVENTS } from "./funnel.js";
 
 function readEndpoint(env, name) {
   const value = env && env[name];
@@ -43,10 +43,10 @@ export const COLLECTOR_ENDPOINT = collectorEndpoint();
 
 export const COLLECTOR_DEVICE_KEY = "andale-device-id";
 
-const EVENT_NAMES = new Set(Object.values(FUNNEL_EVENTS));
+/** The only events that leave the device. */
+export const COLLECTOR_EVENTS = Object.freeze([FUNNEL_EVENTS.paywallSeen, FUNNEL_EVENTS.reserveSubmit]);
+const EVENT_NAMES = new Set(COLLECTOR_EVENTS);
 
-const LEARNER_DAY_CAP = 3650;
-const SOURCES = new Set(Object.values(PAYWALL_SEEN_SOURCE));
 
 /** Local calendar day of the event. Same clock as the streak day key. */
 function localEventDate(now, fallback) {
@@ -57,19 +57,6 @@ function localEventDate(now, fallback) {
   const date = raw ? new Date(raw) : new Date();
   const key = dayKeyFromDate(Number.isNaN(date.getTime()) ? new Date() : date);
   return key || dayKeyFromDate(new Date());
-}
-
-/** Allowlisted paywall source, or a blank so the key stays and junk does not. */
-function postedSource(detail) {
-  const source = detail && detail.source;
-  return SOURCES.has(source) ? source : "";
-}
-
-/** Learner day 1–3650, or a blank. Same bounds as the funnel bus. */
-function postedDay(detail) {
-  const value = detail && detail.day;
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > LEARNER_DAY_CAP) return "";
-  return value;
 }
 
 function browserStorage() {
@@ -150,7 +137,7 @@ export async function postCollector(record, {
 }
 
 /** Forward one bus event. Empty endpoint sends nothing and does not mint a device id.
- *  The body is only event, source, day, date, and device_id.
+ *  Only paywall_seen and reserve_submit send. The body is only event, date, and device.
  */
 export async function shipFunnelEvent(detail, {
   endpoint = collectorEndpoint(),
@@ -164,16 +151,14 @@ export async function shipFunnelEvent(detail, {
     const url = typeof endpoint === "string" ? endpoint.trim() : "";
     if (!url) return { ok: true, sent: false };
     const name = detail && detail.event;
-    if (!EVENT_NAMES.has(name)) return { ok: false, sent: false };
+    if (!EVENT_NAMES.has(name)) return { ok: true, sent: false };
     const store = storage === undefined ? browserStorage() : storage;
     const deviceId = collectorDeviceId(store, random);
     if (!deviceId) return { ok: true, sent: false };
     const record = {
       event: name,
-      source: postedSource(detail),
-      day: postedDay(detail),
       date: localEventDate(now, detail && detail.at),
-      device_id: deviceId,
+      device: deviceId,
     };
     return postCollector(record, { endpoint: url, fetchImpl, beaconImpl });
   } catch {

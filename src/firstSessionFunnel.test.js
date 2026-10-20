@@ -141,14 +141,9 @@ for (const event of [
     },
     fetchImpl: async () => { throw new Error("fetch should not run"); },
   });
-  assert(result.sent === true, `${event} ships on the collector path`);
+  assert(result.sent === false, `${event} stays on the device`);
 }
-assert(posted.map((row) => row.event).join(",") === "first_session_start,first_session_exercise1_correct,first_session_complete,day2_return", "collector keeps the four names");
-for (const row of posted) {
-  assert(Object.keys(row).sort().join(",") === "date,day,device_id,event,source", `${row.event} row is the five collector fields`);
-  assert(!("email" in row) && !("daysSinceLast" in row) && !("name" in row) && !("lang" in row), `${row.event} row has no address, day gap, or old fields`);
-  assert(row.device_id === "device-session-1" && row.source === "" && row.day === "", `${row.event} keeps the device id and blank source and day`);
-}
-assert(shipStore.data["andale-device-id"] === "device-session-1", "the four events share one device id");
+assert(posted.length === 0, "none of the four first-session events leave the device");
+assert(shipStore.data["andale-device-id"] == null, "no device id is minted for events that stay home");
 
 console.log("firstSessionFunnel.test.js: ok");

@@ -67,7 +67,7 @@ await withDevice(async ({ storage, bus, shipped, open }) => {
   assert(open("story-0", "2026-10-14") == null, "a same-day reopen does not emit");
   assert(logged(storage, "lectura_start").length === 1, "a same-day reopen writes one Lectura start to the device log");
   assert(logged(storage, "lectura_start")[0].storyId === "story-0", "the stored start keeps the story id");
-  assert(shippedNamed(shipped, "lectura_start").length === 1, "a same-day reopen ships one Lectura start");
+  assert(shippedNamed(shipped, "lectura_start").length === 0, "Lectura start stays on the device");
   assert(JSON.parse(storage.getItem(LECTURA_START_DAY_KEY))["story-0"] === "2026-10-14", "the day record keeps story-0 for today");
 
   emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaChapterDone, storyId: "story-0" }, bus);
@@ -83,10 +83,10 @@ await withDevice(async ({ storage, bus, shipped, open }) => {
   assert(logged(storage, "paywall_seen").length === 2, "paywall seen still logs every open");
   assert(logged(storage, "paywall_tap").length === 2, "paywall taps still log every tap");
   assert(logged(storage, "tap_annual").length === 1 && logged(storage, "tap_monthly").length === 1, "annual and monthly taps still log");
-  assert(shippedNamed(shipped, "lectura_chapter_done").length === 2, "Lectura win still ships every claim");
+  assert(shippedNamed(shipped, "lectura_chapter_done").length === 0, "Lectura win stays on the device");
   assert(shippedNamed(shipped, "paywall_seen").length === 2, "paywall seen still ships every open");
-  assert(shippedNamed(shipped, "paywall_tap").length === 2, "paywall taps still ship every tap");
-  assert(shippedNamed(shipped, "tap_annual").length === 1 && shippedNamed(shipped, "tap_monthly").length === 1, "annual and monthly taps still ship");
+  assert(shippedNamed(shipped, "paywall_tap").length === 0, "paywall taps stay on the device");
+  assert(shippedNamed(shipped, "tap_annual").length === 0 && shippedNamed(shipped, "tap_monthly").length === 0, "annual and monthly taps stay on the device");
 });
 
 await withDevice(async ({ storage, shipped, open }) => {
@@ -94,7 +94,7 @@ await withDevice(async ({ storage, shipped, open }) => {
   open("story-1", "2026-10-14");
   assert(logged(storage, "lectura_start").length === 2, "a different story on the same day writes a second Lectura start");
   assert(logged(storage, "lectura_start").map((row) => row.storyId).join(",") === "story-0,story-1", "the two starts keep their own story ids");
-  assert(shippedNamed(shipped, "lectura_start").length === 2, "a different story on the same day ships a second Lectura start");
+  assert(shippedNamed(shipped, "lectura_start").length === 0, "a second Lectura start stays on the device");
   const record = JSON.parse(storage.getItem(LECTURA_START_DAY_KEY));
   assert(record["story-0"] === "2026-10-14" && record["story-1"] === "2026-10-14", "both stories are stored for today");
 });
@@ -108,14 +108,14 @@ await withDevice(async ({ storage, shipped, open }) => {
   }));
   assert(open("story-0", "2026-10-15")?.storyId === "story-0", "the same story on the next local day emits again");
   assert(logged(storage, "lectura_start").length === 2, "the next local day writes another Lectura start");
-  assert(shippedNamed(shipped, "lectura_start").length === 2, "the next local day ships another Lectura start");
+  assert(shippedNamed(shipped, "lectura_start").length === 0, "the next-day Lectura start stays on the device");
   const record = JSON.parse(storage.getItem(LECTURA_START_DAY_KEY));
   assert(record["story-0"] === "2026-10-15", "the day record moves story-0 to the new day");
   assert(record["story-9"] == null, "an older day is pruned");
   assert(!JSON.stringify(record).includes("2026-10-14"), "the previous day is not kept");
   assert(!JSON.stringify(record).includes("ada@example.com"), "the day record drops an address");
   assert(open("story-0", "2026-10-15") == null, "the new day still counts the story only once");
-  assert(logged(storage, "lectura_start").length === 2 && shippedNamed(shipped, "lectura_start").length === 2, "a reopen on the new day does not log or ship again");
+  assert(logged(storage, "lectura_start").length === 2 && shippedNamed(shipped, "lectura_start").length === 0, "a reopen on the new day does not log or ship again");
 });
 
 const blocked = memoryStorage();
