@@ -207,11 +207,7 @@ const shipped = await shipFunnelEvent({
   },
   fetchImpl: async () => { throw new Error("fetch should not run"); },
 });
-assert(shipped.sent === true, "collector allowlist accepts first_streak_seen");
-assert(posted.length === 1, "one collector row");
-assert(Object.keys(posted[0]).sort().join(",") === "date,day,device_id,event,source", "first_streak_seen uses the five collector fields");
-assert(posted[0].event === "first_streak_seen" && posted[0].source === "" && posted[0].day === "", "blank source and day, same as the other plain events");
-assert(posted[0].device_id === "device-streak-1", "device id is kept");
-assert(!("email" in posted[0]) && !("storyId" in posted[0]), "collector drops the address and the story id");
+assert(shipped.sent === false, "first_streak_seen stays on the device");
+assert(posted.length === 0, "no collector row for first_streak_seen");
 
 console.log("firstStreakReturn.test.js ok");

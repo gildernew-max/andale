@@ -2,7 +2,8 @@
  * Anonymous funnel collector for Ándale. Not deployed from this repo.
  *
  * doPost appends one row per event to the first tab of the bound spreadsheet.
- * Columns: received_at, event, source, day, date, device_id.
+ * Only paywall_seen and reserve_submit are kept; anything else is ignored.
+ * Columns: received_at, event, date, device.
  * This script does not read IP addresses or request headers.
  *
  * Deploy steps for Dave:
@@ -12,12 +13,12 @@
  * 4. Put that URL in the VITE_COLLECTOR_ENDPOINT repository variable
  *    or secret used by the Pages build. Leave it unset to send nothing.
  */
+var ALLOWED_EVENTS = { paywall_seen: true, reserve_submit: true };
+
 function readEvent(e) {
   var eventName = "";
-  var source = "";
-  var day = "";
   var date = "";
-  var deviceId = "";
+  var device = "";
   var raw = "";
   if (e && e.postData && typeof e.postData.contents === "string") {
     raw = e.postData.contents;
@@ -25,22 +26,17 @@ function readEvent(e) {
   if (raw.charAt(0) === "{") {
     try {
       var parsed = JSON.parse(raw);
-      if (typeof parsed.event === "string") eventName = parsed.event;
-      if (typeof parsed.source === "string") source = parsed.source;
-      if (typeof parsed.day === "number" && isFinite(parsed.day)) day = parsed.day;
-      else if (typeof parsed.day === "string") day = parsed.day;
-      if (typeof parsed.date === "string") date = parsed.date;
-      if (typeof parsed.device_id === "string") deviceId = parsed.device_id;
+      if (typeof parsed.event === "string" && ALLOWED_EVENTS[parsed.event] === true) eventName = parsed.event;
+      if (typeof parsed.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.date)) date = parsed.date;
+      if (typeof parsed.device === "string") device = parsed.device.slice(0, 64);
     } catch (err) {
       eventName = "";
     }
   }
   return {
     event: eventName,
-    source: source,
-    day: day,
     date: date,
-    device_id: deviceId,
+    device: device,
   };
 }
 
@@ -49,15 +45,13 @@ function doPost(e) {
   if (!record.event) return ContentService.createTextOutput("ok");
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(["received_at", "event", "source", "day", "date", "device_id"]);
+    sheet.appendRow(["received_at", "event", "date", "device"]);
   }
   sheet.appendRow([
     new Date().toISOString(),
     record.event,
-    record.source,
-    record.day,
     record.date,
-    record.device_id,
+    record.device,
   ]);
   return ContentService.createTextOutput("ok");
 }
