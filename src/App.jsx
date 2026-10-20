@@ -8730,7 +8730,12 @@ export default function App() {
     const wasReserved = !!readReservation();
     const next = submitReserve(reserveEmail);
     setReserveStep(next);
-    if (next === RESERVE_STEP.done) setReserved(true);
+    if (next === RESERVE_STEP.done) {
+      setReserved(true);
+      // Just reserved: the wall turns into the same quiet reserved view a returning learner sees.
+      reservedReturnRef.current = true;
+      setReservedReturn(true);
+    }
     // reserve_submit counts a device once: never on a re-reserve.
     if (next === RESERVE_STEP.done && !wasReserved) {
       emitFunnelEvent({ event: FUNNEL_EVENTS.reserveSubmit, plan: RESERVE_PLAN, price: RESERVE_PRICE });
@@ -11052,8 +11057,11 @@ export default function App() {
             ) : (
               <LogoMark size={44} data-testid="soft-paywall-cenzontle" style={{ display: "block", width: 44, height: 44, objectFit: "contain", margin: "0 auto", flexShrink: 0 }} />
             )}
+            {/* Reserved views (No face, Oct 20): the done box sits right under the hero bird, at the headline's gap. */}
+            {reservedReturn ? null : (<>
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", flexShrink: 0, color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
             <div data-testid="soft-paywall-body" style={{ ...paywallBodyType, marginBottom: 8, flexShrink: 0 }}>{L.paywallBody}</div>
+            </>)}
             {(() => {
               /* Founding annual card, No face page Oct 19. A default, B open, C bad email, D reserved. Never charges. */
               const rw = reserveWords(uiLang);
@@ -11062,7 +11070,7 @@ export default function App() {
               const ink = dark ? "#F6EFE4" : "#1F3A1A";
               if (reserveStep === RESERVE_STEP.done) {
                 return (
-                  <div ref={paywallAnnualRef} data-testid="soft-paywall-reserved" role="status" style={{ width: "100%", flexShrink: 0, marginTop: 4, boxSizing: "border-box", padding: "12px 16px", borderRadius: 16, border: `2px solid ${dark ? "#CDBBA6" : "#1F3A1A"}`, textAlign: "center" }}>
+                  <div ref={paywallAnnualRef} data-testid="soft-paywall-reserved" role="status" style={{ width: "100%", flexShrink: 0, marginTop: reservedReturn ? 10 : 4, boxSizing: "border-box", padding: "12px 16px", borderRadius: 16, border: `2px solid ${dark ? "#CDBBA6" : "#1F3A1A"}`, textAlign: "center" }}>
                     <div data-testid="soft-paywall-reserved-title" style={{ fontWeight: 900, fontSize: 20, lineHeight: 1.2, color: ink }}>{rw.doneTitle}</div>
                     {reservedReturn ? null : <div data-testid="soft-paywall-reserved-line" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.4, color: quiet, marginTop: 4 }}>{rw.doneLine}</div>}
                     <button type="button" data-testid="soft-paywall-reserved-keep" onClick={() => dismissSoftPaywall()}

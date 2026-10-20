@@ -144,8 +144,8 @@ describe("reserved return", () => {
     await user.click(await screen.findByTestId("soft-paywall-annual"));
     await user.type(screen.getByTestId("soft-paywall-reserve-email"), "ana@example.com");
     await user.click(screen.getByTestId("soft-paywall-reserve-submit"));
-    // Just-reserved view is unchanged from main.
-    expect(screen.getByTestId("soft-paywall-reserved-line").textContent).toBe(w.doneLine);
+    // Just-reserved view matches the returning reserved view.
+    expect(screen.queryByTestId("soft-paywall-reserved-line")).toBeNull();
     expect(log().filter((e) => e.event === FUNNEL_EVENTS.reserveSubmit)).toHaveLength(1);
     await user.click(screen.getByTestId("soft-paywall-reserved-keep"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
@@ -158,6 +158,8 @@ describe("reserved return", () => {
     const wall = await screen.findByTestId("soft-paywall");
     expect(screen.queryByTestId("story-reader")).toBeNull();
     expect(screen.getByTestId("soft-paywall-reserved-title").textContent).toBe(w.doneTitle);
+    expect(screen.queryByTestId("soft-paywall-headline")).toBeNull();
+    expect(screen.getByTestId("soft-paywall-reserved").style.marginTop).toBe("10px");
     expect(screen.queryByTestId("soft-paywall-reserved-line")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-reserve-form")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-annual")).toBeNull();
@@ -173,6 +175,47 @@ describe("reserved return", () => {
     await user.click(screen.getByTestId("soft-paywall-reserved-keep"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(locked.getAttribute("data-locked")).toBe("true");
+  });
+
+  it.each(FACES)("$theme $uiLang: the view right after Reserve is the quiet reserved view: bird then done box; no price, lime, monthly, free; Keep reading only", async ({ theme, uiLang }) => {
+    setViewport({ width: 360, height: 640 });
+    const user = await winContinue({ theme, uiLang });
+    const w = RESERVE_WORDS[uiLang];
+    const headline = (await screen.findByTestId("soft-paywall-headline")).textContent;
+    const body = screen.getByTestId("soft-paywall-body").textContent;
+    const bird = () => screen.queryAllByTestId("soft-paywall-cenzontle").length + document.querySelectorAll("[data-paywall-still-kind='hero']").length;
+    const birdBefore = bird();
+    const seen = log().filter((e) => e.event === FUNNEL_EVENTS.paywallSeen).length;
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    await user.type(screen.getByTestId("soft-paywall-reserve-email"), "ana@example.com");
+    await user.click(screen.getByTestId("soft-paywall-reserve-submit"));
+    const wall = screen.getByTestId("soft-paywall");
+    expect(headline && body).toBeTruthy();
+    // No face layout: the done box sits right under the hero bird, at the headline's 10px gap.
+    expect(screen.queryByTestId("soft-paywall-headline")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-body")).toBeNull();
+    expect(screen.getByTestId("soft-paywall-reserved").style.marginTop).toBe("10px");
+    expect(screen.getByTestId("soft-paywall-reserved-title").textContent).toBe(w.doneTitle);
+    expect(bird()).toBe(birdBefore);
+    expect(bird()).toBe(1);
+    expect(screen.queryByTestId("soft-paywall-reserved-line")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-reserve-form")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-annual")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-annual-price")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-monthly")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-dismiss")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-free-line")).toBeNull();
+    expect(wall.textContent).not.toMatch(/39\.99|6\.99/);
+    expect([...wall.querySelectorAll("*")].some((el) => LIME.test(el.getAttribute("style") || ""))).toBe(false);
+    expect(wall.querySelectorAll("button")).toHaveLength(1);
+    expect(screen.getByTestId("soft-paywall-reserved-keep").textContent).toBe(w.keepReading);
+    expect(log().filter((e) => e.event === FUNNEL_EVENTS.reserveSubmit)).toHaveLength(1);
+    expect(log().filter((e) => e.event === FUNNEL_EVENTS.paywallSeen).length).toBe(seen);
+    const taps = log().filter((e) => e.event === FUNNEL_EVENTS.paywallTap).length;
+    await user.click(screen.getByTestId("soft-paywall-reserved-keep"));
+    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
+    expect(log().filter((e) => e.event === FUNNEL_EVENTS.paywallTap).length).toBe(taps);
+    expect(log().filter((e) => e.event === FUNNEL_EVENTS.reserveSubmit)).toHaveLength(1);
   });
 
   it("a reserved learner's locked tap shows the reserved view even after the daily cap", async () => {
