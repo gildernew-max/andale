@@ -11415,7 +11415,7 @@ export default function App() {
                 </div>
                 <div style={{ border: `2px solid ${D.line}`, borderRadius: 14, padding: "13px 16px", background: D.subtle, display: "flex", gap: 10, alignItems: "center" }}>
                   <button type="button" data-testid="lesson-listen" onClick={() => speak(lessonListenText(q))} aria-label={uiLang === "en" ? "Listen" : "Escuchar"} style={{ border: "none", background: D.blueBg, borderRadius: 10, cursor: "pointer", padding: "5px 9px", flexShrink: 0, lineHeight: 0 }}><IcSpeaker size={18} color={"#1CB0F6"} /></button>
-                  <span style={{ fontSize: 18, fontWeight: 800 }}>{q.base}</span>
+                  <span lang="es" style={{ fontSize: 18, fontWeight: 800 }}>{q.base}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0 0" }}>
                   <span style={{ fontSize: 20, fontWeight: 900, color: limeText(session.color, D) }}>↓</span>
@@ -11455,7 +11455,7 @@ export default function App() {
 
             {/* answer area */}
             {q.type === "mc" && (
-              <div className="lesson-mc-grid" style={{ display: "grid", gap: 10 }}>
+              <div className="lesson-mc-grid" lang="es" style={{ display: "grid", gap: 10 }}>
                 {q.shuffledChoices.map((c, idx) => {
                   const isSel = selected === idx;
                   const showState = status !== "idle";
@@ -11485,7 +11485,7 @@ export default function App() {
 
             {(q.type === "type" || q.type === "listen" || q.type === "transform") && (
               <div>
-                <textarea ref={inputRef} className="lesson-blank" rows={1} value={typed} disabled={status !== "idle"}
+                <textarea ref={inputRef} className="lesson-blank" lang="es" rows={1} value={typed} disabled={status !== "idle"}
                   onChange={(e) => { setTypedTileIds([]); setPlaceAt(null); setTyped(e.target.value.replace(/[\r\n]+/g, " ")); }}
                   onKeyDown={(e) => { if (insertChoiceChipFromKey(e)) return; if (e.key === "Enter") { e.preventDefault(); status === "idle" ? check() : next(); } }}
 	                  placeholder={q.type === "listen" ? (uiLang === "en" ? "Write the full sentence…" : "Escribe la oración completa…") : q.type === "transform" ? (uiLang === "en" ? "Write the transformed sentence…" : "Escribe la oración transformada…") : (uiLang === "en" ? "Write the missing word…" : "Escribe la palabra que falta…")}
@@ -11510,7 +11510,7 @@ export default function App() {
                           {typedTileIds.map((id) => {
                             const tile = q.answerAid.tiles.find((t) => t.id === id);
                             return tile ? (
-                              <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" className="tile" disabled={status !== "idle"}
+                              <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" lang="es" className="tile" disabled={status !== "idle"}
                                 title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
                                 aria-label={`${tile.w}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                                 onClick={() => removeAnswerTile(id)}
@@ -11537,7 +11537,7 @@ export default function App() {
                           <div key={tile.id} className="tile-slot" data-tile-slot={tile.id}
                             onClick={() => { if (hide) removeAnswerTile(tile.id); }}
                             style={chipKey ? { flexDirection: "column", alignItems: "center", gap: 3 } : undefined}>
-                            <button type="button" data-tile-id={hide ? undefined : tile.id} data-testid={hide ? undefined : "bank-tile"} className="tile"
+                            <button type="button" data-tile-id={hide ? undefined : tile.id} data-testid={hide ? undefined : "bank-tile"} lang="es" className="tile"
                               disabled={status !== "idle"}
                               aria-pressed={used}
                               aria-hidden={hide}
@@ -11589,7 +11589,7 @@ export default function App() {
                     const t = q.shuffledWords.find((x) => x.id === id);
                     const label = orderTileLabel(t.w, { answer: q.answer, placedIndex: index });
                     return (
-                      <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" className="tile" disabled={status !== "idle"}
+                      <button type="button" key={id} data-tile-id={id} data-testid="placed-tile" lang="es" className="tile" disabled={status !== "idle"}
                         title={uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}
                         aria-label={`${label}. ${uiLang === "en" ? "Tap to return to the bank" : "Toca para devolver al banco"}`}
                         onClick={() => unplaceOrderTile(id)}
@@ -11627,7 +11627,7 @@ export default function App() {
                     return (
                       <div key={t.id} className="tile-slot" data-tile-slot={t.id}
                         onClick={() => { if (used) unplaceOrderTile(t.id); }}>
-                        <button type="button" data-tile-id={used ? undefined : t.id} data-testid={used ? undefined : "bank-tile"} className="tile"
+                        <button type="button" data-tile-id={used ? undefined : t.id} data-testid={used ? undefined : "bank-tile"} lang="es" className="tile"
                           disabled={status !== "idle"}
                           aria-hidden={used || undefined}
                           tabIndex={used ? -1 : 0}
@@ -11652,7 +11652,7 @@ export default function App() {
             {q.type === "match" && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 {[0, 1].map((side) => (
-                  <div key={side} style={{ display: "grid", gap: 10, alignContent: "start" }}>
+                  <div key={side} lang={side === 0 ? "es" : undefined} style={{ display: "grid", gap: 10, alignContent: "start" }}>
                     {(side === 0 ? q.left : q.right).map((item, idx) => {
                       const isMatched = matched.includes(item.id);
                       const isSel = matchSel && matchSel.side === side && matchSel.idx === idx;
@@ -12204,7 +12204,7 @@ export default function App() {
                 <p style={{ fontSize: 13, fontWeight: 800, color: D.sub, margin: "0 0 16px" }}>{L.matchInstruction}</p>
                 <div data-testid="match-pairs-board" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {[0, 1].map((side) => (
-                    <div key={side} style={{ display: "grid", gap: 10, alignContent: "start" }}>
+                    <div key={side} lang={side === 0 ? "es" : undefined} style={{ display: "grid", gap: 10, alignContent: "start" }}>
                       {(side === 0 ? matchGame.left : matchGame.right).map((item) => {
                         const isMatched = (matchGame.matched || []).includes(item.id);
                         const isSel = matchGame.sel && matchGame.sel.side === side && matchGame.sel.id === item.id;
@@ -12543,7 +12543,7 @@ export default function App() {
                 <IcSpeaker size={18} color={"#1CB0F6"} />
               </button>
               <div style={{ flex: 1 }}>
-                <span style={{ fontWeight: 900, fontSize: 18 }}>{wordSel.display}</span>
+                <span lang="es" style={{ fontWeight: 900, fontSize: 18 }}>{wordSel.display}</span>
                 {wordSel.en && (storyMode !== "challenge" || wordReveal) ? (
                   <span data-testid="word-sheet-translation" style={{ fontWeight: 700, fontSize: 15, color: D.sub }}> — {sheetCopy.meaning}</span>
                 ) : wordSel.en ? (
@@ -12583,7 +12583,7 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
 	              <button type="button" onClick={() => { setWordSel(null); setPaywallSource(PAYWALL_SOURCE.storyClose); setScreen("home"); setTab("lectura"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div data-testid="story-reader-title" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{story.title}</div>
+                <div data-testid="story-reader-title" lang="es" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{story.title}</div>
                 <div data-testid="story-reader-subtitle" style={{ fontSize: 13, fontWeight: 800, color: limeText(sec.color, D) }}>{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
               </div>
               <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
@@ -12634,7 +12634,7 @@ export default function App() {
                   <IcSpeaker size={15} color={"#1CB0F6"} />
                 </button>
                 )}
-                <p style={{ margin: 0, fontSize: 17, lineHeight: 1.75, fontWeight: 600 }}>
+                <p lang="es" style={{ margin: 0, fontSize: 17, lineHeight: 1.75, fontWeight: 600 }}>
                   {segmentGlossText(para).map((seg, ti) => {
                     if (/^\s+$/.test(seg.raw) || !seg.raw) return seg.raw;
                     const tok = seg.raw;
@@ -12787,12 +12787,12 @@ export default function App() {
                     {passage ? (
                       <div data-testid="story-quiz-passage" style={{ border: `2px solid ${D.line}`, borderRadius: 14, padding: qFit.quotePad, background: D.subtle, margin: `0 0 ${qFit.quoteGap}px` }}>
                         <div data-testid="story-quiz-cue" style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".06em", color: D.sub, marginBottom: qFit.cueGap }}>{storyQuizEyebrow(uiLang)}</div>
-                        <div style={{ fontSize: qFit.quoteSize, fontWeight: 700, lineHeight: qFit.quoteLine }}>
+                        <div lang="es" style={{ fontSize: qFit.quoteSize, fontWeight: 700, lineHeight: qFit.quoteLine }}>
                           <GlossedText text={passage} uiLang={uiLang} D={D} accent={sec.color} />
                         </div>
                       </div>
                     ) : null}
-                    <div data-testid="story-q-prompt" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: qFit.promptGap }}>{i + 1}. <GlossedText text={qq.prompt} uiLang={uiLang} D={D} accent={sec.color} /></div>
+                    <div data-testid="story-q-prompt" lang="es" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: qFit.promptGap }}>{i + 1}. <GlossedText text={qq.prompt} uiLang={uiLang} D={D} accent={sec.color} /></div>
                     <div style={{ display: "grid", gap: qFit.choiceGap }}>
                       {shown.map((c) => {
                         const isAns = c === qq.answer;
@@ -12801,7 +12801,7 @@ export default function App() {
                         else if (done && sel === c && !isAns) { bg = D.badBg; bd = D.red; col = D.badText; }
                         else if (theme === "dark") { bg = D.subtle; col = HUB_CREAM; }
                         return (
-                          <button key={c} className="choice-card" disabled={done}
+                          <button key={c} className="choice-card" lang="es" disabled={done}
                             onClick={() => { setAnsSel({ ...ansSel, [i]: c }); beep(isAns ? "ok" : "bad"); }}
                             style={{ textAlign: "left", padding: `${qFit.choicePadY}px 14px`, fontSize: 14.5, fontWeight: 700, fontFamily: "inherit", cursor: done ? "default" : "pointer", background: bg, borderColor: bd, borderBottomColor: bd, color: col }}>
                             <GlossedText text={c} uiLang={uiLang} D={D} accent={sec.color} />
@@ -12889,7 +12889,7 @@ export default function App() {
                   {lecturaCliffhangerLine(story.id, uiLang)}
                 </p>
                 <p data-testid="lectura-cliffhanger-next" style={{ margin: 0, fontSize: 17, fontWeight: 700, lineHeight: 1.3, color: D.ink }}>
-                  {uiLang === "en" ? "Next: " : "Sigue: "}<i style={{ fontStyle: "italic" }}>La casa azul</i>
+                  {uiLang === "en" ? "Next: " : "Sigue: "}<i lang="es" style={{ fontStyle: "italic" }}>La casa azul</i>
                 </p>
                 <button
                   type="button"
