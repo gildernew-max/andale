@@ -36,7 +36,7 @@ import { emitLecturaStartOnce } from "./lecturaStartDay.js";
 import { FIRST_STREAK_BIRD_PX, dismissFirstStreakReturn, firstStreakReturn, presentFirstStreakReturn } from "./firstStreakReturn.js";
 import { isWaitlistEmail } from "./waitlist.js";
 import PerfilReservation from "./PerfilReservation.jsx";
-import { reserveWords, submitReserve, reserveStartStep, RESERVE_STEP, RESERVE_PLAN, RESERVE_PRICE } from "./reserveAnnual.js";
+import { reserveWords, submitReserve, readReservation, RESERVE_STEP, RESERVE_PLAN, RESERVE_PRICE } from "./reserveAnnual.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
 import { culturalHintExplain, explainHaystack, explainText, focusLabel, storyClueExplain, uiText } from "./practiceI18n.js";
@@ -5381,6 +5381,13 @@ export default function App() {
   const paywallSeenKindRef = useRef(PAYWALL_SEEN_SOURCE.timed);
   const [paywallAnnualHold, setPaywallAnnualHold] = useState(false);
   const [reserveStep, setReserveStep] = useState(RESERVE_STEP.closed);
+  /** One device "is reserved" state (Hand ruling Oct 20, option A). Read on load; Reserve, Change and Remove update it. */
+  const [reserved, setReserved] = useState(() => !!readReservation());
+  const reservedRef = useRef(reserved);
+  reservedRef.current = reserved;
+  /** True while the open wall is the returning reserved view: no lime, no price, Keep reading only, no paywall events. */
+  const [reservedReturn, setReservedReturn] = useState(false);
+  const reservedReturnRef = useRef(false);
   // Large zoom only: a price line wider than its button wraps after the amount, with tighter side padding.
   const [paywallPriceWrap, setPaywallPriceWrap] = useState(false);
   const [reserveEmail, setReserveEmail] = useState("");
@@ -6973,6 +6980,8 @@ export default function App() {
   };
 
   const armPostWinPaywall = (bird) => {
+    // Reserved learners never get the post-win wall, bird variant included.
+    if (reservedRef.current || readReservation()) return;
     const ctx = paywallDayContext();
     if (paywallOpenDecision({ source: "win", ...ctx }) !== "open") return;
     if (paywallDismissingRef.current) return;
@@ -6989,7 +6998,8 @@ export default function App() {
     // A click that falls through Continue free is not a new tap.
     if (paywallDismissingRef.current) return;
     const ctx = paywallDayContext();
-    if (paywallOpenDecision({ source: "locked_story", ...ctx }) === "capped") {
+    const isReserved = reservedRef.current || !!readReservation();
+    if (!isReserved && paywallOpenDecision({ source: "locked_story", ...ctx }) === "capped") {
       setLockedCapNote({ storyId, surface });
       emitFunnelEvent({ event: FUNNEL_EVENTS.lockedStoryCapped, day: ctx.dayNumber });
       return;
@@ -6998,7 +7008,7 @@ export default function App() {
     paywallDismissedRef.current = false;
     setPaywallDismissed(false);
     setLockedStoryPaywall(true);
-    stampPaywallShown(ctx.today);
+    if (!isReserved) stampPaywallShown(ctx.today);
   };
 
   const openStory = (story, { justClaimedId } = {}) => {
@@ -8321,6 +8331,14 @@ export default function App() {
   useEffect(() => {
     if (showSoftPaywall) {
       setSoftPaywall(true);
+      const isReserved = !!readReservation();
+      if (isReserved !== reservedRef.current) setReserved(isReserved);
+      reservedReturnRef.current = isReserved;
+      setReservedReturn(isReserved);
+      if (isReserved) {
+        setReserveStep(RESERVE_STEP.done);
+        return;
+      }
       const seenSource = paywallSeenKindRef.current;
       const seenToday = todayStr();
       const seenToken = `${seenSource}:${seenToday}`;
@@ -8333,8 +8351,10 @@ export default function App() {
         });
         emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: seenSource, day: learnerDayNumber(seenFirst, seenToday) });
       }
-      setReserveStep(reserveStartStep());
+      setReserveStep(RESERVE_STEP.closed);
     } else {
+      reservedReturnRef.current = false;
+      setReservedReturn(false);
       setSoftPaywall(false);
       setPaywallArmed(false);
       setPaywallAnnualHold(false);
@@ -8667,6 +8687,8 @@ export default function App() {
     if (plan) return;
     if (paywallDismissingRef.current) return;
     paywallDismissingRef.current = true;
+    // Keep reading on the returning reserved view is not a paywall choice.
+    if (reservedReturnRef.current) fromBackdrop = true;
     if (!fromBackdrop) {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.continueFree });
     }
@@ -8705,9 +8727,12 @@ export default function App() {
   };
   const submitReserveAnnual = (e) => {
     if (e && typeof e.preventDefault === "function") e.preventDefault();
+    const wasReserved = !!readReservation();
     const next = submitReserve(reserveEmail);
     setReserveStep(next);
-    if (next === RESERVE_STEP.done) {
+    if (next === RESERVE_STEP.done) setReserved(true);
+    // reserve_submit counts a device once: never on a re-reserve.
+    if (next === RESERVE_STEP.done && !wasReserved) {
       emitFunnelEvent({ event: FUNNEL_EVENTS.reserveSubmit, plan: RESERVE_PLAN, price: RESERVE_PRICE });
     }
   };
@@ -10420,7 +10445,7 @@ export default function App() {
 	              <div style={{ fontSize: 13, color: D.sub, fontWeight: 700 }}>{L.profileSub}</div>
             </div>
           </div>
-          <PerfilReservation key={`${uiLang}-${theme}`} uiLang={uiLang} theme={theme} />
+          <PerfilReservation key={`${uiLang}-${theme}`} uiLang={uiLang} theme={theme} onReservationChange={(r) => setReserved(!!r)} />
           {showLevelTheater && <div data-testid="level-theater" style={{ border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 16, padding: "14px 18px", marginBottom: 14, background: D.goldBg }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <span style={{ fontWeight: 900, fontSize: 18, color: D.goldDark }}>{levelLabel(lvl.name, uiLang)}</span>
@@ -11039,7 +11064,7 @@ export default function App() {
                 return (
                   <div ref={paywallAnnualRef} data-testid="soft-paywall-reserved" role="status" style={{ width: "100%", flexShrink: 0, marginTop: 4, boxSizing: "border-box", padding: "12px 16px", borderRadius: 16, border: `2px solid ${dark ? "#CDBBA6" : "#1F3A1A"}`, textAlign: "center" }}>
                     <div data-testid="soft-paywall-reserved-title" style={{ fontWeight: 900, fontSize: 20, lineHeight: 1.2, color: ink }}>{rw.doneTitle}</div>
-                    <div data-testid="soft-paywall-reserved-line" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.4, color: quiet, marginTop: 4 }}>{rw.doneLine}</div>
+                    {reservedReturn ? null : <div data-testid="soft-paywall-reserved-line" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.4, color: quiet, marginTop: 4 }}>{rw.doneLine}</div>}
                     <button type="button" data-testid="soft-paywall-reserved-keep" onClick={() => dismissSoftPaywall()}
                       style={{ display: "block", width: "100%", minHeight: 44, marginTop: 2, padding: 0, background: "none", border: "none", color: quiet, fontFamily: "inherit", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>{rw.keepReading}</button>
                   </div>
@@ -11090,6 +11115,7 @@ export default function App() {
                 </form>
               );
             })()}
+            {reservedReturn ? null : (<>
             <button type="button" data-testid="soft-paywall-monthly" onClick={tapPaywallMonthly}
               style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", boxSizing: "border-box", flexShrink: 0, height: paywallPriceWrap ? "auto" : PAYWALL_MONTHLY_HEIGHT, minHeight: paywallPriceWrap ? PAYWALL_MONTHLY_HEIGHT : undefined, marginTop: PAYWALL_MONTHLY_GAP, padding: 0, background: "none", border: `2px solid ${theme === "dark" ? "#CDBBA6" : "#1F3A1A"}`, borderRadius: 16, color: theme === "dark" ? "#F6EFE4" : "#1F3A1A", fontFamily: "inherit", fontWeight: 800, fontSize: 20, lineHeight: 1.2, textTransform: "none", letterSpacing: "0", cursor: "pointer" }}>
               <span data-testid="soft-paywall-monthly-label">{paywallPriceWrap ? paywallPriceWrapText(L.paywallMonthlyLabel) : L.paywallMonthlyLabel}</span>
@@ -11099,6 +11125,7 @@ export default function App() {
               {L.paywallDismiss}
             </button>
             <div data-testid="soft-paywall-free-line" style={{ fontWeight: 700, fontSize: PAYWALL_FREE_LINE_SIZE, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : "#6B6258", textAlign: "center", marginTop: PAYWALL_FREE_LINE_GAP, flexShrink: 0 }}>{L.paywallFreeLine}</div>
+            </>)}
           </div>
         </div>
       )}

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { reserveWords, perfilReserveLine, readReservation, updateReservationEmail, removeReservation } from "./reserveAnnual.js";
 import { isWaitlistEmail } from "./waitlist.js";
 
-export default function PerfilReservation({ uiLang, theme }) {
+export default function PerfilReservation({ uiLang, theme, onReservationChange }) {
   const [res, setRes] = useState(() => readReservation());
   const [mode, setMode] = useState("view"); // view | edit | confirm
   const [email, setEmail] = useState("");
@@ -22,7 +22,8 @@ export default function PerfilReservation({ uiLang, theme }) {
   const save = (e) => {
     e.preventDefault();
     if (!isWaitlistEmail(email) || !updateReservationEmail(email.trim())) { setInvalid(true); return; }
-    setRes(readReservation()); setMode("view"); setInvalid(false);
+    const next = readReservation(); setRes(next); setMode("view"); setInvalid(false);
+    if (onReservationChange) onReservationChange(next);
   };
   return (
     <div data-testid="perfil-reservation" style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 16, border: `2px solid ${dark ? "#3A3D45" : "#E6DCCB"}`, background: dark ? "#1E2026" : "#F6EFE4", color: ink }}>
@@ -50,7 +51,7 @@ export default function PerfilReservation({ uiLang, theme }) {
         <div data-testid="perfil-reservation-confirm" role="alertdialog" aria-label={w.confirm} style={{ marginTop: 8 }}>
           <div style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.35 }}>{w.confirm}</div>
           <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-            <button type="button" data-testid="perfil-reservation-confirm-remove" style={outlineBtn} onClick={() => { removeReservation(); setRes(null); }}>{w.confirmRemove}</button>
+            <button type="button" data-testid="perfil-reservation-confirm-remove" style={outlineBtn} onClick={() => { removeReservation(); setRes(null); if (onReservationChange) onReservationChange(null); }}>{w.confirmRemove}</button>
             <button type="button" data-testid="perfil-reservation-confirm-keep" style={outlineBtn} onClick={() => setMode("view")}>{w.confirmKeep}</button>
           </div>
         </div>
