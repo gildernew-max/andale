@@ -622,3 +622,18 @@ export function watchComprensionFit({ win = typeof window !== "undefined" ? wind
     win.removeEventListener("orientationchange", run);
   };
 }
+
+/**
+ * Checkpoint answers peeking under the pinned BACK/NEXT row look tappable but the row
+ * takes the tap. While the learner scrolls down, once the answers start to slide under
+ * the row, return how far to scroll so their bottom sits one gap above it. 0 = leave it.
+ */
+export function checkpointUnderBarNudge({ answersTop, answersBottom, barTop, gap = LECTURA_NEXT_GAP } = {}) {
+  const top = Number(answersTop);
+  const bottom = Number(answersBottom);
+  const bar = Number(barTop);
+  if (![top, bottom, bar].every(Number.isFinite)) return 0;
+  if (top >= bar) return 0; // not in sight yet
+  if (bottom <= bar - gap) return 0; // already clear
+  return Math.ceil(bottom - (bar - gap));
+}

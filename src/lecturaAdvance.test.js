@@ -341,3 +341,16 @@ assert(appSrc.includes("<div ref={lecturaCounterRef} style={{ fontSize: 12, font
   assert(appSrc.includes("q1Answered: ansSel[0] != null,"), "re-align only while Q1 is open");
   assert(appSrc.includes("}, [screen, paraIdx, storyView, prog.uiLang, comprensionFit, ansSel]);"), "the fit effect re-runs on language and answer changes");
 }
+
+// Checkpoint answers under the pinned BACK/NEXT row (Varys cold walk, Oct 20).
+{
+  const { checkpointUnderBarNudge: nudge, LECTURA_NEXT_GAP: G } = await import("./lecturaAdvance.js");
+  const a = (c, m) => { if (!c) throw new Error(m); };
+  a(nudge({ answersTop: 700, answersBottom: 760, barTop: 540 }) === 0, "answers still below the row: no nudge");
+  a(nudge({ answersTop: 400, answersBottom: 460, barTop: 540 }) === 0, "answers already clear: no nudge");
+  a(nudge({ answersTop: 512, answersBottom: 574, barTop: 540 }) === 574 - (540 - G), "answers half under the row lift to one gap above it");
+  a(nudge({ answersTop: 527, answersBottom: 589, barTop: 540, gap: 12 }) === 61, "explicit gap");
+  a(nudge({ answersTop: 480, answersBottom: 530, barTop: 540, gap: 12 }) === 2, "inside the gap still lifts");
+  a(nudge({}) === 0 && nudge({ answersTop: NaN, answersBottom: 1, barTop: 1 }) === 0, "bad input: no nudge");
+  console.log("ok: checkpoint answers lift above the pinned row");
+}
