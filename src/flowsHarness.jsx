@@ -479,7 +479,7 @@ export const assertFreeWinFlyAway = () => {
 /** Loud annual / quiet continue free. Locked words. One static Cenzontle. Annual price sits above the button. */
 export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const wall = screen.getByTestId("soft-paywall");
-  const bird = screen.getByTestId("soft-paywall-cenzontle");
+  const bird = screen.queryByTestId("soft-paywall-cenzontle");
   const annual = screen.getByTestId("soft-paywall-annual");
   const body = screen.getByTestId("soft-paywall-body");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
@@ -525,26 +525,34 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(dismiss.compareDocumentPosition(freeLine) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(screen.queryByTestId("soft-paywall-honesty")).toBeNull();
   expect(screen.queryByTestId("soft-paywall-disclosure")).toBeNull();
-  expect(bird.tagName).toBe("IMG");
-  expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
   const still = screen.queryByTestId("soft-paywall-still");
+  const hero = still?.getAttribute("data-paywall-still-kind") === "hero";
+  if (hero) {
+    // No face brand hold: the hero already carries the bird, so no corner Cenzontle.
+    expect(bird).toBeNull();
+    expect(still.getAttribute("src")).toMatch(/stills\/paywall-hero-bird\.jpg$/);
+    expect(still.getAttribute("alt")).toMatch(/cenzontle|mockingbird/i);
+  } else {
+    expect(bird.tagName).toBe("IMG");
+    expect(bird.getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+    expect(bird.getAttribute("width")).toBe(still ? "48" : "44");
+    expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)|animation/);
+    expect(wall.querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+  }
   if (still) {
-    expect(bird.getAttribute("width")).toBe("48");
-    expect(still.getAttribute("src")).toMatch(/lectura\/story-/);
+    if (!hero) {
+      expect(still.getAttribute("src")).toMatch(/lectura\/story-/);
+      expect(still.getAttribute("alt")).toBe("");
+    }
     expect(still.style.aspectRatio).toMatch(/16\s*\/\s*9/);
     expect(still.style.borderRadius).toBe("16px");
     expect(still.style.objectFit).toBe("cover");
     expect(still.style.borderStyle || "none").toBe("none");
-    expect(wall.querySelectorAll("[data-testid='soft-paywall-cenzontle']")).toHaveLength(1);
-  } else {
-    expect(bird.getAttribute("width")).toBe("44");
-    expect(screen.queryByTestId("soft-paywall-still")).toBeNull();
+    expect(wall.querySelectorAll("[data-testid='soft-paywall-cenzontle']")).toHaveLength(hero ? 0 : 1);
   }
-  expect(bird.getAttribute("style") || "").not.toMatch(/scaleX\s*\(\s*-1\s*\)|animation/);
   expect(screen.queryByTestId("soft-paywall-cenzontle-stage")).toBeNull();
   expect(screen.queryByTestId("soft-paywall-cenzontle-wing")).toBeNull();
-  expect(wall.querySelector("[data-testid='soft-paywall-cenzontle']").compareDocumentPosition(screen.getByTestId("soft-paywall-headline")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(wall.querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+  expect((bird || still).compareDocumentPosition(screen.getByTestId("soft-paywall-headline")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(wall.textContent).not.toMatch(/Tell me when the store opens|Avísame cuando abramos la tienda|I’ll write when it’s ready|Te escribo cuando esté listo/);
   expect(wall.querySelector("[data-testid='win-bounce']")).toBeNull();
   expect(wall.querySelector("[data-testid='story-0-beat']")).toBeNull();

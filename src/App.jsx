@@ -10,7 +10,7 @@ import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
 import { comeBackTomorrowLine, dayKeyFromDate, firstLecturaClaimed, hoyHubChecked, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, storiesHubLoud, streakAfterWin, todaySceneIdFromSession, xpCountedToday } from "./firstDoor.js";
 import { PAYWALL_BIRD_TRIGGER, PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
-import { paywallStillPath } from "./paywallStill.js";
+import { paywallBandImage, paywallStillPath } from "./paywallStill.js";
 import { buildColdFirstHoyQueue, coldFirstHoySceneBeats, isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
@@ -8230,6 +8230,7 @@ export default function App() {
     winDays: prog.winDays,
   });
   const [paywallStillMiss, setPaywallStillMiss] = useState(false);
+  const [paywallHeroMiss, setPaywallHeroMiss] = useState(false);
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
   const showLockedStoryPaywall = LOCKED_STORY_PAYWALL && lockedStoryPaywall && !isPaywallMidFlow(screen);
@@ -8242,9 +8243,8 @@ export default function App() {
   const paywallBodyType = { fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, lineHeight: 1.45 };
   const annualPriceText = annualPriceLine(L.paywallPrice);
   const paywallStillRel = paywallStillPath(storyView, paraIdx);
-  const paywallStillSrc = paywallStillRel && !paywallStillMiss
-    ? `${import.meta.env.BASE_URL}${paywallStillRel}`
-    : null;
+  const paywallBand = paywallBandImage({ storyRel: paywallStillRel, storyMiss: paywallStillMiss, heroMiss: paywallHeroMiss, lang: uiLang });
+  const paywallStillSrc = paywallBand ? `${import.meta.env.BASE_URL}${paywallBand.rel}` : null;
   useEffect(() => {
     setPaywallStillMiss(false);
   }, [paywallStillRel]);
@@ -11014,11 +11014,14 @@ export default function App() {
                   <img
                     data-testid="soft-paywall-still"
                     src={paywallStillSrc}
-                    alt=""
-                    onError={() => setPaywallStillMiss(true)}
+                    data-paywall-still-kind={paywallBand.kind}
+                    alt={paywallBand.alt}
+                    onError={() => (paywallBand.kind === "story" ? setPaywallStillMiss(true) : setPaywallHeroMiss(true))}
                     style={{ display: "block", height: PAYWALL_STILL_HEIGHT, width: "auto", maxWidth: "100%", maxHeight: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 16, border: "none" }}
                   />
+                  {paywallBand.kind === "story" && (
                   <LogoMark size={PAYWALL_BIRD_SIZE} data-testid="soft-paywall-cenzontle" style={{ position: "absolute", right: 8, bottom: -8, display: "block", width: PAYWALL_BIRD_SIZE, height: PAYWALL_BIRD_SIZE, objectFit: "contain" }} />
+                  )}
                 </div>
               </div>
             ) : (

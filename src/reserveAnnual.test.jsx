@@ -170,7 +170,7 @@ describe("founding annual reserve", () => {
     expect(JSON.stringify(log())).not.toContain("ana@");
     expect(localStorage.getItem("andale-funnel-log")).not.toContain("ana@");
     expect(screen.getByTestId("soft-paywall")).toBeTruthy();
-    expect(screen.getAllByTestId("soft-paywall-cenzontle")).toHaveLength(1);
+    expect(screen.queryAllByTestId("soft-paywall-cenzontle").length + document.querySelectorAll("[data-paywall-still-kind='hero']").length).toBe(1);
     expect(purchases).toHaveLength(0);
     window.removeEventListener("andale-purchase", onPurchase);
   });
