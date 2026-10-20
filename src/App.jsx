@@ -6998,7 +6998,7 @@ export default function App() {
       for (const el of document.querySelectorAll("[data-testid='lectura-checkpoint-answers']")) {
         if (nudged.has(el)) continue;
         const r = el.getBoundingClientRect();
-        const delta = checkpointUnderBarNudge({ answersTop: r.top, answersBottom: r.bottom, barTop });
+        const delta = checkpointUnderBarNudge({ answersTop: r.top, answersBottom: r.bottom, barTop, viewportHeight: window.innerHeight, arrival });
         if (delta > 0) {
           nudged.add(el);
           window.scrollBy({ top: delta, behavior: "smooth" });
@@ -7008,9 +7008,11 @@ export default function App() {
     };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(() => check(false)); };
     window.addEventListener("scroll", onScroll, { passive: true });
-    // A page that opens with its answers already peeking under the row gets the same lift once it has settled.
+        // Every page change (NEXT, BACK, reopen) lands here: once the arrival scroll and the still have settled,
+    // put the page's answers fully above the row, even when they opened below the fold.
     const settle = setTimeout(() => check(true), 400);
-    return () => { clearTimeout(settle); window.removeEventListener("scroll", onScroll); if (frame) cancelAnimationFrame(frame); };
+    const settleLate = setTimeout(() => check(true), 1000);
+    return () => { clearTimeout(settle); clearTimeout(settleLate); window.removeEventListener("scroll", onScroll); if (frame) cancelAnimationFrame(frame); };
   }, [screen, paraIdx]);
 
   const armPostWinPaywall = (bird, { source } = {}) => {
