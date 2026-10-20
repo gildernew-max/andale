@@ -8244,7 +8244,13 @@ export default function App() {
   // Gate only — a stale session flag must not keep the modal after midnight / day-2.
   // Bajío glow beat sits after ¡Eso! / That's it. and before the wall.
   const showLockedStoryPaywall = LOCKED_STORY_PAYWALL && lockedStoryPaywall && !isPaywallMidFlow(screen);
-  const showWinPaywall = winPaywall && (screen === "home" || screen === "sessionClose") && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
+  // Any map unlock flash (zIndex 62) covers the wall and eats taps, so the post-win wall waits until it is gone.
+  const unlockFlashBusy = bajioUnlockFlash || bajioFlashPending || isBajioUnlockFlashDue()
+    || cdmxUnlockFlash || cdmxFlashPending || isCdmxUnlockFlashDue()
+    || oaxacaUnlockFlash || oaxacaFlashPending || isOaxacaUnlockFlashDue()
+    || yucatanUnlockFlash || yucatanFlashPending || isYucatanUnlockFlashDue()
+    || norteUnlockFlash || norteFlashPending || isNorteUnlockFlashDue();
+  const showWinPaywall = winPaywall && (screen === "home" || screen === "sessionClose") && !unlockFlashBusy;
   const showSoftPaywall = !paywallDismissed && (showLockedStoryPaywall || showWinPaywall);
   useEffect(() => { if (!showSoftPaywall) setPaywallPriceWrap(false); }, [showSoftPaywall]);
   const paywallHeadlineSource = showLockedStoryPaywall ? PAYWALL_SOURCE.lockedStory : (chapterBirdHandoff ? PAYWALL_BIRD_TRIGGER : paywallSource);
@@ -8693,7 +8699,8 @@ export default function App() {
       emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.continueFree });
     }
     const beat = lecturaCliffhanger;
-    const backToLectura = LOCKED_STORY_PAYWALL && lockedStoryPaywall;
+    // Keep reading after reserving (post-win included) lands on Stories, same as the locked-tap return.
+    const backToLectura = (LOCKED_STORY_PAYWALL && lockedStoryPaywall) || reservedReturnRef.current;
     paywallDismissedRef.current = true;
     setPaywallDismissed(true);
     setPaywallClickShield(true);
