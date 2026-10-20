@@ -41,6 +41,7 @@ export const RESERVE_WORDS = Object.freeze({
       confirm: "¿Quitar tu reserva? Tu correo se borra de este dispositivo.",
       confirmRemove: "Quitar",
       confirmKeep: "Dejarla",
+      save: "Guardar",
     }),
   }),
   en: Object.freeze({
@@ -64,6 +65,7 @@ export const RESERVE_WORDS = Object.freeze({
       confirm: "Remove your reservation? Your email is deleted from this device.",
       confirmRemove: "Remove",
       confirmKeep: "Keep it",
+      save: "Save",
     }),
   }),
 });
