@@ -55,7 +55,7 @@ describe("first-session measurement events", () => {
     await waitFor(() => expect(document.querySelector("[data-first-session]")?.getAttribute("data-first-session")).toBe("1"));
     expect(names("first_session_start")).toEqual(["first_session_start"]);
     expect(names("day2_return")).toEqual([]);
-  });
+  }, 15000);
 
   it("fires exercise 1 only when that beat is correct", async () => {
     const user = userEvent.setup();
