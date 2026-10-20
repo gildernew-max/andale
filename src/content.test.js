@@ -738,9 +738,9 @@ assert(!/data-testid="soft-paywall-monthly"[\s\S]{0,420}#58CC02/.test(paywallLay
 assert(/data-testid="soft-paywall-monthly"[\s\S]{0,900}background:\s*"none"/.test(paywallLayout), "monthly has no fill");
 assert(/data-testid="soft-paywall-monthly"[\s\S]{0,1100}2px solid \$\{theme === "dark" \? "#CDBBA6" : "#1F3A1A"\}/.test(paywallLayout), "monthly border is #1F3A1A light and #CDBBA6 dark");
 assert(/data-testid="soft-paywall-monthly"[\s\S]{0,1200}theme === "dark" \? "#F6EFE4" : "#1F3A1A"/.test(paywallLayout), "monthly label ink is #1F3A1A light and cream dark");
-assert(/data-testid="soft-paywall-monthly"[\s\S]{0,900}height: PAYWALL_MONTHLY_HEIGHT/.test(paywallLayout) && /data-testid="soft-paywall-monthly"[\s\S]{0,1200}fontSize: 20/.test(paywallLayout), "monthly is 64px with a 20px price");
+assert(/data-testid="soft-paywall-monthly"[\s\S]{0,900}height: paywallPriceWrap \? "auto" : PAYWALL_MONTHLY_HEIGHT/.test(paywallLayout) && /data-testid="soft-paywall-monthly"[\s\S]{0,1400}fontSize: 20/.test(paywallLayout), "monthly is 64px with a 20px price");
 assert(paywallLayout.includes("marginTop: PAYWALL_MONTHLY_GAP"), "monthly sits 12px under annual");
-assert(paywallLayout.includes("{L.paywallMonthlyLabel}"), "monthly button uses the price label");
+assert(paywallLayout.includes(": L.paywallMonthlyLabel}"), "monthly button uses the price label");
 assert(paywallLayout.includes("{L.paywallFreeLine}"), "the free line uses the locked copy");
 assert(/data-testid="soft-paywall-free-line"/.test(paywallLayout), "the free line is testable");
 assert(!/<Btn outline data-testid="soft-paywall-dismiss"/.test(paywallLayout), "continue free is not an outline Btn");
@@ -5688,3 +5688,5 @@ const transformCue = answerAidFor({
 });
 assert(transformCue && transformCue.mode === "bank", "transform keeps its aid when the note is a spell cue");
 console.log(`ok: spell cue — ${spellCueHits.length} bank items return null; chambea still has choices`);
+assert(paywallLayout.includes("{paywallPriceWrap ? paywallPriceWrapText(annualPriceText) : annualPriceText}"), "the annual price wraps after the amount only at large zoom");
+assert(appSrc.includes('if (wide("soft-paywall-annual-price") || wide("soft-paywall-monthly-label")) { setPaywallPriceWrap(true); return; }'), "wrap turns on only when a price line is wider than its button");
