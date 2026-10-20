@@ -10,7 +10,7 @@
  */
 import { ANNUAL_PRICE_PLACEHOLDER } from "./webPaywall.js";
 import { dayKeyFromDate } from "./firstDoor.js";
-import { isWaitlistEmail, saveWaitlistNotice } from "./waitlist.js";
+import { isWaitlistEmail, saveWaitlistNotice, WAITLIST_STORE_KEY } from "./waitlist.js";
 
 export const RESERVE_PLAN = "annual";
 export const RESERVE_PRICE = Number(ANNUAL_PRICE_PLACEHOLDER);
@@ -32,6 +32,16 @@ export const RESERVE_WORDS = Object.freeze({
     doneTitle: "Listo. Tu lugar está apartado.",
     doneLine: "US$39.99 al año. Hoy no se cobra nada.",
     keepReading: "Seguir leyendo",
+    /** Perfil reservation row. George final, Oct 20. */
+    perfil: Object.freeze({
+      title: "Plan anual fundador: apartado",
+      line: "{correo} · Hoy no se cobra nada.",
+      change: "Cambiar",
+      remove: "Quitar",
+      confirm: "¿Quitar tu reserva? Tu correo se borra de este dispositivo.",
+      confirmRemove: "Quitar",
+      confirmKeep: "Dejarla",
+    }),
   }),
   en: Object.freeze({
     label: "FOUNDING ANNUAL",
@@ -46,6 +56,15 @@ export const RESERVE_WORDS = Object.freeze({
     doneTitle: "Done. Your spot is saved.",
     doneLine: "$39.99 a year. Nothing is charged today.",
     keepReading: "Keep reading",
+    perfil: Object.freeze({
+      title: "Founding annual: reserved",
+      line: "{email} · Nothing is charged today.",
+      change: "Change",
+      remove: "Remove",
+      confirm: "Remove your reservation? Your email is deleted from this device.",
+      confirmRemove: "Remove",
+      confirmKeep: "Keep it",
+    }),
   }),
 });
 
@@ -82,4 +101,33 @@ export function reserveStartStep(storage, now = new Date()) {
     if (store && store.getItem(RESERVE_DAY_KEY) === dayKeyFromDate(now)) return RESERVE_STEP.done;
   } catch { /* A */ }
   return RESERVE_STEP.closed;
+}
+
+/** Perfil line with the saved email filled in. */
+export function perfilReserveLine(lang, email) {
+  return reserveWords(lang).perfil.line.replace(/\{(correo|email)\}/, email);
+}
+
+/** The device reservation: a reserve day key plus the saved email. Null when none. */
+export function readReservation(storage) {
+  const store = storage || defaultStore();
+  try {
+    if (!store || !store.getItem(RESERVE_DAY_KEY)) return null;
+    const rec = JSON.parse(store.getItem(WAITLIST_STORE_KEY) || "null");
+    if (!rec || !isWaitlistEmail(rec.email)) return null;
+    return { email: rec.email };
+  } catch { return null; }
+}
+
+/** Change the saved email on the same device record. Keeps the reserve day. */
+export function updateReservationEmail(email, storage) {
+  const store = storage || defaultStore();
+  if (!readReservation(store) || !isWaitlistEmail(email)) return false;
+  return saveWaitlistNotice(email, store).ok;
+}
+
+/** Delete the device reservation: the email record and the reserve day key. */
+export function removeReservation(storage) {
+  const store = storage || defaultStore();
+  try { store.removeItem(WAITLIST_STORE_KEY); store.removeItem(RESERVE_DAY_KEY); return true; } catch { return false; }
 }

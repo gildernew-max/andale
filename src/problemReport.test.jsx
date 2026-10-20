@@ -124,7 +124,7 @@ describe("perfil problem report", () => {
   ])("renders Perfil in %s %s with George's mailto and Soporte ink", async (uiLang, theme, label, subject, ink) => {
     await bootPerfil(uiLang, theme);
     const link = screen.getByTestId("report-problem");
-    const soporte = screen.getByRole("link", { name: "Soporte" });
+    const soporte = screen.getByRole("link", { name: uiLang === "en" ? "Support" : "Soporte" });
     expect(link.textContent).toBe(label);
     expect(link.parentElement).toBe(soporte.parentElement);
     const countNote = screen.getByTestId("settings-count-note");
