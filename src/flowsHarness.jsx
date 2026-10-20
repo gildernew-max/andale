@@ -530,7 +530,13 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const still = screen.queryByTestId("soft-paywall-still");
   if (still) {
     expect(bird.getAttribute("width")).toBe("48");
-    expect(still.getAttribute("src")).toMatch(/lectura\/story-/);
+    if (still.getAttribute("data-paywall-still-kind") === "hero") {
+      expect(still.getAttribute("src")).toMatch(/stills\/paywall-hero-bird\.jpg$/);
+      expect(still.getAttribute("alt")).toMatch(/cenzontle|mockingbird/i);
+    } else {
+      expect(still.getAttribute("src")).toMatch(/lectura\/story-/);
+      expect(still.getAttribute("alt")).toBe("");
+    }
     expect(still.style.aspectRatio).toMatch(/16\s*\/\s*9/);
     expect(still.style.borderRadius).toBe("16px");
     expect(still.style.objectFit).toBe("cover");
