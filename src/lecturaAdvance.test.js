@@ -288,8 +288,8 @@ assert(appSrc.includes("<div ref={lecturaCounterRef} style={{ fontSize: 12, font
   assert(comprensionNextFitLevel({ ...v, level: 0, headerTop: Number.NaN, lastChoiceBottom: 700 }) === 0, "no layout: stay");
   assert(comprensionNextFitLevel({}) === 0, "no input: step 0");
   assert(appSrc.includes("const qFit = comprensionFitStep(comprensionFit.level);"), "the render reads the fitted step");
-  assert(appSrc.includes("<div style={{ fontSize: qFit.quoteSize, fontWeight: 700, lineHeight: qFit.quoteLine }}>"), "the quote is never clamped: no max height or overflow on it");
-  assert(appSrc.includes('<div data-testid="story-q-prompt" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: qFit.promptGap }}>'), "question type stays 15.5px");
+  assert(appSrc.includes("<div lang=\"es\" style={{ fontSize: qFit.quoteSize, fontWeight: 700, lineHeight: qFit.quoteLine }}>"), "the quote is never clamped: no max height or overflow on it");
+  assert(appSrc.includes('<div data-testid="story-q-prompt" lang="es" style={{ fontWeight: 800, fontSize: 15.5, marginBottom: qFit.promptGap }}>'), "question type stays 15.5px");
   assert(appSrc.includes('padding: `${qFit.choicePadY}px 14px`, fontSize: 14.5, fontWeight: 700'), "choice type stays 14.5px");
 }
 // Codex P2 on #360: a resize, rotation or ES/EN switch reflows the page above the Comprensión header.
