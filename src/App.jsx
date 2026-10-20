@@ -67,7 +67,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
-import { comprensionFitStep, comprensionHeaderResized, comprensionNextFitLevel, comprensionRealignScrollY, watchComprensionFit, homeArrivalScrollY, lecturaAdvanceScrollY, lecturaParagraphArrivalTop, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
+import { checkpointUnderBarNudge, comprensionFitStep, comprensionHeaderResized, comprensionNextFitLevel, comprensionRealignScrollY, watchComprensionFit, homeArrivalScrollY, lecturaAdvanceScrollY, lecturaParagraphArrivalTop, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
 import { firstSessionBeatOf, firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
 import { CONTINUE_LABEL, firstLessonForLevel, ONBOARDING_CTA_BOTTOM, ONBOARDING_CTA_CONTENT_GAP, ONBOARDING_CTA_HEIGHT, onboardingCtaBottomCss, onboardingResume, shouldShowOnboarding } from "./onboarding.js";
 import { resolveTheme } from "./themeDefault.js";
@@ -6978,6 +6978,40 @@ export default function App() {
     writePlainDay(typeof window !== "undefined" ? window.localStorage : null, PAYWALL_SHOWN_KEY, today);
     save({ paywallShownDay: today });
   };
+
+  // Checkpoint answers never sit half under the pinned BACK/NEXT row: on the way down,
+  // the first time a page's answers reach the row, scroll just enough to lift them above it.
+  useEffect(() => {
+    if (screen !== "story" || typeof window === "undefined") return undefined;
+    const nudged = new WeakSet();
+    let lastY = window.scrollY;
+    let frame = 0;
+    const check = (arrival = false) => {
+      frame = 0;
+      const y = window.scrollY;
+      const down = y > lastY;
+      lastY = y;
+      if (!down && !arrival) return;
+      const bar = document.querySelector("[data-testid='lectura-advance']");
+      if (!bar) return;
+      const barTop = bar.getBoundingClientRect().top;
+      for (const el of document.querySelectorAll("[data-testid='lectura-checkpoint-answers']")) {
+        if (nudged.has(el)) continue;
+        const r = el.getBoundingClientRect();
+        const delta = checkpointUnderBarNudge({ answersTop: r.top, answersBottom: r.bottom, barTop });
+        if (delta > 0) {
+          nudged.add(el);
+          window.scrollBy({ top: delta, behavior: "smooth" });
+          return;
+        }
+      }
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(() => check(false)); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    // A page that opens with its answers already peeking under the row gets the same lift once it has settled.
+    const settle = setTimeout(() => check(true), 400);
+    return () => { clearTimeout(settle); window.removeEventListener("scroll", onScroll); if (frame) cancelAnimationFrame(frame); };
+  }, [screen, paraIdx]);
 
   const armPostWinPaywall = (bird, { source } = {}) => {
     // Reserved learners never get the post-win wall, bird variant included.
