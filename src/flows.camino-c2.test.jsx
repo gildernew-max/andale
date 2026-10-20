@@ -1019,7 +1019,8 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     assertSoftPaywallAnnualPrimary("es");
     expect(screen.queryByTestId("win-bounce")).toBeNull();
     expect(screen.queryByTestId("story-0-beat")).toBeNull();
-    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle']")).toHaveLength(1);
+    // One bird look: the mark, or the hero image (which carries the bird) with no corner mark.
+    expect(screen.getByTestId("soft-paywall").querySelectorAll("img[src*='cenzontle'], img[data-paywall-still-kind='hero']")).toHaveLength(1);
     const hubSnap = {
       hoy: screen.getByTestId("hub-hoy").textContent,
       stories: screen.getByTestId("hub-stories").textContent,

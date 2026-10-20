@@ -11019,7 +11019,9 @@ export default function App() {
                     onError={() => (paywallBand.kind === "story" ? setPaywallStillMiss(true) : setPaywallHeroMiss(true))}
                     style={{ display: "block", height: PAYWALL_STILL_HEIGHT, width: "auto", maxWidth: "100%", maxHeight: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 16, border: "none" }}
                   />
+                  {paywallBand.kind === "story" && (
                   <LogoMark size={PAYWALL_BIRD_SIZE} data-testid="soft-paywall-cenzontle" style={{ position: "absolute", right: 8, bottom: -8, display: "block", width: PAYWALL_BIRD_SIZE, height: PAYWALL_BIRD_SIZE, objectFit: "contain" }} />
+                  )}
                 </div>
               </div>
             ) : (

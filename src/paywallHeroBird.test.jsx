@@ -4,6 +4,11 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.jsx";
 import { dayKeyFromDate, prevDayKey } from "./firstDoor.js";
+const storyStill = vi.hoisted(() => ({ rel: null }));
+vi.mock("./paywallStill.js", async (orig) => {
+  const m = await orig();
+  return { ...m, paywallStillPath: (...a) => storyStill.rel ?? m.paywallStillPath(...a) };
+});
 import { PAYWALL_HERO_ALT, PAYWALL_HERO_PATH, paywallBandImage } from "./paywallStill.js";
 const STORAGE_KEY = "andale-v3";
 const LIVE_KEY = "andale-v3-live";
@@ -76,7 +81,7 @@ async function openPaywall({ theme, uiLang }) {
 }
 
 describe("paywall hero bird", () => {
-  afterEach(() => { cleanup(); localStorage.clear(); });
+  afterEach(() => { cleanup(); localStorage.clear(); storyStill.rel = null; });
 
   it("story page wins with alt=''; hero only when there is no page or it fails", () => {
     expect(paywallBandImage({ storyRel: "lectura/story-0/p1.png", lang: "en" })).toEqual({ kind: "story", rel: "lectura/story-0/p1.png", alt: "" });
@@ -96,9 +101,24 @@ describe("paywall hero bird", () => {
       expect(still.getAttribute("alt")).toBe(PAYWALL_HERO_ALT[uiLang]);
       expect(still.style.height).toBe("140px");
       expect(screen.getByTestId("soft-paywall-still-frame")).toBeTruthy();
+      // No face brand hold: the hero is the bird, so no 48px corner Cenzontle.
+      expect(screen.queryAllByTestId("soft-paywall-cenzontle")).toHaveLength(0);
+      expect(document.querySelectorAll("[data-testid='soft-paywall'] img[src*='cenzontle']")).toHaveLength(0);
+    });
+
+    it(`story page (${uiLang}): learner's page with alt="" and the 48px corner bird, as before`, async () => {
+      storyStill.rel = "lectura/story-1/p5.png";
+      await openPaywall({ theme, uiLang });
+      const still = screen.getByTestId("soft-paywall-still");
+      expect(still.getAttribute("src")).toMatch(/lectura\/story-1\/p5\.png$/);
+      expect(still.getAttribute("data-paywall-still-kind")).toBe("story");
+      expect(still.getAttribute("alt")).toBe("");
       const birds = screen.getAllByTestId("soft-paywall-cenzontle");
       expect(birds).toHaveLength(1);
+      expect(birds[0].getAttribute("width")).toBe("48");
       expect(birds[0].style.position).toBe("absolute");
+      expect(birds[0].style.right).toBe("8px");
+      expect(birds[0].style.bottom).toBe("-8px");
     });
   }
 
