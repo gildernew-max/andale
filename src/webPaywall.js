@@ -20,6 +20,12 @@ export function annualPriceLine(template, price = ANNUAL_PRICE_PLACEHOLDER) {
   return line.replace(/ /g, "\u00A0");
 }
 
+/** Large-zoom price line: the space after the amount becomes breakable, so "$39.99" / "a year" wraps there and nowhere else. */
+export function paywallPriceWrapText(line) {
+  if (line == null) return line;
+  return String(line).replace("\u00A0", " ");
+}
+
 /** Card bottom sits at least this many pixels above the safe area. */
 export const PAYWALL_CARD_BOTTOM_INSET = 16;
 

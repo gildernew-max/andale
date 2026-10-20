@@ -1,4 +1,4 @@
-import { ANNUAL_PRICE_PLACEHOLDER, LOCKED_STORY_PAYWALL, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_MONTHLY_GAP, annualPriceLine } from "./webPaywall.js";
+import { ANNUAL_PRICE_PLACEHOLDER, LOCKED_STORY_PAYWALL, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_MONTHLY_GAP, annualPriceLine, paywallPriceWrapText } from "./webPaywall.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
@@ -58,3 +58,8 @@ console.log("webPaywall.test.js ok");
   assert(app.includes('frame.style.display = "flex";'), "every fit starts with the still shown and centered");
   assert(app.includes('if (paywallStillShouldHide({ priceBottom, fold: card.clientHeight })) frame.style.display = "none";'), "the still hides only when the price can't fit");
 }
+
+assert(paywallPriceWrapText(EN) === "$39.99 a\u00A0year", "large zoom breaks English only after the amount");
+assert(paywallPriceWrapText(ES) === "US$39.99 al\u00A0año", "large zoom breaks Spanish only after the amount");
+assert(paywallPriceWrapText("$6.99\u00A0a\u00A0month") === "$6.99 a\u00A0month", "monthly breaks only after the amount");
+assert(paywallPriceWrapText(null) == null, "no price stays no price");

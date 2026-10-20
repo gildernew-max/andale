@@ -27,7 +27,7 @@ import { watchWordSheetPlacement, wordSheetClose, wordSheetCopy, wordSheetReveal
 import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { LOCKED_STORY_PAYWALL, paywallStillMaxHeight, paywallStillShouldHide, watchPaywallStillResize, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT, PAYWALL_MONTHLY_GAP, annualPriceLine } from "./webPaywall.js";
+import { LOCKED_STORY_PAYWALL, paywallStillMaxHeight, paywallStillShouldHide, watchPaywallStillResize, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT, PAYWALL_MONTHLY_GAP, annualPriceLine, paywallPriceWrapText } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent, paywallSeenSourceFor } from "./funnel.js";
 import { FIRST_ACTIVITY_KEY, LOCKED_CAP_FADE_MS, LOCKED_CAP_GAP_PX, LOCKED_CAP_INK, LOCKED_CAP_SIZE, LOCKED_STORY_CAP_LINE, PAYWALL_SHOWN_KEY, isPaywallMidFlow, learnerDayNumber, paywallOpenDecision, readPlainDay, resolveFirstActivityDay, resolvePaywallShownDay, writePlainDay } from "./paywallTrigger.js";
@@ -5380,6 +5380,8 @@ export default function App() {
   const paywallSeenKindRef = useRef(PAYWALL_SEEN_SOURCE.timed);
   const [paywallAnnualHold, setPaywallAnnualHold] = useState(false);
   const [reserveStep, setReserveStep] = useState(RESERVE_STEP.closed);
+  // Large zoom only: a price line wider than its button wraps after the amount, with tighter side padding.
+  const [paywallPriceWrap, setPaywallPriceWrap] = useState(false);
   const [reserveEmail, setReserveEmail] = useState("");
   const [paywallMonthlyHold, setPaywallMonthlyHold] = useState(false);
   const paywallAnnualRef = useRef(null);
@@ -8232,6 +8234,7 @@ export default function App() {
   const showLockedStoryPaywall = LOCKED_STORY_PAYWALL && lockedStoryPaywall && !isPaywallMidFlow(screen);
   const showWinPaywall = winPaywall && (screen === "home" || screen === "sessionClose") && !bajioUnlockFlash && !bajioFlashPending && !isBajioUnlockFlashDue();
   const showSoftPaywall = !paywallDismissed && (showLockedStoryPaywall || showWinPaywall);
+  useEffect(() => { if (!showSoftPaywall) setPaywallPriceWrap(false); }, [showSoftPaywall]);
   const paywallHeadlineSource = showLockedStoryPaywall ? PAYWALL_SOURCE.lockedStory : (chapterBirdHandoff ? PAYWALL_BIRD_TRIGGER : paywallSource);
   const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource, lecturaStartedStored);
   paywallSeenKindRef.current = paywallSeenSourceFor(paywallHeadlineSource);
@@ -8365,6 +8368,11 @@ export default function App() {
       // Start from today's layout: no scroll, still shown. Scroll is only switched on below when the content is taller than the card.
       card.style.overflowY = "";
       frame.style.display = "flex";
+      // Large zoom: an unbroken price line wider than its button would be clipped, so wrap it after the amount.
+      if (!paywallPriceWrap) {
+        const wide = (id) => { const el = card.querySelector(`[data-testid='${id}']`); return !!el && el.getBoundingClientRect().width > el.parentElement.getBoundingClientRect().width + 0.5; };
+        if (wide("soft-paywall-annual-price") || wide("soft-paywall-monthly-label")) { setPaywallPriceWrap(true); return; }
+      }
       img.style.maxHeight = "";
       img.style.width = "auto";
       const overlayStyle = overlay ? getComputedStyle(overlay) : null;
@@ -8397,7 +8405,7 @@ export default function App() {
     };
     fitStill();
     return watchPaywallStillResize({ target: overlay, onResize: fitStill });
-  }, [showSoftPaywall, uiLang, theme, paywallAnnualHold, paywallMonthlyHold, paywallStillSrc, reserveStep]);
+  }, [showSoftPaywall, uiLang, theme, paywallAnnualHold, paywallMonthlyHold, paywallStillSrc, reserveStep, paywallPriceWrap]);
   useEffect(() => {
     if (!paywallClickShield) return undefined;
     const clear = setTimeout(() => setPaywallClickShield(false), 0);
@@ -10996,8 +11004,8 @@ export default function App() {
       {/* ---------- SOFT PAYWALL (web card; annual tap records paywall_tap and does not charge) ---------- */}
       {/* Look lock: one static Cenzontle, locked words, loud annual, quiet Continue free. Light card is HUB_CREAM. Dark page is #15171C and the card is opaque #1E2128. */}
       {showSoftPaywall && (
-        <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: theme === "dark" ? "#15171C" : "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", paddingTop: 16, paddingRight: 20, paddingBottom: `calc(${PAYWALL_CARD_BOTTOM_INSET}px + env(safe-area-inset-bottom))`, paddingLeft: 20, overflow: "hidden" }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
-          <div ref={paywallCardRef} data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, maxWidth: 340, width: "100%", maxHeight: "100%", minHeight: 0, display: "flex", flexDirection: "column", boxSizing: "border-box", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}`, padding: "16px 20px 14px" }}>
+        <div data-testid="soft-paywall" style={{ position: "fixed", inset: 0, zIndex: 60, background: theme === "dark" ? "#15171C" : "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", paddingTop: 16, paddingRight: paywallPriceWrap ? 8 : 20, paddingBottom: `calc(${PAYWALL_CARD_BOTTOM_INSET}px + env(safe-area-inset-bottom))`, paddingLeft: paywallPriceWrap ? 8 : 20, overflow: "hidden" }} onClick={() => dismissSoftPaywall(undefined, { fromBackdrop: true })}>
+          <div ref={paywallCardRef} data-testid="soft-paywall-card" className={theme === "dark" ? undefined : "pop"} onClick={(e) => e.stopPropagation()} style={{ background: theme === "dark" ? "#1E2128" : HUB_CREAM, opacity: theme === "dark" ? 1 : undefined, backdropFilter: theme === "dark" ? "none" : undefined, borderRadius: 20, maxWidth: 340, width: "100%", maxHeight: "100%", minHeight: 0, display: "flex", flexDirection: "column", boxSizing: "border-box", textAlign: "center", border: theme === "dark" ? "2px solid #4A5160" : `2px solid ${MARK_INK}`, padding: paywallPriceWrap ? "16px 8px 14px" : "16px 20px 14px" }}>
             {paywallStillSrc ? (
               <div ref={paywallStillFrameRef} data-testid="soft-paywall-still-frame" style={{ position: "relative", flex: "0 1 auto", minHeight: 48, width: "100%", margin: "0 0 2px", display: "flex", justifyContent: "center" }}>
                 <div style={{ position: "relative", maxWidth: "100%", maxHeight: "100%", lineHeight: 0 }}>
@@ -11036,10 +11044,10 @@ export default function App() {
                 return (
                   <div ref={paywallAnnualRef} style={{ width: "100%", flexShrink: 0, marginTop: 4 }}>
                     <button type="button" className="duo-btn" data-testid="soft-paywall-annual" onClick={tapPaywallAnnual}
-                      style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, width: "100%", minHeight: PAYWALL_ANNUAL_HEIGHT, boxSizing: "border-box", padding: "10px 16px", background: PAYWALL_LIME, border: "none", borderRadius: 16, color: LESSON_LIME_INK, fontFamily: "inherit", textAlign: "center", cursor: "pointer" }}>
+                      style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, width: "100%", minHeight: PAYWALL_ANNUAL_HEIGHT, boxSizing: "border-box", padding: paywallPriceWrap ? "10px 4px" : "10px 16px", background: PAYWALL_LIME, border: "none", borderRadius: 16, color: LESSON_LIME_INK, fontFamily: "inherit", textAlign: "center", cursor: "pointer" }}>
                       <span data-testid="soft-paywall-annual-label" style={{ fontWeight: 800, fontSize: 13, lineHeight: 1.2, letterSpacing: ".06em", textTransform: "uppercase", color: LESSON_LIME_INK }}>{rw.label}</span>
                       {annualPriceText ? (
-                        <span data-testid="soft-paywall-annual-price" style={{ fontWeight: 900, fontSize: 30, lineHeight: 1.1, color: LESSON_LIME_INK }}>{annualPriceText}</span>
+                        <span data-testid="soft-paywall-annual-price" style={{ fontWeight: 900, fontSize: 30, lineHeight: 1.1, color: LESSON_LIME_INK }}>{paywallPriceWrap ? paywallPriceWrapText(annualPriceText) : annualPriceText}</span>
                       ) : null}
                       <span data-testid="soft-paywall-annual-action" style={{ fontWeight: 800, fontSize: 15, lineHeight: 1.2, color: LESSON_LIME_INK }}>{rw.action}</span>
                       <span data-testid="soft-paywall-annual-small" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2, color: LESSON_LIME_INK }}>{rw.small}</span>
@@ -11078,8 +11086,8 @@ export default function App() {
               );
             })()}
             <button type="button" data-testid="soft-paywall-monthly" onClick={tapPaywallMonthly}
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", boxSizing: "border-box", flexShrink: 0, height: PAYWALL_MONTHLY_HEIGHT, marginTop: PAYWALL_MONTHLY_GAP, padding: 0, background: "none", border: `2px solid ${theme === "dark" ? "#CDBBA6" : "#1F3A1A"}`, borderRadius: 16, color: theme === "dark" ? "#F6EFE4" : "#1F3A1A", fontFamily: "inherit", fontWeight: 800, fontSize: 20, lineHeight: 1.2, textTransform: "none", letterSpacing: "0", cursor: "pointer" }}>
-              {L.paywallMonthlyLabel}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", boxSizing: "border-box", flexShrink: 0, height: paywallPriceWrap ? "auto" : PAYWALL_MONTHLY_HEIGHT, minHeight: paywallPriceWrap ? PAYWALL_MONTHLY_HEIGHT : undefined, marginTop: PAYWALL_MONTHLY_GAP, padding: 0, background: "none", border: `2px solid ${theme === "dark" ? "#CDBBA6" : "#1F3A1A"}`, borderRadius: 16, color: theme === "dark" ? "#F6EFE4" : "#1F3A1A", fontFamily: "inherit", fontWeight: 800, fontSize: 20, lineHeight: 1.2, textTransform: "none", letterSpacing: "0", cursor: "pointer" }}>
+              <span data-testid="soft-paywall-monthly-label">{paywallPriceWrap ? paywallPriceWrapText(L.paywallMonthlyLabel) : L.paywallMonthlyLabel}</span>
             </button>
             <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
               style={{ display: "block", width: "100%", flexShrink: 0, marginTop: PAYWALL_FREE_GAP, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : "#6B6258", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
