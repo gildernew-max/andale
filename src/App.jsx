@@ -27,7 +27,7 @@ import { watchWordSheetPlacement, wordSheetClose, wordSheetCopy, wordSheetReveal
 import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { LOCKED_STORY_PAYWALL, paywallStillMaxHeight, watchPaywallStillResize, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT, PAYWALL_MONTHLY_GAP, annualPriceLine } from "./webPaywall.js";
+import { LOCKED_STORY_PAYWALL, paywallStillMaxHeight, paywallStillShouldHide, watchPaywallStillResize, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT, PAYWALL_MONTHLY_GAP, annualPriceLine } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent, paywallSeenSourceFor } from "./funnel.js";
 import { FIRST_ACTIVITY_KEY, LOCKED_CAP_FADE_MS, LOCKED_CAP_GAP_PX, LOCKED_CAP_INK, LOCKED_CAP_SIZE, LOCKED_STORY_CAP_LINE, PAYWALL_SHOWN_KEY, isPaywallMidFlow, learnerDayNumber, paywallOpenDecision, readPlainDay, resolveFirstActivityDay, resolvePaywallShownDay, writePlainDay } from "./paywallTrigger.js";
@@ -8362,6 +8362,9 @@ export default function App() {
     if (!card || !frame || !img) return undefined;
     const overlay = card.parentElement;
     const fitStill = () => {
+      // Start from today's layout: no scroll, still shown. Scroll is only switched on below when the content is taller than the card.
+      card.style.overflowY = "";
+      frame.style.display = "flex";
       img.style.maxHeight = "";
       img.style.width = "auto";
       const overlayStyle = overlay ? getComputedStyle(overlay) : null;
@@ -8370,7 +8373,9 @@ export default function App() {
       const overlayBox = overlay?.getBoundingClientRect?.();
       const limit = overlayBox ? overlayBox.height - padTop - padBottom : 0;
       const cardBox = card.getBoundingClientRect();
-      const overflow = limit > 0 ? cardBox.height - limit : 0;
+      // The card scrolls at large zoom, so its box stops at the limit; count the scrolled-off part too.
+      const scrollOver = card.scrollHeight - card.clientHeight;
+      const overflow = Math.max(limit > 0 ? cardBox.height - limit : 0, scrollOver > 1 ? scrollOver : 0);
       if (overflow > 1) {
         const next = Math.max(48, img.getBoundingClientRect().height - overflow);
         img.style.maxHeight = `${next}px`;
@@ -8381,6 +8386,14 @@ export default function App() {
         img.style.maxHeight = `${fit}px`;
         img.style.width = "auto";
       }
+      // Large zoom: if the headline and full price still can't sit above the fold, hide the still.
+      const price = card.querySelector("[data-testid='soft-paywall-annual-price']");
+      if (price && card.scrollHeight - card.clientHeight > 1) {
+        const cardTop = card.getBoundingClientRect().top;
+        const priceBottom = price.getBoundingClientRect().bottom - cardTop + card.scrollTop;
+        if (paywallStillShouldHide({ priceBottom, fold: card.clientHeight })) frame.style.display = "none";
+      }
+      if (card.scrollHeight - card.clientHeight > 1) card.style.overflowY = "auto";
     };
     fitStill();
     return watchPaywallStillResize({ target: overlay, onResize: fitStill });

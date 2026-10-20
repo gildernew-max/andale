@@ -44,6 +44,6 @@ describe("Spanish content keeps lang=es", () => {
 
   it("ES toggle: html lang is es", async () => {
     await boot("es");
-    expect(document.documentElement.lang).toBe("es");
+    await waitFor(() => expect(document.documentElement.lang).toBe("es"));
   });
 });

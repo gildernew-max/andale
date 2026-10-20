@@ -82,3 +82,16 @@ export function watchPaywallStillResize({ win = typeof window !== "undefined" ? 
     win.removeEventListener("orientationchange", run);
   };
 }
+
+/**
+ * Large zoom only: true when the headline plus the full annual price line cannot sit above the fold
+ * of the scrolling card even with the still at its minimum. Then the still is hidden so the offer leads.
+ * `priceBottom` is measured from the card's content top with the still at its minimum; `fold` is the
+ * card's visible height. At 100% and 130% the price always fits, so this stays false.
+ */
+export function paywallStillShouldHide({ priceBottom, fold } = {}) {
+  const p = Number(priceBottom);
+  const f = Number(fold);
+  if (!Number.isFinite(p) || !Number.isFinite(f) || !(f > 0)) return false;
+  return p > f + 0.5;
+}

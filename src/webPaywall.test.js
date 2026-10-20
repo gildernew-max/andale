@@ -44,3 +44,17 @@ console.log("webPaywall.test.js ok");
   assert(m.PAYWALL_STILL_HEIGHT === 140 && m.PAYWALL_BIRD_SIZE === 48, "still is 140px with a 48px bird");
   assert(m.PAYWALL_LIME === "#58CC02" && m.PAYWALL_ANNUAL_HEIGHT === 96 && m.PAYWALL_MONTHLY_HEIGHT === 64, "annual card is lime 96px; monthly is 64px");
 }
+// Large-zoom paywall: the card scrolls only when it overflows, and the still hides only when the price can't sit above the fold.
+{
+  const m = await import("./webPaywall.js");
+  const fs = await import("node:fs");
+  const app = fs.readFileSync(new URL("./App.jsx", import.meta.url), "utf8");
+  assert(m.paywallStillShouldHide({ priceBottom: 290, fold: 294 }) === false, "price above the fold: keep the still");
+  assert(m.paywallStillShouldHide({ priceBottom: 294.4, fold: 294 }) === false, "sub-pixel: keep the still");
+  assert(m.paywallStillShouldHide({ priceBottom: 400, fold: 294 }) === true, "price below the fold at large zoom: hide the still");
+  assert(m.paywallStillShouldHide({}) === false && m.paywallStillShouldHide({ priceBottom: 400, fold: 0 }) === false, "no layout: keep the still");
+  assert(!/data-testid="soft-paywall-card"[^\n]*overflowY/.test(app), "the card does not scroll by default; 100% layout is today's");
+  assert(app.includes('if (card.scrollHeight - card.clientHeight > 1) card.style.overflowY = "auto";'), "scroll turns on only when the content is taller than the card");
+  assert(app.includes('frame.style.display = "flex";'), "every fit starts with the still shown and centered");
+  assert(app.includes('if (paywallStillShouldHide({ priceBottom, fold: card.clientHeight })) frame.style.display = "none";'), "the still hides only when the price can't fit");
+}
