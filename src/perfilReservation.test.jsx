@@ -167,8 +167,8 @@ describe("perfil reservation row", () => {
   });
 
   it("George's final strings, ES and EN", () => {
-    expect(RESERVE_WORDS.es.perfil).toEqual({ title: "Plan anual fundador: apartado", line: "{correo} · Hoy no se cobra nada.", change: "Cambiar", remove: "Quitar", confirm: "¿Quitar tu reserva? Tu correo se borra de este dispositivo.", confirmRemove: "Quitar", confirmKeep: "Dejarla" });
-    expect(RESERVE_WORDS.en.perfil).toEqual({ title: "Founding annual: reserved", line: "{email} · Nothing is charged today.", change: "Change", remove: "Remove", confirm: "Remove your reservation? Your email is deleted from this device.", confirmRemove: "Remove", confirmKeep: "Keep it" });
+    expect(RESERVE_WORDS.es.perfil).toEqual({ title: "Plan anual fundador: apartado", line: "{correo} · Hoy no se cobra nada.", change: "Cambiar", remove: "Quitar", confirm: "¿Quitar tu reserva? Tu correo se borra de este dispositivo.", confirmRemove: "Quitar", confirmKeep: "Dejarla", save: "Guardar" });
+    expect(RESERVE_WORDS.en.perfil).toEqual({ title: "Founding annual: reserved", line: "{email} · Nothing is charged today.", change: "Change", remove: "Remove", confirm: "Remove your reservation? Your email is deleted from this device.", confirmRemove: "Remove", confirmKeep: "Keep it", save: "Save" });
   });
 
   it.each(FACES)("$theme $uiLang: change validates with the reserve error, no shift, and saves to the device record", async ({ theme, uiLang }) => {
@@ -179,7 +179,9 @@ describe("perfil reservation row", () => {
     const input = screen.getByTestId("perfil-reservation-email");
     expect(input.value).toBe("ana@correo.com");
     expect(input.className).toContain("reserve-email");
-    expect(screen.getByTestId("perfil-reservation-save").textContent).toBe(RESERVE_WORDS[uiLang].submit);
+    expect(screen.getByTestId("perfil-reservation-save").textContent).toBe(RESERVE_WORDS[uiLang].perfil.save);
+    expect(screen.getByTestId("perfil-reservation-save").textContent).toBe(uiLang === "es" ? "Guardar" : "Save");
+    expect(RESERVE_WORDS[uiLang].submit).toBe(uiLang === "es" ? "Reservar" : "Reserve");
     expect(screen.getByTestId("perfil-reservation-save").outerHTML).not.toMatch(LIME);
     const slot = screen.getByTestId("perfil-reservation-error-slot");
     expect(slot.style.height).toBe("17px");

@@ -43,7 +43,7 @@ export default function PerfilReservation({ uiLang, theme }) {
           <div data-testid="perfil-reservation-error-slot" style={{ height: 17, marginTop: 2, overflow: "hidden" }}>
             {invalid ? <div data-testid="perfil-reservation-error" role="alert" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: ink }}>{rw.error}</div> : null}
           </div>
-          <button type="submit" data-testid="perfil-reservation-save" style={{ ...outlineBtn, width: "100%", marginTop: 4 }}>{rw.submit}</button>
+          <button type="submit" data-testid="perfil-reservation-save" style={{ ...outlineBtn, width: "100%", marginTop: 4 }}>{w.save}</button>
         </form>
       )}
       {mode === "confirm" && (
