@@ -213,3 +213,34 @@ describe("monthly hold line", () => {
     expect(screen.queryByTestId("soft-paywall-monthly-hold")).toBeNull();
   });
 });
+
+describe("reserve email after the error", () => {
+  afterEach(() => { cleanup(); localStorage.clear(); });
+
+  it.each(FACES)("360×640 $theme $uiLang: error slot is always reserved, first typed character survives, html lang follows toggle", async ({ theme, uiLang }) => {
+    setViewport({ width: 360, height: 640 });
+    await openPaywall({ theme, uiLang });
+    expect(document.documentElement.lang).toBe(uiLang);
+    const user = userEvent.setup();
+    await user.click(await screen.findByTestId("soft-paywall-annual"));
+    const input = screen.getByTestId("soft-paywall-reserve-email");
+    const slot = screen.getByTestId("soft-paywall-reserve-error-slot");
+    const slotStyle = { height: slot.style.height, marginTop: slot.style.marginTop };
+    expect(slotStyle).toEqual({ height: "17px", marginTop: "2px" });
+    expect(screen.queryByTestId("soft-paywall-reserve-error")).toBeNull();
+
+    await user.type(input, "abc");
+    await user.click(screen.getByTestId("soft-paywall-reserve-submit"));
+    const err = screen.getByTestId("soft-paywall-reserve-error");
+    expect(err.parentElement).toBe(screen.getByTestId("soft-paywall-reserve-error-slot"));
+    expect({ height: err.parentElement.style.height, marginTop: err.parentElement.style.marginTop }).toEqual(slotStyle);
+
+    await user.clear(input);
+    expect(screen.queryByTestId("soft-paywall-reserve-error")).toBeNull();
+    expect(screen.getByTestId("soft-paywall-reserve-email")).toBe(input);
+    await user.type(input, "test@example.com");
+    expect(input.value).toBe("test@example.com");
+    await user.click(screen.getByTestId("soft-paywall-reserve-submit"));
+    expect(JSON.parse(localStorage.getItem(WAITLIST_STORE_KEY))).toEqual({ email: "test@example.com" });
+  });
+});

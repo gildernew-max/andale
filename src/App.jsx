@@ -8123,6 +8123,8 @@ export default function App() {
   const flashDeck = flashRun?.deck || [];
   const activeCard = flashRun && !flashRun.done && flashRun.idx < flashDeck.length ? flashDeck[flashRun.idx] : null;
   const uiLang = prog.uiLang === "en" ? "en" : "es";
+  // Keep <html lang> in step with the EN/ES toggle so screen readers and the browser read the UI in the right language.
+  useEffect(() => { try { document.documentElement.lang = uiLang; } catch { /* no document */ } }, [uiLang]);
   const streakView = streakDisplay({
     prog,
     today: todayKey,
@@ -11050,9 +11052,12 @@ export default function App() {
                     onFocus={(e) => { try { e.target.scrollIntoView({ block: "nearest" }); } catch { /* jsdom */ } }}
                     onChange={(e) => { setReserveEmail(e.target.value); if (invalid) setReserveStep(RESERVE_STEP.open); }}
                     style={{ display: "block", width: "100%", height: 48, marginTop: 6, boxSizing: "border-box", padding: "0 12px", borderRadius: 12, border: `2px solid ${dark ? "#CDBBA6" : "#1F3A1A"}`, background: dark ? "#15171C" : "#F6EFE4", color: ink, fontFamily: "inherit", fontSize: 16, fontWeight: 700 }} />
-                  {invalid ? (
-                    <div data-testid="soft-paywall-reserve-error" role="alert" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: ink, marginTop: 2 }}>{rw.error}</div>
-                  ) : null}
+                  {/* One quiet line is always reserved for the error, so showing or clearing it never moves the field. */}
+                  <div data-testid="soft-paywall-reserve-error-slot" style={{ height: 17, marginTop: 2, overflow: "hidden" }}>
+                    {invalid ? (
+                      <div data-testid="soft-paywall-reserve-error" role="alert" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: ink }}>{rw.error}</div>
+                    ) : null}
+                  </div>
                   <div data-testid="soft-paywall-reserve-note" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: quiet, marginTop: 2 }}>{rw.note}</div>
                   <button type="submit" className="duo-btn" data-testid="soft-paywall-reserve-submit"
                     style={{ display: "block", width: "100%", height: 48, marginTop: 6, padding: 0, borderRadius: 16, border: "none", background: PAYWALL_LIME, color: LESSON_LIME_INK, fontFamily: "inherit", fontWeight: 900, fontSize: 17, cursor: "pointer" }}>{rw.submit}</button>
