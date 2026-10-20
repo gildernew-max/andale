@@ -175,3 +175,41 @@ describe("founding annual reserve", () => {
     window.removeEventListener("andale-purchase", onPurchase);
   });
 });
+
+describe("monthly hold line", () => {
+  afterEach(() => { cleanup(); localStorage.clear(); });
+
+  it.each(FACES)("360×640 $theme $uiLang: monthly tap swaps the saving line, annual open clears it", async ({ theme, uiLang }) => {
+    setViewport({ width: 360, height: 640 });
+    await openPaywall({ theme, uiLang });
+    const w = RESERVE_WORDS[uiLang];
+    const user = userEvent.setup();
+    const quiet = theme === "dark" ? "#cdbba6" : "#6b6258";
+    const saving = await screen.findByTestId("soft-paywall-saving");
+    const savingStyle = { fontSize: saving.style.fontSize, fontWeight: saving.style.fontWeight, marginTop: saving.style.marginTop };
+    expect(screen.queryByTestId("soft-paywall-monthly-hold")).toBeNull();
+
+    await user.click(screen.getByTestId("soft-paywall-monthly"));
+    const hold = screen.getByTestId("soft-paywall-monthly-hold");
+    expect(hold.textContent).toBe(w.monthlyHold);
+    expect(w.monthlyHold).toBe(uiLang === "en" ? "Monthly isn't open yet. Reserve annual." : "El mensual aún no abre. Aparta el anual.");
+    // One line at 360×640: jsdom has no layout, so this guards the budget (≤44 chars at 13px bold in the ~312px slot)
+    // and asserts equal box height; the Chrome frames (shoot3-monthly.mjs) measure the real pixels.
+    expect(w.monthlyHold.length).toBeLessThanOrEqual(44);
+    expect(hold.getBoundingClientRect().height).toBe(saving.getBoundingClientRect().height);
+    expect(screen.queryByTestId("soft-paywall-saving")).toBeNull();
+    expect(hold.parentElement).toBe(screen.getByTestId("soft-paywall-annual").parentElement);
+    expect({ fontSize: hold.style.fontSize, fontWeight: hold.style.fontWeight, marginTop: hold.style.marginTop }).toEqual(savingStyle);
+    expect(norm(hold.style.color)).toBe(quiet);
+    expect(limeCount()).toBe(1);
+
+    await user.click(screen.getByTestId("soft-paywall-annual"));
+    expect(screen.getByTestId("soft-paywall-reserve-email")).toBeTruthy();
+    expect(screen.queryByTestId("soft-paywall-monthly-hold")).toBeNull();
+    await user.click(screen.getByTestId("soft-paywall-reserve-submit"));
+    expect(screen.getByTestId("soft-paywall-reserve-error")).toBeTruthy();
+    expect(screen.queryByTestId("soft-paywall-monthly-hold")).toBeNull();
+    await user.click(screen.getByTestId("soft-paywall-monthly"));
+    expect(screen.queryByTestId("soft-paywall-monthly-hold")).toBeNull();
+  });
+});

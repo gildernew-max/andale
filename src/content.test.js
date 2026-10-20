@@ -648,7 +648,7 @@ assert(UI.es.paywallHeadlineNoStory === "Hay mucho por leer.", "UI.es.paywallHea
 assert(UI.en.paywallHeadlineNoStory === "There's a lot to read.", "UI.en.paywallHeadlineNoStory");
 assert(UI.en.paywallHeadlineNoStory.endsWith("."), "EN no-story headline keeps the period");
 assert(UI.en.paywallHeadlineNoStory.charCodeAt("There".length) === 0x27, "EN no-story headline keeps the straight apostrophe");
-assert(UI.es.paywallBody === "Todas las historias, la Doctora de frases y el camino completo. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", "UI.es.paywallBody George lock");
+assert(UI.es.paywallBody === "Todas las historias. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", "UI.es.paywallBody George lock");
 assert(UI.es.paywallBody.endsWith("de\u00A0lo\u00A0básico."), "ES body keeps de lo básico together");
 assert(UI.es.paywallAnnual === "Empezar plan anual", "UI.es.paywallAnnual lock — no price in the label");
 assert(UI.es.paywallAnnualHold === "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", "UI.es.paywallAnnualHold lock");
@@ -661,7 +661,7 @@ assert(UI.es.paywallFreeLine === "Gratis: los cuentos se abren uno a uno, en ord
 assert(UI.es.paywallHonesty === "Vista previa · aún no se cobra", "UI.es.paywallHonesty preview line");
 assert(UI.es.paywallDismiss === "Seguir gratis", "UI.es.paywallDismiss George lock");
 assert(UI.en.paywallHeadline === "The story goes on.", "UI.en.paywallHeadline George lock");
-assert(UI.en.paywallBody === "Every story, Phrase Doctor, and the full path. Real Mexican Spanish, past\u00A0the\u00A0basics.", "UI.en.paywallBody George lock");
+assert(UI.en.paywallBody === "Every story. Real Mexican Spanish, past\u00A0the\u00A0basics.", "UI.en.paywallBody George lock");
 assert(UI.en.paywallBody.endsWith("past\u00A0the\u00A0basics."), "EN body keeps past the basics together");
 assert(UI.en.paywallAnnual === "Start annual plan", "UI.en.paywallAnnual lock — no price in the label");
 assert(UI.en.paywallAnnualHold === "Annual plans aren't open yet. Keep reading free for now.", "UI.en.paywallAnnualHold lock");
@@ -756,7 +756,7 @@ assert(paywallLayout.indexOf("soft-paywall-headline") < paywallLayout.indexOf("s
 assert(paywallLayout.indexOf("soft-paywall-body") < paywallLayout.indexOf("data-testid=\"soft-paywall-annual\""), "the annual card sits under the benefit");
 assert(paywallLayout.indexOf("soft-paywall-annual-label") < paywallLayout.indexOf("soft-paywall-annual-price"), "the label sits above the billed total inside the card");
 assert(paywallLayout.indexOf("soft-paywall-annual-price") < paywallLayout.indexOf("soft-paywall-reserve-email"), "the reserve field opens in the annual slot");
-assert(paywallLayout.indexOf("soft-paywall-reserve-submit") < paywallLayout.indexOf("soft-paywall-monthly"), "monthly sits under the reserve slot");
+assert(paywallLayout.indexOf("soft-paywall-reserve-submit") < paywallLayout.indexOf("data-testid=\"soft-paywall-monthly\""), "monthly sits under the reserve slot");
 assert(paywallLayout.indexOf("data-testid=\"soft-paywall-monthly\"") < paywallLayout.indexOf("soft-paywall-dismiss"), "Continue free sits under monthly");
 assert(paywallLayout.indexOf("soft-paywall-dismiss") < paywallLayout.indexOf("soft-paywall-free-line"), "the free line sits under Continue free");
 assert(!/soft-paywall-free-limit|FREE_TIER_LIMIT/.test(paywallLayout + appSrc), "the web card has no free-tier line");
@@ -799,7 +799,7 @@ assert(appSrc.includes("paywallStillMaxHeight({ frameHeight: frame.getBoundingCl
 }
 assert(appSrc.includes("return watchPaywallStillResize({ target: overlay, onResize: fitStill });"), "the paywall layout effect re-measures on resize and cleans up on close");
 assert(PAYWALL_FREE_LINE_GAP === 8, "the free line sits 8px under Continue free");
-assert(PAYWALL_FREE_LINE_SIZE === 12, "the free line is body type one size down from 13.5");
+assert(PAYWALL_FREE_LINE_SIZE === 11, "the free line is body type one size down from 13.5");
 assert(paywallLayout.includes("paddingBottom: `calc(${PAYWALL_CARD_BOTTOM_INSET}px + env(safe-area-inset-bottom))`"), "the card bottom is at least 16px above the safe area");
 assert(paywallLayout.includes("marginTop: PAYWALL_FREE_GAP"), "Continue free uses the 12px gap");
 assert(paywallLayout.includes('overflow: "hidden"'), "the page does not scroll the card");
@@ -811,12 +811,11 @@ assert(paywallLayout.includes("{annualPriceText}"), "a set price renders the loc
 assert(!/soft-paywall-annual-price[\s\S]{0,280}textWrap/.test(paywallLayout), "the price line does not use text-wrap");
 assert(!/soft-paywall-body[\s\S]{0,160}textWrap/.test(paywallLayout), "paywall body does not use text-wrap");
 assert(PAYWALL_ANNUAL_HOLD_GAP === 8, "the post-tap line sits 8px under annual");
-assert(paywallLayout.includes("marginTop: PAYWALL_ANNUAL_HOLD_GAP"), "the post-tap line uses the 8px gap");
 assert(paywallLayout.includes('theme === "dark" ? "#CDBBA6" : "#6B6258"'), "the post-tap line is #6B6258 in light and #CDBBA6 in dark");
-assert(/soft-paywall-monthly-hold[\s\S]{0,180}paywallBodyType/.test(paywallLayout), "the monthly post-tap line uses body type");
-assert(paywallLayout.includes("{paywallMonthlyHold ? ("), "the monthly post-tap line is hidden until monthly is tapped");
+assert(/soft-paywall-monthly-hold[\s\S]{0,120}fontSize: 13, lineHeight: 1\.4, color: quiet, marginTop: 6/.test(paywallLayout), "the monthly post-tap line uses the saving line's quiet type");
+assert(/\{paywallMonthlyHold \? \([\s\S]{0,260}rw\.monthlyHold[\s\S]{0,60}\) : \([\s\S]{0,200}soft-paywall-saving/.test(paywallLayout), "the monthly post-tap line swaps in for the saving line");
 assert(!appSrc.includes("setPaywallAnnualHold(true)"), "annual tap opens the reserve field, not the hold line");
-assert(/const tapPaywallAnnual = \(\) => \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallTap, choice: PAYWALL_TAP\.annual \}\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.tapAnnual, source: paywallSeenKindRef\.current \}\);\s*setReserveStep\(RESERVE_STEP\.open\);\s*\};/.test(appSrc), "annual tap records paywall_tap and tap_annual and opens the reserve field; nothing charges");
+assert(/const tapPaywallAnnual = \(\) => \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallTap, choice: PAYWALL_TAP\.annual \}\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.tapAnnual, source: paywallSeenKindRef\.current \}\);\s*setPaywallMonthlyHold\(false\);\s*setReserveStep\(RESERVE_STEP\.open\);\s*\};/.test(appSrc), "annual tap records paywall_tap and tap_annual and opens the reserve field; nothing charges");
 assert(/const tapPaywallMonthly = \(\) => \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.tapMonthly, source: paywallSeenKindRef\.current \}\);\s*setPaywallMonthlyHold\(true\);\s*\};/.test(appSrc), "monthly tap records tap_monthly and does not change the button");
 assert(!/PAYWALL_TAP\.monthly/.test(appSrc), "monthly is not a paywall_tap choice");
 assert(/<LogoMark size=\{44\} data-testid="soft-paywall-cenzontle"/.test(paywallLayout), "no-still Cenzontle stays the centered 44px mark");

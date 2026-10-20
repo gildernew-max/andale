@@ -31,7 +31,7 @@ export const PAYWALL_FREE_GAP = 12;
 
 /** The free-line sits this many pixels under Continue free. Body type, one size down from 13.5. */
 export const PAYWALL_FREE_LINE_GAP = 8;
-export const PAYWALL_FREE_LINE_SIZE = 12;
+export const PAYWALL_FREE_LINE_SIZE = 11;
 
 /** The post-tap line sits this many pixels under the annual button. Monthly uses the same slot. */
 export const PAYWALL_ANNUAL_HOLD_GAP = 8;
