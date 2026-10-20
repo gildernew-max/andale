@@ -44,8 +44,9 @@ describe("checkpoint answers vs the pinned row", () => {
     const answers = await screen.findByTestId("lectura-checkpoint-answers");
     const bar = screen.getByTestId("lectura-advance");
     bar.getBoundingClientRect = rect(540, 640);
+    answers.getBoundingClientRect = rect(100, 162); // clear of the row through the arrival checks
+    await new Promise((r) => setTimeout(r, 1200));
     answers.getBoundingClientRect = rect(800, 862);
-    await new Promise((r) => setTimeout(r, 500));
     const scrollBy = vi.fn();
     window.scrollBy = scrollBy;
     window.scrollY = 100; window.dispatchEvent(new Event("scroll"));
@@ -96,5 +97,49 @@ describe("checkpoint answers vs the pinned row", () => {
     await new Promise((r) => setTimeout(r, 600));
     expect(lifts(scrollBy)).toHaveLength(1);
     expect(lifts(scrollBy)[0][0].top).toBe(798 - (744 - 12));
+  });
+
+  it("NEXT to a page whose answers sit behind the row lifts them after arrival (Varys p5)", async () => {
+    seedStory(3);
+    Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: 640 });
+    const scrollBy = vi.fn();
+    window.scrollBy = scrollBy;
+    const orig = Element.prototype.getBoundingClientRect;
+    let answersRect = rect(466, 528);
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function () {
+      const id = this.getAttribute && this.getAttribute("data-testid");
+      if (id === "lectura-advance") return rect(540, 640)();
+      if (id === "lectura-checkpoint-answers") return answersRect();
+      return orig.call(this);
+    });
+    render(<App />);
+    await screen.findByTestId("lectura-checkpoint-answers");
+    await new Promise((r) => setTimeout(r, 1200));
+    expect(lifts(scrollBy)).toHaveLength(0);
+    answersRect = rect(568, 630);
+    const next = [...screen.getByTestId("lectura-advance").querySelectorAll("button")].at(-1);
+    next.click();
+    await new Promise((r) => setTimeout(r, 1200));
+    expect(lifts(scrollBy)).toHaveLength(1);
+    expect(lifts(scrollBy)[0][0].top).toBe(630 - 528);
+  });
+
+  it("a page whose answers open below the fold lifts them on arrival", async () => {
+    seedStory(1);
+    Object.defineProperty(window, "innerHeight", { configurable: true, writable: true, value: 640 });
+    const scrollBy = vi.fn();
+    window.scrollBy = scrollBy;
+    const orig = Element.prototype.getBoundingClientRect;
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function () {
+      const id = this.getAttribute && this.getAttribute("data-testid");
+      if (id === "lectura-advance") return rect(540, 640)();
+      if (id === "lectura-checkpoint-answers") return rect(747, 809)();
+      return orig.call(this);
+    });
+    render(<App />);
+    await screen.findByTestId("lectura-checkpoint-answers");
+    await new Promise((r) => setTimeout(r, 1200));
+    expect(lifts(scrollBy)).toHaveLength(1);
+    expect(lifts(scrollBy)[0][0].top).toBe(809 - 528);
   });
 });

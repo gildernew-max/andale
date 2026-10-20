@@ -354,3 +354,14 @@ assert(appSrc.includes("<div ref={lecturaCounterRef} style={{ fontSize: 12, font
   a(nudge({}) === 0 && nudge({ answersTop: NaN, answersBottom: 1, barTop: 1 }) === 0, "bad input: no nudge");
   console.log("ok: checkpoint answers lift above the pinned row");
 }
+
+// Lift on page change (Varys FAIL on #375): answers hidden behind the row, or below the fold on arrival.
+{
+  const { checkpointUnderBarNudge: nudge } = await import("./lecturaAdvance.js");
+  const a = (c, m) => { if (!c) throw new Error(m); };
+  a(nudge({ answersTop: 568, answersBottom: 630, barTop: 540, viewportHeight: 640 }) === 630 - 528, "answers fully behind the row are in sight and lift");
+  a(nudge({ answersTop: 747, answersBottom: 809, barTop: 540, viewportHeight: 640 }) === 0, "below the fold while reading: wait for the learner");
+  a(nudge({ answersTop: 747, answersBottom: 809, barTop: 540, viewportHeight: 640, arrival: true }) === 809 - 528, "below the fold right after a page change: lift into view");
+  a(nudge({ answersTop: 466, answersBottom: 528, barTop: 540, viewportHeight: 640, arrival: true }) === 0, "already clear on arrival: leave it");
+  console.log("ok: checkpoint answers lift after NEXT/BACK");
+}

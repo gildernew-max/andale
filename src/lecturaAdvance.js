@@ -628,12 +628,16 @@ export function watchComprensionFit({ win = typeof window !== "undefined" ? wind
  * takes the tap. While the learner scrolls down, once the answers start to slide under
  * the row, return how far to scroll so their bottom sits one gap above it. 0 = leave it.
  */
-export function checkpointUnderBarNudge({ answersTop, answersBottom, barTop, gap = LECTURA_NEXT_GAP } = {}) {
+export function checkpointUnderBarNudge({ answersTop, answersBottom, barTop, viewportHeight, arrival = false, gap = LECTURA_NEXT_GAP } = {}) {
   const top = Number(answersTop);
   const bottom = Number(answersBottom);
   const bar = Number(barTop);
   if (![top, bottom, bar].every(Number.isFinite)) return 0;
-  if (top >= bar) return 0; // not in sight yet
   if (bottom <= bar - gap) return 0; // already clear
+  // Answers hidden behind the row are in the viewport, just covered: they count as in sight.
+  // Only answers still below the screen wait for the learner, except right after a page change.
+  const vh = Number(viewportHeight);
+  const fold = Number.isFinite(vh) && vh > 0 ? vh : bar;
+  if (top >= fold && !arrival) return 0;
   return Math.ceil(bottom - (bar - gap));
 }
