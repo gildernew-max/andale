@@ -158,6 +158,8 @@ describe("reserved return", () => {
     const wall = await screen.findByTestId("soft-paywall");
     expect(screen.queryByTestId("story-reader")).toBeNull();
     expect(screen.getByTestId("soft-paywall-reserved-title").textContent).toBe(w.doneTitle);
+    expect(screen.queryByTestId("soft-paywall-headline")).toBeNull();
+    expect(screen.getByTestId("soft-paywall-reserved").style.marginTop).toBe("10px");
     expect(screen.queryByTestId("soft-paywall-reserved-line")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-reserve-form")).toBeNull();
     expect(screen.queryByTestId("soft-paywall-annual")).toBeNull();
@@ -175,7 +177,7 @@ describe("reserved return", () => {
     expect(locked.getAttribute("data-locked")).toBe("true");
   });
 
-  it.each(FACES)("$theme $uiLang: the view right after Reserve is the quiet reserved view: headline, body, done box, bird; no price, lime, monthly, free; Keep reading only", async ({ theme, uiLang }) => {
+  it.each(FACES)("$theme $uiLang: the view right after Reserve is the quiet reserved view: bird then done box; no price, lime, monthly, free; Keep reading only", async ({ theme, uiLang }) => {
     setViewport({ width: 360, height: 640 });
     const user = await winContinue({ theme, uiLang });
     const w = RESERVE_WORDS[uiLang];
@@ -188,8 +190,11 @@ describe("reserved return", () => {
     await user.type(screen.getByTestId("soft-paywall-reserve-email"), "ana@example.com");
     await user.click(screen.getByTestId("soft-paywall-reserve-submit"));
     const wall = screen.getByTestId("soft-paywall");
-    expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(headline);
-    expect(screen.getByTestId("soft-paywall-body").textContent).toBe(body);
+    expect(headline && body).toBeTruthy();
+    // No face layout: the done box sits right under the hero bird, at the headline's 10px gap.
+    expect(screen.queryByTestId("soft-paywall-headline")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall-body")).toBeNull();
+    expect(screen.getByTestId("soft-paywall-reserved").style.marginTop).toBe("10px");
     expect(screen.getByTestId("soft-paywall-reserved-title").textContent).toBe(w.doneTitle);
     expect(bird()).toBe(birdBefore);
     expect(bird()).toBe(1);
