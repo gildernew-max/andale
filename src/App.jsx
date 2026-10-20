@@ -7013,7 +7013,7 @@ export default function App() {
     return () => { clearTimeout(settle); window.removeEventListener("scroll", onScroll); if (frame) cancelAnimationFrame(frame); };
   }, [screen, paraIdx]);
 
-  const armPostWinPaywall = (bird) => {
+  const armPostWinPaywall = (bird, { source } = {}) => {
     // Reserved learners never get the post-win wall, bird variant included.
     if (reservedRef.current || readReservation()) return;
     const ctx = paywallDayContext();
@@ -7021,10 +7021,20 @@ export default function App() {
     if (paywallDismissingRef.current) return;
     paywallDismissedRef.current = false;
     setPaywallDismissed(false);
-    setPaywallSource(bird ? PAYWALL_BIRD_TRIGGER : PAYWALL_SOURCE.winContinue);
+    setPaywallSource(source || (bird ? PAYWALL_BIRD_TRIGGER : PAYWALL_SOURCE.winContinue));
     setChapterBirdHandoff(!!bird);
     setWinPaywall(true);
     stampPaywallShown(ctx.today);
+  };
+
+  /** Out of lives replaces the win screen, so leaving it is where the day's wall gets its turn
+   *  (same cap, same reserved and day-1 rules as the post-win wall). */
+  const leaveOutOfLives = ({ refill = false } = {}) => {
+    if (refill) refillHearts();
+    if (failKind === "hearts" && !session?.firstSession) armPostWinPaywall(false, { source: PAYWALL_SOURCE.hearts });
+    else setPaywallSource(PAYWALL_SOURCE.hearts);
+    setScreen("home");
+    setTab("camino");
   };
 
   const openLockedStoryPaywall = (storyId, surface) => {
@@ -13389,10 +13399,10 @@ export default function App() {
               </p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22, flexWrap: "wrap" }}>
 	                {trackedCount > 0 && <Btn color={D.blue} dark={D.blueDark} data-testid="review-and-recover" onClick={() => startReview(true)}>{L.practiceRecover} <IcHeart size={15} /></Btn>}
-                <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < REFILL_COST} onClick={() => { refillHearts(); setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>
+                <Btn color={D.red} dark={D.redDark} disabled={(prog.gems || 0) < REFILL_COST} onClick={() => leaveOutOfLives({ refill: true })}>
 	                  {L.refill} · <IcGem size={15} /> {REFILL_COST}
                 </Btn>
-	                <Btn outline data-testid="hearts-to-path" onClick={() => { setPaywallSource(PAYWALL_SOURCE.hearts); setScreen("home"); setTab("camino"); }}>{L.toPath}</Btn>
+	                <Btn outline data-testid="hearts-to-path" onClick={() => leaveOutOfLives()}>{L.toPath}</Btn>
               </div>
             </>
           )}
