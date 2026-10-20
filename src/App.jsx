@@ -35,6 +35,7 @@ import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1,
 import { emitLecturaStartOnce } from "./lecturaStartDay.js";
 import { FIRST_STREAK_BIRD_PX, dismissFirstStreakReturn, firstStreakReturn, presentFirstStreakReturn } from "./firstStreakReturn.js";
 import { isWaitlistEmail } from "./waitlist.js";
+import PerfilReservation from "./PerfilReservation.jsx";
 import { reserveWords, submitReserve, reserveStartStep, RESERVE_STEP, RESERVE_PLAN, RESERVE_PRICE } from "./reserveAnnual.js";
 import { FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_FILL_INK, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SEEN, deliverFirstWinEmail, firstWinEmailCta, firstWinEmailError as firstWinEmailErrorLine, firstWinEmailInvite, firstWinEmailPlaceholder, firstWinEmailPrivacy, firstWinEmailPrivacyLink, firstWinEmailSkipLabel, firstWinEmailSuccess, shouldShowFirstWinEmail } from "./firstWinEmail.js";
 import { BAJIO_UNLOCK_FLASH_MS, CDMX_UNLOCK_FLASH_MS, MEXICO_MAP_SRC, NORTE_UNLOCK_FLASH_MS, OAXACA_UNLOCK_FLASH_MS, RECUERDOS_FOG_BLOB_DARK, RECUERDOS_FOG_BLOB_LIGHT, RECUERDOS_PIN_LABEL, RECUERDOS_PIN_SHADOW, RECUERDOS_PIN_SHADOW_LOCKED, RECUERDOS_PINS, YUCATAN_UNLOCK_FLASH_MS, bajioUnlockFlashCopy, cdmxUnlockFlashCopy, cdmxUnlockFlashStreak, isBajioUnlockFlashDue, isBajioUnlockFlashLive, isCdmxUnlockFlashDue, isCdmxUnlockFlashLive, isDay2HoyEsoWin, isFirstStreakEsoWin, isNorteUnlockFlashDue, isNorteUnlockFlashLive, isOaxacaUnlockFlashDue, isOaxacaUnlockFlashLive, isRecuerdosPinOpen, isStreak3HoyEsoWin, isStreak4HoyEsoWin, isStreak5HoyEsoWin, isYucatanUnlockFlashDue, isYucatanUnlockFlashLive, markBajioUnlockFlashDue, markBajioUnlockFlashLive, markCdmxUnlockFlashDue, markNorteUnlockFlashDue, markOaxacaUnlockFlashDue, markYucatanUnlockFlashDue, norteUnlockFlashCopy, norteUnlockFlashStreak, oaxacaUnlockFlashCopy, oaxacaUnlockFlashStreak, recuerdosFogBackground, recuerdosLockedPins, recuerdosPinLabel, recuerdosPinState, shouldShowBajioUnlockFlash, shouldShowCdmxUnlockFlash, shouldShowNorteUnlockFlash, shouldShowOaxacaUnlockFlash, shouldShowYucatanUnlockFlash, storyIdForRecuerdosPin, yucatanUnlockFlashCopy, yucatanUnlockFlashStreak } from "./recuerdos.js";
@@ -10398,6 +10399,7 @@ export default function App() {
 	              <div style={{ fontSize: 13, color: D.sub, fontWeight: 700 }}>{L.profileSub}</div>
             </div>
           </div>
+          <PerfilReservation key={`${uiLang}-${theme}`} uiLang={uiLang} theme={theme} />
           {showLevelTheater && <div data-testid="level-theater" style={{ border: `2px solid ${D.gold}`, borderBottom: `4px solid ${D.goldDark}`, borderRadius: 16, padding: "14px 18px", marginBottom: 14, background: D.goldBg }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <span style={{ fontWeight: 900, fontSize: 18, color: D.goldDark }}>{levelLabel(lvl.name, uiLang)}</span>
@@ -10581,8 +10583,8 @@ export default function App() {
             ))}
           </div>
           <div data-testid="perfil-footer" style={{ marginTop: 28, display: "flex", flexWrap: "wrap", gap: 20, justifyContent: "center", maxWidth: "100%" }}>
-            <a href={`${import.meta.env.BASE_URL}privacy.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Privacidad</a>
-            <a href={`${import.meta.env.BASE_URL}support.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>Soporte</a>
+            <a href={`${import.meta.env.BASE_URL}privacy.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>{uiLang === "en" ? "Privacy" : "Privacidad"}</a>
+            <a href={`${import.meta.env.BASE_URL}support.html`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>{uiLang === "en" ? "Support" : "Soporte"}</a>
             <a data-testid="settings-count-note" href={`${import.meta.env.BASE_URL}privacy.html#correo-y-datos`} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>{uiLang === "en" ? "What we count" : "Qué contamos"}</a>
             <a data-testid="report-problem" href={problemReportMailto(uiLang, theme, tab)} style={{ fontSize: 13, fontWeight: 800, color: D.sub, textDecoration: "underline" }}>{uiLang === "en" ? "Report a problem" : "Reportar un problema"}</a>
           </div>
