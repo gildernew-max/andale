@@ -159,7 +159,7 @@ describe("founding annual reserve", () => {
     await user.type(input, "ana@example.com");
     await user.click(screen.getByTestId("soft-paywall-reserve-submit"));
     expect(screen.getByTestId("soft-paywall-reserved-title").textContent).toBe(w.doneTitle);
-    expect(screen.getByTestId("soft-paywall-reserved-line").textContent).toBe(w.doneLine);
+    expect(screen.queryByTestId("soft-paywall-reserved-line")).toBeNull();
     expect(screen.getByTestId("soft-paywall-reserved-keep").textContent).toBe(w.keepReading);
     expect(screen.getByTestId("soft-paywall-reserved-keep").style.minHeight).toBe("44px");
     const subs = log().filter((e) => e.event === FUNNEL_EVENTS.reserveSubmit);

@@ -8730,7 +8730,12 @@ export default function App() {
     const wasReserved = !!readReservation();
     const next = submitReserve(reserveEmail);
     setReserveStep(next);
-    if (next === RESERVE_STEP.done) setReserved(true);
+    if (next === RESERVE_STEP.done) {
+      setReserved(true);
+      // Just reserved: the wall turns into the same quiet reserved view a returning learner sees.
+      reservedReturnRef.current = true;
+      setReservedReturn(true);
+    }
     // reserve_submit counts a device once: never on a re-reserve.
     if (next === RESERVE_STEP.done && !wasReserved) {
       emitFunnelEvent({ event: FUNNEL_EVENTS.reserveSubmit, plan: RESERVE_PLAN, price: RESERVE_PRICE });
