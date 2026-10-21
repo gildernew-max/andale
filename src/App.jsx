@@ -7119,6 +7119,7 @@ export default function App() {
     save({ paywallShownDay: today });
   };
 
+  const storyOpenedAtTopRef = useRef(null);
   // Checkpoint answers never sit half under the pinned BACK/NEXT row: on the way down,
   // the first time a page's answers reach the row, scroll just enough to lift them above it.
   useEffect(() => {
@@ -7150,8 +7151,12 @@ export default function App() {
     window.addEventListener("scroll", onScroll, { passive: true });
         // Every page change (NEXT, BACK, reopen) lands here: once the arrival scroll and the still have settled,
     // put the page's answers fully above the row, even when they opened below the fold.
-    const settle = setTimeout(() => check(true), 400);
-    const settleLate = setTimeout(() => check(true), 1000);
+    // A fresh story open stays at the top (image and counter in view); the scroll-down nudge
+    // still lifts the answers once the learner reaches them.
+    const openedAtTop = storyOpenedAtTopRef.current === paraIdx;
+    storyOpenedAtTopRef.current = null;
+    const settle = openedAtTop ? 0 : setTimeout(() => check(true), 400);
+    const settleLate = openedAtTop ? 0 : setTimeout(() => check(true), 1000);
     return () => { clearTimeout(settle); clearTimeout(settleLate); window.removeEventListener("scroll", onScroll); if (frame) cancelAnimationFrame(frame); };
   }, [screen, paraIdx]);
 
@@ -7201,6 +7206,7 @@ export default function App() {
     const claimedForGate = justClaimedId ? { ...prog.stories, [justClaimedId]: true } : prog.stories;
     if (!isLecturaStoryOpen(STORIES, claimedForGate, story?.id)) return;
     if (story?.id) {
+      story0SequelTopRef.current = true;
       lecturaStartedRef.current = true;
       emitLecturaStartOnce(story.id, { storage: window.localStorage, today: todayStr() });
       save((prev) => ({
@@ -7582,13 +7588,17 @@ export default function App() {
 
   // A story opened from the story-0 end card, or from the first-lesson win
   // button, starts at page 1, not at the previous screen's scroll position.
-  // Only those two paths set the ref.
+  // Any story opened from the app (Stories list included) starts at the top
+  // too: the list's window scroll used to carry over and hide the image and
+  // paragraph counter on p1. openStory sets the ref; a reload that restores
+  // the reader keeps the PR 376 arrival lift.
   useLayoutEffect(() => {
     if (!story0SequelTopRef.current) return;
     if (screen !== "story" || !storyView?.id) return;
     story0SequelTopRef.current = false;
+    storyOpenedAtTopRef.current = paraIdx;
     window.scrollTo(0, 0);
-  }, [screen, storyView]);
+  }, [screen, storyView, paraIdx]);
 
   const handoffCliffhangerToBird = () => {
     if (!lecturaCliffhanger) return;
