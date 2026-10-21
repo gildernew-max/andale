@@ -1972,6 +1972,9 @@ const Confetti = ({ count = 60 }) => {
 
 /* ---------------- XP TICKER (count-up) ---------------- */
 
+/** Top padding of the opaque bar behind the sticky win CONTINUE; the page reserves it too. */
+const WIN_CONTINUE_BAR_TOP = 8;
+
 const Ticker = ({ to, prefix = "+", duration = 900, instant = false }) => {
   const [n, setN] = useState(instant ? to : 0);
   useEffect(() => {
@@ -13233,7 +13236,7 @@ export default function App() {
         const streakChip = streakChipLabel(prog.streak, uiLang);
         const popFirstStreak = shouldPopFirstStreak({ before: session.streakBefore, after: prog.streak });
         return (
-        <div data-testid="lesson-win" style={{ maxWidth: 480, margin: "0 auto", paddingTop: 60, paddingLeft: 20, paddingRight: 20, paddingBottom: `calc(${ONBOARDING_CTA_BOTTOM + ONBOARDING_CTA_HEIGHT + ONBOARDING_CTA_CONTENT_GAP + (firstStoryCta ? 54 : 0)}px + env(safe-area-inset-bottom))`, textAlign: "center", position: "relative" }}>
+        <div data-testid="lesson-win" style={{ maxWidth: 480, margin: "0 auto", paddingTop: 60, paddingLeft: 20, paddingRight: 20, paddingBottom: `calc(${ONBOARDING_CTA_BOTTOM + ONBOARDING_CTA_HEIGHT + ONBOARDING_CTA_CONTENT_GAP + (firstStoryCta ? 54 : WIN_CONTINUE_BAR_TOP)}px + env(safe-area-inset-bottom))`, textAlign: "center", position: "relative" }}>
           {!quietWin && !perchCard && <Confetti count={perfect ? 160 : 70} />}
           {perchCard && (
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
@@ -13333,7 +13336,10 @@ export default function App() {
                 </button>
               </div>
             ) : (
-	            <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy ? LESSON_LIME_INK : undefined} onClick={() => continueFromWin()} style={{ position: "fixed", left: 0, right: 0, width: "fit-content", marginLeft: "auto", marginRight: "auto", bottom: onboardingCtaBottomCss(), zIndex: 12 }}>{L.continue}</Btn>
+              // Opaque bar under the sticky CONTINUE: the stack scrolls beneath it, so REPASAR is never half-covered (No face, Oct 21).
+              <div data-testid="win-continue-bar" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 12, background: D.bg, paddingTop: WIN_CONTINUE_BAR_TOP, paddingBottom: onboardingCtaBottomCss(), display: "flex", justifyContent: "center" }}>
+	              <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy ? LESSON_LIME_INK : undefined} onClick={() => continueFromWin()}>{L.continue}</Btn>
+              </div>
             )}
           </div>
           {showFirstWinEmail && (
