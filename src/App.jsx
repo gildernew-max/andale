@@ -7520,6 +7520,8 @@ export default function App() {
         setWinBounce(true);
     }
     setScreen("done");
+    // The win opens at the top: the reader's scroll must not clip the bird under the brand bar.
+    requestAnimationFrame(() => window.scrollTo(0, 0));
   };
 
   const claimStory = (story, correct, checkpointMisses = 0) => {
