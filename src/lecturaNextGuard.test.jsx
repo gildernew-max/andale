@@ -31,7 +31,7 @@ const LIVE_KEY = "andale-v3-live";
 const here = dirname(fileURLToPath(import.meta.url));
 const appSrc = readFileSync(join(here, "App.jsx"), "utf8");
 
-const MAIN_BACK = '<Btn outline disabled={paraIdx === 0} onClick={() => advanceLectura(paraIdx - 1)} style={{ flex: 1 }}>';
+const MAIN_BACK = '<Btn outline data-testid="lectura-back" disabled={paraIdx === 0} onClick={() => advanceLectura(paraIdx - 1)} style={{ flex: 1, whiteSpace: "nowrap", paddingLeft: 13, paddingRight: 13 }}>';
 const MAIN_NEXT = '<Btn onClick={() => advanceLectura(paraIdx + 1)} style={{ flex: 2 }}>';
 
 describe("lectura NEXT pin clearance and main gating", () => {
@@ -89,7 +89,7 @@ describe("lectura NEXT pin clearance and main gating", () => {
     expect(appSrc.includes(MAIN_BACK)).toBe(true);
     expect(appSrc.includes(MAIN_NEXT)).toBe(true);
     const advanceAt = appSrc.indexOf('data-testid="lectura-advance"');
-    const advanceBlock = appSrc.slice(advanceAt, advanceAt + 700);
+    const advanceBlock = appSrc.slice(advanceAt, advanceAt + 900);
     expect(advanceBlock.includes("disabled={paraIdx === 0}")).toBe(true);
     expect(advanceBlock.includes(MAIN_NEXT)).toBe(true);
     expect(advanceBlock.slice(advanceBlock.indexOf(MAIN_NEXT)).includes("disabled=")).toBe(false);
