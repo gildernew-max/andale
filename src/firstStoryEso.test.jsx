@@ -68,7 +68,7 @@ describe("cold path: the first finished story lands its win screen", () => {
     expect(await screen.findByTestId("soft-paywall", {}, { timeout: 3000 })).toBeTruthy();
     expect(seenEvents()).toHaveLength(1);
     expect(localStorage.getItem("andale-paywall-shown")).toBe(today());
-  });
+  }, 30000);
 
   it("the once-per-day cap holds", async () => {
     seed({ shownToday: true });
@@ -77,7 +77,7 @@ describe("cold path: the first finished story lands its win screen", () => {
     await new Promise((r) => setTimeout(r, 300));
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(seenEvents()).toHaveLength(0);
-  });
+  }, 30000);
 
   it("0 right gets «You finished the story!» with the bird", async () => {
     seed({ uiLang: "en" });

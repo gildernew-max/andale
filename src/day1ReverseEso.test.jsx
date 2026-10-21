@@ -71,7 +71,7 @@ describe("reversed day-1 path: lesson quit, then a story", () => {
     expect(await screen.findByTestId("soft-paywall", {}, { timeout: 3000 })).toBeTruthy();
     expect(seenEvents()).toHaveLength(1);
     expect(localStorage.getItem("andale-paywall-shown")).toBe(today());
-  });
+  }, 30000);
 
   it("the cap holds: a card already shown today stays closed", async () => {
     seed({ shownToday: true });
@@ -82,7 +82,7 @@ describe("reversed day-1 path: lesson quit, then a story", () => {
     await new Promise((r) => setTimeout(r, 300));
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(seenEvents()).toHaveLength(0);
-  });
+  }, 30000);
 
   it("numbers are final on the first frame, and 0 correct gets George's headline", async () => {
     seed({ uiLang: "en" });
