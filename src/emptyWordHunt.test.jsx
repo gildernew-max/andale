@@ -1,7 +1,7 @@
 /** Lectura: no empty word-hunt card on stories without key words; «← Anterior» stays on one line. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import App from "./App.jsx";
+import App, { STORY_EXTRAS } from "./App.jsx";
 import { dayKeyFromDate, prevDayKey } from "./firstDoor.js";
 
 const mockBrowser = () => {
@@ -38,12 +38,19 @@ function openStory(storyId, uiLang = "es") {
 describe("word hunt card", () => {
   afterEach(() => { cleanup(); localStorage.clear(); });
 
-  it.each(["story-3", "story-5", "story-9"])("%s has no key words: no hunt card and no 0/0 counter", async (id) => {
-    openStory(id);
-    const reader = await screen.findByTestId("story-reader");
-    expect(reader.getAttribute("data-story-id")).toBe(id);
-    expect(screen.queryByTestId("word-hunt-card")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/0\/0 palabras clave/);
+  // Stories 3-9 gained key words in #378; blank them here to keep the zero-word guard covered.
+  it.each(["story-3", "story-5", "story-9"])("%s with no key words: no hunt card and no 0/0 counter", async (id) => {
+    const saved = STORY_EXTRAS[id];
+    STORY_EXTRAS[id] = { ...saved, keyWords: [] };
+    try {
+      openStory(id);
+      const reader = await screen.findByTestId("story-reader");
+      expect(reader.getAttribute("data-story-id")).toBe(id);
+      expect(screen.queryByTestId("word-hunt-card")).toBeNull();
+      expect(document.body.textContent).not.toMatch(/0\/0 palabras clave/);
+    } finally {
+      STORY_EXTRAS[id] = saved;
+    }
   });
 
   it.each(["story-0", "story-2"])("%s keeps its hunt card unchanged", async (id) => {
