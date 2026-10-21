@@ -101,3 +101,25 @@ export function paywallStillShouldHide({ priceBottom, fold } = {}) {
   if (!Number.isFinite(p) || !Number.isFinite(f) || !(f > 0)) return false;
   return p > f + 0.5;
 }
+
+/** Paywall copy split (Hand, Oct 20): one loud annual line on the lime card, one quiet free link.
+ *  Each slot names the live string that stands in until No face's copy lands. To drop the new copy in,
+ *  change the key on one line here (and add the ES/EN strings); layout and tests read the slot. */
+export const PAYWALL_ANNUAL_LINE_KEY = "paywallPrice";
+export const PAYWALL_FREE_LINK_KEY = "paywallDismiss";
+
+/** Loud slot: the lime card's main line ({price} filled when the string carries it). */
+export function paywallAnnualLine(words, price) {
+  return annualPriceLine(words[PAYWALL_ANNUAL_LINE_KEY], price);
+}
+
+/** Quiet slot: the free text link. */
+export function paywallFreeLink(words) {
+  return words[PAYWALL_FREE_LINK_KEY];
+}
+
+/** Loud line type on the lime card. */
+export const PAYWALL_ANNUAL_LINE_SIZE = 30;
+/** Quiet free link: small, underlined, #6B6258 light (5.2:1), #CDBBA6 dark (8.6:1) on the card; 44px tap target. */
+export const PAYWALL_FREE_LINK_SIZE = 14;
+export const PAYWALL_FREE_LINK_INK = Object.freeze({ light: "#6B6258", dark: "#CDBBA6" });

@@ -184,7 +184,7 @@ describe("paywall card", () => {
       expect(dismiss.style.borderBottom).not.toMatch(/4px/);
       expect(dismiss.style.minHeight).toBe("44px");
       expect(dismiss.style.padding).toBe("11px 0px");
-      expect(dismiss.style.fontSize).toBe("15px");
+      expect(dismiss.style.fontSize).toBe("14px");
       expect(dismiss.style.fontWeight).toBe("700");
       expect(norm(dismiss.style.color)).toBe(freeInk);
       expect(norm(dismiss.style.color)).not.toBe("#1f3a1a");

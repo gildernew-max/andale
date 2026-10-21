@@ -729,7 +729,7 @@ assert(!/<Btn(?=[\s>])/.test(paywallLayout), "the wall has no Btn: the annual ca
 assert(/data-testid="soft-paywall-annual"[\s\S]{0,700}color: LESSON_LIME_INK/.test(paywallLayout), "annual card ink is #1F3A1A");
 assert(!/soft-paywall-annual-price[\s\S]{0,200}(#6B6258|#CDBBA6|paywallBodyType)/.test(paywallLayout), "the billed total is ink on lime, not quiet ink");
 assert(/soft-paywall-annual-label[\s\S]{0,200}fontSize: 13/.test(paywallLayout) && /soft-paywall-annual-label[\s\S]{0,200}fontWeight: 800/.test(paywallLayout), "annual label is 13px/800");
-assert(/soft-paywall-annual-price[\s\S]{0,200}fontSize: 30/.test(paywallLayout) && /soft-paywall-annual-price[\s\S]{0,200}fontWeight: 900/.test(paywallLayout), "billed total is the main line at 30px/900");
+assert(/soft-paywall-annual-price[\s\S]{0,240}fontSize: PAYWALL_ANNUAL_LINE_SIZE/.test(paywallLayout) && /soft-paywall-annual-price[\s\S]{0,240}fontWeight: 900/.test(paywallLayout), "the loud annual line (paywallAnnualLine slot) is the main line at 30px/900");
 assert(PAYWALL_LIME === "#58CC02" && PAYWALL_ANNUAL_HEIGHT === 96 && PAYWALL_MONTHLY_HEIGHT === 64 && PAYWALL_STILL_HEIGHT === 140 && PAYWALL_BIRD_SIZE === 48, "paywall sizes and lime");
 assert(!/permonth|per month|al mes por|\/ month|12 x|12 ×|83\.88|3\.33|ahorra|save|was \$/i.test(paywallLayout), "no saving line, per-month math, or was-price on the wall");
 assert(/<button type="button" data-testid="soft-paywall-monthly"/.test(paywallLayout), "monthly is a quiet outline button");
@@ -745,10 +745,10 @@ assert(paywallLayout.includes("{L.paywallFreeLine}"), "the free line uses the lo
 assert(/data-testid="soft-paywall-free-line"/.test(paywallLayout), "the free line is testable");
 assert(!/<Btn outline data-testid="soft-paywall-dismiss"/.test(paywallLayout), "continue free is not an outline Btn");
 assert(/<button type="button" data-testid="soft-paywall-dismiss"/.test(paywallLayout), "continue free stays a quiet tap target");
-assert(/soft-paywall-dismiss[\s\S]{0,280}padding:\s*["']11px 0/.test(paywallLayout), "continue free quiet text has ~44px tap padding");
+assert(/soft-paywall-dismiss[\s\S]{0,400}padding:\s*["']11px 0/.test(paywallLayout), "continue free quiet text has ~44px tap padding");
 assert(!/soft-paywall-dismiss[\s\S]{0,280}padding:\s*["']2px 0/.test(paywallLayout), "continue free is not the 2px tap target");
-assert(/soft-paywall-dismiss[\s\S]{0,280}background:\s*["']none/.test(paywallLayout), "continue free is quiet text");
-assert(/soft-paywall-dismiss[\s\S]{0,280}border:\s*["']none/.test(paywallLayout), "continue free has no button chrome");
+assert(/soft-paywall-dismiss[\s\S]{0,520}background:\s*["']none/.test(paywallLayout), "continue free is quiet text");
+assert(/soft-paywall-dismiss[\s\S]{0,520}border:\s*["']none/.test(paywallLayout), "continue free has no button chrome");
 assert(!/soft-paywall-dismiss[\s\S]{0,280}borderBottom:\s*`4px/.test(paywallLayout), "continue free has no 4px press chrome");
 assert(!/soft-paywall-dismiss[\s\S]{0,280}duo-btn/.test(paywallLayout), "continue free is not a duo-btn");
 assert(paywallLayout.indexOf("soft-paywall-cenzontle") < paywallLayout.indexOf("soft-paywall-headline"), "one static Cenzontle sits above the title");
@@ -805,7 +805,7 @@ assert(paywallLayout.includes("marginTop: PAYWALL_FREE_GAP"), "Continue free use
 assert(paywallLayout.includes('overflow: "hidden"'), "the page does not scroll the card");
 assert(ANNUAL_PRICE_PLACEHOLDER === "39.99", "the annual amount is one string constant");
 assert(LOCKED_STORY_PAYWALL === true, "locked Lectura taps open the paywall");
-assert(appSrc.includes("const annualPriceText = annualPriceLine(L.paywallPrice)"), "the price line uses the shared helper");
+assert(appSrc.includes("const annualPriceText = paywallAnnualLine(L)"), "the price line fills the paywallAnnualLine slot (shared helper)");
 assert(paywallLayout.includes("{annualPriceText ? ("), "an empty price renders no price line");
 assert(paywallLayout.includes("{annualPriceText}"), "a set price renders the locked template");
 assert(!/soft-paywall-annual-price[\s\S]{0,280}textWrap/.test(paywallLayout), "the price line does not use text-wrap");
@@ -825,10 +825,10 @@ assert(/soft-paywall-still"[\s\S]{0,400}height: PAYWALL_STILL_HEIGHT/.test(paywa
 assert(/aspectRatio: "16 \/ 9"/.test(paywallLayout), "paywall still is a 16:9 crop");
 assert(/borderRadius: 16, border: "none"/.test(paywallLayout), "paywall still radius is 16 with no border");
 assert(!/textDecoration: "underline"/.test(paywallLayout), "the web card has no fine-print links");
-assert(/soft-paywall-dismiss[\s\S]{0,520}fontSize: 15/.test(paywallLayout), "continue free is 15px");
-assert(/soft-paywall-dismiss[\s\S]{0,520}minHeight: 44/.test(paywallLayout), "continue free tap height is at least 44px");
-assert(/soft-paywall-dismiss[\s\S]{0,520}fontWeight: 700/.test(paywallLayout), "continue free is 15px/700");
-assert(/soft-paywall-dismiss[\s\S]{0,520}theme === "dark" \? "#CDBBA6" : "#6B6258"/.test(paywallLayout), "continue free is #6B6258 light and #CDBBA6 dark, never #6B6258 on dark");
+assert(/soft-paywall-dismiss[\s\S]{0,620}fontSize: PAYWALL_FREE_LINK_SIZE/.test(paywallLayout), "continue free is the small quiet link (14px)");
+assert(/soft-paywall-dismiss[\s\S]{0,620}minHeight: 44/.test(paywallLayout), "continue free tap height is at least 44px");
+assert(/soft-paywall-dismiss[\s\S]{0,620}fontWeight: 700/.test(paywallLayout), "continue free is 14px/700");
+assert(/soft-paywall-dismiss[\s\S]{0,620}theme === "dark" \? PAYWALL_FREE_LINK_INK.dark : PAYWALL_FREE_LINK_INK.light/.test(paywallLayout), "continue free is #6B6258 light and #CDBBA6 dark, never #6B6258 on dark");
 assert(!/<PaywallFlyAway/.test(paywallLayout), "paywall does not mount the fly-away");
 assert(!/paywall-fly|soft-paywall-cenzontle-wing|@keyframes/.test(paywallLayout), "paywall bird does not animate");
 assert((paywallLayout.match(/<LogoMark/g) || []).length === 2, "still perch and centered fallback are alternate looks");
