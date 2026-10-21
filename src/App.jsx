@@ -1972,9 +1972,10 @@ const Confetti = ({ count = 60 }) => {
 
 /* ---------------- XP TICKER (count-up) ---------------- */
 
-const Ticker = ({ to, prefix = "+", duration = 900 }) => {
-  const [n, setN] = useState(0);
+const Ticker = ({ to, prefix = "+", duration = 900, instant = false }) => {
+  const [n, setN] = useState(instant ? to : 0);
   useEffect(() => {
+    if (instant) { setN(to); return undefined; }
     let raf; const t0 = performance.now();
     const step = (t) => {
       const p = Math.min(1, (t - t0) / duration);
@@ -1983,8 +1984,8 @@ const Ticker = ({ to, prefix = "+", duration = 900 }) => {
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [to, duration]);
-  return <span>{prefix}{n}</span>;
+  }, [to, duration, instant]);
+  return <span>{prefix}{instant ? to : n}</span>;
 };
 
 /* ---------------- PATH DECOR ---------------- */
@@ -4837,6 +4838,8 @@ const UI = {
     more: "Más",
     namePrompt: "¿Cómo te dicen?",
     hoyWin: "¡Eso!",
+    /** George, Oct 21: a story win with 0 correct. «¡Eso!» stays for 1 or more. */
+    storyFinished: "¡Terminaste el cuento!",
     sessionClose: "Listo",
     recuerdosTitle: "Recuerdos",
     recuerdosOpen: "Abierto",
@@ -4938,6 +4941,7 @@ const UI = {
     more: "More",
     namePrompt: "What should we call you?",
     hoyWin: "That's it.",
+    storyFinished: "You finished the story!",
     sessionClose: "Done",
     recuerdosTitle: "Souvenir trail",
     recuerdosOpen: "Open",
@@ -7602,13 +7606,6 @@ export default function App() {
 
   const handoffCliffhangerToBird = () => {
     if (!lecturaCliffhanger) return;
-    if (shouldUseFirstSession({ done: prog.done, firstSessionDone: prog.firstSessionDone })) {
-      if ((prog.hearts ?? 0) <= 0) { setHeartsModal(true); return; }
-      setLecturaCliffhanger(null);
-      setPaywallSource(PAYWALL_BIRD_TRIGGER);
-      beginFirstSession(UNITS[0], SECTIONS[0], { fromLectura: true, level: prog.learnerLevel });
-      return;
-    }
     // Same-turn fall-through from Continue free must not reopen the wall.
     // The cliffhanger leaves the reader. The card waits for Continue, and only on day 2+.
     if (paywallDismissingRef.current) return;
@@ -13255,7 +13252,7 @@ export default function App() {
             <span className="nametag" style={{ marginRight: 6, ...lunaNameTagChrome(theme, coachName(session.host)) }}>{coachName(session.host)}</span>«{uiText(screenQuip, uiLang)}»
           </div>}
           <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: (quietWin || perchCard) && theme !== "dark" ? "#85672C" : D.gold }}>
-	            {quietWin ? L.hoyWin : session.testOut != null ? L.sectionPassed : L.completed}
+	            {quietWin ? (session.storyId && !(Number(lessonStats.right) > 0) ? L.storyFinished : L.hoyWin) : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
           {levelUp && !session.firstDoctora && (
             <div
@@ -13293,8 +13290,8 @@ export default function App() {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", margin: "24px 0", flexWrap: "wrap" }}>
             {[
-              { v: <Ticker to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, ink: winNumeralColor(theme, "xp", D), testid: "win-earned-xp" },
-	              { v: <Ticker to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, ink: winNumeralColor(theme, "gems", D), testid: "win-earned-gems" },
+              { v: <Ticker instant={quietWin} to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, ink: winNumeralColor(theme, "xp", D), testid: "win-earned-xp" },
+	              { v: <Ticker instant={quietWin} to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, ink: winNumeralColor(theme, "gems", D), testid: "win-earned-gems" },
 	              ...(streakChip ? [{ v: <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}><IcFlame size={20} fill={STREAK_FLAME} className="flame" />{streakChip}</span>, l: null, c: "#FF9600", ink: streakLabelColor(theme), testid: "win-earned-streak" }] : []),
             ].filter((s) => !session.firstDoctora || s.testid === "win-earned-streak").map((s, i) => (
               <div key={i} className={s.testid === "win-earned-streak" && popFirstStreak ? "pop streak-pop" : "pop"} style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
