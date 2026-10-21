@@ -27,7 +27,7 @@ import { watchWordSheetPlacement, wordSheetClose, wordSheetCopy, wordSheetReveal
 import { isSenderoLesson } from "./senderoWin.js";
 import { gradeListedPhrase, listedAnswers, orderTileLabel } from "./wordOrder.js";
 import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
-import { LOCKED_STORY_PAYWALL, paywallStillMaxHeight, paywallStillShouldHide, watchPaywallStillResize, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT, PAYWALL_MONTHLY_GAP, annualPriceLine, paywallPriceWrapText } from "./webPaywall.js";
+import { LOCKED_STORY_PAYWALL, paywallStillMaxHeight, paywallStillShouldHide, watchPaywallStillResize, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT, PAYWALL_MONTHLY_GAP, annualPriceLine, paywallPriceWrapText, paywallAnnualLine, paywallFreeLink, PAYWALL_ANNUAL_LINE_SIZE, PAYWALL_FREE_LINK_SIZE, PAYWALL_FREE_LINK_INK } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent, paywallSeenSourceFor } from "./funnel.js";
 import { FIRST_ACTIVITY_KEY, LOCKED_CAP_FADE_MS, LOCKED_CAP_GAP_PX, LOCKED_CAP_INK, LOCKED_CAP_SIZE, LOCKED_STORY_CAP_LINE, PAYWALL_SHOWN_KEY, isPaywallMidFlow, learnerDayNumber, paywallOpenDecision, readPlainDay, resolveFirstActivityDay, resolvePaywallShownDay, writePlainDay } from "./paywallTrigger.js";
@@ -8453,7 +8453,8 @@ export default function App() {
   const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource, lecturaStartedStored);
   paywallSeenKindRef.current = paywallSeenSourceFor(paywallHeadlineSource);
   const paywallBodyType = { fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, lineHeight: 1.45 };
-  const annualPriceText = annualPriceLine(L.paywallPrice);
+  const annualPriceText = paywallAnnualLine(L);
+  const paywallFreeLinkText = paywallFreeLink(L);
   const paywallStillRel = paywallStillPath(storyView, paraIdx);
   const paywallBand = paywallBandImage({ storyRel: paywallStillRel, storyMiss: paywallStillMiss, heroMiss: paywallHeroMiss, lang: uiLang });
   const paywallStillSrc = paywallBand ? `${import.meta.env.BASE_URL}${paywallBand.rel}` : null;
@@ -11288,7 +11289,7 @@ export default function App() {
                       style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, width: "100%", minHeight: PAYWALL_ANNUAL_HEIGHT, boxSizing: "border-box", padding: paywallPriceWrap ? "10px 4px" : "10px 16px", background: PAYWALL_LIME, border: "none", borderRadius: 16, color: LESSON_LIME_INK, fontFamily: "inherit", textAlign: "center", cursor: "pointer" }}>
                       <span data-testid="soft-paywall-annual-label" style={{ fontWeight: 800, fontSize: 13, lineHeight: 1.2, letterSpacing: ".06em", textTransform: "uppercase", color: LESSON_LIME_INK }}>{rw.label}</span>
                       {annualPriceText ? (
-                        <span data-testid="soft-paywall-annual-price" style={{ fontWeight: 900, fontSize: 30, lineHeight: 1.1, color: LESSON_LIME_INK }}>{paywallPriceWrap ? paywallPriceWrapText(annualPriceText) : annualPriceText}</span>
+                        <span data-testid="soft-paywall-annual-price" data-paywall-slot="paywallAnnualLine" style={{ fontWeight: 900, fontSize: PAYWALL_ANNUAL_LINE_SIZE, lineHeight: 1.1, color: LESSON_LIME_INK }}>{paywallPriceWrap ? paywallPriceWrapText(annualPriceText) : annualPriceText}</span>
                       ) : null}
                       <span data-testid="soft-paywall-annual-action" style={{ fontWeight: 800, fontSize: 15, lineHeight: 1.2, color: LESSON_LIME_INK }}>{rw.action}</span>
                       <span data-testid="soft-paywall-annual-small" style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2, color: LESSON_LIME_INK }}>{rw.small}</span>
@@ -11331,9 +11332,9 @@ export default function App() {
               style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", boxSizing: "border-box", flexShrink: 0, height: paywallPriceWrap ? "auto" : PAYWALL_MONTHLY_HEIGHT, minHeight: paywallPriceWrap ? PAYWALL_MONTHLY_HEIGHT : undefined, marginTop: PAYWALL_MONTHLY_GAP, padding: 0, background: "none", border: `2px solid ${theme === "dark" ? "#CDBBA6" : "#1F3A1A"}`, borderRadius: 16, color: theme === "dark" ? "#F6EFE4" : "#1F3A1A", fontFamily: "inherit", fontWeight: 800, fontSize: 20, lineHeight: 1.2, textTransform: "none", letterSpacing: "0", cursor: "pointer" }}>
               <span data-testid="soft-paywall-monthly-label">{paywallPriceWrap ? paywallPriceWrapText(L.paywallMonthlyLabel) : L.paywallMonthlyLabel}</span>
             </button>
-            <button type="button" data-testid="soft-paywall-dismiss" onClick={() => dismissSoftPaywall()}
-              style={{ display: "block", width: "100%", flexShrink: 0, marginTop: PAYWALL_FREE_GAP, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? "#CDBBA6" : "#6B6258", fontFamily: "inherit", fontWeight: 700, fontSize: 15, lineHeight: 1.35, cursor: "pointer" }}>
-              {L.paywallDismiss}
+            <button type="button" data-testid="soft-paywall-dismiss" data-paywall-slot="paywallFreeLink" onClick={() => dismissSoftPaywall()}
+              style={{ display: "block", width: "100%", flexShrink: 0, marginTop: PAYWALL_FREE_GAP, padding: "11px 0", minHeight: 44, boxSizing: "border-box", background: "none", border: "none", color: theme === "dark" ? PAYWALL_FREE_LINK_INK.dark : PAYWALL_FREE_LINK_INK.light, fontFamily: "inherit", fontWeight: 700, fontSize: PAYWALL_FREE_LINK_SIZE, lineHeight: 1.35, cursor: "pointer" }}>
+              {paywallFreeLinkText}
             </button>
             <div data-testid="soft-paywall-free-line" style={{ fontWeight: 700, fontSize: PAYWALL_FREE_LINE_SIZE, lineHeight: 1.45, color: theme === "dark" ? "#CDBBA6" : "#6B6258", textAlign: "center", marginTop: PAYWALL_FREE_LINE_GAP, flexShrink: 0 }}>{L.paywallFreeLine}</div>
             </>)}
