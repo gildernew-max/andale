@@ -1526,7 +1526,8 @@ assert(appSrc.includes("shouldPlayStory0Beat(session)"), "done screen plays the 
 assert(appSrc.includes("<CenzontleFlyAway"), "story-0 and Doctora still mount the shared fly-away");
 assert(appSrc.includes('surface="win"'), "free win bird uses the win surface of the #161 motion");
 assert(!appSrc.includes("<Story0Beat"), "done screen does not mount Cubetas flap-then-perch");
-assert(appSrc.includes("shouldPlayStory0Beat(session) || shouldPlayDoctoraBeat(session)"), "story-0 and Doctora still share the fly-away");
+assert(appSrc.includes("shouldPlayStory0Beat(session) && !story0Perched"), "story-0 flies its beat, then rests on the perch with the XP pill (brand hold, Oct 21)");
+assert(appSrc.includes("setStory0Perched(true)"), "story-0 fly-away completion lands the perch");
 assert(!appSrc.includes("shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session)"), "Hoy no longer shares the story-0 fly-away");
 assert(!appSrc.includes("shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session)"), "Hoy is not on the shared fly-away gate");
 assert(!/winBounce && \(shouldPlayStory0Beat\(session\) \|\| shouldPlayHoyBeat\(session\) \|\| shouldPlayDoctoraBeat\(session\)\)/.test(appSrc), "free win is not the old beat-then-perch gate");

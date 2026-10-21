@@ -185,7 +185,7 @@ assert(appSrc.includes("shouldPlayStory0Beat(session)"), "done screen gates the 
 assert(appSrc.includes("shouldPlayHoyBeat(session)"), "done screen gates the Hoy staying bird");
 assert(appSrc.includes("<HoyWinBird"), "Hoy win mounts the staying Cenzontle");
 assert(appSrc.includes("shouldPlayDoctoraBeat(session)"), "done screen gates the firstDoctora fly-away");
-assert(appSrc.includes("shouldPlayStory0Beat(session) || shouldPlayDoctoraBeat(session)"), "story-0 and Doctora still share the fly-away");
+assert(appSrc.includes("shouldPlayStory0Beat(session) && !story0Perched"), "story-0 flies its beat, then rests on the perch with the XP pill (brand hold, Oct 21)");
 assert(!appSrc.includes("shouldPlayStory0Beat(session) || shouldPlayHoyBeat(session)"), "Hoy no longer shares the story-0 fly-away");
 assert(appSrc.includes("if (shouldPlayWinBounce(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session))"), "Hoy / Doctora finish arm the first-win bird with done");
 assert(appSrc.includes("<CenzontleFlyAway"), "story-0 and Doctora mount the shared fly-away");

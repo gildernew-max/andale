@@ -5590,6 +5590,7 @@ export default function App() {
   const [doctorFailed, setDoctorFailed] = useState(false);
   const [firstDoctora, setFirstDoctora] = useState(false);
   const [winBounce, setWinBounce] = useState(false);
+  const [story0Perched, setStory0Perched] = useState(false);
   const winBouncePlayed = useRef(false);
   const storyPagesSeenRef = useRef({});
   const lecturaStartedRef = useRef(false);
@@ -8658,6 +8659,7 @@ export default function App() {
     if (screen !== "done") {
       winBouncePlayed.current = false;
       setWinBounce(false);
+      setStory0Perched(false);
       return;
     }
     if (winBouncePlayed.current) return;
@@ -13249,7 +13251,10 @@ export default function App() {
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
               {shouldPlayHoyBeat(session) ? (
                 <HoyWinBird onComplete={completeCenzontleBeat} />
-              ) : shouldPlayStory0Beat(session) || shouldPlayDoctoraBeat(session) ? (
+              ) : shouldPlayStory0Beat(session) && !story0Perched ? (
+                // Story 0: the bird flies its beat, then comes to rest on the perch with the XP pill (brand hold, Oct 21).
+                <CenzontleFlyAway surface="win" onComplete={() => { completeCenzontleBeat(); setStory0Perched(true); }} />
+              ) : shouldPlayDoctoraBeat(session) ? (
                 <CenzontleFlyAway surface="win" onComplete={completeCenzontleBeat} />
               ) : (
                 <WinPerch theme={theme} />

@@ -86,4 +86,15 @@ describe("cold path: the first finished story lands its win screen", () => {
     expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
     expect(screen.getByTestId("win-earned-xp").textContent).toBe("+5");
   }, 30000);
+
+  it("the bird comes to rest with the XP pill after its beat (brand hold, Oct 21)", async () => {
+    seed();
+    await finishStory0({ right: 2 });
+    await waitFor(() => {
+      expect(screen.getByTestId("win-perch-bird").getAttribute("src")).toMatch(/mascot\/cenzontle\.png/);
+      expect(screen.getByTestId("win-perch-chip")).toBeTruthy();
+    }, { timeout: 4000 });
+    expect(screen.getByTestId("win-perch-slot").contains(screen.getByTestId("win-perch-bird"))).toBe(true);
+    expect(seenEvents()).toHaveLength(0);
+  }, 30000);
 });
