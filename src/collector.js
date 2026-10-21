@@ -5,7 +5,8 @@
  *  This repo does not deploy that script.
  *
  *  Only two events ever leave the device: paywall_seen and reserve_submit.
- *  Each goes out as exactly three fields: { event, date, device }.
+ *  Each goes out as { event, date, device }. paywall_seen adds exactly two more:
+ *  trigger (win, lectura_win, locked_story or timed) and day (day of use, 1 = first day).
  *  date is the device's local calendar day (YYYY-MM-DD).
  *  device is a random id made on this device.
  *  Every other event stays on the device. Every other field is dropped.
@@ -14,7 +15,9 @@
  */
 
 import { dayKeyFromDate } from "./firstDoor.js";
-import { FUNNEL_EVENTS } from "./funnel.js";
+import { FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE } from "./funnel.js";
+
+const PAYWALL_TRIGGERS = new Set(Object.values(PAYWALL_SEEN_SOURCE));
 
 function readEndpoint(env, name) {
   const value = env && env[name];
@@ -137,7 +140,7 @@ export async function postCollector(record, {
 }
 
 /** Forward one bus event. Empty endpoint sends nothing and does not mint a device id.
- *  Only paywall_seen and reserve_submit send. The body is only event, date, and device.
+ *  Only paywall_seen and reserve_submit send. The body is event, date and device, plus trigger and day on paywall_seen.
  */
 export async function shipFunnelEvent(detail, {
   endpoint = collectorEndpoint(),
@@ -160,6 +163,12 @@ export async function shipFunnelEvent(detail, {
       date: localEventDate(now, detail && detail.at),
       device: deviceId,
     };
+    // paywall_seen also carries what opened it and the day of use. Nothing else is added.
+    if (name === FUNNEL_EVENTS.paywallSeen) {
+      if (PAYWALL_TRIGGERS.has(detail.source)) record.trigger = detail.source;
+      const day = Math.floor(Number(detail.day));
+      if (Number.isFinite(day) && day >= 1 && day <= 3650) record.day = day;
+    }
     return postCollector(record, { endpoint: url, fetchImpl, beaconImpl });
   } catch {
     return { ok: false, sent: false };

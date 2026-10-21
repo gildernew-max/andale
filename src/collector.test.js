@@ -4,6 +4,8 @@ import { FUNNEL_EVENTS } from "./funnel.js";
 
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 const THREE = "date,device,event";
+/** paywall_seen adds exactly trigger and day (Hand, Oct 21). */
+const PAYWALL_FIVE = "date,day,device,event,trigger";
 const endpoint = "https://script.google.com/macros/s/collector/exec";
 
 // Switched off: no build endpoint.
@@ -98,11 +100,13 @@ const expectedDate = dayKeyFromDate(new Date(noisy.at));
 for (const row of sent) {
   assert(row.url === endpoint, "rows hit the collector URL");
   const body = JSON.parse(row.body);
-  assert(Object.keys(body).sort().join(",") === THREE, "payload keys are exactly event, date, device");
+  const seen = body.event === FUNNEL_EVENTS.paywallSeen;
+  assert(Object.keys(body).sort().join(",") === (seen ? PAYWALL_FIVE : THREE), seen ? "paywall_seen keys are exactly event, date, device, trigger, day" : "reserve_submit keys are exactly event, date, device");
+  if (seen) assert(body.trigger === "locked_story" && body.day === 2, "paywall_seen carries the trigger kind and the day of use");
   assert(body.device === "device-anonymous-1", "device is the random id");
   assert(body.date === expectedDate && /^\d{4}-\d{2}-\d{2}$/.test(body.date), "date is the local YYYY-MM-DD day");
   assert(!row.body.includes("@") && !row.body.includes("ada"), "email is never sent");
-  assert(!row.body.includes("locked_story") && !row.body.includes("39.99") && !row.body.includes("story-0"), "no source, price, or story");
+  assert((seen || !row.body.includes("locked_story")) && !row.body.includes("39.99") && !row.body.includes("story-0"), "no price or story; the trigger only on paywall_seen");
   assert(!row.body.includes("Dave") && !row.body.includes("203.0.113.8") && !row.body.includes("Mozilla"), "no name, IP, or user agent");
   assert(!row.body.includes("should-not-replace"), "caller device fields are ignored");
 }
@@ -120,5 +124,34 @@ assert(fetched.init.method === "POST" && fetched.init.mode === "no-cors" && fetc
 assert(fetched.init.headers["Content-Type"] === "text/plain", "fallback is text/plain");
 assert(Object.keys(JSON.parse(fetched.init.body)).sort().join(",") === THREE, "fallback payload keys are exactly event, date, device");
 assert(!fetched.init.body.includes("@"), "fallback never sends the email");
+
+// trigger and day: only known kinds, only sane day numbers.
+const shipSeen = async (extra) => {
+  let body = null;
+  await shipFunnelEvent({ at: noisy.at, event: FUNNEL_EVENTS.paywallSeen, ...extra }, { endpoint, storage, beaconImpl: (u, b) => { body = JSON.parse(b); return true; } });
+  return body;
+};
+const lw = await shipSeen({ source: "lectura_win", day: 1 });
+assert(lw.trigger === "lectura_win" && lw.day === 1, "a day-1 Lectura win ships trigger=lectura_win, day=1");
+for (const kind of ["win", "timed", "locked_story"]) assert((await shipSeen({ source: kind, day: 3 })).trigger === kind, `${kind} ships as its own trigger`);
+const junk = await shipSeen({ source: "ada@example.com", day: "x" });
+assert(!("trigger" in junk) && !("day" in junk), "an unknown trigger or a bad day is dropped, not sent");
+assert(!("day" in (await shipSeen({ source: "win", day: 0 }))), "day 0 is not a day of use");
+
+// apps-script/collector.gs keeps trigger and day only on paywall_seen.
+{
+  const { readFileSync } = await import("node:fs");
+  const gs = readFileSync(new URL("../apps-script/collector.gs", import.meta.url), "utf8");
+  const readEvent = new Function(`${gs}; return readEvent;`)();
+  const post = (o) => readEvent({ postData: { contents: JSON.stringify(o) } });
+  const seenRow = post({ event: "paywall_seen", date: "2026-10-21", device: "d1", trigger: "lectura_win", day: 1, email: "ada@example.com" });
+  assert(seenRow.trigger === "lectura_win" && seenRow.day === 1 && !("email" in seenRow), "collector.gs keeps trigger and day on paywall_seen, nothing else");
+  assert(Object.keys(seenRow).sort().join(",") === "date,day,device,event,trigger", "collector.gs row fields");
+  const reserveRow = post({ event: "reserve_submit", date: "2026-10-21", device: "d1", trigger: "win", day: 2 });
+  assert(reserveRow.trigger === "" && reserveRow.day === "", "collector.gs ignores trigger and day on reserve_submit");
+  const badRow = post({ event: "paywall_seen", date: "2026-10-21", device: "d1", trigger: "free text", day: 1.5 });
+  assert(badRow.trigger === "" && badRow.day === "", "collector.gs drops an unknown trigger and a non-integer day");
+  assert(gs.includes('["received_at", "event", "date", "device", "trigger", "day"]'), "collector.gs header names the two new columns");
+}
 
 console.log("collector.test.js: ok");

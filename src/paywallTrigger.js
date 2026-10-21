@@ -15,6 +15,9 @@ import { dayKeyFromDate } from "./firstDoor.js";
 export const FIRST_ACTIVITY_KEY = "andale-first-activity";
 export const PAYWALL_SHOWN_KEY = "andale-paywall-shown";
 
+/** Which win armed the post-win card. Only lectura changes the day-1 rule. */
+export const PAYWALL_WIN_KIND = Object.freeze({ lectura: "lectura", other: "other" });
+
 export const LOCKED_STORY_CAP_LINE = Object.freeze({
   en: "Read the stories before this one to open it.",
   es: "Lee los cuentos anteriores para abrir este.",
@@ -62,7 +65,7 @@ export function paywallShownOnDay(shownDay, today) {
 /**
  * open — show the card.
  * capped — locked story only: keep it locked and show the quiet line.
- * skip — win and timed stay down (day 1, cap used, subscribed, or hearts hold).
+ * skip — win and timed stay down (day 1 except a Lectura story win, cap used, subscribed, or hearts hold).
  * Locked story still opens for a subscribed learner; story locking is unchanged.
  */
 export function paywallOpenDecision({
@@ -72,12 +75,14 @@ export function paywallOpenDecision({
   today = "",
   unlockedPrem = false,
   paywallHold = false,
+  winKind = "",
 } = {}) {
   const capped = paywallShownOnDay(shownDay, today);
   if (source === "locked_story") return capped ? "capped" : "open";
   if (source !== "win" && source !== "timed") return "skip";
   if (paywallHold || unlockedPrem) return "skip";
-  if ((Number(dayNumber) || 1) < 2) return "skip";
+  // Day 1: only a finished Lectura story's win opens it (Hand, team vote Oct 21). Hoy and lessons stay free.
+  if ((Number(dayNumber) || 1) < 2 && !(source === "win" && winKind === PAYWALL_WIN_KIND.lectura)) return "skip";
   if (capped) return "skip";
   return "open";
 }

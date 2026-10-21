@@ -60,6 +60,7 @@ export const PAYWALL_TAP = Object.freeze({
 /** Allowlist for paywall_seen, tap_annual, and tap_monthly. win = post-win continue and the cliffhanger bird, locked_story = locked Lectura tap, timed = every other opener. */
 export const PAYWALL_SEEN_SOURCE = Object.freeze({
   win: "win",
+  lecturaWin: "lectura_win",
   lockedStory: "locked_story",
   timed: "timed",
 });
