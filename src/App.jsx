@@ -7567,7 +7567,7 @@ export default function App() {
       };
     });
     emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaChapterDone, storyId: story.id });
-    setLecturaCliffhanger({
+    const beat = {
       storyId: story.id,
       correct,
       checkpointMisses: Math.max(0, Number(checkpointMisses) || 0),
@@ -7575,7 +7575,9 @@ export default function App() {
       playStory0,
       playLecturaWin,
       streakBefore,
-    });
+    };
+    setLecturaCliffhanger(beat);
+    return beat;
   };
 
   // One tap opens La casa azul. story-1 stays closed until story-0's XP is
@@ -7584,7 +7586,13 @@ export default function App() {
     const next = STORIES.find((item) => item.id === "story-1");
     if (!next) return;
     const claimNow = !!story?.id && !prog.stories?.[story.id];
-    if (claimNow) claimStory(story, correct, checkpointMisses);
+    const beat = claimNow ? claimStory(story, correct, checkpointMisses) : lecturaCliffhanger;
+    // The first finished story lands its win screen first; story 1 waits on the hub (Varys cold walk, Oct 21).
+    if (beat && beat.storyId === story?.id && (beat.playStory0 || beat.playLecturaWin)) {
+      if (paywallDismissingRef.current) return;
+      releaseLecturaWin({ ...beat, lecturaPaywallAfterWin: true });
+      return;
+    }
     setLecturaCliffhanger(null);
     story0SequelTopRef.current = true;
     openStory(next, claimNow ? { justClaimedId: story.id } : undefined);

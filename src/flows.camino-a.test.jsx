@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { passStory0Win } from "./story0WinHelper.js";
 import App from "./App.jsx";
 import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
@@ -497,7 +498,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     await waitFor(() => expect(screen.getAllByTestId("story-q-prompt").length).toBeGreaterThan(0));
   };
 
-  it("first story-0 Lectura opens La casa azul at page 1 — no win, no paywall", async () => {
+  it("first story-0 Lectura lands «¡Eso!» before La casa azul (Varys cold walk)", async () => {
     cleanup();
     seedProgress({ streak: 1, lastDay: localToday(), paywallSeen: true });
     const user = await boot();
@@ -516,16 +517,14 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByRole("button", { name: /^Continuar$/ })).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
-    expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-1/p0.png`);
+    await waitFor(() => expect(screen.getByTestId("story-0-win").textContent).toBe("¡Eso!"));
+    expect(screen.queryByTestId("story-reader")).toBeNull();
+    expect(screen.queryByTestId("soft-paywall")).toBeNull();
+    expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
+    expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
+    await passStory0Win(user);
     expect(screen.getByTestId("story-reader-title").textContent).toBe("La casa azul");
     expect(screen.getByTestId("lectura-paragraph-first").textContent).toMatch(/En el barrio de Coyoacán/);
-    expect(screen.queryByTestId("story-0-win")).toBeNull();
-    expect(screen.queryByTestId("soft-paywall")).toBeNull();
-    expect(screen.queryByTestId("win-bounce")).toBeNull();
-    expect(document.querySelectorAll(".confetti-bit").length).toBe(0);
-    expect(document.querySelectorAll(".jump").length).toBe(0);
-    expect(screen.queryByRole("heading", { name: /Lección completada|Lesson complete|¡Ganaste!|You won!/ })).toBeNull();
   });
 
   it("later Lectura stories show WinPerch static only — no 780ms beat", async () => {
