@@ -12811,7 +12811,7 @@ export default function App() {
 
             {paraIdx < story.paragraphs.length && (
               <div data-testid="lectura-advance" onPointerUp={dismissGlossOnNextTap} className={wordSel ? "lectura-next-held" : undefined} style={{ ...lecturaNextPinStyle(D.bg, theme === "dark" ? D.line : undefined), pointerEvents: wordSel && wordSheetBox?.reaches !== false ? "none" : "auto", ...(wordSel && wordSheetBox && wordSheetBox.reaches === false ? { opacity: LECTURA_NEXT_HELD_OPACITY, transition: "none" } : null) }}>
-                <Btn outline disabled={paraIdx === 0} onClick={() => advanceLectura(paraIdx - 1)} style={{ flex: 1 }}>
+                <Btn outline data-testid="lectura-back" disabled={paraIdx === 0} onClick={() => advanceLectura(paraIdx - 1)} style={{ flex: 1, whiteSpace: "nowrap", paddingLeft: 13, paddingRight: 13 }}>
                   ← {uiLang === "en" ? "Back" : "Anterior"}
                 </Btn>
                 <Btn onClick={() => advanceLectura(paraIdx + 1)} style={{ flex: 2 }}>
@@ -12853,6 +12853,8 @@ export default function App() {
               </div>
             </div>
             )}
+            {/* No key words on this story: no hunt card, no 0/0 counter. */}
+            {keyWords.length > 0 && (
             <div data-testid="word-hunt-card" className="pop" style={{ border: `2px solid ${sec.color}`, borderBottom: `5px solid ${sec.dark}`, borderRadius: 16, padding: 13, background: D.card, marginBottom: 18 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 9 }}>
                 <div>
@@ -12877,6 +12879,7 @@ export default function App() {
                 ))}
               </div>
             </div>
+            )}
 
             {/* comprehension questions — final step */}
             {paraIdx >= story.paragraphs.length && (

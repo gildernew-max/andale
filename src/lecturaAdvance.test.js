@@ -116,7 +116,7 @@ assert(!/sticky|background|zIndex/.test(questionsHeaderTag), "comprehension head
 assert(appSrc.includes("advanceLectura(paraIdx + 1)"), "NEXT uses the advance scroll");
 assert(appSrc.includes("advanceLectura(paraIdx - 1)"), "Back uses the same advance scroll");
 assert(/<Btn onClick=\{\(\) => advanceLectura\(paraIdx \+ 1\)\} style=\{\{ flex: 2 \}\}>/.test(appSrc), "NEXT keeps flex 2 and no extra style");
-assert(/<Btn outline disabled=\{paraIdx === 0\} onClick=\{\(\) => advanceLectura\(paraIdx - 1\)\} style=\{\{ flex: 1 \}\}>/.test(appSrc), "Back keeps flex 1 and outline");
+assert(appSrc.includes('<Btn outline data-testid="lectura-back" disabled={paraIdx === 0} onClick={() => advanceLectura(paraIdx - 1)} style={{ flex: 1, whiteSpace: "nowrap", paddingLeft: 13, paddingRight: 13 }}>'), "Back keeps flex 1 and outline; nowrap keeps the arrow with the word; 13px sides so it fits beside NEXT at 360");
 assert(/<nav aria-label=\{uiLang === "en" \? "Primary navigation" : "Navegación principal"\} style=\{\{ position: "fixed", bottom: 0,/.test(appSrc), "footer nav stays pinned to the bottom edge");
 
 const stillBand = lecturaStillBandHeight();

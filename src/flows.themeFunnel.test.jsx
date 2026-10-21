@@ -1118,7 +1118,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(outlinePaint(disabledAnterior)).toEqual({ fill: darkFill, ink: darkInk, edge: darkLine, lip: darkLine });
     expect(disabledAnterior.style.borderTopWidth).toBe("2px");
     expect(disabledAnterior.style.borderBottomWidth).toBe("4px");
-    expect(disabledAnterior.style.padding).toBe("13px 24px");
+    expect(disabledAnterior.style.padding).toBe("13px");
     expect(disabledAnterior.style.fontSize).toBe("15px");
     expect(disabledAnterior.style.fontWeight).toBe("800");
     expect(disabledAnterior.style.opacity).toBe("");
@@ -1138,7 +1138,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(outlinePaint(lightAnterior)).toMatchObject({ fill: "#ffffff", ink: "#2e7500", edge: "#e5e5e5", lip: "#e5e5e5" });
     expect(lightAnterior.style.borderTopWidth).toBe("2px");
     expect(lightAnterior.style.borderBottomWidth).toBe("4px");
-    expect(lightAnterior.style.padding).toBe("13px 24px");
+    expect(lightAnterior.style.padding).toBe("13px");
     expect(lightAnterior.style.fontSize).toBe("15px");
 
     mountThemed("dark", {
