@@ -10694,7 +10694,8 @@ export default function App() {
                 ? "Choose the language for navigation, hints, and coach context. Spanish exercises stay in Spanish."
                 : "Elige el idioma de navegación, pistas y contexto de los coaches. Los ejercicios de español se quedan en español."}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {/* Both buttons stretch to the taller one when a subtitle wraps (No face, Oct 21). */}
+            <div data-testid="perfil-lang-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", alignItems: "stretch", gap: 8 }}>
               {[
                 { id: "es", label: "Español", detail: uiLang === "en" ? "Spanish UI" : "Interfaz en español", mark: <FlagMX size={18} /> },
                 { id: "en", label: "English", detail: uiLang === "en" ? "English UI" : "Interfaz en inglés", mark: <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: ".03em" }}>EN</span> },
@@ -10724,7 +10725,7 @@ export default function App() {
                   <span style={{ width: 28, height: 28, borderRadius: 99, display: "inline-flex", alignItems: "center", justifyContent: "center", background: uiLang === opt.id ? (theme === "dark" ? D.card : "#fff") : D.bg, border: `1.5px solid ${uiLang === opt.id ? D.green : D.line}`, flexShrink: 0 }}>{opt.mark}</span>
                   <span style={{ minWidth: 0 }}>
                     <span style={{ display: "block", fontSize: 14, fontWeight: 900, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{opt.label}</span>
-                    <span style={{ display: "block", fontSize: 10.5, fontWeight: 800, color: D.sub, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{opt.detail}</span>
+                    <span data-testid={`perfil-lang-${opt.id}-detail`} style={{ display: "block", fontSize: 10.5, fontWeight: 800, color: D.sub, overflowWrap: "break-word" }}>{opt.detail}</span>
                   </span>
                 </button>
               ))}
