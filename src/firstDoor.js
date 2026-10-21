@@ -230,3 +230,18 @@ export function lecturaStartedFromProgress({ lecturaStartedAt, stories } = {}) {
 export function shouldShowSoftPaywall() {
   return false;
 }
+
+/**
+ * Day-after-promise target (Varys cold walk, Oct 21). The win line promised
+ * hoySceneForDay(next day after lastDay) with comeBackTomorrowLine; on the return
+ * the hub names that same scene. When it is today's scene and already played,
+ * fall back to the next unread open story. Null when there is nothing to point to.
+ */
+export function promisedReturnTarget({ scenes, lastDay, today, todaySceneDone, nextStory } = {}) {
+  if (!lastDay || !today || lastDay === today) return null;
+  const scene = hoySceneForDay(scenes, nextDayKey(lastDay));
+  const todays = hoySceneForDay(scenes, today);
+  const played = !!todaySceneDone && !!scene && !!todays && todays.id === scene.id;
+  if (scene && !played) return { kind: "scene", scene };
+  return nextStory ? { kind: "story", story: nextStory } : null;
+}

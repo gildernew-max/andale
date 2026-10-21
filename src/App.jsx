@@ -8,7 +8,7 @@ import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuest
 import { drawLessonIndexes, questionByIndex } from "./replayBank.js";
 import { hoyStillFor } from "./hoyStill.js";
 import { hasLearnerProgress, hasUnlockedShortcuts, hasWeaknessData } from "./theaterGate.js";
-import { comeBackTomorrowLine, dayKeyFromDate, firstLecturaClaimed, hoyHubChecked, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, storiesHubLoud, streakAfterWin, todaySceneIdFromSession, xpCountedToday } from "./firstDoor.js";
+import { comeBackTomorrowLine, dayKeyFromDate, firstLecturaClaimed, hoyHubChecked, hoyHubDone, hoyHubLoud, hoySceneForDay, hoyStoryForScene, hoyTitleForLang, incrementedWinDays, isDay2Return, lecturaStartedFromProgress, nextDayKey, progressAfterWinContinue, promisedReturnTarget, screenAfterWinContinue, shouldShowSoftPaywall, showColdPitch, showDoorMetaChrome, showLearnComeBackTeaser, showPostDismissHandoff, storiesHubLoud, streakAfterWin, todaySceneIdFromSession, xpCountedToday } from "./firstDoor.js";
 import { PAYWALL_BIRD_TRIGGER, PAYWALL_SOURCE, paywallHeadlineFor } from "./paywallHeadline.js";
 import { paywallBandImage, paywallStillPath } from "./paywallStill.js";
 import { buildColdFirstHoyQueue, coldFirstHoySceneBeats, isShortHoy, shouldHoyEarlyWin, shouldParkHoyUnderMas, trimHoyBeats } from "./hoyWin.js";
@@ -33,7 +33,7 @@ import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, cenzontl
 import { FIRST_ACTIVITY_KEY, LOCKED_CAP_FADE_MS, LOCKED_CAP_GAP_PX, LOCKED_CAP_INK, LOCKED_CAP_SIZE, LOCKED_STORY_CAP_LINE, PAYWALL_SHOWN_KEY, isPaywallMidFlow, learnerDayNumber, paywallOpenDecision, readPlainDay, resolveFirstActivityDay, resolvePaywallShownDay, writePlainDay } from "./paywallTrigger.js";
 import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1, claimFirstSessionStart, isFirstExerciseCorrect, sessionOneFromProgress } from "./firstSessionFunnel.js";
 import { emitLecturaStartOnce } from "./lecturaStartDay.js";
-import { FIRST_STREAK_BIRD_PX, dismissFirstStreakReturn, firstStreakReturn, presentFirstStreakReturn } from "./firstStreakReturn.js";
+import { FIRST_STREAK_BIRD_PX, dismissFirstStreakReturn, firstStreakCopy, firstStreakReturn, presentFirstStreakReturn } from "./firstStreakReturn.js";
 import { isWaitlistEmail } from "./waitlist.js";
 import PerfilReservation from "./PerfilReservation.jsx";
 import { reserveWords, submitReserve, readReservation, RESERVE_STEP, RESERVE_PLAN, RESERVE_PRICE } from "./reserveAnnual.js";
@@ -9588,6 +9588,16 @@ export default function App() {
             const welcomeLine = shouldShowWelcomeBack({ prog, today: todayKey })
               ? welcomeBackLine({ lang: uiLang, streak: streakView.displayStreak, lesson: resumeLesson, pickUp: hasLessonToPickUp(prog) })
               : "";
+            // Day after the win line's promise: name the promised scene first (or the next open story), one tap to open.
+            const promised = welcomeLine && !firstStreakCard
+              ? promisedReturnTarget({ scenes: TODAY_SCENES, lastDay: prog.lastDay, today: todayKey, todaySceneDone, nextStory: lecturaHandoffTarget(STORIES, prog.stories) })
+              : null;
+            const promisedCard = !promised ? null : promised.kind === "scene"
+              ? { kind: "scene", id: promised.scene.id, headline: hoyTitleForLang(promised.scene, uiLang), line: "", button: L.playScene, open: () => startTodayScene(promised.scene) }
+              : (() => {
+                  const copy = firstStreakCopy({ lang: uiLang, mode: "next", title: uiLang === "en" ? (promised.story.titleEn || promised.story.title) : promised.story.title, columnPx: 9999 });
+                  return { kind: "story", id: promised.story.id, headline: "", line: copy.line, button: copy.button, open: () => openStory(promised.story) };
+                })();
             const openPath = () => {
               if (!pathUnit) return;
               setSheet({ unit: pathUnit, section: pathSection || SECTIONS[0], crowns: prog.done?.[pathUnit.id] || 0 });
@@ -9610,6 +9620,20 @@ export default function App() {
             ];
             return (
               <div style={{ margin: "6px 0 18px" }}>
+                {promisedCard && (
+                  <div data-testid="hub-promised" data-promised-kind={promisedCard.kind} data-promised-id={promisedCard.id} style={{ background: theme === "dark" ? D.card : "#FFFFFF", borderRadius: theme === "dark" ? 14 : 18, ...(theme === "dark" ? {} : { borderTop: "1.5px solid #E2D6C3", borderRight: "1.5px solid #E2D6C3", borderBottom: "1.5px solid #E2D6C3", borderLeft: "1.5px solid #E2D6C3", boxSizing: "border-box" }), padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+                    {promisedCard.headline ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                        <LogoMark size={FIRST_STREAK_BIRD_PX} />
+                        <div data-testid="hub-promised-headline" style={{ fontSize: 20, fontWeight: 700, color: D.ink, lineHeight: 1.2 }}>{promisedCard.headline}</div>
+                      </div>
+                    ) : (
+                      <div data-testid="hub-promised-line" style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.35, color: theme === "dark" ? "#CDBBA6" : "#6B6258" }}>{promisedCard.line}</div>
+                    )}
+                    <button type="button" data-testid="hub-promised-open" onClick={promisedCard.open}
+                      style={{ width: "100%", background: "#58CC02", color: "#1F3A1A", border: "none", borderRadius: 14, padding: "12px 16px", fontFamily: "inherit", fontWeight: 700, fontSize: 16, cursor: "pointer" }}>{promisedCard.button}</button>
+                  </div>
+                )}
                 {firstStreakCard && (
                   <div data-testid="first-streak-return" data-mode={firstStreakCard.mode} className="pop" style={{ background: theme === "dark" ? D.card : "#FFFFFF", borderRadius: theme === "dark" ? 14 : 18, ...(theme === "dark" ? {} : { borderTop: "1.5px solid #E2D6C3", borderRight: "1.5px solid #E2D6C3", borderBottom: "1.5px solid #E2D6C3", borderLeft: "1.5px solid #E2D6C3", boxSizing: "border-box" }), padding: 12, marginBottom: 10, display: "flex", flexDirection: "column", gap: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
@@ -11405,6 +11429,7 @@ export default function App() {
             <div data-testid="hoy-plan-eyebrow" style={{ fontSize: 11, fontWeight: 900, color: D.sub, letterSpacing: ".06em" }}>{L.hoyPlanEyebrow}</div>
             <p data-testid="hoy-plan-sell" style={{ margin: "8px 0 0", fontSize: 15, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{L.hoyPlanSell}</p>
             <div data-testid="hoy-plan-step" style={{ margin: "14px 0 0", fontSize: 13.5, fontWeight: 800, color: D.sub }}>{L.playScene}</div>
+            {hoyTitleForLang(todayScene, uiLang) ? <div data-testid="hoy-plan-title" style={{ margin: "4px 0 0", fontSize: 15, fontWeight: 800, lineHeight: 1.35, color: D.ink }}>{hoyTitleForLang(todayScene, uiLang)}</div> : null}
             <button type="button" data-testid="hoy-plan-start" onClick={() => { setHoyPlanOpen(false); startTodayScene(todayScene); }}
               style={{ display: "block", width: "100%", marginTop: 16, background: D.green, border: "none", borderBottom: `4px solid ${D.greenDark}`, color: "#fff", borderRadius: 14, padding: "12px 14px", fontFamily: "inherit", fontWeight: 900, fontSize: 16, cursor: "pointer" }}>
               {L.hoyPlanCta}
