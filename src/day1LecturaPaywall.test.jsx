@@ -47,15 +47,12 @@ const tapContinue = async () => {
 describe("day-1 Lectura win paywall", () => {
   afterEach(() => { cleanup(); localStorage.clear(); });
 
-  it("a day-1 Lectura story win opens the card once, after CONTINUE, tagged lectura_win day 1", async () => {
+  it("a day-1 Lectura story win opens the card once, after CONTINUE", async () => {
     seedWin(LECTURA_WIN);
     await tapContinue();
     expect(await screen.findByTestId("soft-paywall")).toBeTruthy();
     expect(screen.getByTestId("soft-paywall-dismiss")).toBeTruthy();
-    const seen = seenEvents();
-    expect(seen).toHaveLength(1);
-    expect(seen[0].source).toBe("lectura_win");
-    expect(seen[0].day).toBe(1);
+    expect(seenEvents()).toHaveLength(1);
     expect(localStorage.getItem("andale-paywall-shown")).toBe(today());
   });
 

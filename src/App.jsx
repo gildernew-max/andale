@@ -5515,7 +5515,6 @@ export default function App() {
   const [softPaywall, setSoftPaywall] = useState(false);
   const [lockedStoryPaywall, setLockedStoryPaywall] = useState(false);
   const [paywallDismissed, setPaywallDismissed] = useState(false);
-  const [paywallWinKind, setPaywallWinKind] = useState("");
   const [paywallClickShield, setPaywallClickShield] = useState(false);
   const paywallDismissedRef = useRef(false);
   const paywallDismissingRef = useRef(false);
@@ -7171,7 +7170,6 @@ export default function App() {
     setPaywallDismissed(false);
     setPaywallSource(source || (bird ? PAYWALL_BIRD_TRIGGER : PAYWALL_SOURCE.winContinue));
     setChapterBirdHandoff(!!bird);
-    setPaywallWinKind(winKind);
     setWinPaywall(true);
     stampPaywallShown(ctx.today);
   };
@@ -8453,10 +8451,7 @@ export default function App() {
   useEffect(() => { if (!showSoftPaywall) setPaywallPriceWrap(false); }, [showSoftPaywall]);
   const paywallHeadlineSource = showLockedStoryPaywall ? PAYWALL_SOURCE.lockedStory : (chapterBirdHandoff ? PAYWALL_BIRD_TRIGGER : paywallSource);
   const paywallHeadlineText = paywallHeadlineFor(L, paywallHeadlineSource, lecturaStartedStored);
-  const paywallSeenKind = paywallSeenSourceFor(paywallHeadlineSource);
-  paywallSeenKindRef.current = paywallSeenKind === PAYWALL_SEEN_SOURCE.win && !showLockedStoryPaywall && paywallWinKind === PAYWALL_WIN_KIND.lectura
-    ? PAYWALL_SEEN_SOURCE.lecturaWin
-    : paywallSeenKind;
+  paywallSeenKindRef.current = paywallSeenSourceFor(paywallHeadlineSource);
   const paywallBodyType = { fontWeight: 700, fontSize: 13.5, color: theme === "dark" ? "#F6EFE4" : D.sub, lineHeight: 1.45 };
   const annualPriceText = paywallAnnualLine(L);
   const paywallFreeLinkText = paywallFreeLink(L);
