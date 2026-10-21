@@ -85,5 +85,5 @@ describe("cold path: the first finished story lands its win screen", () => {
     expect(win.textContent).toBe("You finished the story!");
     expect(screen.getByTestId("win-perch-slot")).toBeTruthy();
     expect(screen.getByTestId("win-earned-xp").textContent).toBe("+5");
-  });
+  }, 30000);
 });

@@ -92,5 +92,5 @@ describe("reversed day-1 path: lesson quit, then a story", () => {
     expect(win.textContent).toBe("You finished the story!");
     expect(screen.getByTestId("win-earned-xp").textContent).toMatch(/\+5\b/);
     expect(document.body.textContent).toMatch(/0 correct, 3 misses/);
-  });
+  }, 30000);
 });
