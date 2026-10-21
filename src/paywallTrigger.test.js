@@ -1,5 +1,6 @@
 import { prevDayKey } from "./firstDoor.js";
 import {
+  PAYWALL_WIN_KIND,
   FIRST_ACTIVITY_KEY,
   LOCKED_CAP_FADE_MS,
   LOCKED_CAP_GAP_PX,
@@ -40,7 +41,13 @@ const today = "2026-10-12";
 const yesterday = prevDayKey(today);
 assert(yesterday === "2026-10-11", "yesterday fixture");
 
-assert(paywallOpenDecision({ source: "win", dayNumber: 1, today }) === "skip", "no win paywall on day 1");
+assert(paywallOpenDecision({ source: "win", dayNumber: 1, today }) === "skip", "no paywall on a day-1 non-Lectura win");
+assert(paywallOpenDecision({ source: "win", winKind: PAYWALL_WIN_KIND.other, dayNumber: 1, today }) === "skip", "day-1 Hoy or lesson win stays paywall-free");
+assert(paywallOpenDecision({ source: "win", winKind: PAYWALL_WIN_KIND.lectura, dayNumber: 1, today }) === "open", "day-1 Lectura story win opens the card");
+assert(paywallOpenDecision({ source: "win", winKind: PAYWALL_WIN_KIND.lectura, dayNumber: 1, shownDay: today, today }) === "skip", "day-1 Lectura win respects the once-a-day cap");
+assert(paywallOpenDecision({ source: "win", winKind: PAYWALL_WIN_KIND.lectura, dayNumber: 1, today, unlockedPrem: true }) === "skip", "subscribed learners skip the day-1 Lectura wall");
+assert(paywallOpenDecision({ source: "win", winKind: PAYWALL_WIN_KIND.lectura, dayNumber: 1, today, paywallHold: true }) === "skip", "hearts hold blocks the day-1 Lectura wall");
+assert(paywallOpenDecision({ source: "timed", winKind: PAYWALL_WIN_KIND.lectura, dayNumber: 1, today }) === "skip", "only a win can carry the Lectura exception");
 assert(paywallOpenDecision({ source: "timed", dayNumber: 1, today }) === "skip", "no timed paywall on day 1");
 assert(paywallOpenDecision({ source: "locked_story", dayNumber: 1, today }) === "open", "day 1 locked tap still opens");
 

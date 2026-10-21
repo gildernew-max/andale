@@ -30,7 +30,7 @@ import { a2hsDisplayEnv, shouldShowA2hsSheet } from "./a2hs.js";
 import { LOCKED_STORY_PAYWALL, paywallStillMaxHeight, paywallStillShouldHide, watchPaywallStillResize, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT, PAYWALL_MONTHLY_GAP, annualPriceLine, paywallPriceWrapText, paywallAnnualLine, paywallFreeLink, PAYWALL_ANNUAL_LINE_SIZE, PAYWALL_FREE_LINK_SIZE, PAYWALL_FREE_LINK_INK } from "./webPaywall.js";
 import { collectorEndpoint, shipFunnelEvent } from "./collector.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, cenzontleBeatFromSession, daysSinceLastVisit, emitFunnelEvent, paywallSeenSourceFor } from "./funnel.js";
-import { FIRST_ACTIVITY_KEY, LOCKED_CAP_FADE_MS, LOCKED_CAP_GAP_PX, LOCKED_CAP_INK, LOCKED_CAP_SIZE, LOCKED_STORY_CAP_LINE, PAYWALL_SHOWN_KEY, isPaywallMidFlow, learnerDayNumber, paywallOpenDecision, readPlainDay, resolveFirstActivityDay, resolvePaywallShownDay, writePlainDay } from "./paywallTrigger.js";
+import { FIRST_ACTIVITY_KEY, LOCKED_CAP_FADE_MS, LOCKED_CAP_GAP_PX, LOCKED_CAP_INK, LOCKED_CAP_SIZE, LOCKED_STORY_CAP_LINE, PAYWALL_SHOWN_KEY, PAYWALL_WIN_KIND, isPaywallMidFlow, learnerDayNumber, paywallOpenDecision, readPlainDay, resolveFirstActivityDay, resolvePaywallShownDay, writePlainDay } from "./paywallTrigger.js";
 import { claimDay2Return, claimFirstSessionComplete, claimFirstSessionExercise1, claimFirstSessionStart, isFirstExerciseCorrect, sessionOneFromProgress } from "./firstSessionFunnel.js";
 import { emitLecturaStartOnce } from "./lecturaStartDay.js";
 import { FIRST_STREAK_BIRD_PX, dismissFirstStreakReturn, firstStreakCopy, firstStreakReturn, presentFirstStreakReturn } from "./firstStreakReturn.js";
@@ -7160,11 +7160,11 @@ export default function App() {
     return () => { clearTimeout(settle); clearTimeout(settleLate); window.removeEventListener("scroll", onScroll); if (frame) cancelAnimationFrame(frame); };
   }, [screen, paraIdx]);
 
-  const armPostWinPaywall = (bird, { source } = {}) => {
+  const armPostWinPaywall = (bird, { source, winKind = PAYWALL_WIN_KIND.other } = {}) => {
     // Reserved learners never get the post-win wall, bird variant included.
     if (reservedRef.current || readReservation()) return;
     const ctx = paywallDayContext();
-    if (paywallOpenDecision({ source: "win", ...ctx }) !== "open") return;
+    if (paywallOpenDecision({ source: "win", winKind, ...ctx }) !== "open") return;
     if (paywallDismissingRef.current) return;
     paywallDismissedRef.current = false;
     setPaywallDismissed(false);
@@ -9056,7 +9056,8 @@ export default function App() {
   const continueFromWin = ({ toStory = null } = {}) => {
     const birdAfterWin = !!session?.lecturaPaywallAfterWin;
     lecturaPaywallAfterWin.current = false;
-    armPostWinPaywall(birdAfterWin);
+    // A finished Lectura story is the only win that may open the card on day 1; it waits for CONTINUE, after the beat.
+    armPostWinPaywall(birdAfterWin, { winKind: session?.storyId ? PAYWALL_WIN_KIND.lectura : PAYWALL_WIN_KIND.other });
     const t = todayStr();
     const firstStreakEso = isFirstStreakEsoWin(session);
     const next = screenAfterWinContinue({ firstDoctora: session?.firstDoctora });
