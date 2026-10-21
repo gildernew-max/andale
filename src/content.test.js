@@ -318,7 +318,7 @@ const checkpointFaces = {
     { q: "Which room still has the mirror?", a: "Her bedroom", choices: ["Her bedroom", "The kitchen", "The patio"], qEs: "¿Qué cuarto todavía tiene el espejo?", choicesEs: ["Su recámara", "La cocina", "El patio"] },
     { q: "Who was Diego Rivera?", a: "A muralist", choices: ["A muralist", "A doctor", "A photographer"], qEs: "¿Quién era Diego Rivera?", choicesEs: ["Un muralista", "Un médico", "Un fotógrafo"] },
     { q: "Which animals appear in the story?", a: "Spider monkeys and xolos", choices: ["Spider monkeys and xolos", "Horses and cats", "Parrots only"], qEs: "¿Qué animales aparecen en el cuento?", choicesEs: ["Monos araña y xolos", "Caballos y gatos", "Solo pericos"] },
-    { q: "What final phrase does the story emphasize?", a: "Viva la vida", choices: ["Viva la vida", "Casa Azul", "Adiós"], qEs: "¿Qué frase final destaca el cuento?" },
+    { q: "What final phrase does the story emphasize?", a: "Viva la vida", choices: ["Viva la vida", "Casa Azul", "Adiós"], qEs: "¿Qué frase final destaca el cuento?", choicesEs: ["Viva la vida", "Casa Azul", "Adiós"] },
   ],
   "story-2": [
     { q: "What was the original plan?", a: "Stay on the beach", choices: ["Visit ruins", "Stay on the beach", "Take Spanish classes"], qEs: "¿Cuál era el plan original?", choicesEs: ["Visitar ruinas", "Quedarse en la playa", "Tomar clases de español"] },
