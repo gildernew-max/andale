@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { passStory0Win } from "./story0WinHelper.js";
 import App from "./App.jsx";
 import { firstSessionWords } from "./firstSessionWords.js";
 import {
@@ -51,7 +52,7 @@ describe("first session before the paywall", () => {
     await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
     await claimStory0(user);
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    await passStory0Win(user);
     expect(document.querySelector("[data-first-session]")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     await user.click(screen.getByRole("button", { name: /Cerrar/ }));
@@ -74,7 +75,7 @@ describe("first session before the paywall", () => {
     await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
     await claimStory0(user);
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    await passStory0Win(user);
     expect(screen.queryByTestId("hearts-modal")).toBeNull();
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(document.querySelector("[data-first-session]")).toBeNull();

@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { passStory0Win } from "./story0WinHelper.js";
 import App, { STORIES } from "./App.jsx";
 import {
   installFlowHooks,
@@ -78,7 +79,7 @@ describe("first-lesson win: one button into Lectura", () => {
     await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
     await claimStory0(user);
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    await passStory0Win(user);
     await user.click(screen.getByRole("button", { name: /Cerrar/ }));
     await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
     await user.click(screen.getByTestId("nav-camino"));
@@ -109,7 +110,7 @@ describe("first-lesson win: one button into Lectura", () => {
     await waitFor(() => expect(screen.getByTestId("nav-lectura")).toBeTruthy());
     await claimStory0(user);
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    await passStory0Win(user);
     await user.click(screen.getByRole("button", { name: /Cerrar/ }));
     await waitFor(() => expect(screen.getByTestId("nav-camino")).toBeTruthy());
     await user.click(screen.getByTestId("nav-camino"));

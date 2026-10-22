@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { passStory0Win } from "./story0WinHelper.js";
 import App from "./App.jsx";
 import { markBajioUnlockFlashDue } from "./recuerdos.js";
 import {
@@ -219,7 +220,7 @@ describe("first session before the paywall", () => {
     expect(afterChapter.gems).toBe(10);
     expect(afterChapter.streak).toBe(1);
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    await passStory0Win(user);
     expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toContain("lectura/story-1/p0.png");
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
     expect(document.querySelector("[data-first-session]")).toBeNull();

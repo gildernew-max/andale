@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { StrictMode } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { passStory0Win } from "./story0WinHelper.js";
 import App from "./App.jsx";
 import { isBajioUnlockFlashDue, markBajioUnlockFlashDue } from "./recuerdos.js";
 import { lettersForLayout } from "./letterBoard.js";
@@ -1645,7 +1646,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
   }, 15000);
 
-  it("Hoy win, then lectura_start, then story-0 opens La casa azul at page 1", async () => {
+  it("Hoy win, then lectura_start, then story-0 lands «¡Eso!», the card once, then La casa azul at page 1", async () => {
     cleanup();
     const yesterday = prevDayKey(localToday());
     seedProgress({ streak: 0, lastDay: null, uiLang: "es", bajioUnlockSeen: true, firstActivityDay: yesterday });
@@ -1728,13 +1729,13 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall-cenzontle")).toBeNull();
 
     await user.click(screen.getByTestId("lectura-bird-handoff-cta"));
-    await waitFor(() => expect(screen.getByTestId("story-reader").getAttribute("data-story-id")).toBe("story-1"));
+    const wall = await passStory0Win(user);
+    expect(wall).toBeTruthy();
     expect(screen.getByTestId("lectura-still-0").getAttribute("src")).toBe(`${import.meta.env.BASE_URL}lectura/story-1/p0.png`);
     expect(screen.getByTestId("story-reader-title").textContent).toBe("La casa azul");
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
-    expect(screen.queryByTestId("story-0-win")).toBeNull();
     expect(firstSessionRoot()).toBeNull();
-    expect(funnelOf("paywall_seen")).toHaveLength(0);
+    expect(funnelOf("paywall_seen")).toHaveLength(1);
     expect(funnelOf("lectura_start").some((e) => e.storyId === "story-1")).toBe(true);
     expect(funnelOf("lectura_chapter_done")).toHaveLength(1);
     expect(funnelOf("purchase")).toHaveLength(0);
@@ -1744,7 +1745,7 @@ describe("Pages funnel log", { timeout: 15000 }, () => {
     expect(at("cenzontle_complete")).toBeGreaterThan(at("open"));
     expect(at("lectura_start")).toBeGreaterThan(at("cenzontle_complete"));
     expect(at("lectura_chapter_done")).toBeGreaterThan(at("lectura_start"));
-    expect(at("paywall_seen")).toBe(-1);
+    expect(at("paywall_seen")).toBeGreaterThan(at("lectura_chapter_done"));
     expect(at("purchase")).toBe(-1);
     expect(JSON.stringify(window.__andaleFunnelLog)).not.toMatch(/@|device|receipt|\$/);
   }, 30000);

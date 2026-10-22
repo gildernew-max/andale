@@ -5590,6 +5590,7 @@ export default function App() {
   const [doctorFailed, setDoctorFailed] = useState(false);
   const [firstDoctora, setFirstDoctora] = useState(false);
   const [winBounce, setWinBounce] = useState(false);
+  const [story0Perched, setStory0Perched] = useState(false);
   const winBouncePlayed = useRef(false);
   const storyPagesSeenRef = useRef({});
   const lecturaStartedRef = useRef(false);
@@ -7519,6 +7520,8 @@ export default function App() {
         setWinBounce(true);
     }
     setScreen("done");
+    // The win opens at the top: the reader's scroll must not clip the bird under the brand bar.
+    requestAnimationFrame(() => window.scrollTo(0, 0));
   };
 
   const claimStory = (story, correct, checkpointMisses = 0) => {
@@ -7567,7 +7570,7 @@ export default function App() {
       };
     });
     emitFunnelEvent({ event: FUNNEL_EVENTS.lecturaChapterDone, storyId: story.id });
-    setLecturaCliffhanger({
+    const beat = {
       storyId: story.id,
       correct,
       checkpointMisses: Math.max(0, Number(checkpointMisses) || 0),
@@ -7575,7 +7578,9 @@ export default function App() {
       playStory0,
       playLecturaWin,
       streakBefore,
-    });
+    };
+    setLecturaCliffhanger(beat);
+    return beat;
   };
 
   // One tap opens La casa azul. story-1 stays closed until story-0's XP is
@@ -7584,7 +7589,13 @@ export default function App() {
     const next = STORIES.find((item) => item.id === "story-1");
     if (!next) return;
     const claimNow = !!story?.id && !prog.stories?.[story.id];
-    if (claimNow) claimStory(story, correct, checkpointMisses);
+    const beat = claimNow ? claimStory(story, correct, checkpointMisses) : lecturaCliffhanger;
+    // The first finished story lands its win screen first; story 1 waits on the hub (Varys cold walk, Oct 21).
+    if (beat && beat.storyId === story?.id && (beat.playStory0 || beat.playLecturaWin)) {
+      if (paywallDismissingRef.current) return;
+      releaseLecturaWin({ ...beat, lecturaPaywallAfterWin: true });
+      return;
+    }
     setLecturaCliffhanger(null);
     story0SequelTopRef.current = true;
     openStory(next, claimNow ? { justClaimedId: story.id } : undefined);
@@ -8650,6 +8661,7 @@ export default function App() {
     if (screen !== "done") {
       winBouncePlayed.current = false;
       setWinBounce(false);
+      setStory0Perched(false);
       return;
     }
     if (winBouncePlayed.current) return;
@@ -13241,7 +13253,10 @@ export default function App() {
             <div data-testid="win-perch-slot" style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible", position: "relative" }}>
               {shouldPlayHoyBeat(session) ? (
                 <HoyWinBird onComplete={completeCenzontleBeat} />
-              ) : shouldPlayStory0Beat(session) || shouldPlayDoctoraBeat(session) ? (
+              ) : shouldPlayStory0Beat(session) && !story0Perched ? (
+                // Story 0: the bird flies its beat, then comes to rest on the perch with the XP pill (brand hold, Oct 21).
+                <CenzontleFlyAway surface="win" onComplete={() => { completeCenzontleBeat(); setStory0Perched(true); }} />
+              ) : shouldPlayDoctoraBeat(session) ? (
                 <CenzontleFlyAway surface="win" onComplete={completeCenzontleBeat} />
               ) : (
                 <WinPerch theme={theme} />
