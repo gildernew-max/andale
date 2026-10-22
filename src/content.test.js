@@ -648,7 +648,7 @@ assert(UI.es.paywallHeadlineNoStory === "Hay mucho por leer.", "UI.es.paywallHea
 assert(UI.en.paywallHeadlineNoStory === "There's a lot to read.", "UI.en.paywallHeadlineNoStory");
 assert(UI.en.paywallHeadlineNoStory.endsWith("."), "EN no-story headline keeps the period");
 assert(UI.en.paywallHeadlineNoStory.charCodeAt("There".length) === 0x27, "EN no-story headline keeps the straight apostrophe");
-assert(UI.es.paywallBody === "Todas las historias. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", "UI.es.paywallBody George lock");
+assert(UI.es.paywallBody === "Todas las historias, sin esperar. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", "UI.es.paywallBody George lock");
 assert(UI.es.paywallBody.endsWith("de\u00A0lo\u00A0básico."), "ES body keeps de lo básico together");
 assert(UI.es.paywallAnnual === "Empezar plan anual", "UI.es.paywallAnnual lock — no price in the label");
 assert(UI.es.paywallAnnualHold === "El plan anual aún no está disponible. Sigue leyendo gratis por ahora.", "UI.es.paywallAnnualHold lock");
@@ -661,7 +661,7 @@ assert(UI.es.paywallFreeLine === "Gratis: los cuentos se abren uno a uno, en ord
 assert(UI.es.paywallHonesty === "Vista previa · aún no se cobra", "UI.es.paywallHonesty preview line");
 assert(UI.es.paywallDismiss === "Seguir gratis", "UI.es.paywallDismiss George lock");
 assert(UI.en.paywallHeadline === "The story goes on.", "UI.en.paywallHeadline George lock");
-assert(UI.en.paywallBody === "Every story. Real Mexican Spanish, past\u00A0the\u00A0basics.", "UI.en.paywallBody George lock");
+assert(UI.en.paywallBody === "Every story, no waiting. Real Mexican Spanish, past\u00A0the\u00A0basics.", "UI.en.paywallBody George lock");
 assert(UI.en.paywallBody.endsWith("past\u00A0the\u00A0basics."), "EN body keeps past the basics together");
 assert(UI.en.paywallAnnual === "Start annual plan", "UI.en.paywallAnnual lock — no price in the label");
 assert(UI.en.paywallAnnualHold === "Annual plans aren't open yet. Keep reading free for now.", "UI.en.paywallAnnualHold lock");
