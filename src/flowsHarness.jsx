@@ -498,7 +498,8 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
   expect(dismiss.textContent).toBe(copy.dismiss);
   expect(screen.getByTestId("soft-paywall-annual-label").textContent).not.toMatch(/\$39\.99|\$6\.99/);
-  expect(wall.textContent).not.toMatch(/12\s*[x×]|83\.88|3\.33|\d\s*%|was \$/i);
+  // Test 2 (Oct 22): the one approved per-month line under the annual card; anything else stays banned.
+  expect(wall.textContent.replace(/Son US\$3\.33\u00A0al\u00A0mes\.|That's \$3\.33\u00A0a\u00A0month\./, "")).not.toMatch(/12\s*[x×]|83\.88|3\.33|\d\s*%|was \$/i);
   expect(wall.textContent).not.toMatch(/Vista previa|you won|Apple|Restore|Un mes|One month/);
   expect(wall.textContent).toContain(copy.price);
   const monthly = screen.getByTestId("soft-paywall-monthly");

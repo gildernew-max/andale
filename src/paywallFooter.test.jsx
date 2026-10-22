@@ -174,7 +174,8 @@ describe("paywall card", () => {
       expect(monthly.style.height).toBe("64px");
       expect(monthly.style.borderRadius).toBe("16px");
       expect(wall.querySelectorAll("button[style*=\"background: rgb(88, 204, 2)\"]")).toHaveLength(1);
-      expect(wall.textContent).not.toMatch(/12\s*[x×]|83\.88|3\.33|\d\s*%|was \$/i);
+      // Test 2 (Oct 22): the one approved per-month line under the annual card; anything else stays banned.
+      expect(wall.textContent.replace(/Son US\$3\.33\u00A0al\u00A0mes\.|That's \$3\.33\u00A0a\u00A0month\./, "")).not.toMatch(/12\s*[x×]|83\.88|3\.33|\d\s*%|was \$/i);
       expect(norm(year.style.background)).toBe("#58cc02");
       expect(norm(year.style.color)).toBe("#1f3a1a");
       expect(dismiss.disabled).toBe(false);
