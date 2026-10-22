@@ -72,10 +72,13 @@ describe("lesson-end Continue stays on screen", () => {
       expect(window.innerWidth).toBe(width);
       expect(window.innerHeight).toBe(height);
       expect(window.scrollY).toBe(0);
-      expect(btn.style.position).toBe("fixed");
-      expect(btn.style.bottom).toBe(onboardingCtaBottomCss());
-      expect(btn.style.bottom).toBe("calc(16px + env(safe-area-inset-bottom))");
-      expect(btn.style.width).toBe("fit-content");
+      // Pinned through its opaque bar (No face, Oct 21): the bar is fixed at 0, the button sits 16px above the safe area.
+      const bar = screen.getByTestId("win-continue-bar");
+      expect(bar.contains(btn)).toBe(true);
+      expect(bar.style.position).toBe("fixed");
+      expect(bar.style.bottom).toBe("0px");
+      expect(bar.style.paddingBottom).toBe(onboardingCtaBottomCss());
+      expect(bar.style.paddingBottom).toBe("calc(16px + env(safe-area-inset-bottom))");
       expect(btn.style.padding).toBe("13px 24px");
       expect(btn.style.fontSize).toBe("15px");
       expect(btn.style.fontWeight).toBe("800");
@@ -98,8 +101,9 @@ describe("lesson-end Continue stays on screen", () => {
       expect(ONBOARDING_CTA_CONTENT_GAP).toBe(12);
 
       const column = screen.getByTestId("lesson-win");
-      expect(column.style.paddingBottom).toBe(`calc(${ONBOARDING_CTA_BOTTOM + ONBOARDING_CTA_HEIGHT + ONBOARDING_CTA_CONTENT_GAP}px + env(safe-area-inset-bottom))`);
-      expect(column.style.paddingBottom).toBe("calc(78px + env(safe-area-inset-bottom))");
+      // +8: the opaque bar's top padding, so the last line still stops 12px above the bar.
+      expect(column.style.paddingBottom).toBe(`calc(${ONBOARDING_CTA_BOTTOM + ONBOARDING_CTA_HEIGHT + ONBOARDING_CTA_CONTENT_GAP + 8}px + env(safe-area-inset-bottom))`);
+      expect(column.style.paddingBottom).toBe("calc(86px + env(safe-area-inset-bottom))");
       expect(column.contains(btn)).toBe(true);
 
       await user.click(btn);
