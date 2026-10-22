@@ -42,9 +42,9 @@ If this page changes in a way that matters, the date at the top will change.
 
 <h2 id="correo-y-datos">What we count / Qué contamos</h2>
 
-We count which steps you reach (like finishing a lesson or seeing a plan) to improve Ándale. It's anonymous: a random ID for this device, and we don't store your name, email or IP address.
+We count which steps you reach (like finishing a lesson or seeing a plan) to improve Ándale. It's anonymous. Each signal carries only the date, a random device ID, and which version of the pricing screen you saw (A or B). We don't store your name, email or IP address.
 
-Contamos a qué pasos llegas (como terminar una lección o ver un plan) para mejorar Ándale. Es anónimo: un ID aleatorio de este dispositivo, y no guardamos tu nombre, correo ni dirección IP.
+Contamos a qué pasos llegas (como terminar una lección o ver un plan) para mejorar Ándale. Es anónimo. Cada señal lleva solo la fecha, un número de dispositivo al azar y la versión de la pantalla de precios que viste (A o B). No guardamos tu nombre, correo ni dirección IP.
 
 ## Contact
 

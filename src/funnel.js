@@ -14,6 +14,8 @@
  *  tap_annual and tap_monthly are separate events and carry that same source.
  *  locked_story_capped is event + timestamp + that day number.
  *  Other events do not carry source or day.
+ *  paywall_seen, tap_annual and reserve_submit may also carry ab ("A" | "B"), the
+ *  subhead test 1 arm (abSubhead1.js). No other event carries it.
  *  Each accepted event is also appended to localStorage key
  *  `andale-funnel-log` on this device. That log is not sent anywhere.
  *  The in-memory list `window.__andaleFunnelLog` is the same session only.
@@ -188,7 +190,7 @@ function safeStoryId(id) {
  * is win, locked_story, or timed. paywall_seen also keeps day when it is an
  * integer >= 1. locked_story_capped is event + at + that day.
  */
-export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId, price, daysSinceLast, source, day } = {}, bus = eventBus()) {
+export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId, price, daysSinceLast, source, day, ab } = {}, bus = eventBus()) {
   if (!EVENTS.has(event)) return null;
   const payload = { event, at: new Date().toISOString() };
   if (event === FUNNEL_EVENTS.open) {
@@ -222,6 +224,10 @@ export function emitFunnelEvent({ event, storyId, beat, choice, plan, productId,
   if (event === FUNNEL_EVENTS.paywallSeen || event === FUNNEL_EVENTS.lockedStoryCapped) {
     const learnerDay = allowLearnerDay(day);
     if (learnerDay != null) payload.day = learnerDay;
+  }
+  // Subhead A/B test 1: the arm only, and only on these three events.
+  if ((event === FUNNEL_EVENTS.paywallSeen || event === FUNNEL_EVENTS.tapAnnual || event === FUNNEL_EVENTS.reserveSubmit) && (ab === "A" || ab === "B")) {
+    payload.ab = ab;
   }
   if (bus) {
     bus[FUNNEL_LOG] = Array.isArray(bus[FUNNEL_LOG]) ? bus[FUNNEL_LOG] : [];

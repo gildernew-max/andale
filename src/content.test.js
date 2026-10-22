@@ -815,7 +815,7 @@ assert(paywallLayout.includes('theme === "dark" ? "#CDBBA6" : "#6B6258"'), "the 
 assert(/soft-paywall-monthly-hold[\s\S]{0,120}fontSize: 13, lineHeight: 1\.4, color: quiet, marginTop: 6/.test(paywallLayout), "the monthly post-tap line uses the saving line's quiet type");
 assert(/\{paywallMonthlyHold \? \([\s\S]{0,260}rw\.monthlyHold[\s\S]{0,60}\) : \([\s\S]{0,200}soft-paywall-saving/.test(paywallLayout), "the monthly post-tap line swaps in for the saving line");
 assert(!appSrc.includes("setPaywallAnnualHold(true)"), "annual tap opens the reserve field, not the hold line");
-assert(/const tapPaywallAnnual = \(\) => \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallTap, choice: PAYWALL_TAP\.annual \}\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.tapAnnual, source: paywallSeenKindRef\.current \}\);\s*setPaywallMonthlyHold\(false\);\s*setReserveStep\(RESERVE_STEP\.open\);\s*\};/.test(appSrc), "annual tap records paywall_tap and tap_annual and opens the reserve field; nothing charges");
+assert(/const tapPaywallAnnual = \(\) => \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallTap, choice: PAYWALL_TAP\.annual \}\);\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.tapAnnual, source: paywallSeenKindRef\.current, ab: subhead1AbField\(\) \}\);\s*setPaywallMonthlyHold\(false\);\s*setReserveStep\(RESERVE_STEP\.open\);\s*\};/.test(appSrc), "annual tap records paywall_tap and tap_annual and opens the reserve field; nothing charges");
 assert(/const tapPaywallMonthly = \(\) => \{\s*emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.tapMonthly, source: paywallSeenKindRef\.current \}\);\s*setPaywallMonthlyHold\(true\);\s*\};/.test(appSrc), "monthly tap records tap_monthly and does not change the button");
 assert(!/PAYWALL_TAP\.monthly/.test(appSrc), "monthly is not a paywall_tap choice");
 assert(/<LogoMark size=\{44\} data-testid="soft-paywall-cenzontle"/.test(paywallLayout), "no-still Cenzontle stays the centered 44px mark");
@@ -932,7 +932,7 @@ assert(appSrc.includes("shipFunnelEvent(ev?.detail, { lang: uiLang })"), "bus ev
 assert(appSrc.includes("collectorEndpoint()"), "the card and the collector share one endpoint helper");
 assert(appSrc.includes("FUNNEL_EVENTS.paywallSeen"), "paywall_seen is wired");
 assert(/if \(showSoftPaywall\) \{\s*setSoftPaywall\(true\);/.test(appSrc), "paywall_seen fires when the wall becomes visible");
-assert(/emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallSeen, source: seenSource, day: learnerDayNumber\(seenFirst, seenToday\) \}\)/.test(appSrc), "paywall_seen carries source and learner day");
+assert(/emitFunnelEvent\(\{ event: FUNNEL_EVENTS\.paywallSeen, source: seenSource, day: learnerDayNumber\(seenFirst, seenToday\), ab: subhead1AbField\(\) \}\)/.test(appSrc), "paywall_seen carries source, learner day and the subhead arm");
 assert(appSrc.includes("FUNNEL_EVENTS.paywallTap"), "paywall_tap is wired");
 assert(appSrc.includes("emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.annual })"), "annual tap emits paywall_tap annual");
 assert(appSrc.includes("PAYWALL_TAP.continueFree"), "continue-free tap is labeled continue_free");
@@ -5309,10 +5309,16 @@ assert(!privacyHtml.includes("Anonymous usage events") && !privacyMd.includes("A
 assert(!privacyHtml.includes("In builds where this is switched on") && !privacyMd.includes("In builds where this is switched on"), "old usage paragraph is gone");
 assert(privacyHtml.indexOf("<h2>What we do not collect</h2>") < privacyHtml.indexOf("<h2>Who else might see something</h2>"), "what we do not collect still sits above who else might see something");
 assert(privacyHtml.includes('<h2 id="correo-y-datos">What we count / Qué contamos</h2>') && privacyMd.includes('<h2 id="correo-y-datos">What we count / Qué contamos</h2>'), "correo-y-datos heading is What we count / Qué contamos");
-const COUNT_NOTE_EN = "We count which steps you reach (like finishing a lesson or seeing a plan) to improve Ándale. It's anonymous: a random ID for this device, and we don't store your name, email or IP address.";
-const COUNT_NOTE_ES = "Contamos a qué pasos llegas (como terminar una lección o ver un plan) para mejorar Ándale. Es anónimo: un ID aleatorio de este dispositivo, y no guardamos tu nombre, correo ni dirección IP.";
+const COUNT_NOTE_EN = "We count which steps you reach (like finishing a lesson or seeing a plan) to improve Ándale. It's anonymous. Each signal carries only the date, a random device ID, and which version of the pricing screen you saw (A or B). We don't store your name, email or IP address.";
+const COUNT_NOTE_ES = "Contamos a qué pasos llegas (como terminar una lección o ver un plan) para mejorar Ándale. Es anónimo. Cada señal lleva solo la fecha, un número de dispositivo al azar y la versión de la pantalla de precios que viste (A o B). No guardamos tu nombre, correo ni dirección IP.";
 assert(privacyHtml.includes(COUNT_NOTE_EN) && privacyMd.includes(COUNT_NOTE_EN), "privacy EN count note");
 assert(privacyHtml.includes(COUNT_NOTE_ES) && privacyMd.includes(COUNT_NOTE_ES), "privacy ES count note");
+// Subhead A/B test 1 (Oct 22): the signal line names the pricing-screen version.
+const SIGNAL_EN = "Each signal carries only the date, a random device ID, and which version of the pricing screen you saw (A or B).";
+const SIGNAL_ES = "Cada señal lleva solo la fecha, un número de dispositivo al azar y la versión de la pantalla de precios que viste (A o B).";
+assert(privacyHtml.includes(SIGNAL_EN) && privacyMd.includes(SIGNAL_EN), "privacy EN signal line names A or B");
+assert(privacyHtml.includes(SIGNAL_ES) && privacyMd.includes(SIGNAL_ES), "privacy ES signal line names A o B");
+assert(privacyHtml.indexOf(SIGNAL_EN) > privacyHtml.indexOf('id="correo-y-datos"'), "signal line sits in #correo-y-datos");
 assert(appSrc.includes('data-testid="settings-count-note"') && appSrc.includes("privacy.html#correo-y-datos"), "perfil links to the correo-y-datos section");
 assert(pagesYml.includes("VITE_COLLECTOR_ENDPOINT"), "Pages build passes the collector endpoint");
 assert(!privacyHtml.includes("Your email and your data") && !privacyMd.includes("Your email and your data"), "email collection heading is not on the privacy page");

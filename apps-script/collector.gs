@@ -3,7 +3,7 @@
  *
  * doPost appends one row per event to the first tab of the bound spreadsheet.
  * Only paywall_seen and reserve_submit are kept; anything else is ignored.
- * Columns: received_at, event, date, device.
+ * Columns: received_at, event, date, device, ab (subhead test 1 arm, "A" | "B" or empty).
  * This script does not read IP addresses or request headers.
  *
  * Deploy steps for Dave:
@@ -19,6 +19,7 @@ function readEvent(e) {
   var eventName = "";
   var date = "";
   var device = "";
+  var ab = "";
   var raw = "";
   if (e && e.postData && typeof e.postData.contents === "string") {
     raw = e.postData.contents;
@@ -29,6 +30,7 @@ function readEvent(e) {
       if (typeof parsed.event === "string" && ALLOWED_EVENTS[parsed.event] === true) eventName = parsed.event;
       if (typeof parsed.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.date)) date = parsed.date;
       if (typeof parsed.device === "string") device = parsed.device.slice(0, 64);
+      if (parsed.ab === "A" || parsed.ab === "B") ab = parsed.ab;
     } catch (err) {
       eventName = "";
     }
@@ -37,6 +39,7 @@ function readEvent(e) {
     event: eventName,
     date: date,
     device: device,
+    ab: ab,
   };
 }
 
@@ -45,13 +48,14 @@ function doPost(e) {
   if (!record.event) return ContentService.createTextOutput("ok");
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(["received_at", "event", "date", "device"]);
+    sheet.appendRow(["received_at", "event", "date", "device", "ab"]);
   }
   sheet.appendRow([
     new Date().toISOString(),
     record.event,
     record.date,
     record.device,
+    record.ab,
   ]);
   return ContentService.createTextOutput("ok");
 }

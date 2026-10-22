@@ -5,7 +5,8 @@
  *  This repo does not deploy that script.
  *
  *  Only two events ever leave the device: paywall_seen and reserve_submit.
- *  Each goes out as exactly three fields: { event, date, device }.
+ *  Each goes out as { event, date, device }, plus ab ("A" | "B") when the
+ *  subhead test 1 arm is set (abSubhead1.js). Nothing else.
  *  date is the device's local calendar day (YYYY-MM-DD).
  *  device is a random id made on this device.
  *  Every other event stays on the device. Every other field is dropped.
@@ -137,7 +138,7 @@ export async function postCollector(record, {
 }
 
 /** Forward one bus event. Empty endpoint sends nothing and does not mint a device id.
- *  Only paywall_seen and reserve_submit send. The body is only event, date, and device.
+ *  Only paywall_seen and reserve_submit send. The body is event, date, device, and ab when set.
  */
 export async function shipFunnelEvent(detail, {
   endpoint = collectorEndpoint(),
@@ -160,6 +161,7 @@ export async function shipFunnelEvent(detail, {
       date: localEventDate(now, detail && detail.at),
       device: deviceId,
     };
+    if (detail && (detail.ab === "A" || detail.ab === "B")) record.ab = detail.ab;
     return postCollector(record, { endpoint: url, fetchImpl, beaconImpl });
   } catch {
     return { ok: false, sent: false };

@@ -67,6 +67,7 @@ import {
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
 import { quizNextAnswersScrollY, QUIZ_NEXT_SCROLL_DELAY_MS } from "./quizAnswerScroll.js";
+import { subhead1Arm, subhead1AbField, SUBHEAD1_A } from "./abSubhead1.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { checkpointUnderBarNudge, comprensionFitStep, comprensionHeaderResized, comprensionNextFitLevel, comprensionRealignScrollY, watchComprensionFit, homeArrivalScrollY, lecturaAdvanceScrollY, lecturaParagraphArrivalTop, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
 import { firstSessionBeatOf, firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
@@ -8595,7 +8596,7 @@ export default function App() {
           progressValue: prog.firstActivityDay,
           today: seenToday,
         });
-        emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: seenSource, day: learnerDayNumber(seenFirst, seenToday) });
+        emitFunnelEvent({ event: FUNNEL_EVENTS.paywallSeen, source: seenSource, day: learnerDayNumber(seenFirst, seenToday), ab: subhead1AbField() });
       }
       setReserveStep(RESERVE_STEP.closed);
     } else {
@@ -8969,7 +8970,7 @@ export default function App() {
   };
   const tapPaywallAnnual = () => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.annual });
-    emitFunnelEvent({ event: FUNNEL_EVENTS.tapAnnual, source: paywallSeenKindRef.current });
+    emitFunnelEvent({ event: FUNNEL_EVENTS.tapAnnual, source: paywallSeenKindRef.current, ab: subhead1AbField() });
     setPaywallMonthlyHold(false);
     setReserveStep(RESERVE_STEP.open);
   };
@@ -8986,7 +8987,7 @@ export default function App() {
     }
     // reserve_submit counts a device once: never on a re-reserve.
     if (next === RESERVE_STEP.done && !wasReserved) {
-      emitFunnelEvent({ event: FUNNEL_EVENTS.reserveSubmit, plan: RESERVE_PLAN, price: RESERVE_PRICE });
+      emitFunnelEvent({ event: FUNNEL_EVENTS.reserveSubmit, plan: RESERVE_PLAN, price: RESERVE_PRICE, ab: subhead1AbField() });
     }
   };
   const tapPaywallMonthly = () => {
@@ -11334,7 +11335,7 @@ export default function App() {
             {/* Reserved views (No face, Oct 20): the done box sits right under the hero bird, at the headline's gap. */}
             {reservedReturn ? null : (<>
             <div data-paywall-source={paywallHeadlineSource} data-testid="soft-paywall-headline" style={{ fontWeight: 900, fontSize: 22, textWrap: "balance", margin: "10px 0 6px", flexShrink: 0, color: theme === "dark" ? "#F6EFE4" : D.ink }}>{paywallHeadlineText}</div>
-            <div data-testid="soft-paywall-body" style={{ ...paywallBodyType, marginBottom: 8, flexShrink: 0 }}>{L.paywallBody}</div>
+            <div data-testid="soft-paywall-body" data-ab={subhead1Arm().render} style={{ ...paywallBodyType, marginBottom: 8, flexShrink: 0 }}>{subhead1Arm().render === "A" ? SUBHEAD1_A[uiLang === "en" ? "en" : "es"] : L.paywallBody}</div>
             </>)}
             {(() => {
               /* Founding annual card, No face page Oct 19. A default, B open, C bad email, D reserved. Never charges. */

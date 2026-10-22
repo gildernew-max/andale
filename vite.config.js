@@ -45,5 +45,7 @@ export default defineConfig({
     // The old flows.test.jsx file held one worker for ~10 minutes. Cap the pool at 4
     // so a larger runner does not fan out to one worker per file.
     maxWorkers: 4,
+    // Fresh A/B rolls land on arm B in tests (see src/testSetupAb.js).
+    setupFiles: ['src/testSetupAb.js'],
   },
 })
