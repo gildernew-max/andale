@@ -66,6 +66,7 @@ import {
 } from "./sobremesa.js";
 import { shouldArmLecturaWin, shouldArmStory0Beat, shouldPlayDoctoraBeat, shouldPlayHoyBeat, shouldPlayLecturaWin, shouldPlayStory0Beat, shouldPlayWinBounce } from "./winBounce.js";
 import { LECTURA_HANDOFF_SEEN, isLecturaStoryOpen, lecturaHandoffCta, lecturaHandoffQuiet, lecturaHandoffTarget, nextOffPathStory, nextUnreadStory, shouldShowLecturaHandoff, shouldStampLecturaHandoff } from "./lecturaHandoff.js";
+import { quizNextAnswersScrollY, QUIZ_NEXT_SCROLL_DELAY_MS } from "./quizAnswerScroll.js";
 import { lecturaCliffhangerLine } from "./lecturaCliffhanger.js";
 import { checkpointUnderBarNudge, comprensionFitStep, comprensionHeaderResized, comprensionNextFitLevel, comprensionRealignScrollY, watchComprensionFit, homeArrivalScrollY, lecturaAdvanceScrollY, lecturaParagraphArrivalTop, lecturaClaimNextScrollY, lecturaClaimScrollY, lecturaNextClearanceCss, lecturaNextPinStyle, lecturaNextRowTop, lecturaPinnedBandTop, lecturaQuestionsOpenScrollY, lecturaSafeAreaBottom, lecturaSheetCanReachBottom, lecturaSheetReachStyle, lecturaSheetTop, lecturaStickyHeaderBottom, LECTURA_CARD_RADIUS, LECTURA_NEXT_HELD_OPACITY, LECTURA_STILL_BAND_HEIGHT, LECTURA_STILL_CARD_INSET, LECTURA_STILL_CARD_TOP_INSET, LECTURA_STILL_MARGIN_BOTTOM, LECTURA_WORD_SHEET_HOST_Z, LECTURA_WORD_SHEET_Z, lecturaPointInRect, lecturaStillCornerRadius, lecturaStillObjectPosition } from "./lecturaAdvance.js";
 import { firstSessionBeatOf, firstSessionChallengeCount, firstSessionProgressPct, firstSessionQuestions, migrateFirstSession, shouldUseFirstSession, someFirstSessionQuestions } from "./firstSession.js";
@@ -7439,6 +7440,37 @@ export default function App() {
     };
     return watchComprensionFit({ target: header, onResize });
   }, [screen, paraIdx, storyView, prog.uiLang, comprensionFit, ansSel]);
+
+  // Q2/Q3: after an answer, land the next question's answers in view (Varys cold walk, Oct 21).
+  // The quote stays whole; only the scroll moves, once per newly answered question.
+  const quizAnsweredRef = useRef(0);
+  useEffect(() => {
+    if (screen !== "story") { quizAnsweredRef.current = 0; return undefined; }
+    const count = Object.values(ansSel || {}).filter((v) => v != null).length;
+    const grew = count > quizAnsweredRef.current;
+    quizAnsweredRef.current = count;
+    if (!grew || !storyView) return undefined;
+    const prompts = Array.from(document.querySelectorAll("[data-testid='story-q-prompt']"));
+    const next = prompts.findIndex((_, i) => ansSel?.[i] == null);
+    if (next < 1) return undefined;
+    const timer = setTimeout(() => {
+      const prompt = prompts[next];
+      const choices = prompt?.nextElementSibling ? Array.from(prompt.nextElementSibling.querySelectorAll("button")) : [];
+      if (!prompt || !choices.length) return;
+      const target = quizNextAnswersScrollY({
+        scrollY: window.scrollY,
+        viewportTop: lecturaStickyHeaderBottom(document.querySelector("[data-testid='brand-home']")),
+        viewportHeight: window.innerHeight,
+        promptTop: prompt.getBoundingClientRect().top,
+        firstChoiceBottom: choices[0].getBoundingClientRect().bottom,
+        lastChoiceBottom: choices[choices.length - 1].getBoundingClientRect().bottom,
+      });
+      if (target == null) return;
+      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      window.scrollTo({ top: target, behavior: reduce ? "auto" : "smooth" });
+    }, QUIZ_NEXT_SCROLL_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [screen, storyView, ansSel]);
 
   // Claim mounts under Q3. After CLAIM, the XP-claimed card can grow past
   // that fold. Pull the whole card back inside: 12px above the viewport
