@@ -13,8 +13,8 @@ assert.equal(RESERVE_WORDS.en.action, "Reserve my spot");
 assert.equal(RESERVE_WORDS.es.action, "Reservar mi lugar");
 assert.equal(RESERVE_WORDS.en.note, "Your email is saved only on this device to hold your spot. Nothing is charged today.");
 assert.equal(RESERVE_WORDS.es.note, "Tu correo se guarda solo en este dispositivo para apartar tu lugar. Hoy no se cobra nada.");
-assert.equal(RESERVE_WORDS.es.error, "Revisa el correo.");
-assert.equal(RESERVE_WORDS.en.error, "Check the email.");
+assert.equal(RESERVE_WORDS.es.error, "Escribe un correo válido.");
+assert.equal(RESERVE_WORDS.en.error, "Enter a valid email.");
 assert.equal(RESERVE_WORDS.es.doneTitle, "Listo. Tu lugar está apartado.");
 assert.equal(RESERVE_WORDS.en.doneLine, "$39.99 a year. Nothing is charged today.");
 for (const lang of ["es", "en"]) {
