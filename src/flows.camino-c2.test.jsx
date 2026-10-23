@@ -868,7 +868,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
       expect(prog.lastDay).toBe(today);
     });
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("Hay mucho más por leer.");
-    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Todas las historias. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.");
+    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Todas las historias, sin esperar. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.");
     assertSoftPaywallAnnualPrimary("es");
     expect(screen.getByTestId("soft-paywall").textContent).not.toMatch(/Orden distinto, mismo sentido|Different order, same meaning/);
     expect(screen.getByTestId("soft-paywall").querySelector("[data-testid=\"word-order-tip\"]")).toBeNull();
@@ -914,7 +914,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("come-back-tomorrow")).toBeNull();
     await awaitSoftPaywallAfterFirstWin();
     expect(screen.getByTestId("soft-paywall-headline").textContent).toBe("There's much\u00A0more to read.");
-    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Every story. Real Mexican Spanish, past\u00A0the\u00A0basics.");
+    expect(screen.getByTestId("soft-paywall-body").textContent).toBe("Every story, no waiting. Real Mexican Spanish, past\u00A0the\u00A0basics.");
     assertSoftPaywallAnnualPrimary("en");
 
     await user.click(screen.getByTestId("soft-paywall-annual"));

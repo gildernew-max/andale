@@ -1281,8 +1281,8 @@ const FALLBACK_HEADLINE = {
   en: "There's much\u00A0more to read.",
 };
 const HOOK_BODY = {
-  es: "Todas las historias. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.",
-  en: "Every story. Real Mexican Spanish, past\u00A0the\u00A0basics.",
+  es: "Todas las historias, sin esperar. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.",
+  en: "Every story, no waiting. Real Mexican Spanish, past\u00A0the\u00A0basics.",
 };
 
 const assertPaywallHeadline = (source, lang = "es") => {

@@ -22,7 +22,7 @@ export const RESERVE_WORDS = Object.freeze({
     label: "PLAN ANUAL FUNDADOR",
     action: "Reservar mi lugar",
     small: "Hoy no se cobra nada.",
-    saving: "US$43.89 menos que 12\u00A0meses a US$6.99",
+    saving: "Son US$3.33\u00A0al\u00A0mes.",
     /** George, Oct 19: shown in the saving line's slot after a monthly tap, until the annual card opens. */
     monthlyHold: "El mensual aún no abre. Aparta el anual.",
     placeholder: "tu@correo.com",
@@ -48,7 +48,7 @@ export const RESERVE_WORDS = Object.freeze({
     label: "FOUNDING ANNUAL",
     action: "Reserve my spot",
     small: "Nothing is charged today.",
-    saving: "$43.89 less than 12\u00A0months at $6.99",
+    saving: "That's $3.33\u00A0a\u00A0month.",
     monthlyHold: "Monthly isn't open yet. Reserve annual.",
     placeholder: "you@email.com",
     note: "Your email is saved only on this device to hold your spot. Nothing is charged today.",

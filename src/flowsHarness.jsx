@@ -484,8 +484,8 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   const body = screen.getByTestId("soft-paywall-body");
   const dismiss = screen.getByTestId("soft-paywall-dismiss");
   const copy = lang === "en"
-    ? { title: "There's much\u00A0more to read.", benefit: "Every story. Real Mexican Spanish, past\u00A0the\u00A0basics.", annual: "FOUNDING ANNUAL", action: "Reserve my spot", small: "Nothing is charged today.", dismiss: "Continue free", price: "$39.99\u00A0a\u00A0year", monthly: "$6.99\u00A0a\u00A0month", freeLine: "Free: stories unlock one at a time, in order." }
-    : { title: "Hay mucho más por leer.", benefit: "Todas las historias. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", annual: "PLAN ANUAL FUNDADOR", action: "Reservar mi lugar", small: "Hoy no se cobra nada.", dismiss: "Seguir gratis", price: "US$39.99\u00A0al\u00A0año", monthly: "US$6.99\u00A0al\u00A0mes", freeLine: "Gratis: los cuentos se abren uno a uno, en orden." };
+    ? { title: "There's much\u00A0more to read.", benefit: "Every story, no waiting. Real Mexican Spanish, past\u00A0the\u00A0basics.", annual: "FOUNDING ANNUAL", action: "Reserve my spot", small: "Nothing is charged today.", dismiss: "Continue free", price: "$39.99\u00A0a\u00A0year", monthly: "$6.99\u00A0a\u00A0month", freeLine: "Free: stories unlock one at a time, in order." }
+    : { title: "Hay mucho más por leer.", benefit: "Todas las historias, sin esperar. Español mexicano de verdad, más allá de\u00A0lo\u00A0básico.", annual: "PLAN ANUAL FUNDADOR", action: "Reservar mi lugar", small: "Hoy no se cobra nada.", dismiss: "Seguir gratis", price: "US$39.99\u00A0al\u00A0año", monthly: "US$6.99\u00A0al\u00A0mes", freeLine: "Gratis: los cuentos se abren uno a uno, en orden." };
   expect(screen.getByTestId("soft-paywall-headline").textContent).toBe(copy.title);
   expect(body.textContent).toBe(copy.benefit);
   expect(body.style.textWrap).toBe("");
@@ -498,7 +498,8 @@ export const assertSoftPaywallAnnualPrimary = (lang = "es") => {
   expect(screen.queryByTestId("soft-paywall-free-limit")).toBeNull();
   expect(dismiss.textContent).toBe(copy.dismiss);
   expect(screen.getByTestId("soft-paywall-annual-label").textContent).not.toMatch(/\$39\.99|\$6\.99/);
-  expect(wall.textContent).not.toMatch(/12\s*[x×]|83\.88|3\.33|\d\s*%|was \$/i);
+  // Test 2 (Oct 22): the one approved per-month line under the annual card; anything else stays banned.
+  expect(wall.textContent.replace(/Son US\$3\.33\u00A0al\u00A0mes\.|That's \$3\.33\u00A0a\u00A0month\./, "")).not.toMatch(/12\s*[x×]|83\.88|3\.33|\d\s*%|was \$/i);
   expect(wall.textContent).not.toMatch(/Vista previa|you won|Apple|Restore|Un mes|One month/);
   expect(wall.textContent).toContain(copy.price);
   const monthly = screen.getByTestId("soft-paywall-monthly");
