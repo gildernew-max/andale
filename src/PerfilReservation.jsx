@@ -1,6 +1,6 @@
 /** Perfil reservation row (Varys walk Oct 20: the reserve left no trace).
  *  One quiet row, cream on light / dark sheet on dark. No lime, no badge, no bird.
- *  Change reuses the reserve email field, «Reservar» and «Revisa el correo.». Device only. */
+ *  Change reuses the reserve email field, «Reservar» and «Escribe un correo válido.». Device only. */
 import { useState } from "react";
 import { reserveWords, perfilReserveLine, readReservation, updateReservationEmail, removeReservation } from "./reserveAnnual.js";
 import { isWaitlistEmail } from "./waitlist.js";
