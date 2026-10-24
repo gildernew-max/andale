@@ -941,7 +941,7 @@ assert(WAITLIST_PROMPT.es === "Avísame cuando abramos la tienda" && WAITLIST_PR
 assert(WAITLIST_PLACEHOLDER.es === "Tu correo" && WAITLIST_PLACEHOLDER.en === "Your email", "waitlist placeholder George lock");
 assert(WAITLIST_CTA.es === "Avisarme" && WAITLIST_CTA.en === "Notify me", "waitlist CTA George lock");
 assert(WAITLIST_SUCCESS.es === "Listo. Te escribo cuando esté listo." && WAITLIST_SUCCESS.en === "Got it. I’ll write when it’s ready.", "waitlist success George lock");
-assert(WAITLIST_ERROR.es === "Revisa el correo" && WAITLIST_ERROR.en === "Check the email", "waitlist error George lock");
+assert(WAITLIST_ERROR.es === "Escribe un correo válido." && WAITLIST_ERROR.en === "Enter a valid email.", "waitlist error George lock");
 assert(WAITLIST_PRIVACY.es === "Solo para el aviso de apertura. Sin spam." && WAITLIST_PRIVACY.en === "Launch notice only. No spam.", "waitlist privacy George lock");
 assert(waitlistPrompt("en") === WAITLIST_PROMPT.en && waitlistPrompt("es") === WAITLIST_PROMPT.es, "waitlist prompt follows uiLang");
 assert(waitlistPlaceholder("en") === WAITLIST_PLACEHOLDER.en && waitlistCta("es") === WAITLIST_CTA.es, "waitlist field and CTA follow uiLang");

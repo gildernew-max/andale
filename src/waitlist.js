@@ -26,8 +26,8 @@ export const WAITLIST_SUCCESS = {
   en: "Got it. I’ll write when it’s ready.",
 };
 export const WAITLIST_ERROR = {
-  es: "Revisa el correo",
-  en: "Check the email",
+  es: "Escribe un correo válido.",
+  en: "Enter a valid email.",
 };
 export const WAITLIST_PRIVACY = {
   es: "Solo para el aviso de apertura. Sin spam.",
