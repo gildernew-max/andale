@@ -287,7 +287,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("hub-hoy").style.border).toMatch(/58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
     expect(screen.getByTestId("hub-sendero").getAttribute("data-hub-loud")).toBeNull();
     expect(screen.getByTestId("hub-sendero").style.border).toBe(screen.getByTestId("hub-stories").style.border);
-    expect(screen.getByTestId("hub-sendero").style.border).toBe(screen.getByTestId("hub-games").style.border);
+    expect(screen.getByTestId("hub-sendero").style.border).toBe(screen.getByTestId("hub-phrase-doctor").style.border);
 
     await user.click(screen.getByTestId("hub-sendero"));
     await waitFor(() => expect(screen.getByTestId("path-sheet")).toBeTruthy());
@@ -368,7 +368,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const user = await boot();
     expect(screen.queryByTestId("hub-sobremesa")).toBeNull();
     expect(screen.getByTestId("learn-hub-tiles").textContent).not.toMatch(/Sobremesa|Intermedio|Intermediate/);
-    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(6);
+    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(5);
     expect(screen.getByTestId("eighty-twenty-cta").textContent).toMatch(/80\/20/);
     expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe("Reglas del subjuntivo");
     expect(screen.getByTestId("eighty-twenty-cta").textContent).not.toMatch(/Sobremesa|Intermedio/);

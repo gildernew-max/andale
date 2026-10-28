@@ -252,7 +252,6 @@ export const assertHubFace = (lang = hubUiLang()) => {
     expect(quiet).toBe(face.hoyQuiet);
   }
   expect(screen.getByTestId("hub-stories").textContent).toContain(face.stories);
-  expect(screen.getByTestId("hub-games").textContent).toContain(face.games);
   expect(screen.getByTestId("hub-phrase-doctor").textContent).toContain(face.doctor);
   expect(screen.getByTestId("eighty-twenty-label").textContent).toBe(face.eighty);
   expect(screen.getByTestId("hub-eighty-quiet").textContent).toBe(face.eightyQuiet);
@@ -274,24 +273,23 @@ export const assertEqualHub = () => {
   expect(screen.queryByTestId("home-pitch")).toBeNull();
   const gridIds = [...tiles.querySelectorAll("button")].map((el) => el.getAttribute("data-testid"));
   expect(gridIds).toEqual([
-    "hub-hoy", "hub-stories", "hub-games", "hub-phrase-doctor",
+    "hub-hoy", "hub-stories", "hub-phrase-doctor",
     "eighty-twenty-cta", "hub-sendero",
   ]);
   const heights = gridIds.map((id) => screen.getByTestId(id).style.height);
   expect(new Set(heights).size).toBe(1);
   expect(screen.getByTestId("hub-hoy").querySelector("img")?.getAttribute("src")).toMatch(/hub\/hoy\.png/);
   expect(screen.getByTestId("hub-stories").querySelector("img")?.getAttribute("src")).toMatch(/hub\/stories\.png/);
-  expect(screen.getByTestId("hub-games").querySelector("img")?.getAttribute("src")).toMatch(/hub\/games\.png/);
   expect(screen.getByTestId("hub-phrase-doctor").querySelector("img")?.getAttribute("src")).toMatch(/hub\/phrase-doctor\.png/);
   expect(screen.getByTestId("eighty-twenty-cta").querySelector("img")?.getAttribute("src")).toMatch(/hub\/eighty\.png/);
   expect(screen.getByTestId("hub-sendero").querySelector("img")?.getAttribute("src")).toMatch(/hub\/sendero\.png/);
   const quietBorder = screen.getByTestId("hub-stories").style.border;
-  expect(screen.getByTestId("hub-games").style.border).toBe(quietBorder);
   expect(screen.getByTestId("hub-sendero").style.border).toBe(quietBorder);
   expect(quietBorder).not.toMatch(/58CC02|rgb\(\s*88,\s*204,\s*2\s*\)/i);
   expect(screen.getByTestId("hub-sendero").getAttribute("data-hub-loud")).toBeNull();
   expect(screen.getByTestId("hub-stories").getAttribute("data-hub-loud")).toBeNull();
-  expect(screen.getByTestId("hub-games").getAttribute("data-hub-loud")).toBeNull();
+  expect(screen.queryByTestId("hub-games")).toBeNull();
+  expect(screen.getByTestId("hub-sendero").style.gridColumn).toBe("1 / -1");
   expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBe("hoy");
   expect(screen.getByTestId("hub-section-title").textContent).toMatch(/Intermedio|Intermediate/);
   expect(screen.getByTestId("camino-more").textContent).not.toMatch(/Más|More/);

@@ -1250,7 +1250,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-hoy-done")).toBe("1");
     expect(screen.getByTestId("hub-hoy-done")).toBeTruthy();
     expect(screen.getByTestId("hub-phrase-doctor").getAttribute("data-hub-loud")).toBeNull();
-    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(6);
+    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(5);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toMatch(HUB_DOCTOR_RE);
     expect(screen.getByTestId("door-meta").textContent).toMatch(/Meta:\s*\d+\/40/);
     expect(screen.getByTestId("rayo-toggle")).toBeTruthy();

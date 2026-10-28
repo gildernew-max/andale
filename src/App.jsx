@@ -5639,11 +5639,6 @@ export default function App() {
     setTab(gamesReturnRef.current === "camino" ? "camino" : "practica");
   };
 
-  const openGamesHub = () => {
-    gamesReturnRef.current = "games";
-    setScreen("games");
-  };
-
   const startCubetas = (from = "practica") => {
     gamesReturnRef.current = from === "games" ? "games" : "practica";
     awardLockRef.current.delete("cubetas");
@@ -8702,7 +8697,6 @@ export default function App() {
             const hubTiles = [
               { id: "hoy", testid: "hub-hoy", title: L.hubHoy, quiet: welcomeLine || L.hubHoyQuiet, art: <HubTileArt face="hoy" />, act: () => todayScene && !todaySceneDone && setHoyPlanOpen(true) },
               { id: "stories", testid: "hub-stories", title: storiesLoud ? L.hubStoriesNext : L.hubStories, art: <HubTileArt face="stories" />, act: () => storiesLoud ? openStory(nextUnreadStory(STORIES, prog.stories)) : setTab("lectura") },
-              { id: "games", testid: "hub-games", title: L.hubGames, art: <HubTileArt face="games" />, act: () => openGamesHub() },
               { id: "doctor", testid: "hub-phrase-doctor", title: L.hubDoctor, art: <HubTileArt face="doctor" />, act: openDoctor },
               { id: "eighty", testid: "eighty-twenty-cta", title: L.hubEighty, quiet: L.hubEightyQuiet, art: <HubTileArt face="eighty" />, act: () => setSubjFiveOpen(true) },
               { id: "sendero", testid: "hub-sendero", title: L.hubSendero, quiet: L.hubSenderoQuiet, art: <HubTileArt face="sendero" />, act: openPath },
@@ -8741,7 +8735,7 @@ export default function App() {
                   </div>
                 )}
                 <div data-testid="learn-hub-tiles" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                  {hubTiles.map((tile) => {
+                  {hubTiles.map((tile, tileIdx) => {
                     const storiesFill = tile.id === "stories" && storiesLoud && !firstStreakCard;
                     const edge = `1.5px solid ${tile.id === "hoy" && hoyLoud && !firstStreakCard ? D.green : D.line}`;
                     return (
@@ -8749,6 +8743,7 @@ export default function App() {
                       data-hub-loud={tile.id === "hoy" && hoyLoud && !firstStreakCard ? "hoy" : tile.id === "stories" && storiesLoud && !firstStreakCard ? "stories" : undefined}
                       data-hub-hoy-done={tile.id === "hoy" && hoyDone ? "1" : undefined}
                       style={{
+                        ...(hubTiles.length % 2 === 1 && tileIdx === hubTiles.length - 1 ? { gridColumn: "1 / -1" } : {}),
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -9475,19 +9470,6 @@ export default function App() {
           </button>
           </div>
           </div>
-          <details style={{ margin: "0 0 14px", textAlign: "left" }}>
-            <summary style={{ fontSize: 12.5, fontWeight: 800, color: D.sub, cursor: "pointer", padding: "8px 4px", listStyle: "none" }}>
-              {uiLang === "en" ? "More games" : "Más juegos"} ▾
-            </summary>
-            <div style={{ display: "grid", gap: 7, marginTop: 6 }}>
-              <button onClick={startSnakes}
-                style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", background: D.card, border: `2px solid ${D.line}`, borderBottom: `3px solid ${D.line}`, color: D.ink, borderRadius: 12, padding: "9px 12px", fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: 18 }}>🐍</span>
-                <span style={{ flex: 1 }}>{uiLang === "en" ? "Snakes & Ladders" : "Serpientes y Escaleras"}</span>
-                <span style={{ fontSize: 14, color: D.sub }}>→</span>
-              </button>
-            </div>
-          </details>
           <div style={{ margin: "16px 0 16px", border: `2px solid ${D.purple}`, borderBottom: `5px solid ${D.purpleDark}`, borderRadius: 16, padding: 14, background: D.purpleBg, textAlign: "left" }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 10 }}>
               <div style={{ width: 44, height: 44, borderRadius: 14, background: D.purple, borderBottom: `4px solid ${D.purpleDark}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -9672,11 +9654,6 @@ export default function App() {
             ))}
           </div>
 
-          <div style={{ marginTop: 16, border: `2px solid ${D.line}`, borderRadius: 16, padding: 14, background: D.subtle, fontSize: 12.5, fontWeight: 800, color: D.sub, lineHeight: 1.4 }}>
-            {uiLang === "en"
-              ? "Weekly challenge idea: win any 3 game rounds to unlock a coach postcard."
-              : "Idea de reto semanal: gana 3 rondas de juegos para desbloquear una postal de coach."}
-          </div>
         </div>
       )}
 
@@ -10585,7 +10562,6 @@ export default function App() {
 	            ].map((t) => (
               <button key={t.id} data-testid={`nav-${t.id}`} aria-label={t.l} onClick={() => {
                 setTab(t.id);
-                if (t.id === "juegos" && !prog.missions?.openedGames) save({ missions: { ...(prog.missions || {}), openedGames: true } });
               }} aria-current={tab === t.id ? "page" : undefined}
                 style={{ flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: "10px 0 12px", position: "relative", borderTop: tab === t.id ? `3px solid ${D.green}` : "3px solid transparent", minHeight: 56 }}>
                 <div style={{ lineHeight: 0, marginBottom: 2 }}><t.Icon size={22} color={tab === t.id ? D.green : D.lockIcon} /></div>

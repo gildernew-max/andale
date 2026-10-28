@@ -77,7 +77,6 @@ describe("Stories is loud after Hoy until the first claim", () => {
     expect(contrastRatio("#1F3A1A", "#58CC02")).toBeGreaterThanOrEqual(4.5);
     expect(hoy.style.background).not.toMatch(LIME);
     expect(hoy.style.border).not.toMatch(LIME);
-    expect(screen.getByTestId("hub-games").getAttribute("data-hub-loud")).toBeNull();
     expect(screen.getByTestId("hub-phrase-doctor").getAttribute("data-hub-loud")).toBeNull();
     expect(screen.getByTestId("hub-sendero").getAttribute("data-hub-loud")).toBeNull();
     expect(stories.querySelector("[data-testid='hub-hoy-done']")).toBeNull();
@@ -169,7 +168,7 @@ describe("Stories is loud after Hoy until the first claim", () => {
 
     await home({ uiLang: "en", stories: { "story-0": true } });
     const stories = screen.getByTestId("hub-stories");
-    const games = screen.getByTestId("hub-games");
+    const games = screen.getByTestId("hub-phrase-doctor");
     expect(screen.getByTestId("hub-stories-label").textContent).toBe(USUAL.en);
     expect(stories.getAttribute("data-hub-loud")).toBeNull();
     expect(screen.getByTestId("hub-hoy").getAttribute("data-hub-loud")).toBeNull();
@@ -178,7 +177,7 @@ describe("Stories is loud after Hoy until the first claim", () => {
     expect(stories.style.background).toBe(games.style.background);
     expect(stories.style.border).toBe(games.style.border);
     expect(stories.style.borderBottom).toBe(games.style.borderBottom);
-    expect(screen.getByTestId("hub-stories-label").style.color).toBe(screen.getByTestId("hub-games").style.color || screen.getByTestId("hub-sendero-label").style.color);
+    expect(screen.getByTestId("hub-stories-label").style.color).toBe(games.style.color || screen.getByTestId("hub-sendero-label").style.color);
 
     await home({ uiLang: "es", stories: { "story-1": true } });
     expect(screen.getByTestId("hub-stories-label").textContent).toBe(USUAL.es);
