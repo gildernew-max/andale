@@ -49,6 +49,8 @@ export const FUNNEL_EVENTS = Object.freeze({
   firstSessionComplete: "first_session_complete",
   day2Return: "day2_return",
   firstStreakSeen: "first_streak_seen",
+  /** Scene 1 speaking loop: a recording happened. Event + timestamp only — never the audio, never what was said. */
+  sceneRecording: "scene1_recording",
 });
 
 export const PAYWALL_TAP = Object.freeze({
