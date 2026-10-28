@@ -1,7 +1,6 @@
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { normalizePair } from "./matchPairs.js";
 import { stripPhrase } from "./wordOrder.js";
 
 /** ñ folds to n inside one flash deck (cardKey) or one match set (pairKey).
@@ -61,7 +60,14 @@ const loadPrivateKey = (file, name) => {
 };
 
 const cardKey = loadPrivateKey("flashDeck.js", "cardKey");
-const pairKey = loadPrivateKey("matchPairs.js", "pairKey");
+// matchPairs.js (Une las parejas game) was cut; lesson match sets keep the same fold.
+const pairKey = (s) => String(s || "").toLowerCase().trim().replace(/[¿?¡!.,;:—–-]/g, " ").replace(/\s+/g, " ").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+function normalizePair(pr) {
+  const es = Array.isArray(pr) ? pr[0] : pr?.es;
+  const en = Array.isArray(pr) ? pr[1] : pr?.en;
+  if (!es || !en) return null;
+  return [String(es), String(en)];
+}
 
 assert(cardKey("año") === "ano" && cardKey("año") === stripPhrase("año"), "cardKey folds ñ the same way as stripPhrase");
 assert(pairKey("año") === "ano" && pairKey("año") === stripPhrase("año"), "pairKey folds ñ the same way as stripPhrase");

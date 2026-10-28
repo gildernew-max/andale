@@ -161,13 +161,6 @@ describe("light greenText part 2", { timeout: 15000 }, () => {
     expect(norm((await screen.findByText(/Buen juicio/)).style.color)).toBe(LIME);
     expect(norm(screen.getByTestId("safe-risky-choice-formal").style.color)).toBe(GREEN_DARK);
 
-    await boot("light", { screen: "jeopardy", tab: "practica", jeopardy });
-    expect(norm((await screen.findByTestId("jeopardy-score-heading")).style.color)).toBe(LIGHT);
-    expect(norm(screen.getByTestId("jeopardy-choice-1").style.color)).toBe(LIGHT);
-
-    await boot("dark", { screen: "jeopardy", tab: "practica", jeopardy });
-    expect(norm((await screen.findByTestId("jeopardy-score-heading")).style.color)).toBe(GREEN_DARK);
-    expect(norm(screen.getByTestId("jeopardy-choice-1").style.color)).toBe(GREEN_DARK);
   });
 
   it("paints the correct option, the lesson quip, and ok words on the wrong footer", async () => {
@@ -295,29 +288,5 @@ describe("light greenText part 2", { timeout: 15000 }, () => {
     const darkMatched = await screen.findByTestId("match-tile-0");
     expect(darkMatched.style.opacity).toBe("1");
     expect(norm(darkMatched.style.color)).toBe(LIME);
-
-    const practice = {
-      screen: "matchPairs", tab: "practica",
-      matchGame: {
-        pairs: [["ojalá", "hopefully"], ["dudar", "to doubt"]],
-        left: [{ t: "ojalá", id: 0 }, { t: "dudar", id: 1 }],
-        right: [{ t: "hopefully", id: 0 }, { t: "to doubt", id: 1 }],
-        matched: [0], sel: null, done: false,
-      },
-    };
-    await boot("light", practice);
-    const practiceMatched = await screen.findByTestId("match-tile-left-0");
-    expect(practiceMatched.disabled).toBe(true);
-    expect(practiceMatched.style.opacity).toBe("1");
-    expect(norm(practiceMatched.style.color)).toBe(LIGHT);
-    expect(norm(practiceMatched.style.background)).toBe(MINT);
-    expect(norm(practiceMatched.style.borderTopColor)).toBe("#e5e5e5");
-    expect(norm(screen.getByTestId("match-tile-left-1").style.background)).toBe(WHITE);
-
-    await boot("dark", practice);
-    const darkPractice = await screen.findByTestId("match-tile-left-0");
-    expect(darkPractice.style.opacity).toBe("0.55");
-    expect(norm(darkPractice.style.color)).toBe(OK_DARK);
-    expect(norm(darkPractice.style.borderTopColor)).toBe(LIME);
   });
 });

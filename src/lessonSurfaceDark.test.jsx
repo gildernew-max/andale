@@ -140,13 +140,10 @@ describe("dark lesson surfaces", () => {
       "color: used ? limeText(D.greenDark, D) : D.greenText",
       "function darkLessonChipPaint",
       "background: D.subtle, borderColor: D.line, borderBottomColor: D.line, color: cream",
-      'theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")',
-      "theme === \"dark\" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)",
       "showWrong ? (theme === \"dark\" ? D.red : D.redDark)",
       "hit ? (theme === \"dark\" ? \"#58CC02\" : limeText(D.greenDark, D)) : (theme === \"dark\" ? D.red : D.redDark)",
       ".lesson-blank::placeholder{color:${D.sub};opacity:1}",
     ]) expect(appSrc).toContain(needle);
-    expect((appSrc.match(/theme === "dark" \? D\.subtle : \(isSel \? "#DDF4FF" : "#fff"\)/g) || []).length).toBe(1);
     const lessonMatch = sliceBetween('{q.type === "match" && (', '{/* ---------- ACTION BAR');
     expect(lessonMatch).toContain("darkLessonChipPaint({ used: !!(isMatched || isWrong), wrong: !!isWrong, D, cream: HUB_CREAM })");
     expect(lessonMatch).toContain("background: D.blueBg, borderColor: D.blue, borderBottomColor: D.blue, color: D.blue, opacity: 1");
@@ -206,14 +203,6 @@ describe("dark lesson surfaces", () => {
     expect([...document.querySelectorAll("style")].some((el) => el.textContent.includes(".lesson-blank::placeholder"))).toBe(false);
     expect(paint(screen.getAllByTestId("bank-tile")[0])).toMatchObject({ fill: "#ffffff", ink: "#2e7500" });
 
-    const pairs = {
-      screen: "matchPairs", tab: "practica",
-      matchGame: { pairs: [["ojalá", "hopefully"], ["dudar", "to doubt"]], left: [{ t: "ojalá", id: 0 }, { t: "dudar", id: 1 }], right: [{ t: "hopefully", id: 0 }, { t: "to doubt", id: 1 }], matched: [], sel: null, done: false },
-    };
-    await boot("dark", pairs);
-    expect(paint(await screen.findByTestId("match-tile-left-0"))).toMatchObject({ fill: "#252830", ink: "#f6efe4" });
-    await boot("light", pairs);
-    expect(paint(await screen.findByTestId("match-tile-left-0"))).toMatchObject({ fill: "#ffffff", ink: "#3c3c3c" });
     await boot("dark", lessonLive({ session: matchSession }));
     await waitFor(() => expect(screen.getByText("Une las parejas")).toBeTruthy());
     expect(paint(card("ojalá"))).toMatchObject({ fill: "#252830", ink: "#f6efe4" });
