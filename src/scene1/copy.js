@@ -16,7 +16,7 @@ export const SCENE1_INTRO_LINE = Object.freeze({
 });
 
 export const SCENE1_HANDOFF_LINE = Object.freeze({
-  es: "Acabas de comprar en español.",
+  es: "Acabas de pedir en español.",
   en: "You just ordered in Spanish.",
 });
 
