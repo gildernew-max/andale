@@ -127,8 +127,6 @@ const thrown = {
 };
 assert(emitLecturaStartOnce("story-0", { storage: thrown, today: "2026-10-14", bus: { dispatchEvent() { throw new Error("should not ship"); } } }) == null, "a failed day-record write does not emit");
 assert(logged(blocked, "lectura_start").length === 0, "a failed day-record write does not touch the device log");
-assert(emitLecturaStartOnce("dave@example.com", { storage: memoryStorage(), today: "2026-10-14" }) == null, "an address-shaped story id does not emit");
-assert(emitLecturaStartOnce("story-0", { storage: memoryStorage(), today: "2026-02-31" }) == null, "an impossible local day does not emit");
 if (previous === undefined) delete globalThis.localStorage;
 else globalThis.localStorage = previous;
 

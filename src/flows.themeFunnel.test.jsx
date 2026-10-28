@@ -12,7 +12,6 @@ import { SUBJ_FIVE, SUBJ_FIVE_LABEL } from "./subjFive.js";
 import { SOBREMESA_FIVE, SOBREMESA_NAME, SOBREMESA_QUIET, SOBREMESA_SELL, sobremesaDeepen, sobremesaName, sobremesaTipText, sobremesaTips } from "./sobremesa.js";
 import { startCubetasRun } from "./cubetas.js";
 import { HANGMAN_BANK, startHangmanRun } from "./hangman.js";
-import { startJeopardyRun } from "./jeopardy.js";
 import { lecturaCliffhangers } from "./lecturaCliffhanger.js";
 import {
   installFlowHooks,
@@ -220,88 +219,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("match-tile-1").getAttribute("data-state")).toBe("idle");
   });
 
-  it("dark Jeopardy tiles, keyboard keys, and Games buttons stay off white and cream at 4.5:1", async () => {
-    cleanup();
-    seedProgress({ theme: "dark", uiLang: "en" });
-    const user = userEvent.setup();
-    render(<App />);
-    await waitFor(() => expect(screen.getByTestId("learn-hub")).toBeTruthy());
-    expect(cssHex(screen.getByTestId("app-shell").style.background)).toBe("#15171c");
-    await user.click(screen.getByTestId("hub-games"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-start")).toBeTruthy());
-    await user.click(screen.getByTestId("jeopardy-start"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-grid")).toBeTruthy());
-    ["subj", "past", "porpara", "mex", "pron", "reg"].forEach((id) => {
-      assertDarkControl(screen.getByTestId(`jeopardy-cat-${id}`), `jeopardy-cat-${id}`);
-    });
-    screen.getAllByTestId(/^jeopardy-tile-/).forEach((tile) => {
-      assertDarkControl(tile, tile.getAttribute("data-testid"));
-    });
-    assertDarkControl(screen.getByTestId("jeopardy-back"), "jeopardy games");
-    await user.click(screen.getByTestId("jeopardy-tile-mex-100"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-choice-0")).toBeTruthy());
-    await user.click(screen.getByTestId("jeopardy-choice-0"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-continue")).toBeTruthy());
-    await user.click(screen.getByTestId("jeopardy-continue"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-tile-mex-100").disabled).toBe(true));
-    assertDarkControl(screen.getByTestId("jeopardy-tile-mex-100"), "used jeopardy tile");
-    assertDarkControl(screen.getByTestId("jeopardy-tile-mex-200"), "open jeopardy tile");
-    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).fill).toBe("#1e2128");
-    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-200")).fill).toBe("#1e2128");
-    expect(paintOf(screen.getByTestId("jeopardy-tile-mex-100")).ink).toBe("#f6efe4");
-    expect(paintOf(screen.getByTestId("jeopardy-cat-mex")).ink).toBe("#f6efe4");
-    expect(paintOf(screen.getByTestId("jeopardy-back")).fill).toBe("#1e2128");
-    expect(paintOf(screen.getByTestId("jeopardy-back")).ink).toBe("#f6efe4");
-
-    await user.click(screen.getByTestId("jeopardy-back"));
-    await waitFor(() => expect(screen.getByTestId("hangman-start")).toBeTruthy());
-    await user.click(screen.getByTestId("hangman-start"));
-    await waitFor(() => expect(screen.getByTestId("letter-board")).toBeTruthy());
-    const keys = [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")];
-    expect(keys.some((el) => el.getAttribute("data-letter") === "Ñ")).toBe(true);
-    expect(paintOf(keys.find((el) => el.getAttribute("data-letter") === "Ñ")).fill).toBe("#1e2128");
-    expect(paintOf(keys.find((el) => el.getAttribute("data-letter") === "Ñ")).ink).toBe("#f6efe4");
-    expect(keys.filter((el) => el.getAttribute("data-testid") === "accent-chip").map((el) => el.textContent).join("")).toBe("ÁÉÍÓÚÜ");
-    expect(paintOf(screen.getAllByTestId("accent-chip")[0]).fill).toBe("#1e2128");
-    expect(paintOf(screen.getAllByTestId("accent-chip")[0]).ink).toBe("#f6efe4");
-    keys.forEach((el) => assertDarkControl(el, `key ${el.getAttribute("data-letter")}`));
-    const word = screen.getByTestId("hangman-board").getAttribute("data-word");
-    const letters = [...new Set([...word.normalize("NFC")].map((ch) => ch.toLocaleUpperCase("es")))];
-    const chipFor = (ch) => [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")]
-      .find((el) => el.getAttribute("data-letter") === ch);
-    expect(chipFor("W")).toBeTruthy();
-    await user.click(chipFor("W"));
-    await user.click(chipFor(letters[0]));
-    await waitFor(() => expect(chipFor("W").getAttribute("data-state")).toBe("wrong"));
-    expect(chipFor(letters[0]).getAttribute("data-state")).toBe("correct");
-    expect(Number.parseInt(chipFor(letters[0]).style.fontWeight, 10)).toBeGreaterThanOrEqual(900);
-    [...screen.getAllByTestId("letter-chip"), ...screen.getAllByTestId("accent-chip")].forEach((el) => {
-      assertDarkControl(el, `played key ${el.getAttribute("data-letter")}`);
-    });
-    expect(paintOf(chipFor("W")).fill).toBe("#2a2e36");
-    expect(paintOf(chipFor("W")).ink).toBe("#a0a4ab");
-    expect(paintOf(chipFor(letters[0])).fill).toBe("#677050");
-    expect(paintOf(chipFor(letters[0])).ink).toBe("#f6efe4");
-    expect(contrastRatio("#A0A4AB", "#2A2E36")).toBeGreaterThanOrEqual(5.4);
-    for (const ch of letters) {
-      if (screen.queryAllByTestId("letter-chip").length + screen.queryAllByTestId("accent-chip").length === 0) break;
-      const chip = chipFor(ch);
-      if (chip && !chip.disabled) await user.click(chip);
-    }
-    await waitFor(() => expect(screen.getByTestId("hangman-back")).toBeTruthy());
-    assertDarkControl(screen.getByTestId("hangman-back"), "hangman games");
-    expect(paintOf(screen.getByTestId("hangman-back")).fill).toBe("#1e2128");
-    expect(paintOf(screen.getByTestId("hangman-back")).ink).toBe("#f6efe4");
-    const end = screen.getByTestId("hangman-end");
-    expect(cssHex(end.style.background)).toBe("#1e2128");
-    expect(end.style.border).toMatch(/2px solid/i);
-    expect(cssHex(end.style.borderColor) || cssHex(end.style.border)).toBe("#677050");
-    expect(cssHex(screen.getByTestId("hangman-win").style.color)).toBe("#e8e8ea");
-    expect(cssHex(screen.getByTestId("hangman-word").style.color)).toBe("#e8e8ea");
-    expect(cssHex(screen.getByTestId("hangman-literal").firstElementChild.style.color)).toBe("#a0a4ab");
-    expect(cssHex(screen.getByTestId("hangman-again").style.background)).toBe("#58cc02");
-    expect(screen.queryAllByTestId("letter-chip")).toHaveLength(0);
-  });
 
   it("letter boards default to QWERTY with Ñ after L; ABC toggle persists", async () => {
     const user = await boot();
@@ -994,40 +911,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
           ahorcado: { word: "gacho", status: "win", guessed: ["g", "a", "c", "h", "o"], awarded: true },
         },
       },
-      {
-        board: "jeopardy-board",
-        card: "jeopardy-result",
-        dismiss: "jeopardy-continue",
-        rest: "22px 20px 40px",
-        live: {
-          screen: "jeopardy", tab: "practica",
-          jeopardy: {
-            score: 100, status: "correct", selected: "Hola", complete: false, awarded: false,
-            active: {
-              prompt: "Hi", answer: "Hola", choices: ["Hola", "Adiós"], value: 100, stake: 100,
-              explain: "Hi.", double: false,
-              focus: { title: { es: "Vocab", en: "Vocab" }, desc: { es: "Vocab", en: "Vocab" } },
-            },
-          },
-        },
-      },
-      {
-        board: "memory-board",
-        card: "memory-end",
-        dismiss: "memory-again",
-        rest: "12px 4px 28px",
-        live: {
-          screen: "memory", tab: "practica",
-          memoryGame: {
-            pairs: [{ word: "gacho" }],
-            cards: [
-              { id: "gacho-word", pairId: "gacho", kind: "word" },
-              { id: "gacho-meaning", pairId: "gacho", kind: "meaning" },
-            ],
-            matched: ["gacho"], status: "done", faceUp: [], awarded: true,
-          },
-        },
-      },
     ];
     for (const spec of cases) {
       cleanup();
@@ -1167,11 +1050,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const hangmanBack = await screen.findByTestId("hangman-back");
     expect(outlinePaint(hangmanBack).fill).toBe(darkFill);
     expect(outlinePaint(hangmanBack).ink).toBe(cream);
-
-    mountThemed("dark", { screen: "jeopardy", tab: "practica", jeopardy: startJeopardyRun() });
-    const jeopardyBack = await screen.findByTestId("jeopardy-back");
-    expect(outlinePaint(jeopardyBack).fill).toBe(darkFill);
-    expect(outlinePaint(jeopardyBack).ink).toBe(cream);
   });
 
   it("an outline Btn follows a theme switch in the same visit", async () => {

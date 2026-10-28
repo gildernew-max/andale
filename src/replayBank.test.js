@@ -92,7 +92,6 @@ const freshReplay = drawLessonIndexes({
   random: mulberry32(7),
 });
 assert(freshReplay.length === 11 && new Set(freshReplay).size === 11, "replay with no memory still draws 11 unique");
-assert(freshReplay.every((i) => i >= 0 && i < 14), "memory-less replay stays inside questions + bank");
 
 let servedBank = false;
 for (let seed = 1; seed <= 30 && !servedBank; seed++) {

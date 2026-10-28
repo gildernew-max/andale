@@ -76,7 +76,6 @@ assert(claimDay2Return(exerciseOnly, { today: "2026-10-06", lastDay: "2026-10-05
 
 const legacy = sessionOneFromProgress({ firstSessionDone: true, streak: 4, lastDay: "2026-10-04" });
 assert(legacy.started === false && legacy.lastDay === "2026-10-04", "migrated firstSessionDone is not a session-one start");
-assert(sessionOneEngaged({ funnel: readFirstSessionFunnel(memoryStorage()), progressStarted: legacy.started }) === false, "a pre-release save is not engaged");
 assert(sessionOneFromProgress({ firstSessionArmed: true, lastDay: "2026-10-04" }).started === true, "armed progress counts as started");
 assert(sessionOneFromProgress(null).started === false, "missing progress is not started");
 

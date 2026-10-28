@@ -2,7 +2,6 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useContext, create
 import { createPortal } from "react-dom";
 import { buildFlashDeck, FLASH_SESSION_CAP, advanceFlashRun } from "./flashDeck.js";
 import { playSound as playGameSound } from "./playSound.js";
-import { applyMatchPick, buildMatchRound, MATCH_PRACTICE_XP, MATCH_ROUND_CAP, startMatchRun } from "./matchPairs.js";
 import { CONTENT_VERSION, acceptProgress, acceptLive, isFirstVisit } from "./schema.js";
 import { lessonListenText, prepQuestion as normalizeQuestion } from "./prepQuestion.js";
 import { drawLessonIndexes, questionByIndex } from "./replayBank.js";
@@ -46,11 +45,10 @@ import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
 import { TypeAccentRow } from "./typeAccentRow.jsx";
 import { accentRowScrollDelta } from "./typeAccentRow.js";
-import { boardTilePaint, darkGamesButtonStyle, darkHangmanEndCardStyle, spanishKeyboardKeyStyle } from "./spanishKeyboard.js";
-import { bucketBodyColor, bucketTileStyle, gamesHubCardChrome, gamesHubFocusColor, hangmanLightEndChrome, letterSlotUnderline, letterSlotUnderlineWidth, memoryCardPaint, wordleActionKeyChrome } from "./sageChrome.js";
+import { darkGamesButtonStyle, darkHangmanEndCardStyle } from "./spanishKeyboard.js";
+import { bucketBodyColor, bucketTileStyle, gamesHubCardChrome, gamesHubFocusColor, hangmanLightEndChrome, letterSlotUnderline, letterSlotUnderlineWidth } from "./sageChrome.js";
 import { lookupGloss, segmentGlossText } from "./storyGloss.js";
 import { GlossWord, GlossedText } from "./GlossedText.jsx";
-import { MemoryCardFace } from "./MemoryCardFace.jsx";
 import { subjFiveLines } from "./subjFive.js";
 import {
   sobremesaDeepen,
@@ -147,88 +145,8 @@ import {
   isHangmanSolved,
   startHangmanRun,
 } from "./hangman.js";
-import {
-  loadWordleRun,
-  saveWordleRun,
-  WORDLE_ABSENT,
-  WORDLE_CORRECT,
-  WORDLE_PRESENT,
-  wordleBackspace,
-  wordleChrome,
-  wordleCommit,
-  wordleDayKey,
-  wordleEnterLabel,
-  wordleGuessSet,
-  wordleHowTo,
-  wordleInvalidLine,
-  wordleKeyState,
-  wordleLetterFromKey,
-  wordleQuiet,
-  wordleRows,
-  wordleSentenceParts,
-  wordleTitle,
-  wordleTypeLetter,
-} from "./wordle.js";
-import {
-  JEOPARDY_VALUES,
-  chooseJeopardyChoice,
-  closeJeopardyPrompt as settleJeopardyPrompt,
-  finishJeopardyClear,
-  hydrateJeopardy,
-  jeopardyAnswerLabel,
-  jeopardyAnswered,
-  jeopardyCatLabel,
-  jeopardyCategoriesFrom,
-  jeopardyChoiceMatch,
-  jeopardyDoubleLabel,
-  jeopardyDoubleLine,
-  jeopardyHowTo,
-  jeopardyQuiet,
-  jeopardyResetLabel,
-  jeopardyTileCount,
-  jeopardyTitle,
-  jeopardyWinLine,
-  openJeopardyTile as applyJeopardyTile,
-  startJeopardyRun,
-} from "./jeopardy.js";
-import {
-  MEMORY_GEM,
-  MEMORY_MISS_MS,
-  MEMORY_XP,
-  applyMemoryPair,
-  applyMemoryTap,
-  clearMemoryMiss,
-  finishMemoryRun,
-  hydrateMemory,
-  isMemoryDone,
-  memoryCardLabel,
-  memoryCardText,
-  memoryCardTranslation,
-  memoryHowTo,
-  memoryIsOpen,
-  memoryLiteralWhyLabel,
-  memoryQuiet,
-  memoryRegionChip,
-  memoryShowTeach,
-  memorySoundsWeirdOutside,
-  memoryTitle,
-  memoryWhy,
-  memoryWinLine,
-  startMemoryRun,
-} from "./memory.js";
-import { CrosswordMark, CrosswordPlayfield } from "./CrosswordPlayfield.jsx";
-import {
-  CROSSWORD_GRID,
-  backspaceCrossword,
-  crosswordQuiet,
-  crosswordTitle,
-  hydrateCrossword,
-  revealCrosswordWord,
-  selectCrosswordCell,
-  selectCrosswordClue,
-  startCrosswordRun,
-  typeCrosswordLetter,
-} from "./crossword.js";
+const WORDLE_CORRECT = "#5C7356";
+const WORDLE_ABSENT = "#7E756E";
 import { ANDALE_BUILD } from "./buildId.js";
 
 /* ============================================================
@@ -340,13 +258,9 @@ const snapshotLive = (s) => {
     rivalOutcome: s.rivalOutcome,
     activeDuelId: s.activeDuel?.id || null,
     safeGame: s.safeGame,
-    jeopardy: s.jeopardy,
     snakeGame: s.snakeGame,
-    matchGame: s.matchGame,
     ahorcado: s.ahorcado,
     cubetasGame: s.cubetasGame,
-    memoryGame: s.memoryGame,
-    crosswordGame: s.crosswordGame,
   };
 };
 
@@ -2669,100 +2583,9 @@ const HangmanMark = ({ size = 44 }) => (
   </svg>
 );
 
-/** Flat geometric board — cream / terracotta / sage. No second mascot. */
-const JeopardyMark = ({ size = 44, tile = "#F6EFE4" }) => (
-  <svg data-testid="jeopardy-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="5" y="5" width="34" height="34" rx="6" fill={tile} stroke="#C46B3A" strokeWidth="2" />
-    <rect x="10" y="10" width="7" height="7" rx="1" fill="#5C7356" />
-    <rect x="19" y="10" width="7" height="7" rx="1" fill="#5C7356" />
-    <rect x="28" y="10" width="7" height="7" rx="1" fill="#5C7356" />
-    <rect x="10" y="19" width="7" height="7" rx="1" fill="#C46B3A" />
-    <rect x="19" y="19" width="7" height="7" rx="1" fill="#C46B3A" />
-    <rect x="28" y="19" width="7" height="7" rx="1" fill="#C46B3A" />
-    <rect x="10" y="28" width="7" height="7" rx="1" fill="#C46B3A" />
-    <rect x="19" y="28" width="7" height="7" rx="1" fill="#C46B3A" />
-    <rect x="28" y="28" width="7" height="7" rx="1" fill="#C46B3A" />
-  </svg>
-);
-
-/** Dark-game Memory board. Light mode keeps the cream / white / terracotta chrome. */
-const MEMORY_DARK_PAGE = "#15171C";
-const MEMORY_DARK_CARD = "#1E2128";
-/** Soft gray, one step lighter than the card (same step as D_DARK.subtle). */
-const MEMORY_DARK_EDGE = "#252830";
+/** Shared dark-surface ink. Also used by the rayo chip and section lane label. */
 const MEMORY_DARK_INK = "#F6EFE4";
-/** Muted gray. 6.44:1 on the card, including at 70% of the hero. */
-const MEMORY_DARK_GLOSS = "#A0A4AB";
-/** Wrong-pair flash text only. Not D.redDark. Light 5.11:1 on #FFF1F1. Dark 5.64:1 on #3A1A1A. */
-const MEMORY_WRONG_INK_LIGHT = "#C62828";
-const MEMORY_WRONG_INK_DARK = "#FF6B6B";
-/** Matched fill. Cream on this sage is 4.58:1, so the small gloss clears 4.5. */
-const MEMORY_DARK_SAGE = "#677050";
-/** Header labels on the page. 7.17:1 against the page. */
-const MEMORY_DARK_LABEL = "#A0A4AB";
-/** Card-back sage tile, lightened so it stays visible on the dark card. */
-const MEMORY_DARK_MARK = "#B8C0A0";
 
-/** Flat five-tile mark — cream / terracotta / sage. No second mascot. */
-const WordleMark = ({ size = 44, tile = "#F6EFE4" }) => (
-  <svg data-testid="wordle-mark" width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="3" y="16" width="6.4" height="6.4" rx="1.2" fill={tile} stroke="#C46B3A" strokeWidth="1.4" />
-    <rect x="11.2" y="16" width="6.4" height="6.4" rx="1.2" fill="#5C7356" />
-    <rect x="19.4" y="16" width="6.4" height="6.4" rx="1.2" fill="#C46B3A" />
-    <rect x="27.6" y="16" width="6.4" height="6.4" rx="1.2" fill="#5C7356" />
-    <rect x="35.2" y="16" width="6.4" height="6.4" rx="1.2" fill={tile} stroke="#C46B3A" strokeWidth="1.4" />
-  </svg>
-);
-
-/** Flat geometric two-tile / flip-card mark — cream / terracotta / sage. No second mascot.
- *  `tile` is the left plate (Games hub passes the dark card). `onDark` lightens the sage half on the Memory board. */
-const MemoryMark = ({ size = 44, labeled = false, tile = "#F6EFE4", onDark = false }) => (
-  <svg data-testid={labeled ? "memory-mark" : undefined} width={size} height={size} viewBox="0 0 44 44" aria-hidden="true">
-    <rect x="5" y="9" width="16" height="26" rx="4" fill={tile} stroke="#C46B3A" strokeWidth="2" />
-    <rect
-      x="23"
-      y="9"
-      width="16"
-      height="26"
-      rx="4"
-      fill={onDark ? MEMORY_DARK_MARK : "#5C7356"}
-      stroke={onDark ? MEMORY_DARK_INK : undefined}
-      strokeWidth={onDark ? 2 : undefined}
-    />
-  </svg>
-);
-
-const memoryCardAt = (refs, x, y, skipId) => {
-  for (const [id, el] of Object.entries(refs || {})) {
-    if (!el || id === skipId) continue;
-    const r = el.getBoundingClientRect();
-    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return id;
-  }
-  return null;
-};
-
-const memoryEntryForRun = (run) => {
-  if (!run?.lastMatch) return null;
-  return (run.pairs || []).find((row) => row.word === run.lastMatch) || null;
-};
-
-const MemoryTeach = ({ entry, uiLang, D }) => {
-  const chip = memoryRegionChip(entry);
-  return (
-    <div data-testid="memory-teach" style={{ textAlign: "left", border: `2px solid ${D.line}`, borderRadius: 14, padding: "11px 13px", background: D.card }}>
-      <div data-testid="memory-literal-why" style={{ fontSize: 10, fontWeight: 900, color: D.sub, letterSpacing: ".08em", marginBottom: 2 }}>{memoryLiteralWhyLabel(uiLang)}</div>
-      <div data-testid="memory-why" style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.4, color: D.ink }}>{memoryWhy(entry, uiLang)}</div>
-      {chip && (
-        <div data-testid="memory-region" data-weird={memorySoundsWeirdOutside(entry) ? "yes" : "no"} style={{ marginTop: 8 }}>
-          <span data-testid="memory-region-chip" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 800, color: D.sub, letterSpacing: ".04em" }}>{chip}</span>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/** Brand CLEAR 2026-09-20 size lock — 167's 96/20 still read as a strip. Soft chrome parked. */
-const MEMORY_CARD_MIN = 140;
 /** Order tile line box. With padding 10+10 and border 2+4 the tile is 48px, the touch-target floor. */
 const ORDER_TILE_LINE = 22;
 /** Undo and Clear sit in the reserved hint row. The 44px hit area spills into the row's own margins (negative margin), so the row stays 23px and nothing moves. */
@@ -2771,206 +2594,6 @@ const ORDER_TILE_PAD = 10;
 const ORDER_TILE_HEIGHT = ORDER_TILE_LINE + ORDER_TILE_PAD * 2 + 2 + 4;
 /** Two tile rows, the 8px wrap gap, and the answer row's 10+10 padding plus 2+2 borders. */
 const ORDER_ANSWER_MIN_HEIGHT = ORDER_TILE_HEIGHT * 2 + 8 + 10 + 10 + 2 + 2;
-const MEMORY_CARD_TYPE = 26;
-const MEMORY_CARD_MARK = 54;
-/** Width lock only — 169's 480 column + 8px pad + UA body margin still read as a center strip. */
-const MEMORY_BOARD_PAD = 4;
-
-/** Beat word-chip max-content so every card fills its 3×4 cell. Same footprint face-down. */
-const MEMORY_CARD_FACE = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  boxSizing: "border-box",
-  width: "100%",
-  minWidth: 0,
-  maxWidth: "100%",
-  flex: "1 1 auto",
-  alignSelf: "stretch",
-  whiteSpace: "normal",
-  overflow: "visible",
-  textOverflow: "unset",
-  wordBreak: "normal",
-  overflowWrap: "normal",
-  hyphens: "none",
-};
-
-/** One-screen Memory playfield. Tap two cards or drag a pair. Soft chrome parked. */
-const MemoryPlayfield = ({ run, uiLang, D, L, theme = "light", onTap, onPair, onClose, onAgain, onLang }) => {
-  const [drag, setDrag] = useState(null);
-  const [endPinned, setEndPinned] = useState(false);
-  const dragRef = useRef(null);
-  const cardsRef = useRef({});
-  const done = isMemoryDone(run);
-  const teach = memoryShowTeach(run) ? memoryEntryForRun(run) : null;
-  const darkBoard = D === D_DARK;
-  const labelColor = darkBoard ? MEMORY_DARK_LABEL : D.sub;
-
-  const onCardPointerDown = (e, id) => {
-    if (run.status !== "play" || run.miss) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const next = { fromId: id, x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, w: r.width, h: r.height, hover: null, moved: false };
-    dragRef.current = next;
-    setDrag(next);
-  };
-  const onCardPointerMove = (e) => {
-    const cur = dragRef.current;
-    if (!cur) return;
-    const moved = cur.moved || Math.hypot(e.clientX - cur.x, e.clientY - cur.y) > 8;
-    const hover = memoryCardAt(cardsRef.current, e.clientX, e.clientY, cur.fromId);
-    const next = { ...cur, x: e.clientX, y: e.clientY, hover, moved };
-    dragRef.current = next;
-    setDrag(next);
-  };
-  const finishPointer = (id, clientX, clientY) => {
-    const cur = dragRef.current;
-    dragRef.current = null;
-    setDrag(null);
-    if (!cur) return;
-    const over = cur.hover || memoryCardAt(cardsRef.current, clientX, clientY, cur.fromId) || (id && id !== cur.fromId ? id : null);
-    if (cur.moved && over && over !== cur.fromId) {
-      onPair(cur.fromId, over);
-      return;
-    }
-    if (!cur.moved && (!id || id === cur.fromId)) onTap(cur.fromId);
-    else if (!cur.moved && id && id !== cur.fromId) onPair(cur.fromId, id);
-  };
-  const onCardPointerUp = (e, id) => {
-    finishPointer(id, e.clientX, e.clientY);
-  };
-
-  return (
-    <div data-testid="memory-board" className="memory-board" data-board-pad={MEMORY_BOARD_PAD} style={{ width: "100%", maxWidth: "none", margin: 0, ...boardPadding(12, MEMORY_BOARD_PAD, 28, endPinned), boxSizing: "border-box", background: darkBoard ? MEMORY_DARK_PAGE : undefined }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: labelColor, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div data-testid="memory-title" style={{ fontWeight: 800, fontSize: 15, color: labelColor }}>{memoryTitle(uiLang)}</div>
-          <div data-testid="memory-quiet" style={{ fontSize: 12, fontWeight: 700, color: labelColor }}>{memoryQuiet(uiLang)}</div>
-        </div>
-        <div data-testid="memory-matched" style={{ fontSize: 12, fontWeight: 800, color: labelColor }}>{run.matched?.length || 0}/{run.pairs?.length || 0}</div>
-        <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
-      </div>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-        <MemoryMark size={40} labeled onDark={darkBoard} />
-      </div>
-      {done ? (
-        <CappedFeedback testId="memory-end" onPin={setEndPinned} className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg }}>
-            <div data-testid="memory-win" style={{ fontWeight: 900, fontSize: 22, color: D.ink, marginBottom: 8 }}>{memoryWinLine(uiLang)}</div>
-            {teach && (
-              <MemoryTeach entry={teach} uiLang={uiLang} D={D} />
-            )}
-          <CappedActions>
-            <Btn color={D.green} dark={D.greenDark} data-testid="memory-again" onClick={onAgain} style={{ width: "100%", marginTop: 12 }}>{uiLang === "en" ? "New pairs" : "Otros pares"}</Btn>
-            <Btn outline data-testid="memory-back" onClick={onClose} style={{ width: "100%", marginTop: 8 }}>{L.games}</Btn>
-          </CappedActions>
-        </CappedFeedback>
-      ) : (
-        <>
-          <p data-testid="memory-howto" style={{ margin: "0 0 8px", fontSize: 13.5, fontWeight: 800, color: labelColor, lineHeight: 1.35, textAlign: "center" }}>{memoryHowTo(uiLang)}</p>
-          <div data-testid="memory-grid" data-cols="3" className="memory-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gridAutoRows: `minmax(${MEMORY_CARD_MIN}px, auto)`, gap: 8, width: "100%", maxWidth: "none", justifyItems: "stretch", alignItems: "stretch" }}>
-            {(run.cards || []).map((card) => {
-              const open = memoryIsOpen(run, card);
-              const dragging = drag?.fromId === card.id;
-              const wrong = run.miss && (run.lastWrong || []).includes(card.id);
-              const showFace = open || dragging;
-              const matched = open && (run.matched || []).includes(card.pairId);
-              const text = memoryCardText(card, uiLang, run);
-              const gloss = memoryCardTranslation(card, uiLang, run);
-              const paint = memoryCardPaint({
-                theme: darkBoard ? "dark" : "light",
-                matched,
-                wrong,
-                faceUp: showFace,
-                kind: card.kind,
-                wrongBorder: D.red,
-                wrongLip: D.redDark,
-                wrongFill: D.redBg,
-                wrongInk: darkBoard ? MEMORY_WRONG_INK_DARK : MEMORY_WRONG_INK_LIGHT,
-                ink: darkBoard ? MEMORY_DARK_INK : D.ink,
-              });
-              const darkUnmatched = darkBoard && !matched && !wrong;
-              const lightUnmatched = !darkBoard && !matched && !wrong;
-              const border = darkUnmatched ? `2px solid ${MEMORY_DARK_EDGE}` : lightUnmatched ? "2px solid #C46B3A" : paint.border;
-              const borderBottom = darkUnmatched ? `4px solid ${MEMORY_DARK_EDGE}` : lightUnmatched ? "4px solid #C46B3A" : paint.borderBottom;
-              const background = darkUnmatched ? MEMORY_DARK_CARD : lightUnmatched ? (showFace ? "#fff" : HUB_CREAM) : (darkBoard && matched && !wrong ? MEMORY_DARK_SAGE : paint.background);
-              const ink = darkUnmatched ? MEMORY_DARK_INK : paint.color;
-              const glossColor = wrong
-                ? paint.color
-                : matched
-                  ? (darkBoard ? MEMORY_DARK_INK : "#5E6650")
-                  : (darkBoard ? MEMORY_DARK_GLOSS : D.sub);
-              return (
-                <div key={card.id} className="memory-cell" style={{ minHeight: MEMORY_CARD_MIN, width: "100%", minWidth: 0, display: "flex", height: "100%" }}>
-                  <button
-                    type="button"
-                    ref={(el) => { cardsRef.current[card.id] = el; }}
-                    data-testid="memory-card"
-                    data-card={card.id}
-                    data-pair={card.pairId}
-                    data-kind={card.kind}
-                    data-face={showFace ? "up" : "down"}
-                    aria-label={showFace ? memoryCardLabel(card, uiLang, run) : undefined}
-                    data-open={open ? "yes" : "no"}
-                    data-miss={wrong ? "yes" : "no"}
-                    data-card-min={MEMORY_CARD_MIN}
-                    data-card-type={MEMORY_CARD_TYPE}
-                    disabled={run.miss || (open && (run.matched || []).includes(card.pairId))}
-                    onPointerDown={(e) => onCardPointerDown(e, card.id)}
-                    onPointerMove={onCardPointerMove}
-                    onPointerUp={(e) => onCardPointerUp(e, card.id)}
-                    onPointerCancel={() => { dragRef.current = null; setDrag(null); }}
-                    className={`word-chip${card.kind === "meaning" ? " word-chip--phrase" : ""} memory-card${wrong ? " wiggle" : ""}`}
-                    style={{
-                      ...WORD_CHIP_PHRASE_STYLE,
-                      ...MEMORY_CARD_FACE,
-                      width: dragging && drag.w ? drag.w : "100%",
-                      height: dragging && drag.h ? drag.h : "100%",
-                      minWidth: 0,
-                      maxWidth: dragging ? drag.w : "100%",
-                      flex: dragging ? "0 0 auto" : "1 1 auto",
-                      alignSelf: "stretch",
-                      minHeight: MEMORY_CARD_MIN,
-                      position: dragging ? "fixed" : "relative",
-                      left: dragging ? drag.x - (drag.dx || 0) : undefined,
-                      top: dragging ? drag.y - (drag.dy || 0) : undefined,
-                      zIndex: dragging ? 20 : 1,
-                      margin: 0,
-                      border,
-                      borderBottom,
-                      background,
-                      color: ink,
-                      borderRadius: 18,
-                      padding: showFace ? "14px 8px" : "16px 8px",
-                      fontFamily: "inherit",
-                      fontWeight: 900,
-                      fontSize: MEMORY_CARD_TYPE,
-                      lineHeight: 1.1,
-                      letterSpacing: "-0.03em",
-                      textAlign: "center",
-                      whiteSpace: "normal",
-                      overflowWrap: "normal",
-                      wordBreak: "normal",
-                      hyphens: "none",
-                      cursor: (run.matched || []).includes(card.pairId) ? "default" : "grab",
-                      touchAction: "none",
-                    }}
-                  >
-                    {showFace ? <MemoryCardFace word={text} translation={gloss} color={glossColor} /> : <MemoryMark size={MEMORY_CARD_MARK} onDark={darkBoard} />}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-          {teach && (
-            <div style={{ marginTop: 16 }}>
-              <MemoryTeach entry={teach} uiLang={uiLang} D={D} />
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-};
 
 /** Dave-cleared illustrated Mexico. Pins / glow / fog sit on top. */
 const RecuerdosMexicoMap = ({ testId, theme }) => (
@@ -5159,189 +4782,6 @@ const LangToggle = ({ uiLang, D, onPick, style }) => (
   </div>
 );
 
-const wordleKeyStatus = (mark) => {
-  if (mark === "correct" || mark === "present") return mark;
-  if (mark === "absent") return "wrong";
-  return "unused";
-};
-
-/** Letter keys are SpanishKeyboardKey. Enter and delete use the same unused-key face. */
-const WordleKeys = ({ D, dark, layout, marks, disabled, onPick, onEnter, onBackspace, onLayoutChange, enterLabel, deleteLabel }) => {
-  const mode = normalizeLetterLayout(layout);
-  const theme = dark ? "dark" : "light";
-  const light = {
-    line: D.line,
-    green: D.green,
-    greenDark: D.greenDark,
-    red: D.red,
-    redDark: D.redDark,
-    okBg: D.okBg,
-    okText: D.okText,
-    badBg: D.badBg,
-    badText: D.badText,
-    card: D.card,
-    cream: "#F6EFE4",
-    muted: D.sub,
-    wordleCorrect: WORDLE_CORRECT,
-    wordlePresent: WORDLE_PRESENT,
-    wordleWrong: WORDLE_ABSENT,
-  };
-  const actionStyle = wordleActionKeyChrome(theme, {
-    ...spanishKeyboardKeyStyle({ theme, status: "unused", disabled, light }),
-    maxWidth: 112,
-  });
-  return (
-    <div data-testid="letter-board" data-layout={mode}>
-      <div style={{ display: "grid", gap: 6 }}>
-        {rowsForLayout(mode).map((row, ri) => (
-          <div key={ri} data-testid="letter-row" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-            {row.map((letter) => {
-              const status = wordleKeyStatus(marks[letter]);
-              return (
-                <SpanishKeyboardKey
-                  key={letter}
-                  letter={letter}
-                  theme={theme}
-                  status={status}
-                  disabled={disabled}
-                  onPick={onPick}
-                  light={light}
-                />
-              );
-            })}
-          </div>
-        ))}
-        <div data-testid="letter-board-actions" style={{ display: "flex", gap: 5, justifyContent: "center" }}>
-          <button type="button" data-testid="letter-board-backspace" aria-label={deleteLabel || "Delete"} disabled={disabled} onClick={onBackspace} style={actionStyle}>⌫</button>
-          <button type="button" data-testid="letter-board-enter" disabled={disabled} onClick={onEnter} style={{ ...actionStyle, flex: "1.6 1 0", maxWidth: 160 }}>{enterLabel || "Enter"}</button>
-        </div>
-      </div>
-      <div data-testid="letter-layout-toggle" role="group" aria-label="ABC QWERTY"
-        style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 10 }}>
-        <button type="button" data-testid="letter-layout-abc" aria-pressed={mode === "abc"}
-          onClick={() => onLayoutChange("abc")}
-          style={{
-            border: "none", background: "none", fontFamily: "inherit", padding: "4px 2px", cursor: "pointer",
-            fontWeight: mode === "abc" ? 900 : 700, fontSize: 11, letterSpacing: ".04em", lineHeight: 1,
-            color: mode === "abc" ? D.ink : D.sub,
-          }}>ABC</button>
-        <span aria-hidden="true" style={{ color: D.sub, fontWeight: 700, fontSize: 11, lineHeight: 1 }}>·</span>
-        <button type="button" data-testid="letter-layout-qwerty" aria-pressed={mode === "qwerty"}
-          onClick={() => onLayoutChange("qwerty")}
-          style={{
-            border: "none", background: "none", fontFamily: "inherit", padding: "4px 2px", cursor: "pointer",
-            fontWeight: mode === "qwerty" ? 900 : 700, fontSize: 11, letterSpacing: ".04em", lineHeight: 1,
-            color: mode === "qwerty" ? D.ink : D.sub,
-          }}>QWERTY</button>
-      </div>
-    </div>
-  );
-};
-
-const WordlePlay = ({ run, uiLang, invalid, shake, flipRow, layout, dark, D, onType, onBackspace, onCommit, onLayoutChange, onClose, onLang }) => {
-  const rows = wordleRows(run);
-  const keyMarks = wordleKeyState(run.guesses, run.answer);
-  const over = run.status !== "play";
-  const reveal = wordleSentenceParts(run.es, run.display);
-  const chrome = wordleChrome(!!dark);
-  return (
-    <div
-      data-testid="wordle-board"
-      data-status={run.status}
-      data-day={run.day}
-      data-theme={dark ? "dark" : "light"}
-      className="wordle-screen"
-      style={{
-        "--wordle-square": chrome.square,
-        "--wordle-letter": chrome.letter,
-        "--wordle-line": chrome.line,
-        "--wordle-board": chrome.board,
-        "--wordle-quiet": chrome.quiet,
-        "--wordle-clue": chrome.clue,
-        "--wordle-gloss": chrome.gloss,
-        background: chrome.board,
-        color: chrome.letter,
-      }}
-    >
-      <div className="wordle-head">
-        <button type="button" onClick={onClose} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: chrome.quiet, padding: "8px 10px", margin: "-8px -10px", minWidth: 44, minHeight: 44 }}>✕</button>
-        <WordleMark size={28} tile={chrome.square} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div data-testid="wordle-title" style={{ fontWeight: 800, fontSize: 15, color: chrome.quiet }}>{wordleTitle(uiLang)}</div>
-          <div data-testid="wordle-howto" style={{ fontSize: 12, fontWeight: 700, color: chrome.quiet }}>{wordleHowTo(uiLang)}</div>
-        </div>
-        <LangToggle uiLang={uiLang} D={D} onPick={onLang} />
-      </div>
-      <div className="wordle-board-slot">
-        <div
-          className="wordle-grid"
-          data-testid="wordle-grid"
-          style={dark ? {
-            "--wordle-correct": chrome.correct,
-            "--wordle-present": chrome.present,
-            "--wordle-absent": chrome.absent,
-            "--wordle-correct-ink": chrome.correctInk,
-            "--wordle-present-ink": chrome.presentInk,
-            "--wordle-absent-ink": chrome.absentInk,
-          } : undefined}
-        >
-          {rows.map((row, ri) => (
-            <div
-              key={`${ri}-${row.current ? shake : "set"}`}
-              data-testid="wordle-row"
-              className={row.current && shake ? "wordle-row wordle-shake" : "wordle-row"}
-            >
-              {row.letters.map((letter, ci) => {
-                const mark = row.marks[ci];
-                const flipping = flipRow === ri && !!mark;
-                return (
-                  <div
-                    key={ci}
-                    data-testid="wordle-tile"
-                    data-mark={mark || "empty"}
-                    data-letter={letter}
-                    className={flipping ? "wordle-tile wordle-flip" : "wordle-tile"}
-                    style={{
-                      "--flip-i": ci,
-                      "--tile-bg": mark ? `var(--wordle-${mark})` : chrome.square,
-                      "--tile-ink": mark ? `var(--wordle-${mark}-ink)` : chrome.letter,
-                      background: mark ? `var(--wordle-${mark})` : chrome.square,
-                      color: mark ? `var(--wordle-${mark}-ink)` : chrome.letter,
-                      borderColor: mark ? "transparent" : chrome.line,
-                    }}
-                  >{letter}</div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-      <div data-testid="wordle-invalid" className="wordle-note">{invalid ? wordleInvalidLine(uiLang) : ""}</div>
-      {over && (
-        <div data-testid="wordle-reveal" className="wordle-reveal" data-display={run.display}>
-          <div data-testid="wordle-sentence">{reveal.before}{reveal.bold ? <span data-testid="wordle-answer">{reveal.bold}</span> : null}{reveal.after}</div>
-          <div data-testid="wordle-gloss">{run.en}</div>
-        </div>
-      )}
-      <div className="wordle-keys">
-        <WordleKeys
-          D={D}
-          dark={!!dark}
-          layout={layout}
-          marks={keyMarks}
-          disabled={over}
-          onPick={onType}
-          onEnter={onCommit}
-          onBackspace={onBackspace}
-          onLayoutChange={onLayoutChange}
-          enterLabel={wordleEnterLabel(uiLang)}
-          deleteLabel={uiLang === "en" ? "Delete" : "Borrar"}
-        />
-      </div>
-    </div>
-  );
-};
-
 /* Btn is declared outside App, so it cannot see App's `theme` binding.
    App writes btnTheme during render and also publishes it on context.
    Context is the subscription: a theme switch re-renders every Btn. */
@@ -5612,20 +5052,10 @@ export default function App() {
   const [showWordOrderTip, setShowWordOrderTip] = useState(false);
   const [wordOrderMiss, setWordOrderMiss] = useState("");
   const [safeGame, setSafeGame] = useState(null);
-  const [jeopardy, setJeopardy] = useState(null);
   const [snakeGame, setSnakeGame] = useState(null);
-  const [matchGame, setMatchGame] = useState(null);
   const [ahorcado, setAhorcado] = useState(null);
-  const [wordle, setWordle] = useState(null);
-  const [wordleInvalid, setWordleInvalid] = useState(false);
-  const [wordleShake, setWordleShake] = useState(0);
-  const [wordleFlip, setWordleFlip] = useState(null);
-  const wordleRef = useRef(null);
   const [cubetasGame, setCubetasGame] = useState(null);
-  const [memoryGame, setMemoryGame] = useState(null);
-  const [crosswordGame, setCrosswordGame] = useState(null);
   const cubetasTimerRef = useRef(null);
-  const memoryTimerRef = useRef(null);
   const gamesReturnRef = useRef("practica");
   const [burst, setBurst] = useState(0); // mini confetti trigger
   const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {}, firstSessionDone: false });
@@ -5664,7 +5094,6 @@ export default function App() {
   const [snakesPinned, setSnakesPinned] = useState(false);
   const [safePinned, setSafePinned] = useState(false);
   const [hangmanPinned, setHangmanPinned] = useState(false);
-  const [jeopardyPinned, setJeopardyPinned] = useState(false);
   const audioCtx = useRef(null);
   const narrationRef = useRef(null);
   const liveReady = useRef(false);
@@ -6196,21 +5625,10 @@ export default function App() {
     setScreen("safeRisky");
   };
 
-  const startMatchPairs = () => {
-    const pairs = buildMatchRound(prog, UNITS, MATCH_ROUND_CAP);
-    if (pairs.length < 2) return;
-    // Keep the match award lock across Otra ronda / rematch. Clearing it
-    // paid another +4 every replay (Hand, live 645c3cb).
-    setMatchGame(startMatchRun(pairs));
-    setScreen("matchPairs");
-  };
-
   const closeGamesSurface = () => {
     const gameSource = {
       cubetas: PAYWALL_SOURCE.cubetas,
       ahorcado: PAYWALL_SOURCE.hangman,
-      memory: PAYWALL_SOURCE.memory,
-      jeopardy: PAYWALL_SOURCE.jeopardy,
     }[screen];
     if (gameSource) setPaywallSource(gameSource);
     if (gamesReturnRef.current === "games") {
@@ -6292,52 +5710,6 @@ export default function App() {
     });
   };
 
-  const startWordle = (from = "practica") => {
-    gamesReturnRef.current = from === "games" ? "games" : from === "practica" ? "practica" : "camino";
-    const run = loadWordleRun(window.localStorage, new Date());
-    wordleRef.current = run;
-    setWordle(run);
-    setWordleInvalid(false);
-    setWordleShake(0);
-    setWordleFlip(null);
-    setScreen("wordle");
-  };
-
-  const typeWordleLetter = (letter) => {
-    const cur = wordleRef.current;
-    if (!cur) return;
-    const next = wordleTypeLetter(cur, letter);
-    if (next === cur) return;
-    wordleRef.current = next;
-    setWordleInvalid(false);
-    setWordle(next);
-  };
-
-  const backspaceWordle = () => {
-    const cur = wordleRef.current;
-    if (!cur) return;
-    const next = wordleBackspace(cur);
-    if (next === cur) return;
-    wordleRef.current = next;
-    setWordleInvalid(false);
-    setWordle(next);
-  };
-
-  const commitWordleGuess = () => {
-    const cur = wordleRef.current;
-    if (!cur || cur.status !== "play") return;
-    const result = wordleCommit(cur, wordleGuessSet());
-    if (result.invalid || result.short) {
-      setWordleShake((n) => n + 1);
-      setWordleInvalid(!!result.invalid);
-      return;
-    }
-    wordleRef.current = result.run;
-    setWordleInvalid(false);
-    setWordleFlip(result.run.guesses.length - 1);
-    setWordle(result.run);
-  };
-
   const startAhorcado = (from = "camino") => {
     gamesReturnRef.current = from === "games" ? "games" : from === "practica" ? "practica" : "camino";
     awardLockRef.current.delete("ahorcado");
@@ -6379,41 +5751,6 @@ export default function App() {
       beep("win");
     }
     setAhorcado((g) => (g ? finishHangmanRun(g, won) : g));
-  };
-
-  const onMatchPracticeTap = (side, id) => {
-    setMatchGame((cur) => {
-      if (!cur || cur.done) return cur;
-      const next = applyMatchPick(cur, side, id);
-      if (next.miss) {
-        beep("bad");
-        setTimeout(() => setMatchGame((g) => (g && g.miss ? { ...g, miss: false } : g)), 400);
-        return next;
-      }
-      if (next.matched?.length > (cur.matched?.length || 0)) beep("ok");
-      if (next.done && !cur.done) queueMicrotask(() => finishMatchPairs());
-      return next;
-    });
-  };
-
-  const finishMatchPairs = () => {
-    if (!lockAward("match")) return;
-    const xp = MATCH_PRACTICE_XP;
-    const t = todayStr();
-    const y = yesterdayStr();
-    save((prev) => {
-      const streak = prev.lastDay === t ? prev.streak || 0 : prev.lastDay === y ? (prev.streak || 0) + 1 : 1;
-      return {
-        ...prev,
-        xp: (prev.xp || 0) + xp,
-        xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + xp,
-        streak,
-        lastDay: t,
-      };
-    });
-    setMatchGame((g) => (g ? { ...g, done: true, awarded: true, xp } : g));
-    setBurst(Date.now());
-    beep("win");
   };
 
   const chooseSafeRisky = (choice) => {
@@ -6578,149 +5915,6 @@ export default function App() {
       question: buildSnakeQuestion(snakeGame.questions, turn),
     });
   };
-
-  const jeopardyCategories = jeopardyCategoriesFrom(SMART_FOCI);
-  const jeopardyBoardCount = jeopardyTileCount(jeopardyCategories, JEOPARDY_VALUES);
-
-  const buildJeopardyQuestion = (focus, value) => {
-    const pool = focus.units.flatMap((uid) => {
-      const u = getUnit(uid);
-      return u ? u.questions.map((qq, i) => ({ ...qq, _u: uid, _i: i })).filter((qq) => {
-        const ans = Array.isArray(qq.answers) ? qq.answers[0] : qq.answers || qq.answer || "";
-        return qq.type === "mc" || (qq.type === "type" && answerTokens(ans).length <= 3);
-      }) : [];
-    });
-    const picked = shuffle(pool)[Math.min(pool.length - 1, Math.floor(value / 100) - 1)] || pool[0];
-    if (!picked) return null;
-    const qj = prepQuestion(picked);
-    const answer = qj.type === "mc" ? qj.answer : qj.answers?.[0];
-    let choices = qj.type === "mc" ? [...(qj.choices || [])] : (qj.answerAid?.tiles || []).map((t) => t.w);
-    if (choices.length < 4) choices = [...choices, ...relatedDistractorsFor(answer, qj, 4 - choices.length)];
-    choices = shuffle([...new Map(choices.filter(Boolean).map((c) => [strip(c), c])).values()]).slice(0, 4);
-    if (!choices.some((c) => strip(c) === strip(answer))) choices[0] = answer;
-    return {
-      key: `${focus.id}-${value}`,
-      focus,
-      value,
-      prompt: qj.type === "type" ? `${qj.prompt}${qj.note ? ` ${qj.note}` : ""}` : qj.prompt,
-      answer,
-      choices: shuffle(choices),
-      explain: qj.explain || qj.note || "",
-      explainEn: qj.explainEn,
-      focusDesc: focus.desc,
-      host: focus.host,
-    };
-  };
-
-  const startJeopardy = (from = "practica") => {
-    gamesReturnRef.current = from === "games" ? "games" : from === "camino" ? "camino" : "practica";
-    awardLockRef.current.delete("jeopardy");
-    setJeopardy(startJeopardyRun({
-      categories: jeopardyCategories,
-      values: JEOPARDY_VALUES,
-      xp: prog.xp,
-      streak: prog.streak,
-    }));
-    setScreen("jeopardy");
-  };
-
-  const openJeopardyTile = (focus, value) => {
-    const question = buildJeopardyQuestion(focus, value);
-    if (!question) return;
-    setJeopardy((cur) => {
-      const next = applyJeopardyTile(cur, question);
-      if (next !== cur && next.active?.double) beep("combo");
-      return next;
-    });
-  };
-
-  const chooseJeopardy = (choice) => {
-    setJeopardy((cur) => {
-      const next = chooseJeopardyChoice(cur, choice);
-      if (next === cur) return cur;
-      if (next.status === "correct") beep("ok");
-      else beep("bad");
-      return next;
-    });
-  };
-
-  const closeJeopardyPrompt = () => {
-    if (!jeopardy) return;
-    let next = settleJeopardyPrompt(jeopardy, jeopardyBoardCount);
-    if (next.complete && !jeopardy.awarded && lockAward("jeopardy")) {
-      next = finishJeopardyClear(next);
-      save((prev) => ({
-        ...prev,
-        xp: (prev.xp || 0) + next.xp,
-        gems: (prev.gems || 0) + next.gems,
-        missions: {
-          ...(prev.missions || {}),
-          jeopardyBest: Math.max(prev.missions?.jeopardyBest || 0, next.score),
-          gameTrophies: { ...(prev.missions?.gameTrophies || {}), jeopardyClear: true },
-        },
-      }));
-      beep("win");
-      setBurst(Date.now());
-    }
-    setJeopardy(next);
-  };
-
-  const startMemory = (from = "practica") => {
-    gamesReturnRef.current = from === "games" ? "games" : from === "practica" ? "practica" : "camino";
-    awardLockRef.current.delete("memory");
-    if (memoryTimerRef.current) clearTimeout(memoryTimerRef.current);
-    setMemoryGame(startMemoryRun());
-    setScreen("memory");
-  };
-
-  const startCrossword = (from = "practica") => {
-    gamesReturnRef.current = from === "games" ? "games" : "practica";
-    setCrosswordGame(startCrosswordRun(CROSSWORD_GRID));
-    setScreen("crossword");
-  };
-
-  const scheduleMemory = (ms, fn) => {
-    if (memoryTimerRef.current) clearTimeout(memoryTimerRef.current);
-    memoryTimerRef.current = setTimeout(fn, ms);
-  };
-
-  const finishMemory = () => {
-    if (!lockAward("memory")) return;
-    const t = todayStr();
-    const y = yesterdayStr();
-    save((prev) => {
-      const streak = prev.lastDay === t ? prev.streak || 0 : prev.lastDay === y ? (prev.streak || 0) + 1 : 1;
-      return {
-        ...prev,
-        xp: (prev.xp || 0) + MEMORY_XP,
-        xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + MEMORY_XP,
-        gems: (prev.gems || 0) + MEMORY_GEM,
-        streak,
-        lastDay: t,
-      };
-    });
-    setMemoryGame((g) => (g ? finishMemoryRun(g) : g));
-    beep("win");
-  };
-
-  const applyMemoryMove = (apply, ...args) => {
-    setMemoryGame((cur) => {
-      if (!cur) return cur;
-      const next = apply(cur, ...args);
-      if (!next || next === cur) return cur;
-      if (next.miss) {
-        beep("bad");
-        scheduleMemory(MEMORY_MISS_MS, () => setMemoryGame((g) => clearMemoryMiss(g)));
-        return next;
-      }
-      if ((next.matched?.length || 0) > (cur.matched?.length || 0)) beep("ok");
-      if (isMemoryDone(next) && !isMemoryDone(cur)) queueMicrotask(() => finishMemory());
-      return next;
-    });
-  };
-
-  const onMemoryTap = (cardId) => applyMemoryMove(applyMemoryTap, cardId);
-  const onMemoryPair = (fromId, toId) => applyMemoryMove(applyMemoryPair, fromId, toId);
 
   // Combo praise sits fixed over the prompt for 1.1s. CONTINUE (and a new
   // lesson) drop it in the same paint as the feedback panel.
@@ -8066,10 +7260,8 @@ export default function App() {
     screen, tab, session, qi, status, selected, typed, typedTileIds, placed,
     matchSel, matched, sessionXP, itemXpLock: [...itemXpLockRef.current], combo, lessonStats, showWhy, failKind, quip,
     screenQuip, storyView, paraIdx, storyMode, ansSel, storyShuffle, wordReveal, dialogue,
-    rivalOutcome, activeDuel, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame,
-    crosswordGame,
+    rivalOutcome, activeDuel, safeGame, snakeGame, ahorcado, cubetasGame,
   };
-  wordleRef.current = wordle;
 
   const applyLive = (live, claimedStories) => {
     const storyResumeBlocked = live?.screen === "story"
@@ -8129,41 +7321,18 @@ export default function App() {
       setSafeGame(live.safeGame);
       if (live.safeGame.awarded || live.safeGame.done) awardLockRef.current.add("safe");
     }
-    if (live.jeopardy) {
-      const restored = hydrateJeopardy(live.jeopardy);
-      setJeopardy(restored);
-      if (restored?.awarded) awardLockRef.current.add("jeopardy");
-    }
     if (live.snakeGame) {
       setSnakeGame(live.snakeGame);
       if (live.snakeGame.awarded || live.snakeGame.done) awardLockRef.current.add("snake");
-    }
-    if (live.matchGame) {
-      setMatchGame(live.matchGame);
-      if (live.matchGame.awarded || live.matchGame.done) awardLockRef.current.add("match");
     }
     if (live.ahorcado) {
       const restored = hydrateHangman(live.ahorcado);
       setAhorcado(restored);
       if (restored?.awarded || isHangmanOver(restored)) awardLockRef.current.add("ahorcado");
     }
-    if (live.screen === "wordle") {
-      setWordle(loadWordleRun(window.localStorage, new Date()));
-      setWordleInvalid(false);
-      setWordleShake(0);
-      setWordleFlip(null);
-    }
     if (live.cubetasGame) {
       setCubetasGame(live.cubetasGame);
       if (live.cubetasGame.awarded || live.cubetasGame.status === "done") awardLockRef.current.add("cubetas");
-    }
-    if (live.memoryGame) {
-      const restored = hydrateMemory(live.memoryGame);
-      setMemoryGame(restored);
-      if (restored?.awarded || isMemoryDone(restored)) awardLockRef.current.add("memory");
-    }
-    if (live.crosswordGame) {
-      setCrosswordGame(hydrateCrossword(CROSSWORD_GRID, live.crosswordGame) || startCrosswordRun(CROSSWORD_GRID));
     }
     setScreen(live.screen);
   };
@@ -8205,7 +7374,7 @@ export default function App() {
   useEffect(() => {
     if (!liveReady.current) return;
     writeLive(snapshotLive(liveRef.current));
-  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, storyShuffle, dialogue, safeGame, jeopardy, snakeGame, matchGame, ahorcado, cubetasGame, crosswordGame]);
+  }, [screen, tab, session, qi, status, selected, typed, typedTileIds, placed, matchSel, matched, sessionXP, combo, lessonStats, storyView, paraIdx, storyMode, ansSel, storyShuffle, dialogue, safeGame, snakeGame, ahorcado, cubetasGame]);
 
   useEffect(() => {
     const flush = () => {
@@ -8302,46 +7471,6 @@ export default function App() {
     return () => window.removeEventListener("keydown", h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, ahorcado]);
-
-  useEffect(() => {
-    if (!wordle) return;
-    const today = wordleDayKey(new Date(now));
-    if (wordle.day !== today) {
-      const next = loadWordleRun(window.localStorage, new Date(now));
-      wordleRef.current = next;
-      setWordle(next);
-      setWordleInvalid(false);
-      setWordleShake(0);
-      setWordleFlip(null);
-      return;
-    }
-    saveWordleRun(window.localStorage, wordle);
-  }, [wordle, now]);
-
-  useEffect(() => {
-    if (screen !== "wordle") return;
-    const h = (e) => {
-      if (e.altKey || e.ctrlKey || e.metaKey) return;
-      const tag = e.target?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      if (e.key === "Enter") {
-        e.preventDefault();
-        commitWordleGuess();
-        return;
-      }
-      if (e.key === "Backspace") {
-        e.preventDefault();
-        backspaceWordle();
-        return;
-      }
-      if (wordleLetterFromKey(e.key)) {
-        e.preventDefault();
-        typeWordleLetter(e.key);
-      }
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [screen]);
 
   const pct = session?.firstSession
     ? firstSessionProgressPct(qi, status, session.questions.length)
@@ -9339,86 +8468,6 @@ export default function App() {
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 800; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-800.woff2') format('woff2'); }
         @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 900; font-display: swap; src: url('${import.meta.env.BASE_URL}fonts/nunito-900.woff2') format('woff2'); }
         html, body, #root { margin: 0; padding: 0; width: 100%; max-width: 100%; }
-        :root {
-          /* Light tiles only. Dark fills and cream letters come from WORDLE_DARK. */
-          --wordle-correct: ${WORDLE_CORRECT};
-          --wordle-correct-ink: #fff;
-          --wordle-present: ${WORDLE_PRESENT};
-          --wordle-present-ink: #fff;
-          --wordle-absent: ${WORDLE_ABSENT};
-          --wordle-absent-ink: #fff;
-        }
-        .wordle-screen {
-          /* Sticky brand bar is 56px. The board fills what's left so the keyboard stays on screen. */
-          height: calc(100vh - 56px);
-          height: calc(100dvh - 56px);
-          max-height: calc(100dvh - 56px);
-          width: 100%;
-          max-width: 480px;
-          margin: 0 auto;
-          padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          background: var(--wordle-board, #F6EFE4);
-          color: var(--wordle-letter, #3C3C3C);
-        }
-        .wordle-head { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-        .wordle-board-slot { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .wordle-grid {
-          height: 100%;
-          width: auto;
-          max-width: 100%;
-          aspect-ratio: 5 / 6;
-          display: grid;
-          grid-template-rows: repeat(6, minmax(0, 1fr));
-          gap: 4px;
-        }
-        .wordle-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; min-height: 0; min-width: 0; perspective: 420px; }
-        .wordle-tile {
-          box-sizing: border-box;
-          width: 100%;
-          height: 100%;
-          min-width: 0;
-          min-height: 0;
-          border: 1px solid var(--wordle-line, #D9CFC3);
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 900;
-          font-size: clamp(15px, 4.8vw, 26px);
-          line-height: 1;
-          text-transform: uppercase;
-          background: var(--wordle-square, #fff);
-          color: var(--wordle-letter, #3C3C3C);
-          transform-style: preserve-3d;
-        }
-        @keyframes wordleFlip {
-          0% { transform: rotateX(0); background: var(--wordle-square, #fff); color: var(--wordle-letter, #3C3C3C); border-color: var(--wordle-line, #D9CFC3); }
-          45% { transform: rotateX(-90deg); background: var(--wordle-square, #fff); color: var(--wordle-letter, #3C3C3C); border-color: var(--wordle-line, #D9CFC3); }
-          55% { transform: rotateX(-90deg); background: var(--tile-bg); color: var(--tile-ink); border-color: transparent; }
-          100% { transform: rotateX(0); background: var(--tile-bg); color: var(--tile-ink); border-color: transparent; }
-        }
-        .wordle-flip {
-          animation: wordleFlip 420ms ease both;
-          animation-delay: calc(var(--flip-i) * 80ms);
-        }
-        .wordle-note { flex: 0 0 auto; min-height: 18px; text-align: center; font-size: 13px; font-weight: 800; color: var(--wordle-quiet, #8A8175); line-height: 1.2; }
-        .wordle-reveal { flex: 0 0 auto; text-align: center; padding: 2px 8px 4px; font-size: 16px; }
-        .wordle-reveal [data-testid="wordle-sentence"] { font-size: 1em; font-weight: 600; line-height: 1.35; color: var(--wordle-clue, #3C3C3C); }
-        .wordle-reveal [data-testid="wordle-answer"] { font-weight: 900; }
-        .wordle-reveal [data-testid="wordle-gloss"] { font-size: 0.7em; font-weight: 700; line-height: 1.35; color: var(--wordle-gloss, #6B6258); margin-top: 2px; }
-        .wordle-keys { flex: 0 0 auto; width: 100%; max-width: 100%; }
-        @keyframes wordleShake {
-          0%, 100% { transform: translateX(0); }
-          18% { transform: translateX(-6px); }
-          36% { transform: translateX(6px); }
-          54% { transform: translateX(-4px); }
-          72% { transform: translateX(4px); }
-        }
-        .wordle-shake { animation: wordleShake .45s ease; }
         * { -webkit-tap-highlight-color: transparent; }
         button, input, select, textarea { touch-action: manipulation; }
         .lesson-footer-cap { max-height: 60vh; max-height: 60dvh; }
@@ -9518,7 +8567,7 @@ export default function App() {
         .cubetas-gem-tick { animation: cubetasGemTick 360ms ${CUBETAS_EASE_LIFT} ${CUBETAS_GRAB_MS}ms both; }
         .nametag { display:inline-block; background:#fff; border:2px solid #E5E5E5; border-radius:8px; padding:1px 8px; font-size:10px; font-weight:900; color:#6B6258; letter-spacing:.06em; text-transform:uppercase; transform:rotate(-3deg); box-shadow:0 2px 0 rgba(0,0,0,.06); }
         ${theme === "dark" ? ".nametag { background:#1E2128; border-color:#2A2E36; color:#F6EFE4; }" : ""}
-        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.streak-pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track,.wordle-flip { animation:none !important; } }
+        @media (prefers-reduced-motion: reduce) { .bounce,.pop,.streak-pop,.wiggle,.idle,.shimmer,.pulse,.bajio-glow,.inter,.flame,.chest-ready,.confetti-bit,.blink,.sway,.spin,.jump,.eso-rise,.cubetas-squash,.cubetas-bird-win,.cubetas-bucket-fly,.cubetas-eso-fly,.cubetas-gem-tick,.story0-bird,.story0-wing,.story0-chip-track { animation:none !important; } }
         .node-btn { transition: transform .08s; }
         .node-btn:hover:not(:disabled):not([aria-disabled="true"]) { transform: scale(1.06); }
         .node-btn:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(3px); }
@@ -9542,11 +8591,6 @@ export default function App() {
         .choice-card[data-selected="true"]:hover:not(:disabled):not([aria-disabled="true"]) { background:${D.blueBg}; border-color:${D.blue}; color:${D.blueDark}; box-shadow:0 0 0 3px ${D.blue}; }
         .word-chip { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; width:max-content; min-width:min-content; max-width:none; flex:0 0 auto; white-space:nowrap; overflow:visible; text-overflow:unset; word-break:keep-all; overflow-wrap:normal; hyphens:manual; }
         .word-chip--phrase { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
-        .memory-board { width:100%; max-width:none; margin:0; padding-left:${MEMORY_BOARD_PAD}px; padding-right:${MEMORY_BOARD_PAD}px; box-sizing:border-box; }
-        .memory-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); grid-auto-rows:minmax(${MEMORY_CARD_MIN}px, auto); gap:8px; width:100%; max-width:none; justify-items:stretch; align-items:stretch; }
-        .memory-cell { min-width:0; width:100%; display:flex; height:100%; }
-        .memory-card { width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
-        .memory-board .word-chip.memory-card { display:flex; width:100%; min-width:0; max-width:none; min-height:${MEMORY_CARD_MIN}px; height:100%; flex:1 1 auto; white-space:normal; overflow-wrap:normal; word-break:normal; hyphens:none; font-size:${MEMORY_CARD_TYPE}px; font-weight:900; line-height:1.1; letter-spacing:-0.03em; text-align:center; padding:16px 8px; }
         .tile { border:2px solid ${D.line}; border-bottom-width:4px; background:${D.card}; border-radius:12px; padding:9px 14px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; color:${D.ink}; }
         ${theme === "dark" ? `.lesson-blank::placeholder{color:${D.sub};opacity:1}` : ""}
         .tile:disabled { opacity:.3; cursor:default; }
@@ -9994,8 +9038,6 @@ export default function App() {
                     {(() => {
                       const gameDefs = [
                         { testid: "ahorcado-section-start", act: () => startAhorcado("camino"), color: D.green, dark: D.greenDark, icon: <HangmanMark size={28} />, labelEs: hangmanTitle("es"), labelEn: hangmanTitle("en"), subEs: hangmanQuiet("es"), subEn: hangmanQuiet("en") },
-                        { testid: "jeopardy-section-start", act: () => startJeopardy("camino"), color: D.green, dark: D.greenDark, icon: <JeopardyMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} />, labelEs: jeopardyTitle("es"), labelEn: jeopardyTitle("en"), subEs: jeopardyQuiet("es"), subEn: jeopardyQuiet("en") },
-                        { testid: "emparejar-section-start", act: startMatchPairs, color: D.blue, dark: D.blueDark, icon: "🔗", labelEs: "Emparejar / Match", labelEn: "Emparejar / Match", subEs: "Una ronda de parejas español–inglés.", subEn: "One round of Spanish–English pair tiles." },
                       ][si];
                       if (!gameDefs) return null;
                       return (
@@ -10409,17 +9451,6 @@ export default function App() {
           </button>
           <div data-testid="match-play">
           <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".08em", color: D.sub, textAlign: "left", padding: "4px 2px 6px" }}>{uiLang === "en" ? "Match & play" : "Empareja y juega"}</div>
-          <button onClick={startMatchPairs} data-testid="match-pairs-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.blue}`, borderBottom: `5px solid ${D.blueDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: D.blue, color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 22, flexShrink: 0, borderBottom: `4px solid ${D.blueDark}` }}>🔗</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{uiLang === "en" ? "Match pairs" : "Emparejar"}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{uiLang === "en" ? "One finite round from the unit pairs — Spanish and English." : "Una ronda finita con las parejas de la unidad — español e inglés."}</div>
-              </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
-            </div>
-          </button>
           <button onClick={() => startCubetas("practica")} data-testid="cubetas-start"
             style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -10442,50 +9473,6 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={() => startJeopardy("practica")} data-testid="jeopardy-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{jeopardyTitle(uiLang)}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{jeopardyQuiet(uiLang)}</div>
-              </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
-            </div>
-          </button>
-          <button onClick={() => startWordle("practica")} data-testid="wordle-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{wordleTitle(uiLang)}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{wordleQuiet(uiLang)}</div>
-              </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
-            </div>
-          </button>
-          <button onClick={() => startMemory("practica")} data-testid="memory-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{memoryTitle(uiLang)}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{memoryQuiet(uiLang)}</div>
-              </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
-            </div>
-          </button>
-          <button onClick={() => startCrossword("practica")} data-testid="crossword-start"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} paper={theme === "dark" ? D.card : "#FFFFFF"} /></span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>
-              </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
-            </div>
-          </button>
           </div>
           </div>
           <details style={{ margin: "0 0 14px", textAlign: "left" }}>
@@ -10497,12 +9484,6 @@ export default function App() {
                 style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", background: D.card, border: `2px solid ${D.line}`, borderBottom: `3px solid ${D.line}`, color: D.ink, borderRadius: 12, padding: "9px 12px", fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
                 <span style={{ fontSize: 18 }}>🐍</span>
                 <span style={{ flex: 1 }}>{uiLang === "en" ? "Snakes & Ladders" : "Serpientes y Escaleras"}</span>
-                <span style={{ fontSize: 14, color: D.sub }}>→</span>
-              </button>
-              <button onClick={() => startJeopardy("practica")}
-                style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", background: D.card, border: `2px solid ${D.line}`, borderBottom: `3px solid ${D.line}`, color: D.ink, borderRadius: 12, padding: "9px 12px", fontFamily: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: 18 }}>🎯</span>
-                <span style={{ flex: 1 }}>{jeopardyTitle(uiLang)}</span>
                 <span style={{ fontSize: 14, color: D.sub }}>→</span>
               </button>
             </div>
@@ -10612,7 +9593,6 @@ export default function App() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
             {[
               [uiLang === "en" ? "Judgment" : "Juicio", `${prog.missions?.safeRiskyBest || 0}/5`, D.red],
-              [uiLang === "en" ? "Jeopardy" : "Jeopardy", prog.missions?.jeopardyBest || 0, D.blue],
               [uiLang === "en" ? "Board" : "Tablero", `${prog.missions?.snakeBest || 0} ${uiLang === "en" ? "best" : "mejor"}`, D.green],
               [uiLang === "en" ? "Rewards" : "Premios", `XP + ${L.gems}`, D.goldDark],
             ].map(([label, value, color]) => (
@@ -10627,7 +9607,6 @@ export default function App() {
               ["snakeFirstWin", uiLang === "en" ? "First climb" : "Primera subida"],
               ["snakePerfect", uiLang === "en" ? "No slides" : "Sin resbalones"],
               ["safePerfect", uiLang === "en" ? "Radar" : "Radar"],
-              ["jeopardyClear", uiLang === "en" ? "Board clear" : "Tablero limpio"],
             ].map(([key, label]) => {
               const earned = !!prog.missions?.gameTrophies?.[key];
               return (
@@ -10675,18 +9654,6 @@ export default function App() {
                 testid: "cubetas-start",
                 stat: uiLang === "en" ? "Ojalá que" : "Ojalá que",
                 reward: uiLang === "en" ? "80/20 · one chip" : "80/20 · una ficha",
-              },
-              {
-                title: jeopardyTitle(uiLang),
-                tag: jeopardyQuiet(uiLang),
-                desc: jeopardyHowTo(uiLang),
-                color: D.green,
-                dark: D.greenDark,
-                icon: "?",
-                act: () => startJeopardy("practica"),
-                testid: "jeopardy-start",
-                stat: `${prog.missions?.jeopardyBest || 0} ${uiLang === "en" ? "best" : "mejor"}`,
-                reward: uiLang === "en" ? "18 tiles · points · XP payout" : "18 casillas · puntos · paga XP",
               },
             ].map((game) => (
               <button key={game.title} data-testid={game.testid} onClick={game.act}
@@ -12461,110 +11428,8 @@ export default function App() {
               <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
             </div>
           </button>
-          <button onClick={() => startJeopardy("games")} data-testid="jeopardy-start" className="games-hub-card"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><JeopardyMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{jeopardyTitle(uiLang)}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{jeopardyQuiet(uiLang)}</div>
-              </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
-            </div>
-          </button>
-          <button onClick={() => startWordle("games")} data-testid="wordle-start" className="games-hub-card"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><WordleMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{wordleTitle(uiLang)}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{wordleQuiet(uiLang)}</div>
-              </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
-            </div>
-          </button>
-          <button onClick={() => startMemory("games")} data-testid="memory-start" className="games-hub-card"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><MemoryMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} /></span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{memoryTitle(uiLang)}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{memoryQuiet(uiLang)}</div>
-              </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
-            </div>
-          </button>
-          <button onClick={() => startCrossword("games")} data-testid="crossword-start" className="games-hub-card"
-            style={{ display: "block", width: "100%", margin: "0 0 8px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: MARK_INK, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `2px solid #C46B3A`, borderBottom: `4px solid #C46B3A` }}><CrosswordMark size={28} tile={theme === "dark" ? D.card : HUB_CREAM} paper={theme === "dark" ? D.subtle : "#FFFFFF"} /></span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 15.5, lineHeight: 1.2 }}>{crosswordTitle(uiLang)}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: D.sub, marginTop: 2 }}>{crosswordQuiet(uiLang)}</div>
-              </div>
-              <span style={{ fontSize: 18, color: D.sub, flexShrink: 0 }}>→</span>
-            </div>
-          </button>
         </div>
       )}
-
-      {/* ---------- MATCH PAIRS (Práctica) ---------- */}
-      {screen === "matchPairs" && matchGame && (() => {
-        const goPractica = () => { setPaywallSource(PAYWALL_SOURCE.matchPairs); setScreen("home"); setTab("practica"); };
-        const n = matchGame.pairs?.length || 0;
-        const got = matchGame.matched?.length || 0;
-        return (
-          <div data-testid="match-pairs-screen" style={{ maxWidth: 560, margin: "0 auto", padding: "22px 20px 40px" }}>
-            {burst > 0 && matchGame.done && <Confetti key={burst} count={36} />}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <button onClick={goPractica} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
-              <div style={{ flex: 1, height: 14, background: D.line, borderRadius: 99, overflow: "hidden" }}>
-                <div style={{ width: `${n ? Math.round((got / n) * 100) : 0}%`, height: "100%", background: D.blue }} />
-              </div>
-              <span style={{ fontSize: 12, fontWeight: 900, color: D.blue }}>{got}/{n}</span>
-              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
-            </div>
-            {matchGame.done ? (
-              <div data-testid="match-pairs-done" className="pop" style={{ textAlign: "center", border: `2px solid ${D.gold}`, borderBottom: `5px solid ${D.goldDark}`, borderRadius: 16, padding: 18, background: D.goldBg }}>
-                <h2 style={{ fontWeight: 900, margin: "8px 0 4px" }}>{uiLang === "en" ? "Round complete" : "¡Ronda terminada!"}</h2>
-                <p style={{ color: D.sub, fontWeight: 800, margin: "0 0 16px" }}>
-                  {uiLang === "en" ? `You matched ${n} pairs.` : `Emparejaste ${n} parejas.`}
-                  {matchGame.xp ? ` · +${matchGame.xp} XP` : ""}
-                </p>
-                <Btn color={D.blue} dark={D.blueDark} data-testid="match-pairs-again" onClick={startMatchPairs}>{uiLang === "en" ? "Another round" : "Otra ronda"}</Btn>
-                <Btn outline data-testid="match-pairs-back" onClick={goPractica} style={{ marginLeft: 10 }}>{L.practice}</Btn>
-              </div>
-            ) : (
-              <>
-                <h2 style={{ fontWeight: 900, fontSize: 22, margin: "0 0 8px" }}>{L.matchPairs}</h2>
-                <p style={{ fontSize: 13, fontWeight: 800, color: D.sub, margin: "0 0 16px" }}>{L.matchInstruction}</p>
-                <div data-testid="match-pairs-board" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {[0, 1].map((side) => (
-                    <div key={side} lang={side === 0 ? "es" : undefined} style={{ display: "grid", gap: 10, alignContent: "start" }}>
-                      {(side === 0 ? matchGame.left : matchGame.right).map((item) => {
-                        const isMatched = (matchGame.matched || []).includes(item.id);
-                        const isSel = matchGame.sel && matchGame.sel.side === side && matchGame.sel.id === item.id;
-                        const wrong = matchGame.lastWrong;
-                        const isWrong = matchGame.miss && wrong && ((wrong.a.side === side && wrong.a.id === item.id) || (wrong.b.side === side && wrong.b.id === item.id));
-                        return (
-                          <button key={`${side}-${item.id}`} type="button" className="choice-card"
-                            data-testid={side === 0 ? `match-tile-left-${item.id}` : `match-tile-right-${item.id}`}
-                            data-state={isMatched ? "matched" : isWrong ? "wrong" : isSel ? "selected" : "idle"}
-                            disabled={isMatched || matchGame.done}
-                            onClick={() => onMatchPracticeTap(side, item.id)}
-                            style={{ padding: "13px 10px", fontSize: 15, fontWeight: 800, fontFamily: "inherit", cursor: isMatched ? "default" : "pointer", background: isMatched ? D.okBg : isWrong ? D.badBg : (theme === "dark" ? D.subtle : (isSel ? "#DDF4FF" : "#fff")), borderColor: isMatched ? (theme === "dark" ? D.green : D.line) : isWrong ? D.red : isSel ? D.blue : D.line, borderBottomColor: isMatched ? (theme === "dark" ? D.green : D.line) : isWrong ? D.red : isSel ? D.blue : D.line, color: isMatched ? limeText(D.okText, D) : isWrong ? D.badText : (theme === "dark" ? HUB_CREAM : (isSel ? D.blueDark : D.ink)), opacity: isMatched && theme === "dark" ? 0.55 : 1 }}>
-                            {item.t}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        );
-      })()}
 
       {/* ---------- Hangman playfield ---------- */}
       {screen === "ahorcado" && ahorcado && (() => {
@@ -12702,151 +11567,6 @@ export default function App() {
           </div>
         );
       })()}
-
-      {/* ---------- JEOPARDY ---------- */}
-      {screen === "jeopardy" && jeopardy && (
-        <div data-testid="jeopardy-board" style={{ maxWidth: 480, margin: "0 auto", ...boardPadding(22, 20, 40, jeopardyPinned) }}>
-          {burst > 0 && jeopardy.complete && <Confetti key={burst} count={48} />}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-            <button type="button" onClick={closeGamesSurface} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div data-testid="jeopardy-title" style={{ fontWeight: 800, fontSize: 15, color: D.sub }}>{jeopardyTitle(uiLang)}</div>
-              <div data-testid="jeopardy-quiet" style={{ fontSize: 12, fontWeight: 700, color: theme === "dark" ? D.sub : "#6B6258" }}>{jeopardyQuiet(uiLang)}</div>
-            </div>
-            <div data-testid="jeopardy-score" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{jeopardy.score}</div>
-            <div data-testid="jeopardy-answered" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{jeopardyAnswered(jeopardy)}/{jeopardyBoardCount}</div>
-            <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-            <JeopardyMark size={56} />
-          </div>
-          {jeopardy.active ? (
-            <div data-testid="jeopardy-prompt" className="pop" style={{ border: `2px solid ${D.green}`, borderBottom: `5px solid ${D.greenDark}`, borderRadius: 18, padding: 16, background: D.card }}>
-              {jeopardy.active.double && (
-                <div data-testid="jeopardy-double" className="pop" style={{ border: `2px solid #C46B3A`, borderBottom: `5px solid #C46B3A`, borderRadius: 14, background: theme === "dark" ? D.card : HUB_CREAM, color: theme === "dark" ? D.ink : "#C46B3A", padding: "9px 12px", marginBottom: 12, fontWeight: 900, textAlign: "center" }}>
-                  {jeopardyDoubleLabel(uiLang)} · {jeopardyDoubleLine(uiLang)} {jeopardy.active.stake}
-                </div>
-              )}
-              <div style={{ marginBottom: 12 }}>
-                <div data-testid="jeopardy-cat" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 11, fontWeight: 900, color: D.sub, letterSpacing: ".08em" }}>{jeopardy.active.focus.title[uiLang]} · {jeopardy.active.double ? `${jeopardy.active.value} → ${jeopardy.active.stake}` : jeopardy.active.value}</div>
-                <div data-testid="jeopardy-question" className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, fontSize: 18, fontWeight: 900, lineHeight: 1.25, color: D.ink }}>{jeopardy.active.prompt}</div>
-              </div>
-              <div style={{ display: "grid", gap: 9 }}>
-                {jeopardy.active.choices.map((choice, i) => {
-                  const revealed = jeopardy.status !== "idle";
-                  const correct = jeopardyChoiceMatch(choice, jeopardy.active.answer);
-                  const chosen = jeopardyChoiceMatch(choice, jeopardy.selected || "");
-                  return (
-                    <button key={`${choice}-${i}`} data-testid={`jeopardy-choice-${i}`} disabled={revealed} onClick={() => chooseJeopardy(choice)}
-                      style={{ textAlign: "left", border: `2px solid ${revealed && correct ? D.green : revealed && chosen ? D.red : D.line}`, borderBottom: `4px solid ${revealed && correct ? D.greenDark : revealed && chosen ? D.redDark : D.line}`, background: revealed && correct ? D.greenBg : revealed && chosen ? D.redBg : D.card, color: revealed && correct ? limeText(D.greenDark, D) : revealed && chosen ? D.redDark : D.ink, borderRadius: 13, padding: "12px 13px", fontFamily: "inherit", fontWeight: 850, fontSize: 15, cursor: revealed ? "default" : "pointer" }}>
-                      <span style={{ display: "inline-block", fontSize: 12, fontWeight: 900, border: `2px solid #C46B3A`, color: "#C46B3A", borderRadius: 8, padding: "1px 7px", marginRight: 9 }}>{i + 1}</span>
-                      {choice}
-                    </button>
-                  );
-                })}
-              </div>
-              {jeopardy.status !== "idle" && (
-                <CappedFeedback testId="jeopardy-result" onPin={setJeopardyPinned} className="pop" style={{ marginTop: 13, border: `2px solid ${jeopardy.status === "correct" ? D.green : D.red}`, borderRadius: 13, padding: "10px 12px", background: jeopardy.status === "correct" ? D.greenBg : D.redBg }}>
-                  <div data-testid="jeopardy-score-heading" style={{ fontWeight: 900, color: jeopardy.status === "correct" ? limeText(D.greenDark, D) : D.redDark }}>
-                    {jeopardy.status === "correct" ? `+${jeopardy.active.stake || jeopardy.active.value}` : `${jeopardy.active.double ? `-${Math.floor((jeopardy.active.stake || jeopardy.active.value) / 2)} · ` : ""}${jeopardyAnswerLabel(uiLang)}: ${jeopardy.active.answer}`}
-                  </div>
-                  <div data-testid="jeopardy-why" style={{ fontSize: 13, fontWeight: 800, color: D.ink, lineHeight: 1.4, marginTop: 4 }}>{explainText(jeopardy.active, uiLang) || uiText(jeopardy.active.focusDesc, uiLang)}</div>
-                  <CappedActions>
-                    <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-continue" onClick={closeJeopardyPrompt} style={{ width: "100%", marginTop: 12 }}>{L.continue}</Btn>
-                  </CappedActions>
-                </CappedFeedback>
-              )}
-            </div>
-          ) : (
-            <>
-              {!jeopardy.complete && (
-                <p data-testid="jeopardy-howto" style={{ margin: "0 0 14px", fontSize: 13.5, fontWeight: 800, color: D.sub, lineHeight: 1.35, textAlign: "center" }}>{jeopardyHowTo(uiLang)}</p>
-              )}
-              {jeopardy.complete && (
-                <div data-testid="jeopardy-clear" className="pop" style={{ textAlign: "left", border: `2px solid ${D.green}`, borderRadius: 14, padding: "11px 13px", background: D.greenBg, marginBottom: 12, fontWeight: 900 }}>
-                  <div style={{ fontSize: 22, color: D.ink }}>{jeopardyWinLine(uiLang)}</div>
-                  <div style={{ marginTop: 6, color: D.sub, fontSize: 13 }}>{jeopardy.score >= 0 ? "+" : ""}{jeopardy.score}</div>
-                </div>
-              )}
-              <div data-testid="jeopardy-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${jeopardyCategories.length}, minmax(min-content, 1fr))`, gap: 5, overflow: "visible", paddingBottom: 4 }}>
-                {jeopardyCategories.map((cat) => (
-                  <div key={cat.id} style={{ display: "grid", gap: 5, minWidth: "min-content", justifyItems: "center" }}>
-                    <div data-testid={`jeopardy-cat-${cat.id}`} className="word-chip word-chip--phrase" style={{ ...WORD_CHIP_PHRASE_STYLE, minHeight: 44, width: "max-content", maxWidth: "100%", borderRadius: 10, fontSize: 9.5, fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center", padding: "5px 6px", lineHeight: 1.15, ...boardTilePaint({ theme, role: "category", light: { cream: HUB_CREAM, mark: MARK_INK, line: D.line, card: D.card, muted: D.sub } }) }}>
-                      {jeopardyCatLabel(cat.id, uiLang)}
-                    </div>
-                    {JEOPARDY_VALUES.map((value) => {
-                      const key = `${cat.id}-${value}`;
-                      const used = !!jeopardy.used?.[key];
-                      return (
-                        <button key={key} data-testid={`jeopardy-tile-${key}`} disabled={used} onClick={() => openJeopardyTile(cat, value)}
-                          style={{ height: 58, borderRadius: 12, fontFamily: "inherit", fontWeight: 900, fontSize: 18, cursor: used ? "default" : "pointer", ...boardTilePaint({ theme, role: "value", used, light: { cream: HUB_CREAM, line: D.line, subtle: D.subtle, sub: D.sub, card: D.card, muted: D.sub } }) }}>
-                          {used ? "✓" : value}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
-                <Btn color={D.green} dark={D.greenDark} data-testid="jeopardy-again" onClick={() => startJeopardy(gamesReturnRef.current)} style={{ width: "100%" }}>{jeopardyResetLabel(uiLang)}</Btn>
-                <Btn outline data-testid="jeopardy-back" onClick={closeGamesSurface} style={{ width: "100%", ...(theme === "dark" ? darkGamesButtonStyle({ card: D.card, line: D.line, cream: HUB_CREAM }) : {}) }}>{L.games}</Btn>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ---------- WORDLE ---------- */}
-      {screen === "wordle" && wordle && (
-        <WordlePlay
-          run={wordle}
-          uiLang={uiLang}
-          invalid={wordleInvalid}
-          shake={wordleShake}
-          flipRow={wordleFlip}
-          dark={theme === "dark"}
-          D={D}
-          layout={normalizeLetterLayout(prog.letterLayout)}
-          onType={typeWordleLetter}
-          onBackspace={backspaceWordle}
-          onCommit={commitWordleGuess}
-          onLayoutChange={(next) => save({ letterLayout: normalizeLetterLayout(next) })}
-          onClose={closeGamesSurface}
-          onLang={(code) => save({ uiLang: code })}
-        />
-      )}
-
-      {/* ---------- MEMORY ---------- */}
-      {screen === "memory" && memoryGame && (
-        <MemoryPlayfield
-          run={memoryGame}
-          uiLang={uiLang}
-          D={D}
-          L={L}
-          theme={theme}
-          onTap={onMemoryTap}
-          onPair={onMemoryPair}
-          onClose={closeGamesSurface}
-          onAgain={() => startMemory(gamesReturnRef.current)}
-          onLang={(code) => save({ uiLang: code })}
-        />
-      )}
-
-      {screen === "crossword" && crosswordGame && (
-        <CrosswordPlayfield
-          run={crosswordGame}
-          grid={CROSSWORD_GRID}
-          uiLang={uiLang}
-          onType={(letter) => setCrosswordGame((cur) => typeCrosswordLetter(CROSSWORD_GRID, cur, letter))}
-          onBackspace={() => setCrosswordGame((cur) => backspaceCrossword(CROSSWORD_GRID, cur))}
-          onSelectCell={(row, col) => setCrosswordGame((cur) => selectCrosswordCell(CROSSWORD_GRID, cur, row, col))}
-          onSelectClue={(wordId) => setCrosswordGame((cur) => selectCrosswordClue(CROSSWORD_GRID, cur, wordId))}
-          onReveal={() => setCrosswordGame((cur) => revealCrosswordWord(CROSSWORD_GRID, cur))}
-          onClose={closeGamesSurface}
-          langControl={<LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />}
-          dark={theme === "dark"}
-        />
-      )}
 
       {/* ---------- STORY READER (tap-to-define) ---------- */}
       {screen === "story" && storyView && (() => {
