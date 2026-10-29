@@ -93,6 +93,9 @@ describe("Scene1Shell", () => {
     const user = userEvent.setup();
     render(<Scene1Shell uiLang="es" search="" />);
 
+    expect(seenEvents("app_open")).toHaveLength(1);
+    expect(Object.keys(seenEvents("app_open")[0]).sort()).toEqual(["at", "event"]);
+
     expect(screen.getByTestId("scene1-cold-open").textContent).toMatch(/Habla español mexicano de verdad/);
     await user.click(screen.getByTestId("scene1-cold-open-start"));
 
@@ -137,9 +140,12 @@ describe("Scene1Shell", () => {
     }
 
     expect(screen.getByTestId("scene1-twist").textContent).toMatch(/Buenos días, ¿qué le doy\?/);
+    expect(seenEvents("scene1_complete")).toHaveLength(0);
     await user.click(screen.getByTestId("scene1-finish"));
     expect(screen.getByTestId("scene1-done")).toBeTruthy();
     expect(screen.queryByText(/Acabas de pedir en español/)).toBeNull();
+    expect(seenEvents("scene1_complete")).toHaveLength(1);
+    expect(Object.keys(seenEvents("scene1_complete")[0]).sort()).toEqual(["at", "event"]);
   }, 20000);
 
   it("moves on after two retries with no score and no penalty", async () => {

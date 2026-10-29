@@ -17,7 +17,7 @@ assert(collectorEndpoint() === "https://override.example/exec", "a test endpoint
 setCollectorEndpointOverride(undefined);
 assert(collectorEndpoint() === "", "clearing the test endpoint reads the empty build env again");
 
-assert(COLLECTOR_EVENTS.slice().sort().join(",") === "paywall_seen,reserve_submit", "only two events are on the send list");
+assert(COLLECTOR_EVENTS.slice().sort().join(",") === "app_open,paywall_seen,reserve_submit,scene1_complete", "only four events are on the send list");
 
 function memoryStorage() {
   const data = {};
@@ -76,7 +76,7 @@ for (const name of COLLECTOR_EVENTS) {
 setCollectorEndpointOverride(undefined);
 assert(calls === 0, "no endpoint calls neither sendBeacon nor fetch");
 
-// With an endpoint, only paywall_seen and reserve_submit leave the device.
+// With an endpoint, only paywall_seen, reserve_submit, app_open, and scene1_complete leave the device.
 const storage = memoryStorage();
 const sent = [];
 for (const name of allEvents.concat(["not_a_funnel_event", "email", ""])) {
@@ -87,11 +87,12 @@ for (const name of allEvents.concat(["not_a_funnel_event", "email", ""])) {
     beaconImpl: (url, body) => { sent.push({ url, body }); return true; },
     fetchImpl: async () => { throw new Error("fetch should not run"); },
   });
-  const shouldSend = name === FUNNEL_EVENTS.paywallSeen || name === FUNNEL_EVENTS.reserveSubmit;
+  const shouldSend = name === FUNNEL_EVENTS.paywallSeen || name === FUNNEL_EVENTS.reserveSubmit
+    || name === FUNNEL_EVENTS.appOpen || name === FUNNEL_EVENTS.scene1Complete;
   assert(r.sent === shouldSend, `${name || "(blank)"} ${shouldSend ? "sends" : "stays on the device"}`);
 }
-assert(sent.length === 2, "exactly two rows left the device");
-assert(sent.map((row) => JSON.parse(row.body).event).sort().join(",") === "paywall_seen,reserve_submit", "the two rows are paywall_seen and reserve_submit");
+assert(sent.length === 4, "exactly four rows left the device");
+assert(sent.map((row) => JSON.parse(row.body).event).sort().join(",") === "app_open,paywall_seen,reserve_submit,scene1_complete", "the four rows are paywall_seen, reserve_submit, app_open, and scene1_complete");
 assert(storage.data[COLLECTOR_DEVICE_KEY] === "device-anonymous-1", "device id is stored under andale-device-id");
 
 const expectedDate = dayKeyFromDate(new Date(noisy.at));

@@ -4,7 +4,8 @@
  *  collector off. The funnel script lives in apps-script/collector.gs.
  *  This repo does not deploy that script.
  *
- *  Only two events ever leave the device: paywall_seen and reserve_submit.
+ *  Only four events ever leave the device: paywall_seen, reserve_submit,
+ *  app_open, and scene1_complete.
  *  Each goes out as exactly three fields: { event, date, device }.
  *  date is the device's local calendar day (YYYY-MM-DD).
  *  device is a random id made on this device.
@@ -44,7 +45,12 @@ export const COLLECTOR_ENDPOINT = collectorEndpoint();
 export const COLLECTOR_DEVICE_KEY = "andale-device-id";
 
 /** The only events that leave the device. */
-export const COLLECTOR_EVENTS = Object.freeze([FUNNEL_EVENTS.paywallSeen, FUNNEL_EVENTS.reserveSubmit]);
+export const COLLECTOR_EVENTS = Object.freeze([
+  FUNNEL_EVENTS.paywallSeen,
+  FUNNEL_EVENTS.reserveSubmit,
+  FUNNEL_EVENTS.appOpen,
+  FUNNEL_EVENTS.scene1Complete,
+]);
 const EVENT_NAMES = new Set(COLLECTOR_EVENTS);
 
 
@@ -137,7 +143,8 @@ export async function postCollector(record, {
 }
 
 /** Forward one bus event. Empty endpoint sends nothing and does not mint a device id.
- *  Only paywall_seen and reserve_submit send. The body is only event, date, and device.
+ *  Only paywall_seen, reserve_submit, app_open, and scene1_complete send.
+ *  The body is only event, date, and device.
  */
 export async function shipFunnelEvent(detail, {
   endpoint = collectorEndpoint(),

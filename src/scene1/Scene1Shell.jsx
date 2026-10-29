@@ -75,6 +75,16 @@ export default function Scene1Shell({ uiLang = "es", search } = {}) {
     recorderPromiseRef.current?.then((handle) => { try { handle.stop(); } catch { /* unmounting */ } }).catch(() => {});
   }, []);
 
+  // One app_open per mount of this shell, i.e. once per app open behind the scene1 flag.
+  useEffect(() => {
+    emitFunnelEvent({ event: FUNNEL_EVENTS.appOpen });
+  }, []);
+
+  useEffect(() => {
+    if (phase !== PHASE.done) return;
+    emitFunnelEvent({ event: FUNNEL_EVENTS.scene1Complete });
+  }, [phase]);
+
   // Dave's condition (proposal.md): the paywall is instrumented. One
   // paywall_seen per time the learner lands on it, same allowlisted shape
   // the rest of the app uses.
