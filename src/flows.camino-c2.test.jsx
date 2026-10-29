@@ -1024,7 +1024,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     const hubSnap = {
       hoy: screen.getByTestId("hub-hoy").textContent,
       stories: screen.getByTestId("hub-stories").textContent,
-      games: screen.getByTestId("hub-games").textContent,
       doctor: screen.getByTestId("hub-phrase-doctor").textContent,
       eighty: screen.getByTestId("eighty-twenty-cta").textContent,
       sendero: screen.getByTestId("hub-sendero").textContent,
@@ -1033,13 +1032,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(hubSnap.hoy).toMatch(/Hoy/);
     expect(hubSnap.hoy).toMatch(/Plan de hoy/);
     expect(hubSnap.sendero).toMatch(/Tu camino/);
-    expect(hubSnap.hoy + hubSnap.stories + hubSnap.games).not.toMatch(/Empezar plan anual|Seguir gratis|Mexicanismos|Lección perfecta/);
+    expect(hubSnap.hoy + hubSnap.stories).not.toMatch(/Empezar plan anual|Seguir gratis|Mexicanismos|Lección perfecta/);
     await user.click(screen.getByTestId("soft-paywall-dismiss"));
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
     expect(screen.getByTestId("learn-hub")).toBeTruthy();
     expect(screen.getByTestId("hub-hoy").textContent).toBe(hubSnap.hoy);
     expect(screen.getByTestId("hub-stories").textContent).toBe(hubSnap.stories);
-    expect(screen.getByTestId("hub-games").textContent).toBe(hubSnap.games);
     expect(screen.getByTestId("hub-phrase-doctor").textContent).toBe(hubSnap.doctor);
     expect(screen.getByTestId("eighty-twenty-cta").textContent).toBe(hubSnap.eighty);
     expect(screen.getByTestId("hub-sendero").textContent).toBe(hubSnap.sendero);

@@ -1235,15 +1235,15 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
-  it("Learn hub Games tile opens Games hub with Cubetas, Hangman, Jeopardy, and Memory", async () => {
+  it("Práctica holds Cubetas and Hangman; Learn hub has no Games tile", async () => {
     const user = await boot();
     await awaitHome();
     expect(screen.queryByTestId("hub-hangman")).toBeNull();
     expect(screen.queryByTestId("hub-memory")).toBeNull();
-    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(6);
-    await user.click(screen.getByTestId("hub-games"));
-    await waitFor(() => expect(screen.getByTestId("games-hub")).toBeTruthy());
-    expect(screen.getByTestId("games-hub-title").textContent).toBe("Juegos");
+    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(5);
+    expect(screen.queryByTestId("hub-games")).toBeNull();
+    await user.click(screen.getByTestId("nav-practica"));
+    await waitFor(() => expect(screen.getByTestId("hangman-start")).toBeTruthy());
     expect(screen.getByTestId("cubetas-start").textContent).toContain("Cubetas");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Ahorcado");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Palabras de México");
@@ -1265,7 +1265,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("Hangman round: guess letters then Literal then Why", async () => {
     const user = await boot();
     await awaitHome();
-    await user.click(screen.getByTestId("hub-games"));
+    await user.click(screen.getByTestId("nav-practica"));
     await waitFor(() => expect(screen.getByTestId("hangman-start")).toBeTruthy());
     await user.click(screen.getByTestId("hangman-start"));
     await waitFor(() => expect(screen.getByTestId("hangman-board")).toBeTruthy());
