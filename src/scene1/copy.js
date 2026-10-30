@@ -15,11 +15,6 @@ export const SCENE1_INTRO_LINE = Object.freeze({
   en: "Today: the market.",
 });
 
-export const SCENE1_HANDOFF_LINE = Object.freeze({
-  es: "Acabas de pedir en español.",
-  en: "You just ordered in Spanish.",
-});
-
 export const SCENE1_COMPARE_PROMPT = Object.freeze({
   es: "Escucha las dos. ¿Suena igual?",
   en: "Listen to both. Same?",
@@ -40,6 +35,12 @@ export const SCENE1_MAX_RETRIES = 2;
 export const SCENE1_MIC_REASON = Object.freeze({
   es: "Ándale usa el micrófono para grabar tu voz. Tus grabaciones se quedan en este teléfono.",
   en: "Ándale uses the microphone to record your voice. Your recordings stay on this phone.",
+});
+
+/** George: shown when getUserMedia rejects (denied permission, no device, etc). */
+export const SCENE1_MIC_ERROR = Object.freeze({
+  es: "No pudimos usar el micrófono. Revisa el permiso en Ajustes.",
+  en: "We couldn't use the microphone. Check the permission in Settings.",
 });
 
 /** Paywall A: right after the first spoken exchange. */

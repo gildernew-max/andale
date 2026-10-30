@@ -107,14 +107,13 @@ describe("Scene1Shell", () => {
     expect(screen.getByTestId("scene1-comparing").textContent).toMatch(/me da/);
     await user.click(screen.getByTestId("scene1-same"));
 
-    // Handoff line, then Paywall A — not chunk 2 — right after the first exchange.
-    expect(screen.getByTestId("scene1-handoff").textContent).toMatch(/Acabas de pedir en español\./);
-    await user.click(screen.getByTestId("scene1-handoff-continue"));
-
+    // Paywall A opens directly on the same headline — no handoff screen in between.
     const paywall = screen.getByTestId("scene1-paywall");
     expect(paywall.getAttribute("data-paywall-variant")).toBe("A");
     expect(screen.getByTestId("scene1-paywall-headline").textContent).toBe("Acabas de pedir en español.");
     expect(screen.getByText("Cada escena de San Miguel, sin esperar.")).toBeTruthy();
+    expect(screen.getByTestId("scene1-paywall-annual-price").textContent).toBe("US$39.99 al año");
+    expect(screen.getByTestId("scene1-paywall-monthly-price").textContent).toBe("Son US$3.33 al mes.");
     expect(seenEvents("paywall_seen")).toHaveLength(1);
     expect(seenEvents("paywall_seen")[0].source).toBe("timed");
 
@@ -134,7 +133,6 @@ describe("Scene1Shell", () => {
       await sayChunk(user);
       await user.click(screen.getByTestId("scene1-same"));
       if (i === 0) {
-        await user.click(screen.getByTestId("scene1-handoff-continue"));
         await user.click(screen.getByTestId("scene1-paywall-dismiss"));
       }
     }
@@ -164,7 +162,7 @@ describe("Scene1Shell", () => {
     expect(screen.getByTestId("scene1-retry-line").textContent).toMatch(/Sigue\. Mañana vuelve\./);
     await user.click(screen.getByTestId("scene1-continue-after-retry"));
     // Still the paywall interception after chunk 1, same as the clean path.
-    expect(screen.getByTestId("scene1-handoff")).toBeTruthy();
+    expect(screen.getByTestId("scene1-paywall")).toBeTruthy();
   }, 20000);
 
   it("the day-3 test switch forces Paywall B without touching the clock", async () => {
@@ -174,7 +172,6 @@ describe("Scene1Shell", () => {
     await user.click(screen.getByTestId("scene1-start"));
     await sayChunk(user);
     await user.click(screen.getByTestId("scene1-same"));
-    await user.click(screen.getByTestId("scene1-handoff-continue"));
 
     const paywall = screen.getByTestId("scene1-paywall");
     expect(paywall.getAttribute("data-paywall-variant")).toBe("B");
@@ -189,4 +186,39 @@ describe("Scene1Shell", () => {
     await user.click(screen.getByTestId("scene1-cold-open-start"));
     expect(screen.getByTestId("scene1-intro").textContent).toMatch(/Today: the market\./);
   });
+
+  it("uiLang=en switches cues, tips, and buttons, but the native Spanish line stays Spanish", async () => {
+    const user = userEvent.setup();
+    render(<Scene1Shell uiLang="en" search="" />);
+    await user.click(screen.getByTestId("scene1-cold-open-start"));
+    await user.click(screen.getByTestId("scene1-start"));
+
+    // Cue and button switch to English.
+    expect(screen.getByTestId("scene1-cue").textContent).toMatch(/Greet the vendor and ask for a kilo of limes\./);
+    expect(screen.getByTestId("scene1-record").textContent).toBe("Record");
+
+    await user.click(await screen.findByTestId("scene1-record"));
+    await user.click(await screen.findByTestId("scene1-stop"));
+    // The model line keeps the native Spanish next to its English gloss.
+    expect(screen.getByTestId("scene1-model").textContent).toMatch(/Buenos días\. ¿Me da un kilo de limones\?/);
+    expect(screen.getByTestId("scene1-model").textContent).toMatch(/Buenos días\. ¿Me da un kilo de limones/);
+  }, 20000);
+
+  it("fits 360x640 with no 40px overflow: minHeight is the dynamic viewport unit, not a fixed 100vh", () => {
+    render(<Scene1Shell uiLang="es" search="" />);
+    expect(screen.getByTestId("scene1-shell").style.minHeight).toBe("100dvh");
+  });
+
+  it("dark mode: quiet text is cream at reduced opacity, not the light-mode ink that fails contrast on #15171C", async () => {
+    const user = userEvent.setup();
+    render(<Scene1Shell uiLang="es" theme="dark" search="" />);
+    await user.click(screen.getByTestId("scene1-cold-open-start"));
+    await user.click(screen.getByTestId("scene1-start"));
+    await sayChunk(user);
+    await user.click(screen.getByTestId("scene1-same"));
+
+    const monthlyPrice = screen.getByTestId("scene1-paywall-monthly-price");
+    expect(monthlyPrice.style.color).toBe("rgba(246, 239, 228, 0.7)");
+    expect(monthlyPrice.style.color).not.toBe("#6B6258");
+  }, 20000);
 });

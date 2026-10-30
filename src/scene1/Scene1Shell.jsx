@@ -2,15 +2,16 @@ import React, { useEffect, useRef, useState } from "react";
 import { dayKeyFromDate } from "../firstDoor.js";
 import { FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, emitFunnelEvent } from "../funnel.js";
 import { learnerDayNumber } from "../paywallTrigger.js";
-import { PAYWALL_LIME } from "../webPaywall.js";
+import { annualPriceLine, PAYWALL_ANNUAL_LINE_SIZE, PAYWALL_LIME } from "../webPaywall.js";
+import { PAYWALL_HERO_ALT, PAYWALL_HERO_PATH } from "../paywallStill.js";
 import { reserveWords } from "../reserveAnnual.js";
 import { SCENE1_CHUNKS, SCENE1_VARIANTS } from "./content.js";
 import {
   SCENE1_COLD_OPEN,
   SCENE1_COMPARE_PROMPT,
-  SCENE1_HANDOFF_LINE,
   SCENE1_INTRO_LINE,
   SCENE1_MAX_RETRIES,
+  SCENE1_MIC_ERROR,
   SCENE1_MIC_REASON,
   SCENE1_MOVE_ON_LINE,
   SCENE1_PAYWALL_A,
@@ -42,16 +43,18 @@ const PHASE = Object.freeze({
   model: "model",
   comparing: "comparing",
   retryLine: "retryLine",
-  handoff: "handoff",
   paywall: "paywall",
   twist: "twist",
   done: "done",
 });
 
-const BIRD_SRC = `${import.meta.env.BASE_URL}mascot/cenzontle.png`;
+const PAYWALL_HERO_SRC = `${import.meta.env.BASE_URL}${PAYWALL_HERO_PATH}`;
 
-export default function Scene1Shell({ uiLang = "es", search } = {}) {
+export default function Scene1Shell({ uiLang = "es", theme = "light", search } = {}) {
   const en = uiLang === "en";
+  // No face, dark mode ruling: quiet #6B6258 ink becomes cream #F6EFE4 at ~70%
+  // opacity on #15171C (8:1+), not solid — #6B6258 itself fails 4.5:1 on dark.
+  const subInk = theme === "dark" ? "rgba(246,239,228,0.7)" : "#6B6258";
   const todayDate = today({ scene1Enabled: true, search });
   const todayKey = dayKeyFromDate(todayDate);
   const firstSeenKeyRef = useRef(null);
@@ -107,7 +110,7 @@ export default function Scene1Shell({ uiLang = "es", search } = {}) {
     recorderPromiseRef.current = pending;
     pending.catch(() => {
       if (recorderPromiseRef.current === pending) recorderPromiseRef.current = null;
-      setRecordError(en ? "Microphone unavailable." : "Micrófono no disponible.");
+      setRecordError(en ? SCENE1_MIC_ERROR.en : SCENE1_MIC_ERROR.es);
       setPhase(PHASE.cue);
     });
   };
@@ -151,7 +154,7 @@ export default function Scene1Shell({ uiLang = "es", search } = {}) {
     const next = chunkIndex + 1;
     if (wasFirstChunk) {
       setChunkIndex(next);
-      setPhase(PHASE.handoff);
+      setPhase(PHASE.paywall);
       return;
     }
     if (next >= SCENE1_CHUNKS.length) {
@@ -192,13 +195,13 @@ export default function Scene1Shell({ uiLang = "es", search } = {}) {
   const variantForPaywall = scene1PaywallVariant({ firstSeenKey: firstSeenKeyRef.current, todayKey, search });
   const words = variantForPaywall === "B" ? SCENE1_PAYWALL_B : SCENE1_PAYWALL_A;
   const rw = reserveWords(uiLang);
+  const annualLine = annualPriceLine(en ? "{price} a year" : "{price} al año");
 
   return (
-    <div data-testid="scene1-shell" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", textAlign: "center" }}>
+    <div data-testid="scene1-shell" style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", textAlign: "center" }}>
       <div style={{ maxWidth: 360, width: "100%" }}>
         {phase === PHASE.coldOpen && (
           <div data-testid="scene1-cold-open">
-            <img src={BIRD_SRC} alt="" width={96} height={96} aria-hidden="true" style={{ display: "block", margin: "0 auto 20px", width: 96, height: 96, objectFit: "contain" }} />
             <div style={{ fontWeight: 900, fontSize: 22, marginBottom: 24 }}>{en ? SCENE1_COLD_OPEN.en : SCENE1_COLD_OPEN.es}</div>
             <button data-testid="scene1-cold-open-start" onClick={() => setPhase(PHASE.intro)} style={primaryBtnStyle}>
               {en ? SCENE1_COLD_OPEN.buttonEn : SCENE1_COLD_OPEN.buttonEs}
@@ -217,10 +220,10 @@ export default function Scene1Shell({ uiLang = "es", search } = {}) {
 
         {phase === PHASE.cue && chunk && (
           <div data-testid="scene1-cue">
-            <div style={{ fontWeight: 800, fontSize: 13, color: "#6B6258", marginBottom: 8 }}>{chunkIndex + 1}/{SCENE1_CHUNKS.length}</div>
+            <div style={{ fontWeight: 800, fontSize: 13, color: subInk, marginBottom: 8 }}>{chunkIndex + 1}/{SCENE1_CHUNKS.length}</div>
             <div style={{ fontWeight: 900, fontSize: 20, marginBottom: 16 }}>{en ? chunk.cueEn : chunk.cueEs}</div>
             {recordError && <div style={{ color: "#C45C48", marginBottom: 8 }}>{recordError}</div>}
-            <div style={{ fontSize: 12, color: "#6B6258", marginBottom: 12 }}>{en ? SCENE1_MIC_REASON.en : SCENE1_MIC_REASON.es}</div>
+            <div style={{ fontSize: 12, color: subInk, marginBottom: 12 }}>{en ? SCENE1_MIC_REASON.en : SCENE1_MIC_REASON.es}</div>
             <button data-testid="scene1-record" onClick={beginRecording} style={primaryBtnStyle}>
               {en ? "Record" : "Grabar"}
             </button>
@@ -239,7 +242,7 @@ export default function Scene1Shell({ uiLang = "es", search } = {}) {
         {phase === PHASE.model && chunk && (
           <div data-testid="scene1-model">
             <div style={{ fontWeight: 900, fontSize: 22, marginBottom: 8 }}>{chunk.es}</div>
-            <div style={{ fontSize: 15, color: "#6B6258", marginBottom: 16 }}>{chunk.en}</div>
+            <div style={{ fontSize: 15, color: subInk, marginBottom: 16 }}>{chunk.en}</div>
             <button data-testid="scene1-compare" onClick={playCompare} style={primaryBtnStyle}>
               {en ? "Listen to both" : "Escuchar las dos"}
             </button>
@@ -249,7 +252,7 @@ export default function Scene1Shell({ uiLang = "es", search } = {}) {
         {phase === PHASE.comparing && chunk && (
           <div data-testid="scene1-comparing">
             <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 8 }}>{en ? SCENE1_COMPARE_PROMPT.en : SCENE1_COMPARE_PROMPT.es}</div>
-            <div style={{ fontSize: 13, color: "#6B6258", marginBottom: 16 }}>{en ? chunk.tipEn : chunk.tipEs}</div>
+            <div style={{ fontSize: 13, color: subInk, marginBottom: 16 }}>{en ? chunk.tipEn : chunk.tipEs}</div>
             <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
               <button data-testid="scene1-same" onClick={tapSameSound} style={primaryBtnStyle}>
                 {en ? SCENE1_COMPARE_PROMPT.sameEn : SCENE1_COMPARE_PROMPT.sameEs}
@@ -270,29 +273,26 @@ export default function Scene1Shell({ uiLang = "es", search } = {}) {
           </div>
         )}
 
-        {phase === PHASE.handoff && (
-          <div data-testid="scene1-handoff">
-            <div style={{ fontWeight: 900, fontSize: 22, marginBottom: 20 }}>{en ? SCENE1_HANDOFF_LINE.en : SCENE1_HANDOFF_LINE.es}</div>
-            <button data-testid="scene1-handoff-continue" onClick={() => setPhase(PHASE.paywall)} style={primaryBtnStyle}>
-              {en ? "Continue" : "Seguir"}
-            </button>
-          </div>
-        )}
-
         {phase === PHASE.paywall && (
           <div data-testid="scene1-paywall" data-paywall-variant={variantForPaywall}>
+            <img
+              src={PAYWALL_HERO_SRC}
+              alt={en ? PAYWALL_HERO_ALT.en : PAYWALL_HERO_ALT.es}
+              style={{ display: "block", margin: "0 auto 16px", height: 140, width: "auto", maxWidth: "100%", borderRadius: 16, objectFit: "cover" }}
+            />
             <div data-testid="scene1-paywall-headline" style={{ fontWeight: 900, fontSize: 22, marginBottom: 6 }}>
               {en ? words.headlineEn : words.headlineEs}
             </div>
-            <div style={{ fontSize: 15, color: "#6B6258", marginBottom: 16 }}>
+            <div style={{ fontSize: 15, color: subInk, marginBottom: 16 }}>
               {en ? words.subheadEn : words.subheadEs}
             </div>
             <button data-testid="scene1-paywall-annual" onClick={tapAnnual} style={{ ...primaryBtnStyle, background: PAYWALL_LIME }}>
               <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".06em", textTransform: "uppercase" }}>{rw.label}</div>
               <div style={{ fontWeight: 800, fontSize: 15 }}>{rw.action}</div>
             </button>
-            <div data-testid="scene1-paywall-price" style={{ fontSize: 13, color: "#6B6258", marginTop: 8 }}>{rw.saving}</div>
-            <button data-testid="scene1-paywall-dismiss" onClick={tapContinueFree} style={{ ...textBtnStyle, marginTop: 12 }}>
+            <div data-testid="scene1-paywall-annual-price" style={{ fontWeight: 900, fontSize: PAYWALL_ANNUAL_LINE_SIZE, marginTop: 10 }}>{annualLine}</div>
+            <div data-testid="scene1-paywall-monthly-price" style={{ fontSize: 13, color: subInk, marginTop: 4 }}>{rw.saving}</div>
+            <button data-testid="scene1-paywall-dismiss" onClick={tapContinueFree} style={{ ...textBtnStyle, color: subInk, marginTop: 12 }}>
               {en ? "Continue free" : "Seguir gratis"}
             </button>
           </div>
@@ -300,7 +300,7 @@ export default function Scene1Shell({ uiLang = "es", search } = {}) {
 
         {phase === PHASE.twist && variant && (
           <div data-testid="scene1-twist">
-            <div style={{ fontWeight: 800, fontSize: 13, color: "#6B6258", marginBottom: 8 }}>{en ? "Your turn" : "Tu turno"}</div>
+            <div style={{ fontWeight: 800, fontSize: 13, color: subInk, marginBottom: 8 }}>{en ? "Your turn" : "Tu turno"}</div>
             {variant.beats.map((beat, i) => {
               const beatChunk = SCENE1_CHUNKS.find((c) => c.id === beat.chunkId);
               return (
@@ -316,11 +316,7 @@ export default function Scene1Shell({ uiLang = "es", search } = {}) {
           </div>
         )}
 
-        {phase === PHASE.done && (
-          <div data-testid="scene1-done">
-            <img src={BIRD_SRC} alt="" width={120} height={120} aria-hidden="true" style={{ display: "block", margin: "0 auto", width: 120, height: 120, objectFit: "contain" }} />
-          </div>
-        )}
+        {phase === PHASE.done && <div data-testid="scene1-done" />}
       </div>
     </div>
   );

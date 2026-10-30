@@ -46,6 +46,7 @@ import { normalizeLetterLayout, rowsForLayout } from "./letterBoard.js";
 import { DEFAULT_VOICE_NAME, bestSpanishVoice, isLatamReadingVoice, listSpanishVoices, pickPaulina, speak, stopSpeak, voicePickerLabel, voiceScore, voicesForPicker } from "./ttsSpeak.js";
 import { isScene1Enabled } from "./scene1/flag.js";
 import Scene1Shell from "./scene1/Scene1Shell.jsx";
+import { scene1DefaultUiLang } from "./scene1/uiLang.js";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
 import { TypeAccentRow } from "./typeAccentRow.jsx";
 import { accentRowScrollDelta } from "./typeAccentRow.js";
@@ -9119,7 +9120,7 @@ export default function App() {
     && status !== "idle"
     && !(session?.review && (status === "correct" || status === "almost"));
 
-  if (isScene1Enabled()) return <Scene1Shell uiLang={uiLang} />;
+  if (isScene1Enabled()) return <Scene1Shell uiLang={scene1DefaultUiLang()} theme={theme} />;
 
   return (
     <BtnThemeContext.Provider value={theme}>
