@@ -9,7 +9,6 @@ import { fileURLToPath } from "url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import App from "./App.jsx";
-import { CrosswordMark } from "./CrosswordPlayfield.jsx";
 
 const appSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "App.jsx"), "utf8");
 const STORAGE_KEY = "andale-v3";
@@ -88,35 +87,6 @@ const bootOrder = async (theme, host) => {
 describe("dark games hub mark and ordena tags", () => {
   afterEach(() => { cleanup(); localStorage.clear(); });
 
-  it("keeps light crossword-mark cells white and paints dark cells slate", () => {
-    const light = render(<CrosswordMark />);
-    const lightFills = fills(light.container);
-    expect(lightFills.filter((fill) => fill === "#FFFFFF")).toHaveLength(5);
-    expect(lightFills).toContain("#F6EFE4");
-    light.unmount();
-
-    const dark = render(<CrosswordMark tile="#1E2128" paper="#252830" />);
-    const darkFills = fills(dark.container).map((fill) => fill.toLowerCase());
-    expect(darkFills).not.toContain("#ffffff");
-    expect(darkFills.filter((fill) => fill === "#252830")).toHaveLength(5);
-    expect(darkFills).toContain("#1e2128");
-    const strokes = [...dark.container.querySelectorAll("rect")].map((el) => (el.getAttribute("stroke") || "").toLowerCase());
-    expect(strokes).toContain("#2a2e36");
-    expect(strokes).not.toContain("#ffffff");
-
-    const gamesAt = appSrc.indexOf('screen === "games"');
-    const games = appSrc.slice(gamesAt, appSrc.indexOf("MATCH PAIRS", gamesAt));
-    expect(games).toContain('paper={theme === "dark" ? D.subtle : "#FFFFFF"}');
-    expect(appSrc).toContain(".nametag { display:inline-block; background:#fff;");
-    const nameRule = appSrc.match(/\.nametag \{[^}]+\}/)[0];
-    expect(nameRule).toContain("color:#6B6258");
-    expect(nameRule).not.toContain("color:#777");
-    expect(contrastRatio("#6B6258", "#FFFFFF")).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio("#6B6258", "#F6EFE4")).toBeGreaterThanOrEqual(4.5);
-    expect(Number(contrastRatio("#6B6258", "#FFFFFF").toFixed(2))).toBe(5.98);
-    expect(Number(contrastRatio("#6B6258", "#F6EFE4").toFixed(2))).toBe(5.23);
-    expect(appSrc).not.toContain('theme === "dark" && name === "Luna"');
-  });
 
   it("paints Ordena tiles and every coach tag without a white fill in dark, and keeps light tiles cream", async () => {
     await bootOrder("dark", "valeria");

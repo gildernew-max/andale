@@ -76,8 +76,6 @@ describe("failing dark surfaces use the approved app darks", () => {
     locked.forEach((el) => expect(norm(el.style.borderBottomColor)).toBe("#2a2e36"));
     expect(lane(1).innerHTML).not.toContain("rgba(255, 255, 255");
     expect(lane(2).innerHTML).not.toContain("rgba(255, 255, 255");
-    expect(fills(screen.getByTestId("jeopardy-section-start"))).toContain("#1e2128");
-    expect(fills(screen.getByTestId("jeopardy-section-start"))).not.toContain("#f6efe4");
     const darkLabels = [...lane(1).querySelectorAll("[data-testid='section-lane-label']")];
     expect(darkLabels.length).toBeGreaterThan(0);
     darkLabels.forEach((el) => expect(norm(el.style.color)).toBe("#e8e8ea"));
@@ -93,7 +91,6 @@ describe("failing dark surfaces use the approved app darks", () => {
     expect(lightLocked.some((el) => norm(el.style.borderBottomColor) === "#cfcfcf")).toBe(true);
     const lightLabels = [...lane(1).querySelectorAll("[data-testid='section-lane-label']")];
     expect(lightLabels.some((el) => norm(el.style.color) === "#afafaf")).toBe(true);
-    expect(fills(screen.getByTestId("jeopardy-section-start"))).toContain("#f6efe4");
   });
 
   it("paints the listen-skip chip and Rayo timer chips with the dark card", async () => {
@@ -123,34 +120,25 @@ describe("failing dark surfaces use the approved app darks", () => {
     expect(norm(screen.getByTestId("run-timer-off-chip").style.color)).toBe("#6b6258");
   });
 
-  it("paints Práctica game tiles, the games Wordle tile, and dark crossword cells", async () => {
+  it("paints Práctica game tiles", async () => {
     await boot("dark", { screen: "home", tab: "practica" });
     await screen.findByTestId("hangman-start");
-    for (const id of ["hangman-start", "jeopardy-start", "wordle-start", "memory-start", "crossword-start"]) {
+    for (const id of ["hangman-start"]) {
       const tile = screen.getByTestId(id).querySelector("span");
       expect(norm(tile.style.background), id).toBe("#1e2128");
     }
-    const paper = fills(screen.getByTestId("crossword-start")).filter((fill) => fill === "#1e2128" || fill === "#ffffff" || fill === "#f6efe4");
-    expect(paper).toContain("#1e2128");
-    expect(paper).not.toContain("#ffffff");
-    expect(paper).not.toContain("#f6efe4");
 
     await boot("light", { screen: "home", tab: "practica" });
     await screen.findByTestId("hangman-start");
-    for (const id of ["hangman-start", "jeopardy-start", "wordle-start", "memory-start", "crossword-start"]) {
+    for (const id of ["hangman-start"]) {
       expect(norm(screen.getByTestId(id).querySelector("span").style.background), id).toBe("#f6efe4");
     }
-    expect(fills(screen.getByTestId("crossword-start"))).toContain("#ffffff");
 
     await boot("dark", { screen: "games", tab: "camino" });
     await screen.findByTestId("games-hub");
-    expect(norm(screen.getByTestId("wordle-start").querySelector("span").style.background)).toBe("#1e2128");
-    expect(fills(screen.getByTestId("wordle-start"))).not.toContain("#f6efe4");
-    expect(fills(screen.getByTestId("crossword-start")).filter((fill) => fill === "#252830").length).toBeGreaterThan(0);
-    expect(fills(screen.getByTestId("crossword-start"))).not.toContain("#ffffff");
   });
 
-  it("paints the Cubetas chip, Jeopardy double card, and Perfil language disc", async () => {
+  it("paints the Cubetas chip and Perfil language disc", async () => {
     await boot("dark", {
       screen: "cubetas", tab: "practica",
       cubetasGame: { queue: [{ id: "c1", phrase: "Ojalá que llueva", bucket: "subjunctive" }], scored: [], status: "idle", hint: false },
@@ -166,28 +154,6 @@ describe("failing dark surfaces use the approved app darks", () => {
     const lightChip = await screen.findByTestId("cubetas-chip");
     expect(norm(lightChip.style.background)).toBe("#ffffff");
     expect(norm(lightChip.style.color)).toBe("#2e7500");
-
-    const jeopardy = {
-      screen: "jeopardy", tab: "practica",
-      jeopardy: {
-        score: 0, status: "idle", used: {}, doubleKey: "mood-200",
-        active: {
-          key: "mood-200", double: true, stake: 400, value: 200,
-          prompt: "Ojalá que ___", answer: "llueva", choices: ["llueva", "llueve"],
-          focus: { title: { es: "Modo", en: "Mood" } },
-        },
-      },
-    };
-    await boot("dark", jeopardy);
-    const double = await screen.findByTestId("jeopardy-double");
-    expect(norm(double.style.background)).toBe("#1e2128");
-    expect(norm(double.style.color)).toBe("#e8e8ea");
-    expect(norm(double.style.borderTopColor)).toBe("#c46b3a");
-
-    await boot("light", jeopardy);
-    const lightDouble = await screen.findByTestId("jeopardy-double");
-    expect(norm(lightDouble.style.background)).toBe("#f6efe4");
-    expect(norm(lightDouble.style.color)).toBe("#c46b3a");
 
     await boot("dark", { screen: "home", tab: "perfil" });
     const disc = await screen.findByTestId("perfil-lang-es");

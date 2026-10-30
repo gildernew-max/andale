@@ -7,7 +7,6 @@ import { CHOICE_CHIP_KEYS } from "./choiceChipKeys.js";
 import { SAFE_RISKY_ANSWERS, SAFE_RISKY_MULTI_FIXTURE, setSafeRiskyPackOverride } from "./safeRisky.js";
 import { OJALA_QUE_PACK } from "./cubetas.js";
 import { HANGMAN_BANK, hangmanLetters } from "./hangman.js";
-import { MEMORY_BANK } from "./memory.js";
 import { FIRST_WIN_MINUTES, splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
 import { onboardingCopy, onboardingLine } from "./onboardingCopy.js";
 import {
@@ -409,29 +408,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
   const progressXp = () => JSON.parse(localStorage.getItem(STORAGE_KEY)).xp;
 
-  it("starts match-pairs from Práctica and finishes a finite round", async () => {
-    const user = await boot();
-    await user.click(screen.getByTestId("nav-practica"));
-    const start = screen.getByTestId("match-pairs-start");
-    expect(start).toBeTruthy();
-    await user.click(start);
-    await playMatchRound(user);
-    expect(screen.queryByTestId("match-pairs-board")).toBeNull();
-    expect(screen.getByText(/¡Ronda terminada!|Round complete/)).toBeTruthy();
-    await user.click(screen.getByTestId("match-pairs-back"));
-    await waitFor(() => expect(screen.getByTestId("match-pairs-start")).toBeTruthy());
-  });
 
-  it("match-pairs rematch keeps XP at 4 (first +4, Otra ronda +0)", async () => {
-    const user = await boot();
-    await user.click(screen.getByTestId("nav-practica"));
-    await user.click(screen.getByTestId("match-pairs-start"));
-    await playMatchRound(user);
-    await waitFor(() => expect(progressXp() - 42).toBe(4));
-    await user.click(screen.getByTestId("match-pairs-again"));
-    await playMatchRound(user);
-    await waitFor(() => expect(progressXp() - 42).toBe(4));
-  });
 
   it("opens story-0 from Lectura, taps a word, and leaves no definición pendiente", async () => {
     const user = await boot();
@@ -1258,39 +1235,26 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.queryByTestId("soft-paywall")).toBeNull();
   });
 
-  it("Learn hub Games tile opens Games hub with Cubetas, Hangman, Jeopardy, and Memory", async () => {
+  it("Práctica holds Cubetas and Hangman; Learn hub has no Games tile", async () => {
     const user = await boot();
     await awaitHome();
     expect(screen.queryByTestId("hub-hangman")).toBeNull();
-    expect(screen.queryByTestId("hub-jeopardy")).toBeNull();
     expect(screen.queryByTestId("hub-memory")).toBeNull();
-    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(6);
-    await user.click(screen.getByTestId("hub-games"));
-    await waitFor(() => expect(screen.getByTestId("games-hub")).toBeTruthy());
-    expect(screen.getByTestId("games-hub-title").textContent).toBe("Juegos");
+    expect(screen.getByTestId("learn-hub-tiles").querySelectorAll("button")).toHaveLength(5);
+    expect(screen.queryByTestId("hub-games")).toBeNull();
+    await user.click(screen.getByTestId("nav-practica"));
+    await waitFor(() => expect(screen.getByTestId("hangman-start")).toBeTruthy());
     expect(screen.getByTestId("cubetas-start").textContent).toContain("Cubetas");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Ahorcado");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Palabras de México");
     expect(screen.getByTestId("hangman-start").textContent).not.toContain("Hangman");
-    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Jeopardy");
-    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Elige categoría, elige valor, responde.");
-    expect(screen.getByTestId("memory-start").textContent).toContain("Memoria");
-    expect(screen.getByTestId("memory-start").textContent).toContain("Pares mexicanos");
-    expect(screen.getByTestId("memory-start").textContent).not.toContain("Memory");
     expect(screen.queryByTestId("cubetas-board")).toBeNull();
     expect(screen.queryByTestId("hangman-board")).toBeNull();
-    expect(screen.queryByTestId("jeopardy-board")).toBeNull();
-    expect(screen.queryByTestId("memory-board")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/AHORCADO \/ HANGMAN|JEOPARDY SOLO|MEMORIA \/ MEMORY/);
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("hangman-start").textContent).toContain("Hangman"));
     expect(screen.getByTestId("hangman-start").textContent).toContain("Mexican words");
     expect(screen.getByTestId("hangman-start").textContent).not.toContain("Ahorcado");
     expect(screen.getByTestId("cubetas-start").textContent).toContain("Bucket fly");
-    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Pick a category, pick a value, answer.");
-    expect(screen.getByTestId("memory-start").textContent).toContain("Memory");
-    expect(screen.getByTestId("memory-start").textContent).toContain("Mexican pairs");
-    expect(screen.getByTestId("memory-start").textContent).not.toContain("Memoria");
     await user.click(screen.getByTestId("cubetas-start"));
     await waitFor(() => expect(screen.getByTestId("cubetas-board")).toBeTruthy());
     expect(screen.getByTestId("cubetas-title").textContent).toBe("Bucket fly");
@@ -1301,7 +1265,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
   it("Hangman round: guess letters then Literal then Why", async () => {
     const user = await boot();
     await awaitHome();
-    await user.click(screen.getByTestId("hub-games"));
+    await user.click(screen.getByTestId("nav-practica"));
     await waitFor(() => expect(screen.getByTestId("hangman-start")).toBeTruthy());
     await user.click(screen.getByTestId("hangman-start"));
     await waitFor(() => expect(screen.getByTestId("hangman-board")).toBeTruthy());
@@ -1417,151 +1381,7 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     // 20 bank words × 2 langs plus the two seeded boots. CI already spends ~15s here.
   }, 40000);
 
-  it("Jeopardy round: pick a tile, answer, return to the board", async () => {
-    const user = await boot();
-    await awaitHome();
-    await user.click(screen.getByTestId("hub-games"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-start")).toBeTruthy());
-    await user.click(screen.getByTestId("jeopardy-start"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-board")).toBeTruthy());
-    expect(screen.getByTestId("jeopardy-title").textContent).toBe("Jeopardy");
-    expect(screen.getByTestId("jeopardy-quiet").textContent).toBe("Elige categoría, elige valor, responde.");
-    expect(screen.getByTestId("jeopardy-howto").textContent).toBe("Elige categoría, elige valor, responde.");
-    expect(screen.getByTestId("jeopardy-mark")).toBeTruthy();
-    expect(screen.getByTestId("jeopardy-answered").textContent).toBe("0/18");
-    expect(screen.getByTestId("jeopardy-grid")).toBeTruthy();
-    expect(screen.getByTestId("jeopardy-tile-subj-100")).toBeTruthy();
-    const lightFill = (el) => `${el.style.backgroundColor} ${el.style.background}`;
-    expect(lightFill(screen.getByTestId("jeopardy-cat-reg"))).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
-    expect(lightFill(screen.getByTestId("jeopardy-tile-subj-100"))).toMatch(/#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i);
-    expect(lightFill(screen.getByTestId("jeopardy-back"))).toMatch(/#fff|#ffffff|rgb\(\s*255,\s*255,\s*255\s*\)/i);
-    expect(screen.getByTestId("jeopardy-cat-reg").textContent).toBe("Registro");
-    expect(screen.getByTestId("jeopardy-cat-subj").textContent).toBe("Subjuntivo");
-    expect(screen.getByTestId("jeopardy-cat-mex").textContent).toBe("México");
-    ["subj", "past", "porpara", "mex", "pron", "reg"].forEach((id) => {
-      const el = screen.getByTestId(`jeopardy-cat-${id}`);
-      expect(el.textContent.length).toBeGreaterThan(0);
-      expect(el.textContent).not.toMatch(/…|\.\.\.$/);
-      expect(el.className).toMatch(/word-chip/);
-      expect(el.style.overflow).not.toBe("hidden");
-      expect(el.style.textOverflow).not.toBe("ellipsis");
-      expect(el.style.wordBreak).toBe("keep-all");
-      expect(el.style.width).toBe("max-content");
-    });
-    expect(screen.getByTestId("jeopardy-grid").style.overflow).not.toBe("hidden");
-    expect(document.body.textContent).not.toMatch(/JEOPARDY SOLO|Reto Ándale \/ Jeopardy|Register and tone|Registe|and ton/);
-    expect(screen.queryByTestId("cubetas-cenzontle")).toBeNull();
-    expect(screen.queryByTestId("memory-start")).toBeNull();
-    await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-howto").textContent).toBe("Pick a category, pick a value, answer."));
-    expect(screen.getByTestId("jeopardy-quiet").textContent).toBe("Pick a category, pick a value, answer.");
-    expect(screen.getByTestId("jeopardy-cat-reg").textContent).toBe("Register");
-    expect(screen.getByTestId("jeopardy-cat-subj").textContent).toBe("Subjunctive");
-    expect(screen.getByTestId("jeopardy-cat-mex").textContent).toBe("Mexico");
-    expect(screen.getByTestId("jeopardy-cat-pron").textContent).toBe("Pronouns");
-    expect(screen.getByTestId("jeopardy-cat-past").textContent).toBe("Past");
-    expect(screen.getByTestId("jeopardy-cat-porpara").textContent).toBe("Por/para");
-    await user.click(screen.getByTestId("jeopardy-tile-mex-100"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-prompt")).toBeTruthy());
-    expect(screen.getByTestId("jeopardy-question").textContent.length).toBeGreaterThan(0);
-    expect(screen.getByTestId("jeopardy-choice-0")).toBeTruthy();
-    expect(screen.queryByTestId("jeopardy-howto")).toBeNull();
-    await user.click(screen.getByTestId("jeopardy-choice-0"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-result")).toBeTruthy());
-    expect(screen.getByTestId("jeopardy-continue")).toBeTruthy();
-    expect(screen.getByTestId("jeopardy-why")).toBeTruthy();
-    await user.click(screen.getByTestId("jeopardy-continue"));
-    await waitFor(() => expect(screen.getByTestId("jeopardy-grid")).toBeTruthy());
-    expect(screen.getByTestId("jeopardy-answered").textContent).toBe("1/18");
-    expect(screen.getByTestId("jeopardy-tile-mex-100").disabled).toBe(true);
-    await user.click(screen.getByTestId("jeopardy-back"));
-    await waitFor(() => expect(screen.getByTestId("games-hub")).toBeTruthy());
-    expect(screen.getByTestId("jeopardy-start")).toBeTruthy();
-    expect(screen.getByTestId("cubetas-start")).toBeTruthy();
-    expect(screen.getByTestId("hangman-start")).toBeTruthy();
-    expect(screen.getByTestId("memory-start")).toBeTruthy();
-  });
 
-  it("Memory pairs: tap match, drag-to-pair, full-word bubbles, ✕ back to Games", async () => {
-    const user = await boot();
-    await awaitHome();
-    await user.click(screen.getByTestId("hub-games"));
-    await waitFor(() => expect(screen.getByTestId("memory-start")).toBeTruthy());
-    expect(screen.getByTestId("memory-start").textContent).toBeTruthy();
-    expect(screen.getByTestId("memory-start").textContent).toContain("Memoria");
-    expect(screen.getByTestId("memory-start").textContent).toContain("Pares mexicanos");
-    await user.click(screen.getByTestId("memory-start"));
-    await waitFor(() => expect(screen.getByTestId("memory-board")).toBeTruthy());
-    expect(screen.getByTestId("memory-title").textContent).toBe("Memoria");
-    expect(screen.getByTestId("memory-quiet").textContent).toBe("Pares mexicanos");
-    expect(screen.getByTestId("memory-howto").textContent).toBe("Toca dos cartas o arrastra un par.");
-    expect(screen.getByTestId("memory-mark")).toBeTruthy();
-    expect(screen.getByTestId("memory-grid")).toBeTruthy();
-    expect(screen.queryByTestId("cubetas-cenzontle")).toBeNull();
-    expect(document.body.textContent).not.toMatch(/MEMORIA \/ MEMORY|Memory \/ Memoria/);
-    const board = screen.getByTestId("memory-board");
-    expect(board.className).toMatch(/memory-board/);
-    expect(board.style.maxWidth).toBe("none");
-    expect(board.style.width).toBe("100%");
-    expect(board.style.margin).toBe("0px");
-    expect(board.getAttribute("data-board-pad")).toBe("4");
-    const cards = screen.getAllByTestId("memory-card");
-    expect(cards.length).toBe(12);
-    expect(screen.getByTestId("memory-grid").getAttribute("data-cols")).toBe("3");
-    expect(screen.getByTestId("memory-grid").style.gridTemplateColumns).toContain("repeat(3");
-    expect(screen.getByTestId("memory-grid").style.width).toBe("100%");
-    expect(screen.getByTestId("memory-grid").style.maxWidth).toBe("none");
-    cards.forEach((el) => {
-      assertMemoryBoardCard(el);
-      expect(["none", "100%"]).toContain(el.style.maxWidth);
-    });
-    const tapCard = cards[0];
-    const tapPair = tapCard.getAttribute("data-pair");
-    const tapKind = tapCard.getAttribute("data-kind");
-    const tapMate = cards.find((el) => el.getAttribute("data-pair") === tapPair && el.getAttribute("data-kind") !== tapKind);
-    expect(tapMate).toBeTruthy();
-    await user.click(tapCard);
-    await waitFor(() => expect(tapCard.getAttribute("data-face")).toBe("up"));
-    const tapEntry = MEMORY_BANK.find((row) => row.word === tapPair);
-    const tapWord = tapKind === "word" ? tapEntry.word : tapEntry.meaning.es;
-    const tapGloss = tapKind === "word" ? tapEntry.meaning.es : tapEntry.word;
-    expect(tapCard.querySelector("[data-testid='memory-card-word']").textContent).toBe(tapWord);
-    expect(tapCard.querySelector("[data-testid='memory-card-gloss']").textContent).toBe(`(${tapGloss})`);
-    expect(tapCard.getAttribute("aria-label")).toBe(`${tapWord} (${tapGloss})`);
-    const stillDown = cards.find((el) => el !== tapCard && el.getAttribute("data-face") === "down");
-    expect(stillDown.querySelector("[data-testid='memory-card-gloss']")).toBeNull();
-    await user.click(tapMate);
-    await waitFor(() => expect(screen.getByTestId("memory-teach")).toBeTruthy());
-    expect(tapCard.getAttribute("data-face")).toBe("up");
-    expect(tapMate.getAttribute("data-face")).toBe("up");
-    expect(tapCard.getAttribute("data-open")).toBe("yes");
-    expect(screen.getByTestId("memory-literal-why").textContent).toBe("Literal · Por qué");
-    expect(screen.getByTestId("memory-why").textContent.length).toBeGreaterThan(0);
-    await user.click(screen.getByTestId("lang-en"));
-    await waitFor(() => expect(screen.getByTestId("memory-howto").textContent).toBe("Tap two cards or drag a pair."));
-    expect(screen.getByTestId("memory-title").textContent).toBe("Memory");
-    expect(screen.getByTestId("memory-quiet").textContent).toBe("Mexican pairs");
-    expect(screen.getByTestId("memory-literal-why").textContent).toBe("Literal · Why");
-    const live = screen.getAllByTestId("memory-card");
-    const dragCard = live.find((el) => el.getAttribute("data-open") !== "yes");
-    expect(dragCard).toBeTruthy();
-    const dragPair = dragCard.getAttribute("data-pair");
-    const dragKind = dragCard.getAttribute("data-kind");
-    const dragMate = live.find((el) => el.getAttribute("data-pair") === dragPair && el.getAttribute("data-kind") !== dragKind);
-    fireEvent.pointerDown(dragCard, { clientX: 10, clientY: 10 });
-    fireEvent.pointerUp(dragMate, { clientX: 40, clientY: 40 });
-    await waitFor(() => expect(dragCard.getAttribute("data-open")).toBe("yes"));
-    expect(dragMate.getAttribute("data-open")).toBe("yes");
-    expect(screen.getByTestId("memory-why").textContent.length).toBeGreaterThan(0);
-    const closeBtn = screen.getByTestId("memory-board").querySelector("button[aria-label='Close']");
-    expect(closeBtn).toBeTruthy();
-    await user.click(closeBtn);
-    await waitFor(() => expect(screen.getByTestId("games-hub")).toBeTruthy());
-    expect(screen.getByTestId("memory-start")).toBeTruthy();
-    expect(screen.getByTestId("cubetas-start")).toBeTruthy();
-    expect(screen.getByTestId("hangman-start")).toBeTruthy();
-    expect(screen.getByTestId("jeopardy-start")).toBeTruthy();
-  });
 
   it("section test-out starts from Camino and fails closed after 3 misses (failKind === test)", async () => {
     const user = await boot();
@@ -1634,7 +1454,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("practica-fold")).toBeTruthy();
     expect(screen.getByTestId("phrase-doctor")).toBeTruthy();
     expect(screen.getByTestId("safe-risky-start")).toBeTruthy();
-    expect(screen.getByTestId("match-pairs-start")).toBeTruthy();
 
     cleanup();
     seedProgress({ xp: 50, done: { subj1: 1 }, weak: { Subjuntivo: 3 } });
@@ -1743,13 +1562,13 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("phrase-doctor-board").textContent).not.toMatch(/NATURAL/);
   });
 
-  it("Práctica fold leads with Phrase Doctor, Safe-or-Risky, and Emparejar", async () => {
+  it("Práctica fold leads with Phrase Doctor and Safe-or-Risky", async () => {
     const user = await boot();
     await user.click(screen.getByTestId("nav-practica"));
     const fold = screen.getByTestId("practica-fold");
     const ids = [...fold.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
-    expect(ids.filter((id) => ["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start", "hangman-start", "jeopardy-start", "memory-start"].includes(id)))
-      .toEqual(["phrase-doctor", "safe-risky-start", "match-pairs-start", "cubetas-start", "hangman-start", "jeopardy-start", "memory-start"]);
+    expect(ids.filter((id) => ["phrase-doctor", "safe-risky-start", "cubetas-start", "hangman-start"].includes(id)))
+      .toEqual(["phrase-doctor", "safe-risky-start", "cubetas-start", "hangman-start"]);
     const html = document.body.innerHTML;
     const foldAt = html.indexOf('data-testid="practica-fold"');
     const smartAt = html.search(/PRÁCTICA INTELIGENTE|SMART PRACTICE/);
@@ -1759,7 +1578,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(flashAt).toBeGreaterThan(foldAt);
     expect(screen.getByTestId("phrase-doctor").textContent).toMatch(/Doctora de frases|Phrase Doctor/);
     expect(screen.getByTestId("safe-risky-start").textContent).toMatch(/¿Seguro o riesgoso\?|Safe or Risky\?/);
-    expect(screen.getByTestId("match-pairs-start").textContent).toMatch(/Emparejar|Match pairs/);
     expect(screen.getByTestId("match-play")).toBeTruthy();
     expect(screen.getByTestId("match-play").textContent).toMatch(/Match & play|Empareja y juega/);
     expect(screen.getByTestId("cubetas-start").textContent).toContain("Cubetas");
@@ -1767,21 +1585,12 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     expect(screen.getByTestId("hangman-start").textContent).toContain("Ahorcado");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Palabras de México");
     expect(screen.getByTestId("hangman-start").textContent).not.toContain("Hangman");
-    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Jeopardy");
-    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Elige categoría, elige valor, responde.");
-    expect(screen.getByTestId("memory-start").textContent).toContain("Memoria");
-    expect(screen.getByTestId("memory-start").textContent).toContain("Pares mexicanos");
-    expect(screen.getByTestId("memory-start").textContent).not.toContain("Memory");
     await user.click(screen.getByTestId("lang-en"));
     await waitFor(() => expect(screen.getByTestId("cubetas-start").textContent).toContain("Bucket fly"));
     expect(screen.getByTestId("cubetas-start").textContent).not.toContain("Cubetas");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Hangman");
     expect(screen.getByTestId("hangman-start").textContent).toContain("Mexican words");
     expect(screen.getByTestId("hangman-start").textContent).not.toContain("Ahorcado");
-    expect(screen.getByTestId("jeopardy-start").textContent).toContain("Pick a category, pick a value, answer.");
-    expect(screen.getByTestId("memory-start").textContent).toContain("Memory");
-    expect(screen.getByTestId("memory-start").textContent).toContain("Mexican pairs");
-    expect(screen.getByTestId("memory-start").textContent).not.toContain("Memoria");
   });
 
   it("Cubetas: one chip, two mood buckets, wrong returns, correct flies then Literal/Why", async () => {
@@ -1891,67 +1700,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
 
     cleanup();
     seedProgress({ uiLang: "en" });
-    const apa = MEMORY_BANK.find((r) => r.word === "apapacho");
-    const tian = MEMORY_BANK.find((r) => r.word === "tianguis");
-    const morra = MEMORY_BANK.find((r) => r.word === "morra");
-    localStorage.setItem(LIVE_KEY, JSON.stringify({
-      screen: "memory",
-      tab: "practica",
-      memoryGame: {
-        packId: "mexicanismos-v1",
-        hub: "games",
-        pairs: [apa, tian, morra],
-        cards: [
-          { id: "apapacho-word", pairId: "apapacho", kind: "word" },
-          { id: "apapacho-meaning", pairId: "apapacho", kind: "meaning" },
-          { id: "tianguis-word", pairId: "tianguis", kind: "word" },
-          { id: "tianguis-meaning", pairId: "tianguis", kind: "meaning" },
-          { id: "morra-word", pairId: "morra", kind: "word" },
-          { id: "morra-meaning", pairId: "morra", kind: "meaning" },
-        ],
-        faceUp: ["apapacho-word", "apapacho-meaning", "tianguis-word", "morra-meaning"],
-        matched: [],
-        lastMatch: null,
-        miss: false,
-        lastWrong: [],
-        status: "play",
-      },
-    }));
-    render(<App />);
-    await waitFor(() => expect(screen.getByTestId("memory-board")).toBeTruthy());
-    const cards = screen.getAllByTestId("memory-card");
-    const byId = (id) => cards.find((el) => el.getAttribute("data-card") === id);
-    expect(byId("apapacho-word").getAttribute("data-face")).toBe("up");
-    assertMemoryBoardCard(byId("apapacho-word"), "apapacho");
-    expect(byId("apapacho-word").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(warm hug)");
-    assertMemoryBoardCard(byId("apapacho-meaning"), "warm hug");
-    expect(byId("apapacho-meaning").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(apapacho)");
-    assertMemoryBoardCard(byId("tianguis-word"), "tianguis");
-    expect(byId("tianguis-word").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(street market)");
-    assertMemoryBoardCard(byId("morra-meaning"), "girl, young woman");
-    expect(byId("morra-meaning").querySelector("[data-testid='memory-card-gloss']").textContent).toBe("(morra)");
-    expect(byId("tianguis-meaning").getAttribute("data-face")).toBe("down");
-    expect(byId("tianguis-meaning").querySelector("[data-testid='memory-card-gloss']")).toBeNull();
-    expect(byId("morra-word").getAttribute("data-face")).toBe("down");
-    expect(byId("morra-word").querySelector("[data-testid='memory-card-gloss']")).toBeNull();
-    expect(byId("apapacho-meaning").className).toMatch(/word-chip--phrase/);
-    expect(byId("apapacho-word").style.fontSize).toBe(byId("apapacho-meaning").style.fontSize);
-    const creamFace = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
-    const whiteFace = /#fff|#ffffff|white|rgb\(\s*255,\s*255,\s*255\s*\)/i;
-    const terracotta = /#C46B3A|rgb\(\s*196,\s*107,\s*58\s*\)/i;
-    const lightInk = /#3C3C3C|rgb\(\s*60,\s*60,\s*60\s*\)/i;
-    expect(byId("tianguis-meaning").style.background).toMatch(creamFace);
-    expect(byId("tianguis-meaning").style.borderTopColor).toMatch(terracotta);
-    expect(byId("tianguis-meaning").style.borderBottomColor).toMatch(terracotta);
-    expect(byId("apapacho-word").style.background).toMatch(whiteFace);
-    expect(byId("apapacho-word").style.color).toMatch(lightInk);
-    expect(byId("apapacho-word").style.borderTopColor).toMatch(terracotta);
-    expect(screen.getByTestId("memory-title").style.color).toMatch(/#6B6258|rgb\(\s*107,\s*98,\s*88\s*\)/i);
-    expect(screen.getByTestId("memory-mark").querySelectorAll("rect")[1].getAttribute("fill")).toBe("#5C7356");
-    expect(screen.getByTestId("app-shell").style.background).toMatch(creamFace);
-
-    cleanup();
-    seedProgress({ uiLang: "en" });
     localStorage.setItem(LIVE_KEY, JSON.stringify({
       screen: "ahorcado",
       tab: "practica",
@@ -2013,89 +1761,6 @@ describe("simulated learner flows", { timeout: 15000 }, () => {
     });
   });
 
-  it("Memory dark theme follows the dark-game board and keeps light chrome off it", async () => {
-    cleanup();
-    // Earlier tests paint document.body and never clear it.
-    document.body.style.background = "";
-    document.body.style.color = "";
-    document.body.style.transition = "";
-    seedProgress({ uiLang: "es", theme: "dark" });
-    const combi = MEMORY_BANK.find((r) => r.word === "combi");
-    const tian = MEMORY_BANK.find((r) => r.word === "tianguis");
-    const elote = MEMORY_BANK.find((r) => r.word === "elote");
-    localStorage.setItem(LIVE_KEY, JSON.stringify({
-      screen: "memory",
-      tab: "practica",
-      memoryGame: {
-        packId: "mexicanismos-v1",
-        hub: "games",
-        pairs: [combi, tian, elote],
-        cards: [
-          { id: "combi-word", pairId: "combi", kind: "word" },
-          { id: "combi-meaning", pairId: "combi", kind: "meaning" },
-          { id: "tianguis-word", pairId: "tianguis", kind: "word" },
-          { id: "tianguis-meaning", pairId: "tianguis", kind: "meaning" },
-          { id: "elote-word", pairId: "elote", kind: "word" },
-          { id: "elote-meaning", pairId: "elote", kind: "meaning" },
-        ],
-        faceUp: ["combi-word", "combi-meaning", "tianguis-word"],
-        matched: ["combi"],
-        lastMatch: "combi",
-        miss: false,
-        lastWrong: [],
-        status: "play",
-      },
-    }));
-    render(<App />);
-    const page = /#15171C|rgb\(\s*21,\s*23,\s*28\s*\)/i;
-    const card = /#1E2128|rgb\(\s*30,\s*33,\s*40\s*\)/i;
-    const edge = /#252830|rgb\(\s*37,\s*40,\s*48\s*\)/i;
-    const cream = /#F6EFE4|rgb\(\s*246,\s*239,\s*228\s*\)/i;
-    const gloss = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
-    const sage = /#677050|rgb\(\s*103,\s*112,\s*80\s*\)/i;
-    const label = /#A0A4AB|rgb\(\s*160,\s*164,\s*171\s*\)/i;
-    // The dark board commits before the body colour effect. Under load that
-    // effect is still the previous cream when the board node already exists.
-    await waitFor(() => {
-      expect(screen.getByTestId("memory-board").style.background).toMatch(page);
-      expect(screen.getByTestId("app-shell").style.background).toMatch(page);
-      expect(document.body.style.background).toMatch(page);
-    });
-    expect(screen.getByTestId("app-shell").style.background).toMatch(page);
-    expect(document.body.style.background).toMatch(page);
-    expect(screen.getByTestId("memory-board").style.background).toMatch(page);
-    expect(screen.getByTestId("memory-title").style.color).toMatch(label);
-    expect(screen.getByTestId("memory-quiet").style.color).toMatch(label);
-    expect(screen.getByTestId("memory-matched").style.color).toMatch(label);
-    expect(screen.getByTestId("memory-howto").style.color).toMatch(label);
-    const cards = screen.getAllByTestId("memory-card");
-    const byId = (id) => cards.find((el) => el.getAttribute("data-card") === id);
-    const down = byId("elote-meaning");
-    expect(down.getAttribute("data-face")).toBe("down");
-    expect(down.style.background).toMatch(card);
-    expect(down.style.borderTopColor).toMatch(edge);
-    expect(down.style.borderBottomColor).toMatch(edge);
-    expect(down.style.background).not.toMatch(cream);
-    const downMark = down.querySelectorAll("rect");
-    expect(downMark[0].getAttribute("fill")).toBe("#F6EFE4");
-    expect(downMark[1].getAttribute("fill")).toBe("#B8C0A0");
-    expect(downMark[1].getAttribute("stroke")).toBe("#F6EFE4");
-    const openCard = byId("tianguis-word");
-    expect(openCard.getAttribute("data-face")).toBe("up");
-    expect(openCard.style.background).toMatch(card);
-    expect(openCard.style.color).toMatch(cream);
-    expect(openCard.querySelector("[data-testid='memory-card-gloss']").style.color).toMatch(gloss);
-    expect(openCard.querySelector("[data-testid='memory-card-gloss']").style.fontSize).toBe("0.7em");
-    const matchedCard = byId("combi-meaning");
-    expect(matchedCard.style.background).toMatch(sage);
-    expect(matchedCard.style.color).toMatch(cream);
-    expect(matchedCard.querySelector("[data-testid='memory-card-word']").textContent).toBe("camioneta colectiva");
-    const matchedGloss = matchedCard.querySelector("[data-testid='memory-card-gloss']");
-    expect(matchedGloss.style.color).toMatch(cream);
-    expect(matchedGloss.style.fontSize).toBe("0.7em");
-    expect(contrastRatio(matchedGloss.style.color, matchedCard.style.background)).toBeGreaterThanOrEqual(4.5);
-    expect(screen.getByTestId("memory-mark").querySelectorAll("rect")[1].getAttribute("fill")).toBe("#B8C0A0");
-  });
 
   it("Safe/Risky hub reward is extra por racha / streak extra, not bonus", async () => {
     const user = await boot();

@@ -8,9 +8,6 @@ import { isBajioUnlockFlashDue, isCdmxUnlockFlashDue, isOaxacaUnlockFlashDue, ma
 import { SAFE_RISKY_MULTI_FIXTURE, startSafeRiskyRun } from "./safeRisky.js";
 import { startCubetasRun } from "./cubetas.js";
 import { startHangmanRun } from "./hangman.js";
-import { startMemoryRun } from "./memory.js";
-import { startJeopardyRun } from "./jeopardy.js";
-import { startMatchRun } from "./matchPairs.js";
 import { LECTURA_HANDOFF_CTA, LECTURA_HANDOFF_QUIET } from "./lecturaHandoff.js";
 import { WAITLIST_STORE_KEY } from "./waitlist.js";
 import { FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_PRIVACY_LINK, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
@@ -1521,19 +1518,7 @@ describe("paywall headline follows the open source", () => {
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
-  it("match pairs close uses the fallback headline", async () => {
-    const user = await openPaywallFrom({ screen: "matchPairs", matchGame: startMatchRun([["hola", "hi"], ["adiós", "bye"]]) });
-    await waitSurfaceClear("match-pairs-screen");
-    await clickClose(user, "match-pairs-screen");
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
-  });
 
-  it("memory close uses the fallback headline", async () => {
-    const user = await openPaywallFrom({ screen: "memory", memoryGame: startMemoryRun() });
-    await waitSurfaceClear("memory-board");
-    await clickClose(user, "memory-board");
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
-  });
 
   it("dialogue close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "dialogue" });
@@ -1596,12 +1581,6 @@ describe("paywall headline follows the open source", () => {
     await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
   });
 
-  it("jeopardy close uses the fallback headline", async () => {
-    const user = await openPaywallFrom({ screen: "jeopardy", jeopardy: startJeopardyRun() });
-    await waitSurfaceClear("jeopardy-board");
-    await clickClose(user, "jeopardy-board");
-    await waitFor(() => expect(screen.queryByTestId("soft-paywall")).toBeNull());
-  });
 
   it("story close uses the fallback headline", async () => {
     const user = await openPaywallFrom({ screen: "story", storyId: "story-0", paraIdx: 0 });
@@ -1764,8 +1743,6 @@ describe("cream caption contrast", { timeout: 20000 }, () => {
     await user.click(screen.getByTestId("nav-practica"));
     await waitFor(() => expect(screen.getByTestId("memory-window")).toBeTruthy());
     expect(screen.getByRole("button", { name: /Repasar hoy/ })).toBeTruthy();
-    expect(screen.getByTestId("memory-window").textContent).toMatch(/60/);
-    assertCaption(screen.getByTestId("memory-window"), LIGHT_CAPTION);
 
     await user.click(screen.getByTestId("nav-perfil"));
     await waitFor(() => expect(screen.getAllByTestId("achievement-desc").length).toBeGreaterThan(0));
@@ -1776,8 +1753,6 @@ describe("cream caption contrast", { timeout: 20000 }, () => {
     await bootLive("light", { screen: "ahorcado", tab: "practica", ahorcado: startHangmanRun() }, "hangman-quiet");
     assertCaption(screen.getByTestId("hangman-quiet"), LIGHT_CAPTION);
 
-    await bootLive("light", { screen: "jeopardy", tab: "practica", jeopardy: startJeopardyRun() }, "jeopardy-quiet");
-    assertCaption(screen.getByTestId("jeopardy-quiet"), LIGHT_CAPTION);
   });
 
   it("dark cream captions stay D.sub #A0A4AB at 12px/700", async () => {
@@ -1789,7 +1764,6 @@ describe("cream caption contrast", { timeout: 20000 }, () => {
 
     await user.click(screen.getByTestId("nav-practica"));
     await waitFor(() => expect(screen.getByTestId("memory-window")).toBeTruthy());
-    assertCaption(screen.getByTestId("memory-window"), DARK_SUB);
 
     await user.click(screen.getByTestId("nav-perfil"));
     await waitFor(() => expect(screen.getAllByTestId("achievement-desc").length).toBeGreaterThan(0));
@@ -1798,7 +1772,5 @@ describe("cream caption contrast", { timeout: 20000 }, () => {
     await bootLive("dark", { screen: "ahorcado", tab: "practica", ahorcado: startHangmanRun() }, "hangman-quiet");
     assertCaption(screen.getByTestId("hangman-quiet"), DARK_SUB);
 
-    await bootLive("dark", { screen: "jeopardy", tab: "practica", jeopardy: startJeopardyRun() }, "jeopardy-quiet");
-    assertCaption(screen.getByTestId("jeopardy-quiet"), DARK_SUB);
   });
 });
