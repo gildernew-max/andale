@@ -7,6 +7,8 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Scene1Shell from "./Scene1Shell.jsx";
 import { SCENE1_CHUNKS } from "./content.js";
+import { PAYWALL_HERO_ALT, PAYWALL_HERO_PATH } from "../paywallStill.js";
+import { LOCKED_DISPLAY_PRICE } from "../paywallDisclosure.js";
 
 function fakeIdbFactory() {
   const stores = new Map();

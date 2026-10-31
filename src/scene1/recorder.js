@@ -81,18 +81,25 @@ export async function startRecording({
   if (typeof Recorder !== "function") throw new Error("MediaRecorder unavailable");
 
   const stream = await gum({ audio: true });
-  const recorder = new Recorder(stream, { mimeType });
-  const chunks = [];
-  recorder.ondataavailable = (e) => { if (e?.data?.size) chunks.push(e.data); };
-  const stopped = new Promise((resolve, reject) => {
-    recorder.onstop = () => {
-      try { stream.getTracks?.().forEach((t) => t.stop()); } catch { /* best effort */ }
-      resolve(new Blob(chunks, { type: mimeType }));
-    };
-    recorder.onerror = (e) => reject(e?.error || new Error("recording failed"));
-  });
-  recorder.start();
-  return { stop: () => { recorder.stop(); return stopped; } };
+  try {
+    const recorder = new Recorder(stream, { mimeType });
+    const chunks = [];
+    recorder.ondataavailable = (e) => { if (e?.data?.size) chunks.push(e.data); };
+    const stopped = new Promise((resolve, reject) => {
+      recorder.onstop = () => {
+        try { stream.getTracks?.().forEach((t) => t.stop()); } catch { /* best effort */ }
+        resolve(new Blob(chunks, { type: mimeType }));
+      };
+      recorder.onerror = (e) => reject(e?.error || new Error("recording failed"));
+    });
+    recorder.start();
+    return { stop: () => { recorder.stop(); return stopped; } };
+  } catch (e) {
+    // The recorder never started (bad mimeType, constructor/start threw):
+    // onstop will never fire to release the mic, so stop it here instead.
+    try { stream.getTracks?.().forEach((t) => t.stop()); } catch { /* best effort */ }
+    throw e;
+  }
 }
 
 function speakOnce(text, { voice, speechSynthesisImpl, UtteranceImpl } = {}) {

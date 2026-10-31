@@ -5024,7 +5024,15 @@ export default function App() {
     // Skip the default state. Strict Mode replays this effect; flipping the
     // flag inside the skip would write those defaults over a real save.
     if (!hydrated.current) return;
-    try { storage.set(STORAGE_KEY, JSON.stringify({ ...prog, contentVersion: CONTENT_VERSION })); } catch (e) {}
+    const toSave = { ...prog, contentVersion: CONTENT_VERSION };
+    // This component's uiLang picker never runs while Scene1 is on (the
+    // isScene1Enabled() return below is reached after this hook, every
+    // render), so prog.uiLang here is always this load effect's own default,
+    // never a real choice. Persisting it would land in andale-v3 and read
+    // back as a saved choice by scene1DefaultUiLang (./scene1/uiLang.js),
+    // silently beating the phone-language fallback on a Spanish phone.
+    if (isScene1Enabled()) delete toSave.uiLang;
+    try { storage.set(STORAGE_KEY, JSON.stringify(toSave)); } catch (e) {}
   }, [prog]);
 
   const playSound = (kind) => playGameSound(kind, { enabled: prog.sound, audioRef: audioCtx });

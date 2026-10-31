@@ -4,6 +4,7 @@ import { FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, emitFunnelEvent } from
 import { learnerDayNumber } from "../paywallTrigger.js";
 import { annualPriceLine, PAYWALL_ANNUAL_LINE_SIZE, PAYWALL_LIME } from "../webPaywall.js";
 import { PAYWALL_HERO_ALT, PAYWALL_HERO_PATH } from "../paywallStill.js";
+import { LOCKED_DISPLAY_PRICE } from "../paywallDisclosure.js";
 import { reserveWords } from "../reserveAnnual.js";
 import { SCENE1_CHUNKS, SCENE1_VARIANTS } from "./content.js";
 import {
@@ -195,7 +196,9 @@ export default function Scene1Shell({ uiLang = "es", theme = "light", search } =
   const variantForPaywall = scene1PaywallVariant({ firstSeenKey: firstSeenKeyRef.current, todayKey, search });
   const words = variantForPaywall === "B" ? SCENE1_PAYWALL_B : SCENE1_PAYWALL_A;
   const rw = reserveWords(uiLang);
-  const annualLine = annualPriceLine(en ? "{price} a year" : "{price} al año");
+  // The loud card line reuses Guideline 3.1.2's locked annual amount (paywallDisclosure.js)
+  // instead of a second, hand-typed "$39.99" so the two never drift apart.
+  const annualLine = annualPriceLine(en ? "{price} a year" : "{price} al año", LOCKED_DISPLAY_PRICE.annual);
 
   return (
     <div data-testid="scene1-shell" style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "'Nunito','Avenir Next',system-ui,sans-serif", textAlign: "center" }}>
@@ -276,6 +279,7 @@ export default function Scene1Shell({ uiLang = "es", theme = "light", search } =
         {phase === PHASE.paywall && (
           <div data-testid="scene1-paywall" data-paywall-variant={variantForPaywall}>
             <img
+              data-testid="scene1-paywall-hero"
               src={PAYWALL_HERO_SRC}
               alt={en ? PAYWALL_HERO_ALT.en : PAYWALL_HERO_ALT.es}
               style={{ display: "block", margin: "0 auto 16px", height: 140, width: "auto", maxWidth: "100%", borderRadius: 16, objectFit: "cover" }}

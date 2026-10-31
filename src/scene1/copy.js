@@ -1,7 +1,8 @@
 /** Scene 1 copy constants — No face (brand/paywall) + George (compare/mic).
  *  /workspace/andale-redesign/noface-scene1-copy.md
  *  /workspace/andale-redesign/compare-spec-and-scene2.md
- *  ES/EN pairs only. Price and card chrome stay in webPaywall.js / reserveAnnual.js. */
+ *  ES/EN pairs only. Price and card chrome stay in webPaywall.js / reserveAnnual.js;
+ *  the locked annual amount itself comes from paywallDisclosure.js. */
 
 export const SCENE1_COLD_OPEN = Object.freeze({
   es: "Habla español mexicano de verdad en San Miguel. Desde esta semana.",

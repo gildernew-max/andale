@@ -90,6 +90,27 @@ async function fakeGetUserMedia() {
   assert(stopped === true, "stopping the recorder releases the mic track");
 }
 
+// The recorder fails to start (constructor throws, e.g. an unsupported
+// mimeType): the mic was already open via getUserMedia, and onstop never
+// fires to release it, so startRecording must stop the track itself.
+{
+  class ThrowingMediaRecorder {
+    constructor() { throw new Error("mimeType not supported"); }
+  }
+  let stopped = false;
+  let threw = false;
+  try {
+    await startRecording({
+      getUserMediaImpl: async () => ({ getTracks: () => [{ stop() { stopped = true; } }] }),
+      MediaRecorderImpl: ThrowingMediaRecorder,
+    });
+  } catch {
+    threw = true;
+  }
+  assert(threw, "startRecording rejects when the recorder constructor throws");
+  assert(stopped === true, "the mic track is released even when the recorder never started");
+}
+
 // Missing getUserMedia/MediaRecorder rejects instead of silently doing nothing.
 {
   let threw = false;
