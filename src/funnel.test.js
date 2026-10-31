@@ -34,10 +34,13 @@ assert(FUNNEL_EVENTS.firstSessionExercise1Correct === "first_session_exercise1_c
 assert(FUNNEL_EVENTS.firstSessionComplete === "first_session_complete", "first_session_complete is the session-one win");
 assert(FUNNEL_EVENTS.day2Return === "day2_return", "day2_return is the later-day open");
 assert(FUNNEL_EVENTS.firstStreakSeen === "first_streak_seen", "first_streak_seen is the day-2 return card");
+assert(FUNNEL_EVENTS.sceneRecording === "scene1_recording", "scene1_recording is the speaking-loop recording count");
+assert(FUNNEL_EVENTS.appOpen === "app_open", "app_open is the scene1 app open");
+assert(FUNNEL_EVENTS.scene1Complete === "scene1_complete", "scene1_complete is the scene1 finish");
 assert(
   Object.values(FUNNEL_EVENTS).slice().sort().join(",")
-    === ["cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "first_streak_seen", "lectura_chapter_done", "lectura_start", "locked_story_capped", "open", "paywall_seen", "paywall_tap", "purchase", "reserve_submit", "tap_annual", "tap_monthly", "waitlist_submit"].join(","),
-  "funnel allowlist is the conversion chain plus lectura, paywall, waitlist, first-win email, and first-session measurement, plus reserve_submit",
+    === ["app_open", "cenzontle_complete", "day2_return", "email-skipped", "email-submitted", "first-win-seen", "first_session_complete", "first_session_exercise1_correct", "first_session_start", "first_streak_seen", "lectura_chapter_done", "lectura_start", "locked_story_capped", "open", "paywall_seen", "paywall_tap", "purchase", "reserve_submit", "scene1_complete", "scene1_recording", "tap_annual", "tap_monthly", "waitlist_submit"].join(","),
+  "funnel allowlist is the conversion chain plus lectura, paywall, waitlist, first-win email, first-session measurement, reserve_submit, and the scene1 recording/open/complete events",
 );
 assert(PAYWALL_TAP.annual === "annual", "annual tap label");
 assert(PAYWALL_TAP.monthly === "monthly", "monthly tap label");
@@ -283,6 +286,20 @@ for (const event of [
   assert(step.email == null && step.name == null && step.choice == null && step.storyId == null && step.beat == null, `${event} drops email and other extras`);
   assert(JSON.stringify(step) === JSON.stringify({ event, at: step.at }), `${event} payload is event + at only`);
   assert(!/example\.com|@/.test(JSON.stringify(step)), `${event} JSON has no address`);
+}
+
+for (const event of [FUNNEL_EVENTS.appOpen, FUNNEL_EVENTS.scene1Complete]) {
+  const step = emitFunnelEvent({
+    event,
+    email: "dave@example.com",
+    name: "Dave",
+    source: "win",
+    day: 2,
+  }, bus);
+  assert(step.event === event, `${event} names the event`);
+  assert(typeof step.at === "string" && step.at.includes("T"), `${event} carries an ISO timestamp`);
+  assert(JSON.stringify(step) === JSON.stringify({ event, at: step.at }), `${event} payload is event + at only`);
+  assert(!/example\.com|@|Dave/.test(JSON.stringify(step)), `${event} JSON has no PII`);
 }
 
 const bought = emitFunnelEvent({
