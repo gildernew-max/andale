@@ -300,8 +300,9 @@ describe("Scene1Shell", () => {
 
       const annualButton = screen.getByTestId("scene1-paywall-annual");
       const bg = toHex(annualButton.style.background);
-      expect(bg).not.toBe("#58cc02"); // the old bright lime measured 2.09:1 for white text
-      expect(contrastRatio("#ffffff", bg)).toBeGreaterThanOrEqual(4.5);
+      expect(bg).toBe("#58cc02"); // No face: lime is the brand
+      expect(toHex(annualButton.style.color)).toBe("#1f3a1a"); // ink on lime, label inherits
+      expect(contrastRatio("#1f3a1a", bg)).toBeGreaterThanOrEqual(4.5);
       cleanup();
     }
   }, 20000);

@@ -2,11 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { dayKeyFromDate } from "../firstDoor.js";
 import { FUNNEL_EVENTS, PAYWALL_SEEN_SOURCE, PAYWALL_TAP, emitFunnelEvent } from "../funnel.js";
 import { learnerDayNumber } from "../paywallTrigger.js";
-import { annualPriceLine, PAYWALL_ANNUAL_LINE_SIZE } from "../webPaywall.js";
+import { annualPriceLine, PAYWALL_ANNUAL_LINE_SIZE, PAYWALL_LIME } from "../webPaywall.js";
 import { PAYWALL_HERO_ALT, PAYWALL_HERO_PATH } from "../paywallStill.js";
 import { LOCKED_DISPLAY_PRICE } from "../paywallDisclosure.js";
 import { reserveWords } from "../reserveAnnual.js";
-import { SAGE } from "../sageChrome.js";
 import { SCENE1_CHUNKS, SCENE1_VARIANTS } from "./content.js";
 import {
   SCENE1_COLD_OPEN,
@@ -291,7 +290,7 @@ export default function Scene1Shell({ uiLang = "es", theme = "light", search } =
             <div style={{ fontSize: 15, color: subInk, marginBottom: 16 }}>
               {en ? words.subheadEn : words.subheadEs}
             </div>
-            <button data-testid="scene1-paywall-annual" onClick={tapAnnual} style={{ ...primaryBtnStyle, background: theme === "dark" ? SAGE.sageSmall : SAGE.sage }}>
+            <button data-testid="scene1-paywall-annual" onClick={tapAnnual} style={{ ...primaryBtnStyle, background: PAYWALL_LIME, color: "#1F3A1A" }}>
               <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".06em", textTransform: "uppercase" }}>{rw.label}</div>
               <div style={{ fontWeight: 800, fontSize: 15 }}>{rw.action}</div>
             </button>
