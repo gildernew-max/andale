@@ -9,6 +9,7 @@ import Scene1Shell from "./Scene1Shell.jsx";
 import { SCENE1_CHUNKS } from "./content.js";
 import { PAYWALL_HERO_ALT, PAYWALL_HERO_PATH } from "../paywallStill.js";
 import { LOCKED_DISPLAY_PRICE } from "../paywallDisclosure.js";
+import { contrastRatio } from "../hoyChoiceCard.js";
 
 function fakeIdbFactory() {
   const stores = new Map();
@@ -75,6 +76,20 @@ function mockBrowser() {
 
 const seenEvents = (eventName) =>
   JSON.parse(localStorage.getItem("andale-funnel-log") || "[]").filter((e) => e.event === eventName);
+
+/** style.background may come back as rgb(...) in jsdom even though we set a hex literal. */
+function toHex(value) {
+  const s = String(value || "").trim().toLowerCase();
+  const hex = s.match(/#([0-9a-f]{3,8})/);
+  if (hex) {
+    let h = hex[1];
+    if (h.length === 3) h = h.split("").map((ch) => ch + ch).join("");
+    return `#${h.slice(0, 6)}`;
+  }
+  const rgb = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (!rgb) return "";
+  return `#${[rgb[1], rgb[2], rgb[3]].map((n) => Number(n).toString(16).padStart(2, "0")).join("")}`;
+}
 
 beforeEach(() => {
   localStorage.clear();
@@ -252,10 +267,44 @@ describe("Scene1Shell", () => {
     expect(screen.getByTestId("scene1-model").textContent).toMatch(/Buenos días\. ¿Me da un kilo de limones/);
   }, 20000);
 
-  it("fits 360x640 with no 40px overflow: minHeight is the dynamic viewport unit, not a fixed 100vh", () => {
+  it("fits 360x640 with no 40px overflow: minHeight is the dynamic viewport unit, padding stays inside the box, and no screen sets a fixed 680 height", async () => {
+    const user = userEvent.setup();
     render(<Scene1Shell uiLang="es" search="" />);
-    expect(screen.getByTestId("scene1-shell").style.minHeight).toBe("100dvh");
-  });
+    const shell = screen.getByTestId("scene1-shell");
+    expect(shell.style.minHeight).toBe("100dvh");
+    // border-box keeps the 20px padding inside the 100dvh box; content-box would add
+    // 40px on top of the viewport, which is exactly the overflow Varys caught.
+    expect(shell.style.boxSizing).toBe("border-box");
+    expect(shell.style.height).not.toBe("680px");
+    expect(shell.style.minHeight).not.toBe("640px");
+
+    // Same shell element persists across every phase, so one assertion covers all screens.
+    await user.click(screen.getByTestId("scene1-cold-open-start"));
+    expect(screen.getByTestId("scene1-shell").style.boxSizing).toBe("border-box");
+    await user.click(screen.getByTestId("scene1-start"));
+    await sayChunk(user);
+    await user.click(screen.getByTestId("scene1-same"));
+    const paywallShell = screen.getByTestId("scene1-shell");
+    expect(paywallShell.style.boxSizing).toBe("border-box");
+    expect(paywallShell.style.height).not.toBe("680px");
+  }, 20000);
+
+  it("the paywall's green annual button is dark enough for white text to clear 4.5:1, in both themes", async () => {
+    for (const theme of ["light", "dark"]) {
+      const user = userEvent.setup();
+      render(<Scene1Shell uiLang="es" theme={theme} search="" />);
+      await user.click(screen.getByTestId("scene1-cold-open-start"));
+      await user.click(screen.getByTestId("scene1-start"));
+      await sayChunk(user);
+      await user.click(screen.getByTestId("scene1-same"));
+
+      const annualButton = screen.getByTestId("scene1-paywall-annual");
+      const bg = toHex(annualButton.style.background);
+      expect(bg).not.toBe("#58cc02"); // the old bright lime measured 2.09:1 for white text
+      expect(contrastRatio("#ffffff", bg)).toBeGreaterThanOrEqual(4.5);
+      cleanup();
+    }
+  }, 20000);
 
   it("dark mode: quiet text is cream at reduced opacity, not the light-mode ink that fails contrast on #15171C", async () => {
     const user = userEvent.setup();
