@@ -44,6 +44,24 @@ export const SCENE1_MIC_ERROR = Object.freeze({
   en: "We couldn't use the microphone. Check the permission in Settings.",
 });
 
+/** Shown after tapping «Reservar mi lugar» (Paywall A/B's lime button): confirms
+ *  the reservation and sends the learner on to the next chunk free, same
+ *  destination as «Seguir gratis». Collects no email, no data. */
+export const SCENE1_PAYWALL_RESERVED = Object.freeze({
+  es: "Listo. Tu lugar está apartado.",
+  en: "Done. Your spot is reserved.",
+  continueEs: "Seguir",
+  continueEn: "Continue",
+});
+
+/** George: when the mic is denied or fails, this sits under SCENE1_MIC_ERROR
+ *  and skips recording — ends the chunk as a «Suena igual» tap so the
+ *  learner still reaches the paywall. */
+export const SCENE1_MIC_SKIP = Object.freeze({
+  es: "Seguir sin micrófono",
+  en: "Continue without the mic",
+});
+
 /** Paywall A: right after the first spoken exchange. */
 export const SCENE1_PAYWALL_A = Object.freeze({
   headlineEs: "Acabas de pedir en español.",

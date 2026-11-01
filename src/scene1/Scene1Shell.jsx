@@ -14,9 +14,11 @@ import {
   SCENE1_MAX_RETRIES,
   SCENE1_MIC_ERROR,
   SCENE1_MIC_REASON,
+  SCENE1_MIC_SKIP,
   SCENE1_MOVE_ON_LINE,
   SCENE1_PAYWALL_A,
   SCENE1_PAYWALL_B,
+  SCENE1_PAYWALL_RESERVED,
 } from "./copy.js";
 import { scene1PaywallVariant } from "./paywallVariant.js";
 import { emitRecordingHappened, loadRecordingBlob, playNativeThenLearner, saveRecordingBlob, startRecording } from "./recorder.js";
@@ -66,6 +68,7 @@ export default function Scene1Shell({ uiLang = "es", theme = "light", search } =
   const [retries, setRetries] = useState(0);
   const [learnerBlob, setLearnerBlob] = useState(null);
   const [recordError, setRecordError] = useState(null);
+  const [reserved, setReserved] = useState(false);
   // The in-flight startRecording() promise, not the resolved handle: a fast
   // tap of Stop can land before the mic promise settles and React re-renders
   // with the handle in state, so finishRecording awaits this directly
@@ -168,6 +171,13 @@ export default function Scene1Shell({ uiLang = "es", theme = "light", search } =
 
   const tapSameSound = () => advanceChunk();
 
+  // Mic denied/failed: skip recording and end the chunk the same way a
+  // «Suena igual» tap would, so the learner still reaches the paywall.
+  const skipMic = () => {
+    setRecordError(null);
+    advanceChunk();
+  };
+
   const tapRetry = () => {
     const nextRetries = retries + 1;
     if (nextRetries > SCENE1_MAX_RETRIES) {
@@ -191,7 +201,12 @@ export default function Scene1Shell({ uiLang = "es", theme = "light", search } =
   const tapAnnual = () => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.annual });
     emitFunnelEvent({ event: FUNNEL_EVENTS.tapAnnual, source: PAYWALL_SEEN_SOURCE.timed });
+    setReserved(true);
   };
+
+  // Same destination as «Seguir gratis» — the reservation is on-device only,
+  // so there's nothing left to wait on before moving to the next chunk.
+  const tapReservedContinue = () => setPhase(PHASE.cue);
 
   const variantForPaywall = scene1PaywallVariant({ firstSeenKey: firstSeenKeyRef.current, todayKey, search });
   const words = variantForPaywall === "B" ? SCENE1_PAYWALL_B : SCENE1_PAYWALL_A;
@@ -225,7 +240,14 @@ export default function Scene1Shell({ uiLang = "es", theme = "light", search } =
           <div data-testid="scene1-cue">
             <div style={{ fontWeight: 800, fontSize: 13, color: subInk, marginBottom: 8 }}>{chunkIndex + 1}/{SCENE1_CHUNKS.length}</div>
             <div style={{ fontWeight: 900, fontSize: 20, marginBottom: 16 }}>{en ? chunk.cueEn : chunk.cueEs}</div>
-            {recordError && <div style={{ color: "#C45C48", marginBottom: 8 }}>{recordError}</div>}
+            {recordError && (
+              <>
+                <div style={{ color: "#C45C48", marginBottom: 8 }}>{recordError}</div>
+                <button data-testid="scene1-skip-mic" onClick={skipMic} style={{ ...primaryBtnStyle, background: PAYWALL_LIME, color: "#1F3A1A", marginBottom: 12 }}>
+                  {en ? SCENE1_MIC_SKIP.en : SCENE1_MIC_SKIP.es}
+                </button>
+              </>
+            )}
             <div style={{ fontSize: 12, color: subInk, marginBottom: 12 }}>{en ? SCENE1_MIC_REASON.en : SCENE1_MIC_REASON.es}</div>
             <button data-testid="scene1-record" onClick={beginRecording} style={primaryBtnStyle}>
               {en ? "Record" : "Grabar"}
@@ -290,15 +312,28 @@ export default function Scene1Shell({ uiLang = "es", theme = "light", search } =
             <div style={{ fontSize: 15, color: subInk, marginBottom: 16 }}>
               {en ? words.subheadEn : words.subheadEs}
             </div>
-            <button data-testid="scene1-paywall-annual" onClick={tapAnnual} style={{ ...primaryBtnStyle, background: PAYWALL_LIME, color: "#1F3A1A" }}>
-              <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".06em", textTransform: "uppercase" }}>{rw.label}</div>
-              <div style={{ fontWeight: 800, fontSize: 15 }}>{rw.action}</div>
-            </button>
-            <div data-testid="scene1-paywall-annual-price" style={{ fontWeight: 900, fontSize: PAYWALL_ANNUAL_LINE_SIZE, marginTop: 10 }}>{annualLine}</div>
-            <div data-testid="scene1-paywall-monthly-price" style={{ fontSize: 13, color: subInk, marginTop: 4 }}>{rw.saving}</div>
-            <button data-testid="scene1-paywall-dismiss" onClick={tapContinueFree} style={{ ...textBtnStyle, color: subInk, marginTop: 12 }}>
-              {en ? "Continue free" : "Seguir gratis"}
-            </button>
+            {reserved ? (
+              <>
+                <div data-testid="scene1-paywall-reserved-line" style={{ fontWeight: 900, fontSize: 18, marginBottom: 16 }}>
+                  {en ? SCENE1_PAYWALL_RESERVED.en : SCENE1_PAYWALL_RESERVED.es}
+                </div>
+                <button data-testid="scene1-paywall-continue" onClick={tapReservedContinue} style={{ ...primaryBtnStyle, background: PAYWALL_LIME, color: "#1F3A1A" }}>
+                  {en ? SCENE1_PAYWALL_RESERVED.continueEn : SCENE1_PAYWALL_RESERVED.continueEs}
+                </button>
+              </>
+            ) : (
+              <>
+                <button data-testid="scene1-paywall-annual" onClick={tapAnnual} style={{ ...primaryBtnStyle, background: PAYWALL_LIME, color: "#1F3A1A" }}>
+                  <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".06em", textTransform: "uppercase" }}>{rw.label}</div>
+                  <div style={{ fontWeight: 800, fontSize: 15 }}>{rw.action}</div>
+                </button>
+                <div data-testid="scene1-paywall-annual-price" style={{ fontWeight: 900, fontSize: PAYWALL_ANNUAL_LINE_SIZE, marginTop: 10 }}>{annualLine}</div>
+                <div data-testid="scene1-paywall-monthly-price" style={{ fontSize: 13, color: subInk, marginTop: 4 }}>{rw.saving}</div>
+                <button data-testid="scene1-paywall-dismiss" onClick={tapContinueFree} style={{ ...textBtnStyle, color: subInk, marginTop: 12 }}>
+                  {en ? "Continue free" : "Seguir gratis"}
+                </button>
+              </>
+            )}
           </div>
         )}
 

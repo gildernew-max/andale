@@ -307,6 +307,103 @@ describe("Scene1Shell", () => {
     }
   }, 20000);
 
+  it("tapping Reservar mi lugar shows the reserved line and a lime Seguir button that reaches chunk 2, in Spanish", async () => {
+    const user = userEvent.setup();
+    render(<Scene1Shell uiLang="es" search="" />);
+    await user.click(screen.getByTestId("scene1-cold-open-start"));
+    await user.click(screen.getByTestId("scene1-start"));
+    await sayChunk(user);
+    await user.click(screen.getByTestId("scene1-same"));
+
+    await user.click(screen.getByTestId("scene1-paywall-annual"));
+    // The existing log still fires.
+    expect(seenEvents("paywall_tap").map((e) => e.choice)).toContain("annual");
+    expect(seenEvents("tap_annual")).toHaveLength(1);
+
+    expect(screen.queryByTestId("scene1-paywall-annual")).toBeNull();
+    expect(screen.getByTestId("scene1-paywall-reserved-line").textContent).toBe("Listo. Tu lugar está apartado.");
+
+    const continueBtn = screen.getByTestId("scene1-paywall-continue");
+    expect(continueBtn.textContent).toBe("Seguir");
+    expect(toHex(continueBtn.style.background)).toBe("#58cc02");
+    expect(toHex(continueBtn.style.color)).toBe("#1f3a1a");
+
+    await user.click(continueBtn);
+    expect(screen.getByTestId("scene1-cue").textContent).toMatch(/Pide medio kilo/);
+  }, 20000);
+
+  it("tapping Reserve my spot shows the reserved line and a lime Continue button that reaches chunk 2, in English", async () => {
+    const user = userEvent.setup();
+    render(<Scene1Shell uiLang="en" search="" />);
+    await user.click(screen.getByTestId("scene1-cold-open-start"));
+    await user.click(screen.getByTestId("scene1-start"));
+    await sayChunk(user);
+    await user.click(screen.getByTestId("scene1-same"));
+
+    await user.click(screen.getByTestId("scene1-paywall-annual"));
+    expect(seenEvents("paywall_tap").map((e) => e.choice)).toContain("annual");
+    expect(seenEvents("tap_annual")).toHaveLength(1);
+
+    expect(screen.queryByTestId("scene1-paywall-annual")).toBeNull();
+    expect(screen.getByTestId("scene1-paywall-reserved-line").textContent).toBe("Done. Your spot is reserved.");
+
+    const continueBtn = screen.getByTestId("scene1-paywall-continue");
+    expect(continueBtn.textContent).toBe("Continue");
+    expect(toHex(continueBtn.style.background)).toBe("#58cc02");
+    expect(toHex(continueBtn.style.color)).toBe("#1f3a1a");
+
+    await user.click(continueBtn);
+    expect(screen.getByTestId("scene1-cue").textContent).toMatch(/Ask for half a kilo instead\./);
+  }, 20000);
+
+  it("mic denied: Seguir sin micrófono skips recording and still reaches the paywall, in Spanish", async () => {
+    const user = userEvent.setup();
+    render(<Scene1Shell uiLang="es" search="" />);
+    await user.click(screen.getByTestId("scene1-cold-open-start"));
+    await user.click(screen.getByTestId("scene1-start"));
+
+    Object.defineProperty(window.navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: () => Promise.reject(new Error("denied")) },
+    });
+
+    await user.click(screen.getByTestId("scene1-record"));
+    await waitFor(() => expect(screen.getByText("No pudimos usar el micrófono. Revisa el permiso en Ajustes.")).toBeTruthy());
+
+    const skipBtn = screen.getByTestId("scene1-skip-mic");
+    expect(skipBtn.textContent).toBe("Seguir sin micrófono");
+    expect(toHex(skipBtn.style.background)).toBe("#58cc02");
+    expect(toHex(skipBtn.style.color)).toBe("#1f3a1a");
+
+    await user.click(skipBtn);
+    expect(screen.getByTestId("scene1-paywall")).toBeTruthy();
+    expect(screen.queryByTestId("scene1-recording")).toBeNull();
+  }, 20000);
+
+  it("mic denied: Continue without the mic skips recording and still reaches the paywall, in English", async () => {
+    const user = userEvent.setup();
+    render(<Scene1Shell uiLang="en" search="" />);
+    await user.click(screen.getByTestId("scene1-cold-open-start"));
+    await user.click(screen.getByTestId("scene1-start"));
+
+    Object.defineProperty(window.navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: () => Promise.reject(new Error("denied")) },
+    });
+
+    await user.click(screen.getByTestId("scene1-record"));
+    await waitFor(() => expect(screen.getByText("We couldn't use the microphone. Check the permission in Settings.")).toBeTruthy());
+
+    const skipBtn = screen.getByTestId("scene1-skip-mic");
+    expect(skipBtn.textContent).toBe("Continue without the mic");
+    expect(toHex(skipBtn.style.background)).toBe("#58cc02");
+    expect(toHex(skipBtn.style.color)).toBe("#1f3a1a");
+
+    await user.click(skipBtn);
+    expect(screen.getByTestId("scene1-paywall")).toBeTruthy();
+    expect(screen.queryByTestId("scene1-recording")).toBeNull();
+  }, 20000);
+
   it("dark mode: quiet text is cream at reduced opacity, not the light-mode ink that fails contrast on #15171C", async () => {
     const user = userEvent.setup();
     render(<Scene1Shell uiLang="es" theme="dark" search="" />);
