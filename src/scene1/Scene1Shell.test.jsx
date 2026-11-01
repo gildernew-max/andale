@@ -167,6 +167,52 @@ describe("Scene1Shell", () => {
     expect(screen.getByTestId("scene1-paywall")).toBeTruthy();
   }, 20000);
 
+  it("shows the PR 368 hero bird above the headline on Paywall A and B, and nowhere else", async () => {
+    const user = userEvent.setup();
+    render(<Scene1Shell uiLang="es" search="" />);
+
+    await user.click(screen.getByTestId("scene1-cold-open-start"));
+    expect(screen.queryByTestId("scene1-paywall-hero")).toBeNull();
+    await user.click(screen.getByTestId("scene1-start"));
+    expect(screen.queryByTestId("scene1-paywall-hero")).toBeNull();
+
+    await sayChunk(user);
+    await user.click(screen.getByTestId("scene1-same"));
+
+    // Paywall A: the hero bird sits above the headline in the same band PR 368 built.
+    const paywallA = screen.getByTestId("scene1-paywall");
+    expect(paywallA.getAttribute("data-paywall-variant")).toBe("A");
+    const heroA = screen.getByTestId("scene1-paywall-hero");
+    expect(heroA.tagName).toBe("IMG");
+    expect(heroA.src).toContain(PAYWALL_HERO_PATH);
+    expect(heroA.alt).toBe(PAYWALL_HERO_ALT.es);
+    expect(
+      heroA.compareDocumentPosition(screen.getByTestId("scene1-paywall-headline")) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    await user.click(screen.getByTestId("scene1-paywall-dismiss"));
+    expect(screen.queryByTestId("scene1-paywall-hero")).toBeNull();
+  }, 20000);
+
+  it("shows the PR 368 hero bird above the headline on Paywall B too", async () => {
+    const user = userEvent.setup();
+    render(<Scene1Shell uiLang="es" search="?paywallVariant=b" />);
+    await user.click(screen.getByTestId("scene1-cold-open-start"));
+    await user.click(screen.getByTestId("scene1-start"));
+    await sayChunk(user);
+    await user.click(screen.getByTestId("scene1-same"));
+
+    const paywallB = screen.getByTestId("scene1-paywall");
+    expect(paywallB.getAttribute("data-paywall-variant")).toBe("B");
+    const heroB = screen.getByTestId("scene1-paywall-hero");
+    expect(heroB.tagName).toBe("IMG");
+    expect(heroB.src).toContain(PAYWALL_HERO_PATH);
+    expect(heroB.alt).toBe(PAYWALL_HERO_ALT.es);
+    expect(
+      heroB.compareDocumentPosition(screen.getByTestId("scene1-paywall-headline")) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  }, 20000);
+
   it("the day-3 test switch forces Paywall B without touching the clock", async () => {
     const user = userEvent.setup();
     render(<Scene1Shell uiLang="es" search="?paywallVariant=b" />);
