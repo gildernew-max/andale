@@ -306,21 +306,27 @@ export default function Scene1Shell({ uiLang = "es", theme = "light", search } =
               alt={en ? PAYWALL_HERO_ALT.en : PAYWALL_HERO_ALT.es}
               style={{ display: "block", margin: "0 auto 16px", height: 140, width: "auto", maxWidth: "100%", borderRadius: 16, objectFit: "cover" }}
             />
-            <div data-testid="scene1-paywall-headline" style={{ fontWeight: 900, fontSize: 22, marginBottom: 6 }}>
-              {en ? words.headlineEn : words.headlineEs}
-            </div>
-            <div style={{ fontSize: 15, color: subInk, marginBottom: 16 }}>
-              {en ? words.subheadEn : words.subheadEs}
-            </div>
-            {reserved ? (
+            {!reserved && (
               <>
-                <div data-testid="scene1-paywall-reserved-line" style={{ fontWeight: 900, fontSize: 18, marginBottom: 16 }}>
+                <div data-testid="scene1-paywall-headline" style={{ fontWeight: 900, fontSize: 22, marginBottom: 6 }}>
+                  {en ? words.headlineEn : words.headlineEs}
+                </div>
+                <div style={{ fontSize: 15, color: subInk, marginBottom: 16 }}>
+                  {en ? words.subheadEn : words.subheadEs}
+                </div>
+              </>
+            )}
+            {reserved ? (
+              // Reserved screen reused from PRs 370/372 (bird above, done box below):
+              // same bird already rendered above, same done-box border/shape, Scene 1's own words.
+              <div data-testid="scene1-paywall-reserved" role="status" style={{ width: "100%", boxSizing: "border-box", padding: "12px 16px", borderRadius: 16, border: `2px solid ${theme === "dark" ? "#CDBBA6" : "#1F3A1A"}`, textAlign: "center" }}>
+                <div data-testid="scene1-paywall-reserved-title" style={{ fontWeight: 900, fontSize: 20, lineHeight: 1.2 }}>
                   {en ? SCENE1_PAYWALL_RESERVED.en : SCENE1_PAYWALL_RESERVED.es}
                 </div>
-                <button data-testid="scene1-paywall-continue" onClick={tapReservedContinue} style={{ ...primaryBtnStyle, background: PAYWALL_LIME, color: "#1F3A1A" }}>
+                <button data-testid="scene1-paywall-continue" onClick={tapReservedContinue} style={{ ...primaryBtnStyle, marginTop: 10, background: PAYWALL_LIME, color: "#1F3A1A" }}>
                   {en ? SCENE1_PAYWALL_RESERVED.continueEn : SCENE1_PAYWALL_RESERVED.continueEs}
                 </button>
-              </>
+              </div>
             ) : (
               <>
                 <button data-testid="scene1-paywall-annual" onClick={tapAnnual} style={{ ...primaryBtnStyle, background: PAYWALL_LIME, color: "#1F3A1A" }}>

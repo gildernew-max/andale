@@ -307,7 +307,7 @@ describe("Scene1Shell", () => {
     }
   }, 20000);
 
-  it("tapping Reservar mi lugar shows the reserved line and a lime Seguir button that reaches chunk 2, in Spanish", async () => {
+  it("tapping Reservar mi lugar shows the reserved screen (bird + done box) and a lime Seguir button that reaches chunk 2, in Spanish", async () => {
     const user = userEvent.setup();
     render(<Scene1Shell uiLang="es" search="" />);
     await user.click(screen.getByTestId("scene1-cold-open-start"));
@@ -321,7 +321,15 @@ describe("Scene1Shell", () => {
     expect(seenEvents("tap_annual")).toHaveLength(1);
 
     expect(screen.queryByTestId("scene1-paywall-annual")).toBeNull();
-    expect(screen.getByTestId("scene1-paywall-reserved-line").textContent).toBe("Listo. Tu lugar está apartado.");
+    // The bird (PR 368's hero) stays above the done box; the headline/subhead drop out.
+    expect(screen.getByTestId("scene1-paywall-hero")).toBeTruthy();
+    expect(screen.queryByTestId("scene1-paywall-headline")).toBeNull();
+    const box = screen.getByTestId("scene1-paywall-reserved");
+    expect(box.getAttribute("role")).toBe("status");
+    expect(screen.getByTestId("scene1-paywall-reserved-title").textContent).toBe("Listo. Tu lugar está apartado.");
+    // No email box or email text on this screen.
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.queryByText(/correo/i)).toBeNull();
 
     const continueBtn = screen.getByTestId("scene1-paywall-continue");
     expect(continueBtn.textContent).toBe("Seguir");
@@ -332,7 +340,7 @@ describe("Scene1Shell", () => {
     expect(screen.getByTestId("scene1-cue").textContent).toMatch(/Pide medio kilo/);
   }, 20000);
 
-  it("tapping Reserve my spot shows the reserved line and a lime Continue button that reaches chunk 2, in English", async () => {
+  it("tapping Reserve my spot shows the reserved screen (bird + done box) and a lime Continue button that reaches chunk 2, in English", async () => {
     const user = userEvent.setup();
     render(<Scene1Shell uiLang="en" search="" />);
     await user.click(screen.getByTestId("scene1-cold-open-start"));
@@ -345,7 +353,13 @@ describe("Scene1Shell", () => {
     expect(seenEvents("tap_annual")).toHaveLength(1);
 
     expect(screen.queryByTestId("scene1-paywall-annual")).toBeNull();
-    expect(screen.getByTestId("scene1-paywall-reserved-line").textContent).toBe("Done. Your spot is reserved.");
+    expect(screen.getByTestId("scene1-paywall-hero")).toBeTruthy();
+    expect(screen.queryByTestId("scene1-paywall-headline")).toBeNull();
+    const box = screen.getByTestId("scene1-paywall-reserved");
+    expect(box.getAttribute("role")).toBe("status");
+    expect(screen.getByTestId("scene1-paywall-reserved-title").textContent).toBe("Done. Your spot is reserved.");
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.queryByText(/email/i)).toBeNull();
 
     const continueBtn = screen.getByTestId("scene1-paywall-continue");
     expect(continueBtn.textContent).toBe("Continue");
