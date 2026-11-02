@@ -319,6 +319,9 @@ describe("Scene1Shell", () => {
     // The existing log still fires.
     expect(seenEvents("paywall_tap").map((e) => e.choice)).toContain("annual");
     expect(seenEvents("tap_annual")).toHaveLength(1);
+    // Same collector allowlist as the main paywall's reserve_submit, but no plan/price/email.
+    expect(seenEvents("reserve_submit")).toHaveLength(1);
+    expect(Object.keys(seenEvents("reserve_submit")[0]).sort()).toEqual(["at", "event"]);
 
     expect(screen.queryByTestId("scene1-paywall-annual")).toBeNull();
     // The bird (PR 368's hero) stays above the done box; the headline/subhead drop out.
@@ -351,6 +354,8 @@ describe("Scene1Shell", () => {
     await user.click(screen.getByTestId("scene1-paywall-annual"));
     expect(seenEvents("paywall_tap").map((e) => e.choice)).toContain("annual");
     expect(seenEvents("tap_annual")).toHaveLength(1);
+    expect(seenEvents("reserve_submit")).toHaveLength(1);
+    expect(Object.keys(seenEvents("reserve_submit")[0]).sort()).toEqual(["at", "event"]);
 
     expect(screen.queryByTestId("scene1-paywall-annual")).toBeNull();
     expect(screen.getByTestId("scene1-paywall-hero")).toBeTruthy();

@@ -197,10 +197,14 @@ export default function Scene1Shell({ uiLang = "es", theme = "light", search } =
   };
 
   // No real payment wiring; nothing takes money. The tap is still counted,
-  // same as the main paywall elsewhere in the app.
+  // same as the main paywall elsewhere in the app. reserve_submit carries
+  // no plan/price/email here — just event + at, same collector allowlist,
+  // through the same endpoint-gated collector path that sends nothing while
+  // VITE_COLLECTOR_ENDPOINT is empty.
   const tapAnnual = () => {
     emitFunnelEvent({ event: FUNNEL_EVENTS.paywallTap, choice: PAYWALL_TAP.annual });
     emitFunnelEvent({ event: FUNNEL_EVENTS.tapAnnual, source: PAYWALL_SEEN_SOURCE.timed });
+    emitFunnelEvent({ event: FUNNEL_EVENTS.reserveSubmit });
     setReserved(true);
   };
 
