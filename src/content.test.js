@@ -22,7 +22,7 @@ import { IAP_PRODUCTS, PURCHASE_EVENT, WEB_NO_IAP_REASON } from "./purchase.js";
 import { PAYWALL_BIRD_TRIGGER, PAYWALL_SOURCE } from "./paywallHeadline.js";
 import { ANNUAL_PRICE_PLACEHOLDER, LOCKED_STORY_PAYWALL, paywallStillMaxHeight, watchPaywallStillResize, PAYWALL_ANNUAL_HEIGHT, PAYWALL_ANNUAL_HOLD_GAP, PAYWALL_BIRD_SIZE, PAYWALL_CARD_BOTTOM_INSET, PAYWALL_FREE_GAP, PAYWALL_FREE_LINE_GAP, PAYWALL_FREE_LINE_SIZE, PAYWALL_LIME, PAYWALL_MONTHLY_GAP, PAYWALL_MONTHLY_HEIGHT, PAYWALL_STILL_HEIGHT } from "./webPaywall.js";
 import { FUNNEL_EVENT, FUNNEL_EVENTS, FUNNEL_LOG, PAYWALL_TAP } from "./funnel.js";
-import { COLLECTOR_ENDPOINT, collectorEndpoint } from "./collector.js";
+import { COLLECTOR_ENDPOINT, COLLECTOR_EVENTS, collectorEndpoint } from "./collector.js";
 import { FIRST_WIN_EMAIL_CTA, FIRST_WIN_EMAIL_DARK, FIRST_WIN_EMAIL_ERROR, FIRST_WIN_EMAIL_FILL, FIRST_WIN_EMAIL_INVITE, FIRST_WIN_EMAIL_PLACEHOLDER, FIRST_WIN_EMAIL_PRIVACY, FIRST_WIN_EMAIL_PRIVACY_HREF, FIRST_WIN_EMAIL_PRIVACY_INK, FIRST_WIN_EMAIL_SKIP, FIRST_WIN_EMAIL_SUCCESS } from "./firstWinEmail.js";
 import { isAudioGatedStep, LISTEN_SKIP, LISTEN_SKIP_HINT, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { WAITLIST_CTA, WAITLIST_ERROR, WAITLIST_PLACEHOLDER, WAITLIST_PRIVACY, WAITLIST_PRIVACY_URL, WAITLIST_PROMPT, WAITLIST_SUCCESS, waitlistCta, waitlistError, waitlistPlaceholder, waitlistPrivacy, waitlistPrompt, waitlistSuccess } from "./waitlist.js";
@@ -5212,6 +5212,20 @@ const COUNT_NOTE_ES = "Contamos a qué pasos llegas (como terminar una lección 
 assert(privacyHtml.includes(COUNT_NOTE_EN) && privacyMd.includes(COUNT_NOTE_EN), "privacy EN count note");
 assert(privacyHtml.includes(COUNT_NOTE_ES) && privacyMd.includes(COUNT_NOTE_ES), "privacy ES count note");
 assert(appSrc.includes('data-testid="settings-count-note"') && appSrc.includes("privacy.html#correo-y-datos"), "perfil links to the correo-y-datos section");
+
+// The "anonymous signals" sentence must name exactly the four events COLLECTOR_EVENTS
+// (collector.js) ever sends off-device — no more, no fewer — in both languages.
+assert(COLLECTOR_EVENTS.length === 4, "exactly four events are ever allowed off the device");
+const SIGNALS_EN = "The app sends us a few anonymous signals: when you open it, when you finish a scene, when you see the plan screen, and when you reserve the annual plan.";
+const SIGNALS_ES = "La app nos envía unas pocas señales anónimas: cuando la abres, cuando terminas una escena, cuando ves la pantalla del plan y cuando apartas el plan anual.";
+assert(privacyHtml.includes(SIGNALS_EN), "privacy.html names the app_open, scene1_complete, paywall_seen, reserve_submit signals (EN)");
+assert(privacyHtml.includes(SIGNALS_ES), "privacy.html names the same four signals (ES)");
+const SIGNAL_CLAUSE = { app_open: "when you open it", scene1_complete: "when you finish a scene", paywall_seen: "when you see the plan screen", reserve_submit: "when you reserve the annual plan" };
+for (const event of COLLECTOR_EVENTS) {
+  assert(SIGNAL_CLAUSE[event], `${event} has a privacy.html clause to check (add one above if this is a new allowlisted event)`);
+  assert(SIGNALS_EN.includes(SIGNAL_CLAUSE[event]), `privacy.html's signals sentence still names ${event}`);
+}
+assert(Object.keys(SIGNAL_CLAUSE).sort().join(",") === COLLECTOR_EVENTS.slice().sort().join(","), "privacy.html names the allowlist exactly, not a subset or a superset");
 assert(pagesYml.includes("VITE_COLLECTOR_ENDPOINT"), "Pages build passes the collector endpoint");
 assert(!privacyHtml.includes("Your email and your data") && !privacyMd.includes("Your email and your data"), "email collection heading is not on the privacy page");
 assert(!privacyHtml.includes("What we collect and what we don't") && !privacyMd.includes("What we collect and what we don't"), "renamed collect heading is not on the privacy page");

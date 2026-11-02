@@ -13,6 +13,8 @@
  *  calendar day) when that number is a positive integer.
  *  tap_annual and tap_monthly are separate events and carry that same source.
  *  locked_story_capped is event + timestamp + that day number.
+ *  app_open and scene1_complete (Scene 1, behind the scene1 flag) are
+ *  event + timestamp only.
  *  Other events do not carry source or day.
  *  Each accepted event is also appended to localStorage key
  *  `andale-funnel-log` on this device. That log is not sent anywhere.
@@ -49,6 +51,11 @@ export const FUNNEL_EVENTS = Object.freeze({
   firstSessionComplete: "first_session_complete",
   day2Return: "day2_return",
   firstStreakSeen: "first_streak_seen",
+  /** Scene 1 speaking loop: a recording happened. Event + timestamp only — never the audio, never what was said. */
+  sceneRecording: "scene1_recording",
+  /** Scene 1 app open and scene complete. Event + timestamp only, same as day2_return / first_streak_seen. */
+  appOpen: "app_open",
+  scene1Complete: "scene1_complete",
 });
 
 export const PAYWALL_TAP = Object.freeze({
@@ -181,6 +188,7 @@ function safeStoryId(id) {
  * are event + timestamp only — never the email.
  * first_session_start, first_session_exercise1_correct, first_session_complete,
  * day2_return, and first_streak_seen are event + timestamp only.
+ * app_open and scene1_complete are also event + timestamp only.
  * purchase is event + at + allowlisted plan / productId only.
  * reserve_submit is event + at + plan "annual" + price 39.99 only — never the email.
  * open is event + at, plus daysSinceLast when it is an integer 0–365.

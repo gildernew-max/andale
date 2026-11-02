@@ -17,7 +17,7 @@ assert(collectorEndpoint() === "https://override.example/exec", "a test endpoint
 setCollectorEndpointOverride(undefined);
 assert(collectorEndpoint() === "", "clearing the test endpoint reads the empty build env again");
 
-assert(COLLECTOR_EVENTS.slice().sort().join(",") === "paywall_seen,reserve_submit", "only two events are on the send list");
+assert(COLLECTOR_EVENTS.slice().sort().join(",") === "app_open,paywall_seen,reserve_submit,scene1_complete", "only four events are on the send list");
 
 function memoryStorage() {
   const data = {};
@@ -76,7 +76,7 @@ for (const name of COLLECTOR_EVENTS) {
 setCollectorEndpointOverride(undefined);
 assert(calls === 0, "no endpoint calls neither sendBeacon nor fetch");
 
-// With an endpoint, only paywall_seen and reserve_submit leave the device.
+// With an endpoint, only paywall_seen, reserve_submit, app_open, and scene1_complete leave the device.
 const storage = memoryStorage();
 const sent = [];
 for (const name of allEvents.concat(["not_a_funnel_event", "email", ""])) {
@@ -87,11 +87,12 @@ for (const name of allEvents.concat(["not_a_funnel_event", "email", ""])) {
     beaconImpl: (url, body) => { sent.push({ url, body }); return true; },
     fetchImpl: async () => { throw new Error("fetch should not run"); },
   });
-  const shouldSend = name === FUNNEL_EVENTS.paywallSeen || name === FUNNEL_EVENTS.reserveSubmit;
+  const shouldSend = name === FUNNEL_EVENTS.paywallSeen || name === FUNNEL_EVENTS.reserveSubmit
+    || name === FUNNEL_EVENTS.appOpen || name === FUNNEL_EVENTS.scene1Complete;
   assert(r.sent === shouldSend, `${name || "(blank)"} ${shouldSend ? "sends" : "stays on the device"}`);
 }
-assert(sent.length === 2, "exactly two rows left the device");
-assert(sent.map((row) => JSON.parse(row.body).event).sort().join(",") === "paywall_seen,reserve_submit", "the two rows are paywall_seen and reserve_submit");
+assert(sent.length === 4, "exactly four rows left the device");
+assert(sent.map((row) => JSON.parse(row.body).event).sort().join(",") === "app_open,paywall_seen,reserve_submit,scene1_complete", "the four rows are paywall_seen, reserve_submit, app_open, and scene1_complete");
 assert(storage.data[COLLECTOR_DEVICE_KEY] === "device-anonymous-1", "device id is stored under andale-device-id");
 
 const expectedDate = dayKeyFromDate(new Date(noisy.at));
@@ -120,5 +121,45 @@ assert(fetched.init.method === "POST" && fetched.init.mode === "no-cors" && fetc
 assert(fetched.init.headers["Content-Type"] === "text/plain", "fallback is text/plain");
 assert(Object.keys(JSON.parse(fetched.init.body)).sort().join(",") === THREE, "fallback payload keys are exactly event, date, device");
 assert(!fetched.init.body.includes("@"), "fallback never sends the email");
+
+// paywall_tap and tap_annual are on the funnel bus but never on COLLECTOR_EVENTS:
+// an endpoint-armed collector must not touch sendBeacon or fetch for either one.
+assert(!COLLECTOR_EVENTS.includes(FUNNEL_EVENTS.paywallTap), "paywall_tap is not on the send allowlist");
+assert(!COLLECTOR_EVENTS.includes(FUNNEL_EVENTS.tapAnnual), "tap_annual is not on the send allowlist");
+let droppedCalls = 0;
+for (const name of [FUNNEL_EVENTS.paywallTap, FUNNEL_EVENTS.tapAnnual]) {
+  const store = memoryStorage();
+  const r = await shipFunnelEvent({ event: name, choice: "annual", source: "win" }, {
+    endpoint,
+    storage: store,
+    random: () => "device-dropped",
+    beaconImpl: () => { droppedCalls += 1; return true; },
+    fetchImpl: async () => { droppedCalls += 1; return { ok: true }; },
+  });
+  assert(r.sent === false, `${name} is not sent even with an endpoint armed`);
+}
+assert(droppedCalls === 0, "paywall_tap and tap_annual never reach sendBeacon or fetch");
+
+// reserve_submit carries plan + price on the funnel bus (App.jsx emits
+// { event: FUNNEL_EVENTS.reserveSubmit, plan: RESERVE_PLAN, price: RESERVE_PRICE }).
+// The collector builds its own record from fixed fields only, so plan and
+// price never reach the wire: the sent body is exactly { event, date, device }.
+const reserveDetail = {
+  event: FUNNEL_EVENTS.reserveSubmit,
+  at: "2026-10-13T15:04:00.000Z",
+  plan: "annual",
+  price: 39.99,
+};
+let reserveSent = null;
+const reserveResult = await shipFunnelEvent(reserveDetail, {
+  endpoint,
+  storage: memoryStorage(),
+  random: () => "device-reserve",
+  beaconImpl: (url, body) => { reserveSent = { url, body }; return true; },
+  fetchImpl: async () => { throw new Error("fetch should not run"); },
+});
+assert(reserveResult.sent === true, "reserve_submit sends with an endpoint armed");
+assert(Object.keys(JSON.parse(reserveSent.body)).sort().join(",") === THREE, "reserve_submit payload keys are exactly event, date, device, never plan or price");
+assert(!reserveSent.body.includes("plan") && !reserveSent.body.includes("annual") && !reserveSent.body.includes("39.99"), "reserve_submit never carries plan or price onto the wire");
 
 console.log("collector.test.js: ok");

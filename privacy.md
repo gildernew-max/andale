@@ -46,6 +46,12 @@ We count which steps you reach (like finishing a lesson or seeing a plan) to imp
 
 Contamos a qué pasos llegas (como terminar una lección o ver un plan) para mejorar Ándale. Es anónimo: un ID aleatorio de este dispositivo, y no guardamos tu nombre, correo ni dirección IP.
 
+## Speaking practice / Práctica de habla
+
+Cuando practicas hablar, Ándale graba tu voz para que la escuches junto a la frase nativa. Las grabaciones se guardan solo en este dispositivo y nunca se suben. Solo contamos que hubo una grabación, nunca lo que dijiste. Si borras los datos de la app, se borran.
+
+When you practice speaking, Ándale records your voice so you can hear it next to the native line. Recordings are saved only on this device and are never uploaded. We only count that a recording happened, never what you said. Clearing the app's data deletes them.
+
 ## Contact
 
 Privacy questions: gildernew@gmail.com
