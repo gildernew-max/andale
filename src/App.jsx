@@ -8255,7 +8255,7 @@ export default function App() {
     && !(session?.review && (status === "correct" || status === "almost"));
 
   if (isScene1Enabled()) return <Scene1Shell uiLang={scene1DefaultUiLang()} theme={theme} />;
-  if (isScene2Enabled()) return <Scene2Shell uiLang={scene1DefaultUiLang()} />;
+  if (isScene2Enabled()) return <Scene2Shell uiLang={scene1DefaultUiLang()} theme={theme} />;
 
   return (
     <BtnThemeContext.Provider value={theme}>
