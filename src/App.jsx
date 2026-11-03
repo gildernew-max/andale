@@ -46,6 +46,8 @@ import { DEFAULT_VOICE_NAME, bestSpanishVoice, isLatamReadingVoice, listSpanishV
 import { isScene1Enabled } from "./scene1/flag.js";
 import Scene1Shell from "./scene1/Scene1Shell.jsx";
 import { scene1DefaultUiLang } from "./scene1/uiLang.js";
+import { isScene2Enabled } from "./scene2/flag.js";
+import Scene2Shell from "./scene2/Scene2Shell.jsx";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
 import { TypeAccentRow } from "./typeAccentRow.jsx";
 import { accentRowScrollDelta } from "./typeAccentRow.js";
@@ -8253,6 +8255,7 @@ export default function App() {
     && !(session?.review && (status === "correct" || status === "almost"));
 
   if (isScene1Enabled()) return <Scene1Shell uiLang={scene1DefaultUiLang()} theme={theme} />;
+  if (isScene2Enabled()) return <Scene2Shell uiLang={scene1DefaultUiLang()} />;
 
   return (
     <BtnThemeContext.Provider value={theme}>
