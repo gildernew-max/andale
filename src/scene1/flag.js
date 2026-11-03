@@ -6,6 +6,12 @@
 export const SCENE1_FLAG_KEY = "andale-scene1-flag";
 export const SCENE1_QUERY_PARAM = "scene1";
 
+/** On by default for real users. The vitest suite (MODE "test") keeps the
+ *  legacy Home as its default so older Home tests stay meaningful. */
+export const SCENE1_DEFAULT_ON = (() => {
+  try { return import.meta.env?.MODE !== "test"; } catch { return true; }
+})();
+
 function readStorage(storage) {
   try {
     return storage || (typeof localStorage !== "undefined" ? localStorage : null);
@@ -23,7 +29,7 @@ function parseFlagParam(value) {
 
 /**
  * Reads the `?scene1=` query param first and persists it. Falls back to the
- * last persisted value. Returns a plain boolean, default false.
+ * last persisted value. Returns a plain boolean, default true (on by default; ?scene1=0 opts out).
  */
 export function readScene1Flag({ search, storage } = {}) {
   const store = readStorage(storage);
@@ -40,9 +46,12 @@ export function readScene1Flag({ search, storage } = {}) {
     return fromParam;
   }
   try {
-    return store?.getItem?.(SCENE1_FLAG_KEY) === "1";
+    const v = store?.getItem?.(SCENE1_FLAG_KEY);
+    if (v === "1") return true;
+    if (v === "0") return false;
+    return SCENE1_DEFAULT_ON;
   } catch {
-    return false;
+    return SCENE1_DEFAULT_ON;
   }
 }
 

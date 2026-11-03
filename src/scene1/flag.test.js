@@ -11,11 +11,11 @@ function fakeStorage(initial = {}) {
   };
 }
 
-// No param, nothing stored: off by default.
+// No param, nothing stored: on by default for real users.
 {
   const storage = fakeStorage();
-  assert(readScene1Flag({ search: "", storage }) === false, "no param and no stored value is off");
-  assert(isScene1Enabled({ search: "", storage }) === false, "isScene1Enabled mirrors readScene1Flag");
+  assert(readScene1Flag({ search: "", storage }) === true, "no param and no stored value is on");
+  assert(isScene1Enabled({ search: "", storage }) === true, "isScene1Enabled mirrors readScene1Flag");
 }
 
 // ?scene1=1 turns it on and persists.
