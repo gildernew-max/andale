@@ -32,7 +32,7 @@ export const SCENE2_CHUNKS = Object.freeze([
     id: "derecha",
     cueEn: "Tell him to turn right here.",
     es: "Aquí a la derecha.",
-    en: "Right here.",
+    en: "Here, on the right.",
     trap: "«a la derecha», never «a la derecho».",
     tipEs: "Fíjate en \"la\": derecha es femenina.",
     tipEn: "Listen for «la»: derecha is feminine.",
