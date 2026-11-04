@@ -11891,7 +11891,7 @@ export default function App() {
             ) : (
               // Opaque bar under the sticky CONTINUE: the stack scrolls beneath it, so REPASAR is never half-covered (No face, Oct 21).
               <div data-testid="win-continue-bar" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 12, background: D.bg, paddingTop: WIN_CONTINUE_BAR_TOP, paddingBottom: onboardingCtaBottomCss(), display: "flex", justifyContent: "center" }}>
-	              <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy ? LESSON_LIME_INK : undefined} onClick={() => continueFromWin()}>{L.continue}</Btn>
+	              <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy || session.firstDoctora ? LESSON_LIME_INK : undefined} onClick={() => continueFromWin()}>{L.continue}</Btn>
               </div>
             )}
           </div>

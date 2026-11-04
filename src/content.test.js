@@ -1519,7 +1519,7 @@ assert(appSrc.includes("img.src = `${import.meta.env.BASE_URL}mascot/cenzontle.p
 assert(appSrc.includes("if (shouldPlayWinBounce(session) || shouldPlayHoyBeat(session) || shouldPlayDoctoraBeat(session))"), "Hoy / Doctora finish still arm the first-win bird in the same turn as screen done");
 assert(appSrc.includes("shouldPlayHoyBeat(session)"), "firstHoy gates the staying Cenzontle");
 assert(appSrc.includes("<HoyWinBird"), "Hoy win mounts the staying Cenzontle");
-assert(appSrc.includes("ink={session.firstHoy ? LESSON_LIME_INK : undefined}"), "Hoy CONTINUE ink is #1F3A1A; other wins stay on CONTINUE_LABEL");
+assert(appSrc.includes("ink={session.firstHoy || session.firstDoctora ? LESSON_LIME_INK : undefined}"), "Hoy and Doctora CONTINUE ink is #1F3A1A; other wins stay on CONTINUE_LABEL");
 assert(appSrc.includes("shouldPlayDoctoraBeat(session)"), "firstDoctora plays the shared fly-away");
 assert(appSrc.includes("shouldArmStory0Beat"), "story-0 first claim arms the free-win bird");
 assert(appSrc.includes("shouldPlayStory0Beat(session)"), "done screen plays the story-0 bird from the session flag");
