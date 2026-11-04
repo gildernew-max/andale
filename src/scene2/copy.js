@@ -13,6 +13,7 @@ export const SCENE2_CHUNKS = Object.freeze([
   Object.freeze({
     id: "hidalgo",
     cueEn: "Ask the driver to take you to Calle Hidalgo.",
+    cueEs: "Dile al taxista adónde vas: la calle Hidalgo.",
     es: "¿Me lleva a la calle Hidalgo, por favor?",
     en: "Can you take me to Hidalgo Street, please?",
     trap: "«llevar», not «tomar».",
@@ -22,6 +23,7 @@ export const SCENE2_CHUNKS = Object.freeze([
   Object.freeze({
     id: "cobra",
     cueEn: "Ask how much he'll charge.",
+    cueEs: "Pregúntale el precio del viaje.",
     es: "¿Cuánto me cobra?",
     en: "How much will you charge me?",
     trap: "«cobrar», not «cargar».",
@@ -31,6 +33,7 @@ export const SCENE2_CHUNKS = Object.freeze([
   Object.freeze({
     id: "derecha",
     cueEn: "Tell him to turn right here.",
+    cueEs: "Indícale que dé vuelta a la derecha justo aquí.",
     es: "Aquí a la derecha.",
     en: "Here, on the right.",
     trap: "«a la derecha», never «a la derecho».",
@@ -40,6 +43,7 @@ export const SCENE2_CHUNKS = Object.freeze([
   Object.freeze({
     id: "aqui-esta-bien",
     cueEn: "Tell him here is fine.",
+    cueEs: "Dile que ya te puedes bajar aquí.",
     es: "Aquí está bien, gracias.",
     en: "Here is fine, thanks.",
     trap: "«está», not «es».",
@@ -49,6 +53,7 @@ export const SCENE2_CHUNKS = Object.freeze([
   Object.freeze({
     id: "cambio-doscientos",
     cueEn: "Ask if he has change for 200.",
+    cueEs: "Solo traes un billete de 200. Asegúrate de que tenga para darte el resto.",
     es: "¿Tiene cambio de doscientos?",
     en: "Do you have change for two hundred?",
     trap: "«cambio de», not «cambio para».",
