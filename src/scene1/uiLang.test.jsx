@@ -7,9 +7,14 @@ function storageWith(value) {
 }
 
 describe("scene1DefaultUiLang", () => {
-  it("a saved uiLang wins over the phone's language", () => {
-    expect(scene1DefaultUiLang({ storage: storageWith({ uiLang: "en" }), navigator: { language: "es-MX" } })).toBe("en");
-    expect(scene1DefaultUiLang({ storage: storageWith({ uiLang: "es" }), navigator: { language: "en-US" } })).toBe("es");
+  it("an explicitly-picked saved uiLang wins over the phone's language", () => {
+    expect(scene1DefaultUiLang({ storage: storageWith({ uiLang: "en", uiLangPicked: true }), navigator: { language: "es-MX" } })).toBe("en");
+    expect(scene1DefaultUiLang({ storage: storageWith({ uiLang: "es", uiLangPicked: true }), navigator: { language: "en-US" } })).toBe("es");
+  });
+
+  it("a saved uiLang without the explicit-pick marker is ignored: the phone's language wins", () => {
+    expect(scene1DefaultUiLang({ storage: storageWith({ uiLang: "en" }), navigator: { language: "es-MX" } })).toBe("es");
+    expect(scene1DefaultUiLang({ storage: storageWith({ uiLang: "es" }), navigator: { language: "en-US" } })).toBe("en");
   });
 
   it("no saved uiLang: any es* phone language is Spanish", () => {

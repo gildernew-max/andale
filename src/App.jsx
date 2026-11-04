@@ -46,6 +46,8 @@ import { DEFAULT_VOICE_NAME, bestSpanishVoice, isLatamReadingVoice, listSpanishV
 import { isScene1Enabled } from "./scene1/flag.js";
 import Scene1Shell from "./scene1/Scene1Shell.jsx";
 import { scene1DefaultUiLang } from "./scene1/uiLang.js";
+import { isScene2Enabled } from "./scene2/flag.js";
+import Scene2Shell from "./scene2/Scene2Shell.jsx";
 import { SpanishKeyboardKey } from "./spanishKeyboard.jsx";
 import { TypeAccentRow } from "./typeAccentRow.jsx";
 import { accentRowScrollDelta } from "./typeAccentRow.js";
@@ -5025,13 +5027,14 @@ export default function App() {
     // flag inside the skip would write those defaults over a real save.
     if (!hydrated.current) return;
     const toSave = { ...prog, contentVersion: CONTENT_VERSION };
-    // This component's uiLang picker never runs while Scene1 is on (the
-    // isScene1Enabled() return below is reached after this hook, every
-    // render), so prog.uiLang here is always this load effect's own default,
-    // never a real choice. Persisting it would land in andale-v3 and read
-    // back as a saved choice by scene1DefaultUiLang (./scene1/uiLang.js),
-    // silently beating the phone-language fallback on a Spanish phone.
-    if (isScene1Enabled()) delete toSave.uiLang;
+    // This component's uiLang picker never runs while Scene1 or Scene2 is on
+    // (the isScene1Enabled()/isScene2Enabled() returns below are reached
+    // after this hook, every render), so prog.uiLang here is always this
+    // load effect's own default, never a real choice. Persisting it would
+    // land in andale-v3 without the uiLangPicked marker scene1DefaultUiLang()
+    // (./scene1/uiLang.js) requires — harmless on its own now, but dropping
+    // it keeps andale-v3 free of a uiLang value nobody chose.
+    if (isScene1Enabled() || isScene2Enabled()) delete toSave.uiLang;
     try { storage.set(STORAGE_KEY, JSON.stringify(toSave)); } catch (e) {}
   }, [prog]);
 
@@ -8253,6 +8256,7 @@ export default function App() {
     && !(session?.review && (status === "correct" || status === "almost"));
 
   if (isScene1Enabled()) return <Scene1Shell uiLang={scene1DefaultUiLang()} theme={theme} />;
+  if (isScene2Enabled()) return <Scene2Shell uiLang={scene1DefaultUiLang()} theme={theme} />;
 
   return (
     <BtnThemeContext.Provider value={theme}>
@@ -8424,7 +8428,7 @@ export default function App() {
                   <span style={{ position: "absolute", top: -2, right: -3, width: 8, height: 8, borderRadius: 99, border: `1.5px solid ${D.card}`, background: voiceDead || (voicesReady && !voices.length) ? D.red : "#BBB" }} />
                 </button>
               )}
-              <LangToggle uiLang={uiLang} D={headerD} onPick={(code) => save({ uiLang: code })} />
+              <LangToggle uiLang={uiLang} D={headerD} onPick={(code) => save({ uiLang: code, uiLangPicked: true })} />
             </div>
           )}
         </div>
@@ -9518,7 +9522,7 @@ export default function App() {
                   data-testid={`perfil-lang-${opt.id}`}
                   aria-label={uiLang === "en" ? (opt.id === "en" ? "English context language" : "Spanish context language") : (opt.id === "en" ? "Idioma de contexto: inglés" : "Idioma de contexto: español")}
                   aria-pressed={uiLang === opt.id}
-                  onClick={() => save({ uiLang: opt.id })}
+                  onClick={() => save({ uiLang: opt.id, uiLangPicked: true })}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -10375,7 +10379,7 @@ export default function App() {
 
       {(screen === "done" || screen === "failed" || screen === "rivalIntro" || screen === "rivalDone" || screen === "sessionClose") && (
         <div style={{ position: "fixed", top: 62, right: 18, zIndex: 20 }}>
-          <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+          <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code, uiLangPicked: true })} />
         </div>
       )}
 
@@ -10405,7 +10409,7 @@ export default function App() {
               : session.review
 	              ? <span style={{ fontSize: 12, fontWeight: 900, color: D.blue }}>{L.listening}</span>
               : <span style={{ fontWeight: 900, color: D.red, fontSize: 16 }}><IcHeart size={18} /> {prog.hearts}</span>}
-            <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+            <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code, uiLangPicked: true })} />
           </div>
 
           {session.scenario && status === "idle" && (
@@ -10886,7 +10890,7 @@ export default function App() {
                 <div style={{ width: `${Math.round((dialogue.done ? 1 : dialogue.idx / activeDuel.steps.length) * 100)}%`, height: "100%", background: activeDuel.color }} />
               </div>
               <span style={{ fontSize: 12, fontWeight: 900, color: limeText(activeDuel.dark, D) }}>{dialogue.score}/{maxScore}</span>
-              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code, uiLangPicked: true })} />
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 12, marginBottom: 16 }}>
               <CoachPortrait id="diego" mood={dialogue.done ? "party" : "happy"} size={86} />
@@ -10943,7 +10947,7 @@ export default function App() {
                 <div style={{ fontWeight: 900, fontSize: 21 }}>Serpientes y Escaleras</div>
               </div>
               <div style={{ border: `2px solid ${D.green}`, borderBottom: `4px solid ${D.greenDark}`, borderRadius: 12, padding: "7px 10px", background: D.greenBg, fontWeight: 900, color: limeText(D.greenDark, D) }}>{snakeGame.tile}/24</div>
-              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code, uiLangPicked: true })} />
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 12 }}>
@@ -11074,7 +11078,7 @@ export default function App() {
                 <div style={{ width: `${safeGame.done ? 100 : Math.round((safeGame.idx / safeGame.items.length) * 100)}%`, height: "100%", background: D.red }} />
               </div>
               <span style={{ fontSize: 12, fontWeight: 900, color: D.red }}>{safeGame.score}/{safeGame.items.length}</span>
-              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code, uiLangPicked: true })} />
             </div>
             {safeGame.done ? (
               <div className="pop" style={{ textAlign: "center", border: `2px solid ${D.gold}`, borderBottom: `5px solid ${D.goldDark}`, borderRadius: 16, padding: 18, background: D.goldBg }}>
@@ -11171,7 +11175,7 @@ export default function App() {
           onNext={onCubetasNext}
           onClose={closeGamesSurface}
           onAgain={() => startCubetas(gamesReturnRef.current)}
-          onLang={(code) => save({ uiLang: code })}
+          onLang={(code) => save({ uiLang: code, uiLangPicked: true })}
         />
       )}
 
@@ -11180,7 +11184,7 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
             <button type="button" onClick={() => { setPaywallSource(PAYWALL_SOURCE.gamesHub); setScreen("home"); setTab("camino"); }} aria-label={uiLang === "en" ? "Close" : "Cerrar"} style={{ border: "none", background: "none", fontSize: 22, cursor: "pointer", color: D.sub, padding: "10px 12px", margin: "-10px -12px", minWidth: 44, minHeight: 44 }}>✕</button>
             <div data-testid="games-hub-title" style={{ flex: 1, fontWeight: 800, fontSize: 15, color: D.sub }}>{L.hubGames}</div>
-            <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+            <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code, uiLangPicked: true })} />
           </div>
           <button onClick={() => startCubetas("games")} data-testid="cubetas-start" className="games-hub-card"
             style={{ display: "block", width: "100%", margin: "0 0 10px", ...gamesHubCardChrome(theme), background: D.card, color: D.ink, borderRadius: 18, padding: "13px 16px", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}>
@@ -11227,7 +11231,7 @@ export default function App() {
                 <div data-testid="hangman-quiet" style={{ fontSize: 12, fontWeight: 700, color: theme === "dark" ? D.sub : "#6B6258" }}>{hangmanQuiet(uiLang)}</div>
               </div>
               <div data-testid="hangman-misses" style={{ fontSize: 12, fontWeight: 800, color: D.sub }}>{misses.length}/{HANGMAN_MAX}</div>
-              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code, uiLangPicked: true })} />
             </div>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
               <HangmanMark size={56} />
@@ -11418,7 +11422,7 @@ export default function App() {
                 <div data-testid="story-reader-title" lang="es" style={{ fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>{story.title}</div>
                 <div data-testid="story-reader-subtitle" style={{ fontSize: 13, fontWeight: 800, color: limeText(sec.color, D) }}>{uiLang === "en" ? (story.subtitleEn || story.subtitle) : story.subtitle}</div>
               </div>
-              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code })} />
+              <LangToggle uiLang={uiLang} D={D} onPick={(code) => save({ uiLang: code, uiLangPicked: true })} />
             </div>
             <div data-testid="story-tip" style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0 8px", background: D.subtle, borderRadius: 12, padding: "8px 12px", fontSize: 12.5, fontWeight: 800, color: D.sub }}>
 	              <IcBook size={16} color={sec.color} /> {L.storyTip}
