@@ -50,10 +50,7 @@ export default function Scene2Shell({ uiLang = "es", theme = "light" } = {}) {
         {phase === PHASE.cue && chunk && (
           <div data-testid="scene2-cue">
             <div style={{ fontWeight: 800, fontSize: 13, color: subInk, marginBottom: 8 }}>{chunkIndex + 1}/{SCENE2_CHUNKS.length}</div>
-            {/* No cueEs is authored in copy.js: the Spanish-UI cue is the chunk's
-                own «es» line, not a translated instruction, so the slot below
-                only duplicates it for English UI. */}
-            <div style={{ fontWeight: 900, fontSize: 20, marginBottom: 16, color: ink }}>{en ? chunk.cueEn : chunk.es}</div>
+            <div style={{ fontWeight: 900, fontSize: 20, marginBottom: 16, color: ink }}>{en ? chunk.cueEn : chunk.cueEs}</div>
             {en && <div style={{ fontWeight: 900, fontSize: 22, marginBottom: 8, color: ink }}>{chunk.es}</div>}
             <div style={{ fontSize: 15, color: subInk, marginBottom: 16 }}>{chunk.en}</div>
             <button data-testid="scene2-continue" onClick={advance} style={primaryBtnStyle}>
