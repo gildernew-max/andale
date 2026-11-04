@@ -4848,6 +4848,7 @@ export default function App() {
   const cubetasTimerRef = useRef(null);
   const gamesReturnRef = useRef("practica");
   const [burst, setBurst] = useState(0); // mini confetti trigger
+  const storedUiLang = useRef(null);
   const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {}, firstSessionDone: false });
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState("level");
@@ -4910,6 +4911,7 @@ export default function App() {
 	  (async () => {
 	    let p = null;
 	    try { const r = await storage.get(STORAGE_KEY); if (r && r.value) p = JSON.parse(r.value); } catch (e) {}
+	    if (p?.uiLang === "en" || p?.uiLang === "es") storedUiLang.current = p.uiLang;
 	    p = acceptProgress(p);
 	    if (p) p = migrateFirstSession(p);
 	    const needsOnboarding = shouldShowOnboarding(p);
@@ -5031,7 +5033,12 @@ export default function App() {
     // never a real choice. Persisting it would land in andale-v3 and read
     // back as a saved choice by scene1DefaultUiLang (./scene1/uiLang.js),
     // silently beating the phone-language fallback on a Spanish phone.
-    if (isScene1Enabled()) delete toSave.uiLang;
+    if (isScene1Enabled()) {
+      // Keep a language already stored (a learner's own pick from the old
+      // home screen); never write this load's default in its place.
+      delete toSave.uiLang;
+      if (storedUiLang.current) toSave.uiLang = storedUiLang.current;
+    }
     try { storage.set(STORAGE_KEY, JSON.stringify(toSave)); } catch (e) {}
   }, [prog]);
 
