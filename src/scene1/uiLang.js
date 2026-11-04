@@ -1,9 +1,12 @@
-/** Scene 1 mounts before onboarding (App.jsx's `isScene1Enabled()` check comes
- *  before any onboarding or uiLang picker), so the usual "first visit keeps
- *  English" default never saw a choice get made. A saved andale-v3 uiLang
- *  still wins; absent that, follow the phone's language instead of hardcoding
- *  English — any es* tag (es, es-MX, es-419, ...) is Spanish, everything else
- *  is English. */
+/** Scene 1 and Scene 2 both mount before onboarding (App.jsx's
+ *  `isScene1Enabled()`/`isScene2Enabled()` checks come before any onboarding
+ *  or uiLang picker), so the usual "first visit keeps English" default never
+ *  saw a choice get made. A saved andale-v3 uiLang only wins once it carries
+ *  the `uiLangPicked` marker — set when the learner actually taps the
+ *  language toggle, never by a load effect's own default. Absent an
+ *  explicit pick, follow the phone's language instead of hardcoding English
+ *  — any es* tag (es, es-MX, es-419, ...) is Spanish, everything else is
+ *  English. */
 
 const STORAGE_KEY = "andale-v3";
 
@@ -12,6 +15,7 @@ function savedUiLang(storage) {
     const raw = storage?.getItem(STORAGE_KEY);
     if (!raw) return null;
     const saved = JSON.parse(raw);
+    if (saved?.uiLangPicked !== true) return null;
     return saved?.uiLang === "en" || saved?.uiLang === "es" ? saved.uiLang : null;
   } catch {
     return null;

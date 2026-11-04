@@ -6,7 +6,15 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Scene2Shell from "./Scene2Shell.jsx";
-import { SCENE2_CHUNKS } from "./copy.js";
+import { SCENE2_CHUNKS, SCENE2_DONE } from "./copy.js";
+
+async function finishScene(uiLang) {
+  render(<Scene2Shell uiLang={uiLang} />);
+  await userEvent.click(screen.getByTestId("scene2-start"));
+  for (let i = 0; i < SCENE2_CHUNKS.length; i++) {
+    await userEvent.click(screen.getByTestId("scene2-continue"));
+  }
+}
 
 afterEach(() => {
   cleanup();
@@ -19,6 +27,15 @@ describe("Scene2Shell: brand hold", () => {
     expect(start.textContent).toBe("Empezar");
     expect(start.style.background).toBe("rgb(88, 204, 2)");
     expect(start.style.color).toBe("rgb(31, 58, 26)");
+  });
+
+  it("Seguir/Continue button is also lime #58CC02 with dark-green #1F3A1A text, same as Start", async () => {
+    render(<Scene2Shell uiLang="es" />);
+    await userEvent.click(screen.getByTestId("scene2-start"));
+    const continueBtn = screen.getByTestId("scene2-continue");
+    expect(continueBtn.textContent).toBe("Seguir");
+    expect(continueBtn.style.background).toBe("rgb(88, 204, 2)");
+    expect(continueBtn.style.color).toBe("rgb(31, 58, 26)");
   });
 
   it("light mode: body text is #1F3A1A", async () => {
@@ -79,5 +96,26 @@ describe("Scene2Shell: step-forward reaches chunks 2-5", () => {
     }
 
     expect(screen.getByTestId("scene2-done")).toBeTruthy();
+  });
+});
+
+describe("Scene2Shell: done screen (George, exact strings)", () => {
+  it("es: shows the bird above a bordered done box with George's one line and a lime Seguir button", async () => {
+    await finishScene("es");
+    const bird = screen.getByTestId("scene2-done-bird");
+    expect(bird.tagName).toBe("IMG");
+    const box = screen.getByTestId("scene2-done-box");
+    expect(box.compareDocumentPosition(bird) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(screen.getByTestId("scene2-done-line").textContent).toBe(SCENE2_DONE.es);
+    const continueBtn = screen.getByTestId("scene2-done-continue");
+    expect(continueBtn.textContent).toBe("Seguir");
+    expect(continueBtn.style.background).toBe("rgb(88, 204, 2)");
+    expect(continueBtn.style.color).toBe("rgb(31, 58, 26)");
+  });
+
+  it("en: shows George's exact English line and a Continue button", async () => {
+    await finishScene("en");
+    expect(screen.getByTestId("scene2-done-line").textContent).toBe(SCENE2_DONE.en);
+    expect(screen.getByTestId("scene2-done-continue").textContent).toBe("Continue");
   });
 });

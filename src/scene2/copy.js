@@ -9,6 +9,11 @@ export const SCENE2_TITLE = Object.freeze({
   en: "Today: the taxi.",
 });
 
+export const SCENE2_DONE = Object.freeze({
+  es: "Llegaste. Ya sabes pedir el viaje, pagar y bajarte.",
+  en: "You made it. Now you can ask for the ride, pay and get out.",
+});
+
 export const SCENE2_CHUNKS = Object.freeze([
   Object.freeze({
     id: "hidalgo",

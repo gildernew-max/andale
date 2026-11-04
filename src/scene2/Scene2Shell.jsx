@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { SCENE2_CHUNKS, SCENE2_TITLE } from "./copy.js";
+import { PAYWALL_HERO_ALT, PAYWALL_HERO_PATH } from "../paywallStill.js";
+import { SCENE2_CHUNKS, SCENE2_DONE, SCENE2_TITLE } from "./copy.js";
+
+// Same bird used on Scene 1's paywall (src/scene1/Scene1Shell.jsx) — the one
+// brand asset for a "you made it" moment, not an invented one.
+const DONE_HERO_SRC = `${import.meta.env.BASE_URL}${PAYWALL_HERO_PATH}`;
 
 const PHASE = Object.freeze({
   intro: "intro",
@@ -59,7 +64,24 @@ export default function Scene2Shell({ uiLang = "es", theme = "light" } = {}) {
           </div>
         )}
 
-        {phase === PHASE.done && <div data-testid="scene2-done" />}
+        {phase === PHASE.done && (
+          <div data-testid="scene2-done">
+            <img
+              data-testid="scene2-done-bird"
+              src={DONE_HERO_SRC}
+              alt={en ? PAYWALL_HERO_ALT.en : PAYWALL_HERO_ALT.es}
+              style={{ display: "block", margin: "0 auto 16px", height: 140, width: "auto", maxWidth: "100%", borderRadius: 16, objectFit: "cover" }}
+            />
+            <div data-testid="scene2-done-box" style={{ width: "100%", boxSizing: "border-box", padding: "12px 16px", borderRadius: 16, border: `2px solid ${dark ? "#CDBBA6" : "#1F3A1A"}`, textAlign: "center" }}>
+              <div data-testid="scene2-done-line" style={{ fontWeight: 900, fontSize: 20, lineHeight: 1.2, color: ink }}>
+                {en ? SCENE2_DONE.en : SCENE2_DONE.es}
+              </div>
+              <button data-testid="scene2-done-continue" type="button" style={{ ...primaryBtnStyle, marginTop: 10 }}>
+                {en ? "Continue" : "Seguir"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -80,17 +102,6 @@ const startBtnStyle = {
   cursor: "pointer",
 };
 
-const primaryBtnStyle = {
-  display: "block",
-  width: "100%",
-  minHeight: 48,
-  padding: "10px 16px",
-  background: "#1CB0F6",
-  color: "#fff",
-  border: "none",
-  borderRadius: 16,
-  fontFamily: "inherit",
-  fontWeight: 800,
-  fontSize: 15,
-  cursor: "pointer",
-};
+// Same lime/ink as Start — Seguir/Continue is the same brand action, not a
+// secondary one.
+const primaryBtnStyle = startBtnStyle;
