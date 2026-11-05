@@ -239,7 +239,7 @@ describe("Scene1Shell", () => {
     const paywall = screen.getByTestId("scene1-paywall");
     expect(paywall.getAttribute("data-paywall-variant")).toBe("B");
     expect(screen.getByTestId("scene1-paywall-headline").textContent).toBe("Tres días hablando. Sigue.");
-    expect(screen.getByText("Escucha tu primer día y el de hoy. Ahí se nota.")).toBeTruthy();
+    expect(screen.getByText("Cada día suenas más natural. Sigue con todas las historias.")).toBeTruthy();
   }, 20000);
 
   it("uiLang=en renders the English pairs for the same screens", async () => {
