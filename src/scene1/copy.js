@@ -74,6 +74,6 @@ export const SCENE1_PAYWALL_A = Object.freeze({
 export const SCENE1_PAYWALL_B = Object.freeze({
   headlineEs: "Tres días hablando. Sigue.",
   headlineEn: "Three days speaking. Keep going.",
-  subheadEs: "Escucha tu primer día y el de hoy. Ahí se nota.",
-  subheadEn: "Hear day one next to today. That's how you know.",
+  subheadEs: "Cada día suenas más natural. Sigue con todas las historias.",
+  subheadEn: "You sound more natural every day. Keep going with every story.",
 });

@@ -14,7 +14,8 @@ import { buildColdFirstHoyQueue, coldFirstHoySceneBeats, isShortHoy, shouldHoyEa
 import { isAudioGatedStep, listenSkipHint, listenSkipLabel } from "./listenSkip.js";
 import { splashPromiseLine, splashPromiseSentences } from "./splashCopy.js";
 import { hoyListenChoicePaint, hoyListenChoiceTone, isHoyListenChoiceStep } from "./hoyChoiceCard.js";
-import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats } from "./doctoraWin.js";
+import { isFirstDoctoraSession, shouldDoctoraEarlyWin, trimDoctoraBeats, doctoraWinReward } from "./doctoraWin.js";
+import { isDoctoraXpEnabled } from "./doctoraXp/flag.js";
 import { LESSON_XP_COMBO, lessonFinishReward, lessonItemXP } from "./lessonAward.js";
 import { STREAK_FLAME, shouldPopFirstStreak, streakChipLabel, streakLabelColor } from "./streakChip.js";
 import { streakDisplay, streakFreezeBody, streakFreezeButton, streakRepairBody } from "./streakDisplay.js";
@@ -4848,6 +4849,7 @@ export default function App() {
   const cubetasTimerRef = useRef(null);
   const gamesReturnRef = useRef("practica");
   const [burst, setBurst] = useState(0); // mini confetti trigger
+  const storedUiLang = useRef(null);
   const [prog, setProg] = useState({ welcomed: false, xp: 0, streak: 0, lastDay: null, xpToday: 0, done: {}, mistakes: [], srs: {}, flashcards: {}, weak: {}, missions: {}, rayo: false, stories: {}, uiLang: DEFAULT_UI_LANG, sound: true, gems: 0, hearts: MAX_HEARTS, heartT: Date.now(), perfects: 0, chests: {}, firstSessionDone: false });
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState("level");
@@ -4910,6 +4912,7 @@ export default function App() {
 	  (async () => {
 	    let p = null;
 	    try { const r = await storage.get(STORAGE_KEY); if (r && r.value) p = JSON.parse(r.value); } catch (e) {}
+	    if (p?.uiLang === "en" || p?.uiLang === "es") storedUiLang.current = p.uiLang;
 	    p = acceptProgress(p);
 	    if (p) p = migrateFirstSession(p);
 	    const needsOnboarding = shouldShowOnboarding(p);
@@ -5031,7 +5034,12 @@ export default function App() {
     // never a real choice. Persisting it would land in andale-v3 and read
     // back as a saved choice by scene1DefaultUiLang (./scene1/uiLang.js),
     // silently beating the phone-language fallback on a Spanish phone.
-    if (isScene1Enabled()) delete toSave.uiLang;
+    if (isScene1Enabled()) {
+      // Keep a language already stored (a learner's own pick from the old
+      // home screen); never write this load's default in its place.
+      delete toSave.uiLang;
+      if (storedUiLang.current) toSave.uiLang = storedUiLang.current;
+    }
     try { storage.set(STORAGE_KEY, JSON.stringify(toSave)); } catch (e) {}
   }, [prog]);
 
@@ -7919,21 +7927,36 @@ export default function App() {
     setA2hsSheet(false);
     save({ a2hsSeen: true });
   };
-  const awardDoctoraStreak = () => {
+  const awardDoctoraStreak = ({ xp = 0, gems = 0 } = {}) => {
     if (!lockAward("phrase-doctor")) return;
     const t = todayStr();
     const y = yesterdayStr();
+    const xpOn = isDoctoraXpEnabled();
+    const earnedXP = xpOn ? (Number(xp) || 0) : 0;
+    const earnedGems = xpOn ? (Number(gems) || 0) : 0;
     save((prev) => ({
       ...prev,
       streak: streakAfterWin(prev, t, y),
       lastDay: t,
-      xpToday: prev.lastDay === t ? prev.xpToday || 0 : 0,
+      ...(xpOn ? { xp: (prev.xp || 0) + earnedXP, gems: (prev.gems || 0) + earnedGems } : {}),
+      xpToday: (prev.lastDay === t ? prev.xpToday || 0 : 0) + earnedXP,
     }));
   };
 
   const finishDoctoraWin = () => {
     const streakBefore = Number(prog.streak) || 0;
-    awardDoctoraStreak();
+    const xpOn = isDoctoraXpEnabled();
+    const hits = Math.max(doctorHits, 1);
+    const wrongs = xpOn && doctorFailed ? 1 : 0;
+    const { earnedXP, earnedGems, perfectBonus } = xpOn
+      ? doctoraWinReward({ hits, almostHits: doctorGrade === "equivalent" ? 1 : 0, wrongs, firstDoctora: true, streak: prog.streak })
+      : { earnedXP: 0, earnedGems: 0, perfectBonus: 0 };
+    awardDoctoraStreak({ xp: earnedXP, gems: earnedGems });
+    if (xpOn) {
+      const before = levelOf(prog.xp || 0).idx;
+      const after = levelOf((prog.xp || 0) + earnedXP).idx;
+      setLevelUp(after > before ? LEVELS[after][1] : null);
+    }
     setSession({
       firstDoctora: true,
       esoWin: true,
@@ -7941,11 +7964,12 @@ export default function App() {
       host: "valeria",
       questions: [{}],
       awarded: true,
-      earnedXP: 0,
-      earnedGems: 0,
+      earnedXP,
+      earnedGems,
+      perfectBonus,
       streakBefore,
     });
-    setLessonStats({ right: Math.max(doctorHits, 1), wrong: 0 });
+    setLessonStats({ right: hits, wrong: wrongs });
     setScreenQuip("");
     setDoctorOpen(false);
     winBouncePlayed.current = true;
@@ -11755,6 +11779,7 @@ export default function App() {
         const milestones = [3, 7, 14, 30, 50, 100, 365];
         const hitMilestone = milestones.includes(prog.streak);
         const quietWin = session.firstHoy || session.firstDoctora || session.firstStory0 || session.lecturaWin;
+        const doctoraXpOn = session.firstDoctora && isDoctoraXpEnabled();
         const firstWin = !!session.firstSession;
         const perchCard = firstWin || isSenderoLesson(session);
         const winTestId = session.firstHoy ? "hoy-win" : session.firstDoctora ? "doctora-win" : session.firstStory0 ? "story-0-win" : session.lecturaWin ? "lectura-win" : undefined;
@@ -11800,7 +11825,7 @@ export default function App() {
           <h2 data-testid={winTestId} data-lectura-paywall={session.lecturaPaywallAfterWin ? "1" : "0"} className={quietWin ? "eso-rise" : undefined} style={{ fontWeight: 900, fontSize: 26, margin: "12px 0 4px", color: (quietWin || perchCard) && theme !== "dark" ? "#85672C" : D.gold }}>
 	            {quietWin ? (session.storyId && !(Number(lessonStats.right) > 0) ? L.storyFinished : L.hoyWin) : session.testOut != null ? L.sectionPassed : L.completed}
           </h2>
-          {levelUp && !session.firstDoctora && (
+          {levelUp && (!session.firstDoctora || doctoraXpOn) && (
             <div
               data-testid="level-up-banner"
               className="pop"
@@ -11839,7 +11864,7 @@ export default function App() {
               { v: <Ticker instant={quietWin} to={session.earnedXP != null ? session.earnedXP : sessionXP} />, l: "XP", c: D.gold, ink: winNumeralColor(theme, "xp", D), testid: "win-earned-xp" },
 	              { v: <Ticker instant={quietWin} to={session.earnedGems != null ? session.earnedGems : 0} duration={700} />, l: <span><IcGem size={13} /> {L.gems}</span>, c: D.blue, ink: winNumeralColor(theme, "gems", D), testid: "win-earned-gems" },
 	              ...(streakChip ? [{ v: <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}><IcFlame size={20} fill={STREAK_FLAME} className="flame" />{streakChip}</span>, l: null, c: "#FF9600", ink: streakLabelColor(theme), testid: "win-earned-streak" }] : []),
-            ].filter((s) => !session.firstDoctora || s.testid === "win-earned-streak").map((s, i) => (
+            ].filter((s) => !session.firstDoctora || doctoraXpOn || s.testid === "win-earned-streak").map((s, i) => (
               <div key={i} className={s.testid === "win-earned-streak" && popFirstStreak ? "pop streak-pop" : "pop"} style={{ border: `2px solid ${s.c}`, borderRadius: 14, padding: "12px 20px", minWidth: 84, background: D.card }}>
                 <div data-testid={s.testid} style={{ fontWeight: 900, fontSize: s.testid === "win-earned-streak" ? 16 : 22, color: s.ink || s.c, lineHeight: 1.25, whiteSpace: s.testid === "win-earned-streak" ? "nowrap" : undefined }}>{s.v}</div>
                 {s.l != null && <div style={{ fontSize: 11, fontWeight: 800, color: D.sub }}>{s.l}</div>}
@@ -11866,7 +11891,7 @@ export default function App() {
             ) : (
               // Opaque bar under the sticky CONTINUE: the stack scrolls beneath it, so REPASAR is never half-covered (No face, Oct 21).
               <div data-testid="win-continue-bar" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 12, background: D.bg, paddingTop: WIN_CONTINUE_BAR_TOP, paddingBottom: onboardingCtaBottomCss(), display: "flex", justifyContent: "center" }}>
-	              <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy ? LESSON_LIME_INK : undefined} onClick={() => continueFromWin()}>{L.continue}</Btn>
+	              <Btn data-testid={continueTestId || "win-continue"} ink={session.firstHoy || session.firstDoctora ? LESSON_LIME_INK : undefined} onClick={() => continueFromWin()}>{L.continue}</Btn>
               </div>
             )}
           </div>
